@@ -1,14 +1,18 @@
 // src/user/user.resolver.ts
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { UserService } from '@kickzone-workspace/services';
-import { User } from '@kickzone-workspace/entities';
+import { User, UserRole } from '@kickzone-workspace/entities';
 import { CreateUserInput, UpdateUserInput } from '@kickzone-workspace/inputs';
+import { SetMetadata, UseGuards } from '@nestjs/common';
+import { RolesGuard } from '@kickzone-workspace/guards';
 
 @Resolver(() => User)
 export class UserResolver {
   constructor(private userService: UserService) {}
 
   @Query(() => [User])
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
   async users(): Promise<User[]> {
     return this.userService.findAll();
   }
@@ -19,7 +23,9 @@ export class UserResolver {
   }
 
   @Mutation(() => User)
-  async createUser(@Args('input') input: CreateUserInput): Promise<User> {
+  async createUser(
+    @Args('input') input: CreateUserInput
+  ): Promise<User | null> {
     return this.userService.create(input);
   }
 

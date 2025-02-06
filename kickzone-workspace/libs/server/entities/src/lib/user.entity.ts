@@ -1,5 +1,5 @@
-// src/user/user.entity.ts
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { ObjectType, Field, ID } from '@nestjs/graphql';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -7,20 +7,25 @@ export enum UserRole {
   CUSTOMER = 'CUSTOMER',
 }
 
+@ObjectType()
 @Entity()
 export class User {
+  @Field(() => ID)
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Field()
   @Column()
   name: string;
 
+  @Field()
   @Column({ unique: true })
   email: string;
 
   @Column()
   password: string;
 
+  @Field(() => UserRole)
   @Column({
     type: 'enum',
     enum: UserRole,
@@ -28,3 +33,5 @@ export class User {
   })
   role: UserRole;
 }
+
+export type UserWithoutPassword = Omit<User, 'password'>;

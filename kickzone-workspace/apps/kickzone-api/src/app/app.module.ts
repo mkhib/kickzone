@@ -1,30 +1,32 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from '@kickzone-workspace/entities';
+import { AuthModule, UserModule } from '@kickzone-workspace/modules';
+import { GraphQLModule } from '@nestjs/graphql';
+import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { join } from 'path';
 
 @Module({
   imports: [
     TypeOrmModule.forRoot({
       type: 'postgres',
-      host: 'localhost',
+      host: process.env.DB_HOST,
       port: 5432,
-      username: 'postgres',
-      password: 'm1k1h1i1b1',
-      database: 'kickzone_db',
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
       entities: [User],
       synchronize: true,
     }),
+    GraphQLModule.forRoot<ApolloDriverConfig>({
+      driver: ApolloDriver,
+      autoSchemaFile: join(process.cwd(), 'apps/api/src/schema.gql'),
+      playground: true,
+      introspection: true,
+      context: ({ req, res }) => ({ req, res }),
+    }),
+    UserModule,
+    AuthModule,
   ],
 })
 export class AppModule {}
-
-/**
- * DB_HOST=localhost
-DB_PORT=5432
-DB_USERNAME=postgres
-DB_PASSWORD=m1k1h1i1b1
-DB_NAME=airzone_db
-JWT_SECRET=jE5QOJGltFBDwMQElUWtNSNfS8/kcVkWt/IZ8UliQPg=
-SALT_ROUNDS=12
-NX_APP_NAME=AIRZONE
- */
