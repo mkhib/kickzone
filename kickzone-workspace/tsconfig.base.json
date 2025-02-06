@@ -20,8 +20,11 @@
         "libs/server/controllers/src/index.ts"
       ],
       "@kickzone-workspace/entities": ["libs/server/entities/src/index.ts"],
+      "@kickzone-workspace/inputs": ["libs/server/inputs/src/index.ts"],
       "@kickzone-workspace/modules": ["libs/server/modules/src/index.ts"],
-      "@kickzone-workspace/services": ["libs/server/services/src/index.ts"]
+      "@kickzone-workspace/resolvers": ["libs/server/resolvers/src/index.ts"],
+      "@kickzone-workspace/services": ["libs/server/services/src/index.ts"],
+      "@kickzone-workspace/strategies": ["libs/server/strategies/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
