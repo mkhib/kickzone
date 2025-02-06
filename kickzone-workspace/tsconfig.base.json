@@ -16,7 +16,11 @@
     "baseUrl": ".",
     "strictPropertyInitialization": false,
     "paths": {
+      "@kickzone-workspace/controllers": [
+        "libs/server/controllers/src/index.ts"
+      ],
       "@kickzone-workspace/entities": ["libs/server/entities/src/index.ts"],
+      "@kickzone-workspace/modules": ["libs/server/modules/src/index.ts"],
       "@kickzone-workspace/services": ["libs/server/services/src/index.ts"]
     }
   },
