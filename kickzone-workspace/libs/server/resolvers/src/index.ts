@@ -1,1 +1,1 @@
-export * from './lib/resolvers.module';
+export * from './lib/user.resolver';

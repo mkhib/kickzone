@@ -1,1 +1,1 @@
-export * from './lib/inputs.module';
+export * from './lib/user.input';
