@@ -26,7 +26,7 @@
       "@kickzone-workspace/resolvers": ["libs/server/resolvers/src/index.ts"],
       "@kickzone-workspace/services": ["libs/server/services/src/index.ts"],
       "@kickzone-workspace/strategies": ["libs/server/strategies/src/index.ts"],
-      "@kickzone-workspace/utils": ["lib/server/utils/src/index.ts"]
+      "@kickzone-workspace/utils": ["libs/server/utils/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
