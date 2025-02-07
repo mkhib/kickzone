@@ -2,6 +2,11 @@
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
 # ------------------------------------------------------
 
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+}
+
 type User {
   id: ID!
   name: String!
@@ -15,26 +20,17 @@ enum UserRole {
   CUSTOMER
 }
 
+type UserEdge {
+  cursor: String!
+  node: User!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type Query {
-  users: [User!]!
-  user(id: String!): User!
-}
-
-type Mutation {
-  createUser(input: CreateUserInput!): User!
-  updateUser(id: String!, input: UpdateUserInput!): User!
-}
-
-input CreateUserInput {
-  name: String!
-  email: String!
-  password: String!
-  role: UserRole!
-}
-
-input UpdateUserInput {
-  name: String
-  email: String
-  password: String
-  role: UserRole
+  users(first: Float, after: String, searchTerm: String): UserConnection!
 }

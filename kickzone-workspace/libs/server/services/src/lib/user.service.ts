@@ -1,8 +1,12 @@
-// libs/services/src/lib/user.service.ts
+import { User } from '@kickzone-workspace/entities';
+import {
+  Connection,
+  ConnectionArgs,
+  createConnection,
+} from '@kickzone-workspace/utils';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { User } from '@kickzone-workspace/entities';
 
 @Injectable()
 export class UserService {
@@ -11,22 +15,29 @@ export class UserService {
     private userRepository: Repository<User>
   ) {}
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find();
-  }
+  async findAllPaginated({
+    first = 10,
+    after,
+    searchTerm,
+  }: ConnectionArgs): Promise<Connection<User>> {
+    const query = this.userRepository.createQueryBuilder('user');
 
-  async findById(id: string): Promise<User | null> {
-    return this.userRepository.findOne({ where: { id } });
-  }
+    if (searchTerm) {
+      query.where('user.name LIKE :searchTerm OR user.email LIKE :searchTerm', {
+        searchTerm: `%${searchTerm}%`,
+      });
+    }
 
-  async create(user: Partial<User>): Promise<User | null> {
-    const newUser = this.userRepository.create(user);
-    return this.userRepository.save(newUser);
-  }
+    if (after) {
+      query.andWhere('user.id > :after', { after });
+    }
 
-  async update(id: string, user: Partial<User>): Promise<User | null> {
-    await this.userRepository.update(id, user);
-    return this.userRepository.findOne({ where: { id } });
+    const [users, totalCount] = await query
+      .orderBy('user.id', 'ASC')
+      .take(first)
+      .getManyAndCount();
+
+    return createConnection(users, totalCount, first, after);
   }
 
   async findByEmail(email: string): Promise<User | null> {

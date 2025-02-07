@@ -1,5 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
-import { ObjectType, Field, ID, registerEnumType } from '@nestjs/graphql';
+import { ObjectType, Field, ID, registerEnumType, Int } from '@nestjs/graphql';
+import { PageInfo, Edge, Connection } from '@kickzone-workspace/utils';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -36,6 +37,27 @@ export class User {
     default: UserRole.CUSTOMER,
   })
   role: UserRole;
+}
+
+@ObjectType()
+export class UserEdge implements Edge<User> {
+  @Field(() => String)
+  cursor: string | number;
+
+  @Field(() => User)
+  node: User;
+}
+
+@ObjectType()
+export class UserConnection implements Connection<User> {
+  @Field(() => [UserEdge])
+  edges: UserEdge[];
+
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+
+  @Field(() => Int)
+  totalCount: number;
 }
 
 export type UserWithoutPassword = Omit<User, 'password'>;
