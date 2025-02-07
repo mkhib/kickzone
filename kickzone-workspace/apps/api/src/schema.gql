@@ -1,0 +1,40 @@
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type User {
+  id: ID!
+  name: String!
+  email: String!
+  role: UserRole!
+}
+
+enum UserRole {
+  ADMIN
+  SELLER
+  CUSTOMER
+}
+
+type Query {
+  users: [User!]!
+  user(id: String!): User!
+}
+
+type Mutation {
+  createUser(input: CreateUserInput!): User!
+  updateUser(id: String!, input: UpdateUserInput!): User!
+}
+
+input CreateUserInput {
+  name: String!
+  email: String!
+  password: String!
+  role: UserRole!
+}
+
+input UpdateUserInput {
+  name: String
+  email: String
+  password: String
+  role: UserRole
+}

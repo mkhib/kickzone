@@ -1,3 +1,4 @@
+// libs/services/src/lib/user.service.ts
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -18,7 +19,7 @@ export class UserService {
     return this.userRepository.findOne({ where: { id } });
   }
 
-  async create(user: Partial<User>): Promise<User> {
+  async create(user: Partial<User>): Promise<User | null> {
     const newUser = this.userRepository.create(user);
     return this.userRepository.save(newUser);
   }

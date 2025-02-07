@@ -1,10 +1,11 @@
-// src/user/user.resolver.ts
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
 import { UserService } from '@kickzone-workspace/services';
-import { User, UserRole } from '@kickzone-workspace/entities';
+import { User } from '@kickzone-workspace/entities';
 import { CreateUserInput, UpdateUserInput } from '@kickzone-workspace/inputs';
-import { SetMetadata, UseGuards } from '@nestjs/common';
 import { RolesGuard } from '@kickzone-workspace/guards';
+import { UserRole } from '@kickzone-workspace/entities';
+import { SetMetadata } from '@nestjs/common';
 
 @Resolver(() => User)
 export class UserResolver {
