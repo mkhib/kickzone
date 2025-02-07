@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
-import { UserService } from './user.service';
+import { User } from '@kickzone-workspace/entities';
+import { Injectable } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcryptjs';
-import { User, UserWithoutPassword } from '@kickzone-workspace/entities';
+import { UserService } from './user.service';
 
 @Injectable()
 export class AuthService {
@@ -13,7 +13,7 @@ export class AuthService {
 
   async validateUser(email: string, pass: string): Promise<User | null> {
     const user = await this.userService.findByEmail(email);
-    if (user && user.password === pass) {
+    if (user && (await bcrypt.compare(pass, user.password))) {
       return user;
     }
     return null;
