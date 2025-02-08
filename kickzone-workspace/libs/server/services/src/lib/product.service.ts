@@ -1,0 +1,112 @@
+import { Injectable } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In } from 'typeorm';
+import { Product, ProductInfo, Category } from '@kickzone-workspace/entities';
+import {
+  CreateProductInput,
+  CreateProductInfoInput,
+  CreateCategoryInput,
+  ProductFilterInput,
+} from '@kickzone-workspace/inputs';
+
+@Injectable()
+export class ProductService {
+  constructor(
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductInfo)
+    private readonly productInfoRepository: Repository<ProductInfo>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>
+  ) {}
+
+  async getProducts(filter?: ProductFilterInput) {
+    const query = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.productInfos', 'productInfo')
+      .leftJoinAndSelect('product.categories', 'category');
+
+    if (filter?.category) {
+      query.andWhere('category.name = :category', {
+        category: filter.category,
+      });
+    }
+
+    if (filter?.searchTerm) {
+      query.andWhere('product.name LIKE :searchTerm', {
+        searchTerm: `%${filter.searchTerm}%`,
+      });
+    }
+
+    if (filter?.productInfoFilter) {
+      const { size, price, costPrice, color, weight, discount, stockQuantity } =
+        filter.productInfoFilter;
+      if (size) query.andWhere('productInfo.size IN (:...size)', { size });
+      if (price) query.andWhere('productInfo.price IN (:...price)', { price });
+      if (costPrice)
+        query.andWhere('productInfo.costPrice IN (:...costPrice)', {
+          costPrice,
+        });
+      if (color) query.andWhere('productInfo.color IN (:...color)', { color });
+      if (weight)
+        query.andWhere('productInfo.weight IN (:...weight)', { weight });
+      if (discount)
+        query.andWhere('productInfo.discount IN (:...discount)', { discount });
+      if (stockQuantity)
+        query.andWhere('productInfo.stockQuantity IN (:...stockQuantity)', {
+          stockQuantity,
+        });
+    }
+
+    if (filter?.first) {
+      query.take(filter.first);
+    }
+
+    if (filter?.after) {
+      query.skip(parseInt(filter.after, 10));
+    }
+
+    return query.getMany();
+  }
+
+  async createProduct(input: CreateProductInput) {
+    const categories = await this.categoryRepository.findBy({
+      id: In(input.categoryIds),
+    });
+    const product = this.productRepository.create({
+      name: input.name,
+      discount: input.discount,
+      categories,
+    });
+    return this.productRepository.save(product);
+  }
+
+  async createProductInfo(input: CreateProductInfoInput) {
+    const product = await this.productRepository.findOneBy({
+      id: input.productId,
+    });
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    const productInfo = this.productInfoRepository.create({
+      product,
+      size: input.size,
+      price: input.price,
+      costPrice: input.costPrice,
+      color: input.color,
+      weight: input.weight,
+      discount: input.discount,
+      stockQuantity: input.stockQuantity,
+    });
+    return this.productInfoRepository.save(productInfo);
+  }
+
+  async createCategory(input: CreateCategoryInput) {
+    const category = this.categoryRepository.create({ name: input.name });
+    return this.categoryRepository.save(category);
+  }
+
+  async getCategories() {
+    return this.categoryRepository.find();
+  }
+}

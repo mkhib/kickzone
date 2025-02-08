@@ -31,13 +31,62 @@ type UserConnection {
   totalCount: Int!
 }
 
+type ProductInfo {
+  id: Int!
+  size: String!
+  price: Float!
+  costPrice: Float!
+  color: String!
+  weight: Float!
+  discount: Float!
+  stockQuantity: Int!
+  product: Product!
+}
+
+type Product {
+  id: Int!
+  name: String!
+  productInfos: [ProductInfo!]!
+  categories: [Category!]!
+  discount: Float!
+}
+
+type Category {
+  id: Int!
+  name: String!
+  products: [Product!]!
+}
+
 type Query {
   users(first: Float, after: String, searchTerm: String): UserConnection!
+  categories: [Category!]!
+  products(filter: ProductFilterInput): [Product!]!
+}
+
+input ProductFilterInput {
+  category: String
+  searchTerm: String
+  productInfoFilter: ProductInfoFilterInput
+  first: Float
+  after: String
+}
+
+input ProductInfoFilterInput {
+  size: [String!]
+  price: [Float!]
+  costPrice: [Float!]
+  color: [String!]
+  weight: [Float!]
+  discount: [Float!]
+  stockQuantity: [Int!]
 }
 
 type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
   login(email: String!, password: String!): User!
+  createCategory(input: CreateCategoryInput!): Category!
+  createProduct(input: CreateProductInput!): Product!
+  createProductInfo(input: CreateProductInfoInput!): ProductInfo!
 }
 
 input CreateUserInput {
@@ -45,4 +94,25 @@ input CreateUserInput {
   email: String!
   password: String!
   role: UserRole!
+}
+
+input CreateCategoryInput {
+  name: String!
+}
+
+input CreateProductInput {
+  name: String!
+  discount: Float!
+  categoryIds: [Int!]!
+}
+
+input CreateProductInfoInput {
+  productId: Int!
+  size: String!
+  price: Float!
+  costPrice: Float!
+  color: String!
+  weight: Float!
+  discount: Float!
+  stockQuantity: Int!
 }

@@ -1,7 +1,18 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@kickzone-workspace/entities';
-import { AuthModule, UserModule } from '@kickzone-workspace/modules';
+import {
+  Category,
+  Product,
+  ProductInfo,
+  User,
+} from '@kickzone-workspace/entities';
+import {
+  AuthModule,
+  CategoryModule,
+  ProductInfoModule,
+  ProductModule,
+  UserModule,
+} from '@kickzone-workspace/modules';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
@@ -15,7 +26,7 @@ import { join } from 'path';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User],
+      entities: [User, Product, ProductInfo, Category],
       synchronize: true,
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -27,6 +38,9 @@ import { join } from 'path';
     }),
     UserModule,
     AuthModule,
+    CategoryModule,
+    ProductModule,
+    ProductInfoModule,
   ],
 })
 export class AppModule {}
