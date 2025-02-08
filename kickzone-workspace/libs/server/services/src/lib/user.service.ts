@@ -1,4 +1,6 @@
 import { User } from '@kickzone-workspace/entities';
+import { CreateUserInput } from '@kickzone-workspace/inputs';
+import * as bcrypt from 'bcryptjs';
 import {
   Connection,
   ConnectionArgs,
@@ -42,5 +44,16 @@ export class UserService {
 
   async findByEmail(email: string): Promise<User | null> {
     return this.userRepository.findOne({ where: { email } });
+  }
+
+  async create(createUserInput: CreateUserInput): Promise<User> {
+    const salt = parseInt(process.env['SALT_ROUNDS'] ?? '10', 10) || 10;
+
+    const hashedPassword = await bcrypt.hash(createUserInput.password, salt);
+    const user = this.userRepository.create({
+      ...createUserInput,
+      password: hashedPassword,
+    });
+    return this.userRepository.save(user);
   }
 }

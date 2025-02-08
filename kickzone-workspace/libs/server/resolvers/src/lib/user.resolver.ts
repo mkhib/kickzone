@@ -2,8 +2,9 @@ import { User, UserConnection, UserRole } from '@kickzone-workspace/entities';
 import { RolesGuard } from '@kickzone-workspace/guards';
 import { UserService } from '@kickzone-workspace/services';
 import { SetMetadata, UseGuards } from '@nestjs/common';
-import { Args, Query, Resolver } from '@nestjs/graphql';
+import { Args, Query, Resolver, Mutation } from '@nestjs/graphql';
 import { Connection } from '@kickzone-workspace/utils';
+import { CreateUserInput } from '@kickzone-workspace/inputs';
 
 @Resolver(() => User)
 export class UserResolver {
@@ -22,5 +23,12 @@ export class UserResolver {
       after,
       searchTerm,
     });
+  }
+
+  @Mutation(() => User)
+  async createUser(
+    @Args('createUserInput') createUserInput: CreateUserInput
+  ): Promise<User> {
+    return this.userService.create(createUserInput);
   }
 }

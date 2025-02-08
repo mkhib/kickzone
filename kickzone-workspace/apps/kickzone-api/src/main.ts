@@ -5,6 +5,8 @@ import { AppModule } from './app/app.module';
 import { readFileSync } from 'fs';
 import cookieParser from 'cookie-parser';
 
+declare const module: any;
+
 async function bootstrap() {
   const app = await NestFactory.create(AppModule, {
     httpsOptions: {
@@ -12,6 +14,13 @@ async function bootstrap() {
       cert: readFileSync('./localhost.pem'),
     },
   });
+
+  if (module.hot) {
+    Logger.log('HOT2');
+    module.hot.accept();
+    module.hot.dispose(() => app.close());
+  }
+
   app.enableCors({
     origin: ['http://localhost:4200', 'https://studio.apollographql.com'],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',

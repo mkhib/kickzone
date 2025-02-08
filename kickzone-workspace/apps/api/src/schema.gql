@@ -34,3 +34,15 @@ type UserConnection {
 type Query {
   users(first: Float, after: String, searchTerm: String): UserConnection!
 }
+
+type Mutation {
+  createUser(createUserInput: CreateUserInput!): User!
+  login(email: String!, password: String!): User!
+}
+
+input CreateUserInput {
+  name: String!
+  email: String!
+  password: String!
+  role: UserRole!
+}
