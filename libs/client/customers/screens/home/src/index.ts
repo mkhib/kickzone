@@ -1,1 +1,1 @@
-export * from './lib/customers-home-screen';
+export * from './lib/CustomersHomeScreen';

@@ -1,1 +1,1 @@
-export * from './lib/customers-login-screen';
+export * from './lib/CustomersLoginScreen';
