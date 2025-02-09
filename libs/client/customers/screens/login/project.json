@@ -1,0 +1,9 @@
+{
+  "name": "customers-login-screen",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/login/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customers-login-screen --web",
+  "targets": {}
+}

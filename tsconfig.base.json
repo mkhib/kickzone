@@ -19,6 +19,12 @@
       "@kickzone-workspace/controllers": [
         "libs/server/controllers/src/index.ts"
       ],
+      "@kickzone-workspace/customers-home-screen": [
+        "libs/client/customers/screens/home/src/index.ts"
+      ],
+      "@kickzone-workspace/customers-login-screen": [
+        "libs/client/customers/screens/login/src/index.ts"
+      ],
       "@kickzone-workspace/entities": ["libs/server/entities/src/index.ts"],
       "@kickzone-workspace/guards": ["libs/server/guards/src/index.ts"],
       "@kickzone-workspace/inputs": ["libs/server/inputs/src/index.ts"],
