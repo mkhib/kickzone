@@ -15,7 +15,7 @@ export class CategoryService {
   }
 
   async createCategory(name: string): Promise<Category> {
-    const category = this.categoryRepository.create({ name });
+    const category = this.categoryRepository.create({ name, products: [] });
     return this.categoryRepository.save(category);
   }
 }
