@@ -16,6 +16,9 @@
     "baseUrl": ".",
     "strictPropertyInitialization": false,
     "paths": {
+      "@kickzone-workspace/colors": [
+        "libs/client/shared/ui/colors/src/index.ts"
+      ],
       "@kickzone-workspace/controllers": [
         "libs/server/controllers/src/index.ts"
       ],
