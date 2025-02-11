@@ -28,6 +28,9 @@
       "@kickzone-workspace/customers-home-screen": [
         "libs/client/customers/screens/home/src/index.ts"
       ],
+      "@kickzone-workspace/customers-layout": [
+        "libs/client/customers/components/layout/src/index.ts"
+      ],
       "@kickzone-workspace/customers-login-screen": [
         "libs/client/customers/screens/login/src/index.ts"
       ],
