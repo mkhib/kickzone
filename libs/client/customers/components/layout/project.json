@@ -1,0 +1,9 @@
+{
+  "name": "customers-layout",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/components/layout/src",
+  "projectType": "application",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customers-layout --web",
+  "targets": {}
+}
