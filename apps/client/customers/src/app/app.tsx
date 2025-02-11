@@ -1,13 +1,7 @@
-// Uncomment this line to use CSS modules
-// import styles from './app.module.css';
-import NxWelcome from './nx-welcome';
+import { CustomersRouter } from '@kickzone-workspace/customers-router';
 
 export function App() {
-  return (
-    <div>
-      <NxWelcome title="kickzone-customers" />
-    </div>
-  );
+  return <CustomersRouter />;
 }
 
 export default App;

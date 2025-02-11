@@ -13,7 +13,6 @@ export class Category {
   @Column()
   name: string;
 
-  @Field(() => [Product])
   @ManyToMany(() => Product, (product) => product.categories)
-  products: Product[] = [];
+  products: Product[];
 }

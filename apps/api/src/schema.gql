@@ -54,7 +54,6 @@ type Product {
 type Category {
   id: Int!
   name: String!
-  products: [Product!]!
 }
 
 type Query {

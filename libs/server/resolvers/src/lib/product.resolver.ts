@@ -23,7 +23,11 @@ export class ProductResolver {
   async createProduct(
     @Args('input') input: CreateProductInput
   ): Promise<Product> {
-    return this.productService.createProduct(input);
+    const product = await this.productService.createProduct(input);
+    if (!product.productInfos) {
+      product.productInfos = [];
+    }
+    return product;
   }
 
   @Mutation(() => ProductInfo)
