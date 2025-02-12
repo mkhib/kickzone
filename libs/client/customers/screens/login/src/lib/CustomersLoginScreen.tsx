@@ -10,6 +10,7 @@ import Grid2 from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
 import CssBaseline from '@mui/material/CssBaseline';
 import Paper from '@mui/material/Paper';
+import { colors } from '@kickzone-workspace/colors';
 
 export function Login() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
@@ -36,11 +37,11 @@ export function Login() {
             borderRadius: 2,
           }}
         >
-          <LockOutlined sx={{ fontSize: 40, color: '#FF4500' }} />
+          <LockOutlined sx={{ fontSize: 40, color: colors.main }} />
           <Typography
             component="h1"
             variant="h5"
-            sx={{ mt: 2, color: '#333333' }}
+            sx={{ mt: 2, color: colors.text }}
           >
             Sign in
           </Typography>
@@ -54,7 +55,7 @@ export function Login() {
               name="email"
               autoComplete="email"
               autoFocus
-              sx={{ backgroundColor: '#FFFFFF', borderRadius: 1 }}
+              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <TextField
               margin="normal"
@@ -65,7 +66,7 @@ export function Login() {
               type="password"
               id="password"
               autoComplete="current-password"
-              sx={{ backgroundColor: '#FFFFFF', borderRadius: 1 }}
+              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <Button
               type="submit"
@@ -74,7 +75,7 @@ export function Login() {
               sx={{
                 mt: 3,
                 mb: 2,
-                backgroundColor: '#FF4500',
+                backgroundColor: colors.main,
                 '&:hover': { backgroundColor: '#E63E00' },
               }}
             >
@@ -82,7 +83,7 @@ export function Login() {
             </Button>
             <Grid2 container justifyContent="flex-end" component="div">
               <Grid2 component="div">
-                <Link href="#" variant="body2" sx={{ color: '#FF4500' }}>
+                <Link href="#" variant="body2" sx={{ color: colors.main }}>
                   Don't have an account? Sign Up
                 </Link>
               </Grid2>
