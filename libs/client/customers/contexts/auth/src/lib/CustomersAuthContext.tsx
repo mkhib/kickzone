@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { createContext, useContext, useState, ReactNode } from 'react';
 import { User } from '@kickzone-workspace/entities';
 
 interface AuthContextType {
@@ -7,9 +7,15 @@ interface AuthContextType {
   logout: () => void;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
+const CustomersAuthContext = createContext<AuthContextType | undefined>(
+  undefined
+);
 
-export const AuthProvider = ({ children }: { children: ReactNode }) => {
+export const CustomersAuthProvider = ({
+  children,
+}: {
+  children: ReactNode;
+}) => {
   const [user, setUser] = useState<Pick<
     User,
     'id' | 'name' | 'email' | 'role'
@@ -24,14 +30,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <CustomersAuthContext.Provider value={{ user, login, logout }}>
       {children}
-    </AuthContext.Provider>
+    </CustomersAuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
+export const useCustomersAuth = () => {
+  const context = useContext(CustomersAuthContext);
   if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
