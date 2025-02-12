@@ -5,4 +5,5 @@ export const colors = {
   accent2: '#FFD700', // Gold
   background: '#F5F5F5', // Light Gray
   text: '#333333', // Dark Gray
+  hoverMain: '#E63E00', // Darker Orange Red
 };

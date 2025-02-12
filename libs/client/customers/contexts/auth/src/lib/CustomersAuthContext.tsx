@@ -39,7 +39,9 @@ export const CustomersAuthProvider = ({
 export const useCustomersAuth = () => {
   const context = useContext(CustomersAuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error(
+      'useCustomersAuth must be used within an CustomersAuthProvider'
+    );
   }
   return context;
 };

@@ -1,10 +1,15 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
-import '@testing-library/jest-dom/extend-expect';
+import { screen, fireEvent, cleanup } from '@testing-library/react';
+import { describe, it, expect, afterEach } from 'vitest';
 import { Login } from './CustomersLoginScreen';
+import { render } from '@kickzone-workspace/customers-test-utility';
 
 describe('CustomersLoginScreen', () => {
-  test('renders the login form', () => {
+  afterEach(() => {
+    cleanup();
+  });
+
+  it('renders the login form', () => {
     render(<Login />);
     expect(screen.getByText('Sign in')).toBeInTheDocument();
     expect(screen.getByLabelText('Email Address')).toBeInTheDocument();
@@ -17,7 +22,7 @@ describe('CustomersLoginScreen', () => {
     ).toBeInTheDocument();
   });
 
-  test('allows the user to type in the email and password fields', () => {
+  it('allows the user to type in the email and password fields', () => {
     render(<Login />);
     const emailInput = screen.getByLabelText('Email Address');
     const passwordInput = screen.getByLabelText('Password');
@@ -29,7 +34,7 @@ describe('CustomersLoginScreen', () => {
     expect(passwordInput).toHaveValue('password123');
   });
 
-  test('submits the form with email and password', () => {
+  it('submits the form with email and password', () => {
     render(<Login />);
     const emailInput = screen.getByLabelText('Email Address');
     const passwordInput = screen.getByLabelText('Password');
@@ -42,7 +47,7 @@ describe('CustomersLoginScreen', () => {
     expect(screen.getByText('Sign in')).toBeInTheDocument();
   });
 
-  test('displays validation errors when fields are empty', () => {
+  it('displays validation errors when fields are empty', () => {
     render(<Login />);
     const submitButton = screen.getByRole('button', { name: /sign in/i });
 

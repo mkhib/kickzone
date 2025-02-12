@@ -76,7 +76,7 @@ export function Login() {
                 mt: 3,
                 mb: 2,
                 backgroundColor: colors.main,
-                '&:hover': { backgroundColor: '#E63E00' },
+                '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
               Sign In
