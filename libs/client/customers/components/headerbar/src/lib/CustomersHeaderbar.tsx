@@ -12,13 +12,33 @@ import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import { Link as RouterLink } from 'react-router-dom';
+import HomeIcon from '@mui/icons-material/Home';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ContactMailIcon from '@mui/icons-material/ContactMail';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { useState } from 'react';
+import { styled } from '@mui/material/styles';
+
+const drawerWidth = 300;
+
+const StyledDrawer = styled(Drawer)(({ theme }) => ({
+  width: drawerWidth,
+  flexShrink: 0,
+  '& .MuiDrawer-paper': {
+    width: drawerWidth,
+    boxSizing: 'border-box',
+  },
+}));
+
+const CustomListItemText = styled(ListItemText)(({ theme }) => ({
+  color: '#000000',
+}));
 
 export function Headerbar() {
   const { user, logout } = useCustomersAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const location = useLocation();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -58,25 +78,50 @@ export function Headerbar() {
           )}
         </Toolbar>
       </AppBar>
-      <Drawer anchor="left" open={drawerOpen} onClose={handleDrawerToggle}>
+      <StyledDrawer
+        anchor="left"
+        open={drawerOpen}
+        onClose={handleDrawerToggle}
+      >
         <List>
-          <ListItem component={RouterLink} to="/home">
+          <ListItem
+            component={RouterLink}
+            to="/home"
+            selected={location.pathname === '/home'}
+          >
             <ListItemButton>
-              <ListItemText primary="Home" />
+              <ListItemIcon>
+                <HomeIcon />
+              </ListItemIcon>
+              <CustomListItemText primary="Home" />
             </ListItemButton>
           </ListItem>
-          <ListItem component={RouterLink} to="/products">
+          <ListItem
+            component={RouterLink}
+            to="/products"
+            selected={location.pathname === '/products'}
+          >
             <ListItemButton>
-              <ListItemText primary="Products" />
+              <ListItemIcon>
+                <ShoppingCartIcon />
+              </ListItemIcon>
+              <CustomListItemText primary="Products" />
             </ListItemButton>
           </ListItem>
-          <ListItem component={RouterLink} to="/contact">
+          <ListItem
+            component={RouterLink}
+            to="/contact"
+            selected={location.pathname === '/contact'}
+          >
             <ListItemButton>
-              <ListItemText primary="Contact" />
+              <ListItemIcon>
+                <ContactMailIcon />
+              </ListItemIcon>
+              <CustomListItemText primary="Contact" />
             </ListItemButton>
           </ListItem>
         </List>
-      </Drawer>
+      </StyledDrawer>
     </>
   );
 }
