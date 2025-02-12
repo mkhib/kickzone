@@ -51,6 +51,27 @@
       ],
       "@kickzone-workspace/modules": ["libs/server/modules/src/index.ts"],
       "@kickzone-workspace/resolvers": ["libs/server/resolvers/src/index.ts"],
+      "@kickzone-workspace/sellers-auth-context": [
+        "libs/client/sellers/contexts/auth/src/index.ts"
+      ],
+      "@kickzone-workspace/sellers-headerbar": [
+        "libs/client/sellers/components/headerbar/src/index.ts"
+      ],
+      "@kickzone-workspace/sellers-layout": [
+        "libs/client/sellers/components/layout/src/index.ts"
+      ],
+      "@kickzone-workspace/sellers-login-screen": [
+        "libs/client/sellers/screens/login/src/index.ts"
+      ],
+      "@kickzone-workspace/sellers-product-editor-screen": [
+        "libs/client/sellers/screens/product-editor/src/index.ts"
+      ],
+      "@kickzone-workspace/sellers-products-screen": [
+        "libs/client/sellers/screens/products/src/index.ts"
+      ],
+      "@kickzone-workspace/sellers-router": [
+        "libs/client/sellers/router/src/index.ts"
+      ],
       "@kickzone-workspace/services": ["libs/server/services/src/index.ts"],
       "@kickzone-workspace/strategies": ["libs/server/strategies/src/index.ts"],
       "@kickzone-workspace/utils": ["libs/server/utils/src/index.ts"]

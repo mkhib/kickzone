@@ -1,0 +1,9 @@
+{
+  "name": "sellers-headerbar",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/sellers/components/headerbar/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project sellers-headerbar --web",
+  "targets": {}
+}

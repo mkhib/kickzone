@@ -1,0 +1,9 @@
+{
+  "name": "sellers-router",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/sellers/router/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project sellers-router --web",
+  "targets": {}
+}
