@@ -12,7 +12,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import Paper from '@mui/material/Paper';
 import { colors } from '@kickzone-workspace/colors';
 
-export function Login() {
+export function CustomersLogin() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -95,4 +95,4 @@ export function Login() {
   );
 }
 
-export default Login;
+export default CustomersLogin;

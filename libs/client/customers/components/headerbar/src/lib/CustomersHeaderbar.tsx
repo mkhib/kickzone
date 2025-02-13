@@ -1,24 +1,22 @@
-import React from 'react';
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
+import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
+import ContactMailIcon from '@mui/icons-material/ContactMail';
+import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
+import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
 import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
 import List from '@mui/material/List';
-import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import HomeIcon from '@mui/icons-material/Home';
-import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import ContactMailIcon from '@mui/icons-material/ContactMail';
-import { Link as RouterLink, useLocation } from 'react-router-dom';
-import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
-import { useState } from 'react';
 import { styled } from '@mui/material/styles';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
+import { useState } from 'react';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 const drawerWidth = 300;
 
@@ -84,42 +82,38 @@ export function Headerbar() {
         onClose={handleDrawerToggle}
       >
         <List>
-          <ListItem
-            component={RouterLink}
+          <ListItemButton
             to="/home"
+            component={RouterLink}
             selected={location.pathname === '/home'}
           >
-            <ListItemButton>
-              <ListItemIcon>
-                <HomeIcon />
-              </ListItemIcon>
-              <CustomListItemText primary="Home" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem
-            component={RouterLink}
+            <ListItemIcon>
+              <HomeIcon />
+            </ListItemIcon>
+            <CustomListItemText primary="Home" />
+          </ListItemButton>
+
+          <ListItemButton
             to="/products"
+            component={RouterLink}
             selected={location.pathname === '/products'}
           >
-            <ListItemButton>
-              <ListItemIcon>
-                <ShoppingCartIcon />
-              </ListItemIcon>
-              <CustomListItemText primary="Products" />
-            </ListItemButton>
-          </ListItem>
-          <ListItem
-            component={RouterLink}
+            <ListItemIcon>
+              <ShoppingCartIcon />
+            </ListItemIcon>
+            <CustomListItemText primary="Products" />
+          </ListItemButton>
+
+          <ListItemButton
             to="/contact"
+            component={RouterLink}
             selected={location.pathname === '/contact'}
           >
-            <ListItemButton>
-              <ListItemIcon>
-                <ContactMailIcon />
-              </ListItemIcon>
-              <CustomListItemText primary="Contact" />
-            </ListItemButton>
-          </ListItem>
+            <ListItemIcon>
+              <ContactMailIcon />
+            </ListItemIcon>
+            <CustomListItemText primary="Contact" />
+          </ListItemButton>
         </List>
       </StyledDrawer>
     </>

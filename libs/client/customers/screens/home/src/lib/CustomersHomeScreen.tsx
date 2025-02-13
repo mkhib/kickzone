@@ -24,7 +24,7 @@ const products = [
   // Add more products as needed
 ];
 
-export function Home() {
+export function CustomersHome() {
   return (
     <CustomersLayout>
       <Container component="main">
@@ -76,4 +76,4 @@ export function Home() {
   );
 }
 
-export default Home;
+export default CustomersHome;
