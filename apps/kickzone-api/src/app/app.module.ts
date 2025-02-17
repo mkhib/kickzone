@@ -4,6 +4,8 @@ import {
   Category,
   Product,
   ProductInfo,
+  SellerInfo,
+  SellerProduct,
   User,
 } from '@kickzone-workspace/entities';
 import {
@@ -11,6 +13,8 @@ import {
   CategoryModule,
   ProductInfoModule,
   ProductModule,
+  SellerInfoModule,
+  SellerProductsModule,
   UserModule,
 } from '@kickzone-workspace/modules';
 import { GraphQLModule } from '@nestjs/graphql';
@@ -26,7 +30,14 @@ import { join } from 'path';
       username: process.env.DB_USERNAME,
       password: process.env.DB_PASSWORD,
       database: process.env.DB_NAME,
-      entities: [User, Product, ProductInfo, Category],
+      entities: [
+        User,
+        Product,
+        ProductInfo,
+        Category,
+        SellerProduct,
+        SellerInfo,
+      ],
       synchronize: true,
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
@@ -41,6 +52,8 @@ import { join } from 'path';
     CategoryModule,
     ProductModule,
     ProductInfoModule,
+    SellerInfoModule,
+    SellerProductsModule,
   ],
 })
 export class AppModule {}

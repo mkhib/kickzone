@@ -1,1 +1,1 @@
-export * from './lib/sellers-auth-context';
+export * from './lib/SellersAuthContext';

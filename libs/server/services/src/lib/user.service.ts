@@ -1,6 +1,5 @@
 import { User } from '@kickzone-workspace/entities';
 import { CreateUserInput } from '@kickzone-workspace/inputs';
-import * as bcrypt from 'bcryptjs';
 import {
   Connection,
   ConnectionArgs,
@@ -8,6 +7,7 @@ import {
 } from '@kickzone-workspace/utils';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
+import * as bcrypt from 'bcryptjs';
 import { Repository } from 'typeorm';
 
 @Injectable()
@@ -46,7 +46,7 @@ export class UserService {
     return this.userRepository.findOne({ where: { email } });
   }
 
-  async create(createUserInput: CreateUserInput): Promise<User> {
+  async createUser(createUserInput: CreateUserInput): Promise<User> {
     const salt = parseInt(process.env['SALT_ROUNDS'] ?? '10', 10) || 10;
 
     const hashedPassword = await bcrypt.hash(createUserInput.password, salt);

@@ -7,6 +7,31 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+type ProductInfo {
+  id: Int!
+  size: String!
+  price: Float!
+  costPrice: Float!
+  color: String!
+  weight: Float!
+  discount: Float!
+  stockQuantity: Int!
+  product: Product!
+}
+
+type Category {
+  id: Int!
+  name: String!
+}
+
+type Product {
+  id: Int!
+  name: String!
+  productInfos: [ProductInfo!]!
+  categories: [Category!]!
+  discount: Float!
+}
+
 type User {
   id: ID!
   name: String!
@@ -29,31 +54,6 @@ type UserConnection {
   edges: [UserEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
-}
-
-type ProductInfo {
-  id: Int!
-  size: String!
-  price: Float!
-  costPrice: Float!
-  color: String!
-  weight: Float!
-  discount: Float!
-  stockQuantity: Int!
-  product: Product!
-}
-
-type Product {
-  id: Int!
-  name: String!
-  productInfos: [ProductInfo!]!
-  categories: [Category!]!
-  discount: Float!
-}
-
-type Category {
-  id: Int!
-  name: String!
 }
 
 type Query {

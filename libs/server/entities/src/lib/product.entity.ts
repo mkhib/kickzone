@@ -6,9 +6,11 @@ import {
   ManyToMany,
   JoinTable,
   OneToMany,
+  Relation,
 } from 'typeorm';
 import { ProductInfo } from './product-info.entity';
 import { Category } from './category.entity';
+import { SellerProduct } from './seller-product.entity';
 
 @ObjectType()
 @Entity()
@@ -33,4 +35,7 @@ export class Product {
   @Field(() => Float)
   @Column('decimal', { precision: 5, scale: 2 })
   discount: number;
+
+  @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
+  sellerProducts: Relation<SellerProduct>[];
 }

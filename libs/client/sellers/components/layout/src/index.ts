@@ -1,1 +1,1 @@
-export * from './lib/sellers-layout';
+export * from './lib/SellersLayout';

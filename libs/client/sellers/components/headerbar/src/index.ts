@@ -1,1 +1,1 @@
-export * from './lib/sellers-headerbar';
+export * from './lib/SellersHeaderbar';

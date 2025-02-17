@@ -1,6 +1,13 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToOne,
+  Relation,
+} from 'typeorm';
 import { ObjectType, Field, ID, registerEnumType, Int } from '@nestjs/graphql';
 import { PageInfo, Edge, Connection } from '@kickzone-workspace/utils';
+import { SellerInfo } from './seller-info.entity';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -37,6 +44,11 @@ export class User {
     default: UserRole.CUSTOMER,
   })
   role: UserRole;
+
+  @OneToOne(() => SellerInfo, (sellerInfo) => sellerInfo.user, {
+    nullable: true,
+  })
+  sellerInfo?: Relation<SellerInfo>;
 }
 
 @ObjectType()
