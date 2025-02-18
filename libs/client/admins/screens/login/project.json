@@ -1,0 +1,9 @@
+{
+  "name": "admins-login",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/admins/screens/login/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project admins-login --web",
+  "targets": {}
+}

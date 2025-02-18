@@ -28,6 +28,9 @@
       "@kickzone-workspace/admins-layout": [
         "libs/client/admins/components/layout/src/index.ts"
       ],
+      "@kickzone-workspace/admins-login": [
+        "libs/client/admins/screens/login/src/index.ts"
+      ],
       "@kickzone-workspace/admins-router": [
         "libs/client/admins/router/src/index.ts"
       ],
