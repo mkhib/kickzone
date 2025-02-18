@@ -25,6 +25,9 @@
       "@kickzone-workspace/admins-headerbar": [
         "libs/client/admins/components/headerbar/src/index.ts"
       ],
+      "@kickzone-workspace/admins-layout": [
+        "libs/client/admins/components/layout/src/index.ts"
+      ],
       "@kickzone-workspace/admins-router": [
         "libs/client/admins/router/src/index.ts"
       ],
