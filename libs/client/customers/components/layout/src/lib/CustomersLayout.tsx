@@ -1,6 +1,6 @@
 import React from 'react';
 import { Layout } from '@kickzone-workspace/layout';
-import { Headerbar } from '@kickzone-workspace/customers-headerbar'; // Import the HeaderBar component
+import { Headerbar } from '@kickzone-workspace/customers-headerbar';
 
 interface CustomersLayoutProps {
   children: React.ReactNode;
