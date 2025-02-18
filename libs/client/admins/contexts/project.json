@@ -1,0 +1,9 @@
+{
+  "name": "admins-contexts",
+  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/admins/contexts/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project admins-contexts --web",
+  "targets": {}
+}

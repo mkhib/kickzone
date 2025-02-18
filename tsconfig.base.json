@@ -16,6 +16,15 @@
     "baseUrl": ".",
     "strictPropertyInitialization": false,
     "paths": {
+      "@kickzone-workspace/admins-components": [
+        "libs/client/admins/components/src/index.ts"
+      ],
+      "@kickzone-workspace/admins-contexts": [
+        "libs/client/admins/contexts/src/index.ts"
+      ],
+      "@kickzone-workspace/admins-router": [
+        "libs/client/admins/router/src/index.ts"
+      ],
       "@kickzone-workspace/colors": [
         "libs/client/shared/ui/colors/src/index.ts"
       ],
