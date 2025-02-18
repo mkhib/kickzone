@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import AdminsHeaderbar from './admins-headerbar';
+import AdminsHeaderbar from './AdminsHeaderbar';
 
 describe('AdminsHeaderbar', () => {
   it('should render successfully', () => {

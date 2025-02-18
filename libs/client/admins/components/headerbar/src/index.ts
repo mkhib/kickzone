@@ -1,1 +1,1 @@
-export * from './lib/admins-headerbar';
+export * from './lib/AdminsHeaderbar';
