@@ -1,0 +1,9 @@
+{
+  "name": "admins-headerbar",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/admins/components/headerbar/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project admins-headerbar --web",
+  "targets": {}
+}
