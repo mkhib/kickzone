@@ -16,6 +16,9 @@
     "baseUrl": ".",
     "strictPropertyInitialization": false,
     "paths": {
+      "@kickzone-workspace/admin-product-editor": [
+        "libs/client/admins/screens/product-editor/src/index.ts"
+      ],
       "@kickzone-workspace/admins-components": [
         "libs/client/admins/components/src/index.ts"
       ],
