@@ -1,4 +1,4 @@
-import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
+import { useAdminsAuth } from '@kickzone-workspace/admins-contexts';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -34,7 +34,7 @@ const CustomListItemText = styled(ListItemText)(({ theme }) => ({
 }));
 
 export function AdminsHeaderbar() {
-  const { user, logout } = useCustomersAuth();
+  const { user, logout } = useAdminsAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 

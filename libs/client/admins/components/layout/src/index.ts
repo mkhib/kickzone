@@ -1,1 +1,1 @@
-export * from './lib/admins-layout';
+export * from './lib/AdminsLayout';

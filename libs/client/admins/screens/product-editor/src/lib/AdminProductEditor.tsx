@@ -10,8 +10,8 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Chip from '@mui/material/Chip';
 import Grid2 from '@mui/material/Grid2';
-import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { colors } from '@kickzone-workspace/colors';
+import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 
 export function AdminProductEditor() {
   const [product, setProduct] = useState({
@@ -72,7 +72,7 @@ export function AdminProductEditor() {
   );
 
   return (
-    <SellersLayout>
+    <AdminsLayout>
       <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
         <Typography variant="h5" sx={{ mb: 3, color: colors.text }}>
           Add/Edit Product
@@ -211,7 +211,7 @@ export function AdminProductEditor() {
           </Grid2>
         </form>
       </Paper>
-    </SellersLayout>
+    </AdminsLayout>
   );
 }
 

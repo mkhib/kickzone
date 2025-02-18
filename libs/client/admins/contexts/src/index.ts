@@ -1,1 +1,1 @@
-export * from './lib/admins-contexts';
+export * from './lib/AdminsAuthContext';
