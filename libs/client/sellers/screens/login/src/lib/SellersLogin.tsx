@@ -1,18 +1,18 @@
-import React from 'react';
-import { CustomersLayout } from '@kickzone-workspace/customers-layout';
+import { colors } from '@kickzone-workspace/colors';
+import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import CssBaseline from '@mui/material/CssBaseline';
 import Grid2 from '@mui/material/Grid2';
 import Link from '@mui/material/Link';
-import CssBaseline from '@mui/material/CssBaseline';
 import Paper from '@mui/material/Paper';
-import { colors } from '@kickzone-workspace/colors';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import React from 'react';
 
-export function CustomersLogin() {
+export function SellersLogin() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -23,7 +23,7 @@ export function CustomersLogin() {
   };
 
   return (
-    <CustomersLayout>
+    <SellersLayout>
       <Container component="main" maxWidth="xs">
         <CssBaseline />
         <Paper
@@ -91,8 +91,8 @@ export function CustomersLogin() {
           </Box>
         </Paper>
       </Container>
-    </CustomersLayout>
+    </SellersLayout>
   );
 }
 
-export default CustomersLogin;
+export default SellersLogin;

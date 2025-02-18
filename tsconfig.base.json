@@ -75,9 +75,6 @@
       "@kickzone-workspace/sellers-login-screen": [
         "libs/client/sellers/screens/login/src/index.ts"
       ],
-      "@kickzone-workspace/sellers-product-editor-screen": [
-        "libs/client/sellers/screens/product-editor/src/index.ts"
-      ],
       "@kickzone-workspace/sellers-products-screen": [
         "libs/client/sellers/screens/products/src/index.ts"
       ],
