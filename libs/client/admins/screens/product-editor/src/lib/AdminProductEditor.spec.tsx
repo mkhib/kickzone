@@ -1,6 +1,5 @@
 import { render } from '@testing-library/react';
-
-import AdminProductEditor from './admin-product-editor';
+import { AdminProductEditor } from './AdminProductEditor';
 
 describe('AdminProductEditor', () => {
   it('should render successfully', () => {
