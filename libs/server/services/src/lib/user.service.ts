@@ -46,6 +46,10 @@ export class UserService {
     return this.userRepository.findOne({ where: { email } });
   }
 
+  async getUserById(id: string): Promise<User | null> {
+    return this.userRepository.findOne({ where: { id } });
+  }
+
   async createUser(createUserInput: CreateUserInput): Promise<User> {
     const salt = parseInt(process.env['SALT_ROUNDS'] ?? '10', 10) || 10;
 

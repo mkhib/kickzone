@@ -25,4 +25,13 @@ export class AuthService {
       access_token: this.jwtService.sign(payload),
     };
   }
+
+  async verifyToken(token: string): Promise<User | null> {
+    try {
+      const decoded = this.jwtService.verify(token);
+      return this.userService.getUserById(decoded.sub);
+    } catch (_) {
+      return null;
+    }
+  }
 }

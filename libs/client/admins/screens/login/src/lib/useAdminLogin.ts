@@ -5,6 +5,7 @@ import {
 } from '@kickzone-workspace/admins-graphql';
 import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
 import { User } from '@kickzone-workspace/entities';
+import { useNavigate } from 'react-router-dom';
 
 interface LoginInput {
   email: string;
@@ -13,6 +14,7 @@ interface LoginInput {
 
 export const useAdminLogin = () => {
   const { setAdmin } = useAdminsAuthContext();
+  const navigate = useNavigate();
 
   const [login, { loading: adminsLoginLoading, error: adminsLoginError }] =
     useMutation<{
@@ -20,9 +22,8 @@ export const useAdminLogin = () => {
     }>(LOGIN_MUTATION, {
       onCompleted: (data) => {
         setAdmin(data.login);
-      },
-      onError: (error) => {
-        console.error('Login failed:', error.message);
+        localStorage.setItem('admin_user', JSON.stringify(data.login));
+        navigate('/product-editor');
       },
     });
 

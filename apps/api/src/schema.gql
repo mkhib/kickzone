@@ -58,6 +58,7 @@ type UserConnection {
 
 type Query {
   users(first: Float, after: String, searchTerm: String): UserConnection!
+  me: User
   categories: [Category!]!
   products(filter: ProductFilterInput): [Product!]!
 }
@@ -83,6 +84,7 @@ input ProductInfoFilterInput {
 type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
   login(email: String!, password: String!): User!
+  logout: Boolean!
   createCategory(input: CreateCategoryInput!): Category!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): ProductInfo!
