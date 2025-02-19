@@ -22,9 +22,10 @@ async function bootstrap() {
   }
 
   app.enableCors({
-    origin: ['http://localhost:4200', 'https://studio.apollographql.com'],
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    origin: ['https://localhost:4200', 'https://studio.apollographql.com'],
     credentials: true,
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
+    // allowedHeaders: 'Content-Type,Authorization',
   });
   app.use(cookieParser());
   const globalPrefix = 'api';

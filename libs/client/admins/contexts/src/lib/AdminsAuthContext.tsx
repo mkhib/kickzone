@@ -1,12 +1,7 @@
 import { useMutation, useQuery } from '@apollo/client';
 import { LOGOUT_MUTATION, ME_QUERY } from '@kickzone-workspace/admins-graphql';
 import { User } from '@kickzone-workspace/entities';
-import {
-  createContext,
-  ReactNode,
-  useContext,
-  useState
-} from 'react';
+import { createContext, ReactNode, useContext, useState } from 'react';
 
 type AdminUser = Pick<User, 'id' | 'name' | 'email' | 'role'>;
 
@@ -42,13 +37,16 @@ export const AdminsAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [logoutMutation] = useMutation(LOGOUT_MUTATION, {
     onCompleted: () => {
+      console.log('masoud');
       setAdmin(null);
       localStorage.removeItem('admin_user');
     },
   });
 
   const logoutAdmin = () => {
-    logoutMutation();
+    logoutMutation().then(() => {
+      console.log('Log outeddd');
+    });
   };
 
   if (loading) return <div>Loading...</div>;

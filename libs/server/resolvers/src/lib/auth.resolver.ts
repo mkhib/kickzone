@@ -23,7 +23,8 @@ export class AuthResolver {
     context.res.cookie('access_token', access_token, {
       httpOnly: true,
       maxAge: 2629800000,
-      secure: process.env['NODE_ENV'] === 'production',
+      sameSite: 'none',
+      secure: true,
     });
 
     return user;
@@ -41,7 +42,9 @@ export class AuthResolver {
   async logout(@Context() context: { res: Response }): Promise<boolean> {
     context.res.clearCookie('access_token', {
       httpOnly: true,
-      secure: process.env['NODE_ENV'] === 'production',
+      secure: true,
+      sameSite: 'none',
+      path: '/',
     });
     return true;
   }

@@ -34,7 +34,7 @@ const CustomListItemText = styled(ListItemText)(({ theme }) => ({
 }));
 
 export function AdminsHeaderbar() {
-  const { admin: user, setAdmin } = useAdminsAuthContext();
+  const { admin: user, setAdmin, logoutAdmin } = useAdminsAuthContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 
@@ -43,8 +43,9 @@ export function AdminsHeaderbar() {
   };
 
   const handleOnLogoutClick = useCallback(() => {
+    logoutAdmin();
     setAdmin(null);
-  }, [setAdmin]);
+  }, [setAdmin, logoutAdmin]);
 
   return (
     <>
