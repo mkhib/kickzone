@@ -1,7 +1,7 @@
-import { Resolver, Mutation, Args, Context } from '@nestjs/graphql';
+import { Resolver, Mutation, Args, Context, Query } from '@nestjs/graphql';
 import { AuthService } from '@kickzone-workspace/services';
 import { User } from '@kickzone-workspace/entities';
-import { Response } from 'express';
+import { Response, Request } from 'express';
 import { UnauthorizedException } from '@nestjs/common';
 
 @Resolver()
@@ -26,5 +26,27 @@ export class AuthResolver {
     });
 
     return user;
+  }
+
+  // @Query(() => User, { nullable: true })
+  // async me(@Context() context: { req: Request }): Promise<User | null> {
+  //   const token = context.req.cookies?.access_token;
+  //   if (!token) return null;
+
+  //   try {
+  //     const payload = await this.authService.verifyToken(token);
+  //     return this.authService.getUserById(payload.sub);
+  //   } catch {
+  //     return null;
+  //   }
+  // }
+
+  @Mutation(() => Boolean)
+  async logout(@Context() context: { res: Response }): Promise<boolean> {
+    context.res.clearCookie('access_token', {
+      httpOnly: true,
+      secure: process.env['NODE_ENV'] === 'production',
+    });
+    return true;
   }
 }

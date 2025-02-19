@@ -7,6 +7,9 @@ import {
   CreateCategoryInput,
   ProductFilterInput,
 } from '@kickzone-workspace/inputs';
+import { RolesGuard } from '@kickzone-workspace/guards';
+import { UserRole } from '@kickzone-workspace/entities';
+import { SetMetadata, UseGuards } from '@nestjs/common';
 
 @Resolver(() => Product)
 export class ProductResolver {
@@ -20,6 +23,8 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
   async createProduct(
     @Args('input') input: CreateProductInput
   ): Promise<Product> {

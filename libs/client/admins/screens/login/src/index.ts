@@ -1,1 +1,1 @@
-export * from './lib/admins-login';
+export * from './lib/AdminsLogin';

@@ -1,4 +1,4 @@
-import { useAdminsAuth } from '@kickzone-workspace/admins-contexts';
+import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -15,7 +15,7 @@ import ListItemText from '@mui/material/ListItemText';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
 const drawerWidth = 300;
@@ -34,13 +34,17 @@ const CustomListItemText = styled(ListItemText)(({ theme }) => ({
 }));
 
 export function AdminsHeaderbar() {
-  const { user, logout } = useAdminsAuth();
+  const { admin: user, setAdmin } = useAdminsAuthContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
   };
+
+  const handleOnLogoutClick = useCallback(() => {
+    setAdmin(null);
+  }, [setAdmin]);
 
   return (
     <>
@@ -57,15 +61,15 @@ export function AdminsHeaderbar() {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Kickzone Admin Panel
           </Typography>
-          <Button color="inherit" component={RouterLink} to="/home">
-            Home
+          <Button color="inherit" component={RouterLink} to="/product-editor">
+            Product Editor
           </Button>
           {user ? (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
                 {user.name}
               </Typography>
-              <Button color="inherit" onClick={logout}>
+              <Button color="inherit" onClick={handleOnLogoutClick}>
                 Logout
               </Button>
             </Box>
@@ -83,14 +87,14 @@ export function AdminsHeaderbar() {
       >
         <List>
           <ListItemButton
-            to="/home"
+            to="/product-editor"
             component={RouterLink}
-            selected={location.pathname === '/home'}
+            selected={location.pathname === '/product-editor'}
           >
             <ListItemIcon>
               <HomeIcon />
             </ListItemIcon>
-            <CustomListItemText primary="Home" />
+            <CustomListItemText primary="Product Editor" />
           </ListItemButton>
 
           <ListItemButton
