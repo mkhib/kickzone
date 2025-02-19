@@ -12,6 +12,7 @@ import Chip from '@mui/material/Chip';
 import Grid2 from '@mui/material/Grid2';
 import { colors } from '@kickzone-workspace/colors';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
+import { useAdminProductEditor } from './useAdminProductEditor';
 
 export function AdminProductEditor() {
   const [product, setProduct] = useState({
@@ -34,6 +35,27 @@ export function AdminProductEditor() {
     { id: 1, name: 'Jordan Shoes' },
     { id: 2, name: 'Nike Clothes' },
   ]);
+
+  const {
+    createCategory,
+    createProduct,
+    isCreatingCategory,
+    isCreatingProduct,
+  } = useAdminProductEditor();
+
+  const handleCreateCategory = async () => {
+    const category = await createCategory({ name: 'New Category' });
+    console.log('Created category:', category);
+  };
+
+  const handleCreateProduct = useCallback(async () => {
+    const product = await createProduct({
+      name: 'New Product',
+      discount: 10,
+      categoryIds: [],
+    });
+    console.log('Created product:', product);
+  }, [createProduct]);
 
   const handleProductChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -64,11 +86,11 @@ export function AdminProductEditor() {
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
       e.preventDefault();
+      handleCreateProduct();
       console.log('Product:', product);
       console.log('Product Info:', productInfo);
-      // Add logic to submit data to the backend
     },
-    [product, productInfo]
+    [product, productInfo, handleCreateProduct]
   );
 
   return (
