@@ -42,7 +42,8 @@
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
     "type-graphql": "^2.0.0-rc.2",
-    "typeorm": "^0.3.20"
+    "typeorm": "^0.3.20",
+    "webpack-node-externals": "^3.0.0"
   },
   "devDependencies": {
     "@babel/core": "^7.14.5",
