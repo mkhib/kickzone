@@ -13,6 +13,7 @@ import Grid2 from '@mui/material/Grid2';
 import { colors } from '@kickzone-workspace/colors';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { useAdminProductEditor } from './useAdminProductEditor';
+import { useCategories } from '@kickzone-workspace/categories-hook';
 
 export function AdminProductEditor() {
   const [product, setProduct] = useState({
@@ -31,10 +32,7 @@ export function AdminProductEditor() {
     stockQuantity: 0,
   });
 
-  const [categories, setCategories] = useState([
-    { id: 1, name: 'Jordan Shoes' },
-    { id: 2, name: 'Nike Clothes' },
-  ]);
+  const { categoriesData, categoriesLoading } = useCategories();
 
   const {
     createCategory,
@@ -142,13 +140,17 @@ export function AdminProductEditor() {
                       {(selected as number[]).map((id) => (
                         <Chip
                           key={id}
-                          label={categories.find((cat) => cat.id === id)?.name}
+                          label={
+                            categoriesData?.categories.find(
+                              (cat) => cat.id === id
+                            )?.name
+                          }
                         />
                       ))}
                     </Box>
                   )}
                 >
-                  {categories.map((category) => (
+                  {categoriesData?.categories.map((category) => (
                     <MenuItem key={category.id} value={category.id}>
                       {category.name}
                     </MenuItem>

@@ -37,6 +37,9 @@
       "@kickzone-workspace/admins-router": [
         "libs/client/admins/router/src/index.ts"
       ],
+      "@kickzone-workspace/categories-hook": [
+        "libs/client/shared/hooks/categories/src/index.ts"
+      ],
       "@kickzone-workspace/codegen": ["libs/shared/codegen/src/index.ts"],
       "@kickzone-workspace/colors": [
         "libs/client/shared/ui/colors/src/index.ts"
