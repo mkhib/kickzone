@@ -37,6 +37,7 @@
       "@kickzone-workspace/admins-router": [
         "libs/client/admins/router/src/index.ts"
       ],
+      "@kickzone-workspace/codegen": ["libs/shared/codegen/src/index.ts"],
       "@kickzone-workspace/colors": [
         "libs/client/shared/ui/colors/src/index.ts"
       ],
@@ -65,6 +66,9 @@
         "libs/client/customers/utility/test/src/index.ts"
       ],
       "@kickzone-workspace/entities": ["libs/server/entities/src/index.ts"],
+      "@kickzone-workspace/graphql-schema": [
+        "libs/shared/graphql-schema/src/index.ts"
+      ],
       "@kickzone-workspace/guards": ["libs/server/guards/src/index.ts"],
       "@kickzone-workspace/inputs": ["libs/server/inputs/src/index.ts"],
       "@kickzone-workspace/layout": [

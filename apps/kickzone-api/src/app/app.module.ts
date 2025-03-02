@@ -42,7 +42,10 @@ import { join } from 'path';
     }),
     GraphQLModule.forRoot<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(process.cwd(), 'apps/api/src/schema.gql'),
+      autoSchemaFile: join(
+        process.cwd(),
+        'libs/shared/graphql-schema/src/lib/schema.gql'
+      ),
       playground: true,
       introspection: true,
       context: ({ req, res }) => ({ req, res }),
