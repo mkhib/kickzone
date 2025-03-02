@@ -1,9 +1,5 @@
 import { useMutation, gql } from '@apollo/client';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import {
-  CreateCategoryInput,
-  CreateProductInput,
-} from '@kickzone-workspace/inputs';
 
 const CREATE_CATEGORY = gql`
   mutation CreateCategory($input: CreateCategoryInput!) {
