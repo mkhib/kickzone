@@ -1,4 +1,5 @@
 import { useMutation, gql } from '@apollo/client';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   CreateCategoryInput,
   CreateProductInput,
@@ -43,21 +44,15 @@ const CREATE_PRODUCT = gql`
 `;
 
 export function useAdminProductEditor() {
-  const [createCategoryMutation, { loading: isCreatingCategory }] =
-    useMutation(CREATE_CATEGORY);
+  const [createCategory, { loading: isCreatingCategory }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'createCategory'>,
+    KickzoneGraphqlTypes.MutationCreateCategoryArgs
+  >(CREATE_CATEGORY);
 
-  const [createProductMutation, { loading: isCreatingProduct }] =
-    useMutation(CREATE_PRODUCT);
-
-  const createCategory = async (input: CreateCategoryInput) => {
-    const { data } = await createCategoryMutation({ variables: { input } });
-    return data?.createCategory;
-  };
-
-  const createProduct = async (input: CreateProductInput) => {
-    const { data } = await createProductMutation({ variables: { input } });
-    return data?.createProduct;
-  };
+  const [createProduct, { loading: isCreatingProduct }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'createProduct'>,
+    KickzoneGraphqlTypes.MutationCreateProductArgs
+  >(CREATE_PRODUCT);
 
   return {
     createCategory,

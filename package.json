@@ -2,7 +2,9 @@
   "name": "@kickzone-workspace/source",
   "version": "0.0.0",
   "license": "MIT",
-  "scripts": {},
+  "scripts": {
+    "generate-types": "graphql-codegen --config libs/shared/codegen/src/lib/codegen.yml"
+  },
   "private": true,
   "dependencies": {
     "@apollo/server": "^4.11.3",

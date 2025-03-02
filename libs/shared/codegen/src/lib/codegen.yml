@@ -1,0 +1,6 @@
+schema: libs/shared/graphql-schema/src/lib/schema.gql
+generates:
+  libs/shared/codegen/src/lib/generated/graphql.ts:
+    plugins:
+      - typescript
+      - typescript-operations

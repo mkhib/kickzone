@@ -44,15 +44,25 @@ export function AdminProductEditor() {
   } = useAdminProductEditor();
 
   const handleCreateCategory = async () => {
-    const category = await createCategory({ name: 'New Category' });
+    const category = await createCategory({
+      variables: {
+        input: {
+          name: 'New Category',
+        },
+      },
+    });
     console.log('Created category:', category);
   };
 
   const handleCreateProduct = useCallback(async () => {
     const product = await createProduct({
-      name: 'New Product',
-      discount: 10,
-      categoryIds: [],
+      variables: {
+        input: {
+          name: 'New Product',
+          discount: 10,
+          categoryIds: [],
+        },
+      },
     });
     console.log('Created product:', product);
   }, [createProduct]);

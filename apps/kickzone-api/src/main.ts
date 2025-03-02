@@ -15,6 +15,8 @@ async function bootstrap() {
     },
   });
 
+  console.log('this is module', module);
+
   if (module.hot) {
     Logger.log('HOT2');
     module.hot.accept();
