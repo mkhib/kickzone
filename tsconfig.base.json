@@ -102,6 +102,9 @@
       ],
       "@kickzone-workspace/services": ["libs/server/services/src/index.ts"],
       "@kickzone-workspace/strategies": ["libs/server/strategies/src/index.ts"],
+      "@kickzone-workspace/translations": [
+        "libs/client/shared/translations/src/index.ts"
+      ],
       "@kickzone-workspace/utils": ["libs/server/utils/src/index.ts"]
     }
   },
