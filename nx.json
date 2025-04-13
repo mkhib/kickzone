@@ -15,7 +15,7 @@
     ],
     "sharedGlobals": ["{workspaceRoot}/.github/workflows/kickzone-cl.yml"]
   },
-  "nxCloudId": "67a4c918a57f173d8c469ab6",
+  "nxCloudId": "67fc28f3ebe23f324e74a8f0",
   "plugins": [
     {
       "plugin": "@nx/webpack/plugin",
@@ -27,17 +27,10 @@
         "watchDepsTargetName": "watch-deps"
       }
     },
-    {
-      "plugin": "@nx/eslint/plugin",
-      "options": {
-        "targetName": "lint"
-      }
-    },
+    { "plugin": "@nx/eslint/plugin", "options": { "targetName": "lint" } },
     {
       "plugin": "@nx/jest/plugin",
-      "options": {
-        "targetName": "test"
-      },
+      "options": { "targetName": "test" },
       "exclude": ["apps/kickzone-api-e2e/**/*"]
     },
     {
@@ -54,17 +47,10 @@
         "watchDepsTargetName": "watch-deps"
       }
     },
-    {
-      "plugin": "@nx/playwright/plugin",
-      "options": {
-        "targetName": "e2e"
-      }
-    }
+    { "plugin": "@nx/playwright/plugin", "options": { "targetName": "e2e" } }
   ],
   "targetDefaults": {
-    "e2e-ci--**/*": {
-      "dependsOn": ["^build"]
-    },
+    "e2e-ci--**/*": { "dependsOn": ["^build"] },
     "@nx/js:tsc": {
       "cache": true,
       "dependsOn": ["^build"],
@@ -79,9 +65,7 @@
         "linter": "eslint",
         "bundler": "vite"
       },
-      "component": {
-        "style": "css"
-      },
+      "component": { "style": "css" },
       "library": {
         "style": "css",
         "linter": "eslint",
