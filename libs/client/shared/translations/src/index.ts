@@ -1,1 +1,1 @@
-export * from './lib/translations';
+export * from './lib/generate-i18n-types';
