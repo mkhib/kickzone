@@ -101,6 +101,9 @@
         "libs/client/sellers/router/src/index.ts"
       ],
       "@kickzone-workspace/services": ["libs/server/services/src/index.ts"],
+      "@kickzone-workspace/snackbar": [
+        "libs/client/shared/components/snackbar/src/index.ts"
+      ],
       "@kickzone-workspace/snackbar-hook": [
         "libs/client/shared/hooks/snackbar/src/index.ts"
       ],
