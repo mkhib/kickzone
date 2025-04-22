@@ -16,6 +16,7 @@
     "@graphql-codegen/typescript-operations": "^4.5.1",
     "@graphql-codegen/typescript-resolvers": "^4.4.2",
     "@mui/icons-material": "^6.4.3",
+    "@mui/lab": "^7.0.0-beta.11",
     "@mui/material": "^6.4.3",
     "@nestjs/apollo": "^13.0.2",
     "@nestjs/common": "^10.0.2",
