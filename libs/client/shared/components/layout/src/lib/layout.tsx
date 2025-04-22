@@ -1,11 +1,14 @@
 import Grid from '@mui/material/Grid2';
 
-interface LayoutProps {
+type LayoutProps = ILayoutProps & {
   header: React.ReactNode;
   body: React.ReactNode;
   footer: React.ReactNode;
-  isLoading?: boolean;
   loadingComponent?: React.ReactNode;
+};
+
+export interface ILayoutProps {
+  isLoading?: boolean;
 }
 
 export function Layout({

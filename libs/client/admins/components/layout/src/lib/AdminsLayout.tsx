@@ -1,8 +1,8 @@
 import React from 'react';
-import { Layout } from '@kickzone-workspace/layout';
+import { ILayoutProps, Layout } from '@kickzone-workspace/layout';
 import { AdminsHeaderbar } from '@kickzone-workspace/admins-headerbar';
 
-interface AdminsLayoutProps {
+interface AdminsLayoutProps extends ILayoutProps {
   children: React.ReactNode;
 }
 

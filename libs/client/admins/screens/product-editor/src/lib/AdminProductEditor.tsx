@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
@@ -10,10 +10,76 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Chip from '@mui/material/Chip';
 import Grid2 from '@mui/material/Grid2';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Autocomplete from '@mui/material/Autocomplete';
+import IconButton from '@mui/material/IconButton';
+import EditIcon from '@mui/icons-material/Edit';
 import { colors } from '@kickzone-workspace/colors';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { useAdminProductEditor } from './useAdminProductEditor';
 import { useCategories } from '@kickzone-workspace/categories-hook';
+import LoadingButton from '@mui/lab/LoadingButton';
+import { useApolloClient } from '@apollo/client';
+
+interface CategoryModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (name: string) => void;
+  initialName?: string;
+  title: string;
+  isLoading?: boolean;
+}
+
+const CategoryModal = ({
+  open,
+  onClose,
+  onSubmit,
+  initialName = '',
+  title,
+  isLoading = false,
+}: CategoryModalProps) => {
+  const [categoryName, setCategoryName] = useState(initialName);
+
+  useEffect(() => {
+    setCategoryName(initialName);
+  }, [initialName]);
+
+  const handleSubmit = useCallback(() => {
+    onSubmit(categoryName);
+    setCategoryName('');
+    onClose();
+  }, [categoryName, onSubmit, onClose]);
+
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Category Name"
+          fullWidth
+          value={categoryName}
+          onChange={(e) => setCategoryName(e.target.value)}
+        />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <LoadingButton
+          onClick={handleSubmit}
+          loading={isLoading}
+          variant="contained"
+          color="primary"
+        >
+          Save
+        </LoadingButton>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 export function AdminProductEditor() {
   const [product, setProduct] = useState({
@@ -32,25 +98,66 @@ export function AdminProductEditor() {
     stockQuantity: 0,
   });
 
-  const { categoriesData, categoriesLoading } = useCategories();
+  const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
 
+  const client = useApolloClient();
   const {
+    categoriesData,
+    categoriesLoading,
     createCategory,
-    createProduct,
+    updateCategory,
     isCreatingCategory,
-    isCreatingProduct,
-  } = useAdminProductEditor();
+    isUpdatingCategory,
+  } = useCategories();
 
-  const handleCreateCategory = async () => {
-    const category = await createCategory({
-      variables: {
-        input: {
-          name: 'New Category',
-        },
-      },
-    });
-    console.log('Created category:', category);
-  };
+  const { createProduct, isCreatingProduct } = useAdminProductEditor();
+
+  const handleCreateCategory = useCallback(
+    async (name: string) => {
+      try {
+        await createCategory(name);
+      } catch (error) {
+        // Error is already logged in the hook
+      }
+    },
+    [createCategory]
+  );
+
+  const handleEditCategory = useCallback(
+    async (name: string) => {
+      if (!selectedCategory) return;
+      try {
+        await updateCategory(selectedCategory.id, name);
+        setSelectedCategory(null);
+      } catch (error) {
+        // Error is already logged in the hook
+      }
+    },
+    [selectedCategory, updateCategory]
+  );
+
+  const handleCategoryChange = useCallback(
+    (_, newValue: { id: number; name: string }[]) => {
+      setProduct((prev) => ({
+        ...prev,
+        categoryIds: newValue.map((category) => category.id),
+      }));
+    },
+    []
+  );
+
+  const handleEditCategoryClick = useCallback(
+    (category: { id: number; name: string }) => {
+      setSelectedCategory(category);
+      setIsEditCategoryModalOpen(true);
+    },
+    []
+  );
 
   const handleCreateProduct = useCallback(async () => {
     const product = await createProduct({
@@ -77,16 +184,6 @@ export function AdminProductEditor() {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
       setProductInfo((prev) => ({ ...prev, [name]: value }));
-    },
-    []
-  );
-
-  const handleCategoryChange = useCallback(
-    (e: React.ChangeEvent<{ value: unknown }>) => {
-      setProduct((prev) => ({
-        ...prev,
-        categoryIds: e.target.value as number[],
-      }));
     },
     []
   );
@@ -129,34 +226,56 @@ export function AdminProductEditor() {
                 required
                 sx={{ mb: 2 }}
               />
-              <FormControl fullWidth sx={{ mb: 2 }}>
-                <InputLabel>Categories</InputLabel>
-                <Select
+              <Box sx={{ mb: 2 }}>
+                <Autocomplete
                   multiple
-                  value={product.categoryIds}
-                  // onChange={handleCategoryChange}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {(selected as number[]).map((id) => (
-                        <Chip
-                          key={id}
-                          label={
-                            categoriesData?.categories.find(
-                              (cat) => cat.id === id
-                            )?.name
-                          }
-                        />
-                      ))}
-                    </Box>
+                  options={categoriesData?.categories || []}
+                  getOptionLabel={(option) => option.name}
+                  value={
+                    categoriesData?.categories.filter((cat) =>
+                      product.categoryIds.includes(cat.id)
+                    ) || []
+                  }
+                  onChange={handleCategoryChange}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Categories" />
                   )}
-                >
-                  {categoriesData?.categories.map((category) => (
-                    <MenuItem key={category.id} value={category.id}>
-                      {category.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+                  renderOption={(props, option) => {
+                    const { key, ...otherProps } = props;
+                    return (
+                      <li key={key} {...otherProps}>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            width: '100%',
+                            alignItems: 'center',
+                          }}
+                        >
+                          {option.name}
+                          <IconButton
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleEditCategoryClick(option);
+                            }}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </li>
+                    );
+                  }}
+                />
+              </Box>
+
+              <Button
+                variant="outlined"
+                onClick={() => setIsNewCategoryModalOpen(true)}
+                sx={{ mb: 2 }}
+              >
+                Add New Category
+              </Button>
             </Grid2>
 
             <Grid2 size={{ xs: 12, md: 6 }}>
@@ -245,6 +364,26 @@ export function AdminProductEditor() {
           </Grid2>
         </form>
       </Paper>
+
+      <CategoryModal
+        open={isNewCategoryModalOpen}
+        onClose={() => setIsNewCategoryModalOpen(false)}
+        onSubmit={handleCreateCategory}
+        title="Add New Category"
+        isLoading={isCreatingCategory}
+      />
+
+      <CategoryModal
+        open={isEditCategoryModalOpen}
+        onClose={() => {
+          setIsEditCategoryModalOpen(false);
+          setSelectedCategory(null);
+        }}
+        onSubmit={handleEditCategory}
+        initialName={selectedCategory?.name || ''}
+        title="Edit Category"
+        isLoading={isUpdatingCategory}
+      />
     </AdminsLayout>
   );
 }
