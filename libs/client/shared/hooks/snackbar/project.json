@@ -1,0 +1,9 @@
+{
+  "name": "snackbar-hook",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/shared/hooks/snackbar/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project snackbar-hook --web",
+  "targets": {}
+}
