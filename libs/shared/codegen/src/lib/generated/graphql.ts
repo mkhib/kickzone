@@ -56,6 +56,7 @@ export type Mutation = {
   createUser: User;
   login: User;
   logout: Scalars['Boolean']['output'];
+  updateCategory: Category;
 };
 
 
@@ -82,6 +83,11 @@ export type MutationCreateUserArgs = {
 export type MutationLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
+};
+
+
+export type MutationUpdateCategoryArgs = {
+  input: UpdateCategoryInput;
 };
 
 export type PageInfo = {
@@ -148,6 +154,11 @@ export type QueryUsersArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Float']['input']>;
   searchTerm?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateCategoryInput = {
+  id: Scalars['ID']['input'];
+  name: Scalars['String']['input'];
 };
 
 export type User = {

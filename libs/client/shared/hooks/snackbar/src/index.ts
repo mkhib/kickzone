@@ -1,1 +1,2 @@
-export * from './lib/snackbar-hook';
+export * from './lib/useSnackbar';
+export * from './lib/SnackbarContext';

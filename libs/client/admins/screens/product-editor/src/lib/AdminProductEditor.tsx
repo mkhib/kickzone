@@ -22,7 +22,8 @@ import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { useAdminProductEditor } from './useAdminProductEditor';
 import { useCategories } from '@kickzone-workspace/categories-hook';
 import LoadingButton from '@mui/lab/LoadingButton';
-import { useApolloClient } from '@apollo/client';
+import { ApolloError, useApolloClient } from '@apollo/client';
+import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 
 interface CategoryModalProps {
   open: boolean;
@@ -116,16 +117,21 @@ export function AdminProductEditor() {
   } = useCategories();
 
   const { createProduct, isCreatingProduct } = useAdminProductEditor();
+  const { showSnackbar } = useSnackbarContext();
 
   const handleCreateCategory = useCallback(
     async (name: string) => {
       try {
         await createCategory(name);
-      } catch (error) {
-        // Error is already logged in the hook
+        showSnackbar('Category created successfully', { severity: 'success' });
+        setIsNewCategoryModalOpen(false);
+      } catch (err) {
+        const error = err as ApolloError;
+
+        showSnackbar(error.message, { severity: 'error' });
       }
     },
-    [createCategory]
+    [createCategory, showSnackbar]
   );
 
   const handleEditCategory = useCallback(
@@ -133,16 +139,18 @@ export function AdminProductEditor() {
       if (!selectedCategory) return;
       try {
         await updateCategory(selectedCategory.id, name);
+        showSnackbar('Category updated successfully', { severity: 'success' });
+        setIsEditCategoryModalOpen(false);
         setSelectedCategory(null);
       } catch (error) {
-        // Error is already logged in the hook
+        showSnackbar('Failed to update category', { severity: 'error' });
       }
     },
-    [selectedCategory, updateCategory]
+    [selectedCategory, updateCategory, showSnackbar]
   );
 
   const handleCategoryChange = useCallback(
-    (_, newValue: { id: number; name: string }[]) => {
+    (_: unknown, newValue: { id: number; name: string }[]) => {
       setProduct((prev) => ({
         ...prev,
         categoryIds: newValue.map((category) => category.id),
@@ -200,13 +208,16 @@ export function AdminProductEditor() {
 
   return (
     <AdminsLayout>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+      <Paper elevation={3} sx={{ p: 4, borderRadius: 2, height: '100%' }}>
         <Typography variant="h5" sx={{ mb: 3, color: colors.text }}>
           Add/Edit Product
         </Typography>
         <form onSubmit={handleSubmit}>
-          <Grid2 container spacing={3}>
-            <Grid2 size={{ xs: 12, md: 6 }}>
+          <Grid2 container spacing={3} sx={{ height: '100%' }}>
+            <Grid2
+              size={{ xs: 12, md: 6 }}
+              sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+            >
               <TextField
                 fullWidth
                 label="Product Name"
@@ -214,7 +225,6 @@ export function AdminProductEditor() {
                 value={product.name}
                 onChange={handleProductChange}
                 required
-                sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
@@ -224,9 +234,8 @@ export function AdminProductEditor() {
                 value={product.discount}
                 onChange={handleProductChange}
                 required
-                sx={{ mb: 2 }}
               />
-              <Box sx={{ mb: 2 }}>
+              <Box>
                 <Autocomplete
                   multiple
                   options={categoriesData?.categories || []}
@@ -238,7 +247,25 @@ export function AdminProductEditor() {
                   }
                   onChange={handleCategoryChange}
                   renderInput={(params) => (
-                    <TextField {...params} label="Categories" />
+                    <TextField
+                      {...params}
+                      label="Categories"
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {params.InputProps.endAdornment}
+                            <Button
+                              variant="outlined"
+                              onClick={() => setIsNewCategoryModalOpen(true)}
+                              sx={{ ml: 1 }}
+                            >
+                              Add New
+                            </Button>
+                          </>
+                        ),
+                      }}
+                    />
                   )}
                   renderOption={(props, option) => {
                     const { key, ...otherProps } = props;
@@ -268,17 +295,12 @@ export function AdminProductEditor() {
                   }}
                 />
               </Box>
-
-              <Button
-                variant="outlined"
-                onClick={() => setIsNewCategoryModalOpen(true)}
-                sx={{ mb: 2 }}
-              >
-                Add New Category
-              </Button>
             </Grid2>
 
-            <Grid2 size={{ xs: 12, md: 6 }}>
+            <Grid2
+              size={{ xs: 12, md: 6 }}
+              sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+            >
               <TextField
                 fullWidth
                 label="Size"
@@ -286,7 +308,6 @@ export function AdminProductEditor() {
                 value={productInfo.size}
                 onChange={handleProductInfoChange}
                 required
-                sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
@@ -296,7 +317,6 @@ export function AdminProductEditor() {
                 value={productInfo.price}
                 onChange={handleProductInfoChange}
                 required
-                sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
@@ -306,7 +326,6 @@ export function AdminProductEditor() {
                 value={productInfo.costPrice}
                 onChange={handleProductInfoChange}
                 required
-                sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
@@ -315,7 +334,6 @@ export function AdminProductEditor() {
                 value={productInfo.color}
                 onChange={handleProductInfoChange}
                 required
-                sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
@@ -325,7 +343,6 @@ export function AdminProductEditor() {
                 value={productInfo.weight}
                 onChange={handleProductInfoChange}
                 required
-                sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
@@ -335,7 +352,6 @@ export function AdminProductEditor() {
                 value={productInfo.discount}
                 onChange={handleProductInfoChange}
                 required
-                sx={{ mb: 2 }}
               />
               <TextField
                 fullWidth
@@ -345,21 +361,21 @@ export function AdminProductEditor() {
                 value={productInfo.stockQuantity}
                 onChange={handleProductInfoChange}
                 required
-                sx={{ mb: 2 }}
               />
             </Grid2>
 
-            <Grid2 size={12}>
-              <Button
+            <Grid2 size={12} sx={{ mt: 'auto' }}>
+              <LoadingButton
                 type="submit"
                 variant="contained"
                 sx={{
                   backgroundColor: colors.main,
                   '&:hover': { backgroundColor: colors.hoverMain },
                 }}
+                loading={isCreatingProduct}
               >
                 Save Product
-              </Button>
+              </LoadingButton>
             </Grid2>
           </Grid2>
         </form>

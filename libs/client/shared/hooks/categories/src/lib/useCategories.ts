@@ -38,8 +38,8 @@ export const useCategories = () => {
   );
 
   const [createCategoryMutation, { loading: isCreatingCategory }] = useMutation<
-    { createCategory: KickzoneGraphqlTypes.Category },
-    { input: { name: string } }
+    Pick<KickzoneGraphqlTypes.Mutation, 'createCategory'>,
+    KickzoneGraphqlTypes.MutationCreateCategoryArgs
   >(CREATE_CATEGORY, {
     update(cache, { data }) {
       if (!data?.createCategory) return;
@@ -63,8 +63,8 @@ export const useCategories = () => {
   });
 
   const [updateCategoryMutation, { loading: isUpdatingCategory }] = useMutation<
-    { updateCategory: KickzoneGraphqlTypes.Category },
-    { input: { id: number; name: string } }
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateCategory'>,
+    KickzoneGraphqlTypes.MutationUpdateCategoryArgs
   >(UPDATE_CATEGORY, {
     update(cache, { data }) {
       if (!data?.updateCategory) return;
@@ -78,8 +78,9 @@ export const useCategories = () => {
       cache.writeQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>({
         query: CATEGORIES_QUERY,
         data: {
-          categories: (existingData?.categories ?? []).map((cat) =>
-            cat.id === data.updateCategory.id ? data.updateCategory : cat
+          categories: (existingData?.categories ?? []).map(
+            (cat: KickzoneGraphqlTypes.Category) =>
+              cat.id === data.updateCategory.id ? data.updateCategory : cat
           ),
         },
       });
@@ -96,7 +97,7 @@ export const useCategories = () => {
   const updateCategory = (id: number, name: string) =>
     updateCategoryMutation({
       variables: {
-        input: { id, name },
+        input: { id: id.toString(), name },
       },
     });
 

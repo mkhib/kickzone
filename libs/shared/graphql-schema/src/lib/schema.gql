@@ -86,6 +86,7 @@ type Mutation {
   login(email: String!, password: String!): User!
   logout: Boolean!
   createCategory(input: CreateCategoryInput!): Category!
+  updateCategory(input: UpdateCategoryInput!): Category!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): ProductInfo!
 }
@@ -98,6 +99,11 @@ input CreateUserInput {
 }
 
 input CreateCategoryInput {
+  name: String!
+}
+
+input UpdateCategoryInput {
+  id: ID!
   name: String!
 }
 
