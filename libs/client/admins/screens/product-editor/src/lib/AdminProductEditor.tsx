@@ -142,8 +142,9 @@ export function AdminProductEditor() {
         showSnackbar('Category updated successfully', { severity: 'success' });
         setIsEditCategoryModalOpen(false);
         setSelectedCategory(null);
-      } catch (error) {
-        showSnackbar('Failed to update category', { severity: 'error' });
+      } catch (err) {
+        const error = err as ApolloError;
+        showSnackbar(error.message, { severity: 'error' });
       }
     },
     [selectedCategory, updateCategory, showSnackbar]
