@@ -81,6 +81,9 @@
       "@kickzone-workspace/private-route": [
         "libs/client/shared/components/private-route/src/index.ts"
       ],
+      "@kickzone-workspace/products-hook": [
+        "libs/client/shared/hooks/products/src/index.ts"
+      ],
       "@kickzone-workspace/resolvers": ["libs/server/resolvers/src/index.ts"],
       "@kickzone-workspace/sellers-auth-context": [
         "libs/client/sellers/contexts/auth/src/index.ts"
