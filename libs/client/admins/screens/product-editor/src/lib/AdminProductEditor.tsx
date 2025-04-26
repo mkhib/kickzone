@@ -1,29 +1,25 @@
-import React, { useState, useCallback, useEffect } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Button from '@mui/material/Button';
-import Paper from '@mui/material/Paper';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import FormControl from '@mui/material/FormControl';
-import InputLabel from '@mui/material/InputLabel';
-import Chip from '@mui/material/Chip';
-import Grid2 from '@mui/material/Grid2';
-import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Autocomplete from '@mui/material/Autocomplete';
-import IconButton from '@mui/material/IconButton';
-import EditIcon from '@mui/icons-material/Edit';
-import { colors } from '@kickzone-workspace/colors';
+import { ApolloError } from '@apollo/client';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
-import { useAdminProductEditor } from './useAdminProductEditor';
 import { useCategories } from '@kickzone-workspace/categories-hook';
-import LoadingButton from '@mui/lab/LoadingButton';
-import { ApolloError, useApolloClient } from '@apollo/client';
+import { colors } from '@kickzone-workspace/colors';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
+import EditIcon from '@mui/icons-material/Edit';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Grid2 from '@mui/material/Grid2';
+import IconButton from '@mui/material/IconButton';
+import Paper from '@mui/material/Paper';
+import { useTheme } from '@mui/material/styles';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import React, { useCallback, useEffect, useState } from 'react';
+import { useAdminProductEditor } from './useAdminProductEditor';
 
 interface CategoryModalProps {
   open: boolean;
@@ -69,14 +65,14 @@ const CategoryModal = ({
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Cancel</Button>
-        <LoadingButton
+        <Button
           onClick={handleSubmit}
           loading={isLoading}
           variant="contained"
           color="primary"
         >
           Save
-        </LoadingButton>
+        </Button>
       </DialogActions>
     </Dialog>
   );
@@ -106,7 +102,6 @@ export function AdminProductEditor() {
     name: string;
   } | null>(null);
 
-  const client = useApolloClient();
   const {
     categoriesData,
     categoriesLoading,
@@ -118,6 +113,9 @@ export function AdminProductEditor() {
 
   const { createProduct, isCreatingProduct } = useAdminProductEditor();
   const { showSnackbar } = useSnackbarContext();
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
   const handleCreateCategory = useCallback(
     async (name: string) => {
@@ -215,6 +213,7 @@ export function AdminProductEditor() {
         </Typography>
         <form onSubmit={handleSubmit}>
           <Grid2 container spacing={3} sx={{ height: '100%' }}>
+            {/* Left Side - Basic Product Info */}
             <Grid2
               size={{ xs: 12, md: 6 }}
               sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
@@ -296,12 +295,6 @@ export function AdminProductEditor() {
                   }}
                 />
               </Box>
-            </Grid2>
-
-            <Grid2
-              size={{ xs: 12, md: 6 }}
-              sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-            >
               <TextField
                 fullWidth
                 label="Size"
@@ -310,6 +303,21 @@ export function AdminProductEditor() {
                 onChange={handleProductInfoChange}
                 required
               />
+              <TextField
+                fullWidth
+                label="Color"
+                name="color"
+                value={productInfo.color}
+                onChange={handleProductInfoChange}
+                required
+              />
+            </Grid2>
+
+            {/* Right Side - Pricing and Stock Info */}
+            <Grid2
+              size={{ xs: 12, md: 6 }}
+              sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
+            >
               <TextField
                 fullWidth
                 label="Price"
@@ -330,27 +338,10 @@ export function AdminProductEditor() {
               />
               <TextField
                 fullWidth
-                label="Color"
-                name="color"
-                value={productInfo.color}
-                onChange={handleProductInfoChange}
-                required
-              />
-              <TextField
-                fullWidth
                 label="Weight (kg)"
                 name="weight"
                 type="number"
                 value={productInfo.weight}
-                onChange={handleProductInfoChange}
-                required
-              />
-              <TextField
-                fullWidth
-                label="Discount (%)"
-                name="discount"
-                type="number"
-                value={productInfo.discount}
                 onChange={handleProductInfoChange}
                 required
               />
@@ -365,18 +356,27 @@ export function AdminProductEditor() {
               />
             </Grid2>
 
+            {/* Save Button */}
             <Grid2 size={12} sx={{ mt: 'auto' }}>
-              <LoadingButton
-                type="submit"
-                variant="contained"
+              <Box
                 sx={{
-                  backgroundColor: colors.main,
-                  '&:hover': { backgroundColor: colors.hoverMain },
+                  display: 'flex',
+                  justifyContent: { xs: 'stretch', md: 'flex-end' },
                 }}
-                loading={isCreatingProduct}
               >
-                Save Product
-              </LoadingButton>
+                <Button
+                  type="submit"
+                  variant="contained"
+                  sx={{
+                    backgroundColor: colors.main,
+                    '&:hover': { backgroundColor: colors.hoverMain },
+                  }}
+                  loading={isCreatingProduct}
+                  fullWidth={isMobile}
+                >
+                  Save Product
+                </Button>
+              </Box>
             </Grid2>
           </Grid2>
         </form>
