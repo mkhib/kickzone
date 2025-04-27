@@ -20,6 +20,7 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useAdminProductEditor } from './useAdminProductEditor';
+import { useProducts } from '@kickzone-workspace/products-hook';
 
 interface CategoryModalProps {
   open: boolean;
@@ -111,7 +112,7 @@ export function AdminProductEditor() {
     isUpdatingCategory,
   } = useCategories();
 
-  const { createProduct, isCreatingProduct } = useAdminProductEditor();
+  const { createProduct, isCreatingProduct } = useProducts();
   const { showSnackbar } = useSnackbarContext();
 
   const theme = useTheme();
@@ -166,19 +167,6 @@ export function AdminProductEditor() {
     []
   );
 
-  const handleCreateProduct = useCallback(async () => {
-    const product = await createProduct({
-      variables: {
-        input: {
-          name: 'New Product',
-          discount: 10,
-          categoryIds: [],
-        },
-      },
-    });
-    console.log('Created product:', product);
-  }, [createProduct]);
-
   const handleProductChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
@@ -196,13 +184,34 @@ export function AdminProductEditor() {
   );
 
   const handleSubmit = useCallback(
-    (e: React.FormEvent) => {
+    async (e: React.FormEvent) => {
       e.preventDefault();
-      handleCreateProduct();
-      console.log('Product:', product);
-      console.log('Product Info:', productInfo);
+      try {
+        const result = await createProduct(
+          {
+            name: product.name,
+            discount: product.discount,
+            categoryIds: product.categoryIds,
+          },
+          {
+            size: productInfo.size,
+            price: productInfo.price,
+            costPrice: productInfo.costPrice,
+            color: productInfo.color,
+            weight: productInfo.weight,
+            discount: productInfo.discount,
+            stockQuantity: productInfo.stockQuantity,
+          }
+        );
+
+        showSnackbar('Product created successfully', { severity: 'success' });
+        console.log('Created product:', result);
+      } catch (error) {
+        const err = error as ApolloError;
+        showSnackbar(err.message, { severity: 'error' });
+      }
     },
-    [product, productInfo, handleCreateProduct]
+    [product, productInfo, createProduct, showSnackbar]
   );
 
   return (

@@ -38,4 +38,7 @@ export class Product {
 
   @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
   sellerProducts: Relation<SellerProduct>[];
+
+  @Column('simple-array')
+  images: string[];
 }
