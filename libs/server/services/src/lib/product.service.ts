@@ -109,4 +109,14 @@ export class ProductService {
   async getCategories() {
     return this.categoryRepository.find();
   }
+
+  async addImagesToProduct(productId: number, imageUrls: string[]) {
+    const product = await this.productRepository.findOneBy({ id: productId });
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    product.images = [...(product.images || []), ...imageUrls];
+    return this.productRepository.save(product);
+  }
 }

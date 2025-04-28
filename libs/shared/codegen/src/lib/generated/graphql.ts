@@ -12,6 +12,8 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /** The `Upload` scalar type represents a file upload. */
+  Upload: { input: any; output: any; }
 };
 
 export type Category = {
@@ -57,6 +59,7 @@ export type Mutation = {
   login: User;
   logout: Scalars['Boolean']['output'];
   updateCategory: Category;
+  uploadProductImages: Array<Scalars['String']['output']>;
 };
 
 
@@ -90,6 +93,12 @@ export type MutationUpdateCategoryArgs = {
   input: UpdateCategoryInput;
 };
 
+
+export type MutationUploadProductImagesArgs = {
+  files: Array<Scalars['Upload']['input']>;
+  productId: Scalars['Float']['input'];
+};
+
 export type PageInfo = {
   __typename?: 'PageInfo';
   endCursor?: Maybe<Scalars['String']['output']>;
@@ -101,6 +110,7 @@ export type Product = {
   categories: Array<Category>;
   discount: Scalars['Float']['output'];
   id: Scalars['Int']['output'];
+  images?: Maybe<Array<Scalars['String']['output']>>;
   name: Scalars['String']['output'];
   productInfos: Array<ProductInfo>;
 };

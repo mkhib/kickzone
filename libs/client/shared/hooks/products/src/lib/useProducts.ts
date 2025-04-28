@@ -50,7 +50,10 @@ export function useProducts() {
       KickzoneGraphqlTypes.MutationCreateProductInfoArgs
     >(CREATE_PRODUCT_INFO);
 
-  const [uploadProductImagesMutation] = useMutation(UPLOAD_PRODUCT_IMAGES);
+  const [uploadProductImagesMutation] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'uploadProductImages'>,
+    KickzoneGraphqlTypes.MutationUploadProductImagesArgs
+  >(UPLOAD_PRODUCT_IMAGES);
 
   const createProduct = useCallback(
     async (

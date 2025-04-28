@@ -30,6 +30,7 @@ type Product {
   productInfos: [ProductInfo!]!
   categories: [Category!]!
   discount: Float!
+  images: [String!]
 }
 
 type User {
@@ -89,6 +90,7 @@ type Mutation {
   updateCategory(input: UpdateCategoryInput!): Category!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): ProductInfo!
+  uploadProductImages(productId: Float!, files: [Upload!]!): [String!]!
 }
 
 input CreateUserInput {
@@ -123,3 +125,6 @@ input CreateProductInfoInput {
   discount: Float!
   stockQuantity: Int!
 }
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload

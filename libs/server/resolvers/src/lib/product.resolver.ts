@@ -10,6 +10,16 @@ import {
 import { RolesGuard } from '@kickzone-workspace/guards';
 import { UserRole } from '@kickzone-workspace/entities';
 import { SetMetadata, UseGuards } from '@nestjs/common';
+import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
+import * as fs from 'fs';
+import * as path from 'path';
+
+export interface FileUpload {
+  filename: string;
+  mimetype: string;
+  encoding: string;
+  createReadStream: () => NodeJS.ReadableStream;
+}
 
 @Resolver(() => Product)
 export class ProductResolver {
@@ -52,5 +62,36 @@ export class ProductResolver {
   @Query(() => [Category])
   async categories(): Promise<Category[]> {
     return this.productService.getCategories();
+  }
+
+  @Mutation(() => [String])
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async uploadProductImages(
+    @Args('productId') productId: number,
+    @Args({ name: 'files', type: () => [GraphQLUpload] })
+    files: Promise<FileUpload>[]
+  ): Promise<string[]> {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'products');
+    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+
+    const uploadedFiles = await Promise.all(files);
+
+    const imageUrls: string[] = [];
+    for (const file of uploadedFiles) {
+      const { createReadStream, filename } = file;
+      const uniqueName = `${Date.now()}-${filename}`;
+      const filePath = path.join(uploadDir, uniqueName);
+      await new Promise((resolve, reject) => {
+        createReadStream()
+          .pipe(fs.createWriteStream(filePath))
+          .on('finish', resolve)
+          .on('error', reject);
+      });
+      imageUrls.push(`/uploads/products/${uniqueName}`);
+    }
+
+    await this.productService.addImagesToProduct(productId, imageUrls);
+    return imageUrls;
   }
 }

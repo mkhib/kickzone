@@ -39,6 +39,7 @@ export class Product {
   @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
   sellerProducts: Relation<SellerProduct>[];
 
-  @Column('simple-array')
+  @Field(() => [String], { nullable: true })
+  @Column('simple-array', { nullable: true, default: [] })
   images: string[];
 }
