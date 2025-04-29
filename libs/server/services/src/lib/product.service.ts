@@ -147,4 +147,28 @@ export class ProductService {
     );
     return this.productInfoRepository.save(productInfo);
   }
+
+  async updateProduct(
+    id: number,
+    name: string,
+    discount: number,
+    categoryIds: number[]
+  ): Promise<Product> {
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) {
+      throw new Error(`Product with ID ${id} not found`);
+    }
+    // Check for duplicate name (excluding current product)
+    const existing = await this.productRepository.findOne({ where: { name } });
+    if (existing && existing.id !== id) {
+      throw new Error('A product with this name already exists.');
+    }
+    const categories = await this.categoryRepository.findBy({
+      id: In(categoryIds),
+    });
+    product.name = name;
+    product.discount = discount;
+    product.categories = categories;
+    return this.productRepository.save(product);
+  }
 }

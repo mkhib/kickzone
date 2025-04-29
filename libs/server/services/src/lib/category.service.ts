@@ -26,6 +26,12 @@ export class CategoryService {
       throw new NotFoundException(`Category with ID ${id} not found`);
     }
 
+    // Check for duplicate name (excluding current category)
+    const existing = await this.categoryRepository.findOne({ where: { name } });
+    if (existing && existing.id !== id) {
+      throw new Error('A category with this name already exists.');
+    }
+
     category.name = name;
     return this.categoryRepository.save(category);
   }
