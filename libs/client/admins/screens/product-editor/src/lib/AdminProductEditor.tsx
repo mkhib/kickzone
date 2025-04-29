@@ -195,12 +195,6 @@ export function AdminProductEditor() {
         setSelectedCategory(null);
       } catch (err) {
         const error = err as ApolloError;
-        console.log('Error details:', {
-          message: error.message,
-          networkError: error.networkError,
-          graphQLErrors: error.graphQLErrors,
-          extraInfo: error.extraInfo,
-        });
         showSnackbar(error.message, { severity: 'error' });
       }
     },
