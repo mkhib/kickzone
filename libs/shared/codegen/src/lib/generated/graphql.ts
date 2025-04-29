@@ -58,9 +58,9 @@ export type Mutation = {
   createUser: User;
   login: User;
   logout: Scalars['Boolean']['output'];
-  removeProductImage: Scalars['Boolean']['output'];
+  removeProductInfoImage: Scalars['Boolean']['output'];
   updateCategory: Category;
-  uploadProductImages: Array<Scalars['String']['output']>;
+  uploadProductInfoImages: Array<Scalars['String']['output']>;
 };
 
 
@@ -90,9 +90,9 @@ export type MutationLoginArgs = {
 };
 
 
-export type MutationRemoveProductImageArgs = {
+export type MutationRemoveProductInfoImageArgs = {
   imageName: Scalars['String']['input'];
-  productId: Scalars['Float']['input'];
+  productInfoId: Scalars['Float']['input'];
 };
 
 
@@ -101,9 +101,9 @@ export type MutationUpdateCategoryArgs = {
 };
 
 
-export type MutationUploadProductImagesArgs = {
+export type MutationUploadProductInfoImagesArgs = {
   files: Array<Scalars['Upload']['input']>;
-  productId: Scalars['Float']['input'];
+  productInfoId: Scalars['Float']['input'];
 };
 
 export type PageInfo = {
@@ -117,7 +117,6 @@ export type Product = {
   categories: Array<Category>;
   discount: Scalars['Float']['output'];
   id: Scalars['Int']['output'];
-  images?: Maybe<Array<Scalars['String']['output']>>;
   name: Scalars['String']['output'];
   productInfos: Array<ProductInfo>;
 };
@@ -136,6 +135,7 @@ export type ProductInfo = {
   costPrice: Scalars['Float']['output'];
   discount: Scalars['Float']['output'];
   id: Scalars['Int']['output'];
+  images?: Maybe<Array<Scalars['String']['output']>>;
   price: Scalars['Float']['output'];
   product: Product;
   size: Scalars['String']['output'];

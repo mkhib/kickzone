@@ -28,19 +28,20 @@ const CREATE_PRODUCT_INFO = gql`
       weight
       discount
       stockQuantity
+      images
     }
   }
 `;
 
-const UPLOAD_PRODUCT_IMAGES = gql`
-  mutation UploadProductImages($productId: Int!, $files: [Upload!]!) {
-    uploadProductImages(productId: $productId, files: $files)
+const UPLOAD_PRODUCT_INFO_IMAGES = gql`
+  mutation UploadProductInfoImages($productInfoId: Int!, $files: [Upload!]!) {
+    uploadProductInfoImages(productInfoId: $productInfoId, files: $files)
   }
 `;
 
-const REMOVE_PRODUCT_IMAGE = gql`
-  mutation RemoveProductImage($productId: Int!, $imageName: String!) {
-    removeProductImage(productId: $productId, imageName: $imageName)
+const REMOVE_PRODUCT_INFO_IMAGE = gql`
+  mutation RemoveProductInfoImage($productInfoId: Int!, $imageName: String!) {
+    removeProductInfoImage(productInfoId: $productInfoId, imageName: $imageName)
   }
 `;
 
@@ -56,23 +57,24 @@ export function useProducts() {
       KickzoneGraphqlTypes.MutationCreateProductInfoArgs
     >(CREATE_PRODUCT_INFO);
 
-  const [uploadProductImagesMutation] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'uploadProductImages'>,
-    KickzoneGraphqlTypes.MutationUploadProductImagesArgs
-  >(UPLOAD_PRODUCT_IMAGES);
+  const [uploadProductInfoImagesMutation] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'uploadProductInfoImages'>,
+    { productInfoId: number; files: File[] }
+  >(UPLOAD_PRODUCT_INFO_IMAGES);
 
-  const [removeProductImageMutation] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'removeProductImage'>,
-    KickzoneGraphqlTypes.MutationRemoveProductImageArgs
-  >(REMOVE_PRODUCT_IMAGE);
+  const [removeProductInfoImageMutation] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'removeProductInfoImage'>,
+    { productInfoId: number; imageName: string }
+  >(REMOVE_PRODUCT_INFO_IMAGE);
 
-  const createProduct = useCallback(
+  // Accepts productInput and an array of productInfoInputs
+  const createProductWithInfos = useCallback(
     async (
       productInput: KickzoneGraphqlTypes.CreateProductInput,
-      productInfoInput: Omit<
+      productInfos: Omit<
         KickzoneGraphqlTypes.CreateProductInfoInput,
         'productId'
-      >
+      >[]
     ) => {
       try {
         // First create the product
@@ -86,23 +88,25 @@ export function useProducts() {
           throw new Error('Failed to create product');
         }
 
-        // Then create the product info with the product ID
-        const { data: productInfoData } = await createProductInfoMutation({
-          variables: {
-            input: {
-              ...productInfoInput,
-              productId: productData.createProduct.id,
+        // Then create all product infos with the product ID
+        const createdProductInfos = [];
+        for (const info of productInfos) {
+          const { data: productInfoData } = await createProductInfoMutation({
+            variables: {
+              input: {
+                ...info,
+                productId: productData.createProduct.id,
+              },
             },
-          },
-        });
-
-        if (!productInfoData?.createProductInfo) {
-          throw new Error('Failed to create product info');
+          });
+          if (productInfoData?.createProductInfo) {
+            createdProductInfos.push(productInfoData.createProductInfo);
+          }
         }
 
         return {
           product: productData.createProduct,
-          productInfo: productInfoData.createProductInfo,
+          productInfos: createdProductInfos,
         };
       } catch (error) {
         console.error('Error creating product:', error);
@@ -112,48 +116,46 @@ export function useProducts() {
     [createProductMutation, createProductInfoMutation]
   );
 
-  const uploadProductImages = useCallback(
-    async (productId: number, files: File[]) => {
+  const uploadProductInfoImages = useCallback(
+    async (productInfoId: number, files: File[]) => {
       try {
-        const { data } = await uploadProductImagesMutation({
+        const { data } = await uploadProductInfoImagesMutation({
           variables: {
-            productId,
+            productInfoId,
             files,
           },
         });
-
-        return data?.uploadProductImages || [];
+        return data?.uploadProductInfoImages || [];
       } catch (error) {
         console.error('Error uploading images:', error);
         throw error;
       }
     },
-    [uploadProductImagesMutation]
+    [uploadProductInfoImagesMutation]
   );
 
-  const removeProductImage = useCallback(
-    async (productId: number, imageName: string) => {
+  const removeProductInfoImage = useCallback(
+    async (productInfoId: number, imageName: string) => {
       try {
-        const { data } = await removeProductImageMutation({
+        const { data } = await removeProductInfoImageMutation({
           variables: {
-            productId,
+            productInfoId,
             imageName,
           },
         });
-
-        return data?.removeProductImage;
+        return data?.removeProductInfoImage;
       } catch (error) {
         console.error('Error removing image:', error);
         throw error;
       }
     },
-    [removeProductImageMutation]
+    [removeProductInfoImageMutation]
   );
 
   return {
-    createProduct,
-    uploadProductImages,
-    removeProductImage,
+    createProductWithInfos,
+    uploadProductInfoImages,
+    removeProductInfoImage,
     isCreatingProduct: isCreatingProduct || isCreatingProductInfo,
   };
 }

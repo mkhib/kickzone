@@ -70,6 +70,13 @@ export class ProductService {
   }
 
   async createProduct(input: CreateProductInput) {
+    // Check for duplicate product name
+    const existing = await this.productRepository.findOneBy({
+      name: input.name,
+    });
+    if (existing) {
+      throw new Error('A product with this name already exists.');
+    }
     const categories = await this.categoryRepository.findBy({
       id: In(input.categoryIds),
     });
@@ -102,6 +109,13 @@ export class ProductService {
   }
 
   async createCategory(input: CreateCategoryInput) {
+    // Check for duplicate category name
+    const existing = await this.categoryRepository.findOneBy({
+      name: input.name,
+    });
+    if (existing) {
+      throw new Error('A category with this name already exists.');
+    }
     const category = this.categoryRepository.create({ name: input.name });
     return this.categoryRepository.save(category);
   }
@@ -110,23 +124,27 @@ export class ProductService {
     return this.categoryRepository.find();
   }
 
-  async addImagesToProduct(productId: number, imageUrls: string[]) {
-    const product = await this.productRepository.findOneBy({ id: productId });
-    if (!product) {
-      throw new Error('Product not found');
+  async addImagesToProductInfo(productInfoId: number, imageUrls: string[]) {
+    const productInfo = await this.productInfoRepository.findOneBy({
+      id: productInfoId,
+    });
+    if (!productInfo) {
+      throw new Error('ProductInfo not found');
     }
-
-    product.images = [...(product.images || []), ...imageUrls];
-    return this.productRepository.save(product);
+    productInfo.images = [...(productInfo.images || []), ...imageUrls];
+    return this.productInfoRepository.save(productInfo);
   }
 
-  async removeImageFromProduct(productId: number, imageUrl: string) {
-    const product = await this.productRepository.findOneBy({ id: productId });
-    if (!product) {
-      throw new Error('Product not found');
+  async removeImageFromProductInfo(productInfoId: number, imageUrl: string) {
+    const productInfo = await this.productInfoRepository.findOneBy({
+      id: productInfoId,
+    });
+    if (!productInfo) {
+      throw new Error('ProductInfo not found');
     }
-
-    product.images = (product.images || []).filter((url) => url !== imageUrl);
-    return this.productRepository.save(product);
+    productInfo.images = (productInfo.images || []).filter(
+      (url) => url !== imageUrl
+    );
+    return this.productInfoRepository.save(productInfo);
   }
 }

@@ -10,7 +10,7 @@ export class Category {
   id: number;
 
   @Field()
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @ManyToMany(() => Product, (product) => product.categories)

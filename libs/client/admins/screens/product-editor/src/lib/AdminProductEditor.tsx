@@ -26,8 +26,9 @@ import { styled, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, ChangeEvent } from 'react';
 import { Tooltip } from '@mui/material';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 interface CategoryModalProps {
   open: boolean;
@@ -114,27 +115,219 @@ const ImagePreviewContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }));
 
+// Move ProductInfoState type to top level and export it
+export type ProductInfoState = KickzoneGraphqlTypes.CreateProductInfoInput & {
+  images: File[];
+  imagePreviews: string[];
+  uploadedImageUrls: string[];
+  createdId: number | null;
+  isUploading: boolean;
+  newImages: File[];
+  newImagePreviews: string[];
+};
+
+interface ProductInfoCardProps {
+  info: ProductInfoState;
+  idx: number;
+  onChange: (
+    idx: number,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => void;
+  onImageUpload: (idx: number, e: React.ChangeEvent<HTMLInputElement>) => void;
+  onRemove: (idx: number) => void;
+  onRemoveImage: (infoIdx: number, imageIdx: number) => void;
+  disableRemove: boolean;
+}
+
+const ProductInfoCard = React.memo(
+  ({
+    info,
+    idx,
+    onChange,
+    onImageUpload,
+    onRemove,
+    onRemoveImage,
+    disableRemove,
+  }: ProductInfoCardProps) => {
+    // Tooltip for upload button if product info is not created
+    const uploadButton = (
+      <Button
+        component="label"
+        variant="contained"
+        startIcon={<AddPhotoAlternateIcon />}
+        disabled={!info.createdId || info.isUploading}
+        sx={{
+          backgroundColor: colors.main,
+          '&:hover': { backgroundColor: colors.hoverMain },
+        }}
+      >
+        {info.isUploading ? 'Uploading...' : 'Upload Images'}
+        <VisuallyHiddenInput
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={(e) => onImageUpload(idx, e)}
+          disabled={!info.createdId || info.isUploading}
+        />
+      </Button>
+    );
+    return (
+      <Paper sx={{ mb: 2, p: 2, position: 'relative' }}>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <TextField
+            label="Size"
+            name="size"
+            value={info.size}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => onChange(idx, e)}
+            required
+            sx={{ flex: 1, minWidth: 100 }}
+          />
+          <TextField
+            label="Color"
+            name="color"
+            value={info.color}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => onChange(idx, e)}
+            required
+            sx={{ flex: 1, minWidth: 100 }}
+          />
+          <TextField
+            label="Price"
+            name="price"
+            type="number"
+            value={info.price}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => onChange(idx, e)}
+            required
+            sx={{ flex: 1, minWidth: 100 }}
+          />
+          <TextField
+            label="Cost Price"
+            name="costPrice"
+            type="number"
+            value={info.costPrice}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => onChange(idx, e)}
+            required
+            sx={{ flex: 1, minWidth: 100 }}
+          />
+          <TextField
+            label="Weight (kg)"
+            name="weight"
+            type="number"
+            value={info.weight}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => onChange(idx, e)}
+            required
+            sx={{ flex: 1, minWidth: 100 }}
+          />
+          <TextField
+            label="Discount (%)"
+            name="discount"
+            type="number"
+            value={info.discount}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => onChange(idx, e)}
+            sx={{ flex: 1, minWidth: 100 }}
+          />
+          <TextField
+            label="Stock Quantity"
+            name="stockQuantity"
+            type="number"
+            value={info.stockQuantity}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => onChange(idx, e)}
+            required
+            sx={{ flex: 1, minWidth: 100 }}
+          />
+        </Box>
+        <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          {!info.createdId ? (
+            <Tooltip title="Save the product first to upload images">
+              <span>{uploadButton}</span>
+            </Tooltip>
+          ) : (
+            uploadButton
+          )}
+          <IconButton
+            onClick={() => onRemove(idx)}
+            color="error"
+            aria-label="Remove variant"
+            sx={{ ml: 1 }}
+            disabled={disableRemove}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+        <ImagePreviewContainer>
+          {info.uploadedImageUrls.map((preview: string, imageIdx: number) => (
+            <ImagePreviewCard key={imageIdx}>
+              <CardMedia
+                component="img"
+                height="140"
+                image={preview}
+                alt={`Product variant image ${imageIdx + 1}`}
+              />
+              <CardContent>
+                <Typography variant="body2" color="text.secondary">
+                  {preview.split('/').pop()}
+                </Typography>
+              </CardContent>
+              <CardActions>
+                <IconButton
+                  size="small"
+                  onClick={() => onRemoveImage(idx, imageIdx)}
+                  sx={{ color: 'error.main' }}
+                  aria-label="Delete image"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </CardActions>
+            </ImagePreviewCard>
+          ))}
+        </ImagePreviewContainer>
+      </Paper>
+    );
+  }
+);
+
 export function AdminProductEditor() {
   const [product, setProduct] = useState({
     name: '',
-    discount: 0,
     categoryIds: [] as number[],
   });
 
-  const [productInfo, setProductInfo] = useState({
-    size: '',
-    price: 0,
-    costPrice: 0,
-    color: '',
-    weight: 0,
-    discount: 0,
-    stockQuantity: 0,
-  });
+  const [productInfos, setProductInfos] = useState<ProductInfoState[]>([
+    {
+      productId: 0,
+      size: '',
+      price: 0,
+      costPrice: 0,
+      color: '',
+      weight: 0,
+      discount: 0,
+      stockQuantity: 0,
+      images: [],
+      imagePreviews: [],
+      uploadedImageUrls: [],
+      createdId: null,
+      isUploading: false,
+      newImages: [],
+      newImagePreviews: [],
+    },
+  ]);
 
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [isUploadingImages, setIsUploadingImages] = useState(false);
-  const [createdProductId, setCreatedProductId] = useState<number | null>(null);
+  const [createdProductInfoIds, setCreatedProductInfoIds] = useState<
+    (number | null)[]
+  >([null]);
 
   const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
@@ -153,72 +346,17 @@ export function AdminProductEditor() {
   } = useCategories();
 
   const {
-    createProduct,
+    createProductWithInfos,
+    uploadProductInfoImages,
+    removeProductInfoImage,
     isCreatingProduct,
-    uploadProductImages,
-    removeProductImage,
   } = useProducts();
   const { showSnackbar } = useSnackbarContext();
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
-  const handleCreateCategory = useCallback(
-    async (name: string) => {
-      try {
-        await createCategory(name);
-        showSnackbar('Category created successfully', { severity: 'success' });
-        setIsNewCategoryModalOpen(false);
-      } catch (err) {
-        const error = err as ApolloError;
-        console.log('Error details:', {
-          message: error.message,
-          networkError: error.networkError,
-          graphQLErrors: error.graphQLErrors,
-          extraInfo: error.extraInfo,
-        });
-        showSnackbar(error.message, { severity: 'error' });
-      }
-    },
-    [createCategory, showSnackbar]
-  );
-
-  const handleEditCategory = useCallback(
-    async (name: string) => {
-      console.log(selectedCategory);
-      if (!selectedCategory) return;
-      try {
-        const edited = await updateCategory(selectedCategory.id, name);
-        console.log(selectedCategory, edited);
-        showSnackbar('Category updated successfully', { severity: 'success' });
-        setIsEditCategoryModalOpen(false);
-        setSelectedCategory(null);
-      } catch (err) {
-        const error = err as ApolloError;
-        showSnackbar(error.message, { severity: 'error' });
-      }
-    },
-    [selectedCategory, updateCategory, showSnackbar]
-  );
-
-  const handleCategoryChange = useCallback(
-    (_: unknown, newValue: { id: number; name: string }[]) => {
-      setProduct((prev) => ({
-        ...prev,
-        categoryIds: newValue.map((category) => category.id),
-      }));
-    },
-    []
-  );
-
-  const handleEditCategoryClick = useCallback(
-    (category: { id: number; name: string }) => {
-      setSelectedCategory(category);
-      setIsEditCategoryModalOpen(true);
-    },
-    []
-  );
-
+  // Handlers for product fields
   const handleProductChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
@@ -227,82 +365,63 @@ export function AdminProductEditor() {
     []
   );
 
+  // Handlers for product info fields
   const handleProductInfoChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (index: number, e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       const { name, value } = e.target;
-      setProductInfo((prev) => ({ ...prev, [name]: value }));
+      setProductInfos((prev) => {
+        const updated = [...prev];
+        updated[index] = { ...updated[index], [name]: value };
+        return updated;
+      });
     },
     []
   );
 
-  const handleSubmit = useCallback(
-    async (e: React.FormEvent) => {
-      e.preventDefault();
-      try {
-        // Validate required fields
-        if (
-          !product.name ||
-          !productInfo.size ||
-          !productInfo.color ||
-          !productInfo.price ||
-          !productInfo.costPrice ||
-          !productInfo.weight ||
-          !productInfo.stockQuantity
-        ) {
-          showSnackbar('Please fill in all required fields', {
-            severity: 'error',
-          });
-          return;
-        }
+  // Add a new ProductInfo variant
+  const handleAddProductInfo = useCallback(() => {
+    setProductInfos((prev) => [
+      ...prev,
+      {
+        productId: 0,
+        size: '',
+        price: 0,
+        costPrice: 0,
+        color: '',
+        weight: 0,
+        discount: 0,
+        stockQuantity: 0,
+        images: [],
+        imagePreviews: [],
+        uploadedImageUrls: [],
+        createdId: null,
+        isUploading: false,
+        newImages: [],
+        newImagePreviews: [],
+      } as ProductInfoState,
+    ]);
+    setCreatedProductInfoIds((prev) => [...prev, null]);
+  }, []);
 
-        // First create the product
-        const createdProduct = await createProduct(
-          {
-            name: product.name,
-            discount: Number(product.discount) || 0,
-            categoryIds: product.categoryIds,
-          },
-          {
-            size: productInfo.size,
-            price: Number(productInfo.price),
-            costPrice: Number(productInfo.costPrice),
-            color: productInfo.color,
-            weight: Number(productInfo.weight),
-            discount: Number(productInfo.discount) || 0,
-            stockQuantity: Number(productInfo.stockQuantity),
-          }
-        );
+  // Remove a ProductInfo variant
+  const handleRemoveProductInfo = useCallback((index: number) => {
+    setProductInfos((prev) => prev.filter((_, i) => i !== index));
+    setCreatedProductInfoIds((prev) => prev.filter((_, i) => i !== index));
+  }, []);
 
-        setCreatedProductId(createdProduct.product.id);
-        showSnackbar('Product created successfully', { severity: 'success' });
-      } catch (error) {
-        const err = error as ApolloError;
-        console.log('Error details:', {
-          message: err.message,
-          networkError: err.networkError,
-          graphQLErrors: err.graphQLErrors,
-          extraInfo: err.extraInfo,
-        });
-        showSnackbar(err.message, { severity: 'error' });
-      }
-    },
-    [product, productInfo, createProduct, showSnackbar]
-  );
-
+  // Handle image upload for a specific ProductInfo
   const handleImageUpload = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
+    async (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
-      if (!files || !createdProductId) {
-        if (!createdProductId) {
+      if (!files || !createdProductInfoIds[index]) {
+        if (!createdProductInfoIds[index]) {
           showSnackbar('Please save the product first to upload images', {
             severity: 'warning',
           });
         }
         return;
       }
-
       const newImages = Array.from(files);
-
       // Validate file types
       const validImageTypes = [
         'image/jpeg',
@@ -319,7 +438,6 @@ export function AdminProductEditor() {
         });
         return;
       }
-
       // Validate file sizes (max 5MB per file)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
       const oversizedFiles = newImages.filter((file) => file.size > maxSize);
@@ -329,64 +447,147 @@ export function AdminProductEditor() {
         });
         return;
       }
-
-      setIsUploadingImages(true);
+      setProductInfos((prev) => {
+        const updated = [...prev];
+        updated[index].isUploading = true;
+        return updated;
+      });
       try {
+        const productInfoId = createdProductInfoIds[index];
+        if (!productInfoId) return;
         // Create preview URLs before upload
         const newPreviews = newImages.map((file) => URL.createObjectURL(file));
-        setImagePreviews((prev) => [...prev, ...newPreviews]);
-        setImages((prev) => [...prev, ...newImages]);
-
-        await uploadProductImages(createdProductId, newImages);
+        setProductInfos((prev) => {
+          const updated = [...prev];
+          updated[index].images = [
+            ...(updated[index].images || []),
+            ...newImages,
+          ];
+          updated[index].imagePreviews = [
+            ...(updated[index].imagePreviews || []),
+            ...newPreviews,
+          ];
+          return updated;
+        });
+        const uploadedUrls = await uploadProductInfoImages(
+          productInfoId,
+          newImages
+        );
+        setProductInfos((prev) => {
+          const updated = [...prev];
+          updated[index].uploadedImageUrls = [
+            ...(updated[index].uploadedImageUrls || []),
+            ...uploadedUrls,
+          ];
+          updated[index].isUploading = false;
+          return updated;
+        });
         showSnackbar('Images uploaded successfully', { severity: 'success' });
       } catch (error) {
-        const err = error as ApolloError;
-        console.log('Error details:', {
-          message: err.message,
-          networkError: err.networkError,
-          graphQLErrors: err.graphQLErrors,
-          extraInfo: err.extraInfo,
+        showSnackbar((error as Error).message, { severity: 'error' });
+        setProductInfos((prev) => {
+          const updated = [...prev];
+          updated[index].isUploading = false;
+          return updated;
         });
-        showSnackbar(err.message, { severity: 'error' });
-        // Remove failed uploads from state
-        setImages((prev) => prev.slice(0, -newImages.length));
-        setImagePreviews((prev) => {
-          const removedPreviews = prev.slice(-newImages.length);
-          removedPreviews.forEach((url) => URL.revokeObjectURL(url));
-          return prev.slice(0, -newImages.length);
-        });
-      } finally {
-        setIsUploadingImages(false);
       }
     },
-    [createdProductId, uploadProductImages, showSnackbar]
+    [createdProductInfoIds, uploadProductInfoImages, showSnackbar]
   );
 
+  // Remove image for a specific ProductInfo
   const handleRemoveImage = useCallback(
-    (index: number) => {
-      if (!createdProductId) return;
-
-      const imageToRemove = images[index];
-      setImages((prev) => prev.filter((_, i) => i !== index));
-      setImagePreviews((prev) => {
-        const newPreviews = [...prev];
-        URL.revokeObjectURL(newPreviews[index]);
-        newPreviews.splice(index, 1);
-        return newPreviews;
-      });
-
-      // Call the removeProductImage function
-      removeProductImage(createdProductId, imageToRemove.name);
+    async (infoIndex: number, imageIndex: number) => {
+      const productInfoId = createdProductInfoIds[infoIndex];
+      if (!productInfoId) return;
+      const imageUrl = productInfos[infoIndex].uploadedImageUrls[imageIndex];
+      const imageName = imageUrl.split('/').pop();
+      if (!imageName) return;
+      try {
+        await removeProductInfoImage(productInfoId, imageName);
+        setProductInfos((prev) => {
+          const updated = [...prev];
+          updated[infoIndex].uploadedImageUrls = updated[
+            infoIndex
+          ].uploadedImageUrls.filter((_, i) => i !== imageIndex);
+          updated[infoIndex].images = updated[infoIndex].images.filter(
+            (_, i) => i !== imageIndex
+          );
+          updated[infoIndex].imagePreviews = updated[
+            infoIndex
+          ].imagePreviews.filter((_, i) => i !== imageIndex);
+          return updated;
+        });
+      } catch (error) {
+        showSnackbar((error as Error).message, { severity: 'error' });
+      }
     },
-    [createdProductId, images, removeProductImage]
+    [createdProductInfoIds, productInfos, removeProductInfoImage, showSnackbar]
   );
 
-  // Cleanup preview URLs when component unmounts
-  useEffect(() => {
-    return () => {
-      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
-    };
-  }, [imagePreviews]);
+  // Handle product creation
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      try {
+        // Validate required fields
+        if (!product.name || product.categoryIds.length === 0) {
+          showSnackbar('Please fill in all required fields', {
+            severity: 'error',
+          });
+          return;
+        }
+        for (const info of productInfos) {
+          if (
+            !info.size ||
+            !info.color ||
+            !info.price ||
+            !info.costPrice ||
+            !info.weight ||
+            !info.stockQuantity
+          ) {
+            showSnackbar('Please fill in all product variant fields', {
+              severity: 'error',
+            });
+            return;
+          }
+        }
+        // Create product and all product infos
+        const created = await createProductWithInfos(
+          {
+            name: product.name,
+            categoryIds: product.categoryIds,
+            discount: 0,
+          },
+          productInfos.map((info) => ({
+            size: info.size,
+            price: Number(info.price),
+            costPrice: Number(info.costPrice),
+            color: info.color,
+            weight: Number(info.weight),
+            discount: Number(info.discount) || 0,
+            stockQuantity: Number(info.stockQuantity),
+          }))
+        );
+        setCreatedProductInfoIds(created.productInfos.map((pi) => pi.id));
+        setProductInfos((prev) =>
+          prev.map((info, i) => ({
+            ...info,
+            createdId: created.productInfos[i]?.id || null,
+          }))
+        );
+        showSnackbar('Product created successfully', { severity: 'success' });
+      } catch (error) {
+        const message = (error as Error).message;
+        if (message.includes('already exists')) {
+          showSnackbar(message, { severity: 'error' });
+        } else {
+          showSnackbar((error as Error).message, { severity: 'error' });
+        }
+      }
+    },
+    [product, productInfos, createProductWithInfos, showSnackbar]
+  );
 
   return (
     <AdminsLayout>
@@ -413,19 +614,6 @@ export function AdminProductEditor() {
                 onChange={handleProductChange}
                 required
               />
-              <TextField
-                id="product-discount"
-                slotProps={{
-                  input: { 'aria-label': 'Discount (%)' },
-                }}
-                fullWidth
-                label="Discount (%)"
-                name="discount"
-                type="number"
-                value={product.discount}
-                onChange={handleProductChange}
-                required
-              />
               <Box>
                 <Autocomplete
                   multiple
@@ -437,7 +625,12 @@ export function AdminProductEditor() {
                       product.categoryIds.includes(cat.id)
                     ) || []
                   }
-                  onChange={handleCategoryChange}
+                  onChange={(_e, newValue) =>
+                    setProduct((prev) => ({
+                      ...prev,
+                      categoryIds: newValue.map((category) => category.id),
+                    }))
+                  }
                   loading={categoriesLoading}
                   renderOption={(props, option) => {
                     const { key, ...otherProps } = props;
@@ -456,7 +649,8 @@ export function AdminProductEditor() {
                             size="small"
                             onClick={(e) => {
                               e.stopPropagation();
-                              handleEditCategoryClick(option);
+                              setSelectedCategory(option);
+                              setIsEditCategoryModalOpen(true);
                             }}
                           >
                             <EditIcon fontSize="small" />
@@ -500,154 +694,35 @@ export function AdminProductEditor() {
                   openOnFocus
                 />
               </Box>
-              <TextField
-                id="product-size"
-                slotProps={{
-                  input: { 'aria-label': 'Size' },
-                }}
-                fullWidth
-                label="Size"
-                name="size"
-                value={productInfo.size}
-                onChange={handleProductInfoChange}
-                required
-              />
-              <TextField
-                id="product-color"
-                slotProps={{
-                  input: { 'aria-label': 'Color' },
-                }}
-                fullWidth
-                label="Color"
-                name="color"
-                value={productInfo.color}
-                onChange={handleProductInfoChange}
-                required
-              />
             </Grid2>
-
-            {/* Right Side - Pricing and Stock Info */}
-            <Grid2
-              size={{ xs: 12, md: 6 }}
-              sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-            >
-              <TextField
-                id="product-price"
-                slotProps={{
-                  input: { 'aria-label': 'Price' },
-                }}
-                fullWidth
-                label="Price"
-                name="price"
-                type="number"
-                value={productInfo.price}
-                onChange={handleProductInfoChange}
-                required
-              />
-              <TextField
-                id="product-cost-price"
-                slotProps={{
-                  input: { 'aria-label': 'Cost Price' },
-                }}
-                fullWidth
-                label="Cost Price"
-                name="costPrice"
-                type="number"
-                value={productInfo.costPrice}
-                onChange={handleProductInfoChange}
-                required
-              />
-              <TextField
-                id="product-weight"
-                slotProps={{
-                  input: { 'aria-label': 'Weight (kg)' },
-                }}
-                fullWidth
-                label="Weight (kg)"
-                name="weight"
-                type="number"
-                value={productInfo.weight}
-                onChange={handleProductInfoChange}
-                required
-              />
-              <TextField
-                id="product-stock-quantity"
-                slotProps={{
-                  input: { 'aria-label': 'Stock Quantity' },
-                }}
-                fullWidth
-                label="Stock Quantity"
-                name="stockQuantity"
-                type="number"
-                value={productInfo.stockQuantity}
-                onChange={handleProductInfoChange}
-                required
-              />
+            {/* Right Side - ProductInfos Section */}
+            <Grid2 size={{ xs: 12, md: 6 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                Product Variants
+              </Typography>
+              {productInfos.map((info, idx) => (
+                <ProductInfoCard
+                  key={idx}
+                  info={info}
+                  idx={idx}
+                  onChange={handleProductInfoChange}
+                  onImageUpload={handleImageUpload}
+                  onRemove={handleRemoveProductInfo}
+                  onRemoveImage={handleRemoveImage}
+                  disableRemove={productInfos.length === 1}
+                />
+              ))}
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={handleAddProductInfo}
+                sx={{ mt: 2 }}
+                disabled={isCreatingProduct}
+                fullWidth={isMobile}
+              >
+                Add Variant
+              </Button>
             </Grid2>
-
-            {/* Image Upload Section */}
-            <Grid2 size={12}>
-              <Box sx={{ mb: 2 }}>
-                <Tooltip
-                  title={
-                    !createdProductId
-                      ? 'Please create the product first to upload images'
-                      : ''
-                  }
-                  placement="top"
-                >
-                  <div>
-                    <Button
-                      component="label"
-                      variant="contained"
-                      startIcon={<AddPhotoAlternateIcon />}
-                      disabled={!createdProductId || isUploadingImages}
-                      sx={{
-                        backgroundColor: colors.main,
-                        '&:hover': { backgroundColor: colors.hoverMain },
-                      }}
-                    >
-                      {isUploadingImages ? 'Uploading...' : 'Upload Images'}
-                      <VisuallyHiddenInput
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        disabled={!createdProductId || isUploadingImages}
-                      />
-                    </Button>
-                  </div>
-                </Tooltip>
-              </Box>
-              <ImagePreviewContainer>
-                {imagePreviews.map((preview, index) => (
-                  <ImagePreviewCard key={index}>
-                    <CardMedia
-                      component="img"
-                      height="140"
-                      image={preview}
-                      alt={`Product image ${index + 1}`}
-                    />
-                    <CardContent>
-                      <Typography variant="body2" color="text.secondary">
-                        {images[index].name}
-                      </Typography>
-                    </CardContent>
-                    <CardActions>
-                      <IconButton
-                        size="small"
-                        onClick={() => handleRemoveImage(index)}
-                        sx={{ color: 'error.main' }}
-                        aria-label="Delete image"
-                      >
-                        <DeleteIcon />
-                      </IconButton>
-                    </CardActions>
-                  </ImagePreviewCard>
-                ))}
-              </ImagePreviewContainer>
-            </Grid2>
-
             {/* Save Button */}
             <Grid2 size={12} sx={{ mt: 'auto' }}>
               <Box
@@ -673,22 +748,46 @@ export function AdminProductEditor() {
           </Grid2>
         </form>
       </Paper>
-
       <CategoryModal
         open={isNewCategoryModalOpen}
         onClose={() => setIsNewCategoryModalOpen(false)}
-        onSubmit={handleCreateCategory}
+        onSubmit={async (name) => {
+          try {
+            await createCategory(name);
+            setIsNewCategoryModalOpen(false);
+          } catch (error) {
+            const message = (error as Error).message;
+            if (message.includes('already exists')) {
+              showSnackbar(message, { severity: 'error' });
+            } else {
+              showSnackbar((error as Error).message, { severity: 'error' });
+            }
+          }
+        }}
         title="Add New Category"
         isLoading={isCreatingCategory}
       />
-
       <CategoryModal
         open={isEditCategoryModalOpen}
         onClose={() => {
           setIsEditCategoryModalOpen(false);
           setSelectedCategory(null);
         }}
-        onSubmit={handleEditCategory}
+        onSubmit={async (name) => {
+          try {
+            if (selectedCategory)
+              await updateCategory(selectedCategory.id, name);
+            setIsEditCategoryModalOpen(false);
+            setSelectedCategory(null);
+          } catch (error) {
+            const message = (error as Error).message;
+            if (message.includes('already exists')) {
+              showSnackbar(message, { severity: 'error' });
+            } else {
+              showSnackbar((error as Error).message, { severity: 'error' });
+            }
+          }
+        }}
         initialName={selectedCategory?.name || ''}
         title="Edit Category"
         isLoading={isUpdatingCategory}

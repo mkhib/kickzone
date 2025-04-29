@@ -67,8 +67,8 @@ export class ProductResolver {
   @Mutation(() => [String])
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
-  async uploadProductImages(
-    @Args('productId') productId: number,
+  async uploadProductInfoImages(
+    @Args('productInfoId') productInfoId: number,
     @Args({ name: 'files', type: () => [GraphQLUpload] })
     files: Promise<FileUpload>[]
   ): Promise<string[]> {
@@ -91,15 +91,15 @@ export class ProductResolver {
       imageUrls.push(`/uploads/products/${uniqueName}`);
     }
 
-    await this.productService.addImagesToProduct(productId, imageUrls);
+    await this.productService.addImagesToProductInfo(productInfoId, imageUrls);
     return imageUrls;
   }
 
   @Mutation(() => Boolean)
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
-  async removeProductImage(
-    @Args('productId') productId: number,
+  async removeProductInfoImage(
+    @Args('productInfoId') productInfoId: number,
     @Args('imageName') imageName: string
   ): Promise<boolean> {
     const uploadDir = path.join(process.cwd(), 'uploads', 'products');
@@ -111,14 +111,14 @@ export class ProductResolver {
         fs.unlinkSync(filePath);
       }
 
-      // Remove the image URL from the product
-      await this.productService.removeImageFromProduct(
-        productId,
+      // Remove the image URL from the product info
+      await this.productService.removeImageFromProductInfo(
+        productInfoId,
         `/uploads/products/${imageName}`
       );
       return true;
     } catch (error) {
-      console.error('Error removing product image:', error);
+      console.error('Error removing product info image:', error);
       return false;
     }
   }

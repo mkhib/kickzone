@@ -17,6 +17,7 @@ type ProductInfo {
   discount: Float!
   stockQuantity: Int!
   product: Product!
+  images: [String!]
 }
 
 type Category {
@@ -30,7 +31,6 @@ type Product {
   productInfos: [ProductInfo!]!
   categories: [Category!]!
   discount: Float!
-  images: [String!]
 }
 
 type User {
@@ -90,8 +90,8 @@ type Mutation {
   updateCategory(input: UpdateCategoryInput!): Category!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): ProductInfo!
-  uploadProductImages(productId: Float!, files: [Upload!]!): [String!]!
-  removeProductImage(productId: Float!, imageName: String!): Boolean!
+  uploadProductInfoImages(productInfoId: Float!, files: [Upload!]!): [String!]!
+  removeProductInfoImage(productInfoId: Float!, imageName: String!): Boolean!
 }
 
 input CreateUserInput {

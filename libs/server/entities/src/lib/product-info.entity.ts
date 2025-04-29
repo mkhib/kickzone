@@ -40,4 +40,8 @@ export class ProductInfo {
   @Field(() => Product)
   @ManyToOne(() => Product, (product) => product.productInfos)
   product: Product;
+
+  @Field(() => [String], { nullable: true })
+  @Column('simple-array', { nullable: true, default: '' })
+  images: string[];
 }

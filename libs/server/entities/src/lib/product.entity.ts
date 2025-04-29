@@ -20,7 +20,7 @@ export class Product {
   id: number;
 
   @Field()
-  @Column()
+  @Column({ unique: true })
   name: string;
 
   @Field(() => [ProductInfo])
@@ -38,8 +38,4 @@ export class Product {
 
   @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
   sellerProducts: Relation<SellerProduct>[];
-
-  @Field(() => [String], { nullable: true })
-  @Column('simple-array', { nullable: true, default: [] })
-  images: string[];
 }
