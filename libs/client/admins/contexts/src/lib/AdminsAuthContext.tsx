@@ -37,16 +37,13 @@ export const AdminsAuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [logoutMutation] = useMutation(LOGOUT_MUTATION, {
     onCompleted: () => {
-      console.log('masoud');
       setAdmin(null);
       localStorage.removeItem('admin_user');
     },
   });
 
   const logoutAdmin = () => {
-    logoutMutation().then(() => {
-      console.log('Log outeddd');
-    });
+    logoutMutation();
   };
 
   if (loading) return <div>Loading...</div>;
