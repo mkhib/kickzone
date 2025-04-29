@@ -30,7 +30,7 @@ export function Snackbar({
   return (
     <MuiSnackbar
       open={open}
-      anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       onClose={onClose}
     >
       <StyledAlert onClose={onClose} severity={severity} sx={{ width: '100%' }}>

@@ -28,7 +28,7 @@ const SnackbarContext = createContext<SnackbarContextType | undefined>(
   undefined
 );
 
-const DEFAULT_DURATION = 6000; // 6 seconds
+const DEFAULT_DURATION = 10000; // 10 seconds
 
 export const useSnackbarContext = () => {
   const context = useContext(SnackbarContext);
