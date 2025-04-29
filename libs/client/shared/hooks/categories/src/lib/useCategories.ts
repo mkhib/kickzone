@@ -65,7 +65,30 @@ export const useCategories = () => {
   const [updateCategoryMutation, { loading: isUpdatingCategory }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateCategory'>,
     KickzoneGraphqlTypes.MutationUpdateCategoryArgs
-  >(UPDATE_CATEGORY);
+  >(UPDATE_CATEGORY, {
+    update(cache, { data }) {
+      if (!data?.updateCategory) return;
+
+      const existingData = cache.readQuery<
+        Pick<KickzoneGraphqlTypes.Query, 'categories'>
+      >({
+        query: CATEGORIES_QUERY,
+      });
+
+      if (!existingData?.categories) return;
+
+      const updatedCategories = existingData.categories.map((category) =>
+        category.id === data.updateCategory.id ? data.updateCategory : category
+      );
+
+      cache.writeQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>({
+        query: CATEGORIES_QUERY,
+        data: {
+          categories: updatedCategories,
+        },
+      });
+    },
+  });
 
   const createCategory = (name: string) =>
     createCategoryMutation({

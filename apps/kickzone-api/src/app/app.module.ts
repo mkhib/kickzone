@@ -20,6 +20,8 @@ import {
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { join } from 'path';
+import { AuthService } from '@kickzone-workspace/services';
+import { GraphqlContextModule } from '@kickzone-workspace/modules';
 
 @Module({
   imports: [
@@ -40,15 +42,31 @@ import { join } from 'path';
       ],
       synchronize: true,
     }),
-    GraphQLModule.forRoot<ApolloDriverConfig>({
+    GraphqlContextModule,
+    GraphQLModule.forRootAsync<ApolloDriverConfig>({
       driver: ApolloDriver,
-      autoSchemaFile: join(
-        process.cwd(),
-        'libs/shared/graphql-schema/src/lib/schema.gql'
-      ),
-      playground: true,
-      introspection: true,
-      context: ({ req, res }) => ({ req, res }),
+      imports: [GraphqlContextModule],
+      inject: [AuthService],
+      useFactory: (authService: AuthService) => ({
+        autoSchemaFile: join(
+          process.cwd(),
+          'libs/shared/graphql-schema/src/lib/schema.gql'
+        ),
+        playground: true,
+        introspection: true,
+        context: async ({ req, res }) => {
+          // Get the token from cookies
+          const token = req.cookies['access_token'];
+          if (token) {
+            // Verify and get user
+            const user = await authService.verifyToken(token);
+            if (user) {
+              req.user = user;
+            }
+          }
+          return { req, res };
+        },
+      }),
     }),
     UserModule,
     AuthModule,

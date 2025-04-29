@@ -20,7 +20,11 @@ export class AuthService {
   }
 
   async login(user: User) {
-    const payload = { email: user.email, sub: user.id };
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+    };
     return {
       access_token: this.jwtService.sign(payload),
     };
@@ -29,6 +33,7 @@ export class AuthService {
   async verifyToken(token: string): Promise<User | null> {
     try {
       const decoded = this.jwtService.verify(token);
+      // Always get the full user from the database
       return this.userService.getUserById(decoded.sub);
     } catch (_) {
       return null;

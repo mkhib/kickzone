@@ -185,9 +185,11 @@ export function AdminProductEditor() {
 
   const handleEditCategory = useCallback(
     async (name: string) => {
+      console.log(selectedCategory);
       if (!selectedCategory) return;
       try {
-        await updateCategory(selectedCategory.id, name);
+        const edited = await updateCategory(selectedCategory.id, name);
+        console.log(selectedCategory, edited);
         showSnackbar('Category updated successfully', { severity: 'success' });
         setIsEditCategoryModalOpen(false);
         setSelectedCategory(null);
