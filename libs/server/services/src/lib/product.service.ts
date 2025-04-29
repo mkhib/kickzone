@@ -119,4 +119,14 @@ export class ProductService {
     product.images = [...(product.images || []), ...imageUrls];
     return this.productRepository.save(product);
   }
+
+  async removeImageFromProduct(productId: number, imageUrl: string) {
+    const product = await this.productRepository.findOneBy({ id: productId });
+    if (!product) {
+      throw new Error('Product not found');
+    }
+
+    product.images = (product.images || []).filter((url) => url !== imageUrl);
+    return this.productRepository.save(product);
+  }
 }

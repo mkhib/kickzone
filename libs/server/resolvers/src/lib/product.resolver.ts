@@ -94,4 +94,32 @@ export class ProductResolver {
     await this.productService.addImagesToProduct(productId, imageUrls);
     return imageUrls;
   }
+
+  @Mutation(() => Boolean)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async removeProductImage(
+    @Args('productId') productId: number,
+    @Args('imageName') imageName: string
+  ): Promise<boolean> {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'products');
+    const filePath = path.join(uploadDir, imageName);
+
+    try {
+      // Remove the file from the filesystem
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      // Remove the image URL from the product
+      await this.productService.removeImageFromProduct(
+        productId,
+        `/uploads/products/${imageName}`
+      );
+      return true;
+    } catch (error) {
+      console.error('Error removing product image:', error);
+      return false;
+    }
+  }
 }

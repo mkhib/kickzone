@@ -91,6 +91,7 @@ type Mutation {
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): ProductInfo!
   uploadProductImages(productId: Float!, files: [Upload!]!): [String!]!
+  removeProductImage(productId: Float!, imageName: String!): Boolean!
 }
 
 input CreateUserInput {
@@ -105,7 +106,7 @@ input CreateCategoryInput {
 }
 
 input UpdateCategoryInput {
-  id: ID!
+  id: Int!
   name: String!
 }
 

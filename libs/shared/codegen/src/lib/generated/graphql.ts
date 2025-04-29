@@ -58,6 +58,7 @@ export type Mutation = {
   createUser: User;
   login: User;
   logout: Scalars['Boolean']['output'];
+  removeProductImage: Scalars['Boolean']['output'];
   updateCategory: Category;
   uploadProductImages: Array<Scalars['String']['output']>;
 };
@@ -86,6 +87,12 @@ export type MutationCreateUserArgs = {
 export type MutationLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
+};
+
+
+export type MutationRemoveProductImageArgs = {
+  imageName: Scalars['String']['input'];
+  productId: Scalars['Float']['input'];
 };
 
 
@@ -167,7 +174,7 @@ export type QueryUsersArgs = {
 };
 
 export type UpdateCategoryInput = {
-  id: Scalars['ID']['input'];
+  id: Scalars['Int']['input'];
   name: Scalars['String']['input'];
 };
 

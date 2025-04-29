@@ -38,6 +38,12 @@ const UPLOAD_PRODUCT_IMAGES = gql`
   }
 `;
 
+const REMOVE_PRODUCT_IMAGE = gql`
+  mutation RemoveProductImage($productId: Int!, $imageName: String!) {
+    removeProductImage(productId: $productId, imageName: $imageName)
+  }
+`;
+
 export function useProducts() {
   const [createProductMutation, { loading: isCreatingProduct }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'createProduct'>,
@@ -54,6 +60,11 @@ export function useProducts() {
     Pick<KickzoneGraphqlTypes.Mutation, 'uploadProductImages'>,
     KickzoneGraphqlTypes.MutationUploadProductImagesArgs
   >(UPLOAD_PRODUCT_IMAGES);
+
+  const [removeProductImageMutation] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'removeProductImage'>,
+    KickzoneGraphqlTypes.MutationRemoveProductImageArgs
+  >(REMOVE_PRODUCT_IMAGE);
 
   const createProduct = useCallback(
     async (
@@ -120,9 +131,29 @@ export function useProducts() {
     [uploadProductImagesMutation]
   );
 
+  const removeProductImage = useCallback(
+    async (productId: number, imageName: string) => {
+      try {
+        const { data } = await removeProductImageMutation({
+          variables: {
+            productId,
+            imageName,
+          },
+        });
+
+        return data?.removeProductImage;
+      } catch (error) {
+        console.error('Error removing image:', error);
+        throw error;
+      }
+    },
+    [removeProductImageMutation]
+  );
+
   return {
     createProduct,
     uploadProductImages,
+    removeProductImage,
     isCreatingProduct: isCreatingProduct || isCreatingProductInfo,
   };
 }

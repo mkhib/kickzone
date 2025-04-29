@@ -2,11 +2,19 @@ import { ApolloError } from '@apollo/client';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { useCategories } from '@kickzone-workspace/categories-hook';
 import { colors } from '@kickzone-workspace/colors';
+import { useProducts } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
+import AddIcon from '@mui/icons-material/Add';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
@@ -14,13 +22,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import Grid2 from '@mui/material/Grid2';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
-import { useTheme } from '@mui/material/styles';
+import { styled, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import React, { useCallback, useEffect, useState } from 'react';
-import { useAdminProductEditor } from './useAdminProductEditor';
-import { useProducts } from '@kickzone-workspace/products-hook';
+import { Tooltip } from '@mui/material';
 
 interface CategoryModalProps {
   open: boolean;
@@ -52,7 +59,7 @@ const CategoryModal = ({
   }, [categoryName, onSubmit, onClose]);
 
   return (
-    <Dialog open={open} onClose={onClose}>
+    <Dialog open={open} onClose={onClose} maxWidth="lg">
       <DialogTitle>{title}</DialogTitle>
       <DialogContent>
         <TextField
@@ -62,6 +69,9 @@ const CategoryModal = ({
           fullWidth
           value={categoryName}
           onChange={(e) => setCategoryName(e.target.value)}
+          slotProps={{
+            input: { 'aria-label': 'Category Name' },
+          }}
         />
       </DialogContent>
       <DialogActions>
@@ -78,6 +88,31 @@ const CategoryModal = ({
     </Dialog>
   );
 };
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
+const ImagePreviewCard = styled(Card)(({ theme }) => ({
+  maxWidth: 200,
+  margin: theme.spacing(1),
+  position: 'relative',
+}));
+
+const ImagePreviewContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: theme.spacing(2),
+  marginTop: theme.spacing(2),
+}));
 
 export function AdminProductEditor() {
   const [product, setProduct] = useState({
@@ -96,6 +131,11 @@ export function AdminProductEditor() {
     stockQuantity: 0,
   });
 
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [isUploadingImages, setIsUploadingImages] = useState(false);
+  const [createdProductId, setCreatedProductId] = useState<number | null>(null);
+
   const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<{
@@ -112,7 +152,12 @@ export function AdminProductEditor() {
     isUpdatingCategory,
   } = useCategories();
 
-  const { createProduct, isCreatingProduct } = useProducts();
+  const {
+    createProduct,
+    isCreatingProduct,
+    uploadProductImages,
+    removeProductImage,
+  } = useProducts();
   const { showSnackbar } = useSnackbarContext();
 
   const theme = useTheme();
@@ -126,7 +171,12 @@ export function AdminProductEditor() {
         setIsNewCategoryModalOpen(false);
       } catch (err) {
         const error = err as ApolloError;
-
+        console.log('Error details:', {
+          message: error.message,
+          networkError: error.networkError,
+          graphQLErrors: error.graphQLErrors,
+          extraInfo: error.extraInfo,
+        });
         showSnackbar(error.message, { severity: 'error' });
       }
     },
@@ -143,6 +193,12 @@ export function AdminProductEditor() {
         setSelectedCategory(null);
       } catch (err) {
         const error = err as ApolloError;
+        console.log('Error details:', {
+          message: error.message,
+          networkError: error.networkError,
+          graphQLErrors: error.graphQLErrors,
+          extraInfo: error.extraInfo,
+        });
         showSnackbar(error.message, { severity: 'error' });
       }
     },
@@ -187,32 +243,154 @@ export function AdminProductEditor() {
     async (e: React.FormEvent) => {
       e.preventDefault();
       try {
-        const result = await createProduct(
+        // Validate required fields
+        if (
+          !product.name ||
+          !productInfo.size ||
+          !productInfo.color ||
+          !productInfo.price ||
+          !productInfo.costPrice ||
+          !productInfo.weight ||
+          !productInfo.stockQuantity
+        ) {
+          showSnackbar('Please fill in all required fields', {
+            severity: 'error',
+          });
+          return;
+        }
+
+        // First create the product
+        const createdProduct = await createProduct(
           {
             name: product.name,
-            discount: product.discount,
+            discount: Number(product.discount) || 0,
             categoryIds: product.categoryIds,
           },
           {
             size: productInfo.size,
-            price: productInfo.price,
-            costPrice: productInfo.costPrice,
+            price: Number(productInfo.price),
+            costPrice: Number(productInfo.costPrice),
             color: productInfo.color,
-            weight: productInfo.weight,
-            discount: productInfo.discount,
-            stockQuantity: productInfo.stockQuantity,
+            weight: Number(productInfo.weight),
+            discount: Number(productInfo.discount) || 0,
+            stockQuantity: Number(productInfo.stockQuantity),
           }
         );
 
+        setCreatedProductId(createdProduct.product.id);
         showSnackbar('Product created successfully', { severity: 'success' });
-        console.log('Created product:', result);
       } catch (error) {
         const err = error as ApolloError;
+        console.log('Error details:', {
+          message: err.message,
+          networkError: err.networkError,
+          graphQLErrors: err.graphQLErrors,
+          extraInfo: err.extraInfo,
+        });
         showSnackbar(err.message, { severity: 'error' });
       }
     },
     [product, productInfo, createProduct, showSnackbar]
   );
+
+  const handleImageUpload = useCallback(
+    async (event: React.ChangeEvent<HTMLInputElement>) => {
+      const files = event.target.files;
+      if (!files || !createdProductId) {
+        if (!createdProductId) {
+          showSnackbar('Please save the product first to upload images', {
+            severity: 'warning',
+          });
+        }
+        return;
+      }
+
+      const newImages = Array.from(files);
+
+      // Validate file types
+      const validImageTypes = [
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+      ];
+      const invalidFiles = newImages.filter(
+        (file) => !validImageTypes.includes(file.type)
+      );
+      if (invalidFiles.length > 0) {
+        showSnackbar('Only image files (JPEG, PNG, GIF, WEBP) are allowed', {
+          severity: 'error',
+        });
+        return;
+      }
+
+      // Validate file sizes (max 5MB per file)
+      const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+      const oversizedFiles = newImages.filter((file) => file.size > maxSize);
+      if (oversizedFiles.length > 0) {
+        showSnackbar('Some files exceed the maximum size of 5MB', {
+          severity: 'error',
+        });
+        return;
+      }
+
+      setIsUploadingImages(true);
+      try {
+        // Create preview URLs before upload
+        const newPreviews = newImages.map((file) => URL.createObjectURL(file));
+        setImagePreviews((prev) => [...prev, ...newPreviews]);
+        setImages((prev) => [...prev, ...newImages]);
+
+        await uploadProductImages(createdProductId, newImages);
+        showSnackbar('Images uploaded successfully', { severity: 'success' });
+      } catch (error) {
+        const err = error as ApolloError;
+        console.log('Error details:', {
+          message: err.message,
+          networkError: err.networkError,
+          graphQLErrors: err.graphQLErrors,
+          extraInfo: err.extraInfo,
+        });
+        showSnackbar(err.message, { severity: 'error' });
+        // Remove failed uploads from state
+        setImages((prev) => prev.slice(0, -newImages.length));
+        setImagePreviews((prev) => {
+          const removedPreviews = prev.slice(-newImages.length);
+          removedPreviews.forEach((url) => URL.revokeObjectURL(url));
+          return prev.slice(0, -newImages.length);
+        });
+      } finally {
+        setIsUploadingImages(false);
+      }
+    },
+    [createdProductId, uploadProductImages, showSnackbar]
+  );
+
+  const handleRemoveImage = useCallback(
+    (index: number) => {
+      if (!createdProductId) return;
+
+      const imageToRemove = images[index];
+      setImages((prev) => prev.filter((_, i) => i !== index));
+      setImagePreviews((prev) => {
+        const newPreviews = [...prev];
+        URL.revokeObjectURL(newPreviews[index]);
+        newPreviews.splice(index, 1);
+        return newPreviews;
+      });
+
+      // Call the removeProductImage function
+      removeProductImage(createdProductId, imageToRemove.name);
+    },
+    [createdProductId, images, removeProductImage]
+  );
+
+  // Cleanup preview URLs when component unmounts
+  useEffect(() => {
+    return () => {
+      imagePreviews.forEach((preview) => URL.revokeObjectURL(preview));
+    };
+  }, [imagePreviews]);
 
   return (
     <AdminsLayout>
@@ -220,7 +398,7 @@ export function AdminProductEditor() {
         <Typography variant="h5" sx={{ mb: 3, color: colors.text }}>
           Add/Edit Product
         </Typography>
-        <form onSubmit={handleSubmit}>
+        <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
           <Grid2 container spacing={3} sx={{ height: '100%' }}>
             {/* Left Side - Basic Product Info */}
             <Grid2
@@ -228,6 +406,10 @@ export function AdminProductEditor() {
               sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
             >
               <TextField
+                id="product-name"
+                slotProps={{
+                  input: { 'aria-label': 'Product Name' },
+                }}
                 fullWidth
                 label="Product Name"
                 name="name"
@@ -236,6 +418,10 @@ export function AdminProductEditor() {
                 required
               />
               <TextField
+                id="product-discount"
+                slotProps={{
+                  input: { 'aria-label': 'Discount (%)' },
+                }}
                 fullWidth
                 label="Discount (%)"
                 name="discount"
@@ -247,35 +433,16 @@ export function AdminProductEditor() {
               <Box>
                 <Autocomplete
                   multiple
+                  id="categories-autocomplete"
                   options={categoriesData?.categories || []}
                   getOptionLabel={(option) => option.name}
                   value={
-                    categoriesData?.categories.filter((cat) =>
+                    categoriesData?.categories?.filter((cat) =>
                       product.categoryIds.includes(cat.id)
                     ) || []
                   }
                   onChange={handleCategoryChange}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Categories"
-                      InputProps={{
-                        ...params.InputProps,
-                        endAdornment: (
-                          <>
-                            {params.InputProps.endAdornment}
-                            <Button
-                              variant="outlined"
-                              onClick={() => setIsNewCategoryModalOpen(true)}
-                              sx={{ ml: 1 }}
-                            >
-                              Add New
-                            </Button>
-                          </>
-                        ),
-                      }}
-                    />
-                  )}
+                  loading={categoriesLoading}
                   renderOption={(props, option) => {
                     const { key, ...otherProps } = props;
                     return (
@@ -302,9 +469,46 @@ export function AdminProductEditor() {
                       </li>
                     );
                   }}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Category"
+                      slotProps={{
+                        input: {
+                          ...params.InputProps,
+                          'aria-label': 'Category',
+                          endAdornment: (
+                            <>
+                              {params.InputProps?.endAdornment}
+                              <IconButton
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setIsNewCategoryModalOpen(true);
+                                }}
+                                size="small"
+                                sx={{ ml: 1 }}
+                                aria-label="Add new category"
+                              >
+                                <AddIcon />
+                              </IconButton>
+                            </>
+                          ),
+                        },
+                      }}
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                  filterSelectedOptions
+                  openOnFocus
                 />
               </Box>
               <TextField
+                id="product-size"
+                slotProps={{
+                  input: { 'aria-label': 'Size' },
+                }}
                 fullWidth
                 label="Size"
                 name="size"
@@ -313,6 +517,10 @@ export function AdminProductEditor() {
                 required
               />
               <TextField
+                id="product-color"
+                slotProps={{
+                  input: { 'aria-label': 'Color' },
+                }}
                 fullWidth
                 label="Color"
                 name="color"
@@ -328,6 +536,10 @@ export function AdminProductEditor() {
               sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
             >
               <TextField
+                id="product-price"
+                slotProps={{
+                  input: { 'aria-label': 'Price' },
+                }}
                 fullWidth
                 label="Price"
                 name="price"
@@ -337,6 +549,10 @@ export function AdminProductEditor() {
                 required
               />
               <TextField
+                id="product-cost-price"
+                slotProps={{
+                  input: { 'aria-label': 'Cost Price' },
+                }}
                 fullWidth
                 label="Cost Price"
                 name="costPrice"
@@ -346,6 +562,10 @@ export function AdminProductEditor() {
                 required
               />
               <TextField
+                id="product-weight"
+                slotProps={{
+                  input: { 'aria-label': 'Weight (kg)' },
+                }}
                 fullWidth
                 label="Weight (kg)"
                 name="weight"
@@ -355,6 +575,10 @@ export function AdminProductEditor() {
                 required
               />
               <TextField
+                id="product-stock-quantity"
+                slotProps={{
+                  input: { 'aria-label': 'Stock Quantity' },
+                }}
                 fullWidth
                 label="Stock Quantity"
                 name="stockQuantity"
@@ -363,6 +587,69 @@ export function AdminProductEditor() {
                 onChange={handleProductInfoChange}
                 required
               />
+            </Grid2>
+
+            {/* Image Upload Section */}
+            <Grid2 size={12}>
+              <Box sx={{ mb: 2 }}>
+                <Tooltip
+                  title={
+                    !createdProductId
+                      ? 'Please create the product first to upload images'
+                      : ''
+                  }
+                  placement="top"
+                >
+                  <div>
+                    <Button
+                      component="label"
+                      variant="contained"
+                      startIcon={<AddPhotoAlternateIcon />}
+                      disabled={!createdProductId || isUploadingImages}
+                      sx={{
+                        backgroundColor: colors.main,
+                        '&:hover': { backgroundColor: colors.hoverMain },
+                      }}
+                    >
+                      {isUploadingImages ? 'Uploading...' : 'Upload Images'}
+                      <VisuallyHiddenInput
+                        type="file"
+                        multiple
+                        accept="image/*"
+                        onChange={handleImageUpload}
+                        disabled={!createdProductId || isUploadingImages}
+                      />
+                    </Button>
+                  </div>
+                </Tooltip>
+              </Box>
+              <ImagePreviewContainer>
+                {imagePreviews.map((preview, index) => (
+                  <ImagePreviewCard key={index}>
+                    <CardMedia
+                      component="img"
+                      height="140"
+                      image={preview}
+                      alt={`Product image ${index + 1}`}
+                    />
+                    <CardContent>
+                      <Typography variant="body2" color="text.secondary">
+                        {images[index].name}
+                      </Typography>
+                    </CardContent>
+                    <CardActions>
+                      <IconButton
+                        size="small"
+                        onClick={() => handleRemoveImage(index)}
+                        sx={{ color: 'error.main' }}
+                        aria-label="Delete image"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </CardActions>
+                  </ImagePreviewCard>
+                ))}
+              </ImagePreviewContainer>
             </Grid2>
 
             {/* Save Button */}

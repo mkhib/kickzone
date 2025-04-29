@@ -4,12 +4,12 @@ import { CategoryService, ProductService } from '@kickzone-workspace/services';
 import { SetMetadata, UseGuards } from '@nestjs/common';
 import {
   Args,
+  Field,
+  InputType,
+  Int,
   Mutation,
   Query,
   Resolver,
-  InputType,
-  Field,
-  ID,
 } from '@nestjs/graphql';
 
 @InputType()
@@ -20,7 +20,7 @@ export class CreateCategoryInput {
 
 @InputType()
 export class UpdateCategoryInput {
-  @Field(() => ID)
+  @Field(() => Int)
   id: number;
 
   @Field()
