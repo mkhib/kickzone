@@ -54,6 +54,13 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
         ),
         playground: true,
         introspection: true,
+        buildSchemaOptions: {
+          numberScalarMode: 'integer',
+        },
+        uploads: {
+          maxFileSize: 10000000, // 10 MB
+          maxFiles: 10,
+        },
         context: async ({ req, res }) => {
           // Get the token from cookies
           const token = req.cookies['access_token'];

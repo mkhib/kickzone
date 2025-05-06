@@ -35,4 +35,26 @@ export class CategoryService {
     category.name = name;
     return this.categoryRepository.save(category);
   }
+
+  async deleteCategory(id: number): Promise<void> {
+    const category = await this.categoryRepository.findOne({ where: { id } });
+
+    if (!category) {
+      throw new NotFoundException(`Category with ID ${id} not found`);
+    }
+
+    // Check if category has any products using a count query
+    const productCount = await this.categoryRepository
+      .createQueryBuilder('category')
+      .leftJoin('category.products', 'product')
+      .where('category.id = :id', { id })
+      .select('COUNT(product.id)', 'count')
+      .getRawOne();
+
+    if (productCount && Number(productCount.count) > 0) {
+      throw new Error('Cannot delete category that is assigned to products');
+    }
+
+    await this.categoryRepository.remove(category);
+  }
 }

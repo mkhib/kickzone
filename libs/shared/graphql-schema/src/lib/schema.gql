@@ -88,6 +88,7 @@ type Mutation {
   logout: Boolean!
   createCategory(input: CreateCategoryInput!): Category!
   updateCategory(input: UpdateCategoryInput!): Category!
+  deleteCategory(id: Int!): Boolean!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): ProductInfo!
   uploadProductInfoImages(productInfoId: Float!, files: [Upload!]!): [String!]!

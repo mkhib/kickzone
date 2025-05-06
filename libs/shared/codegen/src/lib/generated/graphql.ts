@@ -56,6 +56,7 @@ export type Mutation = {
   createProduct: Product;
   createProductInfo: ProductInfo;
   createUser: User;
+  deleteCategory: Scalars['Boolean']['output'];
   login: User;
   logout: Scalars['Boolean']['output'];
   removeProductInfoImage: Scalars['Boolean']['output'];
@@ -81,6 +82,11 @@ export type MutationCreateProductInfoArgs = {
 
 export type MutationCreateUserArgs = {
   createUserInput: CreateUserInput;
+};
+
+
+export type MutationDeleteCategoryArgs = {
+  id: Scalars['Int']['input'];
 };
 
 

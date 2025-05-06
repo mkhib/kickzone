@@ -52,4 +52,12 @@ export class CategoryResolver {
   async updateCategory(@Args('input') input: UpdateCategoryInput) {
     return this.categoryService.updateCategory(input.id, input.name);
   }
+
+  @Mutation(() => Boolean)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async deleteCategory(@Args('id', { type: () => Int }) id: number) {
+    await this.categoryService.deleteCategory(id);
+    return true;
+  }
 }

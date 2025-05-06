@@ -28,11 +28,18 @@ const UPDATE_CATEGORY = gql`
   }
 `;
 
+const DELETE_CATEGORY = gql`
+  mutation DeleteCategory($id: Int!) {
+    deleteCategory(id: $id)
+  }
+`;
+
 export const useCategories = () => {
   const {
     data: categoriesData,
     loading: categoriesLoading,
     error: categoriesError,
+    refetch: refetchCategories,
   } = useQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>(
     CATEGORIES_QUERY
   );
@@ -90,6 +97,33 @@ export const useCategories = () => {
     },
   });
 
+  const [deleteCategoryMutation, { loading: isDeletingCategory }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'deleteCategory'>,
+    KickzoneGraphqlTypes.MutationDeleteCategoryArgs
+  >(DELETE_CATEGORY, {
+    update(cache, { data }, { variables }) {
+      if (!data?.deleteCategory || !variables?.id) return;
+
+      const existingData = cache.readQuery<
+        Pick<KickzoneGraphqlTypes.Query, 'categories'>
+      >({
+        query: CATEGORIES_QUERY,
+      });
+
+      if (!existingData?.categories) return;
+
+      // Remove the deleted category from the cache
+      cache.writeQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>({
+        query: CATEGORIES_QUERY,
+        data: {
+          categories: existingData.categories.filter(
+            (category) => category.id !== variables.id
+          ),
+        },
+      });
+    },
+  });
+
   const createCategory = (name: string) =>
     createCategoryMutation({
       variables: {
@@ -104,13 +138,23 @@ export const useCategories = () => {
       },
     });
 
+  const deleteCategory = (id: number) =>
+    deleteCategoryMutation({
+      variables: { id },
+      optimisticResponse: {
+        deleteCategory: true,
+      },
+    });
+
   return {
     categoriesData,
     categoriesLoading,
     categoriesError,
     createCategory,
     updateCategory,
+    deleteCategory,
     isCreatingCategory,
     isUpdatingCategory,
+    isDeletingCategory,
   };
 };

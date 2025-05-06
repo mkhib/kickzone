@@ -8,6 +8,7 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import AddIcon from '@mui/icons-material/Add';
+import WarningIcon from '@mui/icons-material/Warning';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -84,6 +85,48 @@ const CategoryModal = ({
           color="primary"
         >
           Save
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+interface DeleteCategoryModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  categoryName: string;
+  isLoading?: boolean;
+}
+
+const DeleteCategoryModal = ({
+  open,
+  onClose,
+  onConfirm,
+  categoryName,
+  isLoading = false,
+}: DeleteCategoryModalProps) => {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <WarningIcon color="warning" />
+        Delete Category
+      </DialogTitle>
+      <DialogContent>
+        <Typography>
+          Are you sure you want to delete the category "{categoryName}"? This
+          action cannot be undone.
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={onConfirm}
+          loading={isLoading}
+          variant="contained"
+          color="error"
+        >
+          Delete
         </Button>
       </DialogActions>
     </Dialog>
@@ -336,13 +379,22 @@ export function AdminProductEditor() {
     name: string;
   } | null>(null);
 
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] =
+    useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+
   const {
     categoriesData,
     categoriesLoading,
     createCategory,
     updateCategory,
+    deleteCategory,
     isCreatingCategory,
     isUpdatingCategory,
+    isDeletingCategory,
   } = useCategories();
 
   const {
@@ -589,6 +641,32 @@ export function AdminProductEditor() {
     [product, productInfos, createProductWithInfos, showSnackbar]
   );
 
+  const handleDeleteCategory = useCallback(async () => {
+    if (!categoryToDelete) return;
+    try {
+      await deleteCategory(categoryToDelete.id);
+      setIsDeleteCategoryModalOpen(false);
+      setCategoryToDelete(null);
+      showSnackbar('Category deleted successfully', { severity: 'success' });
+    } catch (error) {
+      const message = (error as Error).message;
+      showSnackbar(message, { severity: 'error' });
+    }
+  }, [categoryToDelete, deleteCategory, showSnackbar]);
+
+  const handleOpenDeleteCategoryModal = useCallback(
+    (category: { id: number; name: string }) => {
+      setCategoryToDelete(category);
+      setIsDeleteCategoryModalOpen(true);
+    },
+    []
+  );
+
+  const handleCloseDeleteCategoryModal = useCallback(() => {
+    setIsDeleteCategoryModalOpen(false);
+    setCategoryToDelete(null);
+  }, []);
+
   return (
     <AdminsLayout>
       <Paper elevation={3} sx={{ p: 4, borderRadius: 2, height: '100%' }}>
@@ -645,16 +723,28 @@ export function AdminProductEditor() {
                           }}
                         >
                           {option.name}
-                          <IconButton
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSelectedCategory(option);
-                              setIsEditCategoryModalOpen(true);
-                            }}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
+                          <Box>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedCategory(option);
+                                setIsEditCategoryModalOpen(true);
+                              }}
+                            >
+                              <EditIcon fontSize="small" />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleOpenDeleteCategoryModal(option);
+                              }}
+                              color="error"
+                            >
+                              <DeleteIcon fontSize="small" />
+                            </IconButton>
+                          </Box>
                         </Box>
                       </li>
                     );
@@ -791,6 +881,13 @@ export function AdminProductEditor() {
         initialName={selectedCategory?.name || ''}
         title="Edit Category"
         isLoading={isUpdatingCategory}
+      />
+      <DeleteCategoryModal
+        open={isDeleteCategoryModalOpen}
+        onClose={handleCloseDeleteCategoryModal}
+        onConfirm={handleDeleteCategory}
+        categoryName={categoryToDelete?.name || ''}
+        isLoading={isDeletingCategory}
       />
     </AdminsLayout>
   );
