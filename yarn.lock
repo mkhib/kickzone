@@ -4737,16 +4737,15 @@
   dependencies:
     "@types/node" "*"
 
-"@types/graphql-upload@^17.0.0":
-  version "17.0.0"
-  resolved "https://registry.yarnpkg.com/@types/graphql-upload/-/graphql-upload-17.0.0.tgz#078d85fdd63271d1ad4b83ea42bbae3370b14d67"
-  integrity sha512-2ccZtgR7o43PultV3asCeqHZxFnAbtBA7nZ4slEMSaf3fN9yWI11HtZvRuN3LK0Qcdnzj2YeXzBYwbI8WGqhUw==
+"@types/graphql-upload@15.0.0":
+  version "15.0.0"
+  resolved "https://registry.yarnpkg.com/@types/graphql-upload/-/graphql-upload-15.0.0.tgz#4e9afef0c09dd9b8691c89de515f9b2c1e97ebf2"
+  integrity sha512-miPAsPntgSHXQadZWxFRHZHvlNeBBM6TPtMcgQaofqeJFBBs9aZIrlXVetinpxf78tjbhAqxfxWzKCPR/sQsww==
   dependencies:
     "@types/express" "*"
     "@types/koa" "*"
-    "@types/node" "*"
     fs-capacitor "^8.0.0"
-    graphql "^16.9.0"
+    graphql "0.13.1 - 16"
 
 "@types/http-assert@*":
   version "1.5.6"
@@ -5743,6 +5742,13 @@ apollo-server-types@^3.8.0:
     "@apollo/utils.logger" "^1.0.0"
     apollo-reporting-protobuf "^3.4.0"
     apollo-server-env "^4.2.1"
+
+apollo-upload-client@16.0.0:
+  version "16.0.0"
+  resolved "https://registry.yarnpkg.com/apollo-upload-client/-/apollo-upload-client-16.0.0.tgz#704c9bc21e12bd4687172876eb927cf756b2e524"
+  integrity sha512-aLhYucyA0T8aBEQ5g+p13qnR9RUyL8xqb8FSZ7e/Kw2KUOsotLUlFluLobqaE7JSUFwc6sKfXIcwB7y4yEjbZg==
+  dependencies:
+    extract-files "^11.0.0"
 
 app-root-path@^3.1.0:
   version "3.1.0"
@@ -8894,15 +8900,15 @@ graphql-ws@^6.0.3:
   resolved "https://registry.yarnpkg.com/graphql-ws/-/graphql-ws-6.0.4.tgz#f0376170965f9535576b2d3e897db38b463a31f0"
   integrity sha512-8b4OZtNOvv8+NZva8HXamrc0y1jluYC0+13gdh7198FKjVzXyTvVc95DCwGzaKEfn3YuWZxUqjJlHe3qKM/F2g==
 
+"graphql@0.13.1 - 16":
+  version "16.11.0"
+  resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.11.0.tgz#96d17f66370678027fdf59b2d4c20b4efaa8a633"
+  integrity sha512-mS1lbMsxgQj6hge1XZ6p7GPhbrtFwUFYi3wRzXAC/FmYnyXMTvvI3td3rjmQ2u8ewXueaSvRPWaEcgVVOT9Jnw==
+
 graphql@^16.10.0:
   version "16.10.0"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.10.0.tgz#24c01ae0af6b11ea87bf55694429198aaa8e220c"
   integrity sha512-AjqGKbDGUFRKIRCP9tCKiIGHyriz2oHEbPIbEtcSLSs4YjReZOIPQQWek4+6hjw62H9QShXHyaGivGiYVLeYFQ==
-
-graphql@^16.9.0:
-  version "16.11.0"
-  resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.11.0.tgz#96d17f66370678027fdf59b2d4c20b4efaa8a633"
-  integrity sha512-mS1lbMsxgQj6hge1XZ6p7GPhbrtFwUFYi3wRzXAC/FmYnyXMTvvI3td3rjmQ2u8ewXueaSvRPWaEcgVVOT9Jnw==
 
 handle-thing@^2.0.0:
   version "2.0.1"

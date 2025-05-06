@@ -1,14 +1,17 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
+import { join } from 'path';
 
 import { AppModule } from './app/app.module';
 import { readFileSync } from 'fs';
 import cookieParser from 'cookie-parser';
+import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 
 declare const module: any;
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, {
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     httpsOptions: {
       key: readFileSync('./localhost-key.pem'),
       cert: readFileSync('./localhost.pem'),
@@ -30,6 +33,19 @@ async function bootstrap() {
     // allowedHeaders: 'Content-Type,Authorization',
   });
   app.use(cookieParser());
+
+  // Add graphql-upload middleware
+  app.use(
+    graphqlUploadExpress({
+      maxFileSize: 10000000, // 10 MB
+      maxFiles: 10,
+    })
+  );
+
+  app.useStaticAssets(join(process.cwd(), 'uploads'), {
+    prefix: '/uploads/',
+  });
+
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   const port = process.env.API_PORT || 3000;

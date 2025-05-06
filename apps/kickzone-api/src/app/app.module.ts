@@ -57,10 +57,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
         buildSchemaOptions: {
           numberScalarMode: 'integer',
         },
-        uploads: {
-          maxFileSize: 10000000, // 10 MB
-          maxFiles: 10,
-        },
+        uploads: false, // Disable built-in upload handling since we're using graphql-upload middleware
         context: async ({ req, res }) => {
           // Get the token from cookies
           const token = req.cookies['access_token'];

@@ -72,26 +72,62 @@ export class ProductResolver {
     @Args({ name: 'files', type: () => [GraphQLUpload] })
     files: Promise<FileUpload>[]
   ): Promise<string[]> {
+    console.log('uploadProductInfoImages called');
+    console.log('productInfoId:', productInfoId);
+    console.log('files:', files);
     const uploadDir = path.join(process.cwd(), 'uploads', 'products');
-    if (!fs.existsSync(uploadDir)) fs.mkdirSync(uploadDir, { recursive: true });
+    if (!fs.existsSync(uploadDir)) {
+      console.log('Creating upload directory:', uploadDir);
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
 
-    const uploadedFiles = await Promise.all(files);
+    let uploadedFiles;
+    try {
+      uploadedFiles = await Promise.all(files);
+      console.log(
+        'uploadedFiles:',
+        uploadedFiles.map((f) => ({
+          filename: f.filename,
+          mimetype: f.mimetype,
+          encoding: f.encoding,
+        }))
+      );
+    } catch (err) {
+      console.error('Error resolving uploaded files:', err);
+      throw err;
+    }
 
     const imageUrls: string[] = [];
     for (const file of uploadedFiles) {
       const { createReadStream, filename } = file;
       const uniqueName = `${Date.now()}-${filename}`;
       const filePath = path.join(uploadDir, uniqueName);
-      await new Promise((resolve, reject) => {
-        createReadStream()
-          .pipe(fs.createWriteStream(filePath))
-          .on('finish', resolve)
-          .on('error', reject);
-      });
-      imageUrls.push(`/uploads/products/${uniqueName}`);
+      try {
+        await new Promise((resolve, reject) => {
+          const stream = createReadStream();
+          stream
+            .pipe(fs.createWriteStream(filePath))
+            .on('finish', resolve)
+            .on('error', reject);
+        });
+        imageUrls.push(`/uploads/products/${uniqueName}`);
+        console.log('Saved file:', filePath);
+      } catch (err) {
+        console.error('Error saving file:', filename, err);
+        throw err;
+      }
     }
 
-    await this.productService.addImagesToProductInfo(productInfoId, imageUrls);
+    try {
+      await this.productService.addImagesToProductInfo(
+        productInfoId,
+        imageUrls
+      );
+      console.log('Added image URLs to product info:', imageUrls);
+    } catch (err) {
+      console.error('Error adding images to product info:', err);
+      throw err;
+    }
     return imageUrls;
   }
 

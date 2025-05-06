@@ -59,7 +59,7 @@ export function useProducts() {
 
   const [uploadProductInfoImagesMutation] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'uploadProductInfoImages'>,
-    { productInfoId: number; files: Promise<File>[] }
+    { productInfoId: number; files: File[] }
   >(UPLOAD_PRODUCT_INFO_IMAGES);
 
   const [removeProductInfoImageMutation] = useMutation<
@@ -122,7 +122,7 @@ export function useProducts() {
         const { data } = await uploadProductInfoImagesMutation({
           variables: {
             productInfoId,
-            files: files.map((file) => Promise.resolve(file)),
+            files,
           },
         });
         return data?.uploadProductInfoImages || [];

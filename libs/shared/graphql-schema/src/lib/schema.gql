@@ -58,7 +58,7 @@ type UserConnection {
 }
 
 type Query {
-  users(first: Float, after: String, searchTerm: String): UserConnection!
+  users(first: Int, after: String, searchTerm: String): UserConnection!
   me: User
   categories: [Category!]!
   products(filter: ProductFilterInput): [Product!]!
@@ -68,7 +68,7 @@ input ProductFilterInput {
   category: String
   searchTerm: String
   productInfoFilter: ProductInfoFilterInput
-  first: Float
+  first: Int
   after: String
 }
 
@@ -91,8 +91,8 @@ type Mutation {
   deleteCategory(id: Int!): Boolean!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): ProductInfo!
-  uploadProductInfoImages(productInfoId: Float!, files: [Upload!]!): [String!]!
-  removeProductInfoImage(productInfoId: Float!, imageName: String!): Boolean!
+  uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
+  removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
 }
 
 input CreateUserInput {
