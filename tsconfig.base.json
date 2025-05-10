@@ -19,6 +19,9 @@
       "@kickzone-workspace/admin-product-editor": [
         "libs/client/admins/screens/product-editor/src/index.ts"
       ],
+      "@kickzone-workspace/admin-products": [
+        "libs/client/admins/screens/products/src/index.ts"
+      ],
       "@kickzone-workspace/admins-contexts": [
         "libs/client/admins/contexts/src/index.ts"
       ],
