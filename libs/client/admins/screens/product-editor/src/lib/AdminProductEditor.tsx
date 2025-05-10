@@ -131,6 +131,39 @@ const DeleteCategoryModal = ({
   );
 };
 
+interface DeleteImageModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  imageType: 'preview' | 'uploaded';
+}
+
+const DeleteImageModal = ({
+  open,
+  onClose,
+  onConfirm,
+  imageType,
+}: DeleteImageModalProps) => (
+  <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <WarningIcon color="warning" />
+      Delete Image
+    </DialogTitle>
+    <DialogContent>
+      <Typography>
+        Are you sure you want to delete this{' '}
+        {imageType === 'preview' ? 'selected' : 'uploaded'} image?
+      </Typography>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose}>Cancel</Button>
+      <Button onClick={onConfirm} variant="contained" color="error">
+        Delete
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
+
 const VisuallyHiddenInput = styled('input')({
   clip: 'rect(0 0 0 0)',
   clipPath: 'inset(50%)',
@@ -164,7 +197,7 @@ export type ProductInfoState = KickzoneGraphqlTypes.CreateProductInfoInput & {
   createdId: number | null;
   isUploading: boolean;
   newImages: File[];
-  newImagePreviews: string[];
+  newImagePreviews: { file: File; url: string }[];
 };
 
 interface ProductInfoCardProps {
@@ -202,7 +235,7 @@ const ProductInfoCard = React.memo(
         component="label"
         variant="contained"
         startIcon={<AddPhotoAlternateIcon />}
-        disabled={!info.createdId || info.isUploading}
+        disabled={info.isUploading}
         sx={{
           backgroundColor: colors.main,
           '&:hover': { backgroundColor: colors.hoverMain },
@@ -213,8 +246,12 @@ const ProductInfoCard = React.memo(
           type="file"
           multiple
           accept="image/*"
-          onChange={(e) => onImageUpload(idx, e)}
-          disabled={!info.createdId || info.isUploading}
+          onChange={(e) => {
+            onImageUpload(idx, e);
+            // Reset the value so the same file can be selected again
+            e.target.value = '';
+          }}
+          disabled={info.isUploading}
         />
       </Button>
     );
@@ -297,13 +334,7 @@ const ProductInfoCard = React.memo(
           />
         </Box>
         <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-          {!info.createdId ? (
-            <Tooltip title="Save the product first to upload images">
-              <span>{uploadButton}</span>
-            </Tooltip>
-          ) : (
-            uploadButton
-          )}
+          {uploadButton}
           <IconButton
             onClick={() => onRemove(idx)}
             color="error"
@@ -326,12 +357,12 @@ const ProductInfoCard = React.memo(
                 Selected Images (not yet uploaded):
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
-                {info.newImagePreviews.map((preview, imageIdx) => (
+                {info.newImagePreviews.map((previewObj, imageIdx) => (
                   <ImagePreviewCard key={imageIdx}>
                     <CardMedia
                       component="img"
                       height="140"
-                      image={preview}
+                      image={previewObj.url}
                       alt={`Selected image ${imageIdx + 1}`}
                     />
                     <CardActions>
@@ -352,7 +383,11 @@ const ProductInfoCard = React.memo(
                 color="primary"
                 sx={{ mt: 1 }}
                 onClick={() => onUploadSelectedImages(idx)}
-                disabled={info.isUploading || info.newImages.length === 0}
+                disabled={
+                  info.isUploading ||
+                  info.newImages.length === 0 ||
+                  !info.createdId
+                }
               >
                 {info.isUploading ? 'Uploading...' : 'Upload Images'}
               </Button>
@@ -408,20 +443,20 @@ const BACKEND_BASE_URL = 'https://localhost:4000';
 
 export function AdminProductEditor() {
   const [product, setProduct] = useState({
-    name: '',
+    name: 'jordan ',
     categoryIds: [] as number[],
   });
 
   const [productInfos, setProductInfos] = useState<ProductInfoState[]>([
     {
       productId: 0,
-      size: '',
-      price: 0,
-      costPrice: 0,
-      color: '',
-      weight: 0,
+      size: '42',
+      price: 200,
+      costPrice: 200,
+      color: 'red',
+      weight: 2,
       discount: 0,
-      stockQuantity: 0,
+      stockQuantity: 2,
       images: [],
       imagePreviews: [],
       uploadedImageUrls: [],
@@ -449,6 +484,13 @@ export function AdminProductEditor() {
     id: number;
     name: string;
   } | null>(null);
+
+  const [deleteImageModal, setDeleteImageModal] = useState<{
+    open: boolean;
+    infoIdx: number | null;
+    imageIdx: number | null;
+    imageType: 'preview' | 'uploaded' | null;
+  }>({ open: false, infoIdx: null, imageIdx: null, imageType: null });
 
   const {
     categoriesData,
@@ -530,7 +572,7 @@ export function AdminProductEditor() {
     (index: number, event: React.ChangeEvent<HTMLInputElement>) => {
       const files = event.target.files;
       if (!files) return;
-      const newImages = Array.from(files);
+      const newFiles = Array.from(files);
       // Validate file types
       const validImageTypes = [
         'image/jpeg',
@@ -538,7 +580,7 @@ export function AdminProductEditor() {
         'image/gif',
         'image/webp',
       ];
-      const invalidFiles = newImages.filter(
+      const invalidFiles = newFiles.filter(
         (file) => !validImageTypes.includes(file.type)
       );
       if (invalidFiles.length > 0) {
@@ -549,23 +591,35 @@ export function AdminProductEditor() {
       }
       // Validate file sizes (max 5MB per file)
       const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-      const oversizedFiles = newImages.filter((file) => file.size > maxSize);
+      const oversizedFiles = newFiles.filter((file) => file.size > maxSize);
       if (oversizedFiles.length > 0) {
         showSnackbar('Some files exceed the maximum size of 5MB', {
           severity: 'error',
         });
         return;
       }
-      // Revoke previous previews before replacing
       setProductInfos((prev) => {
         const updated = [...prev];
-        updated[index].newImagePreviews?.forEach((url) =>
-          URL.revokeObjectURL(url)
+        const existingFiles = updated[index].newImages || [];
+        const existingPreviews = updated[index].newImagePreviews || [];
+        // Only add files that are not already present (by name+size)
+        const filesToAdd = newFiles.filter(
+          (file) =>
+            !existingFiles.some(
+              (f) => f.name === file.name && f.size === file.size
+            )
         );
-        updated[index].newImages = newImages;
-        updated[index].newImagePreviews = newImages.map((file) =>
-          URL.createObjectURL(file)
-        );
+        updated[index] = {
+          ...updated[index],
+          newImages: [...existingFiles, ...filesToAdd],
+          newImagePreviews: [
+            ...existingPreviews,
+            ...filesToAdd.map((file) => ({
+              file,
+              url: URL.createObjectURL(file),
+            })),
+          ],
+        };
         return updated;
       });
     },
@@ -577,15 +631,25 @@ export function AdminProductEditor() {
     (infoIdx: number, imageIdx: number) => {
       setProductInfos((prev) => {
         const updated = [...prev];
-        // Revoke the object URL to avoid memory leaks
-        const urlToRevoke = updated[infoIdx].newImagePreviews[imageIdx];
-        if (urlToRevoke) URL.revokeObjectURL(urlToRevoke);
-        updated[infoIdx].newImages = updated[infoIdx].newImages.filter(
+        const previewObj = updated[infoIdx].newImagePreviews[imageIdx];
+        if (previewObj) URL.revokeObjectURL(previewObj.url);
+        // Remove from newImages by file reference, not just index
+        const newImages = updated[infoIdx].newImages.filter(
+          (file) =>
+            !(
+              previewObj &&
+              file.name === previewObj.file.name &&
+              file.size === previewObj.file.size
+            )
+        );
+        const newImagePreviews = updated[infoIdx].newImagePreviews.filter(
           (_, i) => i !== imageIdx
         );
-        updated[infoIdx].newImagePreviews = updated[
-          infoIdx
-        ].newImagePreviews.filter((_, i) => i !== imageIdx);
+        updated[infoIdx] = {
+          ...updated[infoIdx],
+          newImages,
+          newImagePreviews,
+        };
         return updated;
       });
     },
@@ -608,8 +672,16 @@ export function AdminProductEditor() {
         return updated;
       });
       try {
-        const newImages = productInfos[index].newImages;
-        const previewsToRevoke = productInfos[index].newImagePreviews;
+        // Use the latest state for newImages and newImagePreviews
+        let newImages: File[] = [];
+        let previewsToRevoke: string[] = [];
+        setProductInfos((prev) => {
+          newImages = prev[index].newImages;
+          previewsToRevoke = prev[index].newImagePreviews.map((obj) => obj.url);
+          return prev;
+        });
+        // Wait a tick to ensure state is updated
+        await new Promise((resolve) => setTimeout(resolve, 0));
         const uploadedUrls = await uploadProductInfoImages(
           productInfoId,
           newImages
@@ -618,26 +690,29 @@ export function AdminProductEditor() {
         previewsToRevoke.forEach((url) => URL.revokeObjectURL(url));
         setProductInfos((prev) => {
           const updated = [...prev];
-          updated[index].uploadedImageUrls = [
-            ...(updated[index].uploadedImageUrls || []),
-            ...uploadedUrls,
-          ];
-          updated[index].newImages = [];
-          updated[index].newImagePreviews = [];
-          updated[index].isUploading = false;
+          updated[index] = {
+            ...updated[index],
+            uploadedImageUrls: [
+              ...(updated[index].uploadedImageUrls || []),
+              ...uploadedUrls,
+            ],
+            newImages: [],
+            newImagePreviews: [] as { file: File; url: string }[],
+            isUploading: false,
+          };
           return updated;
         });
         showSnackbar('Images uploaded successfully', { severity: 'success' });
       } catch (error) {
-        showSnackbar((error as Error).message, { severity: 'error' });
         setProductInfos((prev) => {
           const updated = [...prev];
           updated[index].isUploading = false;
           return updated;
         });
+        showSnackbar((error as Error).message, { severity: 'error' });
       }
     },
-    [createdProductInfoIds, productInfos, uploadProductInfoImages, showSnackbar]
+    [createdProductInfoIds, uploadProductInfoImages, showSnackbar]
   );
 
   // Remove an uploaded image (from server)
@@ -752,6 +827,72 @@ export function AdminProductEditor() {
   const handleCloseDeleteCategoryModal = useCallback(() => {
     setIsDeleteCategoryModalOpen(false);
     setCategoryToDelete(null);
+  }, []);
+
+  const handleRequestRemoveSelectedImage = useCallback(
+    (infoIdx: number, imageIdx: number) => {
+      setDeleteImageModal({
+        open: true,
+        infoIdx,
+        imageIdx,
+        imageType: 'preview',
+      });
+    },
+    []
+  );
+
+  const handleRequestRemoveUploadedImage = useCallback(
+    (infoIdx: number, imageIdx: number) => {
+      setDeleteImageModal({
+        open: true,
+        infoIdx,
+        imageIdx,
+        imageType: 'uploaded',
+      });
+    },
+    []
+  );
+
+  const handleConfirmDeleteImage = useCallback(() => {
+    if (
+      deleteImageModal.infoIdx === null ||
+      deleteImageModal.imageIdx === null ||
+      !deleteImageModal.imageType
+    ) {
+      setDeleteImageModal({
+        open: false,
+        infoIdx: null,
+        imageIdx: null,
+        imageType: null,
+      });
+      return;
+    }
+    if (deleteImageModal.imageType === 'preview') {
+      handleRemoveSelectedImage(
+        deleteImageModal.infoIdx,
+        deleteImageModal.imageIdx
+      );
+    } else if (deleteImageModal.imageType === 'uploaded') {
+      handleRemoveUploadedImage(
+        deleteImageModal.infoIdx,
+        deleteImageModal.imageIdx
+      );
+    }
+    setDeleteImageModal({
+      open: false,
+      infoIdx: null,
+      imageIdx: null,
+      imageType: null,
+    });
+  }, [deleteImageModal, handleRemoveSelectedImage, handleRemoveUploadedImage]);
+
+  const handleCloseDeleteImageModal = useCallback(() => {
+    setDeleteImageModal({
+      open: false,
+      infoIdx: null,
+      imageIdx: null,
+      imageType: null,
+    });
   }, []);
 
   return (
@@ -885,10 +1026,10 @@ export function AdminProductEditor() {
                   onChange={handleProductInfoChange}
                   onImageUpload={handleImageSelection}
                   onRemove={handleRemoveProductInfo}
-                  onRemoveImage={handleRemoveUploadedImage}
+                  onRemoveImage={handleRequestRemoveUploadedImage}
                   disableRemove={productInfos.length === 1}
-                  onRemoveSelectedImage={handleRemoveSelectedImage}
-                  onRemoveUploadedImage={handleRemoveUploadedImage}
+                  onRemoveSelectedImage={handleRequestRemoveSelectedImage}
+                  onRemoveUploadedImage={handleRequestRemoveUploadedImage}
                   onUploadSelectedImages={handleUploadSelectedImages}
                 />
               ))}
@@ -978,6 +1119,14 @@ export function AdminProductEditor() {
         onConfirm={handleDeleteCategory}
         categoryName={categoryToDelete?.name || ''}
         isLoading={isDeletingCategory}
+      />
+      <DeleteImageModal
+        open={deleteImageModal.open}
+        onClose={handleCloseDeleteImageModal}
+        onConfirm={handleConfirmDeleteImage}
+        imageType={
+          deleteImageModal.imageType === 'preview' ? 'preview' : 'uploaded'
+        }
       />
     </AdminsLayout>
   );
