@@ -1,6 +1,11 @@
 import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
 import { ProductService } from '@kickzone-workspace/services';
-import { Product, ProductInfo, Category } from '@kickzone-workspace/entities';
+import {
+  Product,
+  ProductInfo,
+  Category,
+  ProductConnection,
+} from '@kickzone-workspace/entities';
 import {
   CreateProductInput,
   CreateProductInfoInput,
@@ -13,6 +18,7 @@ import { SetMetadata, UseGuards } from '@nestjs/common';
 import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import * as fs from 'fs';
 import * as path from 'path';
+import { createConnection } from '@kickzone-workspace/utils';
 
 export interface FileUpload {
   filename: string;
@@ -25,11 +31,19 @@ export interface FileUpload {
 export class ProductResolver {
   constructor(private readonly productService: ProductService) {}
 
-  @Query(() => [Product])
+  @Query(() => ProductConnection)
   async products(
     @Args('filter', { nullable: true }) filter?: ProductFilterInput
-  ) {
-    return this.productService.getProducts(filter);
+  ): Promise<ProductConnection> {
+    const [products, totalCount] = await this.productService.getProducts(
+      filter
+    );
+    return createConnection(
+      products,
+      totalCount,
+      filter?.first || 10,
+      filter?.after
+    );
   }
 
   @Mutation(() => Product)

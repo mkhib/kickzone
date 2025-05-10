@@ -33,6 +33,17 @@ type Product {
   discount: Float!
 }
 
+type ProductEdge {
+  cursor: String!
+  node: Product!
+}
+
+type ProductConnection {
+  pageInfo: PageInfo!
+  totalCount: Int!
+  edges: [ProductEdge!]!
+}
+
 type User {
   id: ID!
   name: String!
@@ -61,7 +72,7 @@ type Query {
   users(first: Int, after: String, searchTerm: String): UserConnection!
   me: User
   categories: [Category!]!
-  products(filter: ProductFilterInput): [Product!]!
+  products(filter: ProductFilterInput): ProductConnection!
 }
 
 input ProductFilterInput {

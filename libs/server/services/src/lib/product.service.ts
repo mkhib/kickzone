@@ -20,7 +20,7 @@ export class ProductService {
     private readonly categoryRepository: Repository<Category>
   ) {}
 
-  async getProducts(filter?: ProductFilterInput) {
+  async getProducts(filter?: ProductFilterInput): Promise<[Product[], number]> {
     const query = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.productInfos', 'productInfo')
@@ -58,6 +58,8 @@ export class ProductService {
         });
     }
 
+    const totalCount = await query.getCount();
+
     if (filter?.first) {
       query.take(filter.first);
     }
@@ -66,7 +68,8 @@ export class ProductService {
       query.skip(parseInt(filter.after, 10));
     }
 
-    return query.getMany();
+    const products = await query.getMany();
+    return [products, totalCount];
   }
 
   async createProduct(input: CreateProductInput) {

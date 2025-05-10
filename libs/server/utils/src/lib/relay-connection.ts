@@ -52,3 +52,18 @@ export function createConnection<T extends Node>(
     totalCount,
   };
 }
+
+@ObjectType({ isAbstract: true })
+export class EdgeType<T> {
+  @Field(() => String)
+  cursor: string | number;
+}
+
+@ObjectType({ isAbstract: true })
+export class ConnectionType<T> {
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+
+  @Field(() => Int)
+  totalCount: number;
+}

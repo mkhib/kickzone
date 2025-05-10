@@ -17,6 +17,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { useCallback, useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 const drawerWidth = 300;
 
@@ -37,6 +38,8 @@ export function AdminsHeaderbar() {
   const { admin: user, setAdmin, logoutAdmin } = useAdminsAuthContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -49,28 +52,81 @@ export function AdminsHeaderbar() {
 
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: '#333333' }}>
-        <Toolbar>
+      <AppBar
+        position="static"
+        sx={{
+          background: 'linear-gradient(90deg, #333 60%, #1976d2 100%)',
+          boxShadow: 3,
+        }}
+      >
+        <Toolbar
+          sx={{
+            display: 'flex',
+            flexDirection: 'row',
+            alignItems: 'center',
+            px: { xs: 1, sm: 2 },
+          }}
+        >
           <IconButton
             edge="start"
             color="inherit"
             aria-label="menu"
             onClick={handleDrawerToggle}
+            sx={{ mr: 2 }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
+          <Typography
+            variant={isMobile ? 'subtitle1' : 'h6'}
+            sx={{
+              flexGrow: 1,
+              fontWeight: 700,
+              letterSpacing: 1,
+              color: '#fff',
+              userSelect: 'none',
+            }}
+            noWrap
+          >
             Kickzone Admin Panel
           </Typography>
-          <Button color="inherit" component={RouterLink} to="/product-editor">
-            Product Editor
-          </Button>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/product-editor"
+              startIcon={<HomeIcon />}
+              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+            >
+              Product Editor
+            </Button>
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to="/products"
+              startIcon={<ShoppingCartIcon />}
+              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+            >
+              Products
+            </Button>
+          </Box>
           {user ? (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
+              <Typography
+                variant="body2"
+                sx={{
+                  mr: 2,
+                  color: '#fff',
+                  fontWeight: 500,
+                  display: { xs: 'none', sm: 'block' },
+                }}
+              >
                 {user.name}
               </Typography>
-              <Button color="inherit" onClick={handleOnLogoutClick}>
+              <Button
+                color="inherit"
+                onClick={handleOnLogoutClick}
+                sx={{ fontWeight: 600 }}
+              >
                 Logout
               </Button>
             </Box>
@@ -85,6 +141,14 @@ export function AdminsHeaderbar() {
         anchor="left"
         open={drawerOpen}
         onClose={handleDrawerToggle}
+        variant={isMobile ? 'temporary' : 'persistent'}
+        ModalProps={{ keepMounted: true }}
+        sx={{
+          '& .MuiDrawer-paper': {
+            background: 'linear-gradient(180deg, #fff 80%, #e3eafc 100%)',
+            boxShadow: 4,
+          },
+        }}
       >
         <List>
           <ListItemButton
@@ -101,7 +165,7 @@ export function AdminsHeaderbar() {
           <ListItemButton
             to="/products"
             component={RouterLink}
-            selected={location.pathname === '/products'}
+            selected={location.pathname.startsWith('/products')}
           >
             <ListItemIcon>
               <ShoppingCartIcon />

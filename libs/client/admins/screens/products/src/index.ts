@@ -1,1 +1,1 @@
-export * from './lib/admin-products';
+export * from './lib/AdminProducts';

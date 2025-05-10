@@ -28,6 +28,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
 
 interface CategoryModalProps {
   open: boolean;
@@ -442,6 +443,7 @@ const ProductInfoCard = React.memo(
 const BACKEND_BASE_URL = 'https://localhost:4000';
 
 export function AdminProductEditor() {
+  const { id } = useParams<{ id?: string }>();
   const [product, setProduct] = useState({
     name: 'jordan ',
     categoryIds: [] as number[],
@@ -513,6 +515,18 @@ export function AdminProductEditor() {
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+
+  // Fetch product if editing
+  useEffect(() => {
+    if (id) {
+      // TODO: Fetch product and productInfos by id and set state
+      // Example:
+      // fetchProductById(id).then((data) => {
+      //   setProduct({ name: data.name, categoryIds: data.categoryIds });
+      //   setProductInfos(data.productInfos);
+      // });
+    }
+  }, [id]);
 
   // Handlers for product fields
   const handleProductChange = useCallback(

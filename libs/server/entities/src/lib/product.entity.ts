@@ -11,6 +11,7 @@ import {
 import { ProductInfo } from './product-info.entity';
 import { Category } from './category.entity';
 import { SellerProduct } from './seller-product.entity';
+import { EdgeType, ConnectionType } from '@kickzone-workspace/utils';
 
 @ObjectType()
 @Entity()
@@ -38,4 +39,16 @@ export class Product {
 
   @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
   sellerProducts: Relation<SellerProduct>[];
+}
+
+@ObjectType()
+export class ProductEdge extends EdgeType<Product> {
+  @Field(() => Product)
+  node: Product;
+}
+
+@ObjectType()
+export class ProductConnection extends ConnectionType<Product> {
+  @Field(() => [ProductEdge])
+  edges: ProductEdge[];
 }

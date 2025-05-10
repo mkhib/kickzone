@@ -98,7 +98,7 @@ export type MutationLoginArgs = {
 
 export type MutationRemoveProductInfoImageArgs = {
   imageName: Scalars['String']['input'];
-  productInfoId: Scalars['Float']['input'];
+  productInfoId: Scalars['Int']['input'];
 };
 
 
@@ -109,7 +109,7 @@ export type MutationUpdateCategoryArgs = {
 
 export type MutationUploadProductInfoImagesArgs = {
   files: Array<Scalars['Upload']['input']>;
-  productInfoId: Scalars['Float']['input'];
+  productInfoId: Scalars['Int']['input'];
 };
 
 export type PageInfo = {
@@ -127,10 +127,23 @@ export type Product = {
   productInfos: Array<ProductInfo>;
 };
 
+export type ProductConnection = {
+  __typename?: 'ProductConnection';
+  edges: Array<ProductEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type ProductEdge = {
+  __typename?: 'ProductEdge';
+  cursor: Scalars['String']['output'];
+  node: Product;
+};
+
 export type ProductFilterInput = {
   after?: InputMaybe<Scalars['String']['input']>;
   category?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
   productInfoFilter?: InputMaybe<ProductInfoFilterInput>;
   searchTerm?: InputMaybe<Scalars['String']['input']>;
 };
@@ -163,7 +176,7 @@ export type Query = {
   __typename?: 'Query';
   categories: Array<Category>;
   me?: Maybe<User>;
-  products: Array<Product>;
+  products: ProductConnection;
   users: UserConnection;
 };
 
@@ -175,7 +188,7 @@ export type QueryProductsArgs = {
 
 export type QueryUsersArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
-  first?: InputMaybe<Scalars['Float']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
   searchTerm?: InputMaybe<Scalars['String']['input']>;
 };
 
