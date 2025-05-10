@@ -2,7 +2,7 @@ import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { useCategories } from '@kickzone-workspace/categories-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { colors } from '@kickzone-workspace/colors';
-import { useProducts } from '@kickzone-workspace/products-hook';
+import { useProducts, useProductById } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import AddIcon from '@mui/icons-material/Add';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
@@ -231,16 +231,19 @@ const ProductInfoCard = React.memo(
     onUploadSelectedImages,
   }: ProductInfoCardProps) => {
     // Tooltip for upload button if product info is not created
+    const isSelectImagesDisabled = info.isUploading || !info.createdId;
+    const showTooltip = !info.createdId;
     const uploadButton = (
       <Button
         component="label"
         variant="contained"
         startIcon={<AddPhotoAlternateIcon />}
-        disabled={info.isUploading}
+        disabled={isSelectImagesDisabled}
         sx={{
           backgroundColor: colors.main,
           '&:hover': { backgroundColor: colors.hoverMain },
         }}
+        aria-label="Select Images"
       >
         {info.isUploading ? 'Uploading...' : 'Select Images'}
         <VisuallyHiddenInput
@@ -252,7 +255,7 @@ const ProductInfoCard = React.memo(
             // Reset the value so the same file can be selected again
             e.target.value = '';
           }}
-          disabled={info.isUploading}
+          disabled={isSelectImagesDisabled}
         />
       </Button>
     );
@@ -335,7 +338,16 @@ const ProductInfoCard = React.memo(
           />
         </Box>
         <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-          {uploadButton}
+          {showTooltip ? (
+            <Tooltip
+              title="You must save the product before selecting images."
+              placement="top"
+            >
+              <span>{uploadButton}</span>
+            </Tooltip>
+          ) : (
+            uploadButton
+          )}
           <IconButton
             onClick={() => onRemove(idx)}
             color="error"
@@ -444,21 +456,24 @@ const BACKEND_BASE_URL = 'https://localhost:4000';
 
 export function AdminProductEditor() {
   const { id } = useParams<{ id?: string }>();
+  const productIdNum = id ? Number(id) : undefined;
+  const { product: loadedProduct, loading: loadingProduct } =
+    useProductById(productIdNum);
   const [product, setProduct] = useState({
-    name: 'jordan ',
+    name: '',
     categoryIds: [] as number[],
   });
 
   const [productInfos, setProductInfos] = useState<ProductInfoState[]>([
     {
       productId: 0,
-      size: '42',
-      price: 200,
-      costPrice: 200,
-      color: 'red',
-      weight: 2,
+      size: '',
+      price: 0,
+      costPrice: 0,
+      color: '',
+      weight: 0,
       discount: 0,
-      stockQuantity: 2,
+      stockQuantity: 0,
       images: [],
       imagePreviews: [],
       uploadedImageUrls: [],
@@ -518,15 +533,35 @@ export function AdminProductEditor() {
 
   // Fetch product if editing
   useEffect(() => {
-    if (id) {
-      // TODO: Fetch product and productInfos by id and set state
-      // Example:
-      // fetchProductById(id).then((data) => {
-      //   setProduct({ name: data.name, categoryIds: data.categoryIds });
-      //   setProductInfos(data.productInfos);
-      // });
+    if (productIdNum && loadedProduct) {
+      setProduct({
+        name: loadedProduct.name,
+        categoryIds: loadedProduct.categories.map((cat) => cat.id),
+      });
+      setProductInfos(
+        loadedProduct.productInfos.map((info) => ({
+          productId: loadedProduct.id,
+          size: info.size,
+          price: info.price,
+          costPrice: info.costPrice,
+          color: info.color,
+          weight: info.weight,
+          discount: info.discount,
+          stockQuantity: info.stockQuantity,
+          images: [],
+          imagePreviews: [],
+          uploadedImageUrls: info.images || [],
+          createdId: info.id,
+          isUploading: false,
+          newImages: [],
+          newImagePreviews: [],
+        }))
+      );
+      setCreatedProductInfoIds(
+        loadedProduct.productInfos.map((info) => info.id)
+      );
     }
-  }, [id]);
+  }, [productIdNum, loadedProduct]);
 
   // Handlers for product fields
   const handleProductChange = useCallback(

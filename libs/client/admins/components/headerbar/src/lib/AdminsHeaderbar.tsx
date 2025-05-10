@@ -67,15 +67,17 @@ export function AdminsHeaderbar() {
             px: { xs: 1, sm: 2 },
           }}
         >
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
+          {user && (
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={handleDrawerToggle}
+              sx={{ mr: 2 }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
           <Typography
             variant={isMobile ? 'subtitle1' : 'h6'}
             sx={{
@@ -89,26 +91,28 @@ export function AdminsHeaderbar() {
           >
             Kickzone Admin Panel
           </Typography>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Button
-              color="inherit"
-              component={RouterLink}
-              to="/product-editor"
-              startIcon={<HomeIcon />}
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-            >
-              Product Editor
-            </Button>
-            <Button
-              color="inherit"
-              component={RouterLink}
-              to="/products"
-              startIcon={<ShoppingCartIcon />}
-              sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
-            >
-              Products
-            </Button>
-          </Box>
+          {user && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              <Button
+                color="inherit"
+                component={RouterLink}
+                to="/product-editor"
+                startIcon={<HomeIcon />}
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+              >
+                Product Editor
+              </Button>
+              <Button
+                color="inherit"
+                component={RouterLink}
+                to="/products"
+                startIcon={<ShoppingCartIcon />}
+                sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
+              >
+                Products
+              </Button>
+            </Box>
+          )}
           {user ? (
             <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
               <Typography
@@ -137,54 +141,56 @@ export function AdminsHeaderbar() {
           )}
         </Toolbar>
       </AppBar>
-      <StyledDrawer
-        anchor="left"
-        open={drawerOpen}
-        onClose={handleDrawerToggle}
-        variant={isMobile ? 'temporary' : 'persistent'}
-        ModalProps={{ keepMounted: true }}
-        sx={{
-          '& .MuiDrawer-paper': {
-            background: 'linear-gradient(180deg, #fff 80%, #e3eafc 100%)',
-            boxShadow: 4,
-          },
-        }}
-      >
-        <List>
-          <ListItemButton
-            to="/product-editor"
-            component={RouterLink}
-            selected={location.pathname === '/product-editor'}
-          >
-            <ListItemIcon>
-              <HomeIcon />
-            </ListItemIcon>
-            <CustomListItemText primary="Product Editor" />
-          </ListItemButton>
+      {user && (
+        <StyledDrawer
+          anchor="left"
+          open={drawerOpen}
+          onClose={handleDrawerToggle}
+          variant={isMobile ? 'temporary' : 'persistent'}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            '& .MuiDrawer-paper': {
+              background: 'linear-gradient(180deg, #fff 80%, #e3eafc 100%)',
+              boxShadow: 4,
+            },
+          }}
+        >
+          <List>
+            <ListItemButton
+              to="/product-editor"
+              component={RouterLink}
+              selected={location.pathname === '/product-editor'}
+            >
+              <ListItemIcon>
+                <HomeIcon />
+              </ListItemIcon>
+              <CustomListItemText primary="Product Editor" />
+            </ListItemButton>
 
-          <ListItemButton
-            to="/products"
-            component={RouterLink}
-            selected={location.pathname.startsWith('/products')}
-          >
-            <ListItemIcon>
-              <ShoppingCartIcon />
-            </ListItemIcon>
-            <CustomListItemText primary="Products" />
-          </ListItemButton>
+            <ListItemButton
+              to="/products"
+              component={RouterLink}
+              selected={location.pathname.startsWith('/products')}
+            >
+              <ListItemIcon>
+                <ShoppingCartIcon />
+              </ListItemIcon>
+              <CustomListItemText primary="Products" />
+            </ListItemButton>
 
-          <ListItemButton
-            to="/contact"
-            component={RouterLink}
-            selected={location.pathname === '/contact'}
-          >
-            <ListItemIcon>
-              <ContactMailIcon />
-            </ListItemIcon>
-            <CustomListItemText primary="Contact" />
-          </ListItemButton>
-        </List>
-      </StyledDrawer>
+            <ListItemButton
+              to="/contact"
+              component={RouterLink}
+              selected={location.pathname === '/contact'}
+            >
+              <ListItemIcon>
+                <ContactMailIcon />
+              </ListItemIcon>
+              <CustomListItemText primary="Contact" />
+            </ListItemButton>
+          </List>
+        </StyledDrawer>
+      )}
     </>
   );
 }

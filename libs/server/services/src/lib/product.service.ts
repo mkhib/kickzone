@@ -174,4 +174,11 @@ export class ProductService {
     product.categories = categories;
     return this.productRepository.save(product);
   }
+
+  async getProductById(id: number): Promise<Product | null> {
+    return this.productRepository.findOne({
+      where: { id },
+      relations: ['productInfos', 'categories'],
+    });
+  }
 }

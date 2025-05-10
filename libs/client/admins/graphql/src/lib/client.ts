@@ -1,6 +1,7 @@
 import { ApolloClient, InMemoryCache } from '@apollo/client';
 import { createUploadLink } from 'apollo-upload-client';
 import { setContext } from '@apollo/client/link/context';
+import { relayStylePagination } from '@apollo/client/utilities';
 
 const csrfLink = setContext((_, { headers }) => ({
   headers: {
@@ -19,7 +20,15 @@ const httpLink = createUploadLink({
 
 const apolloClient = new ApolloClient({
   link: csrfLink.concat(httpLink),
-  cache: new InMemoryCache(),
+  cache: new InMemoryCache({
+    typePolicies: {
+      Query: {
+        fields: {
+          products: relayStylePagination(['filter']),
+        },
+      },
+    },
+  }),
   defaultOptions: {
     mutate: {
       fetchPolicy: 'no-cache',

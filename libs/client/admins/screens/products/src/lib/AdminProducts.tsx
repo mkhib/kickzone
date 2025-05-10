@@ -1,69 +1,74 @@
-import React, { useState, useMemo } from 'react';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import {
+  useCategoriesQuery,
+  useProductsQuery,
+} from '@kickzone-workspace/products-hook';
 import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
-import Select from '@mui/material/Select';
-import MenuItem from '@mui/material/MenuItem';
-import InputLabel from '@mui/material/InputLabel';
-import FormControl from '@mui/material/FormControl';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import FormControl from '@mui/material/FormControl';
 import Grid2 from '@mui/material/Grid2';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-
-// Use the correct types from codegen
-type Product = KickzoneGraphqlTypes.Product;
-type Category = KickzoneGraphqlTypes.Category;
-
-// TODO: Replace with actual query hook after codegen
-const useProductsQuery = () => {
-  return {
-    products: [] as Product[],
-    categories: [] as Category[],
-    loading: false,
-    error: null,
-  };
-};
 
 export function AdminProducts() {
   const navigate = useNavigate();
-  const { products, categories, loading, error } = useProductsQuery();
+  const [search, setSearch] = useState<string>('');
+  const [category, setCategory] = useState<string>('');
+  const [sort, setSort] = useState<string>('');
+  const {
+    products,
+    loading,
+    error,
+    loadMore,
+    hasNextPage,
+    totalCount,
+    refetch,
+  } = useProductsQuery({ search, category, sort });
+  const { categories } = useCategoriesQuery();
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  // Filters and sort state
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('');
-  const [sort, setSort] = useState('');
+  // Infinite scroll: observe the loader div
+  useEffect(() => {
+    if (!hasNextPage) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          loadMore();
+        }
+      },
+      { threshold: 1 }
+    );
+    if (loaderRef.current) observer.observe(loaderRef.current);
+    return () => observer.disconnect();
+  }, [loadMore, hasNextPage]);
 
-  // Filtering and sorting logic
+  // Filtering and sorting logic (client-side sort only)
   const filteredProducts = useMemo(() => {
     let filtered = products;
-    if (search) {
-      filtered = filtered.filter((p: Product) =>
-        p.name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-    if (category) {
-      filtered = filtered.filter((p: Product) =>
-        p.categories.some((cat) => String(cat.id) === String(category))
-      );
-    }
     if (sort) {
-      filtered = [...filtered].sort((a: Product, b: Product) => {
-        const aInfo = a.productInfos[0];
-        const bInfo = b.productInfos[0];
-        if (sort === 'price') return (aInfo?.price ?? 0) - (bInfo?.price ?? 0);
-        if (sort === 'color')
-          return (aInfo?.color || '').localeCompare(bInfo?.color || '');
-        // Add more sort logic as needed
-        return 0;
-      });
+      filtered = [...filtered].sort(
+        (a: KickzoneGraphqlTypes.Product, b: KickzoneGraphqlTypes.Product) => {
+          const aInfo = a.productInfos[0];
+          const bInfo = b.productInfos[0];
+          if (sort === 'price')
+            return (aInfo?.price ?? 0) - (bInfo?.price ?? 0);
+          if (sort === 'color')
+            return (aInfo?.color || '').localeCompare(bInfo?.color || '');
+          return 0;
+        }
+      );
     }
     return filtered;
-  }, [products, search, category, sort]);
+  }, [products, sort]);
 
   return (
     <AdminsLayout>
@@ -102,7 +107,7 @@ export function AdminProducts() {
               onChange={(e) => setCategory(e.target.value)}
             >
               <MenuItem value="">All</MenuItem>
-              {categories.map((c: Category) => (
+              {categories.map((c: KickzoneGraphqlTypes.Category) => (
                 <MenuItem key={c.id} value={c.id}>
                   {c.name}
                 </MenuItem>
@@ -123,44 +128,58 @@ export function AdminProducts() {
             </Select>
           </FormControl>
         </Box>
-        {loading ? (
+        {loading && !products.length ? (
           <Typography>Loading...</Typography>
         ) : error ? (
           <Typography color="error">Error loading products</Typography>
         ) : (
-          <Grid2 container spacing={2}>
-            {filteredProducts.map((product: Product) => {
-              const info = product.productInfos[0];
-              return (
-                <Grid2 key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                  <Card>
-                    <CardContent>
-                      <Typography variant="h6">{product.name}</Typography>
-                      <Typography variant="body2">
-                        Price: {info?.price ?? 'N/A'}
-                      </Typography>
-                      <Typography variant="body2">
-                        Color: {info?.color ?? 'N/A'}
-                      </Typography>
-                      <Typography variant="body2">
-                        Categories:{' '}
-                        {product.categories.map((cat) => cat.name).join(', ')}
-                      </Typography>
-                      {/* Show more product info as needed */}
-                    </CardContent>
-                    <CardActions>
-                      <Button
-                        variant="outlined"
-                        onClick={() => navigate(`/products/edit/${product.id}`)}
-                      >
-                        Edit
-                      </Button>
-                    </CardActions>
-                  </Card>
-                </Grid2>
-              );
-            })}
-          </Grid2>
+          <>
+            <Grid2 container spacing={2}>
+              {filteredProducts.map((product: KickzoneGraphqlTypes.Product) => {
+                const info = product.productInfos[0];
+                return (
+                  <Grid2 key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                    <Card>
+                      <CardContent>
+                        <Typography variant="h6">{product.name}</Typography>
+                        <Typography variant="body2">
+                          Price: {info?.price ?? 'N/A'}
+                        </Typography>
+                        <Typography variant="body2">
+                          Color: {info?.color ?? 'N/A'}
+                        </Typography>
+                        <Typography variant="body2">
+                          Categories:{' '}
+                          {product.categories
+                            .map(
+                              (cat: KickzoneGraphqlTypes.Category) => cat.name
+                            )
+                            .join(', ')}
+                        </Typography>
+                        {/* Show more product info as needed */}
+                      </CardContent>
+                      <CardActions>
+                        <Button
+                          variant="outlined"
+                          onClick={() =>
+                            navigate(`/products/edit/${product.id}`)
+                          }
+                        >
+                          Edit
+                        </Button>
+                      </CardActions>
+                    </Card>
+                  </Grid2>
+                );
+              })}
+            </Grid2>
+            {hasNextPage && <div ref={loaderRef} style={{ height: 40 }} />}
+            <Box mt={2} textAlign="center">
+              <Typography variant="caption">
+                Showing {products.length} of {totalCount} products
+              </Typography>
+            </Box>
+          </>
         )}
       </Box>
     </AdminsLayout>

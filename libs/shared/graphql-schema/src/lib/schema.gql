@@ -73,6 +73,7 @@ type Query {
   me: User
   categories: [Category!]!
   products(filter: ProductFilterInput): ProductConnection!
+  product(id: Int!): Product
 }
 
 input ProductFilterInput {

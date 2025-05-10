@@ -1,6 +1,5 @@
-import { useMutation } from '@apollo/client';
-import { gql } from '@apollo/client';
-import { useCallback } from 'react';
+import { useMutation, useQuery, gql } from '@apollo/client';
+import { useCallback, useRef, useEffect } from 'react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 const CREATE_PRODUCT = gql`
@@ -44,6 +43,133 @@ const REMOVE_PRODUCT_INFO_IMAGE = gql`
     removeProductInfoImage(productInfoId: $productInfoId, imageName: $imageName)
   }
 `;
+
+const PRODUCTS_QUERY = gql`
+  query Products($filter: ProductFilterInput) {
+    products(filter: $filter) {
+      edges {
+        cursor
+        node {
+          id
+          name
+          discount
+          categories {
+            id
+            name
+          }
+          productInfos {
+            id
+            price
+            color
+          }
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      totalCount
+    }
+  }
+`;
+
+const CATEGORIES_QUERY = gql`
+  query Categories {
+    categories {
+      id
+      name
+    }
+  }
+`;
+
+const PRODUCT_BY_ID_QUERY = gql`
+  query Product($id: Int!) {
+    product(id: $id) {
+      id
+      name
+      discount
+      categories {
+        id
+        name
+      }
+      productInfos {
+        id
+        size
+        price
+        costPrice
+        color
+        weight
+        discount
+        stockQuantity
+        images
+      }
+    }
+  }
+`;
+
+export function useProductsQuery({
+  search,
+  category,
+  sort = '',
+  pageSize = 12,
+}: {
+  search: string;
+  category: string;
+  sort?: string;
+  pageSize?: number;
+}) {
+  const { data, loading, error, fetchMore, refetch } = useQuery<{
+    products: KickzoneGraphqlTypes.ProductConnection;
+  }>(PRODUCTS_QUERY, {
+    variables: {
+      filter: {
+        searchTerm: search || undefined,
+        category: category || undefined,
+        first: pageSize,
+      },
+    },
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const products =
+    data?.products?.edges?.map(
+      (e: KickzoneGraphqlTypes.ProductEdge) => e.node
+    ) || [];
+  const pageInfo = data?.products?.pageInfo;
+  const totalCount = data?.products?.totalCount || 0;
+
+  const loadMore = useCallback(() => {
+    if (pageInfo?.hasNextPage) {
+      fetchMore({
+        variables: {
+          filter: {
+            searchTerm: search || undefined,
+            category: category || undefined,
+            first: pageSize,
+            after: pageInfo.endCursor,
+          },
+        },
+      });
+    }
+  }, [fetchMore, pageInfo, search, category, pageSize]);
+
+  return {
+    products,
+    loading,
+    error,
+    loadMore,
+    hasNextPage: pageInfo?.hasNextPage,
+    totalCount,
+    refetch,
+  };
+}
+
+export function useCategoriesQuery() {
+  const { data, loading, error } = useQuery<{
+    categories: KickzoneGraphqlTypes.Category[];
+  }>(CATEGORIES_QUERY);
+  return { categories: data?.categories || [], loading, error };
+}
 
 export function useProducts() {
   const [createProductMutation, { loading: isCreatingProduct }] = useMutation<
@@ -158,4 +284,14 @@ export function useProducts() {
     removeProductInfoImage,
     isCreatingProduct: isCreatingProduct || isCreatingProductInfo,
   };
+}
+
+export function useProductById(id: number | undefined) {
+  const { data, loading, error, refetch } = useQuery<{
+    product: KickzoneGraphqlTypes.Product;
+  }>(PRODUCT_BY_ID_QUERY, {
+    variables: { id },
+    skip: !id,
+  });
+  return { product: data?.product, loading, error, refetch };
 }

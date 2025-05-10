@@ -1,4 +1,4 @@
-import { Resolver, Query, Mutation, Args } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
 import { ProductService } from '@kickzone-workspace/services';
 import {
   Product,
@@ -171,5 +171,12 @@ export class ProductResolver {
       console.error('Error removing product info image:', error);
       return false;
     }
+  }
+
+  @Query(() => Product, { nullable: true })
+  async product(
+    @Args('id', { type: () => Int }) id: number
+  ): Promise<Product | null> {
+    return this.productService.getProductById(id);
   }
 }

@@ -176,8 +176,14 @@ export type Query = {
   __typename?: 'Query';
   categories: Array<Category>;
   me?: Maybe<User>;
+  product?: Maybe<Product>;
   products: ProductConnection;
   users: UserConnection;
+};
+
+
+export type QueryProductArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
