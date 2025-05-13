@@ -1,6 +1,6 @@
-import { useMutation, useQuery, gql } from '@apollo/client';
-import { useCallback, useRef, useEffect } from 'react';
+import { gql, useMutation, useQuery } from '@apollo/client';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { useCallback } from 'react';
 
 const CREATE_PRODUCT = gql`
   mutation CreateProduct($input: CreateProductInput!) {
@@ -69,15 +69,6 @@ const PRODUCTS_QUERY = gql`
         hasNextPage
       }
       totalCount
-    }
-  }
-`;
-
-const CATEGORIES_QUERY = gql`
-  query Categories {
-    categories {
-      id
-      name
     }
   }
 `;
@@ -164,14 +155,7 @@ export function useProductsQuery({
   };
 }
 
-export function useCategoriesQuery() {
-  const { data, loading, error } = useQuery<{
-    categories: KickzoneGraphqlTypes.Category[];
-  }>(CATEGORIES_QUERY);
-  return { categories: data?.categories || [], loading, error };
-}
-
-export function useProducts() {
+export const useProducts = () => {
   const [createProductMutation, { loading: isCreatingProduct }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'createProduct'>,
     KickzoneGraphqlTypes.MutationCreateProductArgs
@@ -284,7 +268,7 @@ export function useProducts() {
     removeProductInfoImage,
     isCreatingProduct: isCreatingProduct || isCreatingProductInfo,
   };
-}
+};
 
 export function useProductById(id: number | undefined) {
   const { data, loading, error, refetch } = useQuery<{
