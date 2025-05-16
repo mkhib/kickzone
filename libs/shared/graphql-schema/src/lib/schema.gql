@@ -82,6 +82,7 @@ input ProductFilterInput {
   productInfoFilter: ProductInfoFilterInput
   first: Int
   after: String
+  categoryId: Int
 }
 
 input ProductInfoFilterInput {

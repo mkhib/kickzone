@@ -26,7 +26,11 @@ export class ProductService {
       .leftJoinAndSelect('product.productInfos', 'productInfo')
       .leftJoinAndSelect('product.categories', 'category');
 
-    if (filter?.category) {
+    if (filter?.categoryId) {
+      query.andWhere('category.id = :categoryId', {
+        categoryId: filter.categoryId,
+      });
+    } else if (filter?.category) {
       query.andWhere('category.name = :category', {
         category: filter.category,
       });

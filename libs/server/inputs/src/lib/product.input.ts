@@ -62,4 +62,7 @@ export class ProductFilterInput {
 
   @Field({ nullable: true })
   after?: string;
+
+  @Field(() => Int, { nullable: true })
+  categoryId?: number;
 }
