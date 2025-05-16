@@ -23,7 +23,7 @@ export const useAdminLogin = () => {
       onCompleted: (data) => {
         setAdmin(data.login);
         localStorage.setItem('admin_user', JSON.stringify(data.login));
-        navigate('/product-editor');
+        navigate('/products');
       },
     });
 

@@ -3,6 +3,7 @@ import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import CloseIcon from '@mui/icons-material/Close';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -96,11 +97,11 @@ export function AdminsHeaderbar() {
               <Button
                 color="inherit"
                 component={RouterLink}
-                to="/product-editor"
+                to="/products/new"
                 startIcon={<HomeIcon />}
                 sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               >
-                Product Editor
+                Add New Product
               </Button>
               <Button
                 color="inherit"
@@ -155,22 +156,27 @@ export function AdminsHeaderbar() {
             },
           }}
         >
+          <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+            <IconButton onClick={handleDrawerToggle}>
+              <CloseIcon />
+            </IconButton>
+          </Box>
           <List>
             <ListItemButton
-              to="/product-editor"
+              to="/products/new"
               component={RouterLink}
-              selected={location.pathname === '/product-editor'}
+              selected={location.pathname === '/products/new'}
             >
               <ListItemIcon>
                 <HomeIcon />
               </ListItemIcon>
-              <CustomListItemText primary="Product Editor" />
+              <CustomListItemText primary="Add New Product" />
             </ListItemButton>
 
             <ListItemButton
               to="/products"
               component={RouterLink}
-              selected={location.pathname.startsWith('/products')}
+              selected={location.pathname === '/products'}
             >
               <ListItemIcon>
                 <ShoppingCartIcon />

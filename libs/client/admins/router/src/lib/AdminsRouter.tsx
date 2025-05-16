@@ -19,9 +19,6 @@ export function AdminsRouter() {
           <Route path="/products/new" element={<AdminProductEditor />} />
           <Route path="/products/edit/:id" element={<AdminProductEditor />} />
         </Route>
-        <Route element={<AdminRoute />}>
-          <Route path="/product-editor" element={<AdminProductEditor />} />
-        </Route>
         <Route path="/login" element={<AdminsLogin />} />
       </Routes>
     </BrowserRouter>

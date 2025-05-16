@@ -100,12 +100,12 @@ const PRODUCT_BY_ID_QUERY = gql`
 
 export function useProductsQuery({
   search,
-  category,
+  categoryId,
   sort = '',
   pageSize = 12,
 }: {
   search: string;
-  category: string;
+  categoryId?: number;
   sort?: string;
   pageSize?: number;
 }) {
@@ -115,7 +115,7 @@ export function useProductsQuery({
     variables: {
       filter: {
         searchTerm: search || undefined,
-        category: category || undefined,
+        categoryId: categoryId || undefined,
         first: pageSize,
       },
     },
@@ -135,14 +135,14 @@ export function useProductsQuery({
         variables: {
           filter: {
             searchTerm: search || undefined,
-            category: category || undefined,
+            categoryId: categoryId || undefined,
             first: pageSize,
             after: pageInfo.endCursor,
           },
         },
       });
     }
-  }, [fetchMore, pageInfo, search, category, pageSize]);
+  }, [fetchMore, pageInfo, search, categoryId, pageSize]);
 
   return {
     products,

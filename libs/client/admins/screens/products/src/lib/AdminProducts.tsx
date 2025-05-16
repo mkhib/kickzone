@@ -1,9 +1,7 @@
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import {
-  useCategoriesQuery,
-  useProductsQuery,
-} from '@kickzone-workspace/products-hook';
+import { useProductsQuery } from '@kickzone-workspace/products-hook';
+import { useCategories } from '@kickzone-workspace/categories-hook';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -24,6 +22,7 @@ export function AdminProducts() {
   const [search, setSearch] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [sort, setSort] = useState<string>('');
+  const categoryIdValue = category ? Number(category) : undefined;
   const {
     products,
     loading,
@@ -32,8 +31,8 @@ export function AdminProducts() {
     hasNextPage,
     totalCount,
     refetch,
-  } = useProductsQuery({ search, category, sort });
-  const { categories } = useCategoriesQuery();
+  } = useProductsQuery({ search, categoryId: categoryIdValue, sort });
+  const { categoriesData } = useCategories();
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
   // Infinite scroll: observe the loader div
@@ -104,14 +103,16 @@ export function AdminProducts() {
             <Select
               value={category}
               label="Category"
-              onChange={(e) => setCategory(e.target.value)}
+              onChange={(e) => setCategory(String(e.target.value))}
             >
               <MenuItem value="">All</MenuItem>
-              {categories.map((c: KickzoneGraphqlTypes.Category) => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name}
-                </MenuItem>
-              ))}
+              {categoriesData?.categories.map(
+                (c: KickzoneGraphqlTypes.Category) => (
+                  <MenuItem key={c.id} value={String(c.id)}>
+                    {c.name}
+                  </MenuItem>
+                )
+              )}
             </Select>
           </FormControl>
           <FormControl sx={{ minWidth: 120 }} size="small">
