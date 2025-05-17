@@ -22,6 +22,7 @@ export function AdminProducts() {
   const [search, setSearch] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [sort, setSort] = useState<string>('');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const categoryIdValue = category ? Number(category) : undefined;
   const {
     products,
@@ -31,7 +32,12 @@ export function AdminProducts() {
     hasNextPage,
     totalCount,
     refetch,
-  } = useProductsQuery({ search, categoryId: categoryIdValue, sort });
+  } = useProductsQuery({
+    search,
+    categoryId: categoryIdValue,
+    sort,
+    sortOrder,
+  });
   const { categoriesData } = useCategories();
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
@@ -51,23 +57,7 @@ export function AdminProducts() {
   }, [loadMore, hasNextPage]);
 
   // Filtering and sorting logic (client-side sort only)
-  const filteredProducts = useMemo(() => {
-    let filtered = products;
-    if (sort) {
-      filtered = [...filtered].sort(
-        (a: KickzoneGraphqlTypes.Product, b: KickzoneGraphqlTypes.Product) => {
-          const aInfo = a.productInfos[0];
-          const bInfo = b.productInfos[0];
-          if (sort === 'price')
-            return (aInfo?.price ?? 0) - (bInfo?.price ?? 0);
-          if (sort === 'color')
-            return (aInfo?.color || '').localeCompare(bInfo?.color || '');
-          return 0;
-        }
-      );
-    }
-    return filtered;
-  }, [products, sort]);
+  const filteredProducts = products;
 
   return (
     <AdminsLayout>
@@ -126,6 +116,17 @@ export function AdminProducts() {
               <MenuItem value="price">Price</MenuItem>
               <MenuItem value="color">Color</MenuItem>
               {/* Add more sort options as needed */}
+            </Select>
+          </FormControl>
+          <FormControl sx={{ minWidth: 120 }} size="small">
+            <InputLabel>Order</InputLabel>
+            <Select
+              value={sortOrder}
+              label="Order"
+              onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+            >
+              <MenuItem value="asc">Ascending</MenuItem>
+              <MenuItem value="desc">Descending</MenuItem>
             </Select>
           </FormControl>
         </Box>

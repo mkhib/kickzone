@@ -102,11 +102,13 @@ export function useProductsQuery({
   search,
   categoryId,
   sort = '',
+  sortOrder = 'asc',
   pageSize = 12,
 }: {
   search: string;
   categoryId?: number;
   sort?: string;
+  sortOrder?: 'asc' | 'desc';
   pageSize?: number;
 }) {
   const { data, loading, error, fetchMore, refetch } = useQuery<{
@@ -117,6 +119,8 @@ export function useProductsQuery({
         searchTerm: search || undefined,
         categoryId: categoryId || undefined,
         first: pageSize,
+        sort,
+        sortOrder,
       },
     },
     notifyOnNetworkStatusChange: true,
@@ -138,11 +142,13 @@ export function useProductsQuery({
             categoryId: categoryId || undefined,
             first: pageSize,
             after: pageInfo.endCursor,
+            sort,
+            sortOrder,
           },
         },
       });
     }
-  }, [fetchMore, pageInfo, search, categoryId, pageSize]);
+  }, [fetchMore, pageInfo, search, categoryId, pageSize, sort, sortOrder]);
 
   return {
     products,

@@ -62,6 +62,17 @@ export class ProductService {
         });
     }
 
+    if (filter?.sort) {
+      const order = filter.sortOrder === 'desc' ? 'DESC' : 'ASC';
+      if (filter.sort === 'price') {
+        query.addOrderBy('productInfo.price', order);
+      } else if (filter.sort === 'color') {
+        query.addOrderBy('productInfo.color', order);
+      } else {
+        query.addOrderBy('product.name', order);
+      }
+    }
+
     const totalCount = await query.getCount();
 
     if (filter?.first) {

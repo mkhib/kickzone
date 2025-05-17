@@ -65,4 +65,10 @@ export class ProductFilterInput {
 
   @Field(() => Int, { nullable: true })
   categoryId?: number;
+
+  @Field({ nullable: true })
+  sort?: string;
+
+  @Field({ nullable: true })
+  sortOrder?: 'asc' | 'desc';
 }
