@@ -53,6 +53,9 @@
       "@kickzone-workspace/customers-auth-context": [
         "libs/client/customers/contexts/auth/src/index.ts"
       ],
+      "@kickzone-workspace/customers-graphql": [
+        "libs/client/customers/graphql/src/index.ts"
+      ],
       "@kickzone-workspace/customers-headerbar": [
         "libs/client/customers/components/headerbar/src/index.ts"
       ],
