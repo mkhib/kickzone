@@ -37,8 +37,8 @@ export class ProductService {
     }
 
     if (filter?.searchTerm) {
-      query.andWhere('product.name LIKE :searchTerm', {
-        searchTerm: `%${filter.searchTerm}%`,
+      query.andWhere('LOWER(product.name) LIKE :searchTerm', {
+        searchTerm: `%${filter.searchTerm.toLowerCase()}%`,
       });
     }
 

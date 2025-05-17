@@ -60,6 +60,9 @@ export function Headerbar() {
           <Button color="inherit" component={RouterLink} to="/home">
             Home
           </Button>
+          <IconButton color="inherit" sx={{ ml: 1 }}>
+            <ShoppingCartIcon />
+          </IconButton>
           {user ? (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Typography variant="body1" sx={{ mr: 2 }}>

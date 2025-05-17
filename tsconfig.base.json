@@ -68,6 +68,9 @@
       "@kickzone-workspace/customers-login-screen": [
         "libs/client/customers/screens/login/src/index.ts"
       ],
+      "@kickzone-workspace/customers-product-card": [
+        "libs/client/customers/components/product-card/src/index.ts"
+      ],
       "@kickzone-workspace/customers-router": [
         "libs/client/customers/router/src/index.ts"
       ],

@@ -10,7 +10,12 @@ export default defineConfig({
   server: {
     port: 4200,
     host: 'localhost',
+    https: {
+      key: '../../../localhost-key.pem',
+      cert: '../../../localhost.pem',
+    },
   },
+
   preview: {
     port: 4300,
     host: 'localhost',
