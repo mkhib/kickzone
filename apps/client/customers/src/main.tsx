@@ -3,6 +3,7 @@ import * as ReactDOM from 'react-dom/client';
 import App from './app/app';
 import { CustomersAuthProvider } from '@kickzone-workspace/customers-auth-context';
 import { SnackbarProvider } from '@kickzone-workspace/snackbar-hook';
+import { CustomersGraphQLProvider } from '@kickzone-workspace/customers-graphql';
 
 const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
@@ -10,10 +11,12 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <StrictMode>
-    <CustomersAuthProvider>
-      <SnackbarProvider>
-        <App />
-      </SnackbarProvider>
-    </CustomersAuthProvider>
+    <CustomersGraphQLProvider>
+      <CustomersAuthProvider>
+        <SnackbarProvider>
+          <App />
+        </SnackbarProvider>
+      </CustomersAuthProvider>
+    </CustomersGraphQLProvider>
   </StrictMode>
 );

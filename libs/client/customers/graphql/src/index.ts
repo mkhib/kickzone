@@ -1,1 +1,1 @@
-export * from './lib/customers-graphql';
+export * from './lib/Provider';
