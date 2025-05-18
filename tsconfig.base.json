@@ -40,6 +40,9 @@
       "@kickzone-workspace/admins-router": [
         "libs/client/admins/router/src/index.ts"
       ],
+      "@kickzone-workspace/apollo-provider-base": [
+        "libs/client/shared/components/apollo-provider-base/src/index.ts"
+      ],
       "@kickzone-workspace/categories-hook": [
         "libs/client/shared/hooks/categories/src/index.ts"
       ],

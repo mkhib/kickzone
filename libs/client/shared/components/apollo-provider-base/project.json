@@ -1,0 +1,9 @@
+{
+  "name": "apollo-provider-base",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/shared/components/apollo-provider-base/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project apollo-provider-base --web",
+  "targets": {}
+}
