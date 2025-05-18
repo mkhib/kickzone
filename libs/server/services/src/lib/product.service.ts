@@ -1,7 +1,12 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
-import { Product, ProductInfo, Category } from '@kickzone-workspace/entities';
+import {
+  Product,
+  ProductInfo,
+  Category,
+  Color,
+} from '@kickzone-workspace/entities';
 import {
   CreateProductInput,
   CreateProductInfoInput,
@@ -17,13 +22,16 @@ export class ProductService {
     @InjectRepository(ProductInfo)
     private readonly productInfoRepository: Repository<ProductInfo>,
     @InjectRepository(Category)
-    private readonly categoryRepository: Repository<Category>
+    private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Color)
+    private readonly colorRepository: Repository<Color>
   ) {}
 
   async getProducts(filter?: ProductFilterInput): Promise<[Product[], number]> {
     const query = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.productInfos', 'productInfo')
+      .leftJoinAndSelect('productInfo.color', 'color')
       .leftJoinAndSelect('product.categories', 'category');
 
     if (filter?.categoryId) {
@@ -43,15 +51,23 @@ export class ProductService {
     }
 
     if (filter?.productInfoFilter) {
-      const { size, price, costPrice, color, weight, discount, stockQuantity } =
-        filter.productInfoFilter;
+      const {
+        size,
+        price,
+        costPrice,
+        colorId,
+        weight,
+        discount,
+        stockQuantity,
+      } = filter.productInfoFilter;
       if (size) query.andWhere('productInfo.size IN (:...size)', { size });
       if (price) query.andWhere('productInfo.price IN (:...price)', { price });
       if (costPrice)
         query.andWhere('productInfo.costPrice IN (:...costPrice)', {
           costPrice,
         });
-      if (color) query.andWhere('productInfo.color IN (:...color)', { color });
+      if (colorId)
+        query.andWhere('productInfo.colorId IN (:...colorId)', { colorId });
       if (weight)
         query.andWhere('productInfo.weight IN (:...weight)', { weight });
       if (discount)
@@ -67,7 +83,7 @@ export class ProductService {
       if (filter.sort === 'price') {
         query.addOrderBy('productInfo.price', order);
       } else if (filter.sort === 'color') {
-        query.addOrderBy('productInfo.color', order);
+        query.addOrderBy('color.name', order);
       } else {
         query.addOrderBy('product.name', order);
       }
@@ -113,12 +129,16 @@ export class ProductService {
     if (!product) {
       throw new Error('Product not found');
     }
+    const color = await this.colorRepository.findOneBy({ id: input.colorId });
+    if (!color) {
+      throw new Error(`Color with ID ${input.colorId} not found`);
+    }
     const productInfo = this.productInfoRepository.create({
       product,
       size: input.size,
       price: input.price,
       costPrice: input.costPrice,
-      color: input.color,
+      color,
       weight: input.weight,
       discount: input.discount,
       stockQuantity: input.stockQuantity,
@@ -193,7 +213,38 @@ export class ProductService {
   async getProductById(id: number): Promise<Product | null> {
     return this.productRepository.findOne({
       where: { id },
-      relations: ['productInfos', 'categories'],
+      relations: ['productInfos', 'categories', 'productInfos.color'],
     });
+  }
+
+  async updateProductInfo(
+    id: number,
+    size: string,
+    price: number,
+    costPrice: number,
+    colorId: number,
+    weight: number,
+    discount: number,
+    stockQuantity: number
+  ): Promise<ProductInfo> {
+    const productInfo = await this.productInfoRepository.findOne({
+      where: { id },
+    });
+    if (!productInfo) {
+      throw new Error(`ProductInfo with ID ${id} not found`);
+    }
+    const color = await this.colorRepository.findOneBy({ id: colorId });
+    if (!color) {
+      throw new Error(`Color with ID ${colorId} not found`);
+    }
+    productInfo.size = size;
+    productInfo.price = price;
+    productInfo.costPrice = costPrice;
+    productInfo.color = color;
+    productInfo.weight = weight;
+    productInfo.discount = discount;
+    productInfo.stockQuantity = stockQuantity;
+
+    return this.productInfoRepository.save(productInfo);
   }
 }

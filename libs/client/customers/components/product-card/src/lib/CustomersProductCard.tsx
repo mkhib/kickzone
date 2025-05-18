@@ -78,7 +78,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               ${firstInfo.price?.toFixed(2)}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              Color: {firstInfo.color}
+              Color: {firstInfo.color ? firstInfo.color.name : 'N/A'}
             </Typography>
           </>
         )}

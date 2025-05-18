@@ -27,8 +27,8 @@ export class CreateProductInfoInput {
   @Field(() => Float)
   costPrice: number;
 
-  @Field()
-  color: string;
+  @Field(() => Int)
+  colorId: number;
 
   @Field(() => Float)
   weight: number;
@@ -71,4 +71,22 @@ export class ProductFilterInput {
 
   @Field({ nullable: true })
   sortOrder?: 'asc' | 'desc';
+}
+
+@InputType()
+export class CreateColorInput {
+  @Field()
+  name: string;
+
+  @Field()
+  hexCode: string;
+}
+
+@InputType()
+export class UpdateColorInput {
+  @Field()
+  name: string;
+
+  @Field()
+  hexCode: string;
 }

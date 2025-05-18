@@ -7,6 +7,7 @@ import {
   SellerInfo,
   SellerProduct,
   User,
+  Color,
 } from '@kickzone-workspace/entities';
 import {
   AuthModule,
@@ -16,6 +17,7 @@ import {
   SellerInfoModule,
   SellerProductsModule,
   UserModule,
+  ColorModule,
 } from '@kickzone-workspace/modules';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -39,6 +41,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
         Category,
         SellerProduct,
         SellerInfo,
+        Color,
       ],
       synchronize: true,
     }),
@@ -79,6 +82,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
     ProductInfoModule,
     SellerInfoModule,
     SellerProductsModule,
+    ColorModule,
   ],
 })
 export class AppModule {}

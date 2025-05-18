@@ -1,1 +1,1 @@
-export * from './lib/colors-hook';
+export * from './lib/useColors';

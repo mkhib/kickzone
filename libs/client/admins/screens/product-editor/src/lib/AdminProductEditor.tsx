@@ -29,6 +29,8 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { useColors } from '@kickzone-workspace/colors-hook';
+import { SketchPicker, ColorResult } from 'react-color';
 
 interface CategoryModalProps {
   open: boolean;
@@ -190,8 +192,22 @@ const ImagePreviewContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }));
 
-// Move ProductInfoState type to top level and export it
-export type ProductInfoState = KickzoneGraphqlTypes.CreateProductInfoInput & {
+interface ImagePreviewProps {
+  src: string;
+  alt?: string;
+  onRemove: () => void;
+}
+
+// Define ProductInfoState independently
+export type ProductInfoState = {
+  productId: number;
+  size: string;
+  price: number;
+  costPrice: number;
+  color: KickzoneGraphqlTypes.Color | null; // Use the generated Color type
+  weight: number;
+  discount: number;
+  stockQuantity: number;
   images: File[];
   imagePreviews: string[];
   uploadedImageUrls: string[];
@@ -206,8 +222,24 @@ interface ProductInfoCardProps {
   idx: number;
   onChange: (
     idx: number,
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+    name: keyof Omit<
+      ProductInfoState,
+      | 'color'
+      | 'images'
+      | 'imagePreviews'
+      | 'uploadedImageUrls'
+      | 'createdId'
+      | 'isUploading'
+      | 'newImages'
+      | 'newImagePreviews'
+    >,
+    value: any
   ) => void;
+  onColorChange: (
+    idx: number,
+    color: KickzoneGraphqlTypes.Color | null
+  ) => void; // Use the generated Color type
+  availableColors: KickzoneGraphqlTypes.Color[]; // Renamed from colors to availableColors
   onImageUpload: (idx: number, e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemove: (idx: number) => void;
   onRemoveImage: (infoIdx: number, imageIdx: number) => void;
@@ -222,6 +254,8 @@ const ProductInfoCard = React.memo(
     info,
     idx,
     onChange,
+    onColorChange,
+    availableColors,
     onImageUpload,
     onRemove,
     onRemoveImage,
@@ -268,18 +302,19 @@ const ProductInfoCard = React.memo(
             value={info.size}
             onChange={(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, e)}
+            ) => onChange(idx, 'size', e.target.value)}
             required
             sx={{ flex: 1, minWidth: 100 }}
           />
-          <TextField
-            label="Color"
-            name="color"
+          <Autocomplete
+            options={availableColors}
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
             value={info.color}
-            onChange={(
-              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, e)}
-            required
+            onChange={(_e, newValue) => onColorChange(idx, newValue)}
+            renderInput={(params) => (
+              <TextField {...params} label="Color" required />
+            )}
             sx={{ flex: 1, minWidth: 100 }}
           />
           <TextField
@@ -289,7 +324,7 @@ const ProductInfoCard = React.memo(
             value={info.price}
             onChange={(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, e)}
+            ) => onChange(idx, 'price', e.target.value)}
             required
             sx={{ flex: 1, minWidth: 100 }}
           />
@@ -300,7 +335,7 @@ const ProductInfoCard = React.memo(
             value={info.costPrice}
             onChange={(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, e)}
+            ) => onChange(idx, 'costPrice', e.target.value)}
             required
             sx={{ flex: 1, minWidth: 100 }}
           />
@@ -311,7 +346,7 @@ const ProductInfoCard = React.memo(
             value={info.weight}
             onChange={(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, e)}
+            ) => onChange(idx, 'weight', e.target.value)}
             required
             sx={{ flex: 1, minWidth: 100 }}
           />
@@ -322,7 +357,7 @@ const ProductInfoCard = React.memo(
             value={info.discount}
             onChange={(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, e)}
+            ) => onChange(idx, 'discount', e.target.value)}
             sx={{ flex: 1, minWidth: 100 }}
           />
           <TextField
@@ -332,7 +367,7 @@ const ProductInfoCard = React.memo(
             value={info.stockQuantity}
             onChange={(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, e)}
+            ) => onChange(idx, 'stockQuantity', e.target.value)}
             required
             sx={{ flex: 1, minWidth: 100 }}
           />
@@ -454,6 +489,80 @@ const ProductInfoCard = React.memo(
 
 const BACKEND_BASE_URL = 'https://localhost:4000';
 
+interface ColorModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (id: number | null, name: string, hexCode: string) => void;
+  initialColor?: KickzoneGraphqlTypes.Color | null;
+  title: string;
+  isLoading?: boolean;
+}
+
+const ColorModal = ({
+  open,
+  onClose,
+  onSubmit,
+  initialColor = null,
+  title,
+  isLoading = false,
+}: ColorModalProps) => {
+  const [colorName, setColorName] = useState(initialColor?.name || '');
+  const [hexCode, setHexCode] = useState(initialColor?.hexCode || '#ffffff');
+
+  useEffect(() => {
+    setColorName(initialColor?.name || '');
+    setHexCode(initialColor?.hexCode || '#ffffff');
+  }, [initialColor]);
+
+  const handleSubmit = useCallback(() => {
+    onSubmit(initialColor?.id || null, colorName, hexCode);
+    // Don't reset state here, useEffect will handle it when modal closes or initialColor changes
+    onClose();
+  }, [initialColor, colorName, hexCode, onSubmit, onClose]);
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label="Color Name"
+          fullWidth
+          value={colorName}
+          onChange={(e) => setColorName(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+        <TextField
+          margin="dense"
+          label="Hex Code"
+          fullWidth
+          value={hexCode}
+          onChange={(e) => setHexCode(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <SketchPicker
+            color={hexCode}
+            onChangeComplete={(color: ColorResult) => setHexCode(color.hex)}
+          />
+        </Box>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={isLoading} // Use disabled instead of loading prop if not available
+          variant="contained"
+          color="primary"
+        >
+          Save
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 export function AdminProductEditor() {
   const { id } = useParams<{ id?: string }>();
   const productIdNum = id ? Number(id) : undefined;
@@ -470,7 +579,7 @@ export function AdminProductEditor() {
       size: '',
       price: 0,
       costPrice: 0,
-      color: '',
+      color: null, // Initialize color as null
       weight: 0,
       discount: 0,
       stockQuantity: 0,
@@ -509,6 +618,11 @@ export function AdminProductEditor() {
     imageType: 'preview' | 'uploaded' | null;
   }>({ open: false, infoIdx: null, imageIdx: null, imageType: null });
 
+  const [isNewColorModalOpen, setIsNewColorModalOpen] = useState(false);
+  const [isEditColorModalOpen, setIsEditColorModalOpen] = useState(false);
+  const [selectedColor, setSelectedColor] =
+    useState<KickzoneGraphqlTypes.Color | null>(null);
+
   const {
     categoriesData,
     categoriesLoading,
@@ -531,6 +645,16 @@ export function AdminProductEditor() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
 
+  const {
+    colors: availableColors,
+    loading: colorsLoading,
+    error: colorsError,
+    createColor,
+    updateColor,
+    deleteColor,
+    loading: colorMutationsLoading,
+  } = useColors();
+
   // Fetch product if editing
   useEffect(() => {
     if (productIdNum && loadedProduct) {
@@ -544,7 +668,14 @@ export function AdminProductEditor() {
           size: info.size,
           price: info.price,
           costPrice: info.costPrice,
-          color: info.color,
+          color: info.color
+            ? {
+                // Map backend color object to frontend state
+                id: info.color.id,
+                name: info.color.name,
+                hexCode: info.color.hexCode,
+              }
+            : null,
           weight: info.weight,
           discount: info.discount,
           stockQuantity: info.stockQuantity,
@@ -574,8 +705,21 @@ export function AdminProductEditor() {
 
   // Handlers for product info fields
   const handleProductInfoChange = useCallback(
-    (index: number, e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-      const { name, value } = e.target;
+    (
+      index: number,
+      name: keyof Omit<
+        ProductInfoState,
+        | 'color'
+        | 'images'
+        | 'imagePreviews'
+        | 'uploadedImageUrls'
+        | 'createdId'
+        | 'isUploading'
+        | 'newImages'
+        | 'newImagePreviews'
+      >,
+      value: any
+    ) => {
       setProductInfos((prev) => {
         const updated = [...prev];
         updated[index] = { ...updated[index], [name]: value };
@@ -594,7 +738,7 @@ export function AdminProductEditor() {
         size: '',
         price: 0,
         costPrice: 0,
-        color: '',
+        color: null,
         weight: 0,
         discount: 0,
         stockQuantity: 0,
@@ -826,7 +970,7 @@ export function AdminProductEditor() {
             size: info.size,
             price: Number(info.price),
             costPrice: Number(info.costPrice),
-            color: info.color,
+            colorId: info.color?.id || 0, // Map color object back to colorId
             weight: Number(info.weight),
             discount: Number(info.discount) || 0,
             stockQuantity: Number(info.stockQuantity),
@@ -943,6 +1087,50 @@ export function AdminProductEditor() {
       imageType: null,
     });
   }, []);
+
+  const handleOpenEditColorModal = useCallback(
+    (color: KickzoneGraphqlTypes.Color) => {
+      setSelectedColor(color);
+      setIsEditColorModalOpen(true);
+    },
+    []
+  );
+
+  const handleCloseColorModal = useCallback(() => {
+    setIsNewColorModalOpen(false);
+    setIsEditColorModalOpen(false);
+    setSelectedColor(null);
+  }, []);
+
+  const handleSaveColor = useCallback(
+    async (id: number | null, name: string, hexCode: string) => {
+      try {
+        if (id) {
+          await updateColor(id, name);
+          showSnackbar('Color updated successfully', { severity: 'success' });
+        } else {
+          await createColor(name);
+          showSnackbar('Color created successfully', { severity: 'success' });
+        }
+        handleCloseColorModal();
+      } catch (error) {
+        showSnackbar((error as Error).message, { severity: 'error' });
+      }
+    },
+    [createColor, updateColor, showSnackbar, handleCloseColorModal]
+  );
+
+  const handleDeleteColor = useCallback(
+    async (id: number) => {
+      try {
+        await deleteColor(id);
+        showSnackbar('Color deleted successfully', { severity: 'success' });
+      } catch (error) {
+        showSnackbar((error as Error).message, { severity: 'error' });
+      }
+    },
+    [deleteColor, showSnackbar]
+  );
 
   return (
     <AdminsLayout>
@@ -1061,6 +1249,62 @@ export function AdminProductEditor() {
                   openOnFocus
                 />
               </Box>
+              <Box sx={{ mt: 2 }}>
+                <Typography variant="h6" sx={{ mb: 2 }}>
+                  Colors
+                </Typography>
+                <Button
+                  variant="outlined"
+                  startIcon={<AddIcon />}
+                  onClick={() => setIsNewColorModalOpen(true)}
+                  sx={{ mb: 2 }}
+                  disabled={colorMutationsLoading}
+                >
+                  Add New Color
+                </Button>
+                <Box>
+                  {availableColors.map((color: KickzoneGraphqlTypes.Color) => (
+                    <Box
+                      key={color.id}
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        p: 1,
+                        borderBottom: '1px solid #eee',
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Box
+                          sx={{
+                            width: 20,
+                            height: 20,
+                            backgroundColor: color.hexCode,
+                            mr: 1,
+                            border: '1px solid #ccc',
+                          }}
+                        ></Box>
+                        <Typography>{color.name}</Typography>
+                      </Box>
+                      <Box>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleOpenEditColorModal(color)}
+                        >
+                          <EditIcon fontSize="small" />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          onClick={() => handleDeleteColor(color.id)}
+                          color="error"
+                        >
+                          <DeleteIcon fontSize="small" />
+                        </IconButton>
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+              </Box>
             </Grid2>
             {/* Right Side - ProductInfos Section */}
             <Grid2 size={{ xs: 12, md: 6 }}>
@@ -1073,6 +1317,17 @@ export function AdminProductEditor() {
                   info={info}
                   idx={idx}
                   onChange={handleProductInfoChange}
+                  onColorChange={(
+                    idx,
+                    color: KickzoneGraphqlTypes.Color | null
+                  ) =>
+                    setProductInfos((prev) => {
+                      const updated = [...prev];
+                      updated[idx] = { ...updated[idx], color };
+                      return updated;
+                    })
+                  }
+                  availableColors={availableColors || []}
                   onImageUpload={handleImageSelection}
                   onRemove={handleRemoveProductInfo}
                   onRemoveImage={handleRequestRemoveUploadedImage}
@@ -1176,6 +1431,14 @@ export function AdminProductEditor() {
         imageType={
           deleteImageModal.imageType === 'preview' ? 'preview' : 'uploaded'
         }
+      />
+      <ColorModal
+        open={isNewColorModalOpen || isEditColorModalOpen}
+        onClose={handleCloseColorModal}
+        onSubmit={handleSaveColor}
+        initialColor={selectedColor}
+        title={selectedColor ? 'Edit Color' : 'Add New Color'}
+        isLoading={colorMutationsLoading}
       />
     </AdminsLayout>
   );

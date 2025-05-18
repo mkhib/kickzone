@@ -11,8 +11,8 @@ export class ProductInfoFilterInput {
   @Field(() => [Float], { nullable: true })
   costPrice?: number[];
 
-  @Field(() => [String], { nullable: true })
-  color?: string[];
+  @Field(() => [Int], { nullable: true })
+  colorId?: number[];
 
   @Field(() => [Float], { nullable: true })
   weight?: number[];

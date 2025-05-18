@@ -1,6 +1,7 @@
 import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
 import { Entity, PrimaryGeneratedColumn, Column, ManyToOne } from 'typeorm';
 import { Product } from './product.entity';
+import { Color } from './color.entity';
 
 @ObjectType()
 @Entity()
@@ -21,9 +22,9 @@ export class ProductInfo {
   @Column('decimal', { precision: 10, scale: 2 })
   costPrice: number;
 
-  @Field()
-  @Column()
-  color: string;
+  @Field(() => Color)
+  @ManyToOne(() => Color)
+  color: Color;
 
   @Field(() => Float)
   @Column('decimal', { precision: 10, scale: 2 })

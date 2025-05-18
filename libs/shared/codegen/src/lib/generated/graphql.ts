@@ -22,12 +22,19 @@ export type Category = {
   name: Scalars['String']['output'];
 };
 
+export type Color = {
+  __typename?: 'Color';
+  hexCode: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  name: Scalars['String']['output'];
+};
+
 export type CreateCategoryInput = {
   name: Scalars['String']['input'];
 };
 
 export type CreateProductInfoInput = {
-  color: Scalars['String']['input'];
+  colorId: Scalars['Int']['input'];
   costPrice: Scalars['Float']['input'];
   discount: Scalars['Float']['input'];
   price: Scalars['Float']['input'];
@@ -53,19 +60,27 @@ export type CreateUserInput = {
 export type Mutation = {
   __typename?: 'Mutation';
   createCategory: Category;
+  createColor: Color;
   createProduct: Product;
   createProductInfo: ProductInfo;
   createUser: User;
   deleteCategory: Scalars['Boolean']['output'];
+  deleteColor: Scalars['Boolean']['output'];
   login: User;
   logout: Scalars['Boolean']['output'];
   removeProductInfoImage: Scalars['Boolean']['output'];
   updateCategory: Category;
+  updateColor?: Maybe<Color>;
   uploadProductInfoImages: Array<Scalars['String']['output']>;
 };
 
 
 export type MutationCreateCategoryArgs = {
+  input: CreateCategoryInput;
+};
+
+
+export type MutationCreateColorArgs = {
   input: CreateCategoryInput;
 };
 
@@ -90,6 +105,11 @@ export type MutationDeleteCategoryArgs = {
 };
 
 
+export type MutationDeleteColorArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -104,6 +124,12 @@ export type MutationRemoveProductInfoImageArgs = {
 
 export type MutationUpdateCategoryArgs = {
   input: UpdateCategoryInput;
+};
+
+
+export type MutationUpdateColorArgs = {
+  id: Scalars['Int']['input'];
+  input: CreateCategoryInput;
 };
 
 
@@ -143,14 +169,17 @@ export type ProductEdge = {
 export type ProductFilterInput = {
   after?: InputMaybe<Scalars['String']['input']>;
   category?: InputMaybe<Scalars['String']['input']>;
+  categoryId?: InputMaybe<Scalars['Int']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
   productInfoFilter?: InputMaybe<ProductInfoFilterInput>;
   searchTerm?: InputMaybe<Scalars['String']['input']>;
+  sort?: InputMaybe<Scalars['String']['input']>;
+  sortOrder?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ProductInfo = {
   __typename?: 'ProductInfo';
-  color: Scalars['String']['output'];
+  color: Color;
   costPrice: Scalars['Float']['output'];
   discount: Scalars['Float']['output'];
   id: Scalars['Int']['output'];
@@ -163,7 +192,7 @@ export type ProductInfo = {
 };
 
 export type ProductInfoFilterInput = {
-  color?: InputMaybe<Array<Scalars['String']['input']>>;
+  colorId?: InputMaybe<Array<Scalars['Int']['input']>>;
   costPrice?: InputMaybe<Array<Scalars['Float']['input']>>;
   discount?: InputMaybe<Array<Scalars['Float']['input']>>;
   price?: InputMaybe<Array<Scalars['Float']['input']>>;
@@ -175,10 +204,17 @@ export type ProductInfoFilterInput = {
 export type Query = {
   __typename?: 'Query';
   categories: Array<Category>;
+  color?: Maybe<Color>;
+  colors: Array<Color>;
   me?: Maybe<User>;
   product?: Maybe<Product>;
   products: ProductConnection;
   users: UserConnection;
+};
+
+
+export type QueryColorArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
