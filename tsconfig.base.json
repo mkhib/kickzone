@@ -119,6 +119,9 @@
         "libs/client/sellers/router/src/index.ts"
       ],
       "@kickzone-workspace/services": ["libs/server/services/src/index.ts"],
+      "@kickzone-workspace/shared-i18n": [
+        "libs/shared/shared-i18n/src/index.ts"
+      ],
       "@kickzone-workspace/snackbar": [
         "libs/client/shared/components/snackbar/src/index.ts"
       ],
