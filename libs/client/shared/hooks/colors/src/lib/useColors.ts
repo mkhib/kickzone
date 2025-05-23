@@ -32,21 +32,21 @@ export function useColors() {
   const [deleteColorMutation, { loading: deleteLoading, error: deleteError }] =
     useMutation<
       Pick<KickzoneGraphqlTypes.Mutation, 'deleteColor'>,
-      { id: number }
+      KickzoneGraphqlTypes.MutationDeleteColorArgs
     >(DELETE_COLOR, {
       refetchQueries: [{ query: GET_COLORS }],
     });
 
-  const createColor = async (name: string) => {
+  const createColor = async (name: string, hexCode: string) => {
     const response = await createColorMutation({
-      variables: { input: { name } },
+      variables: { input: { name, hexCode } },
     });
     return response.data?.createColor;
   };
 
-  const updateColor = async (id: number, name: string) => {
+  const updateColor = async (id: number, name: string, hexCode: string) => {
     const response = await updateColorMutation({
-      variables: { id, input: { name } },
+      variables: { id, input: { name, hexCode } },
     });
     return response.data?.updateColor;
   };

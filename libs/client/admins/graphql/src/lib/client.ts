@@ -1,7 +1,8 @@
-import { ApolloClient, InMemoryCache } from '@apollo/client';
+import { ApolloClient, InMemoryCache, ApolloLink } from '@apollo/client';
 import { createUploadLink } from 'apollo-upload-client';
 import { setContext } from '@apollo/client/link/context';
 import { relayStylePagination } from '@apollo/client/utilities';
+import { errorLink } from '@kickzone-workspace/apollo-provider-base';
 
 const csrfLink = setContext((_, { headers }) => ({
   headers: {
@@ -19,7 +20,7 @@ const httpLink = createUploadLink({
 });
 
 const apolloClient = new ApolloClient({
-  link: csrfLink.concat(httpLink),
+  link: ApolloLink.from([errorLink, csrfLink, httpLink]),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {

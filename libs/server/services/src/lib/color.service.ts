@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Color } from '@kickzone-workspace/entities';
-import { CreateCategoryInput } from '@kickzone-workspace/inputs'; // Reusing CreateCategoryInput for now, will create specific Color input later
+import { CreateColorInput, UpdateColorInput } from '@kickzone-workspace/inputs';
 
 @Injectable()
 export class ColorService {
@@ -19,26 +19,31 @@ export class ColorService {
     return this.colorRepository.findOneBy({ id });
   }
 
-  async createColor(name: string, hexCode: string): Promise<Color> {
-    const existing = await this.colorRepository.findOneBy({ name });
+  async createColor(input: CreateColorInput): Promise<Color> {
+    const existing = await this.colorRepository.findOneBy({ name: input.name });
     if (existing) {
       throw new Error('A color with this name already exists.');
     }
-    const color = this.colorRepository.create({ name, hexCode });
+    const color = this.colorRepository.create({
+      name: input.name,
+      hexCode: input.hexCode,
+    });
     return this.colorRepository.save(color);
   }
 
-  async updateColor(id: number, name: string, hexCode: string): Promise<Color> {
+  async updateColor(id: number, input: UpdateColorInput): Promise<Color> {
     const color = await this.colorRepository.findOneBy({ id });
     if (!color) {
       throw new Error(`Color with ID ${id} not found`);
     }
-    const existing = await this.colorRepository.findOne({ where: { name } });
+    const existing = await this.colorRepository.findOne({
+      where: { name: input.name },
+    });
     if (existing && existing.id !== id) {
       throw new Error('A color with this name already exists.');
     }
-    color.name = name;
-    color.hexCode = hexCode;
+    color.name = input.name;
+    color.hexCode = input.hexCode;
     return this.colorRepository.save(color);
   }
 

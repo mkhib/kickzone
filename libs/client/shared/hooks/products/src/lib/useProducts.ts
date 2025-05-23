@@ -1,102 +1,14 @@
-import { gql, useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCallback } from 'react';
-
-const CREATE_PRODUCT = gql`
-  mutation CreateProduct($input: CreateProductInput!) {
-    createProduct(input: $input) {
-      id
-      name
-      discount
-      categories {
-        id
-        name
-      }
-    }
-  }
-`;
-
-const CREATE_PRODUCT_INFO = gql`
-  mutation CreateProductInfo($input: CreateProductInfoInput!) {
-    createProductInfo(input: $input) {
-      id
-      size
-      price
-      costPrice
-      color
-      weight
-      discount
-      stockQuantity
-      images
-    }
-  }
-`;
-
-const UPLOAD_PRODUCT_INFO_IMAGES = gql`
-  mutation UploadProductInfoImages($productInfoId: Int!, $files: [Upload!]!) {
-    uploadProductInfoImages(productInfoId: $productInfoId, files: $files)
-  }
-`;
-
-const REMOVE_PRODUCT_INFO_IMAGE = gql`
-  mutation RemoveProductInfoImage($productInfoId: Int!, $imageName: String!) {
-    removeProductInfoImage(productInfoId: $productInfoId, imageName: $imageName)
-  }
-`;
-
-const PRODUCTS_QUERY = gql`
-  query Products($filter: ProductFilterInput) {
-    products(filter: $filter) {
-      edges {
-        cursor
-        node {
-          id
-          name
-          discount
-          categories {
-            id
-            name
-          }
-          productInfos {
-            id
-            price
-            color
-          }
-        }
-      }
-      pageInfo {
-        endCursor
-        hasNextPage
-      }
-      totalCount
-    }
-  }
-`;
-
-const PRODUCT_BY_ID_QUERY = gql`
-  query Product($id: Int!) {
-    product(id: $id) {
-      id
-      name
-      discount
-      categories {
-        id
-        name
-      }
-      productInfos {
-        id
-        size
-        price
-        costPrice
-        color
-        weight
-        discount
-        stockQuantity
-        images
-      }
-    }
-  }
-`;
+import {
+  CREATE_PRODUCT,
+  CREATE_PRODUCT_INFO,
+  UPLOAD_PRODUCT_INFO_IMAGES,
+  REMOVE_PRODUCT_INFO_IMAGE,
+  PRODUCTS_QUERY,
+  PRODUCT_BY_ID_QUERY,
+} from './products.graphql';
 
 export function useProductsQuery({
   search,

@@ -4,7 +4,7 @@ import { Color } from '@kickzone-workspace/entities';
 import { RolesGuard } from '@kickzone-workspace/guards';
 import { UserRole } from '@kickzone-workspace/entities';
 import { SetMetadata, UseGuards } from '@nestjs/common';
-import { CreateCategoryInput } from '@kickzone-workspace/inputs'; // Reusing CreateCategoryInput for now, will create specific Color input later
+import { CreateColorInput, UpdateColorInput } from '@kickzone-workspace/inputs';
 
 @Resolver(() => Color)
 export class ColorResolver {
@@ -25,13 +25,8 @@ export class ColorResolver {
   @Mutation(() => Color)
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
-  async createColor(
-    @Args('input') input: CreateCategoryInput // Temporarily using this input type
-  ): Promise<Color> {
-    // Assuming CreateCategoryInput has a 'name' field, need to adjust once Color input is created
-    // Also need to add hexCode to the input
-    // For now, using a placeholder hexCode 'temp'
-    return this.colorService.createColor(input.name, '#000000');
+  async createColor(@Args('input') input: CreateColorInput): Promise<Color> {
+    return this.colorService.createColor(input);
   }
 
   @Mutation(() => Color, { nullable: true })
@@ -39,12 +34,9 @@ export class ColorResolver {
   @SetMetadata('roles', [UserRole.ADMIN])
   async updateColor(
     @Args('id', { type: () => Int }) id: number,
-    @Args('input') input: CreateCategoryInput // Temporarily using this input type
+    @Args('input') input: UpdateColorInput
   ): Promise<Color | null> {
-    // Assuming CreateCategoryInput has a 'name' field, need to adjust once Color input is created
-    // Also need to add hexCode to the input
-    // For now, using a placeholder hexCode 'temp'
-    return this.colorService.updateColor(id, input.name, '#000000');
+    return this.colorService.updateColor(id, input);
   }
 
   @Mutation(() => Boolean)

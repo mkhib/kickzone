@@ -1,5 +1,8 @@
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
-import { useCategories } from '@kickzone-workspace/categories-hook';
+import {
+  useCategories,
+  useCategoriesQuery,
+} from '@kickzone-workspace/categories-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { colors } from '@kickzone-workspace/colors';
 import { useProducts, useProductById } from '@kickzone-workspace/products-hook';
@@ -192,12 +195,6 @@ const ImagePreviewContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }));
 
-interface ImagePreviewProps {
-  src: string;
-  alt?: string;
-  onRemove: () => void;
-}
-
 // Define ProductInfoState independently
 export type ProductInfoState = {
   productId: number;
@@ -233,19 +230,18 @@ interface ProductInfoCardProps {
       | 'newImages'
       | 'newImagePreviews'
     >,
-    value: any
+    value: unknown
   ) => void;
   onColorChange: (
     idx: number,
     color: KickzoneGraphqlTypes.Color | null
-  ) => void; // Use the generated Color type
-  availableColors: KickzoneGraphqlTypes.Color[]; // Renamed from colors to availableColors
+  ) => void;
+  availableColors: KickzoneGraphqlTypes.Color[];
   onImageUpload: (idx: number, e: React.ChangeEvent<HTMLInputElement>) => void;
   onRemove: (idx: number) => void;
   onRemoveImage: (infoIdx: number, imageIdx: number) => void;
   disableRemove: boolean;
   onRemoveSelectedImage: (infoIdx: number, imageIdx: number) => void;
-  onRemoveUploadedImage: (infoIdx: number, imageIdx: number) => void;
   onUploadSelectedImages: (infoIdx: number) => void;
 }
 
@@ -261,12 +257,13 @@ const ProductInfoCard = React.memo(
     onRemoveImage,
     disableRemove,
     onRemoveSelectedImage,
-    onRemoveUploadedImage,
     onUploadSelectedImages,
   }: ProductInfoCardProps) => {
     // Tooltip for upload button if product info is not created
     const isSelectImagesDisabled = info.isUploading || !info.createdId;
     const showTooltip = !info.createdId;
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const uploadButton = (
       <Button
         component="label"
@@ -295,17 +292,14 @@ const ProductInfoCard = React.memo(
     );
     return (
       <Paper sx={{ mb: 2, p: 2, position: 'relative' }}>
-        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <TextField
-            label="Size"
-            name="size"
-            value={info.size}
-            onChange={(
-              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, 'size', e.target.value)}
-            required
-            sx={{ flex: 1, minWidth: 100 }}
-          />
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: 2,
+            flexWrap: { xs: 'nowrap', md: 'wrap' },
+          }}
+        >
           <Autocomplete
             options={availableColors}
             getOptionLabel={(option) => option.name}
@@ -315,7 +309,21 @@ const ProductInfoCard = React.memo(
             renderInput={(params) => (
               <TextField {...params} label="Color" required />
             )}
-            sx={{ flex: 1, minWidth: 100 }}
+            sx={{ minWidth: 120, width: '100%', mb: { xs: 2, md: 0 } }}
+          />
+          <TextField
+            label="Size"
+            name="size"
+            value={info.size}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => onChange(idx, 'size', e.target.value)}
+            required
+            sx={{
+              flex: 1,
+              minWidth: 100,
+              width: isMobile ? '100%' : undefined,
+            }}
           />
           <TextField
             label="Price"
@@ -326,7 +334,11 @@ const ProductInfoCard = React.memo(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => onChange(idx, 'price', e.target.value)}
             required
-            sx={{ flex: 1, minWidth: 100 }}
+            sx={{
+              flex: 1,
+              minWidth: 100,
+              width: isMobile ? '100%' : undefined,
+            }}
           />
           <TextField
             label="Cost Price"
@@ -337,7 +349,11 @@ const ProductInfoCard = React.memo(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => onChange(idx, 'costPrice', e.target.value)}
             required
-            sx={{ flex: 1, minWidth: 100 }}
+            sx={{
+              flex: 1,
+              minWidth: 100,
+              width: isMobile ? '100%' : undefined,
+            }}
           />
           <TextField
             label="Weight (kg)"
@@ -348,7 +364,11 @@ const ProductInfoCard = React.memo(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => onChange(idx, 'weight', e.target.value)}
             required
-            sx={{ flex: 1, minWidth: 100 }}
+            sx={{
+              flex: 1,
+              minWidth: 100,
+              width: isMobile ? '100%' : undefined,
+            }}
           />
           <TextField
             label="Discount (%)"
@@ -358,7 +378,11 @@ const ProductInfoCard = React.memo(
             onChange={(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => onChange(idx, 'discount', e.target.value)}
-            sx={{ flex: 1, minWidth: 100 }}
+            sx={{
+              flex: 1,
+              minWidth: 100,
+              width: isMobile ? '100%' : undefined,
+            }}
           />
           <TextField
             label="Stock Quantity"
@@ -369,7 +393,11 @@ const ProductInfoCard = React.memo(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => onChange(idx, 'stockQuantity', e.target.value)}
             required
-            sx={{ flex: 1, minWidth: 100 }}
+            sx={{
+              flex: 1,
+              minWidth: 100,
+              width: isMobile ? '100%' : undefined,
+            }}
           />
         </Box>
         <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -563,14 +591,56 @@ const ColorModal = ({
   );
 };
 
+interface DeleteColorModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  colorName: string;
+  isLoading?: boolean;
+}
+
+const DeleteColorModal = ({
+  open,
+  onClose,
+  onConfirm,
+  colorName,
+  isLoading = false,
+}: DeleteColorModalProps) => {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <WarningIcon color="warning" />
+        Delete Color
+      </DialogTitle>
+      <DialogContent>
+        <Typography>
+          Are you sure you want to delete the color "{colorName}"? This action
+          cannot be undone.
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Cancel</Button>
+        <Button
+          onClick={onConfirm}
+          loading={isLoading}
+          variant="contained"
+          color="error"
+        >
+          Delete
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 export function AdminProductEditor() {
   const { id } = useParams<{ id?: string }>();
   const productIdNum = id ? Number(id) : undefined;
-  const { product: loadedProduct, loading: loadingProduct } =
-    useProductById(productIdNum);
+  const { product: loadedProduct } = useProductById(productIdNum);
   const [product, setProduct] = useState({
     name: '',
     categoryIds: [] as number[],
+    description: '',
   });
 
   const [productInfos, setProductInfos] = useState<ProductInfoState[]>([
@@ -623,9 +693,14 @@ export function AdminProductEditor() {
   const [selectedColor, setSelectedColor] =
     useState<KickzoneGraphqlTypes.Color | null>(null);
 
+  const [isDeleteColorModalOpen, setIsDeleteColorModalOpen] = useState(false);
+  const [colorToDelete, setColorToDelete] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+
+  const { categories, loading: categoriesLoading } = useCategoriesQuery();
   const {
-    categoriesData,
-    categoriesLoading,
     createCategory,
     updateCategory,
     deleteCategory,
@@ -647,8 +722,6 @@ export function AdminProductEditor() {
 
   const {
     colors: availableColors,
-    loading: colorsLoading,
-    error: colorsError,
     createColor,
     updateColor,
     deleteColor,
@@ -661,6 +734,7 @@ export function AdminProductEditor() {
       setProduct({
         name: loadedProduct.name,
         categoryIds: loadedProduct.categories.map((cat) => cat.id),
+        description: loadedProduct.description || '',
       });
       setProductInfos(
         loadedProduct.productInfos.map((info) => ({
@@ -718,7 +792,7 @@ export function AdminProductEditor() {
         | 'newImages'
         | 'newImagePreviews'
       >,
-      value: any
+      value: unknown
     ) => {
       setProductInfos((prev) => {
         const updated = [...prev];
@@ -965,6 +1039,8 @@ export function AdminProductEditor() {
             name: product.name,
             categoryIds: product.categoryIds,
             discount: 0,
+            description:
+              product.description === '' ? null : product.description,
           },
           productInfos.map((info) => ({
             size: info.size,
@@ -1106,10 +1182,10 @@ export function AdminProductEditor() {
     async (id: number | null, name: string, hexCode: string) => {
       try {
         if (id) {
-          await updateColor(id, name);
+          await updateColor(id, name, hexCode);
           showSnackbar('Color updated successfully', { severity: 'success' });
         } else {
-          await createColor(name);
+          await createColor(name, hexCode);
           showSnackbar('Color created successfully', { severity: 'success' });
         }
         handleCloseColorModal();
@@ -1120,17 +1196,30 @@ export function AdminProductEditor() {
     [createColor, updateColor, showSnackbar, handleCloseColorModal]
   );
 
-  const handleDeleteColor = useCallback(
-    async (id: number) => {
-      try {
-        await deleteColor(id);
-        showSnackbar('Color deleted successfully', { severity: 'success' });
-      } catch (error) {
-        showSnackbar((error as Error).message, { severity: 'error' });
-      }
+  const handleDeleteColor = useCallback(async () => {
+    if (!colorToDelete) return;
+    try {
+      await deleteColor(colorToDelete.id);
+      setIsDeleteColorModalOpen(false);
+      setColorToDelete(null);
+      showSnackbar('Color deleted successfully', { severity: 'success' });
+    } catch (error) {
+      showSnackbar((error as Error).message, { severity: 'error' });
+    }
+  }, [colorToDelete, deleteColor, showSnackbar]);
+
+  const handleOpenDeleteColorModal = useCallback(
+    (color: { id: number; name: string }) => {
+      setColorToDelete(color);
+      setIsDeleteColorModalOpen(true);
     },
-    [deleteColor, showSnackbar]
+    []
   );
+
+  const handleCloseDeleteColorModal = useCallback(() => {
+    setIsDeleteColorModalOpen(false);
+    setColorToDelete(null);
+  }, []);
 
   return (
     <AdminsLayout>
@@ -1161,10 +1250,10 @@ export function AdminProductEditor() {
                 <Autocomplete
                   multiple
                   id="categories-autocomplete"
-                  options={categoriesData?.categories || []}
+                  options={categories || []}
                   getOptionLabel={(option) => option.name}
                   value={
-                    categoriesData?.categories?.filter((cat) =>
+                    categories?.filter((cat) =>
                       product.categoryIds.includes(cat.id)
                     ) || []
                   }
@@ -1250,6 +1339,20 @@ export function AdminProductEditor() {
                 />
               </Box>
               <Box sx={{ mt: 2 }}>
+                <TextField
+                  id="product-description"
+                  label="Description"
+                  name="description"
+                  value={product.description || ''}
+                  onChange={handleProductChange}
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  maxRows={8}
+                  sx={{ mb: 2 }}
+                />
+              </Box>
+              <Box sx={{ mt: 2 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   Colors
                 </Typography>
@@ -1295,7 +1398,7 @@ export function AdminProductEditor() {
                         </IconButton>
                         <IconButton
                           size="small"
-                          onClick={() => handleDeleteColor(color.id)}
+                          onClick={() => handleOpenDeleteColorModal(color)}
                           color="error"
                         >
                           <DeleteIcon fontSize="small" />
@@ -1333,7 +1436,6 @@ export function AdminProductEditor() {
                   onRemoveImage={handleRequestRemoveUploadedImage}
                   disableRemove={productInfos.length === 1}
                   onRemoveSelectedImage={handleRequestRemoveSelectedImage}
-                  onRemoveUploadedImage={handleRequestRemoveUploadedImage}
                   onUploadSelectedImages={handleUploadSelectedImages}
                 />
               ))}
@@ -1438,6 +1540,13 @@ export function AdminProductEditor() {
         onSubmit={handleSaveColor}
         initialColor={selectedColor}
         title={selectedColor ? 'Edit Color' : 'Add New Color'}
+        isLoading={colorMutationsLoading}
+      />
+      <DeleteColorModal
+        open={isDeleteColorModalOpen}
+        onClose={handleCloseDeleteColorModal}
+        onConfirm={handleDeleteColor}
+        colorName={colorToDelete?.name || ''}
         isLoading={colorMutationsLoading}
       />
     </AdminsLayout>

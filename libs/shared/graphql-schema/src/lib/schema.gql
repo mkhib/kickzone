@@ -37,6 +37,7 @@ type Product {
   productInfos: [ProductInfo!]!
   categories: [Category!]!
   discount: Float!
+  description: String
 }
 
 type ProductEdge {
@@ -116,8 +117,8 @@ type Mutation {
   createProductInfo(input: CreateProductInfoInput!): ProductInfo!
   uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
   removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
-  createColor(input: CreateCategoryInput!): Color!
-  updateColor(id: Int!, input: CreateCategoryInput!): Color
+  createColor(input: CreateColorInput!): Color!
+  updateColor(id: Int!, input: UpdateColorInput!): Color
   deleteColor(id: Int!): Boolean!
 }
 
@@ -141,6 +142,7 @@ input CreateProductInput {
   name: String!
   discount: Float!
   categoryIds: [Int!]!
+  description: String
 }
 
 input CreateProductInfoInput {
@@ -156,3 +158,13 @@ input CreateProductInfoInput {
 
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
+
+input CreateColorInput {
+  name: String!
+  hexCode: String!
+}
+
+input UpdateColorInput {
+  name: String!
+  hexCode: String!
+}

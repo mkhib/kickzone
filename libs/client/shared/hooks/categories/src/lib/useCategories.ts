@@ -1,128 +1,38 @@
-import { gql, useQuery, useMutation } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import {
+  CATEGORIES_QUERY,
+  CREATE_CATEGORY,
+  UPDATE_CATEGORY,
+  DELETE_CATEGORY,
+} from './categories.graphql';
 
-const CATEGORIES_QUERY = gql`
-  query Categories {
-    categories {
-      id
-      name
-    }
-  }
-`;
-
-const CREATE_CATEGORY = gql`
-  mutation CreateCategory($input: CreateCategoryInput!) {
-    createCategory(input: $input) {
-      id
-      name
-    }
-  }
-`;
-
-const UPDATE_CATEGORY = gql`
-  mutation UpdateCategory($input: UpdateCategoryInput!) {
-    updateCategory(input: $input) {
-      id
-      name
-    }
-  }
-`;
-
-const DELETE_CATEGORY = gql`
-  mutation DeleteCategory($id: Int!) {
-    deleteCategory(id: $id)
-  }
-`;
+export function useCategoriesQuery() {
+  const { data, loading, error, refetch } =
+    useQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>(CATEGORIES_QUERY);
+  return {
+    categories: data?.categories || [],
+    loading,
+    error,
+    refetch,
+  };
+}
 
 export const useCategories = () => {
-  const {
-    data: categoriesData,
-    loading: categoriesLoading,
-    error: categoriesError,
-    refetch: refetchCategories,
-  } = useQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>(
-    CATEGORIES_QUERY
-  );
-
   const [createCategoryMutation, { loading: isCreatingCategory }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'createCategory'>,
     KickzoneGraphqlTypes.MutationCreateCategoryArgs
-  >(CREATE_CATEGORY, {
-    update(cache, { data }) {
-      if (!data?.createCategory) return;
-
-      const existingData = cache.readQuery<
-        Pick<KickzoneGraphqlTypes.Query, 'categories'>
-      >({
-        query: CATEGORIES_QUERY,
-      });
-
-      cache.writeQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>({
-        query: CATEGORIES_QUERY,
-        data: {
-          categories: [
-            ...(existingData?.categories ?? []),
-            data.createCategory,
-          ],
-        },
-      });
-    },
-  });
+  >(CREATE_CATEGORY);
 
   const [updateCategoryMutation, { loading: isUpdatingCategory }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateCategory'>,
     KickzoneGraphqlTypes.MutationUpdateCategoryArgs
-  >(UPDATE_CATEGORY, {
-    update(cache, { data }) {
-      if (!data?.updateCategory) return;
-
-      const existingData = cache.readQuery<
-        Pick<KickzoneGraphqlTypes.Query, 'categories'>
-      >({
-        query: CATEGORIES_QUERY,
-      });
-
-      if (!existingData?.categories) return;
-
-      const updatedCategories = existingData.categories.map((category) =>
-        category.id === data.updateCategory.id ? data.updateCategory : category
-      );
-
-      cache.writeQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>({
-        query: CATEGORIES_QUERY,
-        data: {
-          categories: updatedCategories,
-        },
-      });
-    },
-  });
+  >(UPDATE_CATEGORY);
 
   const [deleteCategoryMutation, { loading: isDeletingCategory }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'deleteCategory'>,
     KickzoneGraphqlTypes.MutationDeleteCategoryArgs
-  >(DELETE_CATEGORY, {
-    update(cache, { data }, { variables }) {
-      if (!data?.deleteCategory || !variables?.id) return;
-
-      const existingData = cache.readQuery<
-        Pick<KickzoneGraphqlTypes.Query, 'categories'>
-      >({
-        query: CATEGORIES_QUERY,
-      });
-
-      if (!existingData?.categories) return;
-
-      // Remove the deleted category from the cache
-      cache.writeQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>({
-        query: CATEGORIES_QUERY,
-        data: {
-          categories: existingData.categories.filter(
-            (category) => category.id !== variables.id
-          ),
-        },
-      });
-    },
-  });
+  >(DELETE_CATEGORY);
 
   const createCategory = (name: string) =>
     createCategoryMutation({
@@ -147,9 +57,6 @@ export const useCategories = () => {
     });
 
   return {
-    categoriesData,
-    categoriesLoading,
-    categoriesError,
     createCategory,
     updateCategory,
     deleteCategory,

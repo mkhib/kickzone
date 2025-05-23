@@ -27,7 +27,11 @@ async function bootstrap() {
   }
 
   app.enableCors({
-    origin: ['https://localhost:4200', 'https://studio.apollographql.com'],
+    origin: [
+      'https://localhost:4300',
+      'https://localhost:4400',
+      'https://studio.apollographql.com',
+    ],
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     // allowedHeaders: 'Content-Type,Authorization',

@@ -1,0 +1,102 @@
+import { gql } from '@apollo/client';
+
+export const PRODUCT_FRAGMENT = gql`
+  fragment ProductFields on Product {
+    id
+    name
+    discount
+    categories {
+      id
+      name
+    }
+    productInfos {
+      id
+      size
+      price
+      costPrice
+      color {
+        id
+        name
+        hexCode
+      }
+      weight
+      discount
+      stockQuantity
+      images
+    }
+  }
+`;
+
+export const CREATE_PRODUCT = gql`
+  mutation CreateProduct($input: CreateProductInput!) {
+    createProduct(input: $input) {
+      id
+      name
+      discount
+      categories {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const CREATE_PRODUCT_INFO = gql`
+  mutation CreateProductInfo($input: CreateProductInfoInput!) {
+    createProductInfo(input: $input) {
+      id
+      size
+      price
+      costPrice
+      color {
+        id
+        name
+        hexCode
+      }
+      weight
+      discount
+      stockQuantity
+      images
+    }
+  }
+`;
+
+export const UPLOAD_PRODUCT_INFO_IMAGES = gql`
+  mutation UploadProductInfoImages($productInfoId: Int!, $files: [Upload!]!) {
+    uploadProductInfoImages(productInfoId: $productInfoId, files: $files)
+  }
+`;
+
+export const REMOVE_PRODUCT_INFO_IMAGE = gql`
+  mutation RemoveProductInfoImage($productInfoId: Int!, $imageName: String!) {
+    removeProductInfoImage(productInfoId: $productInfoId, imageName: $imageName)
+  }
+`;
+
+export const PRODUCTS_QUERY = gql`
+  query Products($filter: ProductFilterInput) {
+    products(filter: $filter) {
+      edges {
+        cursor
+        node {
+          ...ProductFields
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      totalCount
+    }
+  }
+  ${PRODUCT_FRAGMENT}
+`;
+
+export const PRODUCT_BY_ID_QUERY = gql`
+  query Product($id: Int!) {
+    product(id: $id) {
+      ...ProductFields
+    }
+  }
+  ${PRODUCT_FRAGMENT}
+`;

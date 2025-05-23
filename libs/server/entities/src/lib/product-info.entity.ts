@@ -22,8 +22,8 @@ export class ProductInfo {
   @Column('decimal', { precision: 10, scale: 2 })
   costPrice: number;
 
-  @Field(() => Color)
-  @ManyToOne(() => Color)
+  @Field(() => Color, { nullable: true })
+  @ManyToOne(() => Color, { nullable: true, eager: true })
   color: Color;
 
   @Field(() => Float)

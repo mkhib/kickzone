@@ -11,6 +11,9 @@ export class CreateProductInput {
 
   @Field(() => [Int])
   categoryIds: number[];
+
+  @Field({ nullable: true })
+  description?: string;
 }
 
 @InputType()
@@ -41,12 +44,6 @@ export class CreateProductInfoInput {
 }
 
 @InputType()
-export class CreateCategoryInput {
-  @Field()
-  name: string;
-}
-
-@InputType()
 export class ProductFilterInput {
   @Field({ nullable: true })
   category?: string;
@@ -71,22 +68,4 @@ export class ProductFilterInput {
 
   @Field({ nullable: true })
   sortOrder?: 'asc' | 'desc';
-}
-
-@InputType()
-export class CreateColorInput {
-  @Field()
-  name: string;
-
-  @Field()
-  hexCode: string;
-}
-
-@InputType()
-export class UpdateColorInput {
-  @Field()
-  name: string;
-
-  @Field()
-  hexCode: string;
 }

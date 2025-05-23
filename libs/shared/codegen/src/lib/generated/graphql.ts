@@ -33,6 +33,11 @@ export type CreateCategoryInput = {
   name: Scalars['String']['input'];
 };
 
+export type CreateColorInput = {
+  hexCode: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
 export type CreateProductInfoInput = {
   colorId: Scalars['Int']['input'];
   costPrice: Scalars['Float']['input'];
@@ -46,6 +51,7 @@ export type CreateProductInfoInput = {
 
 export type CreateProductInput = {
   categoryIds: Array<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
   discount: Scalars['Float']['input'];
   name: Scalars['String']['input'];
 };
@@ -81,7 +87,7 @@ export type MutationCreateCategoryArgs = {
 
 
 export type MutationCreateColorArgs = {
-  input: CreateCategoryInput;
+  input: CreateColorInput;
 };
 
 
@@ -129,7 +135,7 @@ export type MutationUpdateCategoryArgs = {
 
 export type MutationUpdateColorArgs = {
   id: Scalars['Int']['input'];
-  input: CreateCategoryInput;
+  input: UpdateColorInput;
 };
 
 
@@ -147,6 +153,7 @@ export type PageInfo = {
 export type Product = {
   __typename?: 'Product';
   categories: Array<Category>;
+  description?: Maybe<Scalars['String']['output']>;
   discount: Scalars['Float']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
@@ -236,6 +243,11 @@ export type QueryUsersArgs = {
 
 export type UpdateCategoryInput = {
   id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type UpdateColorInput = {
+  hexCode: Scalars['String']['input'];
   name: Scalars['String']['input'];
 };
 

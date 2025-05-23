@@ -37,6 +37,10 @@ export class Product {
   @Column('decimal', { precision: 5, scale: 2 })
   discount: number;
 
+  @Field({ nullable: true })
+  @Column({ type: 'text', nullable: true })
+  description?: string | null;
+
   @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
   sellerProducts: Relation<SellerProduct>[];
 }

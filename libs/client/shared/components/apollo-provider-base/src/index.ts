@@ -1,1 +1,1 @@
-export * from './lib/apollo-provider-base';
+export * from './lib/ApolloProviderBase';

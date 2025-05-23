@@ -118,6 +118,7 @@ export class ProductService {
       name: input.name,
       discount: input.discount,
       categories,
+      description: input.description === '' ? null : input.description,
     });
     return this.productRepository.save(product);
   }
@@ -190,7 +191,8 @@ export class ProductService {
     id: number,
     name: string,
     discount: number,
-    categoryIds: number[]
+    categoryIds: number[],
+    description?: string | null
   ): Promise<Product> {
     const product = await this.productRepository.findOne({ where: { id } });
     if (!product) {
@@ -207,6 +209,7 @@ export class ProductService {
     product.name = name;
     product.discount = discount;
     product.categories = categories;
+    product.description = description === '' ? null : description;
     return this.productRepository.save(product);
   }
 
