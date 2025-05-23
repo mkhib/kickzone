@@ -3,5 +3,6 @@
     "submit": "Submit",
     "cancel": "Cancel"
   },
-  "greeting": "Hello"
+  "greeting": "Hello",
+  "signIn": "Sign In"
 }

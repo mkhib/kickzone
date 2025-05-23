@@ -1,3 +1,4 @@
+// i18next-scanner.config.js
 module.exports = {
   input: ['libs/**/*.ts', 'libs/**/*.tsx', 'apps/**/*.ts', 'apps/**/*.tsx'],
   output: './libs/shared/shared-i18n/src/lib/locales',
@@ -7,12 +8,21 @@ module.exports = {
     sort: true,
   },
   keySeparator: '.', // Key format: common.submit
-  nsSeparator: ':', // Namespace separator (optional)
+  nsSeparator: ':',
   defaultValue: '__STRING_NOT_TRANSLATED__',
   lngs: ['en', 'fa'],
-  ns: ['common'], // can add more namespaces later
+  ns: ['common'],
   resource: {
     loadPath: 'libs/shared/shared-i18n/src/lib/locales/{{lng}}/{{ns}}.json',
     savePath: 'libs/shared/shared-i18n/src/lib/locales/{{lng}}/{{ns}}.json',
+  },
+  func: {
+    list: ['t'],
+    extensions: ['.ts', '.tsx'],
+  },
+  trans: {
+    component: 'Trans',
+    i18nKey: 'i18nKey',
+    extensions: ['.ts', '.tsx'],
   },
 };

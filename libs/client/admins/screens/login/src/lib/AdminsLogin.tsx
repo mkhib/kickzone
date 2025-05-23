@@ -12,11 +12,13 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useAdminLogin } from './useAdminLogin';
+import { useTranslation } from 'react-i18next';
 
 export function AdminsLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { loginAdmin, adminsLoginLoading, adminsLoginError } = useAdminLogin();
+  const { t } = useTranslation();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -44,7 +46,7 @@ export function AdminsLogin() {
             variant="h5"
             sx={{ mt: 2, color: colors.text }}
           >
-            Sign in
+            {t('signIn')}
           </Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <TextField

@@ -1,1 +1,1 @@
-export * from './lib/shared-i18n';
+export * from './lib/i18n';
