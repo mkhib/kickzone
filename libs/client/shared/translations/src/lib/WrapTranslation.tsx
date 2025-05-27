@@ -1,17 +1,18 @@
 import { LocalizedString } from 'typesafe-i18n';
-import React from 'react';
 
 interface WrapTranslationPropsType {
   message: LocalizedString;
-  renderComponent: (messagePart: LocalizedString) => JSX.Element;
+  renderComponent: (messagePart: LocalizedString) => Element;
 }
 
 export function WrapTranslation({
   message,
   renderComponent,
 }: WrapTranslationPropsType) {
-  // define a split character, in this case '<>'
-  let [prefix, infix, postfix] = message.split('<>') as LocalizedString[];
+  let prefix: LocalizedString, infix: LocalizedString;
+  const [p, i, postfix] = message.split('<>') as LocalizedString[];
+  prefix = p;
+  infix = i;
 
   // render infix only if the message doesn't have any split characters
   if (!infix && !postfix) {
