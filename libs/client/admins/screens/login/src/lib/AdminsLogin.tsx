@@ -1,18 +1,17 @@
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { colors } from '@kickzone-workspace/colors';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import Grid2 from '@mui/material/Grid2';
-import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useAdminLogin } from './useAdminLogin';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { mapApolloErrorToTranslationKey } from '@kickzone-workspace/translations';
 
 export function AdminsLogin() {
   const [email, setEmail] = useState('');
@@ -46,7 +45,7 @@ export function AdminsLogin() {
             variant="h5"
             sx={{ mt: 2, color: colors.text }}
           >
-            {LL.signIn()}
+            {LL.authorization.signIn()}
           </Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <TextField
@@ -87,20 +86,15 @@ export function AdminsLogin() {
                 '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
-              {adminsLoginLoading ? LL.button.submit() : LL.signIn()}
+              {adminsLoginLoading
+                ? LL.button.submit()
+                : LL.authorization.signIn()}
             </Button>
             {adminsLoginError && (
               <Typography color="error" sx={{ mt: 2 }}>
-                {adminsLoginError.message}
+                {LL.errors[mapApolloErrorToTranslationKey(adminsLoginError)]()}
               </Typography>
             )}
-            <Grid2 container justifyContent="flex-end" component="div">
-              <Grid2 component="div">
-                <Link href="#" variant="body2" sx={{ color: colors.main }}>
-                  {LL.greeting()}
-                </Link>
-              </Grid2>
-            </Grid2>
           </Box>
         </Paper>
       </Container>

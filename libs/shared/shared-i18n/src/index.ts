@@ -1,4 +1,3 @@
-export * from './lib/i18n';
 export * from './lib/locales/i18n-react';
 export * from './lib/locales/i18n-types';
 export * from './lib/locales/i18n-util';

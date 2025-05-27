@@ -28,10 +28,62 @@ type RootTranslation = {
 	 * H​e​l​l​o
 	 */
 	greeting: string
-	/**
-	 * S​i​g​n​ ​I​n
-	 */
-	signIn: string
+	authorization: {
+		/**
+		 * S​i​g​n​ ​I​n
+		 */
+		signIn: string
+		/**
+		 * S​i​g​n​ ​U​p
+		 */
+		signUp: string
+		/**
+		 * F​o​r​g​o​t​ ​P​a​s​s​w​o​r​d
+		 */
+		forgotPassword: string
+		/**
+		 * R​e​s​e​t​ ​P​a​s​s​w​o​r​d
+		 */
+		resetPassword: string
+		/**
+		 * V​e​r​i​f​y​ ​E​m​a​i​l
+		 */
+		verifyEmail: string
+		/**
+		 * R​e​s​e​n​d​ ​V​e​r​i​f​i​c​a​t​i​o​n​ ​E​m​a​i​l
+		 */
+		resendVerificationEmail: string
+		/**
+		 * E​m​a​i​l​ ​V​e​r​i​f​i​c​a​t​i​o​n
+		 */
+		emailVerification: string
+		/**
+		 * E​m​a​i​l​ ​V​e​r​i​f​i​c​a​t​i​o​n​ ​S​e​n​t
+		 */
+		emailVerificationSent: string
+		/**
+		 * E​m​a​i​l​ ​V​e​r​i​f​i​c​a​t​i​o​n​ ​F​a​i​l​e​d
+		 */
+		emailVerificationFailed: string
+		/**
+		 * E​m​a​i​l​ ​V​e​r​i​f​i​c​a​t​i​o​n​ ​S​u​c​c​e​s​s
+		 */
+		emailVerificationSuccess: string
+		/**
+		 * W​r​o​n​g​ ​E​m​a​i​l​ ​o​r​ ​P​a​s​s​w​o​r​d
+		 */
+		wrongEmailOrPassword: string
+	}
+	errors: {
+		/**
+		 * Y​o​u​ ​a​r​e​ ​n​o​t​ ​a​u​t​h​o​r​i​z​e​d​.​ ​P​l​e​a​s​e​ ​l​o​g​ ​i​n​.
+		 */
+		unauthorized: string
+		/**
+		 * A​n​ ​u​n​k​n​o​w​n​ ​e​r​r​o​r​ ​o​c​c​u​r​r​e​d​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		unknown: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -49,10 +101,62 @@ export type TranslationFunctions = {
 	 * Hello
 	 */
 	greeting: () => LocalizedString
-	/**
-	 * Sign In
-	 */
-	signIn: () => LocalizedString
+	authorization: {
+		/**
+		 * Sign In
+		 */
+		signIn: () => LocalizedString
+		/**
+		 * Sign Up
+		 */
+		signUp: () => LocalizedString
+		/**
+		 * Forgot Password
+		 */
+		forgotPassword: () => LocalizedString
+		/**
+		 * Reset Password
+		 */
+		resetPassword: () => LocalizedString
+		/**
+		 * Verify Email
+		 */
+		verifyEmail: () => LocalizedString
+		/**
+		 * Resend Verification Email
+		 */
+		resendVerificationEmail: () => LocalizedString
+		/**
+		 * Email Verification
+		 */
+		emailVerification: () => LocalizedString
+		/**
+		 * Email Verification Sent
+		 */
+		emailVerificationSent: () => LocalizedString
+		/**
+		 * Email Verification Failed
+		 */
+		emailVerificationFailed: () => LocalizedString
+		/**
+		 * Email Verification Success
+		 */
+		emailVerificationSuccess: () => LocalizedString
+		/**
+		 * Wrong Email or Password
+		 */
+		wrongEmailOrPassword: () => LocalizedString
+	}
+	errors: {
+		/**
+		 * You are not authorized. Please log in.
+		 */
+		unauthorized: () => LocalizedString
+		/**
+		 * An unknown error occurred. Please try again.
+		 */
+		unknown: () => LocalizedString
+	}
 }
 
 export type Formatters = {}
