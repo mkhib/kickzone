@@ -12,13 +12,13 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useAdminLogin } from './useAdminLogin';
-import { useTranslation } from 'react-i18next';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 
 export function AdminsLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const { loginAdmin, adminsLoginLoading, adminsLoginError } = useAdminLogin();
-  const { t } = useTranslation();
+  const { LL } = useI18nContext();
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -46,7 +46,7 @@ export function AdminsLogin() {
             variant="h5"
             sx={{ mt: 2, color: colors.text }}
           >
-            {t('signIn')}
+            {LL.signIn()}
           </Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <TextField
@@ -87,7 +87,7 @@ export function AdminsLogin() {
                 '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
-              {adminsLoginLoading ? 'Logging in...' : 'Sign In'}
+              {adminsLoginLoading ? LL.button.submit() : LL.signIn()}
             </Button>
             {adminsLoginError && (
               <Typography color="error" sx={{ mt: 2 }}>
@@ -97,7 +97,7 @@ export function AdminsLogin() {
             <Grid2 container justifyContent="flex-end" component="div">
               <Grid2 component="div">
                 <Link href="#" variant="body2" sx={{ color: colors.main }}>
-                  Don't have an account? Sign Up
+                  {LL.greeting()}
                 </Link>
               </Grid2>
             </Grid2>

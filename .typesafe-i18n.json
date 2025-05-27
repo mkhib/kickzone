@@ -1,5 +1,5 @@
 {
   "$schema": "https://unpkg.com/typesafe-i18n@5.26.2/schema/typesafe-i18n.json",
-  "adapter": "react",
-  "outputPath": "./libs/shared/shared-i18n/src/lib/i18n-types"
+  "outputPath": "./libs/shared/shared-i18n/src/lib/locales",
+  "adapter": "react"
 }

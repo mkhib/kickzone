@@ -4,10 +4,9 @@ module.exports = {
   output: './libs/shared/shared-i18n/src/lib/locales',
   options: {
     debug: true,
-    removeUnusedKeys: true,
     sort: true,
   },
-  keySeparator: '.', // Key format: common.submit
+  keySeparator: '.',
   nsSeparator: ':',
   defaultValue: '__STRING_NOT_TRANSLATED__',
   lngs: ['en', 'fa'],

@@ -4,10 +4,10 @@
   "license": "MIT",
   "scripts": {
     "generate-types": "graphql-codegen --config libs/shared/codegen/src/lib/codegen.yml",
-    "i18n:extract": "i18next-scanner",
     "typesafe-i18n": "typesafe-i18n",
     "locales:copy:admins": "npx cpx2 \"libs/shared/shared-i18n/src/lib/locales/**/*\" apps/client/admins/public/assets/locales",
-    "locales:copy:customers": "npx cpx2 \"libs/shared/shared-i18n/src/lib/locales/**/*\" apps/client/customers/public/assets/locales"
+    "locales:copy:customers": "npx cpx2 \"libs/shared/shared-i18n/src/lib/locales/**/*\" apps/client/customers/public/assets/locales",
+    "i18n:update-and-generate": "yarn typesafe-i18n"
   },
   "private": true,
   "dependencies": {
@@ -48,7 +48,6 @@
     "i18next": "^25.2.0",
     "i18next-browser-languagedetector": "^8.1.0",
     "i18next-http-backend": "^3.0.2",
-    "i18next-scanner": "^4.6.0",
     "multer": "^1.4.5-lts.2",
     "passport": "^0.7.0",
     "passport-jwt": "^4.0.1",
@@ -103,6 +102,8 @@
     "@vitejs/plugin-react": "^4.2.0",
     "@vitest/coverage-v8": "^1.0.4",
     "@vitest/ui": "^1.3.1",
+    "concurrently": "^8.2.2",
+    "cpx2": "^3.0.0",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^9.0.0",
     "eslint-plugin-import": "2.31.0",
@@ -124,8 +125,6 @@
     "typescript-eslint": "^8.19.0",
     "vite": "^5.0.0",
     "vitest": "^1.3.1",
-    "webpack-cli": "^5.1.4",
-    "cpx2": "^3.0.0",
-    "concurrently": "^8.2.2"
+    "webpack-cli": "^5.1.4"
   }
 }
