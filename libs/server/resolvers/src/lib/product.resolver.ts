@@ -201,4 +201,23 @@ export class ProductResolver {
   ): Promise<Product> {
     return this.productService.unarchiveProduct(id);
   }
+
+  @Mutation(() => Product)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async updateProduct(
+    @Args('id', { type: () => Int }) id: number,
+    @Args('name') name: string,
+    @Args('discount', { type: () => Number }) discount: number,
+    @Args('categoryIds', { type: () => [Int] }) categoryIds: number[],
+    @Args('description', { nullable: true }) description?: string
+  ): Promise<Product> {
+    return this.productService.updateProduct(
+      id,
+      name,
+      discount,
+      categoryIds,
+      description
+    );
+  }
 }

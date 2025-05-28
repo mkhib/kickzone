@@ -699,7 +699,7 @@ export function AdminProductEditor() {
     name: string;
   } | null>(null);
 
-  const { categories, loading: categoriesLoading } = useCategoriesQuery();
+  const { categories, getCategoriesLoading } = useCategoriesQuery();
   const {
     createCategory,
     updateCategory,
@@ -714,6 +714,7 @@ export function AdminProductEditor() {
     uploadProductInfoImages,
     removeProductInfoImage,
     isCreatingProduct,
+    updateProduct,
   } = useProducts();
   const { showSnackbar } = useSnackbarContext();
 
@@ -1033,33 +1034,45 @@ export function AdminProductEditor() {
             return;
           }
         }
-        // Create product and all product infos
-        const created = await createProductWithInfos(
-          {
-            name: product.name,
-            categoryIds: product.categoryIds,
-            discount: 0,
-            description:
-              product.description === '' ? null : product.description,
-          },
-          productInfos.map((info) => ({
-            size: info.size,
-            price: Number(info.price),
-            costPrice: Number(info.costPrice),
-            colorId: info.color?.id || 0, // Map color object back to colorId
-            weight: Number(info.weight),
-            discount: Number(info.discount) || 0,
-            stockQuantity: Number(info.stockQuantity),
-          }))
-        );
-        setCreatedProductInfoIds(created.productInfos.map((pi) => pi.id));
-        setProductInfos((prev) =>
-          prev.map((info, i) => ({
-            ...info,
-            createdId: created.productInfos[i]?.id || null,
-          }))
-        );
-        showSnackbar('Product created successfully', { severity: 'success' });
+        if (productIdNum) {
+          // Editing existing product
+          await updateProduct(
+            productIdNum,
+            product.name,
+            0, // discount
+            product.categoryIds,
+            product.description === '' ? null : product.description
+          );
+          showSnackbar('Product updated successfully', { severity: 'success' });
+        } else {
+          // Create product and all product infos
+          const created = await createProductWithInfos(
+            {
+              name: product.name,
+              categoryIds: product.categoryIds,
+              discount: 0,
+              description:
+                product.description === '' ? null : product.description,
+            },
+            productInfos.map((info) => ({
+              size: info.size,
+              price: Number(info.price),
+              costPrice: Number(info.costPrice),
+              colorId: info.color?.id || 0, // Map color object back to colorId
+              weight: Number(info.weight),
+              discount: Number(info.discount) || 0,
+              stockQuantity: Number(info.stockQuantity),
+            }))
+          );
+          setCreatedProductInfoIds(created.productInfos.map((pi) => pi.id));
+          setProductInfos((prev) =>
+            prev.map((info, i) => ({
+              ...info,
+              createdId: created.productInfos[i]?.id || null,
+            }))
+          );
+          showSnackbar('Product created successfully', { severity: 'success' });
+        }
       } catch (error) {
         const message = (error as Error).message;
         if (message.includes('already exists')) {
@@ -1069,7 +1082,14 @@ export function AdminProductEditor() {
         }
       }
     },
-    [product, productInfos, createProductWithInfos, showSnackbar]
+    [
+      product,
+      productInfos,
+      createProductWithInfos,
+      updateProduct,
+      showSnackbar,
+      productIdNum,
+    ]
   );
 
   const handleDeleteCategory = useCallback(async () => {
@@ -1263,7 +1283,7 @@ export function AdminProductEditor() {
                       categoryIds: newValue.map((category) => category.id),
                     }))
                   }
-                  loading={categoriesLoading}
+                  loading={getCategoriesLoading}
                   renderOption={(props, option) => {
                     const { key, ...otherProps } = props;
                     return (

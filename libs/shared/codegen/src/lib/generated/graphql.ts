@@ -79,6 +79,7 @@ export type Mutation = {
   unarchiveProduct: Product;
   updateCategory: Category;
   updateColor?: Maybe<Color>;
+  updateProduct: Product;
   uploadProductInfoImages: Array<Scalars['String']['output']>;
 };
 
@@ -148,6 +149,15 @@ export type MutationUpdateCategoryArgs = {
 export type MutationUpdateColorArgs = {
   id: Scalars['Int']['input'];
   input: UpdateColorInput;
+};
+
+
+export type MutationUpdateProductArgs = {
+  categoryIds: Array<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  discount: Scalars['Int']['input'];
+  id: Scalars['Int']['input'];
+  name: Scalars['String']['input'];
 };
 
 

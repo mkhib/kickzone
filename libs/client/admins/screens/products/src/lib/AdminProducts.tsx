@@ -190,6 +190,9 @@ export function AdminProducts() {
                       <CardContent>
                         <Typography variant="h6">{product.name}</Typography>
                         <Typography variant="body2">
+                          Status: {product.archived ? 'Archived' : 'Active'}
+                        </Typography>
+                        <Typography variant="body2">
                           Price: {info?.price ?? 'N/A'}
                         </Typography>
                         <Typography variant="body2">

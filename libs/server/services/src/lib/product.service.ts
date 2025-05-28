@@ -12,7 +12,6 @@ import {
   CreateProductInfoInput,
   CreateCategoryInput,
   ProductFilterInput,
-  ProductArchivedStatus,
 } from '@kickzone-workspace/inputs';
 
 @Injectable()

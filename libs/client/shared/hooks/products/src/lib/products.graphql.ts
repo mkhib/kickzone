@@ -5,6 +5,7 @@ export const PRODUCT_FRAGMENT = gql`
     id
     name
     discount
+    archived
     categories {
       id
       name
@@ -106,6 +107,34 @@ export const ARCHIVE_PRODUCT_MUTATION = gql`
     archiveProduct(id: $id) {
       id
       archived
+    }
+  }
+`;
+
+export const UPDATE_PRODUCT = gql`
+  mutation UpdateProduct(
+    $id: Int!
+    $name: String!
+    $discount: Float!
+    $categoryIds: [Int!]!
+    $description: String
+  ) {
+    updateProduct(
+      id: $id
+      name: $name
+      discount: $discount
+      categoryIds: $categoryIds
+      description: $description
+    ) {
+      id
+      name
+      discount
+      archived
+      categories {
+        id
+        name
+      }
+      description
     }
   }
 `;

@@ -9,6 +9,7 @@ import {
   PRODUCTS_QUERY,
   PRODUCT_BY_ID_QUERY,
   ARCHIVE_PRODUCT_MUTATION,
+  UPDATE_PRODUCT,
 } from './products.graphql';
 
 export function useProductsQuery({
@@ -114,6 +115,11 @@ export const useProducts = () => {
     KickzoneGraphqlTypes.MutationArchiveProductArgs
   >(ARCHIVE_PRODUCT_MUTATION);
 
+  const [updateProductMutation] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateProduct'>,
+    KickzoneGraphqlTypes.MutationUpdateProductArgs
+  >(UPDATE_PRODUCT);
+
   // Accepts productInput and an array of productInfoInputs
   const createProductWithInfos = useCallback(
     async (
@@ -207,12 +213,29 @@ export const useProducts = () => {
     [archiveProductMutation]
   );
 
+  const updateProduct = useCallback(
+    async (
+      id: number,
+      name: string,
+      discount: number,
+      categoryIds: number[],
+      description?: string | null
+    ) => {
+      const { data } = await updateProductMutation({
+        variables: { id, name, discount, categoryIds, description },
+      });
+      return data?.updateProduct;
+    },
+    [updateProductMutation]
+  );
+
   return {
     createProductWithInfos,
     uploadProductInfoImages,
     removeProductInfoImage,
     isCreatingProduct: isCreatingProduct || isCreatingProductInfo,
     archiveProduct,
+    updateProduct,
   };
 };
 
