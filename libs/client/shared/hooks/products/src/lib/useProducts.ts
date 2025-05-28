@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery, gql } from '@apollo/client';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCallback } from 'react';
 import {
@@ -8,6 +8,7 @@ import {
   REMOVE_PRODUCT_INFO_IMAGE,
   PRODUCTS_QUERY,
   PRODUCT_BY_ID_QUERY,
+  ARCHIVE_PRODUCT_MUTATION,
 } from './products.graphql';
 
 export function useProductsQuery({
@@ -16,12 +17,14 @@ export function useProductsQuery({
   sort = '',
   sortOrder = 'asc',
   pageSize = 12,
+  archivedStatus = 'ACTIVE',
 }: {
   search: string;
   categoryId?: number;
   sort?: string;
   sortOrder?: 'asc' | 'desc';
   pageSize?: number;
+  archivedStatus?: 'ALL' | 'ACTIVE' | 'ARCHIVED';
 }) {
   const { data, loading, error, fetchMore, refetch } = useQuery<{
     products: KickzoneGraphqlTypes.ProductConnection;
@@ -33,6 +36,7 @@ export function useProductsQuery({
         first: pageSize,
         sort,
         sortOrder,
+        archivedStatus,
       },
     },
     notifyOnNetworkStatusChange: true,
@@ -56,11 +60,21 @@ export function useProductsQuery({
             after: pageInfo.endCursor,
             sort,
             sortOrder,
+            archivedStatus,
           },
         },
       });
     }
-  }, [fetchMore, pageInfo, search, categoryId, pageSize, sort, sortOrder]);
+  }, [
+    fetchMore,
+    pageInfo,
+    search,
+    categoryId,
+    pageSize,
+    sort,
+    sortOrder,
+    archivedStatus,
+  ]);
 
   return {
     products,
@@ -94,6 +108,11 @@ export const useProducts = () => {
     Pick<KickzoneGraphqlTypes.Mutation, 'removeProductInfoImage'>,
     { productInfoId: number; imageName: string }
   >(REMOVE_PRODUCT_INFO_IMAGE);
+
+  const [archiveProductMutation] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'archiveProduct'>,
+    KickzoneGraphqlTypes.MutationArchiveProductArgs
+  >(ARCHIVE_PRODUCT_MUTATION);
 
   // Accepts productInput and an array of productInfoInputs
   const createProductWithInfos = useCallback(
@@ -180,11 +199,20 @@ export const useProducts = () => {
     [removeProductInfoImageMutation]
   );
 
+  const archiveProduct = useCallback(
+    async (id: number) => {
+      const { data } = await archiveProductMutation({ variables: { id } });
+      return data?.archiveProduct;
+    },
+    [archiveProductMutation]
+  );
+
   return {
     createProductWithInfos,
     uploadProductInfoImages,
     removeProductInfoImage,
     isCreatingProduct: isCreatingProduct || isCreatingProductInfo,
+    archiveProduct,
   };
 };
 

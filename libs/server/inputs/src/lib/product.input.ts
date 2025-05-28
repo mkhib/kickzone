@@ -1,5 +1,21 @@
-import { InputType, Field, Int, Float } from '@nestjs/graphql';
+import {
+  InputType,
+  Field,
+  Int,
+  Float,
+  registerEnumType,
+} from '@nestjs/graphql';
 import { ProductInfoFilterInput } from './product-info-filter.input';
+
+export enum ProductArchivedStatus {
+  ALL = 'ALL',
+  ACTIVE = 'ACTIVE',
+  ARCHIVED = 'ARCHIVED',
+}
+
+registerEnumType(ProductArchivedStatus, {
+  name: 'ProductArchivedStatus',
+});
 
 @InputType()
 export class CreateProductInput {
@@ -68,4 +84,7 @@ export class ProductFilterInput {
 
   @Field({ nullable: true })
   sortOrder?: 'asc' | 'desc';
+
+  @Field(() => ProductArchivedStatus, { nullable: true })
+  archivedStatus?: ProductArchivedStatus;
 }

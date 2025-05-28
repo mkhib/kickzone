@@ -12,6 +12,7 @@ import {
   CreateProductInfoInput,
   CreateCategoryInput,
   ProductFilterInput,
+  ProductArchivedStatus,
 } from '@kickzone-workspace/inputs';
 
 @Injectable()
@@ -33,6 +34,13 @@ export class ProductService {
       .leftJoinAndSelect('product.productInfos', 'productInfo')
       .leftJoinAndSelect('productInfo.color', 'color')
       .leftJoinAndSelect('product.categories', 'category');
+
+    // Partitioning hint: The 'archived' column should be used for table partitioning at the DB level.
+    if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
+      query.andWhere('product.archived = :archived', {
+        archived: filter.archivedStatus === 'ARCHIVED',
+      });
+    }
 
     if (filter?.categoryId) {
       query.andWhere('category.id = :categoryId', {
@@ -249,5 +257,21 @@ export class ProductService {
     productInfo.stockQuantity = stockQuantity;
 
     return this.productInfoRepository.save(productInfo);
+  }
+
+  // Archive a product (set archived = true)
+  async archiveProduct(id: number): Promise<Product> {
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) throw new Error('Product not found');
+    product.archived = true;
+    return this.productRepository.save(product);
+  }
+
+  // Unarchive a product (set archived = false)
+  async unarchiveProduct(id: number): Promise<Product> {
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) throw new Error('Product not found');
+    product.archived = false;
+    return this.productRepository.save(product);
   }
 }

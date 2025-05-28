@@ -8,13 +8,19 @@ import {
 } from './categories.graphql';
 
 export function useCategoriesQuery() {
-  const { data, loading, error, refetch } =
-    useQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>(CATEGORIES_QUERY);
+  const {
+    data,
+    loading: getCategoriesLoading,
+    error: getCategoriesError,
+    refetch: refetchCategories,
+  } = useQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>(
+    CATEGORIES_QUERY
+  );
   return {
     categories: data?.categories || [],
-    loading,
-    error,
-    refetch,
+    getCategoriesLoading,
+    getCategoriesError,
+    refetchCategories,
   };
 }
 

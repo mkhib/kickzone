@@ -1,7 +1,10 @@
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
+import { useCategoriesQuery } from '@kickzone-workspace/categories-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import { useProductsQuery } from '@kickzone-workspace/products-hook';
-import { useCategories } from '@kickzone-workspace/categories-hook';
+import {
+  useProductsQuery,
+  useProducts,
+} from '@kickzone-workspace/products-hook';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -14,8 +17,13 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import ArchiveIcon from '@mui/icons-material/Archive';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 
 export function AdminProducts() {
   const navigate = useNavigate();
@@ -23,6 +31,10 @@ export function AdminProducts() {
   const [category, setCategory] = useState<string>('');
   const [sort, setSort] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [status, setStatus] = useState<'ALL' | 'ACTIVE' | 'ARCHIVED'>('ACTIVE');
+  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
+  const [productToArchive, setProductToArchive] =
+    useState<KickzoneGraphqlTypes.Product | null>(null);
   const categoryIdValue = category ? Number(category) : undefined;
   const {
     products,
@@ -37,8 +49,10 @@ export function AdminProducts() {
     categoryId: categoryIdValue,
     sort,
     sortOrder,
+    archivedStatus: status,
   });
-  const { categoriesData } = useCategories();
+  const { categories } = useCategoriesQuery();
+  const { archiveProduct } = useProducts();
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
   // Infinite scroll: observe the loader div
@@ -58,6 +72,25 @@ export function AdminProducts() {
 
   // Filtering and sorting logic (client-side sort only)
   const filteredProducts = products;
+
+  const handleArchiveClick = (product: KickzoneGraphqlTypes.Product) => {
+    setProductToArchive(product);
+    setArchiveDialogOpen(true);
+  };
+
+  const handleArchiveConfirm = async () => {
+    if (productToArchive) {
+      await archiveProduct(productToArchive.id);
+      setArchiveDialogOpen(false);
+      setProductToArchive(null);
+      refetch();
+    }
+  };
+
+  const handleArchiveCancel = () => {
+    setArchiveDialogOpen(false);
+    setProductToArchive(null);
+  };
 
   return (
     <AdminsLayout>
@@ -96,13 +129,11 @@ export function AdminProducts() {
               onChange={(e) => setCategory(String(e.target.value))}
             >
               <MenuItem value="">All</MenuItem>
-              {categoriesData?.categories.map(
-                (c: KickzoneGraphqlTypes.Category) => (
-                  <MenuItem key={c.id} value={String(c.id)}>
-                    {c.name}
-                  </MenuItem>
-                )
-              )}
+              {categories?.map((c: KickzoneGraphqlTypes.Category) => (
+                <MenuItem key={c.id} value={String(c.id)}>
+                  {c.name}
+                </MenuItem>
+              ))}
             </Select>
           </FormControl>
           <FormControl sx={{ minWidth: 120 }} size="small">
@@ -129,6 +160,20 @@ export function AdminProducts() {
               <MenuItem value="desc">Descending</MenuItem>
             </Select>
           </FormControl>
+          <FormControl sx={{ minWidth: 140 }} size="small">
+            <InputLabel>Status</InputLabel>
+            <Select
+              value={status}
+              label="Status"
+              onChange={(e) =>
+                setStatus(e.target.value as 'ALL' | 'ACTIVE' | 'ARCHIVED')
+              }
+            >
+              <MenuItem value="ALL">All</MenuItem>
+              <MenuItem value="ACTIVE">Active</MenuItem>
+              <MenuItem value="ARCHIVED">Archived</MenuItem>
+            </Select>
+          </FormControl>
         </Box>
         {loading && !products.length ? (
           <Typography>Loading...</Typography>
@@ -148,7 +193,7 @@ export function AdminProducts() {
                           Price: {info?.price ?? 'N/A'}
                         </Typography>
                         <Typography variant="body2">
-                          Color: {info?.color ?? 'N/A'}
+                          Color: {info?.color?.name ?? 'N/A'}
                         </Typography>
                         <Typography variant="body2">
                           Categories:{' '}
@@ -169,6 +214,16 @@ export function AdminProducts() {
                         >
                           Edit
                         </Button>
+                        {!product.archived && (
+                          <Button
+                            variant="outlined"
+                            color="secondary"
+                            startIcon={<ArchiveIcon />}
+                            onClick={() => handleArchiveClick(product)}
+                          >
+                            Archive
+                          </Button>
+                        )}
                       </CardActions>
                     </Card>
                   </Grid2>
@@ -181,6 +236,22 @@ export function AdminProducts() {
                 Showing {products.length} of {totalCount} products
               </Typography>
             </Box>
+            <Dialog open={archiveDialogOpen} onClose={handleArchiveCancel}>
+              <DialogTitle>Archive Product</DialogTitle>
+              <DialogContent>
+                Are you sure you want to archive this product?
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={handleArchiveCancel}>Cancel</Button>
+                <Button
+                  onClick={handleArchiveConfirm}
+                  color="secondary"
+                  variant="contained"
+                >
+                  Archive
+                </Button>
+              </DialogActions>
+            </Dialog>
           </>
         )}
       </Box>

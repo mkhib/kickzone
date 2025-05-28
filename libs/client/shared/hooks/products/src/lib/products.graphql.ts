@@ -100,3 +100,12 @@ export const PRODUCT_BY_ID_QUERY = gql`
   }
   ${PRODUCT_FRAGMENT}
 `;
+
+export const ARCHIVE_PRODUCT_MUTATION = gql`
+  mutation ArchiveProduct($id: Int!) {
+    archiveProduct(id: $id) {
+      id
+      archived
+    }
+  }
+`;

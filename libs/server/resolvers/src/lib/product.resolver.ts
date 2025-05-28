@@ -11,6 +11,7 @@ import {
   CreateProductInfoInput,
   CreateCategoryInput,
   ProductFilterInput,
+  ProductArchivedStatus,
 } from '@kickzone-workspace/inputs';
 import { RolesGuard } from '@kickzone-workspace/guards';
 import { UserRole } from '@kickzone-workspace/entities';
@@ -35,6 +36,9 @@ export class ProductResolver {
   async products(
     @Args('filter', { nullable: true }) filter?: ProductFilterInput
   ): Promise<ProductConnection> {
+    if (!filter) filter = { archivedStatus: ProductArchivedStatus.ACTIVE };
+    if (!filter.archivedStatus)
+      filter.archivedStatus = ProductArchivedStatus.ACTIVE;
     const [products, totalCount] = await this.productService.getProducts(
       filter
     );
@@ -178,5 +182,23 @@ export class ProductResolver {
     @Args('id', { type: () => Int }) id: number
   ): Promise<Product | null> {
     return this.productService.getProductById(id);
+  }
+
+  @Mutation(() => Product)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async archiveProduct(
+    @Args('id', { type: () => Int }) id: number
+  ): Promise<Product> {
+    return this.productService.archiveProduct(id);
+  }
+
+  @Mutation(() => Product)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async unarchiveProduct(
+    @Args('id', { type: () => Int }) id: number
+  ): Promise<Product> {
+    return this.productService.unarchiveProduct(id);
   }
 }

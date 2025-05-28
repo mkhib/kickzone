@@ -43,6 +43,15 @@ export class Product {
 
   @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
   sellerProducts: Relation<SellerProduct>[];
+
+  @Field({ defaultValue: false })
+  @Column({
+    type: 'boolean',
+    default: false,
+    nullable: false,
+    comment: 'For partitioning',
+  })
+  archived: boolean;
 }
 
 @ObjectType()

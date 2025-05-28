@@ -38,6 +38,7 @@ type Product {
   categories: [Category!]!
   discount: Float!
   description: String
+  archived: Boolean!
 }
 
 type ProductEdge {
@@ -94,6 +95,7 @@ input ProductFilterInput {
   categoryId: Int
   sort: String
   sortOrder: String
+  archivedStatus: ProductArchivedStatus
 }
 
 input ProductInfoFilterInput {
@@ -104,6 +106,12 @@ input ProductInfoFilterInput {
   weight: [Float!]
   discount: [Float!]
   stockQuantity: [Int!]
+}
+
+enum ProductArchivedStatus {
+  ALL
+  ACTIVE
+  ARCHIVED
 }
 
 type Mutation {
@@ -117,6 +125,8 @@ type Mutation {
   createProductInfo(input: CreateProductInfoInput!): ProductInfo!
   uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
   removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
+  archiveProduct(id: Int!): Product!
+  unarchiveProduct(id: Int!): Product!
   createColor(input: CreateColorInput!): Color!
   updateColor(id: Int!, input: UpdateColorInput!): Color
   deleteColor(id: Int!): Boolean!

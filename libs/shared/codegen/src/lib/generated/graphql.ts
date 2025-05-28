@@ -65,6 +65,7 @@ export type CreateUserInput = {
 
 export type Mutation = {
   __typename?: 'Mutation';
+  archiveProduct: Product;
   createCategory: Category;
   createColor: Color;
   createProduct: Product;
@@ -75,9 +76,15 @@ export type Mutation = {
   login: User;
   logout: Scalars['Boolean']['output'];
   removeProductInfoImage: Scalars['Boolean']['output'];
+  unarchiveProduct: Product;
   updateCategory: Category;
   updateColor?: Maybe<Color>;
   uploadProductInfoImages: Array<Scalars['String']['output']>;
+};
+
+
+export type MutationArchiveProductArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -128,6 +135,11 @@ export type MutationRemoveProductInfoImageArgs = {
 };
 
 
+export type MutationUnarchiveProductArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationUpdateCategoryArgs = {
   input: UpdateCategoryInput;
 };
@@ -152,6 +164,7 @@ export type PageInfo = {
 
 export type Product = {
   __typename?: 'Product';
+  archived: Scalars['Boolean']['output'];
   categories: Array<Category>;
   description?: Maybe<Scalars['String']['output']>;
   discount: Scalars['Float']['output'];
@@ -159,6 +172,12 @@ export type Product = {
   name: Scalars['String']['output'];
   productInfos: Array<ProductInfo>;
 };
+
+export enum ProductArchivedStatus {
+  Active = 'ACTIVE',
+  All = 'ALL',
+  Archived = 'ARCHIVED'
+}
 
 export type ProductConnection = {
   __typename?: 'ProductConnection';
@@ -175,6 +194,7 @@ export type ProductEdge = {
 
 export type ProductFilterInput = {
   after?: InputMaybe<Scalars['String']['input']>;
+  archivedStatus?: InputMaybe<ProductArchivedStatus>;
   category?: InputMaybe<Scalars['String']['input']>;
   categoryId?: InputMaybe<Scalars['Int']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -186,7 +206,7 @@ export type ProductFilterInput = {
 
 export type ProductInfo = {
   __typename?: 'ProductInfo';
-  color: Color;
+  color?: Maybe<Color>;
   costPrice: Scalars['Float']['output'];
   discount: Scalars['Float']['output'];
   id: Scalars['Int']['output'];
