@@ -1,1 +1,1 @@
-export * from './lib/sellers-router';
+export * from './lib/SellersRouter';
