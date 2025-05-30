@@ -144,12 +144,8 @@ export class ProductService {
     const productInfo = this.productInfoRepository.create({
       product,
       size: input.size,
-      price: input.price,
-      costPrice: input.costPrice,
       color,
       weight: input.weight,
-      discount: input.discount,
-      stockQuantity: input.stockQuantity,
     });
     return this.productInfoRepository.save(productInfo);
   }
@@ -230,12 +226,8 @@ export class ProductService {
   async updateProductInfo(
     id: number,
     size: string,
-    price: number,
-    costPrice: number,
     colorId: number,
-    weight: number,
-    discount: number,
-    stockQuantity: number
+    weight: number
   ): Promise<ProductInfo> {
     const productInfo = await this.productInfoRepository.findOne({
       where: { id },
@@ -248,13 +240,8 @@ export class ProductService {
       throw new Error(`Color with ID ${colorId} not found`);
     }
     productInfo.size = size;
-    productInfo.price = price;
-    productInfo.costPrice = costPrice;
     productInfo.color = color;
     productInfo.weight = weight;
-    productInfo.discount = discount;
-    productInfo.stockQuantity = stockQuantity;
-
     return this.productInfoRepository.save(productInfo);
   }
 

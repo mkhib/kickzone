@@ -40,12 +40,8 @@ export type CreateColorInput = {
 
 export type CreateProductInfoInput = {
   colorId: Scalars['Int']['input'];
-  costPrice: Scalars['Float']['input'];
-  discount: Scalars['Float']['input'];
-  price: Scalars['Float']['input'];
   productId: Scalars['Int']['input'];
   size: Scalars['String']['input'];
-  stockQuantity: Scalars['Int']['input'];
   weight: Scalars['Float']['input'];
 };
 
@@ -217,14 +213,10 @@ export type ProductFilterInput = {
 export type ProductInfo = {
   __typename?: 'ProductInfo';
   color?: Maybe<Color>;
-  costPrice: Scalars['Float']['output'];
-  discount: Scalars['Float']['output'];
   id: Scalars['Int']['output'];
   images?: Maybe<Array<Scalars['String']['output']>>;
-  price: Scalars['Float']['output'];
   product: Product;
   size: Scalars['String']['output'];
-  stockQuantity: Scalars['Int']['output'];
   weight: Scalars['Float']['output'];
 };
 

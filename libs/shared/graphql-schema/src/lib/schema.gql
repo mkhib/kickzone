@@ -16,12 +16,8 @@ type Color {
 type ProductInfo {
   id: Int!
   size: String!
-  price: Float!
-  costPrice: Float!
   color: Color
   weight: Float!
-  discount: Float!
-  stockQuantity: Int!
   product: Product!
   images: [String!]
 }
@@ -159,12 +155,8 @@ input CreateProductInput {
 input CreateProductInfoInput {
   productId: Int!
   size: String!
-  price: Float!
-  costPrice: Float!
   colorId: Int!
   weight: Float!
-  discount: Float!
-  stockQuantity: Int!
 }
 
 """The `Upload` scalar type represents a file upload."""

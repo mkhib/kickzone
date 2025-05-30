@@ -199,12 +199,8 @@ const ImagePreviewContainer = styled(Box)(({ theme }) => ({
 export type ProductInfoState = {
   productId: number;
   size: string;
-  price: number;
-  costPrice: number;
-  color: KickzoneGraphqlTypes.Color | null; // Use the generated Color type
+  color: KickzoneGraphqlTypes.Color | null;
   weight: number;
-  discount: number;
-  stockQuantity: number;
   images: File[];
   imagePreviews: string[];
   uploadedImageUrls: string[];
@@ -326,36 +322,6 @@ const ProductInfoCard = React.memo(
             }}
           />
           <TextField
-            label="Price"
-            name="price"
-            type="number"
-            value={info.price}
-            onChange={(
-              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, 'price', e.target.value)}
-            required
-            sx={{
-              flex: 1,
-              minWidth: 100,
-              width: isMobile ? '100%' : undefined,
-            }}
-          />
-          <TextField
-            label="Cost Price"
-            name="costPrice"
-            type="number"
-            value={info.costPrice}
-            onChange={(
-              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, 'costPrice', e.target.value)}
-            required
-            sx={{
-              flex: 1,
-              minWidth: 100,
-              width: isMobile ? '100%' : undefined,
-            }}
-          />
-          <TextField
             label="Weight (kg)"
             name="weight"
             type="number"
@@ -363,35 +329,6 @@ const ProductInfoCard = React.memo(
             onChange={(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => onChange(idx, 'weight', e.target.value)}
-            required
-            sx={{
-              flex: 1,
-              minWidth: 100,
-              width: isMobile ? '100%' : undefined,
-            }}
-          />
-          <TextField
-            label="Discount (%)"
-            name="discount"
-            type="number"
-            value={info.discount}
-            onChange={(
-              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, 'discount', e.target.value)}
-            sx={{
-              flex: 1,
-              minWidth: 100,
-              width: isMobile ? '100%' : undefined,
-            }}
-          />
-          <TextField
-            label="Stock Quantity"
-            name="stockQuantity"
-            type="number"
-            value={info.stockQuantity}
-            onChange={(
-              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, 'stockQuantity', e.target.value)}
             required
             sx={{
               flex: 1,
@@ -647,12 +584,8 @@ export function AdminProductEditor() {
     {
       productId: 0,
       size: '',
-      price: 0,
-      costPrice: 0,
       color: null, // Initialize color as null
       weight: 0,
-      discount: 0,
-      stockQuantity: 0,
       images: [],
       imagePreviews: [],
       uploadedImageUrls: [],
@@ -741,8 +674,6 @@ export function AdminProductEditor() {
         loadedProduct.productInfos.map((info) => ({
           productId: loadedProduct.id,
           size: info.size,
-          price: info.price,
-          costPrice: info.costPrice,
           color: info.color
             ? {
                 // Map backend color object to frontend state
@@ -752,8 +683,6 @@ export function AdminProductEditor() {
               }
             : null,
           weight: info.weight,
-          discount: info.discount,
-          stockQuantity: info.stockQuantity,
           images: [],
           imagePreviews: [],
           uploadedImageUrls: info.images || [],
@@ -811,12 +740,8 @@ export function AdminProductEditor() {
       {
         productId: 0,
         size: '',
-        price: 0,
-        costPrice: 0,
         color: null,
         weight: 0,
-        discount: 0,
-        stockQuantity: 0,
         images: [],
         imagePreviews: [],
         uploadedImageUrls: [],
@@ -1020,14 +945,7 @@ export function AdminProductEditor() {
           return;
         }
         for (const info of productInfos) {
-          if (
-            !info.size ||
-            !info.color ||
-            !info.price ||
-            !info.costPrice ||
-            !info.weight ||
-            !info.stockQuantity
-          ) {
+          if (!info.size || !info.color || !info.weight) {
             showSnackbar('Please fill in all product variant fields', {
               severity: 'error',
             });
@@ -1056,12 +974,8 @@ export function AdminProductEditor() {
             },
             productInfos.map((info) => ({
               size: info.size,
-              price: Number(info.price),
-              costPrice: Number(info.costPrice),
-              colorId: info.color?.id || 0, // Map color object back to colorId
+              colorId: info.color?.id || 0,
               weight: Number(info.weight),
-              discount: Number(info.discount) || 0,
-              stockQuantity: Number(info.stockQuantity),
             }))
           );
           setCreatedProductInfoIds(created.productInfos.map((pi) => pi.id));

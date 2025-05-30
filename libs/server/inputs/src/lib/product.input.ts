@@ -40,23 +40,11 @@ export class CreateProductInfoInput {
   @Field()
   size: string;
 
-  @Field(() => Float)
-  price: number;
-
-  @Field(() => Float)
-  costPrice: number;
-
   @Field(() => Int)
   colorId: number;
 
   @Field(() => Float)
   weight: number;
-
-  @Field(() => Float)
-  discount: number;
-
-  @Field(() => Int)
-  stockQuantity: number;
 }
 
 @InputType()
