@@ -1,1 +1,1 @@
-export * from './lib/sellers-products-hooks';
+export * from './lib/useSellersProducts';
