@@ -1,1 +1,1 @@
-export * from './lib/sellers-products-screen';
+export * from './lib/SellersProducts';

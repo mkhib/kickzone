@@ -112,6 +112,9 @@
       "@kickzone-workspace/sellers-login-screen": [
         "libs/client/sellers/screens/login/src/index.ts"
       ],
+      "@kickzone-workspace/sellers-products-hooks": [
+        "libs/client/sellers/hooks/products/src/index.ts"
+      ],
       "@kickzone-workspace/sellers-products-screen": [
         "libs/client/sellers/screens/products/src/index.ts"
       ],
