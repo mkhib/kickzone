@@ -1,1 +1,1 @@
-export * from './lib/customers-auth-hooks';
+export * from './lib/useCustomersLogin';

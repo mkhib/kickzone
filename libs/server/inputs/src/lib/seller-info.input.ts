@@ -1,4 +1,4 @@
-import { InputType, Field, Int, PartialType } from '@nestjs/graphql';
+import { InputType, Field, Int, PartialType, Float } from '@nestjs/graphql';
 
 @InputType()
 export class CreateSellerInput {
@@ -14,6 +14,32 @@ export class CreateSellerInput {
 
 @InputType()
 export class UpdateSellerInput extends PartialType(CreateSellerInput) {
+  @Field(() => Int)
+  id: number;
+}
+
+@InputType()
+export class CreateSellerProductInput {
+  @Field(() => Int)
+  productInfoId: number;
+
+  @Field(() => Float)
+  price: number;
+
+  @Field(() => Float)
+  costPrice: number;
+
+  @Field(() => Float)
+  discount: number;
+
+  @Field(() => Int)
+  stockQuantity: number;
+}
+
+@InputType()
+export class UpdateSellerProductInput extends PartialType(
+  CreateSellerProductInput
+) {
   @Field(() => Int)
   id: number;
 }

@@ -1,4 +1,4 @@
-import { useSellersAuth } from '@kickzone-workspace/sellers-auth-context';
+import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -34,7 +34,7 @@ const CustomListItemText = styled(ListItemText)(({ theme }) => ({
 }));
 
 export function Headerbar() {
-  const { user, logout } = useSellersAuth();
+  const { user, logout } = useSellersAuthContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
 

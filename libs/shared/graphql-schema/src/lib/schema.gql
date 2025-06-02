@@ -92,6 +92,7 @@ input ProductFilterInput {
   sort: String
   sortOrder: String
   archivedStatus: ProductArchivedStatus
+  sellerId: Int
 }
 
 input ProductInfoFilterInput {
@@ -118,7 +119,7 @@ type Mutation {
   updateCategory(input: UpdateCategoryInput!): Category!
   deleteCategory(id: Int!): Boolean!
   createProduct(input: CreateProductInput!): Product!
-  createProductInfo(input: CreateProductInfoInput!): ProductInfo!
+  createProductInfo(input: CreateProductInfoInput!): Product!
   uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
   removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
   archiveProduct(id: Int!): Product!

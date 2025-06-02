@@ -75,4 +75,7 @@ export class ProductFilterInput {
 
   @Field(() => ProductArchivedStatus, { nullable: true })
   archivedStatus?: ProductArchivedStatus;
+
+  @Field(() => Int, { nullable: true })
+  sellerId?: number;
 }

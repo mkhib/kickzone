@@ -33,10 +33,6 @@ export class Product {
   @JoinTable()
   categories: Category[];
 
-  @Field(() => Float)
-  @Column('decimal', { precision: 5, scale: 2 })
-  discount: number;
-
   @Field({ nullable: true })
   @Column({ type: 'text', nullable: true })
   description?: string | null;

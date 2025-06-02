@@ -32,11 +32,11 @@ export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
   );
 };
 
-export const useSellersAuth = () => {
+export const useSellersAuthContext = () => {
   const context = useContext(SellersAuthContext);
   if (!context) {
     throw new Error(
-      'useSellersAuth must be used within an SellersAuthProvider'
+      'useSellersAuthContext must be used within an SellersAuthProvider'
     );
   }
   return context;

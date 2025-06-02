@@ -10,16 +10,18 @@ import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import React from 'react';
+import React, { useState } from 'react';
+import { useSellerLogin } from '@kickzone-workspace/sellers-auth-hooks';
 
 export function SellersLogin() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const { loginSeller, sellersLoginLoading, sellersLoginError } =
+    useSellerLogin();
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    loginSeller({ email, password });
   };
 
   return (
@@ -55,6 +57,8 @@ export function SellersLogin() {
               name="email"
               autoComplete="email"
               autoFocus
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <TextField
@@ -66,12 +70,15 @@ export function SellersLogin() {
               type="password"
               id="password"
               autoComplete="current-password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
               sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              disabled={sellersLoginLoading}
               sx={{
                 mt: 3,
                 mb: 2,
@@ -79,8 +86,13 @@ export function SellersLogin() {
                 '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
-              Sign In
+              {sellersLoginLoading ? 'Signing In...' : 'Sign In'}
             </Button>
+            {sellersLoginError && (
+              <Typography color="error" sx={{ mt: 2 }}>
+                {sellersLoginError.message}
+              </Typography>
+            )}
             <Grid2 container justifyContent="flex-end" component="div">
               <Grid2 component="div">
                 <Link href="#" variant="body2" sx={{ color: colors.main }}>

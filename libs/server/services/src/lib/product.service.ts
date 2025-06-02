@@ -130,7 +130,7 @@ export class ProductService {
     return this.productRepository.save(product);
   }
 
-  async createProductInfo(input: CreateProductInfoInput) {
+  async createProductInfo(input: CreateProductInfoInput): Promise<Product> {
     const product = await this.productRepository.findOneBy({
       id: input.productId,
     });
@@ -147,7 +147,12 @@ export class ProductService {
       color,
       weight: input.weight,
     });
-    return this.productInfoRepository.save(productInfo);
+    await this.productInfoRepository.save(productInfo);
+    // Return the full product with relations
+    const fullProduct = await this.getProductById(product.id);
+    if (!fullProduct)
+      throw new Error('Product not found after creating variant');
+    return fullProduct;
   }
 
   async createCategory(input: CreateCategoryInput) {
@@ -259,5 +264,92 @@ export class ProductService {
     if (!product) throw new Error('Product not found');
     product.archived = false;
     return this.productRepository.save(product);
+  }
+
+  async getSellerProducts(
+    sellerId: number,
+    filter?: ProductFilterInput
+  ): Promise<[Product[], number]> {
+    const query = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.productInfos', 'productInfo')
+      .leftJoinAndSelect('productInfo.color', 'color')
+      .leftJoinAndSelect('product.categories', 'category')
+      .leftJoin('product.sellerProducts', 'sellerProduct')
+      .where('sellerProduct.sellerId = :sellerId', { sellerId });
+
+    if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
+      query.andWhere('product.archived = :archived', {
+        archived: filter.archivedStatus === 'ARCHIVED',
+      });
+    }
+
+    if (filter?.categoryId) {
+      query.andWhere('category.id = :categoryId', {
+        categoryId: filter.categoryId,
+      });
+    } else if (filter?.category) {
+      query.andWhere('category.name = :category', {
+        category: filter.category,
+      });
+    }
+
+    if (filter?.searchTerm) {
+      query.andWhere('LOWER(product.name) LIKE :searchTerm', {
+        searchTerm: `%${filter.searchTerm.toLowerCase()}%`,
+      });
+    }
+
+    if (filter?.productInfoFilter) {
+      const {
+        size,
+        price,
+        costPrice,
+        colorId,
+        weight,
+        discount,
+        stockQuantity,
+      } = filter.productInfoFilter;
+      if (size) query.andWhere('productInfo.size IN (:...size)', { size });
+      if (price) query.andWhere('productInfo.price IN (:...price)', { price });
+      if (costPrice)
+        query.andWhere('productInfo.costPrice IN (:...costPrice)', {
+          costPrice,
+        });
+      if (colorId)
+        query.andWhere('productInfo.colorId IN (:...colorId)', { colorId });
+      if (weight)
+        query.andWhere('productInfo.weight IN (:...weight)', { weight });
+      if (discount)
+        query.andWhere('productInfo.discount IN (:...discount)', { discount });
+      if (stockQuantity)
+        query.andWhere('productInfo.stockQuantity IN (:...stockQuantity)', {
+          stockQuantity,
+        });
+    }
+
+    if (filter?.sort) {
+      const order = filter.sortOrder === 'desc' ? 'DESC' : 'ASC';
+      if (filter.sort === 'price') {
+        query.addOrderBy('productInfo.price', order);
+      } else if (filter.sort === 'color') {
+        query.addOrderBy('color.name', order);
+      } else {
+        query.addOrderBy('product.name', order);
+      }
+    }
+
+    const totalCount = await query.getCount();
+
+    if (filter?.first) {
+      query.take(filter.first);
+    }
+
+    if (filter?.after) {
+      query.skip(parseInt(filter.after, 10));
+    }
+
+    const products = await query.getMany();
+    return [products, totalCount];
   }
 }

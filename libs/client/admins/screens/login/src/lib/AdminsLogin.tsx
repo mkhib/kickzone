@@ -10,7 +10,7 @@ import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
-import { useAdminLogin } from './useAdminLogin';
+import { useAdminLogin } from '@kickzone-workspace/admins-auth-hooks';
 import { mapApolloErrorToTranslationKey } from '@kickzone-workspace/translations';
 
 export function AdminsLogin() {

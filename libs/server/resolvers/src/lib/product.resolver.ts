@@ -63,10 +63,10 @@ export class ProductResolver {
     return product;
   }
 
-  @Mutation(() => ProductInfo)
+  @Mutation(() => Product)
   async createProductInfo(
     @Args('input') input: CreateProductInfoInput
-  ): Promise<ProductInfo> {
+  ): Promise<Product> {
     return this.productService.createProductInfo(input);
   }
 

@@ -1,1 +1,1 @@
-export * from './lib/admins-auth-hooks';
+export * from './lib/useAdminLogin';

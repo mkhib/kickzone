@@ -1,1 +1,1 @@
-export * from './lib/sellers-auth-hooks';
+export * from './lib/useSellerLogin';

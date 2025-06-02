@@ -65,7 +65,7 @@ export type Mutation = {
   createCategory: Category;
   createColor: Color;
   createProduct: Product;
-  createProductInfo: ProductInfo;
+  createProductInfo: Product;
   createUser: User;
   deleteCategory: Scalars['Boolean']['output'];
   deleteColor: Scalars['Boolean']['output'];
@@ -206,6 +206,7 @@ export type ProductFilterInput = {
   first?: InputMaybe<Scalars['Int']['input']>;
   productInfoFilter?: InputMaybe<ProductInfoFilterInput>;
   searchTerm?: InputMaybe<Scalars['String']['input']>;
+  sellerId?: InputMaybe<Scalars['Int']['input']>;
   sort?: InputMaybe<Scalars['String']['input']>;
   sortOrder?: InputMaybe<Scalars['String']['input']>;
 };
