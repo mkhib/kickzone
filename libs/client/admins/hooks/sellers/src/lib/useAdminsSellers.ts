@@ -1,164 +1,77 @@
 import { useMutation, useQuery } from '@apollo/client';
-import { gql } from '@apollo/client';
-import { useState } from 'react';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import {
+  GET_SELLERS,
+  CREATE_SELLER,
+  UPDATE_SELLER,
+  TOGGLE_SELLER_ACTIVE,
+} from './adminsSellers.graphql';
 
-const GET_SELLERS = gql`
-  query GetSellers($filter: SellerFilterInput) {
-    sellers(filter: $filter) {
-      id
-      name
-      lastName
-      username
-      email
-      storeName
-      phone
-      address
-      isActive
-      user {
-        id
-        email
-        username
-      }
-    }
-  }
-`;
-
-const CREATE_SELLER = gql`
-  mutation CreateSeller($createSellerInput: CreateSellerInput!) {
-    createSeller(createSellerInput: $createSellerInput) {
-      id
-      name
-      lastName
-      username
-      email
-      storeName
-      phone
-      address
-      isActive
-      user {
-        id
-        email
-        username
-      }
-    }
-  }
-`;
-
-const UPDATE_SELLER = gql`
-  mutation UpdateSeller($updateSellerInput: UpdateSellerInput!) {
-    updateSeller(updateSellerInput: $updateSellerInput) {
-      id
-      name
-      lastName
-      username
-      email
-      storeName
-      phone
-      address
-      isActive
-      user {
-        id
-        email
-        username
-      }
-    }
-  }
-`;
-
-const TOGGLE_SELLER_ACTIVE = gql`
-  mutation ToggleSellerActive($id: Int!) {
-    toggleSellerActive(id: $id) {
-      id
-      isActive
-    }
-  }
-`;
-
-export interface Seller {
-  id: number;
-  name: string;
-  lastName: string;
-  username: string;
-  email: string;
-  storeName: string;
-  phone?: string;
-  address?: string;
-  isActive: boolean;
-  user: {
-    id: string;
-    email: string;
-    username: string;
-  };
-}
-
-export interface CreateSellerInput {
-  name: string;
-  lastName: string;
-  username: string;
-  email: string;
-  password: string;
-  storeName: string;
-  phone?: string;
-  address?: string;
-}
-
-export interface UpdateSellerInput {
-  id: number;
-  name?: string;
-  lastName?: string;
-  username?: string;
-  email?: string;
-  storeName?: string;
-  phone?: string;
-  address?: string;
-  isActive?: boolean;
-}
-
-export interface SellerFilterInput {
-  searchTerm?: string;
-  isActive?: boolean;
-  first?: number;
-  after?: string;
-}
-
-export const useAdminsSellers = () => {
-  const [filter, setFilter] = useState<SellerFilterInput>({
-    isActive: true,
-  });
-
-  const { data, loading, error, refetch } = useQuery(GET_SELLERS, {
+export const useAdminsSellersQuery = (
+  filter: KickzoneGraphqlTypes.SellerFilterInput = { isActive: true }
+) => {
+  const {
+    data: sellersData,
+    loading: isLoadingSellers,
+    error: sellersError,
+    refetch: refetchSellers,
+  } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'sellers'>,
+    KickzoneGraphqlTypes.QuerySellersArgs
+  >(GET_SELLERS, {
     variables: { filter },
   });
 
-  const [createSeller] = useMutation(CREATE_SELLER, {
-    onCompleted: () => {
-      refetch();
-    },
-  });
-
-  const [updateSeller] = useMutation(UPDATE_SELLER, {
-    onCompleted: () => {
-      refetch();
-    },
-  });
-
-  const [toggleSellerActive] = useMutation(TOGGLE_SELLER_ACTIVE, {
-    onCompleted: () => {
-      refetch();
-    },
-  });
-
-  const sellers = data?.sellers || [];
+  const sellers = sellersData?.sellers || [];
 
   return {
     sellers,
-    loading,
-    error,
-    filter,
-    setFilter,
+    isLoadingSellers,
+    sellersError,
+    refetchSellers,
+  };
+};
+
+export const useAdminsSellers = (
+  filter: KickzoneGraphqlTypes.SellerFilterInput = { isActive: true }
+) => {
+  const { sellers, isLoadingSellers, sellersError, refetchSellers } =
+    useAdminsSellersQuery(filter);
+
+  const [createSeller] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'createSeller'>,
+    KickzoneGraphqlTypes.MutationCreateSellerArgs
+  >(CREATE_SELLER, {
+    onCompleted: () => {
+      refetchSellers();
+    },
+  });
+
+  const [updateSeller] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateSeller'>,
+    KickzoneGraphqlTypes.MutationUpdateSellerArgs
+  >(UPDATE_SELLER, {
+    onCompleted: () => {
+      refetchSellers();
+    },
+  });
+
+  const [toggleSellerActive] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'toggleSellerActive'>,
+    KickzoneGraphqlTypes.MutationToggleSellerActiveArgs
+  >(TOGGLE_SELLER_ACTIVE, {
+    onCompleted: () => {
+      refetchSellers();
+    },
+  });
+
+  return {
+    sellers,
+    loading: isLoadingSellers,
+    error: sellersError,
     createSeller,
     updateSeller,
     toggleSellerActive,
-    refetch,
+    refetch: refetchSellers,
   };
 };

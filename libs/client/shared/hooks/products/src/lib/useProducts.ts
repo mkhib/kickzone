@@ -18,7 +18,7 @@ export function useProductsQuery({
   sort = '',
   sortOrder = 'asc',
   pageSize = 12,
-  archivedStatus = 'ACTIVE',
+  archivedStatus = KickzoneGraphqlTypes.ProductArchivedStatus.Active,
   sellerId,
 }: {
   search: string;
@@ -26,12 +26,13 @@ export function useProductsQuery({
   sort?: string;
   sortOrder?: 'asc' | 'desc';
   pageSize?: number;
-  archivedStatus?: 'ALL' | 'ACTIVE' | 'ARCHIVED';
+  archivedStatus?: KickzoneGraphqlTypes.ProductArchivedStatus;
   sellerId?: number;
 }) {
-  const { data, loading, error, fetchMore, refetch } = useQuery<{
-    products: KickzoneGraphqlTypes.ProductConnection;
-  }>(PRODUCTS_QUERY, {
+  const { data, loading, error, fetchMore, refetch } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'products'>,
+    KickzoneGraphqlTypes.QueryProductsArgs
+  >(PRODUCTS_QUERY, {
     variables: {
       filter: {
         searchTerm: search || undefined,
@@ -107,12 +108,12 @@ export const useProducts = () => {
 
   const [uploadProductInfoImagesMutation] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'uploadProductInfoImages'>,
-    { productInfoId: number; files: File[] }
+    KickzoneGraphqlTypes.MutationUploadProductInfoImagesArgs
   >(UPLOAD_PRODUCT_INFO_IMAGES);
 
   const [removeProductInfoImageMutation] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'removeProductInfoImage'>,
-    { productInfoId: number; imageName: string }
+    KickzoneGraphqlTypes.MutationRemoveProductInfoImageArgs
   >(REMOVE_PRODUCT_INFO_IMAGE);
 
   const [archiveProductMutation] = useMutation<

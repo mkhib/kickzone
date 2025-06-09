@@ -4,10 +4,8 @@ import {
   useMaterialReactTable,
   type MRT_ColumnDef,
 } from 'material-react-table';
-import {
-  useAdminsSellers,
-  type Seller,
-} from '@kickzone-workspace/admins-sellers-hooks';
+import { useAdminsSellers } from '@kickzone-workspace/admins-sellers-hooks';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   Box,
   Button,
@@ -27,22 +25,28 @@ import {
 } from '@mui/icons-material';
 import { ChangeEvent } from 'react';
 
+type Seller = NonNullable<KickzoneGraphqlTypes.SellerInfo>;
+type CreateSellerInput = KickzoneGraphqlTypes.CreateSellerInput;
+type SellerFilterInput = KickzoneGraphqlTypes.SellerFilterInput;
+
 export const SellerManagement = () => {
+  const [filter, setFilter] = useState<SellerFilterInput>({
+    isActive: true,
+  });
+
   const {
     sellers,
     loading,
     error,
-    filter,
-    setFilter,
     createSeller,
     updateSeller,
     toggleSellerActive,
-  } = useAdminsSellers();
+  } = useAdminsSellers(filter);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
-  const [formData, setFormData] = useState<Partial<Seller>>({});
+  const [formData, setFormData] = useState<Partial<CreateSellerInput>>({});
 
   const columns: MRT_ColumnDef<Seller>[] = [
     {
@@ -120,32 +124,55 @@ export const SellerManagement = () => {
 
   const table = useMaterialReactTable({
     columns,
-    data: sellers,
+    data: sellers as Seller[],
     state: { isLoading: loading },
     enableRowActions: true,
     renderTopToolbarCustomActions: () => (
-      <Button
-        color="primary"
-        onClick={() => {
-          setFormData({});
-          setCreateModalOpen(true);
-        }}
-        startIcon={<AddIcon />}
-        variant="contained"
-      >
-        Add Seller
-      </Button>
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        <Button
+          color="primary"
+          onClick={() => {
+            setFormData({});
+            setCreateModalOpen(true);
+          }}
+          startIcon={<AddIcon />}
+          variant="contained"
+        >
+          Add Seller
+        </Button>
+        <Button
+          color={filter.isActive ? 'error' : 'success'}
+          onClick={() =>
+            setFilter((prev: SellerFilterInput) => ({
+              ...prev,
+              isActive: !prev.isActive,
+            }))
+          }
+          variant="outlined"
+        >
+          {filter.isActive ? 'Show Inactive' : 'Show Active'}
+        </Button>
+      </Box>
     ),
   });
 
   const handleCreateSubmit = async () => {
     try {
+      if (
+        !formData.name ||
+        !formData.lastName ||
+        !formData.username ||
+        !formData.email ||
+        !formData.storeName
+      ) {
+        return;
+      }
       await createSeller({
         variables: {
           createSellerInput: {
             ...formData,
-            password: 'defaultPassword123', // You might want to add a password field to the form
-          },
+            password: 'defaultPassword123',
+          } as CreateSellerInput,
         },
       });
       setCreateModalOpen(false);
@@ -176,7 +203,10 @@ export const SellerManagement = () => {
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev: Partial<Seller>) => ({ ...prev, [name]: value }));
+    setFormData((prev: Partial<CreateSellerInput>) => ({
+      ...prev,
+      [name]: value,
+    }));
   };
 
   const renderForm = () => (

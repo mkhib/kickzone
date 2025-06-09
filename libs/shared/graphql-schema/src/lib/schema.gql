@@ -47,6 +47,29 @@ type ProductConnection {
   edges: [ProductEdge!]!
 }
 
+type SellerProduct {
+  id: Int!
+  seller: SellerInfo!
+  product: Product!
+  productInfo: ProductInfo!
+  price: Float!
+  costPrice: Float!
+  discount: Float!
+  stockQuantity: Int!
+}
+
+type SellerInfo {
+  id: Int!
+  name: String!
+  lastName: String!
+  username: String!
+  email: String!
+  storeName: String!
+  phone: String
+  address: String
+  isActive: Boolean!
+}
+
 type User {
   id: ID!
   name: String!
@@ -78,6 +101,9 @@ type Query {
   products(filter: ProductFilterInput): ProductConnection!
   sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
   product(id: Int!): Product
+  sellers(filter: SellerFilterInput): [SellerInfo!]!
+  seller(id: Int!): SellerInfo!
+  sellerProducts(filter: ProductFilterInput): ProductConnection!
   colors: [Color!]!
   color(id: Int!): Color
 }
@@ -111,6 +137,13 @@ enum ProductArchivedStatus {
   ARCHIVED
 }
 
+input SellerFilterInput {
+  searchTerm: String
+  isActive: Boolean
+  first: Int
+  after: String
+}
+
 type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
   login(email: String!, password: String!): User!
@@ -125,6 +158,12 @@ type Mutation {
   archiveProduct(id: Int!): Product!
   unarchiveProduct(id: Int!): Product!
   updateProduct(id: Int!, name: String!, categoryIds: [Int!]!, description: String): Product!
+  createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
+  updateSeller(updateSellerInput: UpdateSellerInput!): SellerInfo!
+  toggleSellerActive(id: Int!): SellerInfo!
+  createSellerProductVariant(input: CreateProductInfoInput!): Product!
+  createSellerProduct(input: CreateSellerProductInput!): SellerProduct!
+  updateSellerProduct(input: UpdateSellerProductInput!): SellerProduct!
   createColor(input: CreateColorInput!): Color!
   updateColor(id: Int!, input: UpdateColorInput!): Color
   deleteColor(id: Int!): Boolean!
@@ -162,6 +201,46 @@ input CreateProductInfoInput {
 
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
+
+input CreateSellerInput {
+  name: String!
+  lastName: String!
+  username: String!
+  email: String!
+  password: String!
+  storeName: String!
+  phone: String
+  address: String
+}
+
+input UpdateSellerInput {
+  id: Int!
+  name: String
+  lastName: String
+  username: String
+  email: String
+  storeName: String
+  phone: String
+  address: String
+  isActive: Boolean
+}
+
+input CreateSellerProductInput {
+  productInfoId: Int!
+  price: Float!
+  costPrice: Float!
+  discount: Float!
+  stockQuantity: Int!
+}
+
+input UpdateSellerProductInput {
+  id: Int!
+  productInfoId: Int
+  price: Float
+  costPrice: Float
+  discount: Float
+  stockQuantity: Int
+}
 
 input CreateColorInput {
   name: String!
