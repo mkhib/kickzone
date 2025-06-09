@@ -7,6 +7,11 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+type Category {
+  id: Int!
+  name: String!
+}
+
 type Color {
   id: Int!
   name: String!
@@ -22,17 +27,11 @@ type ProductInfo {
   images: [String!]
 }
 
-type Category {
-  id: Int!
-  name: String!
-}
-
 type Product {
   id: Int!
   name: String!
   productInfos: [ProductInfo!]!
   categories: [Category!]!
-  discount: Float!
   description: String
   archived: Boolean!
 }
@@ -77,6 +76,7 @@ type Query {
   me: User
   categories: [Category!]!
   products(filter: ProductFilterInput): ProductConnection!
+  sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
   product(id: Int!): Product
   colors: [Color!]!
   color(id: Int!): Color
@@ -124,7 +124,7 @@ type Mutation {
   removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
   archiveProduct(id: Int!): Product!
   unarchiveProduct(id: Int!): Product!
-  updateProduct(id: Int!, name: String!, discount: Int!, categoryIds: [Int!]!, description: String): Product!
+  updateProduct(id: Int!, name: String!, categoryIds: [Int!]!, description: String): Product!
   createColor(input: CreateColorInput!): Color!
   updateColor(id: Int!, input: UpdateColorInput!): Color
   deleteColor(id: Int!): Boolean!

@@ -151,7 +151,6 @@ export type MutationUpdateColorArgs = {
 export type MutationUpdateProductArgs = {
   categoryIds: Array<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
-  discount: Scalars['Int']['input'];
   id: Scalars['Int']['input'];
   name: Scalars['String']['input'];
 };
@@ -173,7 +172,6 @@ export type Product = {
   archived: Scalars['Boolean']['output'];
   categories: Array<Category>;
   description?: Maybe<Scalars['String']['output']>;
-  discount: Scalars['Float']['output'];
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   productInfos: Array<ProductInfo>;
@@ -239,6 +237,7 @@ export type Query = {
   me?: Maybe<User>;
   product?: Maybe<Product>;
   products: ProductConnection;
+  sellerProductsForMe: ProductConnection;
   users: UserConnection;
 };
 
@@ -254,6 +253,11 @@ export type QueryProductArgs = {
 
 
 export type QueryProductsArgs = {
+  filter?: InputMaybe<ProductFilterInput>;
+};
+
+
+export type QuerySellerProductsForMeArgs = {
   filter?: InputMaybe<ProductFilterInput>;
 };
 

@@ -1,6 +1,50 @@
 import { useQuery } from '@apollo/client';
-import { PRODUCTS_QUERY } from '@kickzone-workspace/products-hook';
-import { useSellersAuth } from '@kickzone-workspace/sellers-contexts';
+import { gql } from '@apollo/client';
+import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
+
+const SELLER_PRODUCTS_FOR_ME_QUERY = gql`
+  query SellerProductsForMe($filter: ProductFilterInput) {
+    sellerProductsForMe(filter: $filter) {
+      edges {
+        cursor
+        node {
+          id
+          name
+          archived
+          categories {
+            id
+            name
+          }
+          productInfos {
+            id
+            size
+            color {
+              id
+              name
+              hexCode
+            }
+            weight
+            images
+          }
+        }
+      }
+      pageInfo {
+        endCursor
+        hasNextPage
+      }
+      totalCount
+    }
+  }
+`;
+
+interface UseSellersProductsArgs {
+  search?: string;
+  categoryId?: number | string;
+  sort?: string;
+  sortOrder?: 'asc' | 'desc';
+  pageSize?: number;
+  archivedStatus?: 'ALL' | 'ACTIVE' | 'ARCHIVED';
+}
 
 export function useSellersProducts({
   search = '',
@@ -9,32 +53,37 @@ export function useSellersProducts({
   sortOrder = 'asc',
   pageSize = 12,
   archivedStatus = 'ACTIVE',
-} = {}) {
-  const { user } = useSellersAuth();
-  const sellerId = user?.id;
+}: UseSellersProductsArgs = {}) {
+  const { user } = useSellersAuthContext();
+  // sellerId is not needed, backend uses auth context
+  let categoryIdValue: number | undefined = undefined;
+  if (typeof categoryId === 'string' && categoryId !== '') {
+    categoryIdValue = Number(categoryId);
+  } else if (typeof categoryId === 'number') {
+    categoryIdValue = categoryId;
+  }
 
   const { data, loading, error, fetchMore, refetch } = useQuery(
-    PRODUCTS_QUERY,
+    SELLER_PRODUCTS_FOR_ME_QUERY,
     {
       variables: {
         filter: {
           searchTerm: search || undefined,
-          categoryId: categoryId || undefined,
+          categoryId: categoryIdValue,
           first: pageSize,
           sort,
           sortOrder,
           archivedStatus,
-          sellerId,
         },
       },
-      skip: !sellerId,
       notifyOnNetworkStatusChange: true,
     }
   );
 
-  const products = data?.products?.edges?.map((e) => e.node) || [];
-  const pageInfo = data?.products?.pageInfo;
-  const totalCount = data?.products?.totalCount || 0;
+  const products =
+    data?.sellerProductsForMe?.edges?.map((e: any) => e.node) || [];
+  const pageInfo = data?.sellerProductsForMe?.pageInfo;
+  const totalCount = data?.sellerProductsForMe?.totalCount || 0;
 
   const loadMore = () => {
     if (pageInfo?.hasNextPage) {
@@ -42,13 +91,12 @@ export function useSellersProducts({
         variables: {
           filter: {
             searchTerm: search || undefined,
-            categoryId: categoryId || undefined,
+            categoryId: categoryIdValue,
             first: pageSize,
             after: pageInfo.endCursor,
             sort,
             sortOrder,
             archivedStatus,
-            sellerId,
           },
         },
       });

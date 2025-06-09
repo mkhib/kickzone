@@ -1,25 +1,25 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
-import { ProductService } from '@kickzone-workspace/services';
 import {
-  Product,
-  ProductInfo,
   Category,
+  Product,
   ProductConnection,
+  User,
+  UserRole,
 } from '@kickzone-workspace/entities';
-import {
-  CreateProductInput,
-  CreateProductInfoInput,
-  CreateCategoryInput,
-  ProductFilterInput,
-  ProductArchivedStatus,
-} from '@kickzone-workspace/inputs';
 import { RolesGuard } from '@kickzone-workspace/guards';
-import { UserRole } from '@kickzone-workspace/entities';
-import { SetMetadata, UseGuards } from '@nestjs/common';
-import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
-import * as fs from 'fs';
-import * as path from 'path';
+import {
+  CreateCategoryInput,
+  CreateProductInfoInput,
+  CreateProductInput,
+  ProductArchivedStatus,
+  ProductFilterInput,
+} from '@kickzone-workspace/inputs';
+import { ProductService } from '@kickzone-workspace/services';
 import { createConnection } from '@kickzone-workspace/utils';
+import { SetMetadata, UseGuards } from '@nestjs/common';
+import { Args, Context, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import * as fs from 'fs';
+import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
+import * as path from 'path';
 
 export interface FileUpload {
   filename: string;
@@ -40,6 +40,26 @@ export class ProductResolver {
     if (!filter.archivedStatus)
       filter.archivedStatus = ProductArchivedStatus.ACTIVE;
     const [products, totalCount] = await this.productService.getProducts(
+      filter
+    );
+    return createConnection(
+      products,
+      totalCount,
+      filter?.first || 10,
+      filter?.after
+    );
+  }
+
+  @Query(() => ProductConnection)
+  async sellerProductsForMe(
+    @Context() context: { req: { user: User } },
+    @Args('filter', { nullable: true }) filter?: ProductFilterInput
+  ): Promise<ProductConnection> {
+    const user = context.req.user;
+    if (!user?.sellerInfo?.id) throw new Error('Not a seller');
+    const sellerId = user.sellerInfo.id;
+    const [products, totalCount] = await this.productService.getSellerProducts(
+      sellerId,
       filter
     );
     return createConnection(
@@ -208,14 +228,12 @@ export class ProductResolver {
   async updateProduct(
     @Args('id', { type: () => Int }) id: number,
     @Args('name') name: string,
-    @Args('discount', { type: () => Number }) discount: number,
     @Args('categoryIds', { type: () => [Int] }) categoryIds: number[],
     @Args('description', { nullable: true }) description?: string
   ): Promise<Product> {
     return this.productService.updateProduct(
       id,
       name,
-      discount,
       categoryIds,
       description
     );

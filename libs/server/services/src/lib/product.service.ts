@@ -123,7 +123,6 @@ export class ProductService {
     });
     const product = this.productRepository.create({
       name: input.name,
-      discount: input.discount,
       categories,
       description: input.description === '' ? null : input.description,
     });
@@ -198,7 +197,6 @@ export class ProductService {
   async updateProduct(
     id: number,
     name: string,
-    discount: number,
     categoryIds: number[],
     description?: string | null
   ): Promise<Product> {
@@ -215,7 +213,6 @@ export class ProductService {
       id: In(categoryIds),
     });
     product.name = name;
-    product.discount = discount;
     product.categories = categories;
     product.description = description === '' ? null : description;
     return this.productRepository.save(product);
@@ -275,7 +272,13 @@ export class ProductService {
       .leftJoinAndSelect('product.productInfos', 'productInfo')
       .leftJoinAndSelect('productInfo.color', 'color')
       .leftJoinAndSelect('product.categories', 'category')
-      .leftJoin('product.sellerProducts', 'sellerProduct')
+      .leftJoinAndSelect(
+        'product.sellerProducts',
+        'sellerProduct',
+        'sellerProduct.sellerId = :sellerId',
+        { sellerId }
+      )
+      .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
       .where('sellerProduct.sellerId = :sellerId', { sellerId });
 
     if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {

@@ -193,9 +193,6 @@ export function AdminProducts() {
                           Status: {product.archived ? 'Archived' : 'Active'}
                         </Typography>
                         <Typography variant="body2">
-                          Price: {info?.price ?? 'N/A'}
-                        </Typography>
-                        <Typography variant="body2">
                           Color: {info?.color?.name ?? 'N/A'}
                         </Typography>
                         <Typography variant="body2">

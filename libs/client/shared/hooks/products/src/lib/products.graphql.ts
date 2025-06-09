@@ -13,16 +13,12 @@ export const PRODUCT_FRAGMENT = gql`
     productInfos {
       id
       size
-      price
-      costPrice
       color {
         id
         name
         hexCode
       }
       weight
-      discount
-      stockQuantity
       images
     }
   }

@@ -3,7 +3,7 @@ import {
   LOGIN_MUTATION,
   LOGOUT_MUTATION,
 } from '@kickzone-workspace/sellers-graphql';
-import { useSellersAuthContext } from '@kickzone-workspace/sellers-contexts';
+import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { User } from '@kickzone-workspace/entities';
 import { useNavigate } from 'react-router-dom';
 

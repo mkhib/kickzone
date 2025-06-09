@@ -1,6 +1,6 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
+import { Resolver, Query, Mutation, Args, Int, Context } from '@nestjs/graphql';
 import { SellerService } from '@kickzone-workspace/services';
-import { SellerInfo } from '@kickzone-workspace/entities';
+import { SellerInfo, User } from '@kickzone-workspace/entities';
 import {
   CreateSellerInput,
   UpdateSellerInput,
@@ -12,7 +12,6 @@ import {
   CreateProductInfoInput,
 } from '@kickzone-workspace/inputs';
 import { createConnection } from '@kickzone-workspace/utils';
-import { Context } from '@nestjs/graphql';
 import { SellerProduct } from '@kickzone-workspace/entities';
 import {
   CreateSellerProductInput,
@@ -53,7 +52,7 @@ export class SellerResolver {
   @Query(() => ProductConnection)
   async sellerProducts(
     @Args('filter', { nullable: true }) filter: ProductFilterInput,
-    @Context() context: any
+    @Context() context: { req: { user: User } }
   ): Promise<ProductConnection> {
     const user = context.req.user;
     if (!user?.sellerInfo?.id) throw new Error('Not a seller');
@@ -73,7 +72,7 @@ export class SellerResolver {
   @Mutation(() => Product)
   async createSellerProductVariant(
     @Args('input') input: CreateProductInfoInput,
-    @Context() context: any
+    @Context() context: { req: { user: User } }
   ): Promise<Product> {
     const user = context.req.user;
     if (!user?.sellerInfo?.id) throw new Error('Not a seller');
@@ -84,7 +83,7 @@ export class SellerResolver {
   @Mutation(() => SellerProduct)
   async createSellerProduct(
     @Args('input') input: CreateSellerProductInput,
-    @Context() context: any
+    @Context() context: { req: { user: User } }
   ): Promise<SellerProduct> {
     const user = context.req.user;
     if (!user?.sellerInfo?.id) throw new Error('Not a seller');
@@ -94,7 +93,7 @@ export class SellerResolver {
   @Mutation(() => SellerProduct)
   async updateSellerProduct(
     @Args('input') input: UpdateSellerProductInput,
-    @Context() context: any
+    @Context() context: { req: { user: User } }
   ): Promise<SellerProduct> {
     const user = context.req.user;
     if (!user?.sellerInfo?.id) throw new Error('Not a seller');

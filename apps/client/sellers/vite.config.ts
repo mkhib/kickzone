@@ -8,8 +8,12 @@ export default defineConfig({
   root: __dirname,
   cacheDir: '../../../node_modules/.vite/apps/client/sellers',
   server: {
-    port: 4200,
+    port: 4500,
     host: 'localhost',
+    https: {
+      key: '../../../localhost-key.pem',
+      cert: '../../../localhost.pem',
+    },
   },
   preview: {
     port: 4300,

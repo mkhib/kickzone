@@ -53,8 +53,10 @@ export class SellerService {
       id: input.productInfoId,
     });
     if (!productInfo) throw new Error('Product variant not found');
+    const seller = await this.sellerRepository.findOneBy({ id: sellerId });
+    if (!seller) throw new Error('Seller not found');
     const sellerProduct = this.sellerProductRepository.create({
-      seller: { id: sellerId } as any,
+      seller,
       product: productInfo.product,
       productInfo,
       price: input.price,

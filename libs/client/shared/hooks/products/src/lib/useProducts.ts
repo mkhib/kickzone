@@ -19,6 +19,7 @@ export function useProductsQuery({
   sortOrder = 'asc',
   pageSize = 12,
   archivedStatus = 'ACTIVE',
+  sellerId,
 }: {
   search: string;
   categoryId?: number;
@@ -26,6 +27,7 @@ export function useProductsQuery({
   sortOrder?: 'asc' | 'desc';
   pageSize?: number;
   archivedStatus?: 'ALL' | 'ACTIVE' | 'ARCHIVED';
+  sellerId?: number;
 }) {
   const { data, loading, error, fetchMore, refetch } = useQuery<{
     products: KickzoneGraphqlTypes.ProductConnection;
@@ -38,6 +40,7 @@ export function useProductsQuery({
         sort,
         sortOrder,
         archivedStatus,
+        sellerId,
       },
     },
     notifyOnNetworkStatusChange: true,
@@ -62,6 +65,7 @@ export function useProductsQuery({
             sort,
             sortOrder,
             archivedStatus,
+            sellerId,
           },
         },
       });
@@ -75,6 +79,7 @@ export function useProductsQuery({
     sort,
     sortOrder,
     archivedStatus,
+    sellerId,
   ]);
 
   return {
@@ -120,28 +125,28 @@ export const useProducts = () => {
     KickzoneGraphqlTypes.MutationUpdateProductArgs
   >(UPDATE_PRODUCT);
 
-  // Accepts productInput and an array of productInfoInputs
   const createProductWithInfos = useCallback(
     async (
-      productInput: KickzoneGraphqlTypes.CreateProductInput,
+      productInput: {
+        name: string;
+        categoryIds: number[];
+        description?: string | null;
+        discount?: number;
+      },
       productInfos: Omit<
         KickzoneGraphqlTypes.CreateProductInfoInput,
         'productId'
       >[]
     ) => {
       try {
-        // First create the product
         const { data: productData } = await createProductMutation({
           variables: {
-            input: productInput,
+            input: { ...productInput, discount: productInput.discount ?? 0 },
           },
         });
-
         if (!productData?.createProduct?.id) {
           throw new Error('Failed to create product');
         }
-
-        // Then create all product infos with the product ID
         const createdProductInfos = [];
         for (const info of productInfos) {
           const { data: productInfoData } = await createProductInfoMutation({
@@ -156,7 +161,6 @@ export const useProducts = () => {
             createdProductInfos.push(productInfoData.createProductInfo);
           }
         }
-
         return {
           product: productData.createProduct,
           productInfos: createdProductInfos,
@@ -214,15 +218,15 @@ export const useProducts = () => {
   );
 
   const updateProduct = useCallback(
-    async (
-      id: number,
-      name: string,
-      discount: number,
-      categoryIds: number[],
-      description?: string | null
-    ) => {
+    async (input: {
+      id: number;
+      name: string;
+      categoryIds: number[];
+      description?: string | null;
+      discount?: number;
+    }) => {
       const { data } = await updateProductMutation({
-        variables: { id, name, discount, categoryIds, description },
+        variables: { ...input },
       });
       return data?.updateProduct;
     },

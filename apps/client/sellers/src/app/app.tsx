@@ -1,11 +1,7 @@
-import NxWelcome from './nx-welcome';
+import { SellersRouter } from '@kickzone-workspace/sellers-router';
 
 export function App() {
-  return (
-    <div>
-      <NxWelcome title="kickzone-sellers" />
-    </div>
-  );
+  return <SellersRouter />;
 }
 
 export default App;

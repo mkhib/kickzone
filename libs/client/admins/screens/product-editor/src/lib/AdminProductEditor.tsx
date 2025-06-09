@@ -954,13 +954,13 @@ export function AdminProductEditor() {
         }
         if (productIdNum) {
           // Editing existing product
-          await updateProduct(
-            productIdNum,
-            product.name,
-            0, // discount
-            product.categoryIds,
-            product.description === '' ? null : product.description
-          );
+          await updateProduct({
+            id: productIdNum,
+            name: product.name,
+            categoryIds: product.categoryIds,
+            description:
+              product.description === '' ? null : product.description,
+          });
           showSnackbar('Product updated successfully', { severity: 'success' });
         } else {
           // Create product and all product infos
@@ -968,7 +968,6 @@ export function AdminProductEditor() {
             {
               name: product.name,
               categoryIds: product.categoryIds,
-              discount: 0,
               description:
                 product.description === '' ? null : product.description,
             },

@@ -22,6 +22,9 @@
       "@kickzone-workspace/admin-products": [
         "libs/client/admins/screens/products/src/index.ts"
       ],
+      "@kickzone-workspace/admin-seller-management": [
+        "libs/client/admins/screens/seller-management/src/index.ts"
+      ],
       "@kickzone-workspace/admins-auth-hooks": [
         "libs/client/admins/hooks/auth/src/index.ts"
       ],

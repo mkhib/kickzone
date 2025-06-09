@@ -1,17 +1,17 @@
-import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+import { ConnectionType, EdgeType } from '@kickzone-workspace/utils';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
-  ManyToMany,
+  Entity,
   JoinTable,
+  ManyToMany,
   OneToMany,
+  PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
-import { ProductInfo } from './product-info.entity';
 import { Category } from './category.entity';
+import { ProductInfo } from './product-info.entity';
 import { SellerProduct } from './seller-product.entity';
-import { EdgeType, ConnectionType } from '@kickzone-workspace/utils';
 
 @ObjectType()
 @Entity()
