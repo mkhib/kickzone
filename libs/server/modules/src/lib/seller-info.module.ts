@@ -2,6 +2,7 @@ import {
   SellerInfo,
   SellerProduct,
   ProductInfo,
+  User,
 } from '@kickzone-workspace/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -10,7 +11,7 @@ import { SellerService } from '@kickzone-workspace/services';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SellerInfo, SellerProduct, ProductInfo]),
+    TypeOrmModule.forFeature([SellerInfo, SellerProduct, ProductInfo, User]),
     UserModule,
   ],
   providers: [SellerService],

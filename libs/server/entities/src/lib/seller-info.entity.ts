@@ -24,11 +24,31 @@ export class SellerInfo {
 
   @Field()
   @Column()
+  lastName: string;
+
+  @Field()
+  @Column()
+  username: string;
+
+  @Field()
+  @Column()
   email: string;
+
+  @Field()
+  @Column()
+  storeName: string;
 
   @Field({ nullable: true })
   @Column({ nullable: true })
   phone?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  address?: string;
+
+  @Field({ defaultValue: true })
+  @Column({ default: true })
+  isActive: boolean;
 
   @OneToOne(() => User, (user) => user.sellerInfo)
   @JoinColumn()

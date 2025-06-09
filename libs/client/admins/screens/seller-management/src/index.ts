@@ -1,1 +1,1 @@
-export * from './lib/admin-seller-management';
+export * from './lib/SellerManagement';

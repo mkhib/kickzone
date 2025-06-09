@@ -1,22 +1,26 @@
 import { Resolver, Query, Mutation, Args, Int, Context } from '@nestjs/graphql';
 import { SellerService } from '@kickzone-workspace/services';
-import { SellerInfo, User } from '@kickzone-workspace/entities';
+import {
+  SellerInfo,
+  User,
+  UserRole,
+  Product,
+  ProductConnection,
+  SellerProduct,
+} from '@kickzone-workspace/entities';
 import {
   CreateSellerInput,
   UpdateSellerInput,
-} from '@kickzone-workspace/inputs';
-import { ProductConnection, Product } from '@kickzone-workspace/entities';
-import { ProductService } from '@kickzone-workspace/services';
-import {
+  CreateSellerProductInput,
+  UpdateSellerProductInput,
+  SellerFilterInput,
   ProductFilterInput,
   CreateProductInfoInput,
 } from '@kickzone-workspace/inputs';
+import { ProductService } from '@kickzone-workspace/services';
 import { createConnection } from '@kickzone-workspace/utils';
-import { SellerProduct } from '@kickzone-workspace/entities';
-import {
-  CreateSellerProductInput,
-  UpdateSellerProductInput,
-} from '@kickzone-workspace/inputs';
+import { UseGuards, SetMetadata } from '@nestjs/common';
+import { RolesGuard } from '@kickzone-workspace/guards';
 
 @Resolver(() => SellerInfo)
 export class SellerResolver {
@@ -26,6 +30,8 @@ export class SellerResolver {
   ) {}
 
   @Mutation(() => SellerInfo)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
   createSeller(
     @Args('createSellerInput') createSellerInput: CreateSellerInput
   ) {
@@ -33,20 +39,36 @@ export class SellerResolver {
   }
 
   @Query(() => [SellerInfo], { name: 'sellers' })
-  findAll() {
-    return this.sellerService.findAll();
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async findAll(
+    @Args('filter', { nullable: true })
+    filter?: SellerFilterInput
+  ): Promise<[SellerInfo[], number]> {
+    return this.sellerService.findAll(filter);
   }
 
   @Query(() => SellerInfo, { name: 'seller' })
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
   findOne(@Args('id', { type: () => Int }) id: number) {
     return this.sellerService.findOne(id);
   }
 
   @Mutation(() => SellerInfo)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
   updateSeller(
     @Args('updateSellerInput') updateSellerInput: UpdateSellerInput
   ) {
     return this.sellerService.update(updateSellerInput.id, updateSellerInput);
+  }
+
+  @Mutation(() => SellerInfo)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  toggleSellerActive(@Args('id', { type: () => Int }) id: number) {
+    return this.sellerService.toggleActive(id);
   }
 
   @Query(() => ProductConnection)
@@ -76,7 +98,6 @@ export class SellerResolver {
   ): Promise<Product> {
     const user = context.req.user;
     if (!user?.sellerInfo?.id) throw new Error('Not a seller');
-    // You may want to add logic to ensure the product belongs to this seller
     return this.productService.createProductInfo(input);
   }
 
