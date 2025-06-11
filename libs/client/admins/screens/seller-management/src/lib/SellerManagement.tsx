@@ -4,7 +4,10 @@ import {
   useMaterialReactTable,
   type MRT_ColumnDef,
 } from 'material-react-table';
-import { useAdminsSellers } from '@kickzone-workspace/admins-sellers-hooks';
+import {
+  useAdminsSellers,
+  useAdminsSellersQuery,
+} from '@kickzone-workspace/admins-sellers-hooks';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   Box,
@@ -34,14 +37,10 @@ export const SellerManagement = () => {
     isActive: true,
   });
 
-  const {
-    sellers,
-    loading,
-    error,
-    createSeller,
-    updateSeller,
-    toggleSellerActive,
-  } = useAdminsSellers(filter);
+  const { createSeller, updateSeller, toggleSellerActive } =
+    useAdminsSellers(filter);
+
+  const { sellers, isLoadingSellers } = useAdminsSellersQuery(filter);
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
@@ -50,19 +49,19 @@ export const SellerManagement = () => {
 
   const columns: MRT_ColumnDef<Seller>[] = [
     {
-      accessorKey: 'name',
+      accessorKey: 'user.name',
       header: 'Name',
     },
     {
-      accessorKey: 'lastName',
+      accessorKey: 'user.lastName',
       header: 'Last Name',
     },
     {
-      accessorKey: 'username',
+      accessorKey: 'user.username',
       header: 'Username',
     },
     {
-      accessorKey: 'email',
+      accessorKey: 'user.email',
       header: 'Email',
     },
     {
@@ -100,7 +99,15 @@ export const SellerManagement = () => {
             <IconButton
               onClick={() => {
                 setSelectedSeller(row.original);
-                setFormData(row.original);
+                setFormData({
+                  name: row.original.user.name,
+                  lastName: row.original.user.lastName || '',
+                  username: row.original.user.username,
+                  email: row.original.user.email,
+                  storeName: row.original.storeName,
+                  phone: row.original.phone,
+                  address: row.original.address,
+                });
                 setEditModalOpen(true);
               }}
             >
@@ -125,7 +132,7 @@ export const SellerManagement = () => {
   const table = useMaterialReactTable({
     columns,
     data: sellers as Seller[],
-    state: { isLoading: loading },
+    state: { isLoading: isLoadingSellers },
     enableRowActions: true,
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', gap: 1 }}>
@@ -187,9 +194,16 @@ export const SellerManagement = () => {
     try {
       await updateSeller({
         variables: {
+          id: selectedSeller.id,
           updateSellerInput: {
             id: selectedSeller.id,
-            ...formData,
+            name: formData.name || undefined,
+            lastName: formData.lastName || undefined,
+            username: formData.username || undefined,
+            email: formData.email || undefined,
+            storeName: formData.storeName || undefined,
+            phone: formData.phone || undefined,
+            address: formData.address || undefined,
           },
         },
       });

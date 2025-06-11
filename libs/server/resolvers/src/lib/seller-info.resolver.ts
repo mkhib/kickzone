@@ -1,26 +1,35 @@
-import { Resolver, Query, Mutation, Args, Int, Context } from '@nestjs/graphql';
-import { SellerService } from '@kickzone-workspace/services';
 import {
-  SellerInfo,
-  User,
-  UserRole,
   Product,
   ProductConnection,
+  SellerInfo,
   SellerProduct,
+  User,
+  UserRole,
+  SellerConnection,
 } from '@kickzone-workspace/entities';
-import {
-  CreateSellerInput,
-  UpdateSellerInput,
-  CreateSellerProductInput,
-  UpdateSellerProductInput,
-  SellerFilterInput,
-  ProductFilterInput,
-  CreateProductInfoInput,
-} from '@kickzone-workspace/inputs';
-import { ProductService } from '@kickzone-workspace/services';
-import { createConnection } from '@kickzone-workspace/utils';
-import { UseGuards, SetMetadata } from '@nestjs/common';
 import { RolesGuard } from '@kickzone-workspace/guards';
+import {
+  CreateProductInfoInput,
+  CreateSellerInput,
+  CreateSellerProductInput,
+  ProductFilterInput,
+  SellerFilterInput,
+  UpdateSellerInput,
+  UpdateSellerProductInput,
+} from '@kickzone-workspace/inputs';
+import { ProductService, SellerService } from '@kickzone-workspace/services';
+import { createConnection } from '@kickzone-workspace/utils';
+import { SetMetadata, UseGuards } from '@nestjs/common';
+import {
+  Args,
+  Int,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+  Context,
+} from '@nestjs/graphql';
 
 @Resolver(() => SellerInfo)
 export class SellerResolver {
@@ -38,17 +47,30 @@ export class SellerResolver {
     return this.sellerService.create(createSellerInput);
   }
 
-  @Query(() => [SellerInfo], { name: 'sellers' })
+  @Query(() => SellerConnection)
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
-  async findAll(
-    @Args('filter', { nullable: true })
-    filter?: SellerFilterInput
-  ): Promise<[SellerInfo[], number]> {
-    return this.sellerService.findAll(filter);
+  async sellers(
+    @Args('filter', { nullable: true }) filter?: SellerFilterInput
+  ) {
+    const [sellers, totalCount] = await this.sellerService.findAll(filter);
+    // Build edges and pageInfo for SellerConnection
+    const edges = sellers.map((seller) => ({
+      node: seller,
+      cursor: seller.id.toString(),
+    }));
+    const pageInfo = {
+      endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
+      hasNextPage: filter?.first ? sellers.length === filter.first : false,
+    };
+    return {
+      edges,
+      pageInfo,
+      totalCount,
+    };
   }
 
-  @Query(() => SellerInfo, { name: 'seller' })
+  @Query(() => SellerInfo, { nullable: true })
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   findOne(@Args('id', { type: () => Int }) id: number) {
@@ -59,9 +81,10 @@ export class SellerResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   updateSeller(
+    @Args('id', { type: () => Int }) id: number,
     @Args('updateSellerInput') updateSellerInput: UpdateSellerInput
   ) {
-    return this.sellerService.update(updateSellerInput.id, updateSellerInput);
+    return this.sellerService.update(id, updateSellerInput);
   }
 
   @Mutation(() => SellerInfo)
@@ -71,16 +94,39 @@ export class SellerResolver {
     return this.sellerService.toggleActive(id);
   }
 
+  @Mutation(() => SellerProduct)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  createSellerProduct(
+    @Args('sellerId', { type: () => Int }) sellerId: number,
+    @Args('input') input: CreateSellerProductInput
+  ) {
+    return this.sellerService.createSellerProduct(sellerId, input);
+  }
+
+  @Mutation(() => SellerProduct)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  updateSellerProduct(
+    @Args('sellerId', { type: () => Int }) sellerId: number,
+    @Args('input') input: UpdateSellerProductInput
+  ) {
+    return this.sellerService.updateSellerProduct(sellerId, input);
+  }
+
+  // Relay-style sellerProducts for the current seller (for sellers themselves)
   @Query(() => ProductConnection)
-  async sellerProducts(
-    @Args('filter', { nullable: true }) filter: ProductFilterInput,
-    @Context() context: { req: { user: User } }
-  ): Promise<ProductConnection> {
+  async sellerProductsForMe(
+    @Context() context: { req: { user: User } },
+    @Args('filter', { nullable: true }) filter?: ProductFilterInput
+  ) {
     const user = context.req.user;
-    if (!user?.sellerInfo?.id) throw new Error('Not a seller');
-    const sellerId = user.sellerInfo.id;
+    if (!user) throw new Error('Not authenticated');
+    if (user.role !== UserRole.SELLER) throw new Error('Not a seller');
+    const seller = await this.sellerService.findOneByUserId(user.id);
+    if (!seller) throw new Error('Seller info not found');
     const [products, totalCount] = await this.productService.getSellerProducts(
-      sellerId,
+      seller.id,
       filter
     );
     return createConnection(
@@ -91,33 +137,14 @@ export class SellerResolver {
     );
   }
 
-  @Mutation(() => Product)
-  async createSellerProductVariant(
-    @Args('input') input: CreateProductInfoInput,
-    @Context() context: { req: { user: User } }
-  ): Promise<Product> {
-    const user = context.req.user;
-    if (!user?.sellerInfo?.id) throw new Error('Not a seller');
-    return this.productService.createProductInfo(input);
+  @ResolveField(() => User)
+  user(@Parent() seller: SellerInfo) {
+    return seller.user;
   }
 
-  @Mutation(() => SellerProduct)
-  async createSellerProduct(
-    @Args('input') input: CreateSellerProductInput,
-    @Context() context: { req: { user: User } }
-  ): Promise<SellerProduct> {
-    const user = context.req.user;
-    if (!user?.sellerInfo?.id) throw new Error('Not a seller');
-    return this.sellerService.createSellerProduct(user.sellerInfo.id, input);
-  }
-
-  @Mutation(() => SellerProduct)
-  async updateSellerProduct(
-    @Args('input') input: UpdateSellerProductInput,
-    @Context() context: { req: { user: User } }
-  ): Promise<SellerProduct> {
-    const user = context.req.user;
-    if (!user?.sellerInfo?.id) throw new Error('Not a seller');
-    return this.sellerService.updateSellerProduct(user.sellerInfo.id, input);
+  // This is the only sellerProducts ResolveField for SellerInfo
+  @ResolveField(() => [SellerProduct])
+  sellerProducts(@Parent() seller: SellerInfo) {
+    return seller.sellerProducts;
   }
 }

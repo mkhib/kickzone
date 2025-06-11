@@ -13,7 +13,7 @@ import {
   ProductArchivedStatus,
   ProductFilterInput,
 } from '@kickzone-workspace/inputs';
-import { ProductService } from '@kickzone-workspace/services';
+import { ProductService, SellerService } from '@kickzone-workspace/services';
 import { createConnection } from '@kickzone-workspace/utils';
 import { SetMetadata, UseGuards } from '@nestjs/common';
 import { Args, Context, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
@@ -30,7 +30,10 @@ export interface FileUpload {
 
 @Resolver(() => Product)
 export class ProductResolver {
-  constructor(private readonly productService: ProductService) {}
+  constructor(
+    private readonly productService: ProductService,
+    private readonly sellerService: SellerService
+  ) {}
 
   @Query(() => ProductConnection)
   async products(
@@ -56,10 +59,14 @@ export class ProductResolver {
     @Args('filter', { nullable: true }) filter?: ProductFilterInput
   ): Promise<ProductConnection> {
     const user = context.req.user;
-    if (!user?.sellerInfo?.id) throw new Error('Not a seller');
-    const sellerId = user.sellerInfo.id;
+    if (!user) throw new Error('Not authenticated');
+    if (user.role !== UserRole.SELLER) throw new Error('Not a seller');
+
+    const seller = await this.sellerService.findOneByUserId(user.id);
+    if (!seller) throw new Error('Seller info not found');
+
     const [products, totalCount] = await this.productService.getSellerProducts(
-      sellerId,
+      seller.id,
       filter
     );
     return createConnection(

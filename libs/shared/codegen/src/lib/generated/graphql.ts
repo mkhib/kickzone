@@ -73,9 +73,11 @@ export type CreateSellerProductInput = {
 
 export type CreateUserInput = {
   email: Scalars['String']['input'];
+  lastName: Scalars['String']['input'];
   name: Scalars['String']['input'];
   password: Scalars['String']['input'];
   role: UserRole;
+  username: Scalars['String']['input'];
 };
 
 export type Mutation = {
@@ -87,7 +89,6 @@ export type Mutation = {
   createProductInfo: Product;
   createSeller: SellerInfo;
   createSellerProduct: SellerProduct;
-  createSellerProductVariant: Product;
   createUser: User;
   deleteCategory: Scalars['Boolean']['output'];
   deleteColor: Scalars['Boolean']['output'];
@@ -137,11 +138,7 @@ export type MutationCreateSellerArgs = {
 
 export type MutationCreateSellerProductArgs = {
   input: CreateSellerProductInput;
-};
-
-
-export type MutationCreateSellerProductVariantArgs = {
-  input: CreateProductInfoInput;
+  sellerId: Scalars['Int']['input'];
 };
 
 
@@ -202,12 +199,14 @@ export type MutationUpdateProductArgs = {
 
 
 export type MutationUpdateSellerArgs = {
+  id: Scalars['Int']['input'];
   updateSellerInput: UpdateSellerInput;
 };
 
 
 export type MutationUpdateSellerProductArgs = {
   input: UpdateSellerProductInput;
+  sellerId: Scalars['Int']['input'];
 };
 
 
@@ -289,18 +288,22 @@ export type Query = {
   categories: Array<Category>;
   color?: Maybe<Color>;
   colors: Array<Color>;
+  findOne?: Maybe<SellerInfo>;
   me?: Maybe<User>;
   product?: Maybe<Product>;
   products: ProductConnection;
-  seller: SellerInfo;
-  sellerProducts: ProductConnection;
   sellerProductsForMe: ProductConnection;
-  sellers: Array<SellerInfo>;
+  sellers: SellerConnection;
   users: UserConnection;
 };
 
 
 export type QueryColorArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryFindOneArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -311,16 +314,6 @@ export type QueryProductArgs = {
 
 
 export type QueryProductsArgs = {
-  filter?: InputMaybe<ProductFilterInput>;
-};
-
-
-export type QuerySellerArgs = {
-  id: Scalars['Int']['input'];
-};
-
-
-export type QuerySellerProductsArgs = {
   filter?: InputMaybe<ProductFilterInput>;
 };
 
@@ -341,6 +334,19 @@ export type QueryUsersArgs = {
   searchTerm?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type SellerConnection = {
+  __typename?: 'SellerConnection';
+  edges: Array<SellerEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
+export type SellerEdge = {
+  __typename?: 'SellerEdge';
+  cursor: Scalars['String']['output'];
+  node: SellerInfo;
+};
+
 export type SellerFilterInput = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -351,14 +357,12 @@ export type SellerFilterInput = {
 export type SellerInfo = {
   __typename?: 'SellerInfo';
   address?: Maybe<Scalars['String']['output']>;
-  email: Scalars['String']['output'];
   id: Scalars['Int']['output'];
   isActive: Scalars['Boolean']['output'];
-  lastName: Scalars['String']['output'];
-  name: Scalars['String']['output'];
   phone?: Maybe<Scalars['String']['output']>;
+  sellerProducts: Array<SellerProduct>;
   storeName: Scalars['String']['output'];
-  username: Scalars['String']['output'];
+  user: User;
 };
 
 export type SellerProduct = {
@@ -408,8 +412,10 @@ export type User = {
   __typename?: 'User';
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
+  lastName: Scalars['String']['output'];
   name: Scalars['String']['output'];
   role: UserRole;
+  username: Scalars['String']['output'];
 };
 
 export type UserConnection = {

@@ -1,13 +1,6 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToOne,
-  Relation,
-} from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
 import { ObjectType, Field, ID, registerEnumType, Int } from '@nestjs/graphql';
-import { PageInfo, Edge, Connection } from '@kickzone-workspace/utils';
-import { SellerInfo } from './seller-info.entity';
+import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
 
 export enum UserRole {
   ADMIN = 'ADMIN',
@@ -31,6 +24,14 @@ export class User {
   name: string;
 
   @Field()
+  @Column()
+  lastName: string;
+
+  @Field()
+  @Column({ unique: true })
+  username: string;
+
+  @Field()
   @Column({ unique: true })
   email: string;
 
@@ -44,20 +45,15 @@ export class User {
     default: UserRole.CUSTOMER,
   })
   role: UserRole;
-
-  @OneToOne(() => SellerInfo, (sellerInfo) => sellerInfo.user, {
-    nullable: true,
-  })
-  sellerInfo?: Relation<SellerInfo>;
 }
 
 @ObjectType()
 export class UserEdge implements Edge<User> {
-  @Field(() => String)
-  cursor: string | number;
-
   @Field(() => User)
   node: User;
+
+  @Field()
+  cursor: string;
 }
 
 @ObjectType()

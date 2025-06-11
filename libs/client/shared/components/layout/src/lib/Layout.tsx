@@ -1,5 +1,5 @@
 import React from 'react';
-import Grid from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { Snackbar } from '@kickzone-workspace/snackbar';
 import Box from '@mui/material/Box';

@@ -11,7 +11,7 @@ import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import FormControl from '@mui/material/FormControl';
-import Grid2 from '@mui/material/Grid2';
+import Grid2 from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
@@ -31,7 +31,10 @@ export function AdminProducts() {
   const [category, setCategory] = useState<string>('');
   const [sort, setSort] = useState<string>('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [status, setStatus] = useState<'ALL' | 'ACTIVE' | 'ARCHIVED'>('ACTIVE');
+  const [status, setStatus] =
+    useState<KickzoneGraphqlTypes.ProductArchivedStatus>(
+      KickzoneGraphqlTypes.ProductArchivedStatus.Active
+    );
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [productToArchive, setProductToArchive] =
     useState<KickzoneGraphqlTypes.Product | null>(null);
@@ -166,7 +169,9 @@ export function AdminProducts() {
               value={status}
               label="Status"
               onChange={(e) =>
-                setStatus(e.target.value as 'ALL' | 'ACTIVE' | 'ARCHIVED')
+                setStatus(
+                  e.target.value as KickzoneGraphqlTypes.ProductArchivedStatus
+                )
               }
             >
               <MenuItem value="ALL">All</MenuItem>

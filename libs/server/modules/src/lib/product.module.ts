@@ -1,26 +1,40 @@
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import {
+  Category,
+  Color,
   Product,
   ProductInfo,
-  Category,
   SellerProduct,
-  Color,
+  SellerInfo,
+  User,
 } from '@kickzone-workspace/entities';
-import { ProductService } from '@kickzone-workspace/services';
-import { ProductResolver } from '@kickzone-workspace/resolvers';
+import { ProductResolver, UserResolver } from '@kickzone-workspace/resolvers';
+import {
+  ProductService,
+  SellerService,
+  UserService,
+} from '@kickzone-workspace/services';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([
+      User,
       Product,
       ProductInfo,
       Category,
       SellerProduct,
       Color,
+      SellerInfo,
     ]),
   ],
-  providers: [ProductService, ProductResolver],
+  providers: [
+    ProductService,
+    ProductResolver,
+    SellerService,
+    UserService,
+    UserResolver,
+  ],
   exports: [ProductService, TypeOrmModule.forFeature([Product])],
 })
 export class ProductModule {}

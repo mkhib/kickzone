@@ -25,9 +25,10 @@ export class UserService {
     const query = this.userRepository.createQueryBuilder('user');
 
     if (searchTerm) {
-      query.where('user.name LIKE :searchTerm OR user.email LIKE :searchTerm', {
-        searchTerm: `%${searchTerm}%`,
-      });
+      query.where(
+        'LOWER(user.name) LIKE LOWER(:searchTerm) OR LOWER(user.lastName) LIKE LOWER(:searchTerm) OR LOWER(user.email) LIKE LOWER(:searchTerm)',
+        { searchTerm: `%${searchTerm}%` }
+      );
     }
 
     if (after) {

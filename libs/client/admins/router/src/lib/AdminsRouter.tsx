@@ -4,6 +4,7 @@ import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
 import { AdminsLogin } from '@kickzone-workspace/admins-login';
 import { createPrivateRoute } from '@kickzone-workspace/private-route';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { SellerManagement } from '@kickzone-workspace/admin-seller-management';
 
 export function AdminsRouter() {
   const { admin } = useAdminsAuthContext();
@@ -18,6 +19,7 @@ export function AdminsRouter() {
           <Route path="/products" element={<AdminProducts />} />
           <Route path="/products/new" element={<AdminProductEditor />} />
           <Route path="/products/edit/:id" element={<AdminProductEditor />} />
+          <Route path="/sellers" element={<SellerManagement />} />
         </Route>
         <Route path="/login" element={<AdminsLogin />} />
       </Routes>

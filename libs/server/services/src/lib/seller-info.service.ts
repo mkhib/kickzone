@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like } from 'typeorm';
+import { Repository } from 'typeorm';
 import {
   SellerInfo,
   SellerProduct,
@@ -13,6 +13,7 @@ import {
   UpdateSellerInput,
   CreateSellerProductInput,
   UpdateSellerProductInput,
+  SellerFilterInput,
 } from '@kickzone-workspace/inputs';
 import * as bcrypt from 'bcryptjs';
 
@@ -41,6 +42,8 @@ export class SellerService {
     // Create user with hashed password
     const hashedPassword = await bcrypt.hash(createSellerInput.password, 10);
     const user = this.userRepository.create({
+      name: createSellerInput.name,
+      username: createSellerInput.username,
       email: createSellerInput.email,
       password: hashedPassword,
       role: UserRole.SELLER,
@@ -49,25 +52,22 @@ export class SellerService {
 
     // Create seller info
     const newSeller = this.sellerRepository.create({
-      ...createSellerInput,
+      storeName: createSellerInput.storeName,
+      phone: createSellerInput.phone,
+      address: createSellerInput.address,
       user,
     });
     return this.sellerRepository.save(newSeller);
   }
 
-  async findAll(filter?: {
-    searchTerm?: string;
-    isActive?: boolean;
-    first?: number;
-    after?: string;
-  }): Promise<[SellerInfo[], number]> {
+  async findAll(filter?: SellerFilterInput): Promise<[SellerInfo[], number]> {
     const query = this.sellerRepository
       .createQueryBuilder('seller')
       .leftJoinAndSelect('seller.user', 'user');
 
     if (filter?.searchTerm) {
       query.andWhere(
-        '(LOWER(seller.name) LIKE :searchTerm OR LOWER(seller.lastName) LIKE :searchTerm OR LOWER(seller.storeName) LIKE :searchTerm OR LOWER(seller.email) LIKE :searchTerm)',
+        '(LOWER(user.name) LIKE :searchTerm OR LOWER(seller.storeName) LIKE :searchTerm OR LOWER(user.email) LIKE :searchTerm)',
         { searchTerm: `%${filter.searchTerm.toLowerCase()}%` }
       );
     }
@@ -99,6 +99,13 @@ export class SellerService {
     });
   }
 
+  async findOneByUserId(userId: string): Promise<SellerInfo | null> {
+    return this.sellerRepository.findOne({
+      where: { user: { id: userId } },
+      relations: ['user', 'sellerProducts'],
+    });
+  }
+
   async update(
     id: number,
     updateSellerInput: UpdateSellerInput
@@ -108,8 +115,26 @@ export class SellerService {
       throw new Error('Seller not found');
     }
 
+    // Update user info if provided
+    if (
+      updateSellerInput.name ||
+      updateSellerInput.username ||
+      updateSellerInput.email
+    ) {
+      const user = seller.user;
+      if (updateSellerInput.name) user.name = updateSellerInput.name;
+      if (updateSellerInput.username)
+        user.username = updateSellerInput.username;
+      if (updateSellerInput.email) user.email = updateSellerInput.email;
+      await this.userRepository.save(user);
+    }
+
     // Update seller info
-    Object.assign(seller, updateSellerInput);
+    if (updateSellerInput.storeName)
+      seller.storeName = updateSellerInput.storeName;
+    if (updateSellerInput.phone) seller.phone = updateSellerInput.phone;
+    if (updateSellerInput.address) seller.address = updateSellerInput.address;
+
     return this.sellerRepository.save(seller);
   }
 

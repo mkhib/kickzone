@@ -7,6 +7,32 @@ type PageInfo {
   hasNextPage: Boolean!
 }
 
+type User {
+  id: ID!
+  name: String!
+  lastName: String!
+  username: String!
+  email: String!
+  role: UserRole!
+}
+
+enum UserRole {
+  ADMIN
+  SELLER
+  CUSTOMER
+}
+
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type Category {
   id: Int!
   name: String!
@@ -60,36 +86,21 @@ type SellerProduct {
 
 type SellerInfo {
   id: Int!
-  name: String!
-  lastName: String!
-  username: String!
-  email: String!
   storeName: String!
   phone: String
   address: String
   isActive: Boolean!
+  user: User!
+  sellerProducts: [SellerProduct!]!
 }
 
-type User {
-  id: ID!
-  name: String!
-  email: String!
-  role: UserRole!
-}
-
-enum UserRole {
-  ADMIN
-  SELLER
-  CUSTOMER
-}
-
-type UserEdge {
+type SellerEdge {
+  node: SellerInfo!
   cursor: String!
-  node: User!
 }
 
-type UserConnection {
-  edges: [UserEdge!]!
+type SellerConnection {
+  edges: [SellerEdge!]!
   pageInfo: PageInfo!
   totalCount: Int!
 }
@@ -101,9 +112,8 @@ type Query {
   products(filter: ProductFilterInput): ProductConnection!
   sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
   product(id: Int!): Product
-  sellers(filter: SellerFilterInput): [SellerInfo!]!
-  seller(id: Int!): SellerInfo!
-  sellerProducts(filter: ProductFilterInput): ProductConnection!
+  sellers(filter: SellerFilterInput): SellerConnection!
+  findOne(id: Int!): SellerInfo
   colors: [Color!]!
   color(id: Int!): Color
 }
@@ -159,11 +169,10 @@ type Mutation {
   unarchiveProduct(id: Int!): Product!
   updateProduct(id: Int!, name: String!, categoryIds: [Int!]!, description: String): Product!
   createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
-  updateSeller(updateSellerInput: UpdateSellerInput!): SellerInfo!
+  updateSeller(id: Int!, updateSellerInput: UpdateSellerInput!): SellerInfo!
   toggleSellerActive(id: Int!): SellerInfo!
-  createSellerProductVariant(input: CreateProductInfoInput!): Product!
-  createSellerProduct(input: CreateSellerProductInput!): SellerProduct!
-  updateSellerProduct(input: UpdateSellerProductInput!): SellerProduct!
+  createSellerProduct(sellerId: Int!, input: CreateSellerProductInput!): SellerProduct!
+  updateSellerProduct(sellerId: Int!, input: UpdateSellerProductInput!): SellerProduct!
   createColor(input: CreateColorInput!): Color!
   updateColor(id: Int!, input: UpdateColorInput!): Color
   deleteColor(id: Int!): Boolean!
@@ -171,6 +180,8 @@ type Mutation {
 
 input CreateUserInput {
   name: String!
+  lastName: String!
+  username: String!
   email: String!
   password: String!
   role: UserRole!

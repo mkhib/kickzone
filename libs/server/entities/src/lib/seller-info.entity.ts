@@ -10,6 +10,7 @@ import {
 } from 'typeorm';
 import { User } from './user.entity';
 import { SellerProduct } from './seller-product.entity';
+import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
 
 @ObjectType()
 @Entity()
@@ -17,22 +18,6 @@ export class SellerInfo {
   @Field(() => Int)
   @PrimaryGeneratedColumn()
   id: number;
-
-  @Field()
-  @Column()
-  name: string;
-
-  @Field()
-  @Column()
-  lastName: string;
-
-  @Field()
-  @Column()
-  username: string;
-
-  @Field()
-  @Column()
-  email: string;
 
   @Field()
   @Column()
@@ -50,10 +35,32 @@ export class SellerInfo {
   @Column({ default: true })
   isActive: boolean;
 
-  @OneToOne(() => User, (user) => user.sellerInfo)
+  @Field(() => User)
+  @OneToOne(() => User)
   @JoinColumn()
   user: Relation<User>;
 
   @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.seller)
   sellerProducts: SellerProduct[];
+}
+
+@ObjectType()
+export class SellerEdge implements Edge<SellerInfo> {
+  @Field(() => SellerInfo)
+  node: SellerInfo;
+
+  @Field()
+  cursor: string;
+}
+
+@ObjectType()
+export class SellerConnection implements Connection<SellerInfo> {
+  @Field(() => [SellerEdge])
+  edges: SellerEdge[];
+
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+
+  @Field(() => Int)
+  totalCount: number;
 }

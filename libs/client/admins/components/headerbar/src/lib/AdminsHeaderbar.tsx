@@ -19,6 +19,7 @@ import Typography from '@mui/material/Typography';
 import { useCallback, useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useTheme, useMediaQuery } from '@mui/material';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 
 const drawerWidth = 300;
 
@@ -193,6 +194,16 @@ export function AdminsHeaderbar() {
                 <ContactMailIcon />
               </ListItemIcon>
               <CustomListItemText primary="Contact" />
+            </ListItemButton>
+            <ListItemButton
+              to="/sellers"
+              component={RouterLink}
+              selected={location.pathname === '/sellers'}
+            >
+              <ListItemIcon>
+                <StorefrontIcon />
+              </ListItemIcon>
+              <CustomListItemText primary="Sellers" />
             </ListItemButton>
           </List>
         </StyledDrawer>
