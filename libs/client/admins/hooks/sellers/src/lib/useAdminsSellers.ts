@@ -7,22 +7,6 @@ import {
   TOGGLE_SELLER_ACTIVE,
 } from './adminsSellers.graphql';
 
-type SellerEdge = {
-  node: KickzoneGraphqlTypes.SellerInfo;
-  cursor: string;
-};
-
-type SellerConnection = {
-  edges: SellerEdge[];
-  pageInfo: {
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-    startCursor: string;
-    endCursor: string;
-  };
-  totalCount: number;
-};
-
 export const useAdminsSellersQuery = (
   filter: KickzoneGraphqlTypes.SellerFilterInput = { isActive: true }
 ) => {
@@ -32,16 +16,14 @@ export const useAdminsSellersQuery = (
     error: sellersError,
     refetch: refetchSellers,
   } = useQuery<
-    { sellers: SellerConnection },
+    Pick<KickzoneGraphqlTypes.Query, 'sellers'>,
     KickzoneGraphqlTypes.QuerySellersArgs
   >(GET_SELLERS, {
     variables: { filter },
   });
 
-  const sellers = sellersData?.sellers?.edges?.map((edge) => edge.node) || [];
-
   return {
-    sellers,
+    sellers: sellersData?.sellers,
     isLoadingSellers,
     sellersError,
     refetchSellers,
@@ -55,21 +37,36 @@ export const useAdminsSellers = (
     Pick<KickzoneGraphqlTypes.Mutation, 'createSeller'>,
     KickzoneGraphqlTypes.MutationCreateSellerArgs
   >(CREATE_SELLER, {
-    refetchQueries: [{ query: GET_SELLERS, variables: { filter } }],
+    refetchQueries: [
+      {
+        query: GET_SELLERS,
+        variables: { filter: { isActive: filter.isActive } },
+      },
+    ],
   });
 
   const [updateSeller] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateSeller'>,
     KickzoneGraphqlTypes.MutationUpdateSellerArgs
   >(UPDATE_SELLER, {
-    refetchQueries: [{ query: GET_SELLERS, variables: { filter } }],
+    refetchQueries: [
+      {
+        query: GET_SELLERS,
+        variables: { filter: { isActive: filter.isActive } },
+      },
+    ],
   });
 
   const [toggleSellerActive] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'toggleSellerActive'>,
     KickzoneGraphqlTypes.MutationToggleSellerActiveArgs
   >(TOGGLE_SELLER_ACTIVE, {
-    refetchQueries: [{ query: GET_SELLERS, variables: { filter } }],
+    refetchQueries: [
+      {
+        query: GET_SELLERS,
+        variables: { filter: { isActive: filter.isActive } },
+      },
+    ],
   });
 
   return {

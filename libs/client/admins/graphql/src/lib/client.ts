@@ -26,6 +26,7 @@ const apolloClient = new ApolloClient({
       Query: {
         fields: {
           products: relayStylePagination(['filter']),
+          sellers: relayStylePagination(['input']),
         },
       },
     },

@@ -43,6 +43,7 @@ export class SellerService {
     const hashedPassword = await bcrypt.hash(createSellerInput.password, 10);
     const user = this.userRepository.create({
       name: createSellerInput.name,
+      lastName: createSellerInput.lastName,
       username: createSellerInput.username,
       email: createSellerInput.email,
       password: hashedPassword,

@@ -1,15 +1,17 @@
+import { ApolloError } from '@apollo/client';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
-import {
-  MaterialReactTable,
-  useMaterialReactTable,
-  type MRT_ColumnDef,
-} from 'material-react-table';
 import {
   useAdminsSellers,
   useAdminsSellersQuery,
 } from '@kickzone-workspace/admins-sellers-hooks';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
+import AddIcon from '@mui/icons-material/Add';
+import EditIcon from '@mui/icons-material/Edit';
+import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import PersonOffIcon from '@mui/icons-material/PersonOff';
 import {
+  Alert,
   Box,
   Button,
   Dialog,
@@ -19,14 +21,14 @@ import {
   IconButton,
   TextField,
   Tooltip,
+  Typography,
 } from '@mui/material';
-import { useState } from 'react';
 import {
-  Edit as EditIcon,
-  Delete as DeleteIcon,
-  Add as AddIcon,
-} from '@mui/icons-material';
-import { ChangeEvent } from 'react';
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+} from 'material-react-table';
+import { ChangeEvent, useMemo, useState, useEffect } from 'react';
 
 type Seller = NonNullable<KickzoneGraphqlTypes.SellerInfo>;
 type CreateSellerInput = KickzoneGraphqlTypes.CreateSellerInput;
@@ -40,12 +42,25 @@ export const SellerManagement = () => {
   const { createSeller, updateSeller, toggleSellerActive } =
     useAdminsSellers(filter);
 
-  const { sellers, isLoadingSellers } = useAdminsSellersQuery(filter);
+  const { sellers, isLoadingSellers, refetchSellers } =
+    useAdminsSellersQuery(filter);
+  const sellersData = useMemo(
+    () => sellers?.edges?.map((edge) => edge.node) || [],
+    [sellers]
+  );
 
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const [editModalOpen, setEditModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [formData, setFormData] = useState<Partial<CreateSellerInput>>({});
+  const [usernameConfirmation, setUsernameConfirmation] = useState('');
+  const [needsReconfirmation, setNeedsReconfirmation] = useState(false);
+  const { showSnackbar } = useSnackbar();
+
+  useEffect(() => {
+    refetchSellers();
+  }, [filter, refetchSellers]);
 
   const columns: MRT_ColumnDef<Seller>[] = [
     {
@@ -116,12 +131,15 @@ export const SellerManagement = () => {
           </Tooltip>
           <Tooltip title={row.original.isActive ? 'Deactivate' : 'Activate'}>
             <IconButton
-              onClick={() =>
-                toggleSellerActive({ variables: { id: row.original.id } })
-              }
+              onClick={() => {
+                setSelectedSeller(row.original);
+                setDeleteModalOpen(true);
+                setUsernameConfirmation('');
+                setNeedsReconfirmation(false);
+              }}
               color={row.original.isActive ? 'error' : 'success'}
             >
-              <DeleteIcon />
+              {row.original.isActive ? <PersonOffIcon /> : <GroupAddIcon />}
             </IconButton>
           </Tooltip>
         </Box>
@@ -129,9 +147,45 @@ export const SellerManagement = () => {
     },
   ];
 
+  const handleDeleteConfirm = async () => {
+    if (!selectedSeller) return;
+
+    if (!needsReconfirmation) {
+      setNeedsReconfirmation(true);
+      return;
+    }
+
+    try {
+      await toggleSellerActive({ variables: { id: selectedSeller.id } });
+      setDeleteModalOpen(false);
+      setSelectedSeller(null);
+      setUsernameConfirmation('');
+      setNeedsReconfirmation(false);
+      showSnackbar('Seller status updated successfully', {
+        severity: 'success',
+      });
+      refetchSellers();
+    } catch (err) {
+      const error = err as ApolloError;
+
+      showSnackbar(error.message, {
+        severity: 'error',
+      });
+    }
+  };
+
+  const handleUsernameConfirmationChange = (
+    e: ChangeEvent<HTMLInputElement>
+  ) => {
+    setUsernameConfirmation(e.target.value);
+  };
+
+  const isDeleteEnabled =
+    selectedSeller && usernameConfirmation === selectedSeller.user.username;
+
   const table = useMaterialReactTable({
     columns,
-    data: sellers as Seller[],
+    data: sellersData,
     state: { isLoading: isLoadingSellers },
     enableRowActions: true,
     renderTopToolbarCustomActions: () => (
@@ -184,8 +238,12 @@ export const SellerManagement = () => {
       });
       setCreateModalOpen(false);
       setFormData({});
-    } catch (error) {
-      console.error('Error creating seller:', error);
+    } catch (err) {
+      const error = err as ApolloError;
+
+      showSnackbar(error.message, {
+        severity: 'error',
+      });
     }
   };
 
@@ -210,8 +268,12 @@ export const SellerManagement = () => {
       setEditModalOpen(false);
       setSelectedSeller(null);
       setFormData({});
-    } catch (error) {
-      console.error('Error updating seller:', error);
+    } catch (err) {
+      const error = err as ApolloError;
+
+      showSnackbar(error.message, {
+        severity: 'error',
+      });
     }
   };
 
@@ -227,6 +289,7 @@ export const SellerManagement = () => {
     <>
       <TextField
         fullWidth
+        required
         name="name"
         label="Name"
         value={formData.name || ''}
@@ -235,6 +298,7 @@ export const SellerManagement = () => {
       />
       <TextField
         fullWidth
+        required
         name="lastName"
         label="Last Name"
         value={formData.lastName || ''}
@@ -243,6 +307,7 @@ export const SellerManagement = () => {
       />
       <TextField
         fullWidth
+        required
         name="username"
         label="Username"
         value={formData.username || ''}
@@ -251,6 +316,7 @@ export const SellerManagement = () => {
       />
       <TextField
         fullWidth
+        required
         name="email"
         label="Email"
         type="email"
@@ -260,6 +326,7 @@ export const SellerManagement = () => {
       />
       <TextField
         fullWidth
+        required
         name="storeName"
         label="Store Name"
         value={formData.storeName || ''}
@@ -268,6 +335,7 @@ export const SellerManagement = () => {
       />
       <TextField
         fullWidth
+        required
         name="phone"
         label="Phone"
         value={formData.phone || ''}
@@ -276,6 +344,7 @@ export const SellerManagement = () => {
       />
       <TextField
         fullWidth
+        required
         name="address"
         label="Address"
         value={formData.address || ''}
@@ -319,6 +388,86 @@ export const SellerManagement = () => {
             color="primary"
           >
             Save
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Confirmation Modal */}
+      <Dialog
+        open={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setSelectedSeller(null);
+          setUsernameConfirmation('');
+          setNeedsReconfirmation(false);
+        }}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {needsReconfirmation
+            ? `Final Confirmation to ${
+                selectedSeller?.isActive ? 'Deactivate' : 'Activate'
+              }`
+            : `Confirm ${
+                selectedSeller?.isActive ? 'Deactivation' : 'Activation'
+              }`}
+        </DialogTitle>
+        <DialogContent>
+          <Alert
+            severity={selectedSeller?.isActive ? 'error' : 'success'}
+            sx={{ mb: 2 }}
+          >
+            <Typography variant="subtitle1" fontWeight="bold">
+              {selectedSeller?.isActive
+                ? 'Warning: This action will deactivate the seller account!'
+                : 'This action will reactivate the seller account.'}
+            </Typography>
+            <Typography>
+              You are about to{' '}
+              {selectedSeller?.isActive ? 'deactivate' : 'activate'} the seller
+              account for <strong>{selectedSeller?.user.username}</strong>.
+            </Typography>
+          </Alert>
+          <Typography sx={{ mb: 2 }}>
+            To confirm this action, please type the seller's username:{' '}
+            <strong>{selectedSeller?.user.username}</strong>
+          </Typography>
+          <TextField
+            fullWidth
+            label="Enter username"
+            value={usernameConfirmation}
+            onChange={handleUsernameConfirmationChange}
+            error={usernameConfirmation !== '' && !isDeleteEnabled}
+            helperText={
+              usernameConfirmation !== '' && !isDeleteEnabled
+                ? 'Username does not match'
+                : ''
+            }
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setDeleteModalOpen(false);
+              setSelectedSeller(null);
+              setUsernameConfirmation('');
+              setNeedsReconfirmation(false);
+            }}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handleDeleteConfirm}
+            variant="contained"
+            color={selectedSeller?.isActive ? 'error' : 'success'}
+            disabled={!isDeleteEnabled}
+          >
+            {needsReconfirmation
+              ? 'Reconfirm'
+              : selectedSeller?.isActive
+              ? 'Deactivate Anyway'
+              : 'Activate Anyway'}
           </Button>
         </DialogActions>
       </Dialog>
