@@ -1,0 +1,9 @@
+{
+  "name": "sellers-setup-password",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/sellers/screens/setup-password/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project sellers-setup-password --web",
+  "targets": {}
+}
