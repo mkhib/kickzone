@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 import { ObjectType, Field, ID, registerEnumType, Int } from '@nestjs/graphql';
 import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
 
@@ -21,18 +21,22 @@ export class User {
 
   @Field()
   @Column()
+  @Index()
   name: string;
 
   @Field()
   @Column()
+  @Index()
   lastName: string;
 
   @Field()
   @Column({ unique: true })
+  @Index()
   username: string;
 
   @Field()
   @Column({ unique: true })
+  @Index()
   email: string;
 
   @Column()

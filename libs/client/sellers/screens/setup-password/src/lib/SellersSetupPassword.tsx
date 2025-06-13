@@ -1,33 +1,32 @@
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
-import { useMutation } from '@apollo/client';
-import { gql } from '@apollo/client';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import { useState } from 'react';
-
-const SETUP_PASSWORD = gql`
-  mutation SetupPassword($token: String!, $newPassword: String!) {
-    setupPassword(token: $token, newPassword: $newPassword) {
-      id
-      email
-    }
-  }
-`;
+import { useSetupPassword } from '@kickzone-workspace/sellers-auth-hooks';
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Grid,
+  Container,
+  InputAdornment,
+  IconButton,
+  Alert,
+  CircularProgress,
+} from '@mui/material';
+import { Visibility, VisibilityOff } from '@mui/icons-material';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 export const SellersSetupPassword = () => {
   const { token } = useParams();
-  const navigate = useNavigate();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-
-  const [setupPassword, { loading }] = useMutation(SETUP_PASSWORD, {
-    onCompleted: () => {
-      navigate('/login');
-    },
-    onError: (error) => {
-      setError(error.message);
-    },
-  });
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const { setupPassword, setupPasswordLoading, setupPasswordError } =
+    useSetupPassword();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -43,73 +42,167 @@ export const SellersSetupPassword = () => {
       return;
     }
 
-    await setupPassword({
-      variables: {
-        token,
-        newPassword: password,
-      },
-    });
+    if (token) {
+      setupPassword(token, password);
+    }
   };
+
+  const handleClickShowPassword = () => setShowPassword(!showPassword);
+  const handleClickShowConfirmPassword = () =>
+    setShowConfirmPassword(!showConfirmPassword);
 
   return (
     <SellersLayout>
-      <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-              Set up your password
-            </h2>
-          </div>
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="rounded-md shadow-sm -space-y-px">
-              <div>
-                <label htmlFor="password" className="sr-only">
-                  New Password
-                </label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="New Password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                />
-              </div>
-              <div>
-                <label htmlFor="confirm-password" className="sr-only">
-                  Confirm Password
-                </label>
-                <input
-                  id="confirm-password"
-                  name="confirm-password"
-                  type="password"
-                  required
-                  className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                  placeholder="Confirm Password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                />
-              </div>
-            </div>
+      <Container component="main" maxWidth="sm">
+        <Box
+          sx={{
+            minHeight: '100vh',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            py: 4,
+          }}
+        >
+          <Paper
+            elevation={3}
+            sx={{
+              p: 4,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              borderRadius: 2,
+              backgroundColor: 'background.paper',
+            }}
+          >
+            <Box
+              sx={{
+                width: 40,
+                height: 40,
+                borderRadius: '50%',
+                backgroundColor: 'primary.main',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                mb: 2,
+              }}
+            >
+              <LockOutlinedIcon sx={{ color: 'white' }} />
+            </Box>
 
-            {error && (
-              <div className="text-red-500 text-sm text-center">{error}</div>
-            )}
+            <Typography
+              component="h1"
+              variant="h5"
+              sx={{ mb: 3, fontWeight: 600 }}
+            >
+              Set Up Your Password
+            </Typography>
 
-            <div>
-              <button
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ mb: 3, textAlign: 'center' }}
+            >
+              Welcome to Kickzone! Please set up your password to secure your
+              seller account.
+            </Typography>
+
+            <Box
+              component="form"
+              onSubmit={handleSubmit}
+              sx={{ width: '100%' }}
+            >
+              <Grid container spacing={2}>
+                <Grid size={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="New Password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="toggle password visibility"
+                            onClick={handleClickShowPassword}
+                            edge="end"
+                          >
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid size={12}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Confirm Password"
+                    type={showConfirmPassword ? 'text' : 'password'}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton
+                            aria-label="toggle confirm password visibility"
+                            onClick={handleClickShowConfirmPassword}
+                            edge="end"
+                          >
+                            {showConfirmPassword ? (
+                              <VisibilityOff />
+                            ) : (
+                              <Visibility />
+                            )}
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              </Grid>
+
+              {(error || setupPasswordError) && (
+                <Alert severity="error" sx={{ mt: 2, mb: 2 }}>
+                  {error || setupPasswordError?.message}
+                </Alert>
+              )}
+
+              <Button
                 type="submit"
-                disabled={loading}
-                className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
+                fullWidth
+                variant="contained"
+                disabled={setupPasswordLoading}
+                sx={{
+                  mt: 3,
+                  mb: 2,
+                  py: 1.5,
+                  textTransform: 'none',
+                  fontSize: '1rem',
+                  fontWeight: 600,
+                }}
               >
-                {loading ? 'Setting up...' : 'Set Password'}
-              </button>
-            </div>
-          </form>
-        </div>
-      </div>
+                {setupPasswordLoading ? (
+                  <CircularProgress size={24} color="inherit" />
+                ) : (
+                  'Set Password'
+                )}
+              </Button>
+
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ mt: 2, textAlign: 'center' }}
+              >
+                Your password must be at least 8 characters long and include a
+                mix of letters, numbers, and special characters.
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+      </Container>
     </SellersLayout>
   );
 };

@@ -7,9 +7,16 @@ import {
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { UserModule } from './user.module';
-import { SellerService } from '@kickzone-workspace/services';
+import {
+  AuthService,
+  EmailService,
+  SellerService,
+  TokenService,
+} from '@kickzone-workspace/services';
 import { SellerResolver } from '@kickzone-workspace/resolvers';
 import { ProductModule } from './product.module';
+import { JwtService } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
@@ -17,7 +24,15 @@ import { ProductModule } from './product.module';
     UserModule,
     ProductModule,
   ],
-  providers: [SellerService, SellerResolver],
+  providers: [
+    SellerService,
+    SellerResolver,
+    AuthService,
+    JwtService,
+    EmailService,
+    TokenService,
+    ConfigService,
+  ],
   exports: [SellerService],
 })
 export class SellerInfoModule {}

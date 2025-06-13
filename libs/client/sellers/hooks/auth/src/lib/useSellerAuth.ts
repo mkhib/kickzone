@@ -2,7 +2,8 @@ import { useMutation } from '@apollo/client';
 import {
   LOGIN_MUTATION,
   LOGOUT_MUTATION,
-} from '@kickzone-workspace/sellers-graphql';
+  SETUP_PASSWORD_MUTATION,
+} from './sellerAuth.graphql';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { User } from '@kickzone-workspace/entities';
 import { useNavigate } from 'react-router-dom';
@@ -44,5 +45,30 @@ export const useSellerLogin = () => {
     sellersLoginLoading,
     sellersLoginError,
     logoutSeller,
+  };
+};
+
+export const useSetupPassword = () => {
+  const navigate = useNavigate();
+
+  const [
+    setupPasswordMutation,
+    { loading: setupPasswordLoading, error: setupPasswordError },
+  ] = useMutation(SETUP_PASSWORD_MUTATION, {
+    onCompleted: () => {
+      navigate('/login');
+    },
+  });
+
+  const setupPassword = (token: string, newPassword: string) => {
+    setupPasswordMutation({
+      variables: { token, newPassword },
+    });
+  };
+
+  return {
+    setupPassword,
+    setupPasswordLoading,
+    setupPasswordError,
   };
 };

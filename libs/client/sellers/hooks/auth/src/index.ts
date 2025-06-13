@@ -1,1 +1,1 @@
-export * from './lib/useSellerLogin';
+export * from './lib/useSellerAuth';

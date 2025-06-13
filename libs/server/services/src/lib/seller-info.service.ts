@@ -16,6 +16,7 @@ import {
   SellerFilterInput,
 } from '@kickzone-workspace/inputs';
 import * as bcrypt from 'bcryptjs';
+import { AuthService } from './auth.service';
 
 @Injectable()
 export class SellerService {
@@ -27,15 +28,19 @@ export class SellerService {
     @InjectRepository(ProductInfo)
     private productInfoRepository: Repository<ProductInfo>,
     @InjectRepository(User)
-    private userRepository: Repository<User>
+    private userRepository: Repository<User>,
+    private authService: AuthService
   ) {}
 
   async create(createSellerInput: CreateSellerInput): Promise<SellerInfo> {
+    console.log(`Creating new seller with email: ${createSellerInput.email}`);
+
     // Check if email already exists
     const existingUser = await this.userRepository.findOne({
       where: { email: createSellerInput.email },
     });
     if (existingUser) {
+      console.log(`Email ${createSellerInput.email} already exists`);
       throw new Error('Email already exists');
     }
 
@@ -50,6 +55,7 @@ export class SellerService {
       role: UserRole.SELLER,
     });
     await this.userRepository.save(user);
+    console.log(`Created user for seller: ${user.email}`);
 
     // Create seller info
     const newSeller = this.sellerRepository.create({
@@ -58,7 +64,22 @@ export class SellerService {
       address: createSellerInput.address,
       user,
     });
-    return this.sellerRepository.save(newSeller);
+    const savedSeller = await this.sellerRepository.save(newSeller);
+    console.log(`Created seller info for: ${user.email}`);
+
+    // Initiate password setup
+    try {
+      const baseUrl = process.env['FRONTEND_URL'] || 'http://localhost:4200';
+      await this.authService.initiatePasswordSetup(user.email, baseUrl);
+      console.log(`Initiated password setup for seller: ${user.email}`);
+    } catch (error) {
+      console.error(
+        `Failed to initiate password setup for ${user.email}:`,
+        error
+      );
+    }
+
+    return savedSeller;
   }
 
   async findAll(filter?: SellerFilterInput): Promise<[SellerInfo[], number]> {
