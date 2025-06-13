@@ -7,3 +7,5 @@ export * from './lib/seller-info.module';
 export * from './lib/seller-products.module';
 export * from './lib/graphql-context.module';
 export * from './lib/color.module';
+export * from './lib/email.module';
+export * from './lib/token.module';

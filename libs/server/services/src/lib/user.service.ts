@@ -61,4 +61,14 @@ export class UserService {
     });
     return this.userRepository.save(user);
   }
+
+  async updateUser(id: string, updateData: Partial<User>): Promise<User> {
+    const user = await this.getUserById(id);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    Object.assign(user, updateData);
+    return this.userRepository.save(user);
+  }
 }

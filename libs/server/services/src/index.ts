@@ -5,3 +5,5 @@ export * from './lib/category.service';
 export * from './lib/seller-info.service';
 export * from './lib/image-upload.service';
 export * from './lib/color.service';
+export * from './lib/email.service';
+export * from './lib/token.service';

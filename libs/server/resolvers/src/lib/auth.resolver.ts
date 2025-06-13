@@ -48,4 +48,21 @@ export class AuthResolver {
     });
     return true;
   }
+
+  @Mutation(() => Boolean)
+  async initiatePasswordSetup(
+    @Args('email') email: string,
+    @Args('baseUrl') baseUrl: string
+  ): Promise<boolean> {
+    await this.authService.initiatePasswordSetup(email, baseUrl);
+    return true;
+  }
+
+  @Mutation(() => User)
+  async setupPassword(
+    @Args('token') token: string,
+    @Args('newPassword') newPassword: string
+  ): Promise<User> {
+    return this.authService.setupPassword(token, newPassword);
+  }
 }

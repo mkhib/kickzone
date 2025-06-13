@@ -1,1 +1,1 @@
-export * from './lib/sellers-setup-password';
+export * from './lib/SellersSetupPassword';

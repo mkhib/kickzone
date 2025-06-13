@@ -158,6 +158,8 @@ type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
   login(email: String!, password: String!): User!
   logout: Boolean!
+  initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!
+  setupPassword(token: String!, newPassword: String!): User!
   createCategory(input: CreateCategoryInput!): Category!
   updateCategory(input: UpdateCategoryInput!): Category!
   deleteCategory(id: Int!): Boolean!

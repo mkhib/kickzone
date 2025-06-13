@@ -92,9 +92,11 @@ export type Mutation = {
   createUser: User;
   deleteCategory: Scalars['Boolean']['output'];
   deleteColor: Scalars['Boolean']['output'];
+  initiatePasswordSetup: Scalars['Boolean']['output'];
   login: User;
   logout: Scalars['Boolean']['output'];
   removeProductInfoImage: Scalars['Boolean']['output'];
+  setupPassword: User;
   toggleSellerActive: SellerInfo;
   unarchiveProduct: Product;
   updateCategory: Category;
@@ -157,6 +159,12 @@ export type MutationDeleteColorArgs = {
 };
 
 
+export type MutationInitiatePasswordSetupArgs = {
+  baseUrl: Scalars['String']['input'];
+  email: Scalars['String']['input'];
+};
+
+
 export type MutationLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
@@ -166,6 +174,12 @@ export type MutationLoginArgs = {
 export type MutationRemoveProductInfoImageArgs = {
   imageName: Scalars['String']['input'];
   productInfoId: Scalars['Int']['input'];
+};
+
+
+export type MutationSetupPasswordArgs = {
+  newPassword: Scalars['String']['input'];
+  token: Scalars['String']['input'];
 };
 
 
