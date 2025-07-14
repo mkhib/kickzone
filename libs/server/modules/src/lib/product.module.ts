@@ -22,7 +22,7 @@ import {
 } from '@kickzone-workspace/services';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
@@ -36,6 +36,10 @@ import { ConfigService } from '@nestjs/config';
       Color,
       SellerInfo,
     ]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '60m' },
+    }),
   ],
   providers: [
     ProductService,
@@ -45,7 +49,6 @@ import { ConfigService } from '@nestjs/config';
     UserResolver,
     AuthService,
     AuthResolver,
-    JwtService,
     EmailService,
     TokenService,
     ConfigService,

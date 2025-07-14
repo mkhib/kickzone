@@ -1,12 +1,12 @@
 import { useMutation } from '@apollo/client';
+import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
+import { useNavigate } from 'react-router-dom';
 import {
   LOGIN_MUTATION,
   LOGOUT_MUTATION,
   SETUP_PASSWORD_MUTATION,
 } from './sellerAuth.graphql';
-import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
-import { User } from '@kickzone-workspace/entities';
-import { useNavigate } from 'react-router-dom';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 interface LoginInput {
   email: string;
@@ -20,13 +20,16 @@ export const useSellerLogin = () => {
   const [
     loginMutation,
     { loading: sellersLoginLoading, error: sellersLoginError },
-  ] = useMutation<{ login: User }>(LOGIN_MUTATION, {
-    onCompleted: (data) => {
-      login(data.login);
-      localStorage.setItem('seller_user', JSON.stringify(data.login));
-      navigate('/products');
-    },
-  });
+  ] = useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'login'>>(
+    LOGIN_MUTATION,
+    {
+      onCompleted: (data) => {
+        login(data.login);
+        localStorage.setItem('seller_user', JSON.stringify(data.login));
+        navigate('/products');
+      },
+    }
+  );
 
   const loginSeller = (input: LoginInput) => {
     loginMutation({

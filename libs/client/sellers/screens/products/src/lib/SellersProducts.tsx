@@ -1,6 +1,6 @@
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useSellersProducts } from '@kickzone-workspace/sellers-products-hooks';
-import Grid2 from '@mui/material/Grid2';
+import Grid2 from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';

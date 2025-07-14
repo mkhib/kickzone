@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { User } from '@kickzone-workspace/entities';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 interface AuthContextType {
-  user: Pick<User, 'id' | 'name' | 'email' | 'role'> | null;
-  login: (user: Pick<User, 'id' | 'name' | 'email' | 'role'>) => void;
+  user: KickzoneGraphqlTypes.User | null;
+  login: (user: KickzoneGraphqlTypes.User) => void;
   logout: () => void;
 }
 
@@ -12,12 +12,9 @@ const SellersAuthContext = createContext<AuthContextType | undefined>(
 );
 
 export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
-  const [user, setUser] = useState<Pick<
-    User,
-    'id' | 'name' | 'email' | 'role'
-  > | null>(null);
+  const [user, setUser] = useState<KickzoneGraphqlTypes.User | null>(null);
 
-  const login = (user: Pick<User, 'id' | 'name' | 'email' | 'role'>) => {
+  const login = (user: KickzoneGraphqlTypes.User) => {
     setUser(user);
   };
 

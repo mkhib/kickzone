@@ -15,7 +15,7 @@ import {
 } from '@kickzone-workspace/services';
 import { SellerResolver } from '@kickzone-workspace/resolvers';
 import { ProductModule } from './product.module';
-import { JwtService } from '@nestjs/jwt';
+import { JwtModule } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 
 @Module({
@@ -23,12 +23,15 @@ import { ConfigService } from '@nestjs/config';
     TypeOrmModule.forFeature([SellerInfo, SellerProduct, ProductInfo, User]),
     UserModule,
     ProductModule,
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '60m' },
+    }),
   ],
   providers: [
     SellerService,
     SellerResolver,
     AuthService,
-    JwtService,
     EmailService,
     TokenService,
     ConfigService,
