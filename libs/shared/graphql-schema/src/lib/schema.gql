@@ -169,7 +169,7 @@ type Mutation {
   removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
   archiveProduct(id: Int!): Product!
   unarchiveProduct(id: Int!): Product!
-  updateProduct(id: Int!, name: String!, categoryIds: [Int!]!, description: String): Product!
+  updateProduct(input: UpdateProductInput!): Product!
   createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
   updateSeller(id: Int!, updateSellerInput: UpdateSellerInput!): SellerInfo!
   toggleSellerActive(id: Int!): SellerInfo!
@@ -200,7 +200,6 @@ input UpdateCategoryInput {
 
 input CreateProductInput {
   name: String!
-  discount: Float!
   categoryIds: [Int!]!
   description: String
 }
@@ -214,6 +213,13 @@ input CreateProductInfoInput {
 
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
+
+input UpdateProductInput {
+  id: Int!
+  name: String!
+  categoryIds: [Int!]!
+  description: String
+}
 
 input CreateSellerInput {
   name: String!

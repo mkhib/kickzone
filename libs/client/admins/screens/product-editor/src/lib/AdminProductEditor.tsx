@@ -985,6 +985,28 @@ export function AdminProductEditor() {
             }))
           );
           showSnackbar('Product created successfully', { severity: 'success' });
+          // Reset form to initial state
+          setProduct({
+            name: '',
+            categoryIds: [],
+            description: '',
+          });
+          setProductInfos([
+            {
+              productId: 0,
+              size: '',
+              color: null,
+              weight: 0,
+              images: [],
+              imagePreviews: [],
+              uploadedImageUrls: [],
+              createdId: null,
+              isUploading: false,
+              newImages: [],
+              newImagePreviews: [],
+            },
+          ]);
+          setCreatedProductInfoIds([null]);
         }
       } catch (error) {
         const message = (error as Error).message;

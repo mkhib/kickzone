@@ -12,6 +12,7 @@ import {
   CreateProductInfoInput,
   CreateCategoryInput,
   ProductFilterInput,
+  UpdateProductInput,
 } from '@kickzone-workspace/inputs';
 
 @Injectable()
@@ -194,27 +195,26 @@ export class ProductService {
     return this.productInfoRepository.save(productInfo);
   }
 
-  async updateProduct(
-    id: number,
-    name: string,
-    categoryIds: number[],
-    description?: string | null
-  ): Promise<Product> {
-    const product = await this.productRepository.findOne({ where: { id } });
+  async updateProduct(input: UpdateProductInput): Promise<Product> {
+    const product = await this.productRepository.findOne({
+      where: { id: input.id },
+    });
     if (!product) {
-      throw new Error(`Product with ID ${id} not found`);
+      throw new Error(`Product with ID ${input.id} not found`);
     }
     // Check for duplicate name (excluding current product)
-    const existing = await this.productRepository.findOne({ where: { name } });
-    if (existing && existing.id !== id) {
+    const existing = await this.productRepository.findOne({
+      where: { name: input.name },
+    });
+    if (existing && existing.id !== input.id) {
       throw new Error('A product with this name already exists.');
     }
     const categories = await this.categoryRepository.findBy({
-      id: In(categoryIds),
+      id: In(input.categoryIds),
     });
-    product.name = name;
+    product.name = input.name;
     product.categories = categories;
-    product.description = description === '' ? null : description;
+    product.description = input.description === '' ? null : input.description;
     return this.productRepository.save(product);
   }
 

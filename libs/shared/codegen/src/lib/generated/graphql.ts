@@ -48,7 +48,6 @@ export type CreateProductInfoInput = {
 export type CreateProductInput = {
   categoryIds: Array<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
-  discount: Scalars['Float']['input'];
   name: Scalars['String']['input'];
 };
 
@@ -205,10 +204,7 @@ export type MutationUpdateColorArgs = {
 
 
 export type MutationUpdateProductArgs = {
-  categoryIds: Array<Scalars['Int']['input']>;
-  description?: InputMaybe<Scalars['String']['input']>;
-  id: Scalars['Int']['input'];
-  name: Scalars['String']['input'];
+  input: UpdateProductInput;
 };
 
 
@@ -398,6 +394,13 @@ export type UpdateCategoryInput = {
 
 export type UpdateColorInput = {
   hexCode: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+};
+
+export type UpdateProductInput = {
+  categoryIds: Array<Scalars['Int']['input']>;
+  description?: InputMaybe<Scalars['String']['input']>;
+  id: Scalars['Int']['input'];
   name: Scalars['String']['input'];
 };
 

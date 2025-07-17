@@ -132,7 +132,6 @@ export const useProducts = () => {
         name: string;
         categoryIds: number[];
         description?: string | null;
-        discount?: number;
       },
       productInfos: Omit<
         KickzoneGraphqlTypes.CreateProductInfoInput,
@@ -142,7 +141,7 @@ export const useProducts = () => {
       try {
         const { data: productData } = await createProductMutation({
           variables: {
-            input: { ...productInput, discount: productInput.discount ?? 0 },
+            input: productInput,
           },
         });
         if (!productData?.createProduct?.id) {
@@ -158,8 +157,17 @@ export const useProducts = () => {
               },
             },
           });
-          if (productInfoData?.createProductInfo) {
-            createdProductInfos.push(productInfoData.createProductInfo);
+          if (productInfoData?.createProductInfo?.productInfos) {
+            // The createProductInfo mutation returns the full product with all productInfos
+            // We need to find the newly created productInfo from the array
+            // Since we're creating them sequentially, the last one in the array should be the new one
+            const newProductInfo =
+              productInfoData.createProductInfo.productInfos[
+                productInfoData.createProductInfo.productInfos.length - 1
+              ];
+            if (newProductInfo) {
+              createdProductInfos.push(newProductInfo);
+            }
           }
         }
         return {
@@ -224,10 +232,9 @@ export const useProducts = () => {
       name: string;
       categoryIds: number[];
       description?: string | null;
-      discount?: number;
     }) => {
       const { data } = await updateProductMutation({
-        variables: { ...input },
+        variables: { input },
       });
       return data?.updateProduct;
     },

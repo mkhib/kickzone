@@ -12,6 +12,7 @@ import {
   CreateProductInput,
   ProductArchivedStatus,
   ProductFilterInput,
+  UpdateProductInput,
 } from '@kickzone-workspace/inputs';
 import { ProductService, SellerService } from '@kickzone-workspace/services';
 import { createConnection } from '@kickzone-workspace/utils';
@@ -233,16 +234,8 @@ export class ProductResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   async updateProduct(
-    @Args('id', { type: () => Int }) id: number,
-    @Args('name') name: string,
-    @Args('categoryIds', { type: () => [Int] }) categoryIds: number[],
-    @Args('description', { nullable: true }) description?: string
+    @Args('input') input: UpdateProductInput
   ): Promise<Product> {
-    return this.productService.updateProduct(
-      id,
-      name,
-      categoryIds,
-      description
-    );
+    return this.productService.updateProduct(input);
   }
 }

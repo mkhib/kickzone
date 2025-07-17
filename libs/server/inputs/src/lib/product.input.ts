@@ -22,8 +22,20 @@ export class CreateProductInput {
   @Field()
   name: string;
 
-  @Field(() => Float)
-  discount: number;
+  @Field(() => [Int])
+  categoryIds: number[];
+
+  @Field({ nullable: true })
+  description?: string;
+}
+
+@InputType()
+export class UpdateProductInput {
+  @Field(() => Int)
+  id: number;
+
+  @Field()
+  name: string;
 
   @Field(() => [Int])
   categoryIds: number[];

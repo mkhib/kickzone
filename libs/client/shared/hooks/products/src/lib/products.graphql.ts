@@ -28,7 +28,6 @@ export const CREATE_PRODUCT = gql`
     createProduct(input: $input) {
       id
       name
-      discount
       categories {
         id
         name
@@ -41,18 +40,23 @@ export const CREATE_PRODUCT_INFO = gql`
   mutation CreateProductInfo($input: CreateProductInfoInput!) {
     createProductInfo(input: $input) {
       id
-      size
-      price
-      costPrice
-      color {
+      name
+      archived
+      categories {
         id
         name
-        hexCode
       }
-      weight
-      discount
-      stockQuantity
-      images
+      productInfos {
+        id
+        size
+        color {
+          id
+          name
+          hexCode
+        }
+        weight
+        images
+      }
     }
   }
 `;
@@ -107,23 +111,10 @@ export const ARCHIVE_PRODUCT_MUTATION = gql`
 `;
 
 export const UPDATE_PRODUCT = gql`
-  mutation UpdateProduct(
-    $id: Int!
-    $name: String!
-    $discount: Float!
-    $categoryIds: [Int!]!
-    $description: String
-  ) {
-    updateProduct(
-      id: $id
-      name: $name
-      discount: $discount
-      categoryIds: $categoryIds
-      description: $description
-    ) {
+  mutation UpdateProduct($input: UpdateProductInput!) {
+    updateProduct(input: $input) {
       id
       name
-      discount
       archived
       categories {
         id
