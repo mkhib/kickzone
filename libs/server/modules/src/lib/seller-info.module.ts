@@ -11,8 +11,8 @@ import {
   AuthService,
   EmailService,
   SellerService,
-  TokenService,
 } from '@kickzone-workspace/services';
+import { TokenModule } from './token.module';
 import { SellerResolver } from '@kickzone-workspace/resolvers';
 import { ProductModule } from './product.module';
 import { JwtModule } from '@nestjs/jwt';
@@ -27,13 +27,13 @@ import { ConfigService } from '@nestjs/config';
       secret: process.env['JWT_SECRET'] || 'defaultSecret',
       signOptions: { expiresIn: '60m' },
     }),
+    TokenModule,
   ],
   providers: [
     SellerService,
     SellerResolver,
     AuthService,
     EmailService,
-    TokenService,
     ConfigService,
   ],
   exports: [SellerService],

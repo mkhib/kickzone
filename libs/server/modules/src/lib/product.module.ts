@@ -17,9 +17,9 @@ import {
   EmailService,
   ProductService,
   SellerService,
-  TokenService,
   UserService,
 } from '@kickzone-workspace/services';
+import { TokenModule } from './token.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
@@ -40,6 +40,7 @@ import { ConfigService } from '@nestjs/config';
       secret: process.env['JWT_SECRET'] || 'defaultSecret',
       signOptions: { expiresIn: '60m' },
     }),
+    TokenModule,
   ],
   providers: [
     ProductService,
@@ -50,7 +51,6 @@ import { ConfigService } from '@nestjs/config';
     AuthService,
     AuthResolver,
     EmailService,
-    TokenService,
     ConfigService,
   ],
   exports: [ProductService, TypeOrmModule.forFeature([Product])],

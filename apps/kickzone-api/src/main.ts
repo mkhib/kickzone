@@ -30,6 +30,7 @@ async function bootstrap() {
     origin: [
       'https://localhost:4300',
       'https://localhost:4400',
+      'https://localhost:4500',
       'https://studio.apollographql.com',
     ],
     credentials: true,
