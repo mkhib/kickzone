@@ -192,11 +192,44 @@ export const useProducts = () => {
             productInfoId,
             files,
           },
-        });
+          update: (cache, { data: mutationData }) => {
+            if (mutationData?.uploadProductInfoImages) {
+              // Update the cache by modifying the product queries
+              cache.modify({
+                fields: {
+                  product(existingProduct, { readField }) {
+                    if (existingProduct) {
+                      // Find the productInfo that was updated
+                      const productInfos =
+                        readField('productInfos', existingProduct) || [];
+                      const updatedProductInfos = productInfos.map(
+                        (productInfo: KickzoneGraphqlTypes.ProductInfo) => {
+                          if (readField('id', productInfo) === productInfoId) {
+                            // Add the new images to the images array
+                            const existingImages =
+                              readField('images', productInfo) || [];
+                            const newImages =
+                              mutationData.uploadProductInfoImages;
+                            return {
+                              ...productInfo,
+                              images: [...existingImages, ...newImages],
+                            };
+                          }
+                          return productInfo;
+                        }
+                      );
 
-        // Refetch all product queries to update the cache
-        await client.refetchQueries({
-          include: ['Products', 'ProductById'],
+                      return {
+                        ...existingProduct,
+                        productInfos: updatedProductInfos,
+                      };
+                    }
+                    return existingProduct;
+                  },
+                },
+              });
+            }
+          },
         });
 
         return data?.uploadProductInfoImages || [];
@@ -205,7 +238,7 @@ export const useProducts = () => {
         throw error;
       }
     },
-    [uploadProductInfoImagesMutation, client]
+    [uploadProductInfoImagesMutation]
   );
 
   const removeProductInfoImage = useCallback(
@@ -216,11 +249,46 @@ export const useProducts = () => {
             productInfoId,
             imageName,
           },
-        });
+          update: (cache, { data: mutationData }) => {
+            if (mutationData?.removeProductInfoImage) {
+              // Update the cache by modifying the product queries
+              cache.modify({
+                fields: {
+                  product(existingProduct, { readField }) {
+                    if (existingProduct) {
+                      // Find the productInfo that was updated
+                      const productInfos =
+                        readField('productInfos', existingProduct) || [];
+                      const updatedProductInfos = productInfos.map(
+                        (productInfo: KickzoneGraphqlTypes.ProductInfo) => {
+                          if (readField('id', productInfo) === productInfoId) {
+                            // Remove the image from the images array
+                            const images =
+                              readField('images', productInfo) || [];
+                            const imageUrl = `/uploads/products/${imageName}`;
+                            const updatedImages = images.filter(
+                              (img: string) => img !== imageUrl
+                            );
+                            return {
+                              ...productInfo,
+                              images: updatedImages,
+                            };
+                          }
+                          return productInfo;
+                        }
+                      );
 
-        // Refetch all product queries to update the cache
-        await client.refetchQueries({
-          include: ['Products', 'ProductById'],
+                      return {
+                        ...existingProduct,
+                        productInfos: updatedProductInfos,
+                      };
+                    }
+                    return existingProduct;
+                  },
+                },
+              });
+            }
+          },
         });
 
         return data?.removeProductInfoImage;
@@ -229,7 +297,7 @@ export const useProducts = () => {
         throw error;
       }
     },
-    [removeProductInfoImageMutation, client]
+    [removeProductInfoImageMutation]
   );
 
   const archiveProduct = useCallback(

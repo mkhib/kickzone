@@ -429,7 +429,12 @@ const ProductInfoCard = React.memo(
                       <CardActions>
                         <IconButton
                           size="small"
-                          onClick={() => onRemoveImage(idx, imageIdx)}
+                          onClick={() =>
+                            onRemoveImage(
+                              idx,
+                              info.newImagePreviews.length + imageIdx
+                            )
+                          }
                           sx={{ color: 'error.main' }}
                           aria-label="Delete uploaded image"
                         >
@@ -877,28 +882,31 @@ export function AdminProductEditor() {
     setCategoryToDelete(null);
   }, []);
 
-  const handleRequestRemoveSelectedImage = useCallback(
-    (infoIdx: number, imageIdx: number) => {
-      setDeleteImageModal({
-        open: true,
-        infoIdx,
-        imageIdx,
-        imageType: 'preview',
-      });
-    },
-    []
-  );
+  const handleRemoveUploadedImage = useCallback(
+    async (infoIdx: number, imageIdx: number) => {
+      const info = productInfos[infoIdx];
+      if (!info.createdId || !info.uploadedImageUrls[imageIdx]) return;
 
-  const handleRequestRemoveUploadedImage = useCallback(
-    (infoIdx: number, imageIdx: number) => {
-      setDeleteImageModal({
-        open: true,
-        infoIdx,
-        imageIdx,
-        imageType: 'uploaded',
-      });
+      const imageUrl = info.uploadedImageUrls[imageIdx];
+      const imageName = imageUrl.split('/').pop();
+      if (!imageName) return;
+
+      try {
+        await removeProductInfoImage(info.createdId, imageName);
+
+        // Update local state to remove the image
+        setProductInfos((prev) => {
+          const updated = [...prev];
+          updated[infoIdx].uploadedImageUrls.splice(imageIdx, 1);
+          return updated;
+        });
+
+        showSnackbar('Image removed successfully', { severity: 'success' });
+      } catch (error) {
+        showSnackbar((error as Error).message, { severity: 'error' });
+      }
     },
-    []
+    [productInfos, removeProductInfoImage, showSnackbar]
   );
 
   const handleConfirmDeleteImage = useCallback(() => {
@@ -916,17 +924,15 @@ export function AdminProductEditor() {
       return;
     }
     if (deleteImageModal.imageType === 'preview') {
-      // This handler is no longer needed as image selection is removed
-      // handleRemoveSelectedImage(
-      //   deleteImageModal.infoIdx,
-      //   deleteImageModal.imageIdx
-      // );
+      handleRemoveSelectedImage(
+        deleteImageModal.infoIdx,
+        deleteImageModal.imageIdx
+      );
     } else if (deleteImageModal.imageType === 'uploaded') {
-      // This handler is no longer needed as image selection is removed
-      // handleRemoveUploadedImage(
-      //   deleteImageModal.infoIdx,
-      //   deleteImageModal.imageIdx
-      // );
+      handleRemoveUploadedImage(
+        deleteImageModal.infoIdx,
+        deleteImageModal.imageIdx
+      );
     }
     setDeleteImageModal({
       open: false,
@@ -934,7 +940,7 @@ export function AdminProductEditor() {
       imageIdx: null,
       imageType: null,
     });
-  }, [deleteImageModal]);
+  }, [deleteImageModal, handleRemoveSelectedImage, handleRemoveUploadedImage]);
 
   const handleCloseDeleteImageModal = useCallback(() => {
     setDeleteImageModal({
@@ -1009,6 +1015,30 @@ export function AdminProductEditor() {
         updated[infoIdx].newImages.splice(imageIdx, 1);
         updated[infoIdx].newImagePreviews.splice(imageIdx, 1);
         return updated;
+      });
+    },
+    []
+  );
+
+  const handleRequestRemoveSelectedImage = useCallback(
+    (infoIdx: number, imageIdx: number) => {
+      setDeleteImageModal({
+        open: true,
+        infoIdx,
+        imageIdx,
+        imageType: 'preview',
+      });
+    },
+    []
+  );
+
+  const handleRequestRemoveUploadedImage = useCallback(
+    (infoIdx: number, imageIdx: number) => {
+      setDeleteImageModal({
+        open: true,
+        infoIdx,
+        imageIdx,
+        imageType: 'uploaded',
       });
     },
     []
@@ -1259,7 +1289,24 @@ export function AdminProductEditor() {
                   availableColors={availableColors || []}
                   onRemove={handleRemoveProductInfo}
                   disableRemove={productInfos.length === 1}
-                  onRemoveImage={handleRemoveSelectedImage}
+                  onRemoveImage={(infoIdx: number, imageIdx: number) => {
+                    const info = productInfos[infoIdx];
+                    // Check if it's a selected image (newImagePreviews) or uploaded image (uploadedImageUrls)
+                    if (imageIdx < info.newImagePreviews.length) {
+                      // It's a selected image
+                      handleRemoveSelectedImage(infoIdx, imageIdx);
+                    } else {
+                      // It's an uploaded image - show confirmation modal
+                      const actualImageIdx =
+                        imageIdx - info.newImagePreviews.length;
+                      setDeleteImageModal({
+                        open: true,
+                        infoIdx,
+                        imageIdx: actualImageIdx,
+                        imageType: 'uploaded',
+                      });
+                    }
+                  }}
                   onUploadSelectedImages={handleUploadSelectedImages}
                 />
               ))}
