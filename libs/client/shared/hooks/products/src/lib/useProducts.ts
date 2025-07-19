@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery, useApolloClient } from '@apollo/client';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCallback } from 'react';
 import {
@@ -95,6 +95,8 @@ export function useProductsQuery({
 }
 
 export const useProducts = () => {
+  // Get the Apollo Client instance to access cache
+  const client = useApolloClient();
   const [createProductMutation, { loading: isCreatingProduct }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'createProduct'>,
     KickzoneGraphqlTypes.MutationCreateProductArgs
@@ -191,13 +193,19 @@ export const useProducts = () => {
             files,
           },
         });
+
+        // Refetch all product queries to update the cache
+        await client.refetchQueries({
+          include: ['Products', 'ProductById'],
+        });
+
         return data?.uploadProductInfoImages || [];
       } catch (error) {
         console.error('Error uploading images:', error);
         throw error;
       }
     },
-    [uploadProductInfoImagesMutation]
+    [uploadProductInfoImagesMutation, client]
   );
 
   const removeProductInfoImage = useCallback(
@@ -209,13 +217,19 @@ export const useProducts = () => {
             imageName,
           },
         });
+
+        // Refetch all product queries to update the cache
+        await client.refetchQueries({
+          include: ['Products', 'ProductById'],
+        });
+
         return data?.removeProductInfoImage;
       } catch (error) {
         console.error('Error removing image:', error);
         throw error;
       }
     },
-    [removeProductInfoImageMutation]
+    [removeProductInfoImageMutation, client]
   );
 
   const archiveProduct = useCallback(

@@ -24,6 +24,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import { ProductImageManagementModal } from './ProductImageManagementModal';
 
 export function AdminProducts() {
   const navigate = useNavigate();
@@ -37,6 +38,9 @@ export function AdminProducts() {
     );
   const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
   const [productToArchive, setProductToArchive] =
+    useState<KickzoneGraphqlTypes.Product | null>(null);
+  const [imageModalOpen, setImageModalOpen] = useState(false);
+  const [selectedProductForImages, setSelectedProductForImages] =
     useState<KickzoneGraphqlTypes.Product | null>(null);
   const categoryIdValue = category ? Number(category) : undefined;
   const {
@@ -93,6 +97,15 @@ export function AdminProducts() {
   const handleArchiveCancel = () => {
     setArchiveDialogOpen(false);
     setProductToArchive(null);
+  };
+
+  const handleOpenImageModal = (product: KickzoneGraphqlTypes.Product) => {
+    setSelectedProductForImages(product);
+    setImageModalOpen(true);
+  };
+  const handleCloseImageModal = () => {
+    setImageModalOpen(false);
+    setSelectedProductForImages(null);
   };
 
   return (
@@ -219,6 +232,12 @@ export function AdminProducts() {
                         >
                           Edit
                         </Button>
+                        <Button
+                          variant="outlined"
+                          onClick={() => handleOpenImageModal(product)}
+                        >
+                          Images
+                        </Button>
                         {!product.archived && (
                           <Button
                             variant="outlined"
@@ -257,6 +276,11 @@ export function AdminProducts() {
                 </Button>
               </DialogActions>
             </Dialog>
+            <ProductImageManagementModal
+              open={imageModalOpen}
+              onClose={handleCloseImageModal}
+              product={selectedProductForImages}
+            />
           </>
         )}
       </Box>
