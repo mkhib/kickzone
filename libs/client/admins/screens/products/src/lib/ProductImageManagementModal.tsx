@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useState, useEffect, useRef } from 'react';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -100,6 +100,22 @@ export function ProductImageManagementModal({
   onProductUpdated,
 }: ProductImageManagementModalProps) {
   const [selectedTab, setSelectedTab] = useState(0);
+  const selectedTabRef = useRef(0);
+
+  // Preserve selected tab when product changes but is the same product
+  const [lastProductId, setLastProductId] = useState<number | null>(null);
+
+  // Reset selected tab only when opening a different product
+  useEffect(() => {
+    if (!product) return;
+
+    // Only reset tab if we're opening a completely different product
+    if (product.id !== lastProductId) {
+      setSelectedTab(0);
+      setLastProductId(product.id);
+    }
+  }, [product?.id, lastProductId, product]);
+
   const [selectedFiles, setSelectedFiles] = useState<{ [key: number]: File[] }>(
     {}
   );
@@ -123,8 +139,12 @@ export function ProductImageManagementModal({
   const { uploadProductInfoImages, removeProductInfoImage } = useProducts();
   const { showSnackbar } = useSnackbarContext();
 
+  // Use the actual selectedTab state
+  const finalSelectedTab = selectedTab;
+
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     setSelectedTab(newValue);
+    selectedTabRef.current = newValue;
   };
 
   const handleFileSelection = useCallback(
@@ -191,24 +211,7 @@ export function ProductImageManagementModal({
         );
         console.log('✅ Upload successful, received:', uploadedImages);
 
-        // Update the product state to reflect the new images
-        if (product) {
-          const updatedProduct = {
-            ...product,
-            productInfos: product.productInfos.map((info) => {
-              if (info.id === productInfoId) {
-                return {
-                  ...info,
-                  images: [...(info.images || []), ...uploadedImages],
-                };
-              }
-              return info;
-            }),
-          };
-          console.log('🔄 Updated product state:', updatedProduct);
-          // Force a re-render by updating the product prop
-          // This is a workaround since we can't directly update the prop
-        }
+        console.log('✅ Upload successful, will refetch data');
 
         setSelectedFiles((prev) => {
           const newState = { ...prev };
@@ -236,13 +239,7 @@ export function ProductImageManagementModal({
         setUploading((prev) => ({ ...prev, [productInfoId]: false }));
       }
     },
-    [
-      selectedFiles,
-      uploadProductInfoImages,
-      showSnackbar,
-      product,
-      onProductUpdated,
-    ]
+    [selectedFiles, uploadProductInfoImages, showSnackbar, onProductUpdated]
   );
 
   const handleRemoveImage = useCallback(
@@ -277,7 +274,7 @@ export function ProductImageManagementModal({
     });
     setUploading({});
     setSelectedTab(0);
-    onClose();
+    onClose?.();
   };
 
   const handleConfirmDeleteImage = useCallback(async () => {
@@ -302,24 +299,7 @@ export function ProductImageManagementModal({
       );
       console.log('✅ Remove successful');
 
-      // Update the product state to reflect the removed image
-      if (product && deleteModal.imageUrl) {
-        const updatedProduct = {
-          ...product,
-          productInfos: product.productInfos.map((info) => {
-            if (info.id === deleteModal.productInfoId) {
-              return {
-                ...info,
-                images: (info.images || []).filter(
-                  (img) => img !== deleteModal.imageUrl
-                ),
-              };
-            }
-            return info;
-          }),
-        };
-        console.log('🔄 Updated product state after remove:', updatedProduct);
-      }
+      console.log('✅ Remove successful, will refetch data');
 
       showSnackbar('Image removed successfully', { severity: 'success' });
       // Notify parent to refetch data
@@ -337,10 +317,10 @@ export function ProductImageManagementModal({
       });
     }
   }, [
-    deleteModal,
+    deleteModal.productInfoId,
+    deleteModal.imageName,
     removeProductInfoImage,
     showSnackbar,
-    product,
     onProductUpdated,
   ]);
 
@@ -354,13 +334,9 @@ export function ProductImageManagementModal({
     });
   }, []);
 
-  console.log(
-    '🎴 ProductImageManagementModal rendering with product:',
-    product?.id,
-    'images:',
-    product?.productInfos.map((info) => info.images?.length || 0)
-  );
-  if (!product) return null;
+  if (!product) {
+    return null;
+  }
 
   return (
     <>
@@ -368,10 +344,14 @@ export function ProductImageManagementModal({
         <DialogTitle>Manage Images - {product.name}</DialogTitle>
         <DialogContent>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-            <Tabs value={selectedTab} onChange={handleTabChange}>
+            <Tabs
+              key={`tabs-${product?.id}`}
+              value={finalSelectedTab}
+              onChange={handleTabChange}
+            >
               {product.productInfos.map((productInfo, index) => (
                 <Tab
-                  key={productInfo.id}
+                  key={index}
                   label={`${productInfo.size}${
                     productInfo.color ? ` - ${productInfo.color.name}` : ''
                   }`}
@@ -382,7 +362,7 @@ export function ProductImageManagementModal({
             </Tabs>
           </Box>
           {product.productInfos.map((productInfo, index) => (
-            <TabPanel key={productInfo.id} value={selectedTab} index={index}>
+            <TabPanel key={index} value={finalSelectedTab} index={index}>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
                   Variant: {productInfo.size}
