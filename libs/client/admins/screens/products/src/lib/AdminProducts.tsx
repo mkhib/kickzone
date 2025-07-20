@@ -281,22 +281,8 @@ export function AdminProducts() {
               onClose={handleCloseImageModal}
               product={selectedProductForImages}
               onProductUpdated={() => {
-                console.log('🔄 Product updated, refetching data');
                 refetch()
                   .then((result) => {
-                    console.log('📊 Refetch result:', result);
-                    console.log('📊 Refetch data:', result.data);
-                    console.log(
-                      '📊 Products after refetch:',
-                      result.data?.products?.edges?.map((e) => ({
-                        id: e.node.id,
-                        name: e.node.name,
-                        images: e.node.productInfos.map(
-                          (pi) => pi.images?.length || 0
-                        ),
-                      }))
-                    );
-
                     // Update the selected product with the latest data
                     if (
                       selectedProductForImages &&
@@ -306,16 +292,12 @@ export function AdminProducts() {
                         (edge) => edge.node.id === selectedProductForImages.id
                       )?.node;
                       if (updatedProduct) {
-                        console.log(
-                          '🔄 Updating selected product with latest data:',
-                          updatedProduct
-                        );
                         setSelectedProductForImages(updatedProduct);
                       }
                     }
                   })
                   .catch((error) => {
-                    console.error('❌ Refetch failed:', error);
+                    // Handle refetch error silently
                   });
               }}
             />

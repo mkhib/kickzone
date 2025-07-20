@@ -197,10 +197,6 @@ export function ProductImageManagementModal({
 
   const handleUploadImages = useCallback(
     async (productInfoId: number) => {
-      console.log(
-        '🚀 Modal handleUploadImages called for productInfoId:',
-        productInfoId
-      );
       const files = selectedFiles[productInfoId];
       if (!files || files.length === 0) return;
       setUploading((prev) => ({ ...prev, [productInfoId]: true }));
@@ -209,9 +205,6 @@ export function ProductImageManagementModal({
           productInfoId,
           files
         );
-        console.log('✅ Upload successful, received:', uploadedImages);
-
-        console.log('✅ Upload successful, will refetch data');
 
         setSelectedFiles((prev) => {
           const newState = { ...prev };
@@ -233,7 +226,6 @@ export function ProductImageManagementModal({
         // Notify parent to refetch data
         onProductUpdated?.();
       } catch (error) {
-        console.error('❌ Upload failed:', error);
         showSnackbar((error as Error).message, { severity: 'error' });
       } finally {
         setUploading((prev) => ({ ...prev, [productInfoId]: false }));
@@ -244,10 +236,6 @@ export function ProductImageManagementModal({
 
   const handleRemoveImage = useCallback(
     (productInfoId: number, imageUrl: string) => {
-      console.log('🗑️ Modal handleRemoveImage called for:', {
-        productInfoId,
-        imageUrl,
-      });
       const imageName = imageUrl.split('/').pop();
       if (!imageName) return;
 
@@ -297,15 +285,11 @@ export function ProductImageManagementModal({
         deleteModal.productInfoId,
         deleteModal.imageName
       );
-      console.log('✅ Remove successful');
-
-      console.log('✅ Remove successful, will refetch data');
 
       showSnackbar('Image removed successfully', { severity: 'success' });
       // Notify parent to refetch data
       onProductUpdated?.();
     } catch (error) {
-      console.error('❌ Remove failed:', error);
       showSnackbar((error as Error).message, { severity: 'error' });
     } finally {
       setDeleteModal({

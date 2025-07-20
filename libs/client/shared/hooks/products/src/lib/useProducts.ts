@@ -140,107 +140,69 @@ export const useProducts = () => {
         'productId'
       >[]
     ) => {
-      try {
-        const { data: productData } = await createProductMutation({
+      const { data: productData } = await createProductMutation({
+        variables: {
+          input: productInput,
+        },
+      });
+      if (!productData?.createProduct?.id) {
+        throw new Error('Failed to create product');
+      }
+      const createdProductInfos = [];
+      for (const info of productInfos) {
+        const { data: productInfoData } = await createProductInfoMutation({
           variables: {
-            input: productInput,
+            input: {
+              ...info,
+              productId: productData.createProduct.id,
+            },
           },
         });
-        if (!productData?.createProduct?.id) {
-          throw new Error('Failed to create product');
-        }
-        const createdProductInfos = [];
-        for (const info of productInfos) {
-          const { data: productInfoData } = await createProductInfoMutation({
-            variables: {
-              input: {
-                ...info,
-                productId: productData.createProduct.id,
-              },
-            },
-          });
-          if (productInfoData?.createProductInfo?.productInfos) {
-            // The createProductInfo mutation returns the full product with all productInfos
-            // We need to find the newly created productInfo from the array
-            // Since we're creating them sequentially, the last one in the array should be the new one
-            const newProductInfo =
-              productInfoData.createProductInfo.productInfos[
-                productInfoData.createProductInfo.productInfos.length - 1
-              ];
-            if (newProductInfo) {
-              createdProductInfos.push(newProductInfo);
-            }
+        if (productInfoData?.createProductInfo?.productInfos) {
+          // The createProductInfo mutation returns the full product with all productInfos
+          // We need to find the newly created productInfo from the array
+          // Since we're creating them sequentially, the last one in the array should be the new one
+          const newProductInfo =
+            productInfoData.createProductInfo.productInfos[
+              productInfoData.createProductInfo.productInfos.length - 1
+            ];
+          if (newProductInfo) {
+            createdProductInfos.push(newProductInfo);
           }
         }
-        return {
-          product: productData.createProduct,
-          productInfos: createdProductInfos,
-        };
-      } catch (error) {
-        console.error('Error creating product:', error);
-        throw error;
       }
+      return {
+        product: productData.createProduct,
+        productInfos: createdProductInfos,
+      };
     },
     [createProductMutation, createProductInfoMutation]
   );
 
   const uploadProductInfoImages = useCallback(
     async (productInfoId: number, files: File[]) => {
-      console.log('🔧 uploadProductInfoImages called with:', {
-        productInfoId,
-        filesCount: files.length,
-        fileNames: files.map((f) => f.name),
+      const { data } = await uploadProductInfoImagesMutation({
+        variables: {
+          productInfoId,
+          files,
+        },
       });
-      console.log('📍 Called from:', new Error().stack);
-
-      try {
-        console.log('📡 Making GraphQL mutation call...');
-        const { data } = await uploadProductInfoImagesMutation({
-          variables: {
-            productInfoId,
-            files,
-          },
-        });
-
-        console.log('📡 GraphQL response:', data);
-        const result = data?.uploadProductInfoImages || [];
-        console.log('✅ Returning result:', result);
-
-        return result;
-      } catch (error) {
-        console.error('❌ Error uploading images:', error);
-        throw error;
-      }
+      const result = data?.uploadProductInfoImages || [];
+      return result;
     },
     [uploadProductInfoImagesMutation]
   );
 
   const removeProductInfoImage = useCallback(
     async (productInfoId: number, imageName: string) => {
-      console.log('🔧 removeProductInfoImage called with:', {
-        productInfoId,
-        imageName,
+      const { data } = await removeProductInfoImageMutation({
+        variables: {
+          productInfoId,
+          imageName,
+        },
       });
-      console.log('📍 Called from:', new Error().stack);
-
-      try {
-        console.log('📡 Making GraphQL mutation call...');
-        const { data } = await removeProductInfoImageMutation({
-          variables: {
-            productInfoId,
-            imageName,
-          },
-        });
-
-        console.log('📡 GraphQL response:', data);
-        const result = data?.removeProductInfoImage;
-        console.log('✅ Returning result:', result);
-
-        return result;
-      } catch (error) {
-        console.error('❌ Error removing image:', error);
-        throw error;
-      }
+      const result = data?.removeProductInfoImage;
+      return result;
     },
     [removeProductInfoImageMutation]
   );
