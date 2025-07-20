@@ -102,19 +102,21 @@ export function ProductImageManagementModal({
   const [selectedTab, setSelectedTab] = useState(0);
   const selectedTabRef = useRef(0);
 
-  // Preserve selected tab when product changes but is the same product
-  const [lastProductId, setLastProductId] = useState<number | null>(null);
-
-  // Reset selected tab only when opening a different product
-  useEffect(() => {
-    if (!product) return;
-
-    // Only reset tab if we're opening a completely different product
-    if (product.id !== lastProductId) {
-      setSelectedTab(0);
-      setLastProductId(product.id);
-    }
-  }, [product?.id, lastProductId, product]);
+  // TEMPORARILY DISABLE TAB PRESERVATION TO TEST
+  // useEffect(() => {
+  //   if (!product) return;
+  //   console.log('🔄 Tab preservation check:', {
+  //     currentProductId: product.id,
+  //     lastProductId,
+  //     selectedTab,
+  //     willReset: product.id !== lastProductId,
+  //   });
+  //   if (product.id !== lastProductId) {
+  //     console.log('🔄 Resetting tab to 0 because product changed');
+  //     setSelectedTab(0);
+  //     setLastProductId(product.id);
+  //   }
+  // }, [product?.id, lastProductId, product, selectedTab]);
 
   const [selectedFiles, setSelectedFiles] = useState<{ [key: number]: File[] }>(
     {}
@@ -139,12 +141,21 @@ export function ProductImageManagementModal({
   const { uploadProductInfoImages, removeProductInfoImage } = useProducts();
   const { showSnackbar } = useSnackbarContext();
 
-  // Use the actual selectedTab state
-  const finalSelectedTab = selectedTab;
+  // Use a completely stable tab state that never changes during refetches
+  const stableSelectedTab = selectedTabRef.current || selectedTab || 0;
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
-    setSelectedTab(newValue);
-    selectedTabRef.current = newValue;
+    console.log('🔄 handleTabChange called:', {
+      oldValue: selectedTab,
+      newValue,
+    });
+    // Only allow tab changes from user interaction, not from component updates
+    if (newValue !== selectedTabRef.current) {
+      setSelectedTab(newValue);
+      selectedTabRef.current = newValue;
+    } else {
+      console.log('🔄 Blocking tab change from component update');
+    }
   };
 
   const handleFileSelection = useCallback(
@@ -201,10 +212,7 @@ export function ProductImageManagementModal({
       if (!files || files.length === 0) return;
       setUploading((prev) => ({ ...prev, [productInfoId]: true }));
       try {
-        const uploadedImages = await uploadProductInfoImages(
-          productInfoId,
-          files
-        );
+        await uploadProductInfoImages(productInfoId, files);
 
         setSelectedFiles((prev) => {
           const newState = { ...prev };
@@ -329,9 +337,11 @@ export function ProductImageManagementModal({
         <DialogContent>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs
-              key={`tabs-${product?.id}`}
-              value={finalSelectedTab}
+              key={`tabs-${product?.id}-${stableSelectedTab}`}
+              value={stableSelectedTab}
               onChange={handleTabChange}
+              // Prevent auto-selection
+              selectionFollowsFocus={false}
             >
               {product.productInfos.map((productInfo, index) => (
                 <Tab
@@ -346,7 +356,7 @@ export function ProductImageManagementModal({
             </Tabs>
           </Box>
           {product.productInfos.map((productInfo, index) => (
-            <TabPanel key={index} value={finalSelectedTab} index={index}>
+            <TabPanel key={index} value={stableSelectedTab} index={index}>
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
                   Variant: {productInfo.size}
