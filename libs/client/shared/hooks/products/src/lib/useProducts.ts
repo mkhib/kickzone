@@ -186,55 +186,29 @@ export const useProducts = () => {
 
   const uploadProductInfoImages = useCallback(
     async (productInfoId: number, files: File[]) => {
+      console.log('🔧 uploadProductInfoImages called with:', {
+        productInfoId,
+        filesCount: files.length,
+        fileNames: files.map((f) => f.name),
+      });
+      console.log('📍 Called from:', new Error().stack);
+
       try {
+        console.log('📡 Making GraphQL mutation call...');
         const { data } = await uploadProductInfoImagesMutation({
           variables: {
             productInfoId,
             files,
           },
-          update: (cache, { data: mutationData }) => {
-            if (mutationData?.uploadProductInfoImages) {
-              // Update the cache by modifying the product queries
-              cache.modify({
-                fields: {
-                  product(existingProduct, { readField }) {
-                    if (existingProduct) {
-                      // Find the productInfo that was updated
-                      const productInfos =
-                        readField('productInfos', existingProduct) || [];
-                      const updatedProductInfos = productInfos.map(
-                        (productInfo: KickzoneGraphqlTypes.ProductInfo) => {
-                          if (readField('id', productInfo) === productInfoId) {
-                            // Add the new images to the images array
-                            const existingImages =
-                              readField('images', productInfo) || [];
-                            const newImages =
-                              mutationData.uploadProductInfoImages;
-                            return {
-                              ...productInfo,
-                              images: [...existingImages, ...newImages],
-                            };
-                          }
-                          return productInfo;
-                        }
-                      );
-
-                      return {
-                        ...existingProduct,
-                        productInfos: updatedProductInfos,
-                      };
-                    }
-                    return existingProduct;
-                  },
-                },
-              });
-            }
-          },
         });
 
-        return data?.uploadProductInfoImages || [];
+        console.log('📡 GraphQL response:', data);
+        const result = data?.uploadProductInfoImages || [];
+        console.log('✅ Returning result:', result);
+
+        return result;
       } catch (error) {
-        console.error('Error uploading images:', error);
+        console.error('❌ Error uploading images:', error);
         throw error;
       }
     },
@@ -243,57 +217,28 @@ export const useProducts = () => {
 
   const removeProductInfoImage = useCallback(
     async (productInfoId: number, imageName: string) => {
+      console.log('🔧 removeProductInfoImage called with:', {
+        productInfoId,
+        imageName,
+      });
+      console.log('📍 Called from:', new Error().stack);
+
       try {
+        console.log('📡 Making GraphQL mutation call...');
         const { data } = await removeProductInfoImageMutation({
           variables: {
             productInfoId,
             imageName,
           },
-          update: (cache, { data: mutationData }) => {
-            if (mutationData?.removeProductInfoImage) {
-              // Update the cache by modifying the product queries
-              cache.modify({
-                fields: {
-                  product(existingProduct, { readField }) {
-                    if (existingProduct) {
-                      // Find the productInfo that was updated
-                      const productInfos =
-                        readField('productInfos', existingProduct) || [];
-                      const updatedProductInfos = productInfos.map(
-                        (productInfo: KickzoneGraphqlTypes.ProductInfo) => {
-                          if (readField('id', productInfo) === productInfoId) {
-                            // Remove the image from the images array
-                            const images =
-                              readField('images', productInfo) || [];
-                            const imageUrl = `/uploads/products/${imageName}`;
-                            const updatedImages = images.filter(
-                              (img: string) => img !== imageUrl
-                            );
-                            return {
-                              ...productInfo,
-                              images: updatedImages,
-                            };
-                          }
-                          return productInfo;
-                        }
-                      );
-
-                      return {
-                        ...existingProduct,
-                        productInfos: updatedProductInfos,
-                      };
-                    }
-                    return existingProduct;
-                  },
-                },
-              });
-            }
-          },
         });
 
-        return data?.removeProductInfoImage;
+        console.log('📡 GraphQL response:', data);
+        const result = data?.removeProductInfoImage;
+        console.log('✅ Returning result:', result);
+
+        return result;
       } catch (error) {
-        console.error('Error removing image:', error);
+        console.error('❌ Error removing image:', error);
         throw error;
       }
     },

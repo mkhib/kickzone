@@ -142,6 +142,7 @@ interface DeleteImageModalProps {
   onClose: () => void;
   onConfirm: () => void;
   imageType: 'preview' | 'uploaded';
+  isLoading?: boolean;
 }
 
 const DeleteImageModal = ({
@@ -149,6 +150,7 @@ const DeleteImageModal = ({
   onClose,
   onConfirm,
   imageType,
+  isLoading = false,
 }: DeleteImageModalProps) => (
   <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
     <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -162,9 +164,16 @@ const DeleteImageModal = ({
       </Typography>
     </DialogContent>
     <DialogActions>
-      <Button onClick={onClose}>Cancel</Button>
-      <Button onClick={onConfirm} variant="contained" color="error">
-        Delete
+      <Button onClick={onClose} disabled={isLoading}>
+        Cancel
+      </Button>
+      <Button
+        onClick={onConfirm}
+        variant="contained"
+        color="error"
+        disabled={isLoading}
+      >
+        {isLoading ? 'Deleting...' : 'Delete'}
       </Button>
     </DialogActions>
   </Dialog>
@@ -237,6 +246,7 @@ interface ProductInfoCardProps {
   onRemoveImage: (infoIdx: number, imageIdx: number) => void;
   disableRemove: boolean;
   onUploadSelectedImages: (infoIdx: number) => void;
+  setProductInfos: React.Dispatch<React.SetStateAction<ProductInfoState[]>>;
 }
 
 const ProductInfoCard = React.memo(
@@ -250,7 +260,13 @@ const ProductInfoCard = React.memo(
     onRemoveImage,
     disableRemove,
     onUploadSelectedImages,
+    setProductInfos,
   }: ProductInfoCardProps) => {
+    console.log(`🎴 ProductInfoCard ${idx} rendering with:`, {
+      uploadedImageUrls: info.uploadedImageUrls,
+      newImagePreviews: info.newImagePreviews,
+      isUploading: info.isUploading,
+    });
     // Tooltip for upload button if product info is not created
     const isSelectImagesDisabled = info.isUploading || !info.createdId;
     const showTooltip = !info.createdId;
@@ -274,7 +290,25 @@ const ProductInfoCard = React.memo(
           multiple
           accept="image/*"
           onChange={(e) => {
-            // onImageUpload(idx, e); // This line is removed
+            const files = Array.from(e.target.files || []);
+            if (files.length > 0) {
+              // Create preview URLs for selected files
+              const newImagePreviews = files.map((file) => ({
+                file,
+                url: URL.createObjectURL(file),
+              }));
+
+              // Update the product info state with new images
+              setProductInfos((prev) => {
+                const updated = [...prev];
+                updated[idx].newImages = [...updated[idx].newImages, ...files];
+                updated[idx].newImagePreviews = [
+                  ...updated[idx].newImagePreviews,
+                  ...newImagePreviews,
+                ];
+                return updated;
+              });
+            }
             // Reset the value so the same file can be selected again
             e.target.value = '';
           }}
@@ -391,7 +425,10 @@ const ProductInfoCard = React.memo(
                 variant="contained"
                 color="primary"
                 sx={{ mt: 1 }}
-                onClick={() => onUploadSelectedImages(idx)}
+                onClick={() => {
+                  console.log('🔘 Upload button clicked for idx:', idx);
+                  onUploadSelectedImages(idx);
+                }}
                 disabled={
                   info.isUploading ||
                   info.newImages.length === 0 ||
@@ -572,9 +609,10 @@ const DeleteColorModal = ({
 };
 
 export function AdminProductEditor() {
+  console.log('🔄 AdminProductEditor component rendering');
   const { id } = useParams<{ id?: string }>();
   const productIdNum = id ? Number(id) : undefined;
-  const { product: loadedProduct } = useProductById(productIdNum);
+  const { product: loadedProduct, refetch } = useProductById(productIdNum);
   const [product, setProduct] = useState({
     name: '',
     categoryIds: [] as number[],
@@ -620,7 +658,14 @@ export function AdminProductEditor() {
     infoIdx: number | null;
     imageIdx: number | null;
     imageType: 'preview' | 'uploaded' | null;
-  }>({ open: false, infoIdx: null, imageIdx: null, imageType: null });
+    isLoading: boolean;
+  }>({
+    open: false,
+    infoIdx: null,
+    imageIdx: null,
+    imageType: null,
+    isLoading: false,
+  });
 
   const [isNewColorModalOpen, setIsNewColorModalOpen] = useState(false);
   const [isEditColorModalOpen, setIsEditColorModalOpen] = useState(false);
@@ -665,12 +710,18 @@ export function AdminProductEditor() {
 
   // Fetch product if editing
   useEffect(() => {
+    console.log(
+      '📥 useEffect triggered - loadedProduct changed:',
+      loadedProduct
+    );
     if (productIdNum && loadedProduct) {
+      console.log('🔄 Setting product state from loadedProduct');
       setProduct({
         name: loadedProduct.name,
         categoryIds: loadedProduct.categories.map((cat) => cat.id),
         description: loadedProduct.description || '',
       });
+      console.log('🔄 Setting productInfos state from loadedProduct');
       setProductInfos(
         loadedProduct.productInfos.map((info) => ({
           productId: loadedProduct.id,
@@ -696,8 +747,17 @@ export function AdminProductEditor() {
       setCreatedProductInfoIds(
         loadedProduct.productInfos.map((info) => info.id)
       );
+      console.log('✅ State updated from loadedProduct');
     }
-  }, [productIdNum, loadedProduct]);
+  }, [
+    productIdNum,
+    loadedProduct?.id,
+    loadedProduct?.name,
+    loadedProduct?.description,
+    loadedProduct?.categories,
+    loadedProduct?.productInfos,
+    loadedProduct,
+  ]);
 
   // Handlers for product fields
   const handleProductChange = useCallback(
@@ -882,34 +942,19 @@ export function AdminProductEditor() {
     setCategoryToDelete(null);
   }, []);
 
-  const handleRemoveUploadedImage = useCallback(
-    async (infoIdx: number, imageIdx: number) => {
-      const info = productInfos[infoIdx];
-      if (!info.createdId || !info.uploadedImageUrls[imageIdx]) return;
-
-      const imageUrl = info.uploadedImageUrls[imageIdx];
-      const imageName = imageUrl.split('/').pop();
-      if (!imageName) return;
-
-      try {
-        await removeProductInfoImage(info.createdId, imageName);
-
-        // Update local state to remove the image
-        setProductInfos((prev) => {
-          const updated = [...prev];
-          updated[infoIdx].uploadedImageUrls.splice(imageIdx, 1);
-          return updated;
-        });
-
-        showSnackbar('Image removed successfully', { severity: 'success' });
-      } catch (error) {
-        showSnackbar((error as Error).message, { severity: 'error' });
-      }
+  const handleRemoveSelectedImage = useCallback(
+    (infoIdx: number, imageIdx: number) => {
+      setProductInfos((prev) => {
+        const updated = [...prev];
+        updated[infoIdx].newImages.splice(imageIdx, 1);
+        updated[infoIdx].newImagePreviews.splice(imageIdx, 1);
+        return updated;
+      });
     },
-    [productInfos, removeProductInfoImage, showSnackbar]
+    []
   );
 
-  const handleConfirmDeleteImage = useCallback(() => {
+  const handleConfirmDeleteImage = useCallback(async () => {
     if (
       deleteImageModal.infoIdx === null ||
       deleteImageModal.imageIdx === null ||
@@ -920,27 +965,102 @@ export function AdminProductEditor() {
         infoIdx: null,
         imageIdx: null,
         imageType: null,
+        isLoading: false,
       });
       return;
     }
-    if (deleteImageModal.imageType === 'preview') {
-      handleRemoveSelectedImage(
-        deleteImageModal.infoIdx,
-        deleteImageModal.imageIdx
-      );
-    } else if (deleteImageModal.imageType === 'uploaded') {
-      handleRemoveUploadedImage(
-        deleteImageModal.infoIdx,
-        deleteImageModal.imageIdx
-      );
+
+    // Set loading state
+    setDeleteImageModal((prev) => ({ ...prev, isLoading: true }));
+
+    const { infoIdx, imageIdx, imageType } = deleteImageModal;
+
+    if (imageType === 'preview') {
+      // Remove selected image (not yet uploaded)
+      handleRemoveSelectedImage(infoIdx, imageIdx);
+      setDeleteImageModal({
+        open: false,
+        infoIdx: null,
+        imageIdx: null,
+        imageType: null,
+        isLoading: false,
+      });
+    } else if (imageType === 'uploaded') {
+      // Remove uploaded image from server
+      const info = productInfos[infoIdx];
+      if (!info.createdId || !info.uploadedImageUrls[imageIdx]) {
+        setDeleteImageModal({
+          open: false,
+          infoIdx: null,
+          imageIdx: null,
+          imageType: null,
+          isLoading: false,
+        });
+        return;
+      }
+
+      const imageUrl = info.uploadedImageUrls[imageIdx];
+      const imageName = imageUrl.split('/').pop();
+      if (!imageName) {
+        setDeleteImageModal({
+          open: false,
+          infoIdx: null,
+          imageIdx: null,
+          imageType: null,
+          isLoading: false,
+        });
+        return;
+      }
+
+      try {
+        console.log('🗑️ Calling removeProductInfoImage with:', {
+          productInfoId: info.createdId,
+          imageName: imageName,
+        });
+
+        await removeProductInfoImage(info.createdId, imageName);
+        console.log('✅ Remove successful');
+
+        // Update local state immediately
+        console.log(
+          '🔄 Updating local state - removing image at index:',
+          imageIdx
+        );
+        setProductInfos((prev) => {
+          console.log(
+            '📊 Previous uploadedImageUrls:',
+            prev[infoIdx].uploadedImageUrls
+          );
+          const updated = [...prev];
+          updated[infoIdx].uploadedImageUrls.splice(imageIdx, 1);
+          console.log(
+            '📊 Updated uploadedImageUrls:',
+            updated[infoIdx].uploadedImageUrls
+          );
+          return updated;
+        });
+
+        console.log('✅ Remove complete - showing success message');
+        showSnackbar('Image removed successfully', { severity: 'success' });
+      } catch (error) {
+        showSnackbar((error as Error).message, { severity: 'error' });
+      } finally {
+        setDeleteImageModal({
+          open: false,
+          infoIdx: null,
+          imageIdx: null,
+          imageType: null,
+          isLoading: false,
+        });
+      }
     }
-    setDeleteImageModal({
-      open: false,
-      infoIdx: null,
-      imageIdx: null,
-      imageType: null,
-    });
-  }, [deleteImageModal, handleRemoveSelectedImage, handleRemoveUploadedImage]);
+  }, [
+    deleteImageModal,
+    handleRemoveSelectedImage,
+    removeProductInfoImage,
+    productInfos,
+    showSnackbar,
+  ]);
 
   const handleCloseDeleteImageModal = useCallback(() => {
     setDeleteImageModal({
@@ -948,6 +1068,7 @@ export function AdminProductEditor() {
       infoIdx: null,
       imageIdx: null,
       imageType: null,
+      isLoading: false,
     });
   }, []);
 
@@ -1008,64 +1129,71 @@ export function AdminProductEditor() {
     setColorToDelete(null);
   }, []);
 
-  const handleRemoveSelectedImage = useCallback(
-    (infoIdx: number, imageIdx: number) => {
-      setProductInfos((prev) => {
-        const updated = [...prev];
-        updated[infoIdx].newImages.splice(imageIdx, 1);
-        updated[infoIdx].newImagePreviews.splice(imageIdx, 1);
-        return updated;
-      });
-    },
-    []
-  );
-
-  const handleRequestRemoveSelectedImage = useCallback(
-    (infoIdx: number, imageIdx: number) => {
-      setDeleteImageModal({
-        open: true,
-        infoIdx,
-        imageIdx,
-        imageType: 'preview',
-      });
-    },
-    []
-  );
-
-  const handleRequestRemoveUploadedImage = useCallback(
-    (infoIdx: number, imageIdx: number) => {
-      setDeleteImageModal({
-        open: true,
-        infoIdx,
-        imageIdx,
-        imageType: 'uploaded',
-      });
-    },
-    []
-  );
-
   const handleUploadSelectedImages = useCallback(
     async (infoIdx: number) => {
+      console.log(
+        '🚀 handleUploadSelectedImages called with infoIdx:',
+        infoIdx
+      );
+      console.log('🔍 Function called from:', new Error().stack);
       const info = productInfos[infoIdx];
-      if (!info.newImages.length || !info.createdId) return;
+      console.log('📋 Current info state:', info);
+      console.log('📁 New images count:', info.newImages.length);
+      console.log('🆔 Created ID:', info.createdId);
 
+      if (!info.newImages.length || !info.createdId) {
+        console.log('❌ Early return - no images or no createdId');
+        return;
+      }
+
+      console.log('⏳ Setting uploading state to true');
       setProductInfos((prev) => {
         const updated = [...prev];
         updated[infoIdx].isUploading = true;
+        console.log('📝 Updated state - isUploading set to true');
         return updated;
       });
 
       try {
-        await uploadProductInfoImages(info.createdId, info.newImages);
+        console.log('📤 Calling uploadProductInfoImages with:', {
+          productInfoId: info.createdId,
+          filesCount: info.newImages.length,
+          fileNames: info.newImages.map((f) => f.name),
+        });
+
+        const uploadedImages = await uploadProductInfoImages(
+          info.createdId,
+          info.newImages
+        );
+        console.log('✅ Upload successful, received images:', uploadedImages);
+
+        // Update local state immediately with the uploaded images
+        console.log('🔄 Updating local state with uploaded images');
         setProductInfos((prev) => {
+          console.log('📊 Previous state before update:', prev[infoIdx]);
           const updated = [...prev];
           updated[infoIdx].newImages = [];
           updated[infoIdx].newImagePreviews = [];
           updated[infoIdx].isUploading = false;
+          // Add the newly uploaded images to the uploadedImageUrls array
+          if (uploadedImages && uploadedImages.length > 0) {
+            console.log(
+              '➕ Adding uploaded images to uploadedImageUrls:',
+              uploadedImages
+            );
+            updated[infoIdx].uploadedImageUrls = [
+              ...updated[infoIdx].uploadedImageUrls,
+              ...uploadedImages,
+            ];
+          }
+          console.log('📊 Updated state after change:', updated[infoIdx]);
           return updated;
         });
+
+        console.log('✅ Upload complete - showing success message');
         showSnackbar('Images uploaded successfully', { severity: 'success' });
       } catch (error) {
+        console.error('❌ Upload failed:', error);
         setProductInfos((prev) => {
           const updated = [...prev];
           updated[infoIdx].isUploading = false;
@@ -1293,8 +1421,14 @@ export function AdminProductEditor() {
                     const info = productInfos[infoIdx];
                     // Check if it's a selected image (newImagePreviews) or uploaded image (uploadedImageUrls)
                     if (imageIdx < info.newImagePreviews.length) {
-                      // It's a selected image
-                      handleRemoveSelectedImage(infoIdx, imageIdx);
+                      // It's a selected image - show confirmation modal
+                      setDeleteImageModal({
+                        open: true,
+                        infoIdx,
+                        imageIdx,
+                        imageType: 'preview',
+                        isLoading: false,
+                      });
                     } else {
                       // It's an uploaded image - show confirmation modal
                       const actualImageIdx =
@@ -1304,10 +1438,12 @@ export function AdminProductEditor() {
                         infoIdx,
                         imageIdx: actualImageIdx,
                         imageType: 'uploaded',
+                        isLoading: false,
                       });
                     }
                   }}
                   onUploadSelectedImages={handleUploadSelectedImages}
+                  setProductInfos={setProductInfos}
                 />
               ))}
               <Button
@@ -1404,6 +1540,7 @@ export function AdminProductEditor() {
         imageType={
           deleteImageModal.imageType === 'preview' ? 'preview' : 'uploaded'
         }
+        isLoading={deleteImageModal.isLoading}
       />
       <ColorModal
         open={isNewColorModalOpen || isEditColorModalOpen}

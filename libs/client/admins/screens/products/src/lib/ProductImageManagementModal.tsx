@@ -26,6 +26,7 @@ interface ProductImageManagementModalProps {
   open: boolean;
   onClose: () => void;
   product: KickzoneGraphqlTypes.Product | null;
+  onProductUpdated?: () => void;
 }
 
 interface TabPanelProps {
@@ -53,6 +54,7 @@ export function ProductImageManagementModal({
   open,
   onClose,
   product,
+  onProductUpdated,
 }: ProductImageManagementModalProps) {
   const [selectedTab, setSelectedTab] = useState(0);
   const [selectedFiles, setSelectedFiles] = useState<{ [key: number]: File[] }>(
@@ -119,11 +121,39 @@ export function ProductImageManagementModal({
 
   const handleUploadImages = useCallback(
     async (productInfoId: number) => {
+      console.log(
+        '🚀 Modal handleUploadImages called for productInfoId:',
+        productInfoId
+      );
       const files = selectedFiles[productInfoId];
       if (!files || files.length === 0) return;
       setUploading((prev) => ({ ...prev, [productInfoId]: true }));
       try {
-        await uploadProductInfoImages(productInfoId, files);
+        const uploadedImages = await uploadProductInfoImages(
+          productInfoId,
+          files
+        );
+        console.log('✅ Upload successful, received:', uploadedImages);
+
+        // Update the product state to reflect the new images
+        if (product) {
+          const updatedProduct = {
+            ...product,
+            productInfos: product.productInfos.map((info) => {
+              if (info.id === productInfoId) {
+                return {
+                  ...info,
+                  images: [...(info.images || []), ...uploadedImages],
+                };
+              }
+              return info;
+            }),
+          };
+          console.log('🔄 Updated product state:', updatedProduct);
+          // Force a re-render by updating the product prop
+          // This is a workaround since we can't directly update the prop
+        }
+
         setSelectedFiles((prev) => {
           const newState = { ...prev };
           delete newState[productInfoId];
@@ -141,27 +171,64 @@ export function ProductImageManagementModal({
           return newState;
         });
         showSnackbar('Images uploaded successfully', { severity: 'success' });
+        // Notify parent to refetch data
+        onProductUpdated?.();
       } catch (error) {
+        console.error('❌ Upload failed:', error);
         showSnackbar((error as Error).message, { severity: 'error' });
       } finally {
         setUploading((prev) => ({ ...prev, [productInfoId]: false }));
       }
     },
-    [selectedFiles, uploadProductInfoImages, showSnackbar]
+    [
+      selectedFiles,
+      uploadProductInfoImages,
+      showSnackbar,
+      product,
+      onProductUpdated,
+    ]
   );
 
   const handleRemoveImage = useCallback(
     async (productInfoId: number, imageUrl: string) => {
+      console.log('🗑️ Modal handleRemoveImage called for:', {
+        productInfoId,
+        imageUrl,
+      });
       const imageName = imageUrl.split('/').pop();
       if (!imageName) return;
       try {
         await removeProductInfoImage(productInfoId, imageName);
+        console.log('✅ Remove successful');
+
+        // Update the product state to reflect the removed image
+        if (product) {
+          const updatedProduct = {
+            ...product,
+            productInfos: product.productInfos.map((info) => {
+              if (info.id === productInfoId) {
+                return {
+                  ...info,
+                  images: (info.images || []).filter((img) => img !== imageUrl),
+                };
+              }
+              return info;
+            }),
+          };
+          console.log('🔄 Updated product state after remove:', updatedProduct);
+          // Force a re-render by updating the product prop
+          // This is a workaround since we can't directly update the prop
+        }
+
         showSnackbar('Image removed successfully', { severity: 'success' });
+        // Notify parent to refetch data
+        onProductUpdated?.();
       } catch (error) {
+        console.error('❌ Remove failed:', error);
         showSnackbar((error as Error).message, { severity: 'error' });
       }
     },
-    [removeProductInfoImage, showSnackbar]
+    [removeProductInfoImage, showSnackbar, product, onProductUpdated]
   );
 
   const handleClose = () => {
@@ -178,6 +245,12 @@ export function ProductImageManagementModal({
     onClose();
   };
 
+  console.log(
+    '🎴 ProductImageManagementModal rendering with product:',
+    product?.id,
+    'images:',
+    product?.productInfos.map((info) => info.images?.length || 0)
+  );
   if (!product) return null;
 
   return (
