@@ -18,6 +18,7 @@ import Alert from '@mui/material/Alert';
 import DeleteIcon from '@mui/icons-material/Delete';
 import AddPhotoIcon from '@mui/icons-material/AddPhotoAlternate';
 import UploadIcon from '@mui/icons-material/Upload';
+import WarningIcon from '@mui/icons-material/Warning';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useProducts } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
@@ -27,6 +28,14 @@ interface ProductImageManagementModalProps {
   onClose: () => void;
   product: KickzoneGraphqlTypes.Product | null;
   onProductUpdated?: () => void;
+}
+
+interface DeleteImageModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  imageName: string;
+  isLoading?: boolean;
 }
 
 interface TabPanelProps {
@@ -50,6 +59,40 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+const DeleteImageModal = ({
+  open,
+  onClose,
+  onConfirm,
+  imageName,
+  isLoading = false,
+}: DeleteImageModalProps) => (
+  <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <WarningIcon color="warning" />
+      Delete Image
+    </DialogTitle>
+    <DialogContent>
+      <Typography>
+        Are you sure you want to delete the image "{imageName}"? This action
+        cannot be undone.
+      </Typography>
+    </DialogContent>
+    <DialogActions>
+      <Button onClick={onClose} disabled={isLoading}>
+        Cancel
+      </Button>
+      <Button
+        onClick={onConfirm}
+        variant="contained"
+        color="error"
+        disabled={isLoading}
+      >
+        {isLoading ? 'Deleting...' : 'Delete'}
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
+
 export function ProductImageManagementModal({
   open,
   onClose,
@@ -64,6 +107,19 @@ export function ProductImageManagementModal({
     [key: number]: { file: File; url: string }[];
   }>({});
   const [uploading, setUploading] = useState<{ [key: number]: boolean }>({});
+  const [deleteModal, setDeleteModal] = useState<{
+    open: boolean;
+    productInfoId: number | null;
+    imageUrl: string | null;
+    imageName: string | null;
+    isLoading: boolean;
+  }>({
+    open: false,
+    productInfoId: null,
+    imageUrl: null,
+    imageName: null,
+    isLoading: false,
+  });
   const { uploadProductInfoImages, removeProductInfoImage } = useProducts();
   const { showSnackbar } = useSnackbarContext();
 
@@ -190,45 +246,24 @@ export function ProductImageManagementModal({
   );
 
   const handleRemoveImage = useCallback(
-    async (productInfoId: number, imageUrl: string) => {
+    (productInfoId: number, imageUrl: string) => {
       console.log('🗑️ Modal handleRemoveImage called for:', {
         productInfoId,
         imageUrl,
       });
       const imageName = imageUrl.split('/').pop();
       if (!imageName) return;
-      try {
-        await removeProductInfoImage(productInfoId, imageName);
-        console.log('✅ Remove successful');
 
-        // Update the product state to reflect the removed image
-        if (product) {
-          const updatedProduct = {
-            ...product,
-            productInfos: product.productInfos.map((info) => {
-              if (info.id === productInfoId) {
-                return {
-                  ...info,
-                  images: (info.images || []).filter((img) => img !== imageUrl),
-                };
-              }
-              return info;
-            }),
-          };
-          console.log('🔄 Updated product state after remove:', updatedProduct);
-          // Force a re-render by updating the product prop
-          // This is a workaround since we can't directly update the prop
-        }
-
-        showSnackbar('Image removed successfully', { severity: 'success' });
-        // Notify parent to refetch data
-        onProductUpdated?.();
-      } catch (error) {
-        console.error('❌ Remove failed:', error);
-        showSnackbar((error as Error).message, { severity: 'error' });
-      }
+      // Show confirmation modal instead of deleting directly
+      setDeleteModal({
+        open: true,
+        productInfoId,
+        imageUrl,
+        imageName,
+        isLoading: false,
+      });
     },
-    [removeProductInfoImage, showSnackbar, product, onProductUpdated]
+    []
   );
 
   const handleClose = () => {
@@ -245,6 +280,80 @@ export function ProductImageManagementModal({
     onClose();
   };
 
+  const handleConfirmDeleteImage = useCallback(async () => {
+    if (!deleteModal.productInfoId || !deleteModal.imageName) {
+      setDeleteModal({
+        open: false,
+        productInfoId: null,
+        imageUrl: null,
+        imageName: null,
+        isLoading: false,
+      });
+      return;
+    }
+
+    // Set loading state
+    setDeleteModal((prev) => ({ ...prev, isLoading: true }));
+
+    try {
+      await removeProductInfoImage(
+        deleteModal.productInfoId,
+        deleteModal.imageName
+      );
+      console.log('✅ Remove successful');
+
+      // Update the product state to reflect the removed image
+      if (product && deleteModal.imageUrl) {
+        const updatedProduct = {
+          ...product,
+          productInfos: product.productInfos.map((info) => {
+            if (info.id === deleteModal.productInfoId) {
+              return {
+                ...info,
+                images: (info.images || []).filter(
+                  (img) => img !== deleteModal.imageUrl
+                ),
+              };
+            }
+            return info;
+          }),
+        };
+        console.log('🔄 Updated product state after remove:', updatedProduct);
+      }
+
+      showSnackbar('Image removed successfully', { severity: 'success' });
+      // Notify parent to refetch data
+      onProductUpdated?.();
+    } catch (error) {
+      console.error('❌ Remove failed:', error);
+      showSnackbar((error as Error).message, { severity: 'error' });
+    } finally {
+      setDeleteModal({
+        open: false,
+        productInfoId: null,
+        imageUrl: null,
+        imageName: null,
+        isLoading: false,
+      });
+    }
+  }, [
+    deleteModal,
+    removeProductInfoImage,
+    showSnackbar,
+    product,
+    onProductUpdated,
+  ]);
+
+  const handleCloseDeleteModal = useCallback(() => {
+    setDeleteModal({
+      open: false,
+      productInfoId: null,
+      imageUrl: null,
+      imageName: null,
+      isLoading: false,
+    });
+  }, []);
+
   console.log(
     '🎴 ProductImageManagementModal rendering with product:',
     product?.id,
@@ -254,205 +363,220 @@ export function ProductImageManagementModal({
   if (!product) return null;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
-      <DialogTitle>Manage Images - {product.name}</DialogTitle>
-      <DialogContent>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
-          <Tabs value={selectedTab} onChange={handleTabChange}>
-            {product.productInfos.map((productInfo, index) => (
-              <Tab
-                key={productInfo.id}
-                label={`${productInfo.size}${
-                  productInfo.color ? ` - ${productInfo.color.name}` : ''
-                }`}
-                id={`image-tab-${index}`}
-                aria-controls={`image-tabpanel-${index}`}
-              />
-            ))}
-          </Tabs>
-        </Box>
-        {product.productInfos.map((productInfo, index) => (
-          <TabPanel key={productInfo.id} value={selectedTab} index={index}>
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" gutterBottom>
-                Variant: {productInfo.size}
-                {productInfo.color && ` - ${productInfo.color.name}`}
-              </Typography>
-              {/* Current Images */}
-              <Typography variant="subtitle1" gutterBottom>
-                Current Images ({productInfo.images?.length || 0})
-              </Typography>
-              {productInfo.images && productInfo.images.length > 0 ? (
-                <Grid2 container spacing={2} sx={{ mb: 3 }}>
-                  {productInfo.images.map((imageUrl, imageIndex) => (
-                    <Grid2 key={imageIndex} size={{ xs: 12, sm: 6, md: 4 }}>
-                      <Card>
-                        <CardMedia
-                          component="img"
-                          height="140"
-                          image={
-                            imageUrl.startsWith('/uploads/')
-                              ? `https://localhost:4000${imageUrl}`
-                              : imageUrl
-                          }
-                          alt={`Product image ${imageIndex + 1}`}
-                          sx={{ objectFit: 'cover' }}
-                        />
-                        <CardActions>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() =>
-                              handleRemoveImage(productInfo.id, imageUrl)
-                            }
-                          >
-                            <DeleteIcon />
-                          </IconButton>
-                        </CardActions>
-                      </Card>
-                    </Grid2>
-                  ))}
-                </Grid2>
-              ) : (
-                <Alert severity="info" sx={{ mb: 3 }}>
-                  No images uploaded for this variant yet.
-                </Alert>
-              )}
-              {/* Add New Images */}
-              <Typography variant="subtitle1" gutterBottom>
-                Add New Images
-              </Typography>
-              <Box sx={{ mb: 2 }}>
-                <input
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  id={`file-input-${productInfo.id}`}
-                  type="file"
-                  multiple
-                  onChange={(e) => handleFileSelection(productInfo.id, e)}
+    <>
+      <Dialog open={open} onClose={handleClose} maxWidth="md" fullWidth>
+        <DialogTitle>Manage Images - {product.name}</DialogTitle>
+        <DialogContent>
+          <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+            <Tabs value={selectedTab} onChange={handleTabChange}>
+              {product.productInfos.map((productInfo, index) => (
+                <Tab
+                  key={productInfo.id}
+                  label={`${productInfo.size}${
+                    productInfo.color ? ` - ${productInfo.color.name}` : ''
+                  }`}
+                  id={`image-tab-${index}`}
+                  aria-controls={`image-tabpanel-${index}`}
                 />
-                <label htmlFor={`file-input-${productInfo.id}`}>
-                  <Button
-                    variant="outlined"
-                    component="span"
-                    startIcon={<AddPhotoIcon />}
-                    sx={{ mr: 2 }}
-                  >
-                    Select Images
-                  </Button>
-                </label>
-                {selectedFiles[productInfo.id] &&
-                  selectedFiles[productInfo.id].length > 0 && (
+              ))}
+            </Tabs>
+          </Box>
+          {product.productInfos.map((productInfo, index) => (
+            <TabPanel key={productInfo.id} value={selectedTab} index={index}>
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="h6" gutterBottom>
+                  Variant: {productInfo.size}
+                  {productInfo.color && ` - ${productInfo.color.name}`}
+                </Typography>
+                {/* Current Images */}
+                <Typography variant="subtitle1" gutterBottom>
+                  Current Images ({productInfo.images?.length || 0})
+                </Typography>
+                {productInfo.images && productInfo.images.length > 0 ? (
+                  <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                    {productInfo.images.map((imageUrl, imageIndex) => (
+                      <Grid2 key={imageIndex} size={{ xs: 12, sm: 6, md: 4 }}>
+                        <Card>
+                          <CardMedia
+                            component="img"
+                            height="140"
+                            image={
+                              imageUrl.startsWith('/uploads/')
+                                ? `https://localhost:4000${imageUrl}`
+                                : imageUrl
+                            }
+                            alt={`Product image ${imageIndex + 1}`}
+                            sx={{ objectFit: 'cover' }}
+                          />
+                          <CardActions>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() =>
+                                handleRemoveImage(productInfo.id, imageUrl)
+                              }
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </CardActions>
+                        </Card>
+                      </Grid2>
+                    ))}
+                  </Grid2>
+                ) : (
+                  <Alert severity="info" sx={{ mb: 3 }}>
+                    No images uploaded for this variant yet.
+                  </Alert>
+                )}
+                {/* Add New Images */}
+                <Typography variant="subtitle1" gutterBottom>
+                  Add New Images
+                </Typography>
+                <Box sx={{ mb: 2 }}>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id={`file-input-${productInfo.id}`}
+                    type="file"
+                    multiple
+                    onChange={(e) => handleFileSelection(productInfo.id, e)}
+                  />
+                  <label htmlFor={`file-input-${productInfo.id}`}>
                     <Button
-                      variant="contained"
-                      startIcon={<UploadIcon />}
-                      onClick={() => handleUploadImages(productInfo.id)}
-                      disabled={uploading[productInfo.id]}
+                      variant="outlined"
+                      component="span"
+                      startIcon={<AddPhotoIcon />}
+                      sx={{ mr: 2 }}
                     >
-                      {uploading[productInfo.id]
-                        ? 'Uploading...'
-                        : 'Upload Images'}
+                      Select Images
                     </Button>
+                  </label>
+                  {selectedFiles[productInfo.id] &&
+                    selectedFiles[productInfo.id].length > 0 && (
+                      <Button
+                        variant="contained"
+                        startIcon={<UploadIcon />}
+                        onClick={() => handleUploadImages(productInfo.id)}
+                        disabled={uploading[productInfo.id]}
+                      >
+                        {uploading[productInfo.id]
+                          ? 'Uploading...'
+                          : 'Upload Images'}
+                      </Button>
+                    )}
+                </Box>
+                {/* Selected Files Preview */}
+                {selectedFilePreviews[productInfo.id] &&
+                  selectedFilePreviews[productInfo.id].length > 0 && (
+                    <Box>
+                      <Typography variant="body2" gutterBottom>
+                        Selected files (
+                        {selectedFilePreviews[productInfo.id].length}):
+                      </Typography>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
+                        {selectedFilePreviews[productInfo.id].map(
+                          (preview, fileIndex) => (
+                            <Chip
+                              key={fileIndex}
+                              label={preview.file.name}
+                              size="small"
+                              onDelete={() => {
+                                setSelectedFiles((prev) => ({
+                                  ...prev,
+                                  [productInfo.id]: prev[productInfo.id].filter(
+                                    (_, i) => i !== fileIndex
+                                  ),
+                                }));
+                                setSelectedFilePreviews((prev) => {
+                                  const newState = { ...prev };
+                                  URL.revokeObjectURL(
+                                    newState[productInfo.id][fileIndex].url
+                                  );
+                                  newState[productInfo.id] = newState[
+                                    productInfo.id
+                                  ].filter((_, i) => i !== fileIndex);
+                                  return newState;
+                                });
+                              }}
+                            />
+                          )
+                        )}
+                      </Box>
+                      {/* Image Thumbnails */}
+                      <Typography variant="body2" gutterBottom>
+                        Image Previews:
+                      </Typography>
+                      <Grid2 container spacing={2} sx={{ mb: 2 }}>
+                        {selectedFilePreviews[productInfo.id].map(
+                          (preview, fileIndex) => (
+                            <Grid2
+                              key={fileIndex}
+                              size={{ xs: 12, sm: 6, md: 4 }}
+                            >
+                              <Card>
+                                <CardMedia
+                                  component="img"
+                                  height="140"
+                                  image={preview.url}
+                                  alt={`Selected image ${fileIndex + 1}`}
+                                  sx={{ objectFit: 'cover' }}
+                                />
+                                <CardActions>
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => {
+                                      setSelectedFiles((prev) => ({
+                                        ...prev,
+                                        [productInfo.id]: prev[
+                                          productInfo.id
+                                        ].filter((_, i) => i !== fileIndex),
+                                      }));
+                                      setSelectedFilePreviews((prev) => {
+                                        const newState = { ...prev };
+                                        URL.revokeObjectURL(
+                                          newState[productInfo.id][fileIndex]
+                                            .url
+                                        );
+                                        newState[productInfo.id] = newState[
+                                          productInfo.id
+                                        ].filter((_, i) => i !== fileIndex);
+                                        return newState;
+                                      });
+                                    }}
+                                  >
+                                    <DeleteIcon />
+                                  </IconButton>
+                                </CardActions>
+                              </Card>
+                            </Grid2>
+                          )
+                        )}
+                      </Grid2>
+                    </Box>
                   )}
               </Box>
-              {/* Selected Files Preview */}
-              {selectedFilePreviews[productInfo.id] &&
-                selectedFilePreviews[productInfo.id].length > 0 && (
-                  <Box>
-                    <Typography variant="body2" gutterBottom>
-                      Selected files (
-                      {selectedFilePreviews[productInfo.id].length}):
-                    </Typography>
-                    <Box
-                      sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}
-                    >
-                      {selectedFilePreviews[productInfo.id].map(
-                        (preview, fileIndex) => (
-                          <Chip
-                            key={fileIndex}
-                            label={preview.file.name}
-                            size="small"
-                            onDelete={() => {
-                              setSelectedFiles((prev) => ({
-                                ...prev,
-                                [productInfo.id]: prev[productInfo.id].filter(
-                                  (_, i) => i !== fileIndex
-                                ),
-                              }));
-                              setSelectedFilePreviews((prev) => {
-                                const newState = { ...prev };
-                                URL.revokeObjectURL(
-                                  newState[productInfo.id][fileIndex].url
-                                );
-                                newState[productInfo.id] = newState[
-                                  productInfo.id
-                                ].filter((_, i) => i !== fileIndex);
-                                return newState;
-                              });
-                            }}
-                          />
-                        )
-                      )}
-                    </Box>
-                    {/* Image Thumbnails */}
-                    <Typography variant="body2" gutterBottom>
-                      Image Previews:
-                    </Typography>
-                    <Grid2 container spacing={2} sx={{ mb: 2 }}>
-                      {selectedFilePreviews[productInfo.id].map(
-                        (preview, fileIndex) => (
-                          <Grid2
-                            key={fileIndex}
-                            size={{ xs: 12, sm: 6, md: 4 }}
-                          >
-                            <Card>
-                              <CardMedia
-                                component="img"
-                                height="140"
-                                image={preview.url}
-                                alt={`Selected image ${fileIndex + 1}`}
-                                sx={{ objectFit: 'cover' }}
-                              />
-                              <CardActions>
-                                <IconButton
-                                  size="small"
-                                  color="error"
-                                  onClick={() => {
-                                    setSelectedFiles((prev) => ({
-                                      ...prev,
-                                      [productInfo.id]: prev[
-                                        productInfo.id
-                                      ].filter((_, i) => i !== fileIndex),
-                                    }));
-                                    setSelectedFilePreviews((prev) => {
-                                      const newState = { ...prev };
-                                      URL.revokeObjectURL(
-                                        newState[productInfo.id][fileIndex].url
-                                      );
-                                      newState[productInfo.id] = newState[
-                                        productInfo.id
-                                      ].filter((_, i) => i !== fileIndex);
-                                      return newState;
-                                    });
-                                  }}
-                                >
-                                  <DeleteIcon />
-                                </IconButton>
-                              </CardActions>
-                            </Card>
-                          </Grid2>
-                        )
-                      )}
-                    </Grid2>
-                  </Box>
-                )}
-            </Box>
-          </TabPanel>
-        ))}
-      </DialogContent>
-      <DialogActions>
-        <Button onClick={handleClose}>Close</Button>
-      </DialogActions>
-    </Dialog>
+            </TabPanel>
+          ))}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose}>Close</Button>
+        </DialogActions>
+      </Dialog>
+      <DeleteImageModal
+        open={deleteModal.open}
+        onClose={handleCloseDeleteModal}
+        onConfirm={handleConfirmDeleteImage}
+        imageName={deleteModal.imageName || ''}
+        isLoading={deleteModal.isLoading}
+      />
+    </>
   );
 }
