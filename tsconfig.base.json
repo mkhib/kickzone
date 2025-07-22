@@ -89,6 +89,9 @@
       "@kickzone-workspace/customers-product-card": [
         "libs/client/customers/components/product-card/src/index.ts"
       ],
+      "@kickzone-workspace/customers-products-store": [
+        "libs/client/customers/zustand/src/index.ts"
+      ],
       "@kickzone-workspace/customers-router": [
         "libs/client/customers/router/src/index.ts"
       ],
