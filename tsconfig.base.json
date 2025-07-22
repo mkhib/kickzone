@@ -139,6 +139,9 @@
       "@kickzone-workspace/sellers-products-screen": [
         "libs/client/sellers/screens/products/src/index.ts"
       ],
+      "@kickzone-workspace/sellers-products-store": [
+        "libs/client/sellers/zustand/src/index.ts"
+      ],
       "@kickzone-workspace/sellers-router": [
         "libs/client/sellers/router/src/index.ts"
       ],
