@@ -1,1 +1,1 @@
-export * from './lib/customers-products-store';
+export { useCustomersProductsStore } from './lib/customers-products-store';
