@@ -33,7 +33,8 @@ export class ProductService {
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.productInfos', 'productInfo')
       .leftJoinAndSelect('productInfo.color', 'color')
-      .leftJoinAndSelect('product.categories', 'category');
+      .leftJoinAndSelect('product.categories', 'category')
+      .orderBy('productInfo.id', 'ASC');
 
     // Partitioning hint: The 'archived' column should be used for table partitioning at the DB level.
     if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
@@ -222,6 +223,11 @@ export class ProductService {
     return this.productRepository.findOne({
       where: { id },
       relations: ['productInfos', 'categories', 'productInfos.color'],
+      order: {
+        productInfos: {
+          id: 'ASC',
+        },
+      },
     });
   }
 
@@ -279,7 +285,8 @@ export class ProductService {
         { sellerId }
       )
       .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
-      .where('sellerProduct.sellerId = :sellerId', { sellerId });
+      .where('sellerProduct.sellerId = :sellerId', { sellerId })
+      .orderBy('productInfo.id', 'ASC');
 
     if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
       query.andWhere('product.archived = :archived', {
