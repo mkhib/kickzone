@@ -43,6 +43,9 @@
       "@kickzone-workspace/admins-login": [
         "libs/client/admins/screens/login/src/index.ts"
       ],
+      "@kickzone-workspace/admins-products-store": [
+        "libs/client/admins/zustand/admins-products-store/src/index.ts"
+      ],
       "@kickzone-workspace/admins-router": [
         "libs/client/admins/router/src/index.ts"
       ],

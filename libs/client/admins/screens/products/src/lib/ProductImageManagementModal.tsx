@@ -22,8 +22,7 @@ import WarningIcon from '@mui/icons-material/Warning';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useProducts } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
-// TODO: Import from the new store once it's created
-// import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
+import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
 
 interface ProductImageManagementModalProps {
   open: boolean;
@@ -258,7 +257,8 @@ export function ProductImageManagementModal({
         );
         if (productInfo && productInfo.images) {
           const updatedImages = productInfo.images.filter(
-            (img) => !img.includes(deleteModal.imageName!)
+            (img) =>
+              deleteModal.imageName && !img.includes(deleteModal.imageName)
           );
           updateProductImages(deleteModal.productInfoId, updatedImages);
         }
