@@ -175,12 +175,17 @@ export class SellerService {
     sellerId: number,
     input: CreateSellerProductInput
   ): Promise<SellerProduct> {
-    const productInfo = await this.productInfoRepository.findOneBy({
-      id: input.productInfoId,
+    const productInfo = await this.productInfoRepository.findOne({
+      where: { id: input.productInfoId },
+      relations: ['product'],
     });
     if (!productInfo) throw new Error('Product variant not found');
+    if (!productInfo.product)
+      throw new Error('Product not found for this variant');
+
     const seller = await this.sellerRepository.findOneBy({ id: sellerId });
     if (!seller) throw new Error('Seller not found');
+
     const sellerProduct = this.sellerProductRepository.create({
       seller,
       product: productInfo.product,
@@ -199,7 +204,7 @@ export class SellerService {
   ): Promise<SellerProduct> {
     const sellerProduct = await this.sellerProductRepository.findOne({
       where: { id: input.id },
-      relations: ['seller'],
+      relations: ['seller', 'product', 'productInfo'],
     });
     if (!sellerProduct) throw new Error('Seller product not found');
     if (sellerProduct.seller.id !== sellerId) throw new Error('Unauthorized');

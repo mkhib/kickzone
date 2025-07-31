@@ -146,7 +146,7 @@
         "libs/client/sellers/screens/products/src/index.ts"
       ],
       "@kickzone-workspace/sellers-products-store": [
-        "libs/client/sellers/zustand/src/index.ts"
+        "libs/client/sellers/zustand/sellers-products-store/src/index.ts"
       ],
       "@kickzone-workspace/sellers-router": [
         "libs/client/sellers/router/src/index.ts"
@@ -154,12 +154,12 @@
       "@kickzone-workspace/sellers-setup-password": [
         "libs/client/sellers/screens/setup-password/src/index.ts"
       ],
-      "@kickzone-workspace/shared-routes": [
-        "libs/client/shared/routes/src/index.ts"
-      ],
       "@kickzone-workspace/services": ["libs/server/services/src/index.ts"],
       "@kickzone-workspace/shared-i18n": [
         "libs/shared/shared-i18n/src/index.ts"
+      ],
+      "@kickzone-workspace/shared-routes": [
+        "libs/client/shared/routes/src/index.ts"
       ],
       "@kickzone-workspace/snackbar": [
         "libs/client/shared/components/snackbar/src/index.ts"

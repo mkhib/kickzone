@@ -20,6 +20,13 @@ interface SellerProductState {
     isLoading: boolean;
     error: string | null;
   };
+
+  // Filter states
+  search: string;
+  category: string;
+  sort: string;
+  sortOrder: 'asc' | 'desc';
+  status: KickzoneGraphqlTypes.ProductArchivedStatus;
 }
 
 // Define the actions
@@ -45,6 +52,14 @@ interface SellerProductActions {
   removeProduct: (productId: number) => void;
   setProductsLoading: (loading: boolean) => void;
   setProductsError: (error: string | null) => void;
+
+  // Filter actions
+  setSearch: (search: string) => void;
+  setCategory: (category: string) => void;
+  setSellersProductsSortField: (sortField: string) => void;
+  setSellersProductsSortOrder: (sortOrder: 'asc' | 'desc') => void;
+  setStatus: (status: KickzoneGraphqlTypes.ProductArchivedStatus) => void;
+  resetFilters: () => void;
 }
 
 // Create the store
@@ -64,6 +79,12 @@ export const useSellersProductsStore = create<
       isLoading: false,
       error: null,
     },
+    // Filter initial state
+    search: '',
+    category: '',
+    sort: '',
+    sortOrder: 'asc',
+    status: KickzoneGraphqlTypes.ProductArchivedStatus.Active,
 
     // Actions
     setCurrentProduct: (product) => {
@@ -140,6 +161,47 @@ export const useSellersProductsStore = create<
     setProductsError: (error) => {
       set((state) => {
         state.products.error = error;
+      });
+    },
+
+    // Filter actions
+    setSearch: (search) => {
+      set((state) => {
+        state.search = search;
+      });
+    },
+
+    setCategory: (category) => {
+      set((state) => {
+        state.category = category;
+      });
+    },
+
+    setSellersProductsSortField: (sortField) => {
+      set((state) => {
+        state.sort = sortField;
+      });
+    },
+
+    setSellersProductsSortOrder: (sortOrder) => {
+      set((state) => {
+        state.sortOrder = sortOrder;
+      });
+    },
+
+    setStatus: (status) => {
+      set((state) => {
+        state.status = status;
+      });
+    },
+
+    resetFilters: () => {
+      set((state) => {
+        state.search = '';
+        state.category = '';
+        state.sort = '';
+        state.sortOrder = 'asc';
+        state.status = KickzoneGraphqlTypes.ProductArchivedStatus.Active;
       });
     },
   }))

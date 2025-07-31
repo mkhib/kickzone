@@ -1,7 +1,7 @@
 {
   "name": "sellers-products-store",
-  "$schema": "../../../../node_modules/nx/schemas/project-schema.json",
-  "sourceRoot": "libs/client/sellers/zustand/src",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/sellers/zustand/sellers-products-store/src",
   "projectType": "library",
   "tags": [],
   "// targets": "to see all targets run: nx show project sellers-products-store --web",

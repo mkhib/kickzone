@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client';
 import { gql } from '@apollo/client';
-import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 const SELLER_PRODUCTS_FOR_ME_QUERY = gql`
   query SellerProductsForMe($filter: ProductFilterInput) {
@@ -54,7 +54,6 @@ export function useSellersProducts({
   pageSize = 12,
   archivedStatus = 'ACTIVE',
 }: UseSellersProductsArgs = {}) {
-  const { user } = useSellersAuthContext();
   // sellerId is not needed, backend uses auth context
   let categoryIdValue: number | undefined = undefined;
   if (typeof categoryId === 'string' && categoryId !== '') {
@@ -81,7 +80,9 @@ export function useSellersProducts({
   );
 
   const products =
-    data?.sellerProductsForMe?.edges?.map((e: any) => e.node) || [];
+    data?.sellerProductsForMe?.edges?.map(
+      (e: KickzoneGraphqlTypes.ProductEdge) => e.node
+    ) || [];
   const pageInfo = data?.sellerProductsForMe?.pageInfo;
   const totalCount = data?.sellerProductsForMe?.totalCount || 0;
 
@@ -104,12 +105,12 @@ export function useSellersProducts({
   };
 
   return {
-    products,
-    loading,
-    error,
-    loadMore,
-    hasNextPage: pageInfo?.hasNextPage,
-    totalCount,
-    refetch,
+    sellersProducts: products,
+    isSellersProductsLoading: loading,
+    sellersProductsError: error,
+    loadMoreSellersProducts: loadMore,
+    hasMoreSellersProducts: pageInfo?.hasNextPage,
+    totalSellersProductsCount: totalCount,
+    refetchSellersProducts: refetch,
   };
 }

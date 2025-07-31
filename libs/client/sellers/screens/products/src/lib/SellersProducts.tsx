@@ -2,6 +2,7 @@ import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useSellersProducts } from '@kickzone-workspace/sellers-products-hooks';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useNavigate } from 'react-router-dom';
+import { useSellersProductsStore } from '@kickzone-workspace/sellers-products-store';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -24,7 +25,6 @@ import {
   Visibility as ViewIcon,
 } from '@mui/icons-material';
 import { SELLER_ROUTES } from '@kickzone-workspace/shared-routes';
-import { useSellersProductsStore } from '@kickzone-workspace/sellers-zustand-sellers-products-store';
 
 export const SellersProducts = () => {
   const navigate = useNavigate();
@@ -36,19 +36,19 @@ export const SellersProducts = () => {
     status,
     setSearch,
     setCategory,
-    setSort,
-    setSortOrder,
+    setSellersProductsSortField,
+    setSellersProductsSortOrder,
     setStatus,
   } = useSellersProductsStore();
 
   const {
-    products,
-    loading,
-    error,
-    loadMore,
-    hasNextPage,
-    totalCount,
-    refetch,
+    sellersProducts,
+    isSellersProductsLoading,
+    sellersProductsError,
+    loadMoreSellersProducts,
+    hasMoreSellersProducts,
+    totalSellersProductsCount,
+    refetchSellersProducts,
   } = useSellersProducts({
     search,
     categoryId: category ? Number(category) : undefined,
@@ -70,7 +70,7 @@ export const SellersProducts = () => {
     console.log('View product:', productId);
   };
 
-  if (loading) {
+  if (isSellersProductsLoading) {
     return (
       <SellersLayout>
         <Box sx={{ p: 3 }}>
@@ -80,12 +80,12 @@ export const SellersProducts = () => {
     );
   }
 
-  if (error) {
+  if (sellersProductsError) {
     return (
       <SellersLayout>
         <Box sx={{ p: 3 }}>
           <Typography color="error">
-            Error loading products: {error.message}
+            Error loading products: {sellersProductsError.message}
           </Typography>
         </Box>
       </SellersLayout>
@@ -147,7 +147,7 @@ export const SellersProducts = () => {
                 <InputLabel>Sort by</InputLabel>
                 <Select
                   value={sort}
-                  onChange={(e) => setSort(e.target.value)}
+                  onChange={(e) => setSellersProductsSortField(e.target.value)}
                   label="Sort by"
                 >
                   <MenuItem value="">Default</MenuItem>
@@ -193,7 +193,7 @@ export const SellersProducts = () => {
 
         {/* Products Grid */}
         <Grid2 container spacing={3}>
-          {products.map((product: KickzoneGraphqlTypes.Product) => {
+          {sellersProducts.map((product: KickzoneGraphqlTypes.Product) => {
             const firstProductInfo = product.productInfos[0];
             return (
               <Grid2 key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
@@ -307,16 +307,16 @@ export const SellersProducts = () => {
         </Grid2>
 
         {/* Load More */}
-        {hasNextPage && (
+        {hasMoreSellersProducts && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Button onClick={loadMore} variant="outlined">
+            <Button onClick={loadMoreSellersProducts} variant="outlined">
               Load More
             </Button>
           </Box>
         )}
 
         {/* Empty State */}
-        {products.length === 0 && !loading && (
+        {sellersProducts.length === 0 && !isSellersProductsLoading && (
           <Box sx={{ textAlign: 'center', py: 8 }}>
             <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
               No products found

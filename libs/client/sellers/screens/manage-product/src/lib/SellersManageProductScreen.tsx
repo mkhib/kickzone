@@ -1,29 +1,25 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Autocomplete,
-  Alert,
-  CircularProgress,
-  Card,
-  CardContent,
-  Divider,
-} from '@mui/material';
-import Grid2 from '@mui/material/Grid';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import {
   useSellersProductManagement,
   type SellerProductFormData,
 } from '@kickzone-workspace/sellers-products-hooks';
-import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
-import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import {
+  Alert,
+  Autocomplete,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  CircularProgress,
+  Divider,
+  Paper,
+  TextField,
+  Typography,
+} from '@mui/material';
+import Grid2 from '@mui/material/Grid';
+import React, { useState } from 'react';
 
 const initialFormData: SellerProductFormData = {
   productId: null,
@@ -178,16 +174,21 @@ export function SellersManageProductScreen() {
                       disabled={isLoading}
                     />
                   )}
-                  renderOption={(props, option) => (
-                    <Box component="li" {...props}>
-                      <Box>
-                        <Typography variant="body1">{option.name}</Typography>
-                        <Typography variant="caption" color="text.secondary">
-                          {option.categories.map((cat) => cat.name).join(', ')}
-                        </Typography>
+                  renderOption={(props, option) => {
+                    const { key, ...otherProps } = props;
+                    return (
+                      <Box component="li" key={key} {...otherProps}>
+                        <Box>
+                          <Typography variant="body1">{option.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {option.categories
+                              .map((cat) => cat.name)
+                              .join(', ')}
+                          </Typography>
+                        </Box>
                       </Box>
-                    </Box>
-                  )}
+                    );
+                  }}
                 />
               </Grid2>
 
@@ -216,30 +217,37 @@ export function SellersManageProductScreen() {
                         disabled={isLoading}
                       />
                     )}
-                    renderOption={(props, option) => (
-                      <Box component="li" {...props}>
-                        <Box
-                          sx={{ display: 'flex', alignItems: 'center', gap: 1 }}
-                        >
-                          {option.color && (
-                            <Box
-                              sx={{
-                                width: 20,
-                                height: 20,
-                                backgroundColor: option.color.hexCode,
-                                borderRadius: '50%',
-                                border: '1px solid #ccc',
-                              }}
-                            />
-                          )}
-                          <Typography>
-                            {option.size} - {option.color?.name || 'No Color'} (
-                            {option.weight}
-                            kg)
-                          </Typography>
+                    renderOption={(props, option) => {
+                      const { key, ...otherProps } = props;
+                      return (
+                        <Box component="li" key={key} {...otherProps}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            {option.color && (
+                              <Box
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+                                  backgroundColor: option.color.hexCode,
+                                  borderRadius: '50%',
+                                  border: '1px solid #ccc',
+                                }}
+                              />
+                            )}
+                            <Typography>
+                              {option.size} - {option.color?.name || 'No Color'}{' '}
+                              ({option.weight}
+                              kg)
+                            </Typography>
+                          </Box>
                         </Box>
-                      </Box>
-                    )}
+                      );
+                    }}
                   />
                 </Grid2>
               )}
