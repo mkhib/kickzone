@@ -175,6 +175,8 @@ type Mutation {
   toggleSellerActive(id: Int!): SellerInfo!
   createSellerProduct(sellerId: Int!, input: CreateSellerProductInput!): SellerProduct!
   updateSellerProduct(sellerId: Int!, input: UpdateSellerProductInput!): SellerProduct!
+  createMySellerProduct(input: CreateSellerProductInput!): SellerProduct!
+  updateMySellerProduct(input: UpdateSellerProductInput!): SellerProduct!
   createColor(input: CreateColorInput!): Color!
   updateColor(id: Int!, input: UpdateColorInput!): Color
   deleteColor(id: Int!): Boolean!

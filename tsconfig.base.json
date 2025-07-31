@@ -154,6 +154,9 @@
       "@kickzone-workspace/sellers-setup-password": [
         "libs/client/sellers/screens/setup-password/src/index.ts"
       ],
+      "@kickzone-workspace/shared-routes": [
+        "libs/client/shared/routes/src/index.ts"
+      ],
       "@kickzone-workspace/services": ["libs/server/services/src/index.ts"],
       "@kickzone-workspace/shared-i18n": [
         "libs/shared/shared-i18n/src/index.ts"

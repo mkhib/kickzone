@@ -114,6 +114,41 @@ export class SellerResolver {
     return this.sellerService.updateSellerProduct(sellerId, input);
   }
 
+  // Seller-specific mutations for creating and updating their own products
+  @Mutation(() => SellerProduct)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.SELLER])
+  async createMySellerProduct(
+    @Context() context: { req: { user: User } },
+    @Args('input') input: CreateSellerProductInput
+  ) {
+    const user = context.req.user;
+    if (!user) throw new Error('Not authenticated');
+    if (user.role !== UserRole.SELLER) throw new Error('Not a seller');
+
+    const seller = await this.sellerService.findOneByUserId(user.id);
+    if (!seller) throw new Error('Seller info not found');
+
+    return this.sellerService.createSellerProduct(seller.id, input);
+  }
+
+  @Mutation(() => SellerProduct)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.SELLER])
+  async updateMySellerProduct(
+    @Context() context: { req: { user: User } },
+    @Args('input') input: UpdateSellerProductInput
+  ) {
+    const user = context.req.user;
+    if (!user) throw new Error('Not authenticated');
+    if (user.role !== UserRole.SELLER) throw new Error('Not a seller');
+
+    const seller = await this.sellerService.findOneByUserId(user.id);
+    if (!seller) throw new Error('Seller info not found');
+
+    return this.sellerService.updateSellerProduct(seller.id, input);
+  }
+
   // Relay-style sellerProducts for the current seller (for sellers themselves)
   @Query(() => ProductConnection)
   async sellerProductsForMe(

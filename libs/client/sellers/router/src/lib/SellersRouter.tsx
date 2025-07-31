@@ -1,9 +1,11 @@
 import { SellersProducts } from '@kickzone-workspace/sellers-products-screen';
+import { SellersManageProductScreen } from '@kickzone-workspace/sellers-manage-product-screen';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { SellersLogin } from '@kickzone-workspace/sellers-login-screen';
 import { SellersSetupPassword } from '@kickzone-workspace/sellers-setup-password';
 import { createPrivateRoute } from '@kickzone-workspace/private-route';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { SELLER_ROUTES } from '@kickzone-workspace/shared-routes';
 
 export function SellersRouter() {
   const { user } = useSellersAuthContext();
@@ -14,12 +16,16 @@ export function SellersRouter() {
     <BrowserRouter>
       <Routes>
         <Route element={<SellerRoute />}>
-          <Route path="/" element={<SellersProducts />} />
-          <Route path="/products" element={<SellersProducts />} />
+          <Route path={SELLER_ROUTES.HOME} element={<SellersProducts />} />
+          <Route path={SELLER_ROUTES.PRODUCTS} element={<SellersProducts />} />
+          <Route
+            path={SELLER_ROUTES.MANAGE_PRODUCT}
+            element={<SellersManageProductScreen />}
+          />
         </Route>
-        <Route path="/login" element={<SellersLogin />} />
+        <Route path={SELLER_ROUTES.LOGIN} element={<SellersLogin />} />
         <Route
-          path="/setup-password/:token"
+          path={SELLER_ROUTES.SETUP_PASSWORD}
           element={<SellersSetupPassword />}
         />
       </Routes>
