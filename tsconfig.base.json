@@ -110,6 +110,9 @@
       "@kickzone-workspace/layout": [
         "libs/client/shared/components/layout/src/index.ts"
       ],
+      "@kickzone-workspace/lottie-unauthorized": [
+        "libs/client/shared/lottie/unauthorized/src/index.ts"
+      ],
       "@kickzone-workspace/modules": ["libs/server/modules/src/index.ts"],
       "@kickzone-workspace/private-route": [
         "libs/client/shared/components/private-route/src/index.ts"
@@ -154,6 +157,9 @@
       "@kickzone-workspace/sellers-setup-password": [
         "libs/client/sellers/screens/setup-password/src/index.ts"
       ],
+      "@kickzone-workspace/sellers-unauthorized-screen": [
+        "libs/client/sellers/screens/unauthorized/src/index.ts"
+      ],
       "@kickzone-workspace/services": ["libs/server/services/src/index.ts"],
       "@kickzone-workspace/shared-i18n": [
         "libs/shared/shared-i18n/src/index.ts"
@@ -170,6 +176,9 @@
       "@kickzone-workspace/strategies": ["libs/server/strategies/src/index.ts"],
       "@kickzone-workspace/translations": [
         "libs/client/shared/translations/src/index.ts"
+      ],
+      "@kickzone-workspace/unauthorized-path": [
+        "libs/client/shared/components/unauthorized/src/index.ts"
       ],
       "@kickzone-workspace/utils": ["libs/server/utils/src/index.ts"]
     }
