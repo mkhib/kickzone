@@ -3,6 +3,7 @@ import { SellersManageProductScreen } from '@kickzone-workspace/sellers-manage-p
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { SellersLogin } from '@kickzone-workspace/sellers-login-screen';
 import { SellersSetupPassword } from '@kickzone-workspace/sellers-setup-password';
+import { SellersUnauthorizedScreen } from '@kickzone-workspace/sellers-unauthorized-screen';
 import { createPrivateRoute } from '@kickzone-workspace/private-route';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SELLER_ROUTES } from '@kickzone-workspace/shared-routes';
@@ -28,6 +29,7 @@ export function SellersRouter() {
           path={SELLER_ROUTES.SETUP_PASSWORD}
           element={<SellersSetupPassword />}
         />
+        <Route path="/unauthorized" element={<SellersUnauthorizedScreen />} />
       </Routes>
     </BrowserRouter>
   );

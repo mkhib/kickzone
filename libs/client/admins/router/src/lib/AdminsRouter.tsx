@@ -2,6 +2,7 @@ import { AdminProductEditor } from '@kickzone-workspace/admin-product-editor';
 import { AdminProducts } from '@kickzone-workspace/admin-products';
 import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
 import { AdminsLogin } from '@kickzone-workspace/admins-login';
+import { AdminsUnauthorizedScreen } from '@kickzone-workspace/admins-unauthorized-screen';
 import { createPrivateRoute } from '@kickzone-workspace/private-route';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SellerManagement } from '@kickzone-workspace/admin-seller-management';
@@ -22,6 +23,7 @@ export function AdminsRouter() {
           <Route path="/sellers" element={<SellerManagement />} />
         </Route>
         <Route path="/login" element={<AdminsLogin />} />
+        <Route path="/unauthorized" element={<AdminsUnauthorizedScreen />} />
       </Routes>
     </BrowserRouter>
   );

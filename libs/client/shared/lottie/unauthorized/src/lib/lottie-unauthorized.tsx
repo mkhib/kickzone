@@ -1,9 +1,24 @@
+import Lottie from 'lottie-react';
+import failedAnimation from './failed.json';
 import styles from './lottie-unauthorized.module.css';
 
-export function LottieUnauthorized() {
+interface LottieUnauthorizedProps {
+  width?: number;
+  height?: number;
+}
+
+export function LottieUnauthorized({
+  width = 300,
+  height = 300,
+}: LottieUnauthorizedProps) {
   return (
     <div className={styles['container']}>
-      <h1>Welcome to LottieUnauthorized!</h1>
+      <Lottie
+        animationData={failedAnimation}
+        loop={true}
+        autoplay={true}
+        style={{ width, height }}
+      />
     </div>
   );
 }

@@ -52,6 +52,9 @@
       "@kickzone-workspace/admins-sellers-hooks": [
         "libs/client/admins/hooks/sellers/src/index.ts"
       ],
+      "@kickzone-workspace/admins-unauthorized-screen": [
+        "libs/client/admins/screens/unauthorized/src/index.ts"
+      ],
       "@kickzone-workspace/apollo-provider-base": [
         "libs/client/shared/components/apollo-provider-base/src/index.ts"
       ],
@@ -100,6 +103,9 @@
       ],
       "@kickzone-workspace/customers-test-utility": [
         "libs/client/customers/utility/test/src/index.ts"
+      ],
+      "@kickzone-workspace/customers-unauthorized-screen": [
+        "libs/client/customers/screens/unauthorized/src/index.ts"
       ],
       "@kickzone-workspace/entities": ["libs/server/entities/src/index.ts"],
       "@kickzone-workspace/graphql-schema": [

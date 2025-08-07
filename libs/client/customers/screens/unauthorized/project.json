@@ -1,0 +1,9 @@
+{
+  "name": "customers-unauthorized-screen",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/unauthorized/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customers-unauthorized-screen --web",
+  "targets": {}
+}

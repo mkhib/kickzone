@@ -1,10 +1,19 @@
-import styles from './sellers-unauthorized-screen.module.css';
+import React from 'react';
+import { SellersLayout } from '@kickzone-workspace/sellers-layout';
+import { UnauthorizedPath } from '@kickzone-workspace/unauthorized-path';
+import { SELLER_ROUTES } from '@kickzone-workspace/shared-routes';
 
 export function SellersUnauthorizedScreen() {
   return (
-    <div className={styles['container']}>
-      <h1>Welcome to SellersUnauthorizedScreen!</h1>
-    </div>
+    <SellersLayout>
+      <UnauthorizedPath
+        appName="Sellers Portal"
+        loginPath={SELLER_ROUTES.LOGIN}
+        showAnimation={true}
+        animationWidth={250}
+        animationHeight={250}
+      />
+    </SellersLayout>
   );
 }
 

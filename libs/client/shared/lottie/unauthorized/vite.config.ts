@@ -12,6 +12,7 @@ export default defineConfig({
   // worker: {
   //  plugins: [ nxViteTsPaths() ],
   // },
+  assetsInclude: ['**/*.json'],
   test: {
     watch: false,
     globals: true,
