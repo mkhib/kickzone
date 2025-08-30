@@ -1,4 +1,4 @@
-import { useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -20,28 +20,24 @@ export const useSellerLogin = () => {
   const [
     loginMutation,
     { loading: sellersLoginLoading, error: sellersLoginError },
-  ] = useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'login'>>(
-    LOGIN_MUTATION,
-    {
-      onCompleted: (data) => {
-        login(data.login);
-        localStorage.setItem('seller_user', JSON.stringify(data.login));
-        navigate('/products');
-      },
-    }
-  );
+  ] = useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'login'>>(LOGIN_MUTATION);
 
-  const loginSeller = (input: LoginInput) => {
-    loginMutation({
-      variables: { email: input.email, password: input.password },
-    });
+  const loginSeller = async (input: LoginInput) => {
+    try {
+      const result = await loginMutation({
+        variables: { email: input.email, password: input.password },
+      });
+      if (result.data?.login) {
+        login(result.data.login);
+        localStorage.setItem('seller_user', JSON.stringify(result.data.login));
+        navigate('/products');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
   };
 
-  const [logoutSeller] = useMutation(LOGOUT_MUTATION, {
-    onError: (error) => {
-      console.error('Logout failed:', error.message);
-    },
-  });
+  const [logoutSeller] = useMutation(LOGOUT_MUTATION);
 
   return {
     loginSeller,
@@ -57,16 +53,17 @@ export const useSetupPassword = () => {
   const [
     setupPasswordMutation,
     { loading: setupPasswordLoading, error: setupPasswordError },
-  ] = useMutation(SETUP_PASSWORD_MUTATION, {
-    onCompleted: () => {
-      navigate('/login');
-    },
-  });
+  ] = useMutation(SETUP_PASSWORD_MUTATION);
 
-  const setupPassword = (token: string, newPassword: string) => {
-    setupPasswordMutation({
-      variables: { token, newPassword },
-    });
+  const setupPassword = async (token: string, newPassword: string) => {
+    try {
+      await setupPasswordMutation({
+        variables: { token, newPassword },
+      });
+      navigate('/login');
+    } catch (error) {
+      console.error('Setup password failed:', error);
+    }
   };
 
   return {

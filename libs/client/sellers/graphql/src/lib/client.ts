@@ -1,26 +1,28 @@
-import { ApolloClient, InMemoryCache, ApolloLink } from '@apollo/client';
-import { createUploadLink } from 'apollo-upload-client';
-import { setContext } from '@apollo/client/link/context';
+import {
+  ApolloClient,
+  InMemoryCache,
+  ApolloLink,
+  HttpLink,
+} from '@apollo/client';
 import { relayStylePagination } from '@apollo/client/utilities';
-import { errorLink } from '@kickzone-workspace/apollo-provider-base';
 
-const csrfLink = setContext((_, { headers }) => ({
-  headers: {
-    ...headers,
-    'apollo-require-preflight': 'true',
-  },
-}));
+const csrfLink = new ApolloLink((operation, forward) => {
+  operation.setContext(({ headers = {} }) => ({
+    headers: {
+      ...headers,
+      'apollo-require-preflight': 'true',
+    },
+  }));
+  return forward(operation);
+});
 
-const httpLink = createUploadLink({
+const httpLink = new HttpLink({
   uri: 'https://localhost:4000/graphql',
   credentials: 'include',
-  fetchOptions: {
-    credentials: 'include',
-  },
 });
 
 const apolloClient = new ApolloClient({
-  link: ApolloLink.from([errorLink, csrfLink, httpLink]),
+  link: ApolloLink.from([csrfLink, httpLink]),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
@@ -35,7 +37,6 @@ const apolloClient = new ApolloClient({
       fetchPolicy: 'no-cache',
     },
   },
-  credentials: 'include',
 });
 
 export default apolloClient;

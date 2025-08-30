@@ -1,4 +1,4 @@
-import { useMutation } from '@apollo/client';
+import { useMutation } from '@apollo/client/react';
 import {
   LOGIN_MUTATION,
   LOGOUT_MUTATION,
@@ -19,23 +19,24 @@ export const useAdminLogin = () => {
   const [login, { loading: adminsLoginLoading, error: adminsLoginError }] =
     useMutation<{
       login: User;
-    }>(LOGIN_MUTATION, {
-      onCompleted: (data) => {
-        setAdmin(data.login);
-        localStorage.setItem('admin_user', JSON.stringify(data.login));
-        navigate('/products');
-      },
-    });
+    }>(LOGIN_MUTATION);
 
-  const loginAdmin = (input: LoginInput) => {
-    login({ variables: { email: input.email, password: input.password } });
+  const loginAdmin = async (input: LoginInput) => {
+    try {
+      const result = await login({
+        variables: { email: input.email, password: input.password },
+      });
+      if (result.data?.login) {
+        setAdmin(result.data.login);
+        localStorage.setItem('admin_user', JSON.stringify(result.data.login));
+        navigate('/products');
+      }
+    } catch (error) {
+      console.error('Login failed:', error);
+    }
   };
 
-  const [logoutAdmin] = useMutation(LOGOUT_MUTATION, {
-    onError: (error) => {
-      console.error('Logout failed:', error.message);
-    },
-  });
+  const [logoutAdmin] = useMutation(LOGOUT_MUTATION);
 
   return {
     loginAdmin,

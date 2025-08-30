@@ -1,4 +1,5 @@
-import { useMutation, useQuery, gql } from '@apollo/client';
+import { gql } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
@@ -108,28 +109,12 @@ export function useSellersProductManagement() {
   const [
     createSellerProduct,
     { loading: isCreateLoading, error: createError },
-  ] = useMutation(CREATE_SELLER_PRODUCT_MUTATION, {
-    onCompleted: () => {
-      // TODO: Add success notification
-      console.log('Product created successfully');
-    },
-    onError: (error) => {
-      console.error('Error creating product:', error);
-    },
-  });
+  ] = useMutation(CREATE_SELLER_PRODUCT_MUTATION);
 
   const [
     updateSellerProduct,
     { loading: isUpdateLoading, error: updateError },
-  ] = useMutation(UPDATE_SELLER_PRODUCT_MUTATION, {
-    onCompleted: () => {
-      // TODO: Add success notification
-      console.log('Product updated successfully');
-    },
-    onError: (error) => {
-      console.error('Error updating product:', error);
-    },
-  });
+  ] = useMutation(UPDATE_SELLER_PRODUCT_MUTATION);
 
   const products =
     productsData?.products?.edges?.map(

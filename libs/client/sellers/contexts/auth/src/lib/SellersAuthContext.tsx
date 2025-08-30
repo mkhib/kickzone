@@ -1,5 +1,11 @@
-import { useMutation, useQuery } from '@apollo/client';
-import { createContext, useContext, useState, ReactNode } from 'react';
+import { useMutation, useQuery } from '@apollo/client/react';
+import {
+  createContext,
+  useContext,
+  useState,
+  ReactNode,
+  useEffect,
+} from 'react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { ME_QUERY, LOGOUT_MUTATION } from '@kickzone-workspace/sellers-graphql';
 
@@ -19,36 +25,39 @@ export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const { loading } = useQuery<{ me: KickzoneGraphqlTypes.User }>(ME_QUERY, {
-    fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data?.me) {
-        setUser(data.me);
-        localStorage.setItem('seller_user', JSON.stringify(data.me));
-      } else {
-        localStorage.removeItem('seller_user');
-      }
-    },
-    onError: () => {
-      setUser(null);
-      localStorage.removeItem('seller_user');
-    },
-  });
+  const { loading, data, error } = useQuery<{ me: KickzoneGraphqlTypes.User }>(
+    ME_QUERY,
+    {
+      fetchPolicy: 'network-only',
+    }
+  );
 
-  const [logoutMutation] = useMutation(LOGOUT_MUTATION, {
-    onCompleted: () => {
+  const [logoutMutation] = useMutation(LOGOUT_MUTATION);
+
+  // Handle data changes
+  useEffect(() => {
+    if (data?.me) {
+      setUser(data.me);
+      localStorage.setItem('seller_user', JSON.stringify(data.me));
+    } else if (error) {
       setUser(null);
       localStorage.removeItem('seller_user');
-    },
-  });
+    }
+  }, [data, error]);
 
   const login = (user: KickzoneGraphqlTypes.User) => {
     setUser(user);
     localStorage.setItem('seller_user', JSON.stringify(user));
   };
 
-  const logout = () => {
-    logoutMutation();
+  const logout = async () => {
+    try {
+      await logoutMutation();
+      setUser(null);
+      localStorage.removeItem('seller_user');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   if (loading) return <div>Loading...</div>;

@@ -1,47 +1,22 @@
 import React from 'react';
-import { ApolloProvider, ApolloClient } from '@apollo/client';
-import { onError } from '@apollo/client/link/error';
+import { ApolloProvider } from '@apollo/client/react';
+import { ApolloClient } from '@apollo/client';
 
 interface ApolloProviderBaseProps {
-  client: ApolloClient<unknown>;
+  client: ApolloClient;
   children: React.ReactNode;
 }
 
-// Advanced error handling using Apollo Link's onError
-const errorLink = onError(
-  ({ graphQLErrors, networkError, operation, forward }) => {
-    if (graphQLErrors) {
-      graphQLErrors.forEach(({ message, locations, path, extensions }) => {
-        console.error('[GraphQL error]:', {
-          message,
-          locations,
-          path,
-          extensions,
-          operationName: operation.operationName,
-        });
-      });
-    }
-    if (networkError) {
-      console.error('[Network error]:', networkError, {
-        operationName: operation.operationName,
-      });
-    }
-    // Optionally, you can forward the operation or handle retries here
-    return forward(operation);
-  }
-);
+// Note: Error handling is now done at the client level or through error policies
+// The errorLink is no longer needed in the same way in Apollo Client 4
+export const errorLink = null;
 
 /**
- * ApolloProviderBase wraps ApolloProvider and injects advanced error handling via Apollo Link's onError.
+ * ApolloProviderBase wraps ApolloProvider and provides a base for Apollo Client configuration.
  *
- * To use this, ensure your ApolloClient composes this errorLink as the first link in its link chain.
- * Example:
- *   const client = new ApolloClient({
- *     link: ApolloLink.from([errorLink, httpLink]),
- *     cache: new InMemoryCache(),
- *   });
+ * In Apollo Client 4, error handling is typically done through error policies
+ * and the client configuration rather than through custom error links.
  */
-export { errorLink };
 
 export const ApolloProviderBase: React.FC<ApolloProviderBaseProps> = ({
   client,

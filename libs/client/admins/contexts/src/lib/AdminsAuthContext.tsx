@@ -1,7 +1,13 @@
-import { useMutation, useQuery } from '@apollo/client';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { LOGOUT_MUTATION, ME_QUERY } from '@kickzone-workspace/admins-graphql';
 import { User } from '@kickzone-workspace/entities';
-import { createContext, ReactNode, useContext, useState } from 'react';
+import {
+  createContext,
+  ReactNode,
+  useContext,
+  useState,
+  useEffect,
+} from 'react';
 
 type AdminUser = Pick<User, 'id' | 'name' | 'email' | 'role'>;
 
@@ -19,31 +25,31 @@ export const AdminsAuthProvider = ({ children }: { children: ReactNode }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const { loading } = useQuery<{ me: AdminUser }>(ME_QUERY, {
+  const { loading, data, error } = useQuery<{ me: AdminUser }>(ME_QUERY, {
     fetchPolicy: 'network-only',
-    onCompleted: (data) => {
-      if (data?.me) {
-        setAdmin(data.me);
-        localStorage.setItem('admin_user', JSON.stringify(data.me));
-      } else {
-        localStorage.removeItem('admin_user');
-      }
-    },
-    onError: () => {
-      setAdmin(null);
-      localStorage.removeItem('admin_user');
-    },
   });
 
-  const [logoutMutation] = useMutation(LOGOUT_MUTATION, {
-    onCompleted: () => {
+  const [logoutMutation] = useMutation(LOGOUT_MUTATION);
+
+  // Handle data changes
+  useEffect(() => {
+    if (data?.me) {
+      setAdmin(data.me);
+      localStorage.setItem('admin_user', JSON.stringify(data.me));
+    } else if (error) {
       setAdmin(null);
       localStorage.removeItem('admin_user');
-    },
-  });
+    }
+  }, [data, error]);
 
-  const logoutAdmin = () => {
-    logoutMutation();
+  const logoutAdmin = async () => {
+    try {
+      await logoutMutation();
+      setAdmin(null);
+      localStorage.removeItem('admin_user');
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   if (loading) return <div>Loading...</div>;
