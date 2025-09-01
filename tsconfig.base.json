@@ -25,6 +25,9 @@
       "@kickzone-workspace/admin-seller-management": [
         "libs/client/admins/screens/seller-management/src/index.ts"
       ],
+      "@kickzone-workspace/admin-seller-orders": [
+        "libs/client/admins/screens/admin-seller-orders/src/index.ts"
+      ],
       "@kickzone-workspace/admins-auth-hooks": [
         "libs/client/admins/hooks/auth/src/index.ts"
       ],
@@ -71,6 +74,24 @@
       "@kickzone-workspace/controllers": [
         "libs/server/controllers/src/index.ts"
       ],
+      "@kickzone-workspace/customer-checkout": [
+        "libs/client/customers/screens/customer-checkout/src/index.ts"
+      ],
+      "@kickzone-workspace/customer-login": [
+        "libs/client/customers/screens/customer-login/src/index.ts"
+      ],
+      "@kickzone-workspace/customer-orders": [
+        "libs/client/customers/screens/customer-orders/src/index.ts"
+      ],
+      "@kickzone-workspace/customer-products": [
+        "libs/client/customers/screens/customer-products/src/index.ts"
+      ],
+      "@kickzone-workspace/customer-shopping-cart": [
+        "libs/client/customers/screens/customer-shopping-cart/src/index.ts"
+      ],
+      "@kickzone-workspace/customer-signup": [
+        "libs/client/customers/screens/customer-signup/src/index.ts"
+      ],
       "@kickzone-workspace/customers-auth-context": [
         "libs/client/customers/contexts/auth/src/index.ts"
       ],
@@ -107,6 +128,7 @@
       "@kickzone-workspace/customers-unauthorized-screen": [
         "libs/client/customers/screens/unauthorized/src/index.ts"
       ],
+      "@kickzone-workspace/decorators": ["libs/server/decorators/src/index.ts"],
       "@kickzone-workspace/entities": ["libs/server/entities/src/index.ts"],
       "@kickzone-workspace/graphql-schema": [
         "libs/shared/graphql-schema/src/index.ts"

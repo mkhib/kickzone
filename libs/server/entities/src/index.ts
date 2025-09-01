@@ -5,3 +5,6 @@ export * from './lib/product-info.entity';
 export * from './lib/seller-product.entity';
 export * from './lib/category.entity';
 export * from './lib/color.entity';
+export * from './lib/order.entity';
+export * from './lib/cart.entity';
+export * from './lib/customer.entity';

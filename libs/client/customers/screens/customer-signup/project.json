@@ -1,0 +1,9 @@
+{
+  "name": "customer-signup",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/customer-signup/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-signup --web",
+  "targets": {}
+}

@@ -84,6 +84,7 @@ export type Mutation = {
   archiveProduct: Product;
   createCategory: Category;
   createColor: Color;
+  createMySellerProduct: SellerProduct;
   createProduct: Product;
   createProductInfo: Product;
   createSeller: SellerInfo;
@@ -100,6 +101,7 @@ export type Mutation = {
   unarchiveProduct: Product;
   updateCategory: Category;
   updateColor?: Maybe<Color>;
+  updateMySellerProduct: SellerProduct;
   updateProduct: Product;
   updateSeller: SellerInfo;
   updateSellerProduct: SellerProduct;
@@ -119,6 +121,11 @@ export type MutationCreateCategoryArgs = {
 
 export type MutationCreateColorArgs = {
   input: CreateColorInput;
+};
+
+
+export type MutationCreateMySellerProductArgs = {
+  input: CreateSellerProductInput;
 };
 
 
@@ -200,6 +207,11 @@ export type MutationUpdateCategoryArgs = {
 export type MutationUpdateColorArgs = {
   id: Scalars['Int']['input'];
   input: UpdateColorInput;
+};
+
+
+export type MutationUpdateMySellerProductArgs = {
+  input: UpdateSellerProductInput;
 };
 
 

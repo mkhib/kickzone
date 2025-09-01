@@ -5,6 +5,7 @@
 type PageInfo {
   endCursor: String
   hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
 }
 
 type User {
@@ -105,6 +106,86 @@ type SellerConnection {
   totalCount: Int!
 }
 
+type Order {
+  id: ID!
+  orderNumber: String!
+  customerEmail: String!
+  customerPhone: String!
+  customerName: String!
+  shippingAddress: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String!
+  status: OrderStatus!
+  subtotal: Float!
+  shippingCost: Float!
+  total: Float!
+  notes: String
+  trackingNumber: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  sellerId: String!
+  items: [OrderItem!]!
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type OrderItem {
+  id: ID!
+  orderId: String!
+  productId: String!
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+}
+
+type Cart {
+  id: ID!
+  userId: String!
+  subtotal: Float!
+  total: Float!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  items: [CartItem!]!
+}
+
+type CartItem {
+  id: ID!
+  cartId: String!
+  productId: String!
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+  sellerId: String!
+}
+
+type OrderEdge {
+  node: Order!
+  cursor: String!
+}
+
 type Query {
   users(first: Int, after: String, searchTerm: String): UserConnection!
   me: User
@@ -116,6 +197,12 @@ type Query {
   findOne(id: Int!): SellerInfo
   colors: [Color!]!
   color(id: Int!): Color
+  orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): [Order!]!
+  order(id: String!): Order!
+  myOrders(first: Int! = 10, after: String): [Order!]!
+  adminSellerOrders(sellerId: String!, first: Int! = 10, after: String, status: OrderStatus): [Order!]!
+  allSellerOrders(first: Int! = 10, after: String, status: OrderStatus): [Order!]!
+  myCart: Cart!
 }
 
 input ProductFilterInput {
@@ -180,6 +267,14 @@ type Mutation {
   createColor(input: CreateColorInput!): Color!
   updateColor(id: Int!, input: UpdateColorInput!): Color
   deleteColor(id: Int!): Boolean!
+  createOrder(createOrderInput: CreateOrderInput!): Order!
+  updateOrder(id: String!, updateOrderInput: UpdateOrderInput!): Order!
+  updateOrderStatus(updateOrderStatusInput: UpdateOrderStatusInput!): Order!
+  deleteOrder(id: String!): Boolean!
+  addToCart(addToCartInput: AddToCartInput!): Cart!
+  updateCartItem(itemId: String!, updateInput: UpdateCartItemInput!): Cart!
+  removeFromCart(itemId: String!): Cart!
+  clearCart: Cart!
 }
 
 input CreateUserInput {
@@ -271,4 +366,77 @@ input CreateColorInput {
 input UpdateColorInput {
   name: String!
   hexCode: String!
+}
+
+input CreateOrderInput {
+  customerEmail: String!
+  customerPhone: String!
+  customerName: String!
+  shippingAddress: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String!
+  sellerId: String!
+  items: [CreateOrderItemInput!]!
+  notes: String
+}
+
+input CreateOrderItemInput {
+  productId: String!
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+}
+
+input UpdateOrderInput {
+  customerEmail: String
+  customerPhone: String
+  customerName: String
+  shippingAddress: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  items: [UpdateOrderItemInput!]
+  notes: String
+  trackingNumber: String
+}
+
+input UpdateOrderItemInput {
+  id: String
+  productId: String!
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+}
+
+input UpdateOrderStatusInput {
+  id: String!
+  status: OrderStatus!
+}
+
+input AddToCartInput {
+  productId: String!
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  color: String
+  size: String
+  sellerId: String!
+}
+
+input UpdateCartItemInput {
+  quantity: Int
+  color: String
+  size: String
 }

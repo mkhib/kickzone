@@ -1,0 +1,9 @@
+{
+  "name": "customer-shopping-cart",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/customer-shopping-cart/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-shopping-cart --web",
+  "targets": {}
+}

@@ -3,10 +3,13 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 @ObjectType()
 export class PageInfo {
   @Field(() => String, { nullable: true })
-  endCursor: string | number | null;
+  endCursor?: string;
 
   @Field(() => Boolean)
   hasNextPage: boolean;
+
+  @Field(() => Boolean)
+  hasPreviousPage: boolean;
 }
 
 export type ConnectionArgs = {
@@ -42,8 +45,10 @@ export function createConnection<T extends Node>(
   }));
 
   const pageInfo: PageInfo = {
-    endCursor: edges.length > 0 ? edges[edges.length - 1].cursor : null,
+    endCursor:
+      edges.length > 0 ? String(edges[edges.length - 1].cursor) : undefined,
     hasNextPage: totalCount > (first || 10) + (after ? 1 : 0),
+    hasPreviousPage: !!after,
   };
 
   return {

@@ -4,3 +4,7 @@ export * from './lib/product-info-filter.input';
 export * from './lib/seller.input';
 export * from './lib/color.input';
 export * from './lib/category.input';
+export * from './lib/order.inputs';
+export * from './lib/order-pagination.inputs';
+export * from './lib/cart.inputs';
+export * from './lib/customer-auth.inputs';
