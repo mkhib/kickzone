@@ -207,6 +207,9 @@
       "@kickzone-workspace/shared-i18n": [
         "libs/shared/shared-i18n/src/index.ts"
       ],
+      "@kickzone-workspace/shared-notification-store": [
+        "libs/client/shared/zustand/shared-notification-store/src/index.ts"
+      ],
       "@kickzone-workspace/shared-routes": [
         "libs/client/shared/routes/src/index.ts"
       ],
