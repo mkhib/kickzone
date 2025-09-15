@@ -210,6 +210,9 @@
       "@kickzone-workspace/shared-routes": [
         "libs/client/shared/routes/src/index.ts"
       ],
+      "@kickzone-workspace/shared-ui-store": [
+        "libs/client/shared/zustand/shared-ui-store/src/index.ts"
+      ],
       "@kickzone-workspace/snackbar": [
         "libs/client/shared/components/snackbar/src/index.ts"
       ],
