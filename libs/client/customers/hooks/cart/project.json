@@ -1,0 +1,9 @@
+{
+  "name": "customers-cart-hook",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/hooks/cart/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customers-cart-hook --web",
+  "targets": {}
+}

@@ -46,6 +46,9 @@
       "@kickzone-workspace/admins-login": [
         "libs/client/admins/screens/login/src/index.ts"
       ],
+      "@kickzone-workspace/admins-orders-hook": [
+        "libs/client/admins/hooks/orders/src/index.ts"
+      ],
       "@kickzone-workspace/admins-products-store": [
         "libs/client/admins/zustand/admins-products-store/src/index.ts"
       ],
@@ -98,6 +101,9 @@
       "@kickzone-workspace/customers-auth-hooks": [
         "libs/client/customers/hooks/auth/src/index.ts"
       ],
+      "@kickzone-workspace/customers-cart-hook": [
+        "libs/client/customers/hooks/cart/src/index.ts"
+      ],
       "@kickzone-workspace/customers-graphql": [
         "libs/client/customers/graphql/src/index.ts"
       ],
@@ -113,8 +119,14 @@
       "@kickzone-workspace/customers-login-screen": [
         "libs/client/customers/screens/login/src/index.ts"
       ],
+      "@kickzone-workspace/customers-orders-hook": [
+        "libs/client/customers/hooks/orders/src/index.ts"
+      ],
       "@kickzone-workspace/customers-product-card": [
         "libs/client/customers/components/product-card/src/index.ts"
+      ],
+      "@kickzone-workspace/customers-product-hook": [
+        "libs/client/customers/hooks/products/src/index.ts"
       ],
       "@kickzone-workspace/customers-products-store": [
         "libs/client/customers/zustand/src/index.ts"
@@ -149,6 +161,9 @@
         "libs/client/shared/hooks/products/src/index.ts"
       ],
       "@kickzone-workspace/resolvers": ["libs/server/resolvers/src/index.ts"],
+      "@kickzone-workspace/seller-orders-screen": [
+        "libs/client/sellers/screens/seller-orders/src/index.ts"
+      ],
       "@kickzone-workspace/sellers-auth-context": [
         "libs/client/sellers/contexts/auth/src/index.ts"
       ],

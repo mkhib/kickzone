@@ -10,3 +10,8 @@ export const ME_QUERY = gql`
     }
   }
 `;
+
+export {
+  GET_SELLER_ORDERS_QUERY,
+  UPDATE_ORDER_STATUS_MUTATION,
+} from './seller-orders.graphql';
