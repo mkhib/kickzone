@@ -7,7 +7,7 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import FormControl from '@mui/material/FormControl';
-import Grid2 from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
@@ -102,7 +102,7 @@ export function CustomersHome() {
               </Select>
             </FormControl>
           </Stack>
-          <Grid2 container spacing={4} justifyContent="center">
+          <Grid container spacing={4} justifyContent="center">
             {loading ? (
               <Typography variant="h6" sx={{ mt: 4 }}>
                 Loading...
@@ -114,7 +114,7 @@ export function CustomersHome() {
             ) : (
               products.map((product) => {
                 return (
-                  <Grid2
+                  <Grid
                     key={product.id}
                     size={
                       products.length === 1
@@ -126,11 +126,11 @@ export function CustomersHome() {
                       product={product}
                       onAddToCart={handleAddToCart}
                     />
-                  </Grid2>
+                  </Grid>
                 );
               })
             )}
-          </Grid2>
+          </Grid>
         </Box>
       </Container>
     </CustomersLayout>

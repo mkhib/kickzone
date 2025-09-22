@@ -6,7 +6,7 @@ import DialogActions from '@mui/material/DialogActions';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
-import Grid2 from '@mui/material/Grid';
+import Grid from '@mui/material/Grid';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
 import CardActions from '@mui/material/CardActions';
@@ -329,9 +329,9 @@ export function ProductImageManagementModal({
                   Current Images ({productInfo.images?.length || 0})
                 </Typography>
                 {productInfo.images && productInfo.images.length > 0 ? (
-                  <Grid2 container spacing={2} sx={{ mb: 3 }}>
+                  <Grid container spacing={2} sx={{ mb: 3 }}>
                     {productInfo.images.map((imageUrl, imageIndex) => (
-                      <Grid2 key={imageIndex} size={{ xs: 12, sm: 6, md: 4 }}>
+                      <Grid key={imageIndex} size={{ xs: 12, sm: 6, md: 4 }}>
                         <Card>
                           <CardMedia
                             component="img"
@@ -356,9 +356,9 @@ export function ProductImageManagementModal({
                             </IconButton>
                           </CardActions>
                         </Card>
-                      </Grid2>
+                      </Grid>
                     ))}
-                  </Grid2>
+                  </Grid>
                 ) : (
                   <Alert severity="info" sx={{ mb: 3 }}>
                     No images uploaded for this variant yet.
@@ -436,10 +436,10 @@ export function ProductImageManagementModal({
                       <Typography variant="body2" gutterBottom>
                         Image Previews:
                       </Typography>
-                      <Grid2 container spacing={2} sx={{ mb: 2 }}>
+                      <Grid container spacing={2} sx={{ mb: 2 }}>
                         {imageModal.selectedFilePreviews[productInfo.id].map(
                           (preview, fileIndex) => (
-                            <Grid2
+                            <Grid
                               key={fileIndex}
                               size={{ xs: 12, sm: 6, md: 4 }}
                             >
@@ -466,10 +466,10 @@ export function ProductImageManagementModal({
                                   </IconButton>
                                 </CardActions>
                               </Card>
-                            </Grid2>
+                            </Grid>
                           )
                         )}
-                      </Grid2>
+                      </Grid>
                     </Box>
                   )}
               </Box>

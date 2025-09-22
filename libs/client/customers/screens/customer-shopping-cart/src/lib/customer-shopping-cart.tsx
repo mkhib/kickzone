@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@apollo/client/react';
+import { useMutation } from '@apollo/client/react';
 import {
   Box,
   Typography,
@@ -24,36 +24,22 @@ import {
 import { Delete, Add, Remove, ShoppingCartCheckout } from '@mui/icons-material';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import {
-  GET_MY_CART_QUERY,
   UPDATE_CART_ITEM_MUTATION,
   REMOVE_FROM_CART_MUTATION,
   CLEAR_CART_MUTATION,
   CREATE_ORDER_MUTATION,
 } from '@kickzone-workspace/customers-graphql';
+import {
+  useCartItems,
+  useCartLoading,
+  useCartError,
+  useCartTotal,
+  useCartActions,
+} from '@kickzone-workspace/customer-cart-store';
+import { useUIActions } from '@kickzone-workspace/shared-ui-store';
 
-interface CartItem {
-  id: string;
-  productId: string;
-  productName: string;
-  productImage: string | null;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  color: string | null;
-  size: string | null;
-  sellerId: string;
-}
-
-interface Cart {
-  id: string;
-  subtotal: number;
-  total: number;
-  items: CartItem[];
-}
-
-interface CartData {
-  myCart: Cart;
-}
+// Import types from cart store
+import type { CartItem } from '@kickzone-workspace/customer-cart-store';
 
 const steps = ['Review Cart', 'Shipping Information', 'Order Summary'];
 
@@ -72,14 +58,15 @@ export function CustomerShoppingCart() {
   });
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
 
-  const {
-    data: cartData,
-    loading: cartLoading,
-    error: cartError,
-    refetch,
-  } = useQuery<CartData>(GET_MY_CART_QUERY, {
-    fetchPolicy: 'cache-and-network',
-  });
+  // Use cart store
+  const cartItems = useCartItems();
+  const cartLoading = useCartLoading();
+  const cartError = useCartError();
+  const cartTotal = useCartTotal();
+  const cartActions = useCartActions();
+
+  // Use UI store for notifications
+  const { addToast } = useUIActions();
 
   const [updateCartItem] = useMutation(UPDATE_CART_ITEM_MUTATION);
   const [removeFromCart] = useMutation(REMOVE_FROM_CART_MUTATION);
@@ -87,27 +74,72 @@ export function CustomerShoppingCart() {
   const [createOrder] = useMutation(CREATE_ORDER_MUTATION);
 
   const handleQuantityChange = async (itemId: string, newQuantity: number) => {
-    if (newQuantity <= 0) {
-      await removeFromCart({ variables: { itemId } });
-    } else {
-      await updateCartItem({
-        variables: {
-          itemId,
-          updateInput: { quantity: newQuantity },
-        },
+    try {
+      if (newQuantity <= 0) {
+        await removeFromCart({ variables: { itemId } });
+        cartActions.removeItem(itemId);
+        addToast({
+          type: 'success',
+          title: 'Item removed',
+          message: 'Item has been removed from your cart',
+        });
+      } else {
+        await updateCartItem({
+          variables: {
+            itemId,
+            updateInput: { quantity: newQuantity },
+          },
+        });
+        cartActions.updateItemQuantity(itemId, newQuantity);
+        addToast({
+          type: 'success',
+          title: 'Quantity updated',
+          message: 'Item quantity has been updated',
+        });
+      }
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'Update failed',
+        message: 'Failed to update item quantity',
       });
     }
-    refetch();
   };
 
   const handleRemoveItem = async (itemId: string) => {
-    await removeFromCart({ variables: { itemId } });
-    refetch();
+    try {
+      await removeFromCart({ variables: { itemId } });
+      cartActions.removeItem(itemId);
+      addToast({
+        type: 'success',
+        title: 'Item removed',
+        message: 'Item has been removed from your cart',
+      });
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'Remove failed',
+        message: 'Failed to remove item from cart',
+      });
+    }
   };
 
   const handleClearCart = async () => {
-    await clearCart();
-    refetch();
+    try {
+      await clearCart();
+      cartActions.clearCart();
+      addToast({
+        type: 'success',
+        title: 'Cart cleared',
+        message: 'All items have been removed from your cart',
+      });
+    } catch {
+      addToast({
+        type: 'error',
+        title: 'Clear failed',
+        message: 'Failed to clear cart',
+      });
+    }
   };
 
   const handleCheckout = () => {
@@ -129,23 +161,12 @@ export function CustomerShoppingCart() {
   const handlePlaceOrder = async () => {
     try {
       // Group items by seller
-      const itemsBySeller = cartData?.myCart.items.reduce(
+      const itemsBySeller = cartItems.reduce(
         (acc: Record<string, CartItem[]>, item: CartItem) => {
           if (!acc[item.sellerId]) {
             acc[item.sellerId] = [];
           }
-          acc[item.sellerId].push({
-            id: item.id,
-            productId: item.productId,
-            productName: item.productName,
-            productImage: item.productImage,
-            quantity: item.quantity,
-            unitPrice: item.unitPrice,
-            totalPrice: item.totalPrice,
-            color: item.color,
-            size: item.size,
-            sellerId: item.sellerId,
-          });
+          acc[item.sellerId].push(item);
           return acc;
         },
         {} as Record<string, CartItem[]>
@@ -169,7 +190,7 @@ export function CustomerShoppingCart() {
       await clearCart();
       setCheckoutDialogOpen(false);
       setActiveStep(0);
-      refetch();
+      // Cart will be cleared by the mutation
     } catch (error) {
       console.error('Error placing order:', error);
     }
@@ -193,13 +214,12 @@ export function CustomerShoppingCart() {
   if (cartError) {
     return (
       <CustomersLayout>
-        <Alert severity="error">Error loading cart: {cartError.message}</Alert>
+        <Alert severity="error">Error loading cart: {cartError}</Alert>
       </CustomersLayout>
     );
   }
 
-  const cart = cartData?.myCart;
-  const hasItems = cart && cart.items.length > 0;
+  const hasItems = cartItems.length > 0;
 
   return (
     <CustomersLayout>
@@ -221,7 +241,7 @@ export function CustomerShoppingCart() {
           <Grid container spacing={3}>
             {/* Cart Items */}
             <Grid size={{ xs: 12, md: 8 }}>
-              {cart.items.map((item) => (
+              {cartItems.map((item) => (
                 <Card key={item.id} sx={{ mb: 2 }}>
                   <CardContent>
                     <Grid container spacing={2} alignItems="center">
@@ -345,7 +365,7 @@ export function CustomerShoppingCart() {
                     }}
                   >
                     <Typography>Subtotal:</Typography>
-                    <Typography>${cart.subtotal.toFixed(2)}</Typography>
+                    <Typography>${cartTotal.toFixed(2)}</Typography>
                   </Box>
 
                   <Box
@@ -370,7 +390,7 @@ export function CustomerShoppingCart() {
                   >
                     <Typography variant="h6">Total:</Typography>
                     <Typography variant="h6">
-                      ${cart.total.toFixed(2)}
+                      ${cartTotal.toFixed(2)}
                     </Typography>
                   </Box>
 
@@ -411,7 +431,7 @@ export function CustomerShoppingCart() {
                 <Typography variant="h6" gutterBottom>
                   Review Your Cart
                 </Typography>
-                {cart?.items.map((item) => (
+                {cartItems.map((item: CartItem) => (
                   <Box
                     key={item.id}
                     sx={{
@@ -429,9 +449,7 @@ export function CustomerShoppingCart() {
                 <Divider sx={{ my: 2 }} />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="h6">Total:</Typography>
-                  <Typography variant="h6">
-                    ${cart?.total.toFixed(2)}
-                  </Typography>
+                  <Typography variant="h6">${cartTotal.toFixed(2)}</Typography>
                 </Box>
               </Box>
             )}

@@ -6,7 +6,7 @@ import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import Grid2 from '@mui/material/Grid2';
+import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import CssBaseline from '@mui/material/CssBaseline';
 import Paper from '@mui/material/Paper';
@@ -81,13 +81,13 @@ export function CustomersLogin() {
             >
               Sign In
             </Button>
-            <Grid2 container justifyContent="flex-end" component="div">
-              <Grid2 component="div">
+            <Grid container justifyContent="flex-end" component="div">
+              <Grid component="div">
                 <Link href="#" variant="body2" sx={{ color: colors.main }}>
                   Don't have an account? Sign Up
                 </Link>
-              </Grid2>
-            </Grid2>
+              </Grid>
+            </Grid>
           </Box>
         </Paper>
       </Container>

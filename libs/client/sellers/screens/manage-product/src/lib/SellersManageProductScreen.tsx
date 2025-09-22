@@ -18,7 +18,7 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import Grid2 from '@mui/material/Grid';
+import Grid from '@mui/material/Grid';
 import React, { useState } from 'react';
 
 const initialFormData: SellerProductFormData = {
@@ -155,9 +155,9 @@ export function SellersManageProductScreen() {
           )}
 
           <form onSubmit={handleSubmit}>
-            <Grid2 container spacing={3}>
+            <Grid container spacing={3}>
               {/* Product Selection */}
-              <Grid2 size={{ xs: 12 }}>
+              <Grid size={{ xs: 12 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
                   Select Product
                 </Typography>
@@ -190,11 +190,11 @@ export function SellersManageProductScreen() {
                     );
                   }}
                 />
-              </Grid2>
+              </Grid>
 
               {/* Product Variant Selection */}
               {selectedProduct && (
-                <Grid2 size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
                     Select Variant
                   </Typography>
@@ -249,59 +249,59 @@ export function SellersManageProductScreen() {
                       );
                     }}
                   />
-                </Grid2>
+                </Grid>
               )}
 
               {/* Product Details Card */}
               {selectedProduct && selectedProductInfo && (
-                <Grid2 size={{ xs: 12 }}>
+                <Grid size={{ xs: 12 }}>
                   <Card variant="outlined">
                     <CardContent>
                       <Typography variant="h6" sx={{ mb: 2 }}>
                         Product Details
                       </Typography>
-                      <Grid2 container spacing={2}>
-                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                      <Grid container spacing={2}>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="body2" color="text.secondary">
                             Product: {selectedProduct.name}
                           </Typography>
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="body2" color="text.secondary">
                             Variant: {selectedProductInfo.size} -{' '}
                             {selectedProductInfo.color?.name || 'No Color'}
                           </Typography>
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="body2" color="text.secondary">
                             Weight: {selectedProductInfo.weight}kg
                           </Typography>
-                        </Grid2>
-                        <Grid2 size={{ xs: 12, sm: 6 }}>
+                        </Grid>
+                        <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="body2" color="text.secondary">
                             Categories:{' '}
                             {selectedProduct.categories
                               .map((cat) => cat.name)
                               .join(', ')}
                           </Typography>
-                        </Grid2>
-                      </Grid2>
+                        </Grid>
+                      </Grid>
                     </CardContent>
                   </Card>
-                </Grid2>
+                </Grid>
               )}
 
               {/* Pricing and Stock Form */}
               {selectedProductInfo && (
                 <>
-                  <Grid2 size={{ xs: 12 }}>
+                  <Grid size={{ xs: 12 }}>
                     <Divider sx={{ my: 2 }} />
                     <Typography variant="h6" sx={{ mb: 2 }}>
                       Pricing & Stock
                     </Typography>
-                  </Grid2>
+                  </Grid>
 
-                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
                       label="Price ($)"
@@ -314,9 +314,9 @@ export function SellersManageProductScreen() {
                       disabled={isLoading}
                       inputProps={{ min: 0, step: 0.01 }}
                     />
-                  </Grid2>
+                  </Grid>
 
-                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
                       label="Cost Price ($)"
@@ -329,9 +329,9 @@ export function SellersManageProductScreen() {
                       disabled={isLoading}
                       inputProps={{ min: 0, step: 0.01 }}
                     />
-                  </Grid2>
+                  </Grid>
 
-                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
                       label="Discount (%)"
@@ -344,9 +344,9 @@ export function SellersManageProductScreen() {
                       inputProps={{ min: 0, max: 100, step: 0.01 }}
                       helperText="Enter discount percentage (0-100)"
                     />
-                  </Grid2>
+                  </Grid>
 
-                  <Grid2 size={{ xs: 12, sm: 6 }}>
+                  <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
                       label="Stock Quantity"
@@ -359,10 +359,10 @@ export function SellersManageProductScreen() {
                       disabled={isLoading}
                       inputProps={{ min: 0 }}
                     />
-                  </Grid2>
+                  </Grid>
 
                   {/* Final Price Display */}
-                  <Grid2 size={{ xs: 12 }}>
+                  <Grid size={{ xs: 12 }}>
                     <Card
                       variant="outlined"
                       sx={{ backgroundColor: 'primary.50' }}
@@ -381,12 +381,12 @@ export function SellersManageProductScreen() {
                         </Typography>
                       </CardContent>
                     </Card>
-                  </Grid2>
+                  </Grid>
                 </>
               )}
 
               {/* Action Buttons */}
-              <Grid2 size={{ xs: 12 }}>
+              <Grid size={{ xs: 12 }}>
                 <Box
                   sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}
                 >
@@ -412,8 +412,8 @@ export function SellersManageProductScreen() {
                       : 'Add Product'}
                   </Button>
                 </Box>
-              </Grid2>
-            </Grid2>
+              </Grid>
+            </Grid>
           </form>
         </Paper>
       </Box>

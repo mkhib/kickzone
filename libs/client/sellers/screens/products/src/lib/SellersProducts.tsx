@@ -18,7 +18,7 @@ import Chip from '@mui/material/Chip';
 import Stack from '@mui/material/Stack';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import Grid2 from '@mui/material/Grid';
+import Grid from '@mui/material/Grid';
 import {
   Add as AddIcon,
   Edit as EditIcon,
@@ -119,8 +119,8 @@ export const SellersProducts = () => {
 
         {/* Filters */}
         <Box sx={{ mb: 3 }}>
-          <Grid2 container spacing={2} alignItems="center">
-            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+          <Grid container spacing={2} alignItems="center">
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
                 label="Search products"
@@ -128,8 +128,8 @@ export const SellersProducts = () => {
                 onChange={(e) => setSearch(e.target.value)}
                 size="small"
               />
-            </Grid2>
-            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Category</InputLabel>
                 <Select
@@ -141,8 +141,8 @@ export const SellersProducts = () => {
                   {/* TODO: Add categories from API */}
                 </Select>
               </FormControl>
-            </Grid2>
-            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Sort by</InputLabel>
                 <Select
@@ -156,8 +156,8 @@ export const SellersProducts = () => {
                   <MenuItem value="createdAt">Date Created</MenuItem>
                 </Select>
               </FormControl>
-            </Grid2>
-            <Grid2 size={{ xs: 12, sm: 6, md: 3 }}>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
                 <InputLabel>Status</InputLabel>
                 <Select
@@ -187,16 +187,16 @@ export const SellersProducts = () => {
                   </MenuItem>
                 </Select>
               </FormControl>
-            </Grid2>
-          </Grid2>
+            </Grid>
+          </Grid>
         </Box>
 
         {/* Products Grid */}
-        <Grid2 container spacing={3}>
+        <Grid container spacing={3}>
           {sellersProducts.map((product: KickzoneGraphqlTypes.Product) => {
             const firstProductInfo = product.productInfos[0];
             return (
-              <Grid2 key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+              <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                 <Card
                   sx={{
                     height: '100%',
@@ -301,10 +301,10 @@ export const SellersProducts = () => {
                     </Box>
                   </CardActions>
                 </Card>
-              </Grid2>
+              </Grid>
             );
           })}
-        </Grid2>
+        </Grid>
 
         {/* Load More */}
         {hasMoreSellersProducts && (

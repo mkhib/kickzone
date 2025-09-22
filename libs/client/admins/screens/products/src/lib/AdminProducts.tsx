@@ -11,7 +11,7 @@ import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardContent from '@mui/material/CardContent';
 import FormControl from '@mui/material/FormControl';
-import Grid2 from '@mui/material/Grid';
+import Grid from '@mui/material/Grid';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
@@ -199,11 +199,11 @@ export function AdminProducts() {
           <Typography color="error">Error loading products</Typography>
         ) : (
           <>
-            <Grid2 container spacing={2}>
+            <Grid container spacing={2}>
               {filteredProducts.map((product: KickzoneGraphqlTypes.Product) => {
                 const info = product.productInfos[0];
                 return (
-                  <Grid2 key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                  <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
                     <Card>
                       <CardContent>
                         <Typography variant="h6">{product.name}</Typography>
@@ -250,10 +250,10 @@ export function AdminProducts() {
                         )}
                       </CardActions>
                     </Card>
-                  </Grid2>
+                  </Grid>
                 );
               })}
-            </Grid2>
+            </Grid>
             {hasNextPage && <div ref={loaderRef} style={{ height: 40 }} />}
             <Box mt={2} textAlign="center">
               <Typography variant="caption">

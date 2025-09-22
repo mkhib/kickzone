@@ -23,7 +23,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
-import Grid2 from '@mui/material/Grid';
+import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
 import Paper from '@mui/material/Paper';
 import { styled, useTheme } from '@mui/material/styles';
@@ -1212,9 +1212,9 @@ export function AdminProductEditor() {
           Add/Edit Product
         </Typography>
         <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
-          <Grid2 container spacing={3} sx={{ height: '100%' }}>
+          <Grid container spacing={3} sx={{ height: '100%' }}>
             {/* Left Side - Basic Product Info */}
-            <Grid2
+            <Grid
               size={{ xs: 12, md: 6 }}
               sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
             >
@@ -1392,9 +1392,9 @@ export function AdminProductEditor() {
                   ))}
                 </Box>
               </Box>
-            </Grid2>
+            </Grid>
             {/* Right Side - ProductInfos Section */}
-            <Grid2 size={{ xs: 12, md: 6 }}>
+            <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>
                 Product Variants
               </Typography>
@@ -1456,9 +1456,9 @@ export function AdminProductEditor() {
               >
                 Add Variant
               </Button>
-            </Grid2>
+            </Grid>
             {/* Save Button */}
-            <Grid2 size={12} sx={{ mt: 'auto' }}>
+            <Grid size={12} sx={{ mt: 'auto' }}>
               <Box
                 sx={{
                   display: 'flex',
@@ -1478,8 +1478,8 @@ export function AdminProductEditor() {
                   Save Product
                 </Button>
               </Box>
-            </Grid2>
-          </Grid2>
+            </Grid>
+          </Grid>
         </form>
       </Paper>
       <CategoryModal

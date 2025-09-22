@@ -98,6 +98,9 @@
       "@kickzone-workspace/customer-signup": [
         "libs/client/customers/screens/customer-signup/src/index.ts"
       ],
+      "@kickzone-workspace/customer-wishlist-store": [
+        "libs/client/customers/zustand/customer-wishlist-store/src/index.ts"
+      ],
       "@kickzone-workspace/customers-auth-context": [
         "libs/client/customers/contexts/auth/src/index.ts"
       ],
