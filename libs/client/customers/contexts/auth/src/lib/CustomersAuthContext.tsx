@@ -23,10 +23,12 @@ export const CustomersAuthProvider = ({
 
   const login = (user: Pick<User, 'id' | 'name' | 'email' | 'role'>) => {
     setUser(user);
+    // Cart will be loaded automatically by useCartService when user logs in
   };
 
   const logout = () => {
     setUser(null);
+    // Cart will be cleared automatically by useCartService when user logs out
   };
 
   return (

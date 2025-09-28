@@ -32,6 +32,7 @@ export interface CartActions {
   removeItem: (itemId: string) => void;
   updateItemQuantity: (itemId: string, quantity: number) => void;
   clearCart: () => void;
+  setItems: (items: CartItem[]) => void;
 
   // Bulk operations
   addMultipleItems: (items: Omit<CartItem, 'id' | 'totalPrice'>[]) => void;
@@ -140,6 +141,13 @@ export const useCartStore = create<CartStore>()(
       clearCart: () => {
         set({
           items: [],
+          lastUpdated: new Date().toISOString(),
+        });
+      },
+
+      setItems: (items) => {
+        set({
+          items,
           lastUpdated: new Date().toISOString(),
         });
       },
@@ -277,6 +285,9 @@ export const useCartStore = create<CartStore>()(
     }),
     {
       name: 'cart-storage',
+      // Only persist items and lastUpdated to localStorage
+      // This ensures cart persists across browser sessions
+      // Cart is cleared on logout via auth context
       partialize: (state) => ({
         items: state.items,
         lastUpdated: state.lastUpdated,
@@ -289,29 +300,91 @@ export const useCartStore = create<CartStore>()(
 export const useCartItems = () => useCartStore((state) => state.items);
 export const useCartLoading = () => useCartStore((state) => state.isLoading);
 export const useCartError = () => useCartStore((state) => state.error);
-export const useCartTotal = () =>
-  useCartStore((state) => state.getTotalPrice());
-export const useCartItemCount = () =>
-  useCartStore((state) => state.getTotalItems());
+// Memoized selectors to prevent infinite loops
+export const useCartTotal = () => {
+  const items = useCartStore((state) => state.items);
+  return items.reduce((total, item) => total + item.totalPrice, 0);
+};
 
-export const useCartActions = () =>
-  useCartStore((state) => ({
-    addItem: state.addItem,
-    removeItem: state.removeItem,
-    updateItemQuantity: state.updateItemQuantity,
-    clearCart: state.clearCart,
-    addMultipleItems: state.addMultipleItems,
-    removeMultipleItems: state.removeMultipleItems,
-    setLoading: state.setLoading,
-    setError: state.setError,
-    clearError: state.clearError,
-    setLastUpdated: state.setLastUpdated,
-    syncWithServer: state.syncWithServer,
-    loadFromServer: state.loadFromServer,
-    getItemById: state.getItemById,
-    getItemByProductInfo: state.getItemByProductInfo,
-    getTotalItems: state.getTotalItems,
-    getTotalPrice: state.getTotalPrice,
-    getTotalBySeller: state.getTotalBySeller,
-    getUniqueSellers: state.getUniqueSellers,
-  }));
+export const useCartItemCount = () => {
+  const items = useCartStore((state) => state.items);
+  return items.reduce((total, item) => total + item.quantity, 0);
+};
+
+// Individual action hooks to prevent unnecessary re-renders
+export const useAddItem = () => useCartStore((state) => state.addItem);
+export const useRemoveItem = () => useCartStore((state) => state.removeItem);
+export const useUpdateItemQuantity = () =>
+  useCartStore((state) => state.updateItemQuantity);
+export const useClearCart = () => useCartStore((state) => state.clearCart);
+export const useAddMultipleItems = () =>
+  useCartStore((state) => state.addMultipleItems);
+export const useRemoveMultipleItems = () =>
+  useCartStore((state) => state.removeMultipleItems);
+export const useSetLoading = () => useCartStore((state) => state.setLoading);
+export const useSetError = () => useCartStore((state) => state.setError);
+export const useClearError = () => useCartStore((state) => state.clearError);
+export const useSetLastUpdated = () =>
+  useCartStore((state) => state.setLastUpdated);
+export const useSyncWithServer = () =>
+  useCartStore((state) => state.syncWithServer);
+export const useLoadFromServer = () =>
+  useCartStore((state) => state.loadFromServer);
+export const useGetItemById = () => useCartStore((state) => state.getItemById);
+export const useGetItemByProductInfo = () =>
+  useCartStore((state) => state.getItemByProductInfo);
+export const useGetTotalItems = () =>
+  useCartStore((state) => state.getTotalItems);
+export const useGetTotalPrice = () =>
+  useCartStore((state) => state.getTotalPrice);
+export const useGetTotalBySeller = () =>
+  useCartStore((state) => state.getTotalBySeller);
+export const useGetUniqueSellers = () =>
+  useCartStore((state) => state.getUniqueSellers);
+
+// Memoized actions hook to prevent infinite re-renders
+export const useCartActions = () => {
+  const addItem = useCartStore((state) => state.addItem);
+  const removeItem = useCartStore((state) => state.removeItem);
+  const updateItemQuantity = useCartStore((state) => state.updateItemQuantity);
+  const clearCart = useCartStore((state) => state.clearCart);
+  const addMultipleItems = useCartStore((state) => state.addMultipleItems);
+  const removeMultipleItems = useCartStore(
+    (state) => state.removeMultipleItems
+  );
+  const setLoading = useCartStore((state) => state.setLoading);
+  const setError = useCartStore((state) => state.setError);
+  const clearError = useCartStore((state) => state.clearError);
+  const setLastUpdated = useCartStore((state) => state.setLastUpdated);
+  const syncWithServer = useCartStore((state) => state.syncWithServer);
+  const loadFromServer = useCartStore((state) => state.loadFromServer);
+  const getItemById = useCartStore((state) => state.getItemById);
+  const getItemByProductInfo = useCartStore(
+    (state) => state.getItemByProductInfo
+  );
+  const getTotalItems = useCartStore((state) => state.getTotalItems);
+  const getTotalPrice = useCartStore((state) => state.getTotalPrice);
+  const getTotalBySeller = useCartStore((state) => state.getTotalBySeller);
+  const getUniqueSellers = useCartStore((state) => state.getUniqueSellers);
+
+  return {
+    addItem,
+    removeItem,
+    updateItemQuantity,
+    clearCart,
+    addMultipleItems,
+    removeMultipleItems,
+    setLoading,
+    setError,
+    clearError,
+    setLastUpdated,
+    syncWithServer,
+    loadFromServer,
+    getItemById,
+    getItemByProductInfo,
+    getTotalItems,
+    getTotalPrice,
+    getTotalBySeller,
+    getUniqueSellers,
+  };
+};

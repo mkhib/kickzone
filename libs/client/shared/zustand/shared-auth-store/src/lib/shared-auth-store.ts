@@ -253,18 +253,32 @@ export const useIsAuthenticated = () =>
   useAuthStore((state) => state.isAuthenticated);
 export const useAuthLoading = () => useAuthStore((state) => state.isLoading);
 export const useAuthError = () => useAuthStore((state) => state.error);
-export const useAuthActions = () =>
-  useAuthStore((state) => ({
-    login: state.login,
-    logout: state.logout,
-    register: state.register,
-    refreshAuthToken: state.refreshAuthToken,
-    updateUser: state.updateUser,
-    setUser: state.setUser,
-    clearUser: state.clearUser,
-    setLoading: state.setLoading,
-    setError: state.setError,
-    clearError: state.clearError,
-    setTokens: state.setTokens,
-    clearTokens: state.clearTokens,
-  }));
+export const useAuthActions = () => {
+  const login = useAuthStore((state) => state.login);
+  const logout = useAuthStore((state) => state.logout);
+  const register = useAuthStore((state) => state.register);
+  const refreshAuthToken = useAuthStore((state) => state.refreshAuthToken);
+  const updateUser = useAuthStore((state) => state.updateUser);
+  const setUser = useAuthStore((state) => state.setUser);
+  const clearUser = useAuthStore((state) => state.clearUser);
+  const setLoading = useAuthStore((state) => state.setLoading);
+  const setError = useAuthStore((state) => state.setError);
+  const clearError = useAuthStore((state) => state.clearError);
+  const setTokens = useAuthStore((state) => state.setTokens);
+  const clearTokens = useAuthStore((state) => state.clearTokens);
+
+  return {
+    login,
+    logout,
+    register,
+    refreshAuthToken,
+    updateUser,
+    setUser,
+    clearUser,
+    setLoading,
+    setError,
+    clearError,
+    setTokens,
+    clearTokens,
+  };
+};

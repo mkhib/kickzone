@@ -38,6 +38,30 @@ export const GET_PRODUCTS_QUERY = gql`
             weight
             images
           }
+          sellerProducts {
+            id
+            price
+            costPrice
+            discount
+            stockQuantity
+            seller {
+              id
+              storeName
+              user {
+                id
+                name
+              }
+            }
+            productInfo {
+              id
+              size
+              color {
+                id
+                name
+                hexCode
+              }
+            }
+          }
         }
         cursor
       }

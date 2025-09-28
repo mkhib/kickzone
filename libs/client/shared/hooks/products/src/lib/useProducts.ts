@@ -20,6 +20,8 @@ export function useProductsQuery({
   pageSize = 12,
   archivedStatus = KickzoneGraphqlTypes.ProductArchivedStatus.Active,
   sellerId,
+  onlyWithSellers,
+  onlyInStock,
 }: {
   search: string;
   categoryId?: number;
@@ -28,6 +30,8 @@ export function useProductsQuery({
   pageSize?: number;
   archivedStatus?: KickzoneGraphqlTypes.ProductArchivedStatus;
   sellerId?: number;
+  onlyWithSellers?: boolean;
+  onlyInStock?: boolean;
 }) {
   const { data, loading, error, fetchMore, refetch } = useQuery<
     Pick<KickzoneGraphqlTypes.Query, 'products'>,
@@ -42,6 +46,8 @@ export function useProductsQuery({
         sortOrder,
         archivedStatus,
         sellerId,
+        onlyWithSellers,
+        onlyInStock,
       },
     },
     notifyOnNetworkStatusChange: true,

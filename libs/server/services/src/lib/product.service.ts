@@ -33,8 +33,32 @@ export class ProductService {
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.productInfos', 'productInfo')
       .leftJoinAndSelect('productInfo.color', 'color')
-      .leftJoinAndSelect('product.categories', 'category')
-      .orderBy('productInfo.id', 'ASC');
+      .leftJoinAndSelect('product.categories', 'category');
+
+    // Use INNER JOIN for sellerProducts when filtering by sellers or stock
+    if (filter?.onlyWithSellers === true || filter?.onlyInStock === true) {
+      query
+        .innerJoinAndSelect('product.sellerProducts', 'sellerProduct')
+        .innerJoinAndSelect('sellerProduct.seller', 'seller')
+        .innerJoinAndSelect('seller.user', 'sellerUser');
+    } else {
+      query
+        .leftJoinAndSelect('product.sellerProducts', 'sellerProduct')
+        .leftJoinAndSelect('sellerProduct.seller', 'seller')
+        .leftJoinAndSelect('seller.user', 'sellerUser');
+    }
+
+    query.orderBy('productInfo.id', 'ASC');
+
+    // Filter by seller availability
+    if (filter?.onlyWithSellers === true) {
+      query.andWhere('sellerProduct.id IS NOT NULL');
+    }
+
+    // Filter by stock availability
+    if (filter?.onlyInStock === true) {
+      query.andWhere('sellerProduct.stockQuantity > 0');
+    }
 
     // Partitioning hint: The 'archived' column should be used for table partitioning at the DB level.
     if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
@@ -109,6 +133,17 @@ export class ProductService {
     }
 
     const products = await query.getMany();
+
+    // Debug: Log the first product to see if sellerProducts are loaded
+    if (products.length > 0) {
+      console.log('🔍 Backend - First product sellerProducts:', {
+        productId: products[0].id,
+        productName: products[0].name,
+        sellerProducts: products[0].sellerProducts,
+        sellerProductsLength: products[0].sellerProducts?.length || 0,
+      });
+    }
+
     return [products, totalCount];
   }
 
@@ -285,6 +320,7 @@ export class ProductService {
         { sellerId }
       )
       .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
+      .leftJoinAndSelect('sellerProductInfo.color', 'sellerProductColor')
       .where('sellerProduct.sellerId = :sellerId', { sellerId })
       .orderBy('productInfo.id', 'ASC');
 

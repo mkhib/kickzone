@@ -1,26 +1,36 @@
 import { gql } from '@apollo/client';
+import {
+  CATEGORY_FRAGMENT,
+  PRODUCT_INFO_FRAGMENT,
+  BASIC_PRODUCT_FRAGMENT,
+} from '@kickzone-workspace/client-shared-graphql';
 
+// Legacy product fragment (with seller products but no seller info - for backward compatibility)
 export const PRODUCT_FRAGMENT = gql`
   fragment ProductFields on Product {
     id
     name
     archived
+    description
     categories {
-      id
-      name
+      ...CategoryFields
     }
     productInfos {
+      ...ProductInfoFields
+    }
+    sellerProducts {
       id
-      size
-      color {
-        id
-        name
-        hexCode
+      price
+      costPrice
+      discount
+      stockQuantity
+      productInfo {
+        ...ProductInfoFields
       }
-      weight
-      images
     }
   }
+  ${CATEGORY_FRAGMENT}
+  ${PRODUCT_INFO_FRAGMENT}
 `;
 
 export const CREATE_PRODUCT = gql`

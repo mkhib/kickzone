@@ -1,6 +1,7 @@
 import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { SELLER_PRODUCT_PRODUCT_FRAGMENT } from '@kickzone-workspace/sellers-graphql';
 
 const SELLER_PRODUCTS_FOR_ME_QUERY = gql`
   query SellerProductsForMe($filter: ProductFilterInput) {
@@ -8,24 +9,7 @@ const SELLER_PRODUCTS_FOR_ME_QUERY = gql`
       edges {
         cursor
         node {
-          id
-          name
-          archived
-          categories {
-            id
-            name
-          }
-          productInfos {
-            id
-            size
-            color {
-              id
-              name
-              hexCode
-            }
-            weight
-            images
-          }
+          ...SellerProductProductFields
         }
       }
       pageInfo {
@@ -35,6 +19,7 @@ const SELLER_PRODUCTS_FOR_ME_QUERY = gql`
       totalCount
     }
   }
+  ${SELLER_PRODUCT_PRODUCT_FRAGMENT}
 `;
 
 interface UseSellersProductsArgs {
@@ -43,7 +28,7 @@ interface UseSellersProductsArgs {
   sort?: string;
   sortOrder?: 'asc' | 'desc';
   pageSize?: number;
-  archivedStatus?: 'ALL' | 'ACTIVE' | 'ARCHIVED';
+  archivedStatus?: KickzoneGraphqlTypes.ProductArchivedStatus;
 }
 
 export function useSellersProducts({
@@ -52,7 +37,7 @@ export function useSellersProducts({
   sort = '',
   sortOrder = 'asc',
   pageSize = 12,
-  archivedStatus = 'ACTIVE',
+  archivedStatus = KickzoneGraphqlTypes.ProductArchivedStatus.Active,
 }: UseSellersProductsArgs = {}) {
   // sellerId is not needed, backend uses auth context
   let categoryIdValue: number | undefined = undefined;
@@ -62,27 +47,24 @@ export function useSellersProducts({
     categoryIdValue = categoryId;
   }
 
-  const { data, loading, error, fetchMore, refetch } = useQuery(
-    SELLER_PRODUCTS_FOR_ME_QUERY,
-    {
-      variables: {
-        filter: {
-          searchTerm: search || undefined,
-          categoryId: categoryIdValue,
-          first: pageSize,
-          sort,
-          sortOrder,
-          archivedStatus,
-        },
+  const { data, loading, error, fetchMore, refetch } = useQuery<
+    KickzoneGraphqlTypes.Query,
+    KickzoneGraphqlTypes.QuerySellerProductsForMeArgs
+  >(SELLER_PRODUCTS_FOR_ME_QUERY, {
+    variables: {
+      filter: {
+        searchTerm: search || undefined,
+        categoryId: categoryIdValue,
+        first: pageSize,
+        sort,
+        sortOrder,
+        archivedStatus,
       },
-      notifyOnNetworkStatusChange: true,
-    }
-  );
+    },
+    notifyOnNetworkStatusChange: true,
+  });
 
-  const products =
-    data?.sellerProductsForMe?.edges?.map(
-      (e: KickzoneGraphqlTypes.ProductEdge) => e.node
-    ) || [];
+  const products = data?.sellerProductsForMe?.edges?.map((e) => e.node) || [];
   const pageInfo = data?.sellerProductsForMe?.pageInfo;
   const totalCount = data?.sellerProductsForMe?.totalCount || 0;
 

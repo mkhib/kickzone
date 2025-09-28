@@ -5,21 +5,21 @@ import {
   useSellersProductManagement,
   type SellerProductFormData,
 } from '@kickzone-workspace/sellers-products-hooks';
-import {
-  Alert,
-  Autocomplete,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  CircularProgress,
-  Divider,
-  Paper,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
+import Alert from '@mui/material/Alert';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CircularProgress from '@mui/material/CircularProgress';
+import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
-import React, { useState } from 'react';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 
 const initialFormData: SellerProductFormData = {
   productId: null,
@@ -32,6 +32,8 @@ const initialFormData: SellerProductFormData = {
 
 export function SellersManageProductScreen() {
   const { user } = useSellersAuthContext();
+  const [searchParams] = useSearchParams();
+  const { showSnackbar } = useSnackbar();
   const [formData, setFormData] =
     useState<SellerProductFormData>(initialFormData);
   const [selectedProduct, setSelectedProduct] =
@@ -44,16 +46,67 @@ export function SellersManageProductScreen() {
   // Use the new hook
   const {
     products,
+    sellerProduct,
     isManagementLoading,
     isProductsLoading,
-    isCreateLoading,
-    isUpdateLoading,
+    isSellerProductLoading,
     productsError,
+    sellerProductError,
     createError,
     updateError,
     createProduct,
     updateProduct,
+    getSellerProductById,
   } = useSellersProductManagement();
+
+  // Handle URL parameters for editing - fetch seller product data
+  useEffect(() => {
+    const sellerProductId = searchParams.get('sellerProductId');
+    console.log('🔍 URL sellerProductId:', sellerProductId);
+    if (sellerProductId) {
+      const sellerProductIdNum = parseInt(sellerProductId, 10);
+      console.log('🔍 Parsed sellerProductId:', sellerProductIdNum);
+      setIsEditing(true);
+      setEditingProductId(sellerProductIdNum);
+
+      // Fetch the seller product data
+      console.log(
+        '🔍 Calling getSellerProductById with id:',
+        sellerProductIdNum
+      );
+      getSellerProductById({ variables: { id: sellerProductIdNum } });
+    } else {
+      setIsEditing(false);
+      setEditingProductId(null);
+    }
+  }, [searchParams, getSellerProductById]);
+
+  // Handle seller product data when it's loaded
+  useEffect(() => {
+    console.log('🔍 sellerProduct data:', sellerProduct);
+    console.log('🔍 isEditing:', isEditing);
+    console.log('🔍 sellerProductError:', sellerProductError);
+    console.log('🔍 isSellerProductLoading:', isSellerProductLoading);
+
+    if (sellerProduct && isEditing && sellerProduct.productInfo) {
+      console.log('🔍 Setting form data with sellerProduct:', sellerProduct);
+      // Set the product and product info
+      setSelectedProduct(sellerProduct.product);
+      setSelectedProductInfo(sellerProduct.productInfo);
+
+      // Set the form data
+      const newFormData = {
+        productId: sellerProduct.product.id,
+        productInfoId: sellerProduct.productInfo.id,
+        price: sellerProduct.price || 0,
+        costPrice: sellerProduct.costPrice || 0,
+        discount: sellerProduct.discount || 0,
+        stockQuantity: sellerProduct.stockQuantity || 0,
+      };
+      console.log('🔍 New form data:', newFormData);
+      setFormData(newFormData);
+    }
+  }, [sellerProduct, isEditing, sellerProductError, isSellerProductLoading]);
 
   const resetForm = () => {
     setFormData(initialFormData);
@@ -108,20 +161,25 @@ export function SellersManageProductScreen() {
       return;
     }
 
-    const variables = {
-      input: {
-        productInfoId: formData.productInfoId,
-        price: formData.price,
-        costPrice: formData.costPrice,
-        discount: formData.discount,
-        stockQuantity: formData.stockQuantity,
-      },
-    };
-
-    if (isEditing && editingProductId) {
-      await updateProduct(formData, editingProductId);
-    } else {
-      await createProduct(formData);
+    try {
+      if (isEditing && editingProductId) {
+        await updateProduct(formData, editingProductId);
+        showSnackbar('Product updated successfully!', {
+          severity: 'success',
+          duration: 4000,
+        });
+      } else {
+        await createProduct(formData);
+        showSnackbar('Product created successfully!', {
+          severity: 'success',
+          duration: 4000,
+        });
+        // Reset form after successful creation
+        resetForm();
+      }
+    } catch (error) {
+      console.error('Error submitting form:', error);
+      // Error handling is already done by the error states in the hook
     }
   };
 
@@ -136,7 +194,33 @@ export function SellersManageProductScreen() {
     );
   };
 
-  const isLoading = isManagementLoading;
+  const isLoading =
+    isManagementLoading || isProductsLoading || isSellerProductLoading;
+
+  // Show loading state while products are being fetched
+  if (isProductsLoading || (isEditing && isSellerProductLoading)) {
+    return (
+      <SellersLayout>
+        <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
+          <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: 200,
+              }}
+            >
+              <CircularProgress size={40} />
+              <Typography variant="h6" sx={{ ml: 2 }}>
+                Loading products...
+              </Typography>
+            </Box>
+          </Paper>
+        </Box>
+      </SellersLayout>
+    );
+  }
 
   return (
     <SellersLayout>
@@ -146,11 +230,15 @@ export function SellersManageProductScreen() {
             {isEditing ? 'Edit Product' : 'Add New Product'}
           </Typography>
 
-          {(createError || updateError || productsError) && (
+          {(createError ||
+            updateError ||
+            productsError ||
+            sellerProductError) && (
             <Alert severity="error" sx={{ mb: 3 }}>
               {createError?.message ||
                 updateError?.message ||
-                productsError?.message}
+                productsError?.message ||
+                sellerProductError?.message}
             </Alert>
           )}
 
@@ -406,7 +494,9 @@ export function SellersManageProductScreen() {
                     }
                   >
                     {isLoading
-                      ? 'Saving...'
+                      ? isEditing
+                        ? 'Updating...'
+                        : 'Creating...'
                       : isEditing
                       ? 'Update Product'
                       : 'Add Product'}

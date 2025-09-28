@@ -211,4 +211,23 @@ export class SellerService {
     Object.assign(sellerProduct, input);
     return this.sellerProductRepository.save(sellerProduct);
   }
+
+  async findSellerProductById(
+    sellerProductId: number,
+    sellerId: number
+  ): Promise<SellerProduct | null> {
+    return this.sellerProductRepository.findOne({
+      where: {
+        id: sellerProductId,
+        seller: { id: sellerId },
+      },
+      relations: [
+        'product',
+        'productInfo',
+        'productInfo.color',
+        'product.productInfos',
+        'product.categories',
+      ],
+    });
+  }
 }

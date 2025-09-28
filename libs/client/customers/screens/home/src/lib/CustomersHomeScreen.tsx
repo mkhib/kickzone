@@ -16,6 +16,7 @@ import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { useCallback, useState } from 'react';
+import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 
 export function CustomersHome() {
   const [search, setSearch] = useState('');
@@ -27,15 +28,74 @@ export function CustomersHome() {
     sort,
     sortOrder,
     pageSize: 12,
+    onlyWithSellers: true, // Only show products with sellers
+    onlyInStock: true, // Only show products in stock
   });
 
-  // Placeholder for add to cart logic
+  const { addItem } = useCustomersCartService();
+
+  // Add to cart logic
   const handleAddToCart = useCallback(
     (product: KickzoneGraphqlTypes.Product) => {
-      console.log('Add to cart clicked for product:', product);
-      // TODO: Implement actual add to cart logic
+      console.log('🛒 Home screen - Add to cart for product:', {
+        productId: product.id,
+        productName: product.name,
+        productInfos: product.productInfos,
+        sellerProducts: product.sellerProducts,
+      });
+
+      if (product.productInfos && product.productInfos.length > 0) {
+        const productInfo = product.productInfos[0];
+        console.log('📋 Selected product info:', productInfo);
+
+        // Find the sellerProduct that matches this productInfo
+        const sellerProduct = product.sellerProducts?.find(
+          (sp) => sp.productInfo.id === productInfo.id
+        );
+
+        console.log('🔍 Found seller product:', {
+          sellerProduct,
+          stockQuantity: sellerProduct?.stockQuantity,
+          price: sellerProduct?.price,
+          discount: sellerProduct?.discount,
+        });
+
+        if (!sellerProduct) {
+          console.error('❌ No seller product found for this product info');
+          return;
+        }
+
+        // Check stock availability
+        if (sellerProduct.stockQuantity <= 0) {
+          console.error(
+            '❌ Product out of stock - stockQuantity:',
+            sellerProduct.stockQuantity
+          );
+          return;
+        }
+
+        // Calculate final price after discount
+        const finalPrice =
+          sellerProduct.discount > 0
+            ? sellerProduct.price -
+              (sellerProduct.price * sellerProduct.discount) / 100
+            : sellerProduct.price;
+
+        addItem({
+          productId: product.id.toString(),
+          productName: product.name,
+          productImage: productInfo.images?.[0] || null,
+          quantity: 1,
+          unitPrice: finalPrice,
+          color: productInfo.color?.name || null,
+          size: productInfo.size || null,
+          sellerId: sellerProduct.seller.id.toString(),
+          sellerName: sellerProduct.seller.storeName,
+          productInfoId: productInfo.id.toString(),
+        });
+      }
     },
-    []
+    [addItem]
   );
 
   return (

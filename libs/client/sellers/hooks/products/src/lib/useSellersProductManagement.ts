@@ -1,7 +1,12 @@
 import { gql } from '@apollo/client';
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useMutation, useQuery, useLazyQuery } from '@apollo/client/react';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { useMemo } from 'react';
+import {
+  SELLER_PRODUCT_MANAGEMENT_FRAGMENT,
+  SELLER_PRODUCT_FRAGMENT,
+} from '@kickzone-workspace/sellers-graphql';
 
 // GraphQL Queries and Mutations
 const GET_PRODUCTS_QUERY = gql`
@@ -9,28 +14,12 @@ const GET_PRODUCTS_QUERY = gql`
     products(filter: $filter) {
       edges {
         node {
-          id
-          name
-          description
-          categories {
-            id
-            name
-          }
-          productInfos {
-            id
-            size
-            color {
-              id
-              name
-              hexCode
-            }
-            weight
-            images
-          }
+          ...SellerProductManagementFields
         }
       }
     }
   }
+  ${SELLER_PRODUCT_MANAGEMENT_FRAGMENT}
 `;
 
 const CREATE_SELLER_PRODUCT_MUTATION = gql`
@@ -77,6 +66,19 @@ const UPDATE_SELLER_PRODUCT_MUTATION = gql`
   }
 `;
 
+const GET_SELLER_PRODUCT_BY_ID_QUERY = gql`
+  query GetSellerProductById($id: Int!) {
+    mySellerProductById(id: $id) {
+      ...SellerProductFields
+      product {
+        ...ProductManagementProductFields
+      }
+    }
+  }
+  ${SELLER_PRODUCT_FRAGMENT}
+  ${SELLER_PRODUCT_MANAGEMENT_FRAGMENT}
+`;
+
 interface SellerProductFormData {
   productId: number | null;
   productInfoId: number | null;
@@ -105,6 +107,19 @@ export function useSellersProductManagement() {
     },
   });
 
+  // Lazy query for fetching seller product by ID
+  const [
+    getSellerProductById,
+    {
+      data: sellerProductData,
+      loading: isSellerProductLoading,
+      error: sellerProductError,
+    },
+  ] = useLazyQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'mySellerProductById'>,
+    KickzoneGraphqlTypes.QueryMySellerProductByIdArgs
+  >(GET_SELLER_PRODUCT_BY_ID_QUERY);
+
   // Mutations
   const [
     createSellerProduct,
@@ -116,10 +131,14 @@ export function useSellersProductManagement() {
     { loading: isUpdateLoading, error: updateError },
   ] = useMutation(UPDATE_SELLER_PRODUCT_MUTATION);
 
-  const products =
-    productsData?.products?.edges?.map(
-      (edge: KickzoneGraphqlTypes.ProductEdge) => edge.node
-    ) || [];
+  const products = useMemo(
+    () =>
+      productsData?.products?.edges?.map(
+        (edge: KickzoneGraphqlTypes.ProductEdge) => edge.node
+      ) || [],
+    [productsData?.products?.edges]
+  );
+
   const isManagementLoading =
     isCreateLoading || isUpdateLoading || isProductsLoading;
 
@@ -171,27 +190,37 @@ export function useSellersProductManagement() {
     return updateSellerProduct({ variables });
   };
 
+  const productInfos = useMemo(
+    () =>
+      products.flatMap(
+        (product: KickzoneGraphqlTypes.Product) => product.productInfos
+      ),
+    [products]
+  );
+
   return {
     // Data
     products,
-    productInfos: products.flatMap(
-      (product: KickzoneGraphqlTypes.Product) => product.productInfos
-    ),
+    productInfos,
+    sellerProduct: sellerProductData?.mySellerProductById,
 
     // Loading states
     isManagementLoading,
     isProductsLoading,
     isCreateLoading,
     isUpdateLoading,
+    isSellerProductLoading,
 
     // Error states
     productsError,
     createError,
     updateError,
+    sellerProductError,
 
     // Actions
     createProduct,
     updateProduct,
+    getSellerProductById,
   };
 }
 

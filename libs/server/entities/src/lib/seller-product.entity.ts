@@ -18,7 +18,7 @@ export class SellerProduct {
   @PrimaryGeneratedColumn()
   id: number;
 
-  @Field(() => SellerInfo)
+  @Field(() => SellerInfo, { nullable: true })
   @ManyToOne(() => SellerInfo, (seller) => seller.sellerProducts)
   seller: SellerInfo;
 
@@ -26,7 +26,7 @@ export class SellerProduct {
   @ManyToOne(() => Product, (product) => product.sellerProducts)
   product: Relation<Product>;
 
-  @Field(() => ProductInfo)
+  @Field(() => ProductInfo, { nullable: true })
   @ManyToOne(() => ProductInfo)
   productInfo: ProductInfo;
 

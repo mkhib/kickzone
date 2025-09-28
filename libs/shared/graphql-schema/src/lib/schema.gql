@@ -60,6 +60,7 @@ type Product {
   productInfos: [ProductInfo!]!
   categories: [Category!]!
   description: String
+  sellerProducts: [SellerProduct!]!
   archived: Boolean!
 }
 
@@ -76,9 +77,9 @@ type ProductConnection {
 
 type SellerProduct {
   id: Int!
-  seller: SellerInfo!
+  seller: SellerInfo
   product: Product!
-  productInfo: ProductInfo!
+  productInfo: ProductInfo
   price: Float!
   costPrice: Float!
   discount: Float!
@@ -195,6 +196,7 @@ type Query {
   product(id: Int!): Product
   sellers(filter: SellerFilterInput): SellerConnection!
   findOne(id: Int!): SellerInfo
+  mySellerProductById(id: Int!): SellerProduct
   colors: [Color!]!
   color(id: Int!): Color
   orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): [Order!]!
@@ -216,6 +218,8 @@ input ProductFilterInput {
   sortOrder: String
   archivedStatus: ProductArchivedStatus
   sellerId: Int
+  onlyWithSellers: Boolean
+  onlyInStock: Boolean
 }
 
 input ProductInfoFilterInput {

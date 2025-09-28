@@ -6,7 +6,7 @@ interface GraphQLProviderProps {
   children: React.ReactNode;
 }
 
-export const AdminsGraphQLProvider: React.FC<GraphQLProviderProps> = ({
+export const SellersGraphQLProvider: React.FC<GraphQLProviderProps> = ({
   children,
 }) => {
   return (

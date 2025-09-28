@@ -3,6 +3,7 @@ import { useSellersProducts } from '@kickzone-workspace/sellers-products-hooks';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useNavigate } from 'react-router-dom';
 import { useSellersProductsStore } from '@kickzone-workspace/sellers-products-store';
+import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -23,11 +24,23 @@ import {
   Add as AddIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
+  Close as CloseIcon,
 } from '@mui/icons-material';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
 import { SELLER_ROUTES } from '@kickzone-workspace/shared-routes';
+import { useState } from 'react';
 
 export const SellersProducts = () => {
   const navigate = useNavigate();
+  const authContext = useSellersAuthContext();
+  const user = authContext.user;
+  const [viewModalOpen, setViewModalOpen] = useState(false);
+  const [selectedProductForView, setSelectedProductForView] =
+    useState<KickzoneGraphqlTypes.Product | null>(null);
+
   const {
     search,
     category,
@@ -37,7 +50,6 @@ export const SellersProducts = () => {
     setSearch,
     setCategory,
     setSellersProductsSortField,
-    setSellersProductsSortOrder,
     setStatus,
   } = useSellersProductsStore();
 
@@ -47,8 +59,6 @@ export const SellersProducts = () => {
     sellersProductsError,
     loadMoreSellersProducts,
     hasMoreSellersProducts,
-    totalSellersProductsCount,
-    refetchSellersProducts,
   } = useSellersProducts({
     search,
     categoryId: category ? Number(category) : undefined,
@@ -62,12 +72,51 @@ export const SellersProducts = () => {
   };
 
   const handleEditProduct = (productId: number) => {
-    navigate(`${SELLER_ROUTES.MANAGE_PRODUCT}?productId=${productId}`);
+    console.log('🔍 handleEditProduct called with productId:', productId);
+    console.log('🔍 Current user:', user);
+    console.log('🔍 Available sellersProducts:', sellersProducts);
+
+    // Find the product
+    const product = sellersProducts.find((p) => p.id === productId);
+    console.log('🔍 Found product:', product);
+
+    if (!product) {
+      console.error('Product not found');
+      return;
+    }
+
+    if (!product.sellerProducts || product.sellerProducts.length === 0) {
+      console.error('No seller products found for this product');
+      return;
+    }
+
+    console.log('🔍 Product sellerProducts:', product.sellerProducts);
+
+    // Since the backend filters by seller ID, the first (and only) seller product should be the current seller's
+    const sellerProduct = product.sellerProducts[0];
+    console.log('🔍 Found sellerProduct:', sellerProduct);
+
+    if (sellerProduct && sellerProduct.id) {
+      console.log('🔍 Navigating to sellerProductId:', sellerProduct.id);
+      navigate(
+        `${SELLER_ROUTES.MANAGE_PRODUCT}?sellerProductId=${sellerProduct.id}`
+      );
+    } else {
+      console.error('Invalid seller product data');
+    }
   };
 
   const handleViewProduct = (productId: number) => {
-    // TODO: Implement view product details
-    console.log('View product:', productId);
+    const product = sellersProducts.find((p) => p.id === productId);
+    if (product) {
+      setSelectedProductForView(product);
+      setViewModalOpen(true);
+    }
+  };
+
+  const handleCloseViewModal = () => {
+    setViewModalOpen(false);
+    setSelectedProductForView(null);
   };
 
   if (isSellersProductsLoading) {
@@ -194,7 +243,10 @@ export const SellersProducts = () => {
         {/* Products Grid */}
         <Grid container spacing={3}>
           {sellersProducts.map((product: KickzoneGraphqlTypes.Product) => {
-            const firstProductInfo = product.productInfos[0];
+            // Since the backend filters by seller ID, sellerProducts should only contain current seller's products
+            const sellerProducts = product.sellerProducts || [];
+            const firstSellerProduct = sellerProducts[0];
+
             return (
               <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                 <Card
@@ -240,24 +292,144 @@ export const SellersProducts = () => {
                           .join(', ') || 'No categories'}
                       </Typography>
 
-                      {firstProductInfo && (
+                      {/* Show all seller's variants */}
+                      {sellerProducts.length > 0 && (
                         <>
                           <Typography variant="body2" color="text.secondary">
-                            <strong>Size:</strong> {firstProductInfo.size}
+                            <strong>Sizes:</strong>{' '}
+                            {sellerProducts
+                              .map((sp) => sp.productInfo?.size)
+                              .filter(Boolean)
+                              .join(', ')}
                           </Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              flexWrap: 'wrap',
+                              mb: 1,
+                            }}
+                          >
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              component="span"
+                            >
+                              <strong>Colors:</strong>{' '}
+                            </Typography>
+                            {sellerProducts
+                              .map((sp) => sp.productInfo?.color)
+                              .filter(Boolean)
+                              .filter(
+                                (color, index, arr) =>
+                                  arr.findIndex(
+                                    (c) => c?.name === color?.name
+                                  ) === index
+                              ) // Remove duplicates by color name
+                              .map((color, index) => (
+                                <Box
+                                  key={index}
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.5,
+                                  }}
+                                >
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      display: 'inline-block',
+                                      width: 12,
+                                      height: 12,
+                                      backgroundColor: color?.hexCode || '#ccc',
+                                      borderRadius: '50%',
+                                      border: '1px solid #ccc',
+                                    }}
+                                  />
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                    component="span"
+                                  >
+                                    {color?.name}
+                                  </Typography>
+                                </Box>
+                              ))}
+                            {sellerProducts.filter(
+                              (sp) => !sp.productInfo?.color
+                            ).length > 0 && (
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                                component="span"
+                              >
+                                No color (
+                                {
+                                  sellerProducts.filter(
+                                    (sp) => !sp.productInfo?.color
+                                  ).length
+                                }
+                                )
+                              </Typography>
+                            )}
+                          </Box>
                           <Typography variant="body2" color="text.secondary">
-                            <strong>Color:</strong>{' '}
-                            {firstProductInfo.color?.name || 'No color'}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            <strong>Weight:</strong> {firstProductInfo.weight}kg
+                            <strong>Weight Range:</strong>{' '}
+                            {(() => {
+                              const weights = sellerProducts
+                                .map((sp) => sp.productInfo?.weight)
+                                .filter(Boolean)
+                                .map(Number);
+                              if (weights.length === 0) return 'N/A';
+                              if (weights.length === 1)
+                                return `${weights[0]}kg`;
+                              const min = Math.min(...weights);
+                              const max = Math.max(...weights);
+                              return min === max
+                                ? `${min}kg`
+                                : `${min}-${max}kg`;
+                            })()}
                           </Typography>
                         </>
                       )}
 
                       <Typography variant="body2" color="text.secondary">
-                        <strong>Variants:</strong> {product.productInfos.length}
+                        <strong>Your Variants:</strong> {sellerProducts.length}
                       </Typography>
+
+                      {/* Current Seller's Product Information */}
+                      {firstSellerProduct && (
+                        <Box
+                          sx={{
+                            mt: 1,
+                            p: 1,
+                            bgcolor: 'grey.50',
+                            borderRadius: 1,
+                          }}
+                        >
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Your Price:</strong> $
+                            {firstSellerProduct.price}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Stock:</strong>{' '}
+                            {firstSellerProduct.stockQuantity} units
+                          </Typography>
+                          {firstSellerProduct.discount > 0 && (
+                            <Typography variant="body2" color="text.secondary">
+                              <strong>Discount:</strong>{' '}
+                              {firstSellerProduct.discount}% |{' '}
+                              <strong>Final Price:</strong> $
+                              {(
+                                (firstSellerProduct.price *
+                                  (100 - firstSellerProduct.discount)) /
+                                100
+                              ).toFixed(2)}
+                            </Typography>
+                          )}
+                        </Box>
+                      )}
                     </Stack>
 
                     {product.description && (
@@ -333,6 +505,307 @@ export const SellersProducts = () => {
             </Button>
           </Box>
         )}
+
+        {/* View Product Modal */}
+        <Dialog
+          open={viewModalOpen}
+          onClose={handleCloseViewModal}
+          maxWidth="md"
+          fullWidth
+        >
+          <DialogTitle>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+              }}
+            >
+              <Typography variant="h6">
+                {selectedProductForView?.name}
+              </Typography>
+              <IconButton onClick={handleCloseViewModal} size="small">
+                <CloseIcon />
+              </IconButton>
+            </Box>
+          </DialogTitle>
+          <DialogContent>
+            {selectedProductForView && (
+              <Box sx={{ mt: 2 }}>
+                <Grid container spacing={3}>
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      Product Information
+                    </Typography>
+                    <Stack spacing={2}>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>Name:</strong> {selectedProductForView.name}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          component="div"
+                        >
+                          <strong>Status:</strong>{' '}
+                          <Chip
+                            label={
+                              selectedProductForView.archived
+                                ? 'Archived'
+                                : 'Active'
+                            }
+                            color={
+                              selectedProductForView.archived
+                                ? 'default'
+                                : 'success'
+                            }
+                            size="small"
+                          />
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>Categories:</strong>{' '}
+                          {selectedProductForView.categories
+                            .map(
+                              (cat: KickzoneGraphqlTypes.Category) => cat.name
+                            )
+                            .join(', ') || 'No categories'}
+                        </Typography>
+                      </Box>
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>Your Variants:</strong>{' '}
+                          {selectedProductForView.sellerProducts?.length || 0}
+                        </Typography>
+                      </Box>
+                      {selectedProductForView.description && (
+                        <Box>
+                          <Typography variant="body2" color="text.secondary">
+                            <strong>Description:</strong>
+                          </Typography>
+                          <Typography variant="body2" sx={{ mt: 1 }}>
+                            {selectedProductForView.description}
+                          </Typography>
+                        </Box>
+                      )}
+                    </Stack>
+                  </Grid>
+
+                  <Grid size={{ xs: 12, md: 6 }}>
+                    <Typography variant="h6" sx={{ mb: 2 }}>
+                      Your Product Variants
+                    </Typography>
+                    <Stack spacing={2}>
+                      {selectedProductForView.sellerProducts?.map(
+                        (sellerProduct, index) => {
+                          if (!sellerProduct.productInfo) {
+                            return null;
+                          }
+
+                          return (
+                            <Card key={sellerProduct.id} variant="outlined">
+                              <CardContent sx={{ p: 2 }}>
+                                <Typography variant="subtitle2" sx={{ mb: 1 }}>
+                                  Your Variant {index + 1}
+                                </Typography>
+                                <Stack spacing={1}>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Size:</strong>{' '}
+                                    {sellerProduct.productInfo.size}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Color:</strong>{' '}
+                                    {sellerProduct.productInfo.color?.name ||
+                                      'No color specified'}
+                                    {sellerProduct.productInfo.color && (
+                                      <Box
+                                        component="span"
+                                        sx={{
+                                          display: 'inline-block',
+                                          width: 16,
+                                          height: 16,
+                                          backgroundColor:
+                                            sellerProduct.productInfo.color
+                                              .hexCode,
+                                          borderRadius: '50%',
+                                          border: '1px solid #ccc',
+                                          ml: 1,
+                                          verticalAlign: 'middle',
+                                        }}
+                                      />
+                                    )}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Weight:</strong>{' '}
+                                    {sellerProduct.productInfo.weight}
+                                    kg
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Your Price:</strong> $
+                                    {sellerProduct.price}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Stock:</strong>{' '}
+                                    {sellerProduct.stockQuantity} units
+                                  </Typography>
+                                  {sellerProduct.productInfo.images &&
+                                    sellerProduct.productInfo.images.length >
+                                      0 && (
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Images:</strong>{' '}
+                                        {
+                                          sellerProduct.productInfo.images
+                                            .length
+                                        }{' '}
+                                        image(s)
+                                      </Typography>
+                                    )}
+                                </Stack>
+                              </CardContent>
+                            </Card>
+                          );
+                        }
+                      )}
+                    </Stack>
+                  </Grid>
+                </Grid>
+
+                {/* Your Product Information Section */}
+                {selectedProductForView.sellerProducts &&
+                  selectedProductForView.sellerProducts.length > 0 && (
+                    <Grid container spacing={3} sx={{ mt: 2 }}>
+                      <Grid size={{ xs: 12 }}>
+                        <Typography variant="h6" sx={{ mb: 2 }}>
+                          Your Product Information
+                        </Typography>
+                        <Stack spacing={2}>
+                          {(() => {
+                            // Since the backend filters by seller ID, sellerProducts should only contain current seller's products
+                            const currentSellerProduct =
+                              selectedProductForView.sellerProducts?.[0];
+
+                            if (!currentSellerProduct) {
+                              return (
+                                <Card variant="outlined">
+                                  <CardContent sx={{ p: 2 }}>
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      You haven't added this product to your
+                                      store yet.
+                                    </Typography>
+                                  </CardContent>
+                                </Card>
+                              );
+                            }
+
+                            return (
+                              <Card
+                                key={currentSellerProduct.id}
+                                variant="outlined"
+                              >
+                                <CardContent sx={{ p: 2 }}>
+                                  <Grid container spacing={2}>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Your Price:</strong> $
+                                        {currentSellerProduct.price}
+                                      </Typography>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Cost Price:</strong> $
+                                        {currentSellerProduct.costPrice}
+                                      </Typography>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Discount:</strong>{' '}
+                                        {currentSellerProduct.discount}%
+                                      </Typography>
+                                    </Grid>
+                                    <Grid size={{ xs: 12, sm: 6 }}>
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Stock:</strong>{' '}
+                                        {currentSellerProduct.stockQuantity}{' '}
+                                        units
+                                      </Typography>
+                                    </Grid>
+                                    <Grid size={{ xs: 12 }}>
+                                      <Typography
+                                        variant="body2"
+                                        color="text.secondary"
+                                      >
+                                        <strong>Final Price:</strong> $
+                                        {(
+                                          (currentSellerProduct.price *
+                                            (100 -
+                                              currentSellerProduct.discount)) /
+                                          100
+                                        ).toFixed(2)}
+                                      </Typography>
+                                    </Grid>
+                                  </Grid>
+                                </CardContent>
+                              </Card>
+                            );
+                          })()}
+                        </Stack>
+                      </Grid>
+                    </Grid>
+                  )}
+              </Box>
+            )}
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleCloseViewModal}>Close</Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                if (selectedProductForView) {
+                  handleEditProduct(selectedProductForView.id);
+                  handleCloseViewModal();
+                }
+              }}
+            >
+              Edit Product
+            </Button>
+          </DialogActions>
+        </Dialog>
       </Box>
     </SellersLayout>
   );

@@ -34,9 +34,11 @@ import {
   useCartLoading,
   useCartError,
   useCartTotal,
-  useCartActions,
+  useRemoveItem,
+  useUpdateItemQuantity,
+  useClearCart,
 } from '@kickzone-workspace/customer-cart-store';
-import { useUIActions } from '@kickzone-workspace/shared-ui-store';
+import { useUIStore } from '@kickzone-workspace/shared-ui-store';
 
 // Import types from cart store
 import type { CartItem } from '@kickzone-workspace/customer-cart-store';
@@ -63,21 +65,23 @@ export function CustomerShoppingCart() {
   const cartLoading = useCartLoading();
   const cartError = useCartError();
   const cartTotal = useCartTotal();
-  const cartActions = useCartActions();
+  const removeItem = useRemoveItem();
+  const updateItemQuantity = useUpdateItemQuantity();
+  const clearCartAction = useClearCart();
 
   // Use UI store for notifications
-  const { addToast } = useUIActions();
+  const addToast = useUIStore((state) => state.addToast);
 
   const [updateCartItem] = useMutation(UPDATE_CART_ITEM_MUTATION);
   const [removeFromCart] = useMutation(REMOVE_FROM_CART_MUTATION);
-  const [clearCart] = useMutation(CLEAR_CART_MUTATION);
+  const [clearCartMutation] = useMutation(CLEAR_CART_MUTATION);
   const [createOrder] = useMutation(CREATE_ORDER_MUTATION);
 
   const handleQuantityChange = async (itemId: string, newQuantity: number) => {
     try {
       if (newQuantity <= 0) {
         await removeFromCart({ variables: { itemId } });
-        cartActions.removeItem(itemId);
+        removeItem(itemId);
         addToast({
           type: 'success',
           title: 'Item removed',
@@ -90,7 +94,7 @@ export function CustomerShoppingCart() {
             updateInput: { quantity: newQuantity },
           },
         });
-        cartActions.updateItemQuantity(itemId, newQuantity);
+        updateItemQuantity(itemId, newQuantity);
         addToast({
           type: 'success',
           title: 'Quantity updated',
@@ -109,7 +113,7 @@ export function CustomerShoppingCart() {
   const handleRemoveItem = async (itemId: string) => {
     try {
       await removeFromCart({ variables: { itemId } });
-      cartActions.removeItem(itemId);
+      removeItem(itemId);
       addToast({
         type: 'success',
         title: 'Item removed',
@@ -126,8 +130,8 @@ export function CustomerShoppingCart() {
 
   const handleClearCart = async () => {
     try {
-      await clearCart();
-      cartActions.clearCart();
+      await clearCartMutation();
+      clearCartAction();
       addToast({
         type: 'success',
         title: 'Cart cleared',
@@ -187,7 +191,7 @@ export function CustomerShoppingCart() {
       );
 
       await Promise.all(orderPromises);
-      await clearCart();
+      await clearCartMutation();
       setCheckoutDialogOpen(false);
       setActiveStep(0);
       // Cart will be cleared by the mutation

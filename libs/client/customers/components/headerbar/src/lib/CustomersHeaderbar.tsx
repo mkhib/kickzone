@@ -1,9 +1,11 @@
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
+import { useCartItemCount } from '@kickzone-workspace/customer-cart-store';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import AppBar from '@mui/material/AppBar';
+import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Drawer from '@mui/material/Drawer';
@@ -37,6 +39,7 @@ export function Headerbar() {
   const { user, logout } = useCustomersAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
+  const totalItems = useCartItemCount();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -60,8 +63,15 @@ export function Headerbar() {
           <Button color="inherit" component={RouterLink} to="/home">
             Home
           </Button>
-          <IconButton color="inherit" sx={{ ml: 1 }}>
-            <ShoppingCartIcon />
+          <IconButton
+            color="inherit"
+            component={RouterLink}
+            to="/cart"
+            sx={{ ml: 1 }}
+          >
+            <Badge badgeContent={user ? totalItems : 0} color="error">
+              <ShoppingCartIcon />
+            </Badge>
           </IconButton>
           {user ? (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -105,6 +115,19 @@ export function Headerbar() {
               <ShoppingCartIcon />
             </ListItemIcon>
             <CustomListItemText primary="Products" />
+          </ListItemButton>
+
+          <ListItemButton
+            to="/cart"
+            component={RouterLink}
+            selected={location.pathname === '/cart'}
+          >
+            <ListItemIcon>
+              <Badge badgeContent={user ? totalItems : 0} color="error">
+                <ShoppingCartIcon />
+              </Badge>
+            </ListItemIcon>
+            <CustomListItemText primary="Shopping Cart" />
           </ListItemButton>
 
           <ListItemButton

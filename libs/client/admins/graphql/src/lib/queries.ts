@@ -1,133 +1,49 @@
 import { gql } from '@apollo/client';
+import {
+  ADMIN_PRODUCT_FRAGMENT,
+  ADMIN_PRODUCT_MANAGEMENT_FRAGMENT,
+} from './fragments';
 
-export const ME_QUERY = gql`
-  query Me {
-    me {
-      id
-      name
-      email
-      role
-    }
-  }
-`;
-
-export const GET_SELLERS_QUERY = gql`
-  query GetSellers(
-    $first: Int = 10
-    $after: String
-    $filter: SellerFilterInput
-  ) {
-    sellers(filter: $filter) {
+// Query for admin to get all products with seller information
+export const ADMIN_PRODUCTS_QUERY = gql`
+  query AdminProducts($filter: ProductFilterInput) {
+    products(filter: $filter) {
       edges {
-        node {
-          id
-          storeName
-          phone
-          address
-          isActive
-          user {
-            id
-            name
-            lastName
-            email
-          }
-        }
         cursor
+        node {
+          ...AdminProductFields
+        }
       }
       pageInfo {
-        hasNextPage
-        hasPreviousPage
         endCursor
+        hasNextPage
       }
       totalCount
     }
   }
+  ${ADMIN_PRODUCT_FRAGMENT}
 `;
 
-export const GET_ADMIN_SELLER_ORDERS_QUERY = gql`
-  query GetAdminSellerOrders(
-    $sellerId: String!
-    $first: Int = 10
-    $after: String
-    $status: OrderStatus
-  ) {
-    adminSellerOrders(
-      sellerId: $sellerId
-      first: $first
-      after: $after
-      status: $status
-    ) {
-      id
-      orderNumber
-      customerEmail
-      customerPhone
-      customerName
-      shippingAddress
-      city
-      state
-      zipCode
-      country
-      status
-      subtotal
-      shippingCost
-      total
-      notes
-      trackingNumber
-      createdAt
-      updatedAt
-      items {
-        id
-        productId
-        productName
-        productImage
-        quantity
-        unitPrice
-        totalPrice
-        color
-        size
+// Query for admin to get a specific product by ID with seller information
+export const ADMIN_PRODUCT_BY_ID_QUERY = gql`
+  query AdminProductById($id: Int!) {
+    product(id: $id) {
+      ...AdminProductFields
+    }
+  }
+  ${ADMIN_PRODUCT_FRAGMENT}
+`;
+
+// Query for admin product management (when editing products - no seller products needed)
+export const ADMIN_PRODUCT_MANAGEMENT_QUERY = gql`
+  query AdminProductManagement($filter: ProductFilterInput) {
+    products(filter: $filter) {
+      edges {
+        node {
+          ...AdminProductManagementFields
+        }
       }
     }
   }
-`;
-
-export const GET_ALL_ORDERS_QUERY = gql`
-  query GetAllOrders(
-    $first: Int = 10
-    $after: String
-    $sellerId: String
-    $status: OrderStatus
-  ) {
-    orders(first: $first, after: $after, sellerId: $sellerId, status: $status) {
-      id
-      orderNumber
-      customerEmail
-      customerPhone
-      customerName
-      shippingAddress
-      city
-      state
-      zipCode
-      country
-      status
-      subtotal
-      shippingCost
-      total
-      notes
-      trackingNumber
-      createdAt
-      updatedAt
-      sellerId
-      items {
-        id
-        productId
-        productName
-        productImage
-        quantity
-        unitPrice
-        totalPrice
-        color
-        size
-      }
-    }
-  }
+  ${ADMIN_PRODUCT_MANAGEMENT_FRAGMENT}
 `;

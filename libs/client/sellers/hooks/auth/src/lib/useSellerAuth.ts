@@ -20,7 +20,10 @@ export const useSellerLogin = () => {
   const [
     loginMutation,
     { loading: sellersLoginLoading, error: sellersLoginError },
-  ] = useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'login'>>(LOGIN_MUTATION);
+  ] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'login'>,
+    KickzoneGraphqlTypes.MutationLoginArgs
+  >(LOGIN_MUTATION);
 
   const loginSeller = async (input: LoginInput) => {
     try {
@@ -37,7 +40,8 @@ export const useSellerLogin = () => {
     }
   };
 
-  const [logoutSeller] = useMutation(LOGOUT_MUTATION);
+  const [logoutSeller] =
+    useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'logout'>>(LOGOUT_MUTATION);
 
   return {
     loginSeller,
@@ -53,7 +57,10 @@ export const useSetupPassword = () => {
   const [
     setupPasswordMutation,
     { loading: setupPasswordLoading, error: setupPasswordError },
-  ] = useMutation(SETUP_PASSWORD_MUTATION);
+  ] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'setupPassword'>,
+    KickzoneGraphqlTypes.MutationSetupPasswordArgs
+  >(SETUP_PASSWORD_MUTATION);
 
   const setupPassword = async (token: string, newPassword: string) => {
     try {

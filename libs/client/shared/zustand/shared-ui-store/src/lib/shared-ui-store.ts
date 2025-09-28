@@ -232,19 +232,34 @@ export const useSidebar = () => useUIStore((state) => state.sidebarOpen);
 export const useMobileMenu = () => useUIStore((state) => state.mobileMenuOpen);
 export const useToasts = () => useUIStore((state) => state.toasts);
 
-export const useUIActions = () =>
-  useUIStore((state) => ({
-    openModal: state.openModal,
-    closeModal: state.closeModal,
-    setLoading: state.setLoading,
-    setTheme: state.setTheme,
-    toggleTheme: state.toggleTheme,
-    toggleSidebar: state.toggleSidebar,
-    setSidebarOpen: state.setSidebarOpen,
-    toggleMobileMenu: state.toggleMobileMenu,
-    setMobileMenuOpen: state.setMobileMenuOpen,
-    addToast: state.addToast,
-    removeToast: state.removeToast,
-    clearToasts: state.clearToasts,
-    resetUI: state.resetUI,
-  }));
+export const useUIActions = () => {
+  const openModal = useUIStore((state) => state.openModal);
+  const closeModal = useUIStore((state) => state.closeModal);
+  const setLoading = useUIStore((state) => state.setLoading);
+  const setTheme = useUIStore((state) => state.setTheme);
+  const toggleTheme = useUIStore((state) => state.toggleTheme);
+  const toggleSidebar = useUIStore((state) => state.toggleSidebar);
+  const setSidebarOpen = useUIStore((state) => state.setSidebarOpen);
+  const toggleMobileMenu = useUIStore((state) => state.toggleMobileMenu);
+  const setMobileMenuOpen = useUIStore((state) => state.setMobileMenuOpen);
+  const addToast = useUIStore((state) => state.addToast);
+  const removeToast = useUIStore((state) => state.removeToast);
+  const clearToasts = useUIStore((state) => state.clearToasts);
+  const resetUI = useUIStore((state) => state.resetUI);
+
+  return {
+    openModal,
+    closeModal,
+    setLoading,
+    setTheme,
+    toggleTheme,
+    toggleSidebar,
+    setSidebarOpen,
+    toggleMobileMenu,
+    setMobileMenuOpen,
+    addToast,
+    removeToast,
+    clearToasts,
+    resetUI,
+  };
+};

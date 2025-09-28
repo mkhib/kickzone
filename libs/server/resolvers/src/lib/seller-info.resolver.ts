@@ -172,6 +172,24 @@ export class SellerResolver {
     );
   }
 
+  // Get a specific seller product by ID for editing
+  @Query(() => SellerProduct, { nullable: true })
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.SELLER])
+  async mySellerProductById(
+    @Context() context: { req: { user: User } },
+    @Args('id', { type: () => Int }) id: number
+  ) {
+    const user = context.req.user;
+    if (!user) throw new Error('Not authenticated');
+    if (user.role !== UserRole.SELLER) throw new Error('Not a seller');
+
+    const seller = await this.sellerService.findOneByUserId(user.id);
+    if (!seller) throw new Error('Seller info not found');
+
+    return this.sellerService.findSellerProductById(id, seller.id);
+  }
+
   @ResolveField(() => User)
   user(@Parent() seller: SellerInfo) {
     return seller.user;

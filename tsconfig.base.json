@@ -67,6 +67,9 @@
       "@kickzone-workspace/categories-hook": [
         "libs/client/shared/hooks/categories/src/index.ts"
       ],
+      "@kickzone-workspace/client-shared-graphql": [
+        "libs/client/shared/graphql/src/index.ts"
+      ],
       "@kickzone-workspace/codegen": ["libs/shared/codegen/src/index.ts"],
       "@kickzone-workspace/colors": [
         "libs/client/shared/ui/colors/src/index.ts"

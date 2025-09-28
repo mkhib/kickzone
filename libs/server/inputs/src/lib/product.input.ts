@@ -90,4 +90,10 @@ export class ProductFilterInput {
 
   @Field(() => Int, { nullable: true })
   sellerId?: number;
+
+  @Field({ nullable: true })
+  onlyWithSellers?: boolean;
+
+  @Field({ nullable: true })
+  onlyInStock?: boolean;
 }

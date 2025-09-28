@@ -6,6 +6,7 @@ import CardContent from '@mui/material/CardContent';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
@@ -22,6 +23,95 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const firstInfo = product.productInfos?.[0];
   const image = firstInfo?.images?.[0] || PRODUCT_IMAGE_PLACEHOLDER;
+
+  // Get pricing info for the first product info
+  const getPricingInfo = () => {
+    console.log('🎴 ProductCard - Product data:', {
+      productId: product.id,
+      productName: product.name,
+      firstInfo,
+      firstInfoId: firstInfo?.id,
+      sellerProducts: product.sellerProducts,
+      sellerProductsLength: product.sellerProducts?.length || 0,
+    });
+
+    if (!product.sellerProducts || product.sellerProducts.length === 0) {
+      console.log('❌ ProductCard - No seller products found');
+      return null;
+    }
+
+    // Log each seller product to see what we're working with
+    console.log(
+      '🔍 ProductCard - All seller products:',
+      product.sellerProducts.map((sp) => ({
+        id: sp.id,
+        productInfoId: sp.productInfo?.id,
+        stockQuantity: sp.stockQuantity,
+        price: sp.price,
+      }))
+    );
+
+    // Find the sellerProduct that matches the first productInfo
+    const sellerProduct = product.sellerProducts.find(
+      (sp) => sp.productInfo?.id === firstInfo?.id
+    );
+
+    console.log('🔍 ProductCard - Matching logic:', {
+      firstInfoId: firstInfo?.id,
+      sellerProduct,
+      stockQuantity: sellerProduct?.stockQuantity,
+      price: sellerProduct?.price,
+      discount: sellerProduct?.discount,
+    });
+
+    if (!sellerProduct) {
+      console.log(
+        '❌ ProductCard - No matching seller product found for productInfo ID:',
+        firstInfo?.id
+      );
+      console.log(
+        '❌ ProductCard - Available productInfo IDs in sellerProducts:',
+        product.sellerProducts.map((sp) => sp.productInfo?.id)
+      );
+      return null;
+    }
+
+    const originalPrice = sellerProduct.price;
+    const discount = sellerProduct.discount;
+    const finalPrice =
+      discount > 0
+        ? originalPrice - (originalPrice * discount) / 100
+        : originalPrice;
+
+    const pricingInfo = {
+      originalPrice,
+      finalPrice,
+      discount,
+      stockQuantity: sellerProduct.stockQuantity,
+      sellerName: sellerProduct.seller.storeName,
+    };
+
+    console.log('💰 ProductCard - Final pricing info:', pricingInfo);
+    console.log('📊 ProductCard - Stock check:', {
+      stockQuantity: pricingInfo.stockQuantity,
+      isOutOfStock: pricingInfo.stockQuantity <= 0,
+    });
+
+    return pricingInfo;
+  };
+
+  const pricingInfo = getPricingInfo();
+  const hasNoSellers = Boolean(
+    !product.sellerProducts || product.sellerProducts.length === 0
+  );
+  const isOutOfStock = pricingInfo ? pricingInfo.stockQuantity <= 0 : false;
+
+  console.log('🎯 ProductCard - Final result:', {
+    hasPricingInfo: !!pricingInfo,
+    hasNoSellers,
+    isOutOfStock,
+    stockQuantity: pricingInfo?.stockQuantity,
+  });
 
   const handleAddToCartClick = useCallback(() => {
     onAddToCart(product);
@@ -68,19 +158,84 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
           {product.categories?.map((cat) => cat.name).join(', ')}
         </Typography>
-        {firstInfo && (
-          <>
+
+        {/* Pricing Information */}
+        {hasNoSellers ? (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              No sellers available
+            </Typography>
             <Typography
-              variant="subtitle2"
-              color="primary"
-              sx={{ fontWeight: 500 }}
+              variant="body2"
+              color="warning.main"
+              sx={{ fontWeight: 'bold' }}
             >
-              ${firstInfo.price?.toFixed(2)}
+              Check back later
             </Typography>
-            <Typography variant="caption" color="text.secondary">
-              Color: {firstInfo.color ? firstInfo.color.name : 'N/A'}
+          </Box>
+        ) : pricingInfo ? (
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+              {pricingInfo.discount > 0 && (
+                <Typography
+                  variant="body2"
+                  sx={{
+                    textDecoration: 'line-through',
+                    color: 'text.secondary',
+                  }}
+                >
+                  ${pricingInfo.originalPrice.toFixed(2)}
+                </Typography>
+              )}
+              <Typography
+                variant="h6"
+                color={pricingInfo.discount > 0 ? 'error' : 'primary'}
+                sx={{ fontWeight: 'bold' }}
+              >
+                ${pricingInfo.finalPrice.toFixed(2)}
+              </Typography>
+              {pricingInfo.discount > 0 && (
+                <Chip
+                  label={`${pricingInfo.discount}% OFF`}
+                  size="small"
+                  color="error"
+                  variant="outlined"
+                />
+              )}
+            </Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              by {pricingInfo.sellerName}
             </Typography>
-          </>
+            <Typography
+              variant="body2"
+              color={isOutOfStock ? 'error' : 'success.main'}
+              sx={{ fontWeight: 'bold' }}
+            >
+              {isOutOfStock
+                ? 'Out of Stock'
+                : `${pricingInfo.stockQuantity} left`}
+            </Typography>
+          </Box>
+        ) : (
+          <Box sx={{ mb: 2 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+              Price not available
+            </Typography>
+            <Typography
+              variant="body2"
+              color="warning.main"
+              sx={{ fontWeight: 'bold' }}
+            >
+              Contact seller
+            </Typography>
+          </Box>
+        )}
+
+        {firstInfo && (
+          <Typography variant="caption" color="text.secondary">
+            Color: {firstInfo.color ? firstInfo.color.name : 'N/A'} | Size:{' '}
+            {firstInfo.size || 'N/A'}
+          </Typography>
         )}
       </CardContent>
       <Box sx={{ p: 2, pt: 0, display: 'flex', justifyContent: 'flex-end' }}>
@@ -88,16 +243,30 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           variant="contained"
           color="primary"
           startIcon={<ShoppingCartIcon />}
+          disabled={hasNoSellers || isOutOfStock}
           sx={{
             borderRadius: 3,
             fontWeight: 600,
             boxShadow: 'none',
             textTransform: 'none',
-            background: 'linear-gradient(90deg, #4f8cff 60%, #3358ff 100%)',
+            background:
+              hasNoSellers || isOutOfStock
+                ? 'grey.400'
+                : 'linear-gradient(90deg, #4f8cff 60%, #3358ff 100%)',
+            '&:hover': {
+              background:
+                hasNoSellers || isOutOfStock
+                  ? 'grey.400'
+                  : 'linear-gradient(90deg, #3d7bff 60%, #2a4dff 100%)',
+            },
           }}
           onClick={handleAddToCartClick}
         >
-          Add to Cart
+          {hasNoSellers
+            ? 'No Sellers'
+            : isOutOfStock
+            ? 'Out of Stock'
+            : 'Add to Cart'}
         </Button>
       </Box>
     </Card>

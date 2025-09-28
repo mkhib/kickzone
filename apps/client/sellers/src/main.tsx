@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import * as ReactDOM from 'react-dom/client';
 import App from './app/app';
 import { SellersAuthProvider } from '@kickzone-workspace/sellers-auth-context';
-import { AdminsGraphQLProvider as SellersGraphQLProvider } from '@kickzone-workspace/sellers-graphql';
+import { SellersGraphQLProvider } from '@kickzone-workspace/sellers-graphql';
 import { SnackbarProvider } from '@kickzone-workspace/snackbar-hook';
 
 const root = ReactDOM.createRoot(
