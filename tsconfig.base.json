@@ -55,6 +55,9 @@
       "@kickzone-workspace/admins-router": [
         "libs/client/admins/router/src/index.ts"
       ],
+      "@kickzone-workspace/admins-routes": [
+        "libs/client/admins/routes/src/index.ts"
+      ],
       "@kickzone-workspace/admins-sellers-hooks": [
         "libs/client/admins/hooks/sellers/src/index.ts"
       ],
@@ -206,6 +209,9 @@
       "@kickzone-workspace/sellers-router": [
         "libs/client/sellers/router/src/index.ts"
       ],
+      "@kickzone-workspace/sellers-routes": [
+        "libs/client/sellers/routes/src/index.ts"
+      ],
       "@kickzone-workspace/sellers-setup-password": [
         "libs/client/sellers/screens/setup-password/src/index.ts"
       ],
@@ -218,9 +224,6 @@
       ],
       "@kickzone-workspace/shared-notification-store": [
         "libs/client/shared/zustand/shared-notification-store/src/index.ts"
-      ],
-      "@kickzone-workspace/shared-routes": [
-        "libs/client/shared/routes/src/index.ts"
       ],
       "@kickzone-workspace/shared-ui-store": [
         "libs/client/shared/zustand/shared-ui-store/src/index.ts"

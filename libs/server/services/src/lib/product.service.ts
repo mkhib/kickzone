@@ -322,7 +322,8 @@ export class ProductService {
       .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
       .leftJoinAndSelect('sellerProductInfo.color', 'sellerProductColor')
       .where('sellerProduct.sellerId = :sellerId', { sellerId })
-      .orderBy('productInfo.id', 'ASC');
+      .orderBy('productInfo.id', 'ASC')
+      .addOrderBy('sellerProduct.id', 'ASC');
 
     if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
       query.andWhere('product.archived = :archived', {

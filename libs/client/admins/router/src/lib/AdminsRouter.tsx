@@ -1,5 +1,6 @@
 import { AdminProductEditor } from '@kickzone-workspace/admin-product-editor';
 import { AdminProducts } from '@kickzone-workspace/admin-products';
+import { ADMIN_ROUTES } from '@kickzone-workspace/admins-routes';
 import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
 import { AdminsLogin } from '@kickzone-workspace/admins-login';
 import { AdminsUnauthorizedScreen } from '@kickzone-workspace/admins-unauthorized-screen';
@@ -16,14 +17,23 @@ export function AdminsRouter() {
     <BrowserRouter>
       <Routes>
         <Route element={<AdminRoute />}>
-          <Route path="/" element={<AdminProductEditor />} />
-          <Route path="/products" element={<AdminProducts />} />
-          <Route path="/products/new" element={<AdminProductEditor />} />
-          <Route path="/products/edit/:id" element={<AdminProductEditor />} />
-          <Route path="/sellers" element={<SellerManagement />} />
+          <Route path={ADMIN_ROUTES.HOME} element={<AdminProductEditor />} />
+          <Route path={ADMIN_ROUTES.PRODUCTS} element={<AdminProducts />} />
+          <Route
+            path={ADMIN_ROUTES.PRODUCTS_NEW}
+            element={<AdminProductEditor />}
+          />
+          <Route
+            path={ADMIN_ROUTES.PRODUCTS_EDIT}
+            element={<AdminProductEditor />}
+          />
+          <Route path={ADMIN_ROUTES.SELLERS} element={<SellerManagement />} />
         </Route>
-        <Route path="/login" element={<AdminsLogin />} />
-        <Route path="/unauthorized" element={<AdminsUnauthorizedScreen />} />
+        <Route path={ADMIN_ROUTES.LOGIN} element={<AdminsLogin />} />
+        <Route
+          path={ADMIN_ROUTES.UNAUTHORIZED}
+          element={<AdminsUnauthorizedScreen />}
+        />
       </Routes>
     </BrowserRouter>
   );

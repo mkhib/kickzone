@@ -71,7 +71,7 @@ const GET_SELLER_PRODUCT_BY_ID_QUERY = gql`
     mySellerProductById(id: $id) {
       ...SellerProductFields
       product {
-        ...ProductManagementProductFields
+        ...SellerProductManagementFields
       }
     }
   }
@@ -161,7 +161,16 @@ export function useSellersProductManagement() {
       },
     };
 
-    return createSellerProduct({ variables });
+    return createSellerProduct({
+      variables,
+      refetchQueries: ['SellerProductsForMe'],
+      awaitRefetchQueries: true,
+      update: (cache, { data }) => {
+        // Invalidate the seller products query to force a refetch
+        cache.evict({ fieldName: 'sellerProductsForMe' });
+        cache.gc();
+      },
+    });
   };
 
   const updateProduct = async (
@@ -187,7 +196,16 @@ export function useSellersProductManagement() {
       },
     };
 
-    return updateSellerProduct({ variables });
+    return updateSellerProduct({
+      variables,
+      refetchQueries: ['SellerProductsForMe'],
+      awaitRefetchQueries: true,
+      update: (cache, { data }) => {
+        // Invalidate the seller products query to force a refetch
+        cache.evict({ fieldName: 'sellerProductsForMe' });
+        cache.gc();
+      },
+    });
   };
 
   const productInfos = useMemo(

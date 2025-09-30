@@ -3,7 +3,6 @@ import { useSellersProducts } from '@kickzone-workspace/sellers-products-hooks';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useNavigate } from 'react-router-dom';
 import { useSellersProductsStore } from '@kickzone-workspace/sellers-products-store';
-import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -30,13 +29,11 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import { SELLER_ROUTES } from '@kickzone-workspace/shared-routes';
+import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 import { useState } from 'react';
 
 export const SellersProducts = () => {
   const navigate = useNavigate();
-  const authContext = useSellersAuthContext();
-  const user = authContext.user;
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedProductForView, setSelectedProductForView] =
     useState<KickzoneGraphqlTypes.Product | null>(null);
@@ -71,39 +68,14 @@ export const SellersProducts = () => {
     navigate(SELLER_ROUTES.MANAGE_PRODUCT);
   };
 
-  const handleEditProduct = (productId: number) => {
-    console.log('🔍 handleEditProduct called with productId:', productId);
-    console.log('🔍 Current user:', user);
-    console.log('🔍 Available sellersProducts:', sellersProducts);
-
-    // Find the product
-    const product = sellersProducts.find((p) => p.id === productId);
-    console.log('🔍 Found product:', product);
-
-    if (!product) {
-      console.error('Product not found');
-      return;
-    }
-
-    if (!product.sellerProducts || product.sellerProducts.length === 0) {
-      console.error('No seller products found for this product');
-      return;
-    }
-
-    console.log('🔍 Product sellerProducts:', product.sellerProducts);
-
-    // Since the backend filters by seller ID, the first (and only) seller product should be the current seller's
-    const sellerProduct = product.sellerProducts[0];
-    console.log('🔍 Found sellerProduct:', sellerProduct);
-
-    if (sellerProduct && sellerProduct.id) {
-      console.log('🔍 Navigating to sellerProductId:', sellerProduct.id);
-      navigate(
-        `${SELLER_ROUTES.MANAGE_PRODUCT}?sellerProductId=${sellerProduct.id}`
-      );
-    } else {
-      console.error('Invalid seller product data');
-    }
+  const handleEditSellerProduct = (sellerProductId: number) => {
+    console.log(
+      '🔍 handleEditSellerProduct called with sellerProductId:',
+      sellerProductId
+    );
+    navigate(
+      `${SELLER_ROUTES.MANAGE_PRODUCT}?sellerProductId=${sellerProductId}`
+    );
   };
 
   const handleViewProduct = (productId: number) => {
@@ -399,7 +371,7 @@ export const SellersProducts = () => {
                       </Typography>
 
                       {/* Current Seller's Product Information */}
-                      {firstSellerProduct && (
+                      {sellerProducts.length > 0 && (
                         <Box
                           sx={{
                             mt: 1,
@@ -408,25 +380,72 @@ export const SellersProducts = () => {
                             borderRadius: 1,
                           }}
                         >
-                          <Typography variant="body2" color="text.secondary">
-                            <strong>Your Price:</strong> $
-                            {firstSellerProduct.price}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            <strong>Stock:</strong>{' '}
-                            {firstSellerProduct.stockQuantity} units
-                          </Typography>
-                          {firstSellerProduct.discount > 0 && (
-                            <Typography variant="body2" color="text.secondary">
-                              <strong>Discount:</strong>{' '}
-                              {firstSellerProduct.discount}% |{' '}
-                              <strong>Final Price:</strong> $
-                              {(
-                                (firstSellerProduct.price *
-                                  (100 - firstSellerProduct.discount)) /
-                                100
-                              ).toFixed(2)}
-                            </Typography>
+                          {sellerProducts.length === 1 ? (
+                            <>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                <strong>Your Price:</strong> $
+                                {firstSellerProduct.price}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                <strong>Stock:</strong>{' '}
+                                {firstSellerProduct.stockQuantity} units
+                              </Typography>
+                              {firstSellerProduct.discount > 0 && (
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                >
+                                  <strong>Discount:</strong>{' '}
+                                  {firstSellerProduct.discount}% |{' '}
+                                  <strong>Final Price:</strong> $
+                                  {(
+                                    (firstSellerProduct.price *
+                                      (100 - firstSellerProduct.discount)) /
+                                    100
+                                  ).toFixed(2)}
+                                </Typography>
+                              )}
+                            </>
+                          ) : (
+                            <>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                <strong>Price Range:</strong> $
+                                {Math.min(
+                                  ...sellerProducts.map((sp) => sp.price)
+                                )}{' '}
+                                - $
+                                {Math.max(
+                                  ...sellerProducts.map((sp) => sp.price)
+                                )}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                <strong>Total Stock:</strong>{' '}
+                                {sellerProducts.reduce(
+                                  (sum, sp) => sum + sp.stockQuantity,
+                                  0
+                                )}{' '}
+                                units
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color="text.secondary"
+                              >
+                                <strong>Variants:</strong>{' '}
+                                {sellerProducts.length} different pricing
+                              </Typography>
+                            </>
                           )}
                         </Box>
                       )}
@@ -449,28 +468,15 @@ export const SellersProducts = () => {
                     )}
                   </CardContent>
 
-                  <CardActions sx={{ justifyContent: 'space-between', p: 2 }}>
-                    <Box>
-                      <Tooltip title="View Details">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleViewProduct(product.id)}
-                        >
-                          <ViewIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                    <Box>
-                      <Tooltip title="Edit Product">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleEditProduct(product.id)}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
+                  <CardActions sx={{ justifyContent: 'center', p: 2 }}>
+                    <Tooltip title="View Details">
+                      <IconButton
+                        size="small"
+                        onClick={() => handleViewProduct(product.id)}
+                      >
+                        <ViewIcon />
+                      </IconButton>
+                    </Tooltip>
                   </CardActions>
                 </Card>
               </Grid>
@@ -608,9 +614,32 @@ export const SellersProducts = () => {
                           return (
                             <Card key={sellerProduct.id} variant="outlined">
                               <CardContent sx={{ p: 2 }}>
-                                <Typography variant="subtitle2" sx={{ mb: 1 }}>
-                                  Your Variant {index + 1}
-                                </Typography>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    justifyContent: 'space-between',
+                                    alignItems: 'flex-start',
+                                    mb: 1,
+                                  }}
+                                >
+                                  <Typography variant="subtitle2">
+                                    Your Variant {index + 1}
+                                  </Typography>
+                                  <Tooltip title="Edit this variant">
+                                    <IconButton
+                                      size="small"
+                                      color="primary"
+                                      onClick={() => {
+                                        handleEditSellerProduct(
+                                          sellerProduct.id
+                                        );
+                                        handleCloseViewModal();
+                                      }}
+                                    >
+                                      <EditIcon />
+                                    </IconButton>
+                                  </Tooltip>
+                                </Box>
                                 <Stack spacing={1}>
                                   <Typography
                                     variant="body2"
@@ -663,6 +692,31 @@ export const SellersProducts = () => {
                                     variant="body2"
                                     color="text.secondary"
                                   >
+                                    <strong>Cost Price:</strong> $
+                                    {sellerProduct.costPrice}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Discount:</strong>{' '}
+                                    {sellerProduct.discount}%
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
+                                    <strong>Final Price:</strong> $
+                                    {(
+                                      (sellerProduct.price *
+                                        (100 - sellerProduct.discount)) /
+                                      100
+                                    ).toFixed(2)}
+                                  </Typography>
+                                  <Typography
+                                    variant="body2"
+                                    color="text.secondary"
+                                  >
                                     <strong>Stock:</strong>{' '}
                                     {sellerProduct.stockQuantity} units
                                   </Typography>
@@ -690,120 +744,11 @@ export const SellersProducts = () => {
                     </Stack>
                   </Grid>
                 </Grid>
-
-                {/* Your Product Information Section */}
-                {selectedProductForView.sellerProducts &&
-                  selectedProductForView.sellerProducts.length > 0 && (
-                    <Grid container spacing={3} sx={{ mt: 2 }}>
-                      <Grid size={{ xs: 12 }}>
-                        <Typography variant="h6" sx={{ mb: 2 }}>
-                          Your Product Information
-                        </Typography>
-                        <Stack spacing={2}>
-                          {(() => {
-                            // Since the backend filters by seller ID, sellerProducts should only contain current seller's products
-                            const currentSellerProduct =
-                              selectedProductForView.sellerProducts?.[0];
-
-                            if (!currentSellerProduct) {
-                              return (
-                                <Card variant="outlined">
-                                  <CardContent sx={{ p: 2 }}>
-                                    <Typography
-                                      variant="body2"
-                                      color="text.secondary"
-                                    >
-                                      You haven't added this product to your
-                                      store yet.
-                                    </Typography>
-                                  </CardContent>
-                                </Card>
-                              );
-                            }
-
-                            return (
-                              <Card
-                                key={currentSellerProduct.id}
-                                variant="outlined"
-                              >
-                                <CardContent sx={{ p: 2 }}>
-                                  <Grid container spacing={2}>
-                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                      <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                      >
-                                        <strong>Your Price:</strong> $
-                                        {currentSellerProduct.price}
-                                      </Typography>
-                                    </Grid>
-                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                      <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                      >
-                                        <strong>Cost Price:</strong> $
-                                        {currentSellerProduct.costPrice}
-                                      </Typography>
-                                    </Grid>
-                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                      <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                      >
-                                        <strong>Discount:</strong>{' '}
-                                        {currentSellerProduct.discount}%
-                                      </Typography>
-                                    </Grid>
-                                    <Grid size={{ xs: 12, sm: 6 }}>
-                                      <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                      >
-                                        <strong>Stock:</strong>{' '}
-                                        {currentSellerProduct.stockQuantity}{' '}
-                                        units
-                                      </Typography>
-                                    </Grid>
-                                    <Grid size={{ xs: 12 }}>
-                                      <Typography
-                                        variant="body2"
-                                        color="text.secondary"
-                                      >
-                                        <strong>Final Price:</strong> $
-                                        {(
-                                          (currentSellerProduct.price *
-                                            (100 -
-                                              currentSellerProduct.discount)) /
-                                          100
-                                        ).toFixed(2)}
-                                      </Typography>
-                                    </Grid>
-                                  </Grid>
-                                </CardContent>
-                              </Card>
-                            );
-                          })()}
-                        </Stack>
-                      </Grid>
-                    </Grid>
-                  )}
               </Box>
             )}
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseViewModal}>Close</Button>
-            <Button
-              variant="contained"
-              onClick={() => {
-                if (selectedProductForView) {
-                  handleEditProduct(selectedProductForView.id);
-                  handleCloseViewModal();
-                }
-              }}
-            >
-              Edit Product
-            </Button>
           </DialogActions>
         </Dialog>
       </Box>

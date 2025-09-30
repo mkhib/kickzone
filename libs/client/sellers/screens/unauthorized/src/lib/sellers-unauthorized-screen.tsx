@@ -1,7 +1,7 @@
 import React from 'react';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { UnauthorizedPath } from '@kickzone-workspace/unauthorized-path';
-import { SELLER_ROUTES } from '@kickzone-workspace/shared-routes';
+import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 
 export function SellersUnauthorizedScreen() {
   return (

@@ -1,4 +1,5 @@
 import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
+import { ADMIN_ROUTES } from '@kickzone-workspace/admins-routes';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -98,7 +99,7 @@ export function AdminsHeaderbar() {
               <Button
                 color="inherit"
                 component={RouterLink}
-                to="/products/new"
+                to={ADMIN_ROUTES.PRODUCTS_NEW}
                 startIcon={<HomeIcon />}
                 sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               >
@@ -107,7 +108,7 @@ export function AdminsHeaderbar() {
               <Button
                 color="inherit"
                 component={RouterLink}
-                to="/products"
+                to={ADMIN_ROUTES.PRODUCTS}
                 startIcon={<ShoppingCartIcon />}
                 sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               >
@@ -137,7 +138,11 @@ export function AdminsHeaderbar() {
               </Button>
             </Box>
           ) : (
-            <Button color="inherit" component={RouterLink} to="/login">
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to={ADMIN_ROUTES.LOGIN}
+            >
               Login
             </Button>
           )}
@@ -164,9 +169,9 @@ export function AdminsHeaderbar() {
           </Box>
           <List>
             <ListItemButton
-              to="/products/new"
+              to={ADMIN_ROUTES.PRODUCTS_NEW}
               component={RouterLink}
-              selected={location.pathname === '/products/new'}
+              selected={location.pathname === ADMIN_ROUTES.PRODUCTS_NEW}
             >
               <ListItemIcon>
                 <HomeIcon />
@@ -175,9 +180,9 @@ export function AdminsHeaderbar() {
             </ListItemButton>
 
             <ListItemButton
-              to="/products"
+              to={ADMIN_ROUTES.PRODUCTS}
               component={RouterLink}
-              selected={location.pathname === '/products'}
+              selected={location.pathname === ADMIN_ROUTES.PRODUCTS}
             >
               <ListItemIcon>
                 <ShoppingCartIcon />
@@ -186,9 +191,9 @@ export function AdminsHeaderbar() {
             </ListItemButton>
 
             <ListItemButton
-              to="/contact"
+              to={ADMIN_ROUTES.CONTACT}
               component={RouterLink}
-              selected={location.pathname === '/contact'}
+              selected={location.pathname === ADMIN_ROUTES.CONTACT}
             >
               <ListItemIcon>
                 <ContactMailIcon />
@@ -196,9 +201,9 @@ export function AdminsHeaderbar() {
               <CustomListItemText primary="Contact" />
             </ListItemButton>
             <ListItemButton
-              to="/sellers"
+              to={ADMIN_ROUTES.SELLERS}
               component={RouterLink}
-              selected={location.pathname === '/sellers'}
+              selected={location.pathname === ADMIN_ROUTES.SELLERS}
             >
               <ListItemIcon>
                 <StorefrontIcon />

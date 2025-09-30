@@ -6,7 +6,7 @@ import { SellersSetupPassword } from '@kickzone-workspace/sellers-setup-password
 import { SellersUnauthorizedScreen } from '@kickzone-workspace/sellers-unauthorized-screen';
 import { createPrivateRoute } from '@kickzone-workspace/private-route';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
-import { SELLER_ROUTES } from '@kickzone-workspace/shared-routes';
+import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 
 export function SellersRouter() {
   const { user } = useSellersAuthContext();

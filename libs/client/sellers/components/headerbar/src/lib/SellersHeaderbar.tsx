@@ -1,4 +1,5 @@
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
+import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -57,8 +58,12 @@ export function Headerbar() {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             Kickzone
           </Typography>
-          <Button color="inherit" component={RouterLink} to="/home">
-            Home
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to={SELLER_ROUTES.PRODUCTS}
+          >
+            Products
           </Button>
           {user ? (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
@@ -70,7 +75,11 @@ export function Headerbar() {
               </Button>
             </Box>
           ) : (
-            <Button color="inherit" component={RouterLink} to="/login">
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to={SELLER_ROUTES.LOGIN}
+            >
               Login
             </Button>
           )}
@@ -83,9 +92,9 @@ export function Headerbar() {
       >
         <List>
           <ListItemButton
-            to="/home"
+            to={SELLER_ROUTES.HOME}
             component={RouterLink}
-            selected={location.pathname === '/home'}
+            selected={location.pathname === SELLER_ROUTES.HOME}
           >
             <ListItemIcon>
               <HomeIcon />
@@ -94,9 +103,9 @@ export function Headerbar() {
           </ListItemButton>
 
           <ListItemButton
-            to="/products"
+            to={SELLER_ROUTES.PRODUCTS}
             component={RouterLink}
-            selected={location.pathname === '/products'}
+            selected={location.pathname === SELLER_ROUTES.PRODUCTS}
           >
             <ListItemIcon>
               <ShoppingCartIcon />
@@ -105,9 +114,9 @@ export function Headerbar() {
           </ListItemButton>
 
           <ListItemButton
-            to="/contact"
+            to={SELLER_ROUTES.CONTACT}
             component={RouterLink}
-            selected={location.pathname === '/contact'}
+            selected={location.pathname === SELLER_ROUTES.CONTACT}
           >
             <ListItemIcon>
               <ContactMailIcon />
