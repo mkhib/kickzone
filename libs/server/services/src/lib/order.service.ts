@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order, OrderItem, OrderStatus } from '@kickzone-workspace/entities';
+import { Order, OrderItem, OrderStatus, SellerProduct } from '@kickzone-workspace/entities';
 import {
   CreateOrderInput,
   UpdateOrderInput,
@@ -19,7 +19,9 @@ export class OrderService {
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
     @InjectRepository(OrderItem)
-    private orderItemRepository: Repository<OrderItem>
+    private orderItemRepository: Repository<OrderItem>,
+    @InjectRepository(SellerProduct)
+    private sellerProductRepository: Repository<SellerProduct>
   ) {}
 
   async createOrder(createOrderInput: CreateOrderInput): Promise<Order> {
@@ -35,6 +37,9 @@ export class OrderService {
     );
     order.shippingCost = 10.0; // Fixed shipping cost for now
     order.total = order.subtotal + order.shippingCost;
+
+    // Decrease stock for each ordered item
+    await this.decreaseStock(order.items);
 
     const savedOrder = await this.orderRepository.save(order);
 
@@ -138,6 +143,16 @@ export class OrderService {
 
   async updateOrderStatus(id: string, status: OrderStatus): Promise<Order> {
     const order = await this.findOne(id);
+    const previousStatus = order.status;
+
+    // If order is being cancelled or rejected, restore stock
+    if (
+      (status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED) &&
+      (previousStatus !== OrderStatus.CANCELLED && previousStatus !== OrderStatus.REFUNDED)
+    ) {
+      await this.restoreStock(order.items);
+    }
+
     order.status = status;
     return this.orderRepository.save(order);
   }
@@ -197,5 +212,49 @@ export class OrderService {
     }
 
     return queryBuilder.getCount();
+  }
+
+  /**
+   * Decrease stock quantity for ordered items
+   * Best practice: This ensures inventory is reserved when order is placed
+   */
+  private async decreaseStock(items: any[]): Promise<void> {
+    for (const item of items) {
+      const sellerProduct = await this.sellerProductRepository.findOne({
+        where: { id: parseInt(item.productId) },
+      });
+
+      if (!sellerProduct) {
+        throw new NotFoundException(
+          `Product with ID ${item.productId} not found`
+        );
+      }
+
+      if (sellerProduct.stockQuantity < item.quantity) {
+        throw new BadRequestException(
+          `Insufficient stock for product ${item.productName}. Available: ${sellerProduct.stockQuantity}, Requested: ${item.quantity}`
+        );
+      }
+
+      sellerProduct.stockQuantity -= item.quantity;
+      await this.sellerProductRepository.save(sellerProduct);
+    }
+  }
+
+  /**
+   * Restore stock quantity for cancelled/rejected orders
+   * Best practice: Return items to inventory when orders are cancelled
+   */
+  private async restoreStock(items: OrderItem[]): Promise<void> {
+    for (const item of items) {
+      const sellerProduct = await this.sellerProductRepository.findOne({
+        where: { id: parseInt(item.productId) },
+      });
+
+      if (sellerProduct) {
+        sellerProduct.stockQuantity += item.quantity;
+        await this.sellerProductRepository.save(sellerProduct);
+      }
+    }
   }
 }
