@@ -1,5 +1,6 @@
 import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
 import { ADMIN_ROUTES } from '@kickzone-workspace/admins-routes';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -43,6 +44,7 @@ export function AdminsHeaderbar() {
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { LL } = useI18nContext();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -92,7 +94,7 @@ export function AdminsHeaderbar() {
             }}
             noWrap
           >
-            Kickzone Admin Panel
+            {LL.navigation.adminPanel()}
           </Typography>
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -176,7 +178,7 @@ export function AdminsHeaderbar() {
               <ListItemIcon>
                 <HomeIcon />
               </ListItemIcon>
-              <CustomListItemText primary="Add New Product" />
+              <CustomListItemText primary={LL.button.addNewProduct()} />
             </ListItemButton>
 
             <ListItemButton
@@ -187,7 +189,7 @@ export function AdminsHeaderbar() {
               <ListItemIcon>
                 <ShoppingCartIcon />
               </ListItemIcon>
-              <CustomListItemText primary="Products" />
+              <CustomListItemText primary={LL.navigation.products()} />
             </ListItemButton>
 
             <ListItemButton
@@ -198,7 +200,7 @@ export function AdminsHeaderbar() {
               <ListItemIcon>
                 <ContactMailIcon />
               </ListItemIcon>
-              <CustomListItemText primary="Contact" />
+              <CustomListItemText primary={LL.navigation.contact()} />
             </ListItemButton>
             <ListItemButton
               to={ADMIN_ROUTES.SELLERS}
@@ -208,7 +210,7 @@ export function AdminsHeaderbar() {
               <ListItemIcon>
                 <StorefrontIcon />
               </ListItemIcon>
-              <CustomListItemText primary="Sellers" />
+              <CustomListItemText primary={LL.navigation.sellers()} />
             </ListItemButton>
           </List>
         </StyledDrawer>

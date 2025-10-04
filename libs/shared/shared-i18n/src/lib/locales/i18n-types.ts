@@ -23,11 +23,413 @@ type RootTranslation = {
 		 * C​a​n​c​e​l
 		 */
 		cancel: string
+		/**
+		 * S​a​v​e
+		 */
+		save: string
+		/**
+		 * E​d​i​t
+		 */
+		edit: string
+		/**
+		 * D​e​l​e​t​e
+		 */
+		'delete': string
+		/**
+		 * A​d​d
+		 */
+		add: string
+		/**
+		 * C​l​o​s​e
+		 */
+		close: string
+		/**
+		 * N​e​x​t
+		 */
+		next: string
+		/**
+		 * B​a​c​k
+		 */
+		back: string
+		/**
+		 * L​o​g​i​n
+		 */
+		login: string
+		/**
+		 * L​o​g​o​u​t
+		 */
+		logout: string
+		/**
+		 * S​i​g​n​ ​I​n
+		 */
+		signIn: string
+		/**
+		 * S​i​g​n​ ​U​p
+		 */
+		signUp: string
+		/**
+		 * P​l​a​c​e​ ​O​r​d​e​r
+		 */
+		placeOrder: string
+		/**
+		 * V​i​e​w​ ​D​e​t​a​i​l​s
+		 */
+		viewDetails: string
+		/**
+		 * E​d​i​t​ ​t​h​i​s​ ​v​a​r​i​a​n​t
+		 */
+		editVariant: string
+		/**
+		 * A​d​d​ ​N​e​w​ ​P​r​o​d​u​c​t
+		 */
+		addNewProduct: string
+		/**
+		 * A​d​d​ ​N​e​w​ ​C​a​t​e​g​o​r​y
+		 */
+		addNewCategory: string
+		/**
+		 * A​d​d​ ​N​e​w​ ​C​o​l​o​r
+		 */
+		addNewColor: string
+		/**
+		 * C​h​o​o​s​e​ ​a​ ​p​r​o​d​u​c​t
+		 */
+		chooseProduct: string
+		/**
+		 * C​h​o​o​s​e​ ​a​ ​v​a​r​i​a​n​t
+		 */
+		chooseVariant: string
+		/**
+		 * U​p​d​a​t​e​ ​S​t​a​t​u​s
+		 */
+		updateStatus: string
+		/**
+		 * F​i​l​t​e​r​ ​b​y​ ​S​t​a​t​u​s
+		 */
+		filterByStatus: string
+		/**
+		 * C​h​a​n​g​e​ ​O​r​d​e​r​ ​S​t​a​t​u​s
+		 */
+		changeOrderStatus: string
 	}
-	/**
-	 * H​e​l​l​o
-	 */
-	greeting: string
+	navigation: {
+		/**
+		 * H​o​m​e
+		 */
+		home: string
+		/**
+		 * P​r​o​d​u​c​t​s
+		 */
+		products: string
+		/**
+		 * O​r​d​e​r​s
+		 */
+		orders: string
+		/**
+		 * C​o​n​t​a​c​t
+		 */
+		contact: string
+		/**
+		 * S​h​o​p​p​i​n​g​ ​C​a​r​t
+		 */
+		shoppingCart: string
+		/**
+		 * C​a​r​t
+		 */
+		cart: string
+		/**
+		 * S​e​l​l​e​r​s
+		 */
+		sellers: string
+		/**
+		 * K​i​c​k​z​o​n​e​ ​A​d​m​i​n​ ​P​a​n​e​l
+		 */
+		adminPanel: string
+		/**
+		 * S​e​l​l​e​r​s​ ​P​o​r​t​a​l
+		 */
+		sellersPortal: string
+	}
+	form: {
+		/**
+		 * E​m​a​i​l​ ​A​d​d​r​e​s​s
+		 */
+		email: string
+		/**
+		 * P​a​s​s​w​o​r​d
+		 */
+		password: string
+		/**
+		 * F​u​l​l​ ​N​a​m​e
+		 */
+		fullName: string
+		/**
+		 * P​h​o​n​e
+		 */
+		phone: string
+		/**
+		 * A​d​d​r​e​s​s
+		 */
+		address: string
+		/**
+		 * C​i​t​y
+		 */
+		city: string
+		/**
+		 * S​t​a​t​e
+		 */
+		state: string
+		/**
+		 * Z​I​P​ ​C​o​d​e
+		 */
+		zipCode: string
+		/**
+		 * C​o​u​n​t​r​y
+		 */
+		country: string
+		/**
+		 * N​o​t​e​s​ ​(​O​p​t​i​o​n​a​l​)
+		 */
+		notes: string
+		/**
+		 * S​e​a​r​c​h​ ​p​r​o​d​u​c​t​s​.​.​.
+		 */
+		searchProducts: string
+		/**
+		 * C​a​t​e​g​o​r​y
+		 */
+		category: string
+		/**
+		 * C​o​l​o​r
+		 */
+		color: string
+		/**
+		 * P​r​i​c​e​ ​(​$​)
+		 */
+		price: string
+		/**
+		 * C​o​s​t​ ​P​r​i​c​e​ ​(​$​)
+		 */
+		costPrice: string
+		/**
+		 * D​i​s​c​o​u​n​t​ ​(​%​)
+		 */
+		discount: string
+		/**
+		 * S​t​o​c​k​ ​Q​u​a​n​t​i​t​y
+		 */
+		stockQuantity: string
+		/**
+		 * C​a​t​e​g​o​r​y​ ​N​a​m​e
+		 */
+		categoryName: string
+		/**
+		 * P​r​o​d​u​c​t​ ​N​a​m​e
+		 */
+		productName: string
+		/**
+		 * D​e​s​c​r​i​p​t​i​o​n
+		 */
+		description: string
+		/**
+		 * S​o​r​t​ ​B​y
+		 */
+		sortBy: string
+		/**
+		 * O​r​d​e​r
+		 */
+		order: string
+		/**
+		 * S​t​a​t​u​s
+		 */
+		status: string
+		/**
+		 * E​n​t​e​r​ ​t​r​a​c​k​i​n​g​ ​n​u​m​b​e​r
+		 */
+		trackingNumber: string
+		/**
+		 * N​e​w​ ​S​t​a​t​u​s
+		 */
+		newStatus: string
+	}
+	table: {
+		/**
+		 * P​r​o​d​u​c​t
+		 */
+		product: string
+		/**
+		 * Q​u​a​n​t​i​t​y
+		 */
+		quantity: string
+		/**
+		 * U​n​i​t​ ​P​r​i​c​e
+		 */
+		unitPrice: string
+		/**
+		 * T​o​t​a​l
+		 */
+		total: string
+		/**
+		 * D​a​t​e​ ​C​r​e​a​t​e​d
+		 */
+		dateCreated: string
+		/**
+		 * N​a​m​e
+		 */
+		name: string
+		/**
+		 * P​r​i​c​e
+		 */
+		price: string
+		/**
+		 * A​l​l​ ​O​r​d​e​r​s
+		 */
+		allOrders: string
+		/**
+		 * A​l​l​ ​C​a​t​e​g​o​r​i​e​s
+		 */
+		allCategories: string
+		/**
+		 * A​l​l
+		 */
+		all: string
+		/**
+		 * A​c​t​i​v​e
+		 */
+		active: string
+		/**
+		 * A​r​c​h​i​v​e​d
+		 */
+		archived: string
+		/**
+		 * D​e​f​a​u​l​t
+		 */
+		'default': string
+	}
+	checkout: {
+		/**
+		 * R​e​v​i​e​w​ ​C​a​r​t
+		 */
+		reviewCart: string
+		/**
+		 * S​h​i​p​p​i​n​g​ ​I​n​f​o​r​m​a​t​i​o​n
+		 */
+		shippingInformation: string
+		/**
+		 * O​r​d​e​r​ ​S​u​m​m​a​r​y
+		 */
+		orderSummary: string
+		/**
+		 * T​h​i​s​ ​i​s​ ​a​ ​d​e​m​o​ ​c​h​e​c​k​o​u​t​.​ ​N​o​ ​p​a​y​m​e​n​t​ ​i​s​ ​r​e​q​u​i​r​e​d​.
+		 */
+		demoCheckout: string
+		/**
+		 * Y​o​u​r​ ​o​r​d​e​r​ ​w​i​l​l​ ​b​e​ ​p​r​o​c​e​s​s​e​d​ ​a​n​d​ ​y​o​u​ ​w​i​l​l​ ​r​e​c​e​i​v​e​ ​a​ ​c​o​n​f​i​r​m​a​t​i​o​n​ ​e​m​a​i​l​.
+		 */
+		orderProcessed: string
+		/**
+		 * I​t​e​m​ ​r​e​m​o​v​e​d
+		 */
+		itemRemoved: string
+		/**
+		 * I​t​e​m​ ​h​a​s​ ​b​e​e​n​ ​r​e​m​o​v​e​d​ ​f​r​o​m​ ​y​o​u​r​ ​c​a​r​t
+		 */
+		itemRemovedMessage: string
+		/**
+		 * Q​u​a​n​t​i​t​y​ ​u​p​d​a​t​e​d
+		 */
+		quantityUpdated: string
+		/**
+		 * I​t​e​m​ ​q​u​a​n​t​i​t​y​ ​h​a​s​ ​b​e​e​n​ ​u​p​d​a​t​e​d
+		 */
+		quantityUpdatedMessage: string
+	}
+	products: {
+		/**
+		 * L​o​a​d​i​n​g​ ​y​o​u​r​ ​p​r​o​d​u​c​t​s​.​.​.
+		 */
+		loadingProducts: string
+		/**
+		 * N​o​ ​p​r​o​d​u​c​t​s​ ​f​o​u​n​d
+		 */
+		noProductsFound: string
+		/**
+		 * P​r​o​d​u​c​t​ ​V​a​r​i​a​n​t​s
+		 */
+		productVariants: string
+		/**
+		 * C​o​l​o​r​s
+		 */
+		colors: string
+		/**
+		 * S​e​l​e​c​t​ ​I​m​a​g​e​s
+		 */
+		selectImages: string
+		/**
+		 * Y​o​u​ ​m​u​s​t​ ​s​a​v​e​ ​t​h​e​ ​p​r​o​d​u​c​t​ ​b​e​f​o​r​e​ ​s​e​l​e​c​t​i​n​g​ ​i​m​a​g​e​s​.
+		 */
+		saveProductFirst: string
+		/**
+		 * E​d​i​t​ ​C​a​t​e​g​o​r​y
+		 */
+		editCategory: string
+	}
+	status: {
+		/**
+		 * L​o​a​d​i​n​g​.​.​.
+		 */
+		loading: string
+		/**
+		 * S​u​c​c​e​s​s
+		 */
+		success: string
+		/**
+		 * E​r​r​o​r
+		 */
+		error: string
+		/**
+		 * W​a​r​n​i​n​g
+		 */
+		warning: string
+		/**
+		 * I​n​f​o
+		 */
+		info: string
+	}
+	messages: {
+		/**
+		 * W​e​l​c​o​m​e​ ​t​o​ ​K​i​c​k​z​o​n​e
+		 */
+		welcome: string
+		/**
+		 * I​t​e​m​ ​a​d​d​e​d​ ​t​o​ ​c​a​r​t
+		 */
+		itemAdded: string
+		/**
+		 * I​t​e​m​ ​r​e​m​o​v​e​d​ ​f​r​o​m​ ​c​a​r​t
+		 */
+		itemRemoved: string
+		/**
+		 * Q​u​a​n​t​i​t​y​ ​u​p​d​a​t​e​d
+		 */
+		quantityUpdated: string
+		/**
+		 * O​r​d​e​r​ ​p​l​a​c​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		orderPlaced: string
+		/**
+		 * P​r​o​d​u​c​t​ ​s​a​v​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		productSaved: string
+		/**
+		 * C​a​t​e​g​o​r​y​ ​a​d​d​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		categoryAdded: string
+		/**
+		 * C​o​l​o​r​ ​a​d​d​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		colorAdded: string
+	}
 	authorization: {
 		/**
 		 * S​i​g​n​ ​I​n
@@ -83,7 +485,43 @@ type RootTranslation = {
 		 * A​n​ ​u​n​k​n​o​w​n​ ​e​r​r​o​r​ ​o​c​c​u​r​r​e​d​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
 		 */
 		unknown: string
+		/**
+		 * P​l​e​a​s​e​ ​f​i​l​l​ ​i​n​ ​a​l​l​ ​r​e​q​u​i​r​e​d​ ​f​i​e​l​d​s
+		 */
+		requiredFields: string
+		/**
+		 * N​e​t​w​o​r​k​ ​e​r​r​o​r​.​ ​P​l​e​a​s​e​ ​c​h​e​c​k​ ​y​o​u​r​ ​c​o​n​n​e​c​t​i​o​n​.
+		 */
+		networkError: string
+		/**
+		 * S​e​r​v​e​r​ ​e​r​r​o​r​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r​.
+		 */
+		serverError: string
 	}
+	/**
+	 * H​e​l​l​o
+	 */
+	greeting: string
+	/**
+	 * W​e​l​c​o​m​e
+	 */
+	welcome: string
+	/**
+	 * T​h​a​n​k​ ​y​o​u
+	 */
+	thankYou: string
+	/**
+	 * P​l​e​a​s​e
+	 */
+	please: string
+	/**
+	 * O​p​t​i​o​n​a​l
+	 */
+	optional: string
+	/**
+	 * R​e​q​u​i​r​e​d
+	 */
+	required: string
 }
 
 export type TranslationFunctions = {
@@ -96,11 +534,413 @@ export type TranslationFunctions = {
 		 * Cancel
 		 */
 		cancel: () => LocalizedString
+		/**
+		 * Save
+		 */
+		save: () => LocalizedString
+		/**
+		 * Edit
+		 */
+		edit: () => LocalizedString
+		/**
+		 * Delete
+		 */
+		'delete': () => LocalizedString
+		/**
+		 * Add
+		 */
+		add: () => LocalizedString
+		/**
+		 * Close
+		 */
+		close: () => LocalizedString
+		/**
+		 * Next
+		 */
+		next: () => LocalizedString
+		/**
+		 * Back
+		 */
+		back: () => LocalizedString
+		/**
+		 * Login
+		 */
+		login: () => LocalizedString
+		/**
+		 * Logout
+		 */
+		logout: () => LocalizedString
+		/**
+		 * Sign In
+		 */
+		signIn: () => LocalizedString
+		/**
+		 * Sign Up
+		 */
+		signUp: () => LocalizedString
+		/**
+		 * Place Order
+		 */
+		placeOrder: () => LocalizedString
+		/**
+		 * View Details
+		 */
+		viewDetails: () => LocalizedString
+		/**
+		 * Edit this variant
+		 */
+		editVariant: () => LocalizedString
+		/**
+		 * Add New Product
+		 */
+		addNewProduct: () => LocalizedString
+		/**
+		 * Add New Category
+		 */
+		addNewCategory: () => LocalizedString
+		/**
+		 * Add New Color
+		 */
+		addNewColor: () => LocalizedString
+		/**
+		 * Choose a product
+		 */
+		chooseProduct: () => LocalizedString
+		/**
+		 * Choose a variant
+		 */
+		chooseVariant: () => LocalizedString
+		/**
+		 * Update Status
+		 */
+		updateStatus: () => LocalizedString
+		/**
+		 * Filter by Status
+		 */
+		filterByStatus: () => LocalizedString
+		/**
+		 * Change Order Status
+		 */
+		changeOrderStatus: () => LocalizedString
 	}
-	/**
-	 * Hello
-	 */
-	greeting: () => LocalizedString
+	navigation: {
+		/**
+		 * Home
+		 */
+		home: () => LocalizedString
+		/**
+		 * Products
+		 */
+		products: () => LocalizedString
+		/**
+		 * Orders
+		 */
+		orders: () => LocalizedString
+		/**
+		 * Contact
+		 */
+		contact: () => LocalizedString
+		/**
+		 * Shopping Cart
+		 */
+		shoppingCart: () => LocalizedString
+		/**
+		 * Cart
+		 */
+		cart: () => LocalizedString
+		/**
+		 * Sellers
+		 */
+		sellers: () => LocalizedString
+		/**
+		 * Kickzone Admin Panel
+		 */
+		adminPanel: () => LocalizedString
+		/**
+		 * Sellers Portal
+		 */
+		sellersPortal: () => LocalizedString
+	}
+	form: {
+		/**
+		 * Email Address
+		 */
+		email: () => LocalizedString
+		/**
+		 * Password
+		 */
+		password: () => LocalizedString
+		/**
+		 * Full Name
+		 */
+		fullName: () => LocalizedString
+		/**
+		 * Phone
+		 */
+		phone: () => LocalizedString
+		/**
+		 * Address
+		 */
+		address: () => LocalizedString
+		/**
+		 * City
+		 */
+		city: () => LocalizedString
+		/**
+		 * State
+		 */
+		state: () => LocalizedString
+		/**
+		 * ZIP Code
+		 */
+		zipCode: () => LocalizedString
+		/**
+		 * Country
+		 */
+		country: () => LocalizedString
+		/**
+		 * Notes (Optional)
+		 */
+		notes: () => LocalizedString
+		/**
+		 * Search products...
+		 */
+		searchProducts: () => LocalizedString
+		/**
+		 * Category
+		 */
+		category: () => LocalizedString
+		/**
+		 * Color
+		 */
+		color: () => LocalizedString
+		/**
+		 * Price ($)
+		 */
+		price: () => LocalizedString
+		/**
+		 * Cost Price ($)
+		 */
+		costPrice: () => LocalizedString
+		/**
+		 * Discount (%)
+		 */
+		discount: () => LocalizedString
+		/**
+		 * Stock Quantity
+		 */
+		stockQuantity: () => LocalizedString
+		/**
+		 * Category Name
+		 */
+		categoryName: () => LocalizedString
+		/**
+		 * Product Name
+		 */
+		productName: () => LocalizedString
+		/**
+		 * Description
+		 */
+		description: () => LocalizedString
+		/**
+		 * Sort By
+		 */
+		sortBy: () => LocalizedString
+		/**
+		 * Order
+		 */
+		order: () => LocalizedString
+		/**
+		 * Status
+		 */
+		status: () => LocalizedString
+		/**
+		 * Enter tracking number
+		 */
+		trackingNumber: () => LocalizedString
+		/**
+		 * New Status
+		 */
+		newStatus: () => LocalizedString
+	}
+	table: {
+		/**
+		 * Product
+		 */
+		product: () => LocalizedString
+		/**
+		 * Quantity
+		 */
+		quantity: () => LocalizedString
+		/**
+		 * Unit Price
+		 */
+		unitPrice: () => LocalizedString
+		/**
+		 * Total
+		 */
+		total: () => LocalizedString
+		/**
+		 * Date Created
+		 */
+		dateCreated: () => LocalizedString
+		/**
+		 * Name
+		 */
+		name: () => LocalizedString
+		/**
+		 * Price
+		 */
+		price: () => LocalizedString
+		/**
+		 * All Orders
+		 */
+		allOrders: () => LocalizedString
+		/**
+		 * All Categories
+		 */
+		allCategories: () => LocalizedString
+		/**
+		 * All
+		 */
+		all: () => LocalizedString
+		/**
+		 * Active
+		 */
+		active: () => LocalizedString
+		/**
+		 * Archived
+		 */
+		archived: () => LocalizedString
+		/**
+		 * Default
+		 */
+		'default': () => LocalizedString
+	}
+	checkout: {
+		/**
+		 * Review Cart
+		 */
+		reviewCart: () => LocalizedString
+		/**
+		 * Shipping Information
+		 */
+		shippingInformation: () => LocalizedString
+		/**
+		 * Order Summary
+		 */
+		orderSummary: () => LocalizedString
+		/**
+		 * This is a demo checkout. No payment is required.
+		 */
+		demoCheckout: () => LocalizedString
+		/**
+		 * Your order will be processed and you will receive a confirmation email.
+		 */
+		orderProcessed: () => LocalizedString
+		/**
+		 * Item removed
+		 */
+		itemRemoved: () => LocalizedString
+		/**
+		 * Item has been removed from your cart
+		 */
+		itemRemovedMessage: () => LocalizedString
+		/**
+		 * Quantity updated
+		 */
+		quantityUpdated: () => LocalizedString
+		/**
+		 * Item quantity has been updated
+		 */
+		quantityUpdatedMessage: () => LocalizedString
+	}
+	products: {
+		/**
+		 * Loading your products...
+		 */
+		loadingProducts: () => LocalizedString
+		/**
+		 * No products found
+		 */
+		noProductsFound: () => LocalizedString
+		/**
+		 * Product Variants
+		 */
+		productVariants: () => LocalizedString
+		/**
+		 * Colors
+		 */
+		colors: () => LocalizedString
+		/**
+		 * Select Images
+		 */
+		selectImages: () => LocalizedString
+		/**
+		 * You must save the product before selecting images.
+		 */
+		saveProductFirst: () => LocalizedString
+		/**
+		 * Edit Category
+		 */
+		editCategory: () => LocalizedString
+	}
+	status: {
+		/**
+		 * Loading...
+		 */
+		loading: () => LocalizedString
+		/**
+		 * Success
+		 */
+		success: () => LocalizedString
+		/**
+		 * Error
+		 */
+		error: () => LocalizedString
+		/**
+		 * Warning
+		 */
+		warning: () => LocalizedString
+		/**
+		 * Info
+		 */
+		info: () => LocalizedString
+	}
+	messages: {
+		/**
+		 * Welcome to Kickzone
+		 */
+		welcome: () => LocalizedString
+		/**
+		 * Item added to cart
+		 */
+		itemAdded: () => LocalizedString
+		/**
+		 * Item removed from cart
+		 */
+		itemRemoved: () => LocalizedString
+		/**
+		 * Quantity updated
+		 */
+		quantityUpdated: () => LocalizedString
+		/**
+		 * Order placed successfully
+		 */
+		orderPlaced: () => LocalizedString
+		/**
+		 * Product saved successfully
+		 */
+		productSaved: () => LocalizedString
+		/**
+		 * Category added successfully
+		 */
+		categoryAdded: () => LocalizedString
+		/**
+		 * Color added successfully
+		 */
+		colorAdded: () => LocalizedString
+	}
 	authorization: {
 		/**
 		 * Sign In
@@ -156,7 +996,43 @@ export type TranslationFunctions = {
 		 * An unknown error occurred. Please try again.
 		 */
 		unknown: () => LocalizedString
+		/**
+		 * Please fill in all required fields
+		 */
+		requiredFields: () => LocalizedString
+		/**
+		 * Network error. Please check your connection.
+		 */
+		networkError: () => LocalizedString
+		/**
+		 * Server error. Please try again later.
+		 */
+		serverError: () => LocalizedString
 	}
+	/**
+	 * Hello
+	 */
+	greeting: () => LocalizedString
+	/**
+	 * Welcome
+	 */
+	welcome: () => LocalizedString
+	/**
+	 * Thank you
+	 */
+	thankYou: () => LocalizedString
+	/**
+	 * Please
+	 */
+	please: () => LocalizedString
+	/**
+	 * Optional
+	 */
+	optional: () => LocalizedString
+	/**
+	 * Required
+	 */
+	required: () => LocalizedString
 }
 
 export type Formatters = {}

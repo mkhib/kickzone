@@ -2,6 +2,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CustomersProductCard } from '@kickzone-workspace/customers-product-card';
 import { useProductsQuery } from '@kickzone-workspace/products-hook';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import SearchIcon from '@mui/icons-material/Search';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
@@ -22,6 +23,7 @@ export function CustomersHome() {
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const { LL } = useI18nContext();
 
   const { products, loading } = useProductsQuery({
     search,
@@ -50,7 +52,7 @@ export function CustomersHome() {
 
         // Find the sellerProduct that matches this productInfo
         const sellerProduct = product.sellerProducts?.find(
-          (sp) => sp.productInfo.id === productInfo.id
+          (sp) => sp.productInfo?.id === productInfo.id
         );
 
         console.log('🔍 Found seller product:', {
@@ -60,8 +62,10 @@ export function CustomersHome() {
           discount: sellerProduct?.discount,
         });
 
-        if (!sellerProduct) {
-          console.error('❌ No seller product found for this product info');
+        if (!sellerProduct || !sellerProduct.seller) {
+          console.error(
+            '❌ No seller product or seller found for this product info'
+          );
           return;
         }
 
@@ -115,7 +119,7 @@ export function CustomersHome() {
             variant="h4"
             sx={{ mb: 4, color: '#222', fontWeight: 700, letterSpacing: 1 }}
           >
-            Welcome to Kickzone
+            {LL.messages.welcome()}
           </Typography>
           <Stack
             direction={{ xs: 'column', sm: 'row' }}
@@ -124,7 +128,7 @@ export function CustomersHome() {
           >
             <TextField
               variant="outlined"
-              placeholder="Search products..."
+              placeholder={LL.form.searchProducts()}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               size="small"
@@ -138,23 +142,23 @@ export function CustomersHome() {
               }}
             />
             <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Sort By</InputLabel>
+              <InputLabel>{LL.form.sortBy()}</InputLabel>
               <Select
                 value={sort}
-                label="Sort By"
+                label={LL.form.sortBy()}
                 onChange={(e) => setSort(e.target.value)}
               >
-                <MenuItem value="">None</MenuItem>
-                <MenuItem value="price">Price</MenuItem>
-                <MenuItem value="name">Name</MenuItem>
-                <MenuItem value="discount">Discount</MenuItem>
+                <MenuItem value="">{LL.table.default()}</MenuItem>
+                <MenuItem value="price">{LL.table.price()}</MenuItem>
+                <MenuItem value="name">{LL.table.name()}</MenuItem>
+                <MenuItem value="discount">{LL.form.discount()}</MenuItem>
               </Select>
             </FormControl>
             <FormControl size="small" sx={{ minWidth: 140 }}>
-              <InputLabel>Order</InputLabel>
+              <InputLabel>{LL.form.order()}</InputLabel>
               <Select
                 value={sortOrder}
-                label="Order"
+                label={LL.form.order()}
                 onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
               >
                 <MenuItem value="asc">Ascending</MenuItem>

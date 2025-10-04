@@ -1,5 +1,6 @@
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { useCartItemCount } from '@kickzone-workspace/customer-cart-store';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -40,6 +41,7 @@ export function Headerbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
   const totalItems = useCartItemCount();
+  const { LL } = useI18nContext();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -61,7 +63,7 @@ export function Headerbar() {
             Kickzone
           </Typography>
           <Button color="inherit" component={RouterLink} to="/home">
-            Home
+            {LL.navigation.home()}
           </Button>
           <IconButton
             color="inherit"
@@ -79,12 +81,12 @@ export function Headerbar() {
                 {user.name}
               </Typography>
               <Button color="inherit" onClick={logout}>
-                Logout
+                {LL.button.logout()}
               </Button>
             </Box>
           ) : (
             <Button color="inherit" component={RouterLink} to="/login">
-              Login
+              {LL.button.login()}
             </Button>
           )}
         </Toolbar>
@@ -103,7 +105,7 @@ export function Headerbar() {
             <ListItemIcon>
               <HomeIcon />
             </ListItemIcon>
-            <CustomListItemText primary="Home" />
+            <CustomListItemText primary={LL.navigation.home()} />
           </ListItemButton>
 
           <ListItemButton
@@ -114,7 +116,7 @@ export function Headerbar() {
             <ListItemIcon>
               <ShoppingCartIcon />
             </ListItemIcon>
-            <CustomListItemText primary="Products" />
+            <CustomListItemText primary={LL.navigation.products()} />
           </ListItemButton>
 
           <ListItemButton
@@ -127,7 +129,7 @@ export function Headerbar() {
                 <ShoppingCartIcon />
               </Badge>
             </ListItemIcon>
-            <CustomListItemText primary="Shopping Cart" />
+            <CustomListItemText primary={LL.navigation.shoppingCart()} />
           </ListItemButton>
 
           <ListItemButton
@@ -138,7 +140,7 @@ export function Headerbar() {
             <ListItemIcon>
               <ContactMailIcon />
             </ListItemIcon>
-            <CustomListItemText primary="Contact" />
+            <CustomListItemText primary={LL.navigation.contact()} />
           </ListItemButton>
         </List>
       </StyledDrawer>

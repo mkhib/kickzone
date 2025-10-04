@@ -1,5 +1,6 @@
 import React from 'react';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -13,6 +14,8 @@ import Paper from '@mui/material/Paper';
 import { colors } from '@kickzone-workspace/colors';
 
 export function CustomersLogin() {
+  const { LL } = useI18nContext();
+
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
@@ -43,7 +46,7 @@ export function CustomersLogin() {
             variant="h5"
             sx={{ mt: 2, color: colors.text }}
           >
-            Sign in
+            {LL.authorization.signIn()}
           </Typography>
           <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
             <TextField
@@ -51,7 +54,7 @@ export function CustomersLogin() {
               required
               fullWidth
               id="email"
-              label="Email Address"
+              label={LL.form.email()}
               name="email"
               autoComplete="email"
               autoFocus
@@ -62,7 +65,7 @@ export function CustomersLogin() {
               required
               fullWidth
               name="password"
-              label="Password"
+              label={LL.form.password()}
               type="password"
               id="password"
               autoComplete="current-password"
@@ -79,12 +82,12 @@ export function CustomersLogin() {
                 '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
-              Sign In
+              {LL.authorization.signIn()}
             </Button>
             <Grid container justifyContent="flex-end" component="div">
               <Grid component="div">
                 <Link href="#" variant="body2" sx={{ color: colors.main }}>
-                  Don't have an account? Sign Up
+                  Don't have an account? {LL.authorization.signUp()}
                 </Link>
               </Grid>
             </Grid>
