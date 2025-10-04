@@ -3,6 +3,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   GET_SELLER_ORDERS_QUERY,
   UPDATE_ORDER_STATUS_MUTATION,
+  UPDATE_ORDER_MUTATION,
   GET_ORDER_DETAILS_QUERY,
 } from '@kickzone-workspace/sellers-graphql';
 
@@ -23,28 +24,49 @@ export function useSellerOrders({
     notifyOnNetworkStatusChange: true,
   });
 
-  const [updateOrderStatusMutation, { loading: updateLoading }] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'updateOrderStatus'>,
-    KickzoneGraphqlTypes.MutationUpdateOrderStatusArgs
-  >(UPDATE_ORDER_STATUS_MUTATION, {
+  const [updateOrderStatusMutation, { loading: updateStatusLoading }] =
+    useMutation<
+      Pick<KickzoneGraphqlTypes.Mutation, 'updateOrderStatus'>,
+      KickzoneGraphqlTypes.MutationUpdateOrderStatusArgs
+    >(UPDATE_ORDER_STATUS_MUTATION, {
+      refetchQueries: [{ query: GET_SELLER_ORDERS_QUERY }],
+    });
+
+  const [updateOrderMutation, { loading: updateOrderLoading }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateOrder'>,
+    KickzoneGraphqlTypes.MutationUpdateOrderArgs
+  >(UPDATE_ORDER_MUTATION, {
     refetchQueries: [{ query: GET_SELLER_ORDERS_QUERY }],
   });
 
   const updateOrderStatus = async (
     orderId: string,
-    status: KickzoneGraphqlTypes.OrderStatus,
-    trackingNumber?: string
+    status: KickzoneGraphqlTypes.OrderStatus
   ) => {
     const response = await updateOrderStatusMutation({
       variables: {
         updateOrderStatusInput: {
-          orderId,
+          id: orderId,
           status,
-          trackingNumber,
         },
       },
     });
     return response.data?.updateOrderStatus;
+  };
+
+  const updateTrackingNumber = async (
+    orderId: string,
+    trackingNumber: string
+  ) => {
+    const response = await updateOrderMutation({
+      variables: {
+        id: orderId,
+        updateOrderInput: {
+          trackingNumber,
+        },
+      },
+    });
+    return response.data?.updateOrder;
   };
 
   const loadMore = () => {
@@ -65,7 +87,9 @@ export function useSellerOrders({
     refetch,
     loadMore,
     updateOrderStatus,
-    updateLoading,
+    updateTrackingNumber,
+    updateStatusLoading,
+    updateOrderLoading,
   };
 }
 

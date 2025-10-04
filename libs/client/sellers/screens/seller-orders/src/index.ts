@@ -1,1 +1,1 @@
-export * from './lib/seller-orders-screen';
+export { SellerOrdersScreen } from './lib/seller-orders-screen';

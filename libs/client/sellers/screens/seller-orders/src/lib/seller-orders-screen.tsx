@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@apollo/client/react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
@@ -30,51 +29,11 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { ExpandMore, Edit, Save, Cancel } from '@mui/icons-material';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
-import {
-  GET_SELLER_ORDERS_QUERY,
-  UPDATE_ORDER_STATUS_MUTATION,
-} from '@kickzone-workspace/sellers-graphql';
-
-interface OrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  productImage: string | null;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-  color: string | null;
-  size: string | null;
-}
-
-interface Order {
-  id: string;
-  orderNumber: string;
-  customerEmail: string;
-  customerPhone: string;
-  customerName: string;
-  shippingAddress: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  country: string;
-  status: string;
-  subtotal: number;
-  shippingCost: number;
-  total: number;
-  notes: string | null;
-  trackingNumber: string | null;
-  createdAt: string;
-  updatedAt: string;
-  items: OrderItem[];
-}
-
-interface OrdersData {
-  allSellerOrders: Order[];
-}
+import { useSellerOrders } from '@kickzone-workspace/sellers-hooks-orders';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 const getStatusColor = (
-  status: string
+  status: KickzoneGraphqlTypes.OrderStatus
 ):
   | 'default'
   | 'primary'
@@ -84,19 +43,19 @@ const getStatusColor = (
   | 'success'
   | 'warning' => {
   switch (status) {
-    case 'PENDING':
+    case KickzoneGraphqlTypes.OrderStatus.Pending:
       return 'warning';
-    case 'CONFIRMED':
+    case KickzoneGraphqlTypes.OrderStatus.Confirmed:
       return 'info';
-    case 'PROCESSING':
+    case KickzoneGraphqlTypes.OrderStatus.Processing:
       return 'primary';
-    case 'SHIPPED':
+    case KickzoneGraphqlTypes.OrderStatus.Shipped:
       return 'secondary';
-    case 'DELIVERED':
+    case KickzoneGraphqlTypes.OrderStatus.Delivered:
       return 'success';
-    case 'CANCELLED':
+    case KickzoneGraphqlTypes.OrderStatus.Cancelled:
       return 'error';
-    case 'REFUNDED':
+    case KickzoneGraphqlTypes.OrderStatus.Refunded:
       return 'default';
     default:
       return 'default';
@@ -115,34 +74,36 @@ const formatDate = (dateString: string) => {
 
 export function SellerOrdersScreen() {
   const [expandedOrder, setExpandedOrder] = useState<string | false>(false);
-  const [selectedStatus, setSelectedStatus] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<
+    KickzoneGraphqlTypes.OrderStatus | undefined
+  >(undefined);
   const [editingOrder, setEditingOrder] = useState<string | null>(null);
   const [trackingNumber, setTrackingNumber] = useState('');
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
-  const [newStatus, setNewStatus] = useState('');
+  const [newStatus, setNewStatus] = useState<KickzoneGraphqlTypes.OrderStatus>(
+    KickzoneGraphqlTypes.OrderStatus.Pending
+  );
 
   const {
-    data: ordersData,
+    orders,
     loading: ordersLoading,
     error: ordersError,
-    refetch,
-  } = useQuery<OrdersData>(GET_SELLER_ORDERS_QUERY, {
-    variables: {
-      first: 50,
-      status: selectedStatus || undefined,
-    },
-    fetchPolicy: 'cache-and-network',
+    updateOrderStatus,
+    updateTrackingNumber,
+  } = useSellerOrders({
+    first: 50,
+    status: selectedStatus,
   });
-
-  const [updateOrderStatus] = useMutation(UPDATE_ORDER_STATUS_MUTATION);
 
   const handleExpandOrder = (orderId: string) => {
     setExpandedOrder(expandedOrder === orderId ? false : orderId);
   };
 
   const handleStatusFilter = (status: string) => {
-    setSelectedStatus(status);
+    setSelectedStatus(
+      (status as KickzoneGraphqlTypes.OrderStatus) || undefined
+    );
   };
 
   const handleEditOrder = (orderId: string, currentTrackingNumber: string) => {
@@ -151,10 +112,13 @@ export function SellerOrdersScreen() {
   };
 
   const handleSaveTracking = async (orderId: string) => {
-    // TODO: Implement tracking number update
-    console.log('Save tracking number:', orderId, trackingNumber);
-    setEditingOrder(null);
-    setTrackingNumber('');
+    try {
+      await updateTrackingNumber(orderId, trackingNumber);
+      setEditingOrder(null);
+      setTrackingNumber('');
+    } catch (error) {
+      console.error('Error updating tracking number:', error);
+    }
   };
 
   const handleCancelEdit = () => {
@@ -171,18 +135,10 @@ export function SellerOrdersScreen() {
     if (!selectedOrderId || !newStatus) return;
 
     try {
-      await updateOrderStatus({
-        variables: {
-          updateOrderStatusInput: {
-            id: selectedOrderId,
-            status: newStatus,
-          },
-        },
-      });
-      refetch();
+      await updateOrderStatus(selectedOrderId, newStatus);
       setStatusDialogOpen(false);
       setSelectedOrderId(null);
-      setNewStatus('');
+      setNewStatus(KickzoneGraphqlTypes.OrderStatus.Pending);
     } catch (error) {
       console.error('Error updating order status:', error);
     }
@@ -213,8 +169,6 @@ export function SellerOrdersScreen() {
     );
   }
 
-  const orders = ordersData?.allSellerOrders || [];
-
   return (
     <SellersLayout>
       <Box sx={{ p: 3 }}>
@@ -227,18 +181,32 @@ export function SellerOrdersScreen() {
           <FormControl sx={{ minWidth: 200 }}>
             <InputLabel>Filter by Status</InputLabel>
             <Select
-              value={selectedStatus}
+              value={selectedStatus || ''}
               onChange={(e) => handleStatusFilter(e.target.value)}
               label="Filter by Status"
             >
               <MenuItem value="">All Orders</MenuItem>
-              <MenuItem value="PENDING">Pending</MenuItem>
-              <MenuItem value="CONFIRMED">Confirmed</MenuItem>
-              <MenuItem value="PROCESSING">Processing</MenuItem>
-              <MenuItem value="SHIPPED">Shipped</MenuItem>
-              <MenuItem value="DELIVERED">Delivered</MenuItem>
-              <MenuItem value="CANCELLED">Cancelled</MenuItem>
-              <MenuItem value="REFUNDED">Refunded</MenuItem>
+              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Pending}>
+                Pending
+              </MenuItem>
+              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Confirmed}>
+                Confirmed
+              </MenuItem>
+              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Processing}>
+                Processing
+              </MenuItem>
+              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Shipped}>
+                Shipped
+              </MenuItem>
+              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Delivered}>
+                Delivered
+              </MenuItem>
+              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Cancelled}>
+                Cancelled
+              </MenuItem>
+              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Refunded}>
+                Refunded
+              </MenuItem>
             </Select>
           </FormControl>
         </Box>
@@ -251,7 +219,7 @@ export function SellerOrdersScreen() {
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {orders.map((order) => (
+            {orders.map((order: KickzoneGraphqlTypes.Order) => (
               <Card key={order.id}>
                 <Accordion
                   expanded={expandedOrder === order.id}
@@ -461,58 +429,60 @@ export function SellerOrdersScreen() {
                             </TableRow>
                           </TableHead>
                           <TableBody>
-                            {order.items.map((item: OrderItem) => (
-                              <TableRow key={item.id}>
-                                <TableCell>
-                                  <Box
-                                    sx={{
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      gap: 2,
-                                    }}
-                                  >
-                                    {item.productImage && (
-                                      <Box
-                                        component="img"
-                                        src={item.productImage}
-                                        alt={item.productName}
-                                        sx={{
-                                          width: 50,
-                                          height: 50,
-                                          objectFit: 'cover',
-                                          borderRadius: 1,
-                                        }}
-                                      />
-                                    )}
-                                    <Box>
-                                      <Typography
-                                        variant="body2"
-                                        fontWeight="medium"
-                                      >
-                                        {item.productName}
-                                      </Typography>
-                                      {(item.color || item.size) && (
-                                        <Typography
-                                          variant="caption"
-                                          color="text.secondary"
-                                        >
-                                          {[item.color, item.size]
-                                            .filter(Boolean)
-                                            .join(' - ')}
-                                        </Typography>
+                            {order.items.map(
+                              (item: KickzoneGraphqlTypes.OrderItem) => (
+                                <TableRow key={item.id}>
+                                  <TableCell>
+                                    <Box
+                                      sx={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: 2,
+                                      }}
+                                    >
+                                      {item.productImage && (
+                                        <Box
+                                          component="img"
+                                          src={item.productImage}
+                                          alt={item.productName}
+                                          sx={{
+                                            width: 50,
+                                            height: 50,
+                                            objectFit: 'cover',
+                                            borderRadius: 1,
+                                          }}
+                                        />
                                       )}
+                                      <Box>
+                                        <Typography
+                                          variant="body2"
+                                          fontWeight="medium"
+                                        >
+                                          {item.productName}
+                                        </Typography>
+                                        {(item.color || item.size) && (
+                                          <Typography
+                                            variant="caption"
+                                            color="text.secondary"
+                                          >
+                                            {[item.color, item.size]
+                                              .filter(Boolean)
+                                              .join(' - ')}
+                                          </Typography>
+                                        )}
+                                      </Box>
                                     </Box>
-                                  </Box>
-                                </TableCell>
-                                <TableCell>{item.quantity}</TableCell>
-                                <TableCell>
-                                  ${item.unitPrice.toFixed(2)}
-                                </TableCell>
-                                <TableCell>
-                                  ${item.totalPrice.toFixed(2)}
-                                </TableCell>
-                              </TableRow>
-                            ))}
+                                  </TableCell>
+                                  <TableCell>{item.quantity}</TableCell>
+                                  <TableCell>
+                                    ${item.unitPrice.toFixed(2)}
+                                  </TableCell>
+                                  <TableCell>
+                                    ${item.totalPrice.toFixed(2)}
+                                  </TableCell>
+                                </TableRow>
+                              )
+                            )}
                           </TableBody>
                         </Table>
                       </TableContainer>
@@ -537,16 +507,34 @@ export function SellerOrdersScreen() {
               <InputLabel>New Status</InputLabel>
               <Select
                 value={newStatus}
-                onChange={(e) => setNewStatus(e.target.value)}
+                onChange={(e) =>
+                  setNewStatus(
+                    e.target.value as KickzoneGraphqlTypes.OrderStatus
+                  )
+                }
                 label="New Status"
               >
-                <MenuItem value="PENDING">Pending</MenuItem>
-                <MenuItem value="CONFIRMED">Confirmed</MenuItem>
-                <MenuItem value="PROCESSING">Processing</MenuItem>
-                <MenuItem value="SHIPPED">Shipped</MenuItem>
-                <MenuItem value="DELIVERED">Delivered</MenuItem>
-                <MenuItem value="CANCELLED">Cancelled</MenuItem>
-                <MenuItem value="REFUNDED">Refunded</MenuItem>
+                <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Pending}>
+                  Pending
+                </MenuItem>
+                <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Confirmed}>
+                  Confirmed
+                </MenuItem>
+                <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Processing}>
+                  Processing
+                </MenuItem>
+                <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Shipped}>
+                  Shipped
+                </MenuItem>
+                <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Delivered}>
+                  Delivered
+                </MenuItem>
+                <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Cancelled}>
+                  Cancelled
+                </MenuItem>
+                <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Refunded}>
+                  Refunded
+                </MenuItem>
               </Select>
             </FormControl>
           </DialogContent>

@@ -182,6 +182,9 @@
       "@kickzone-workspace/sellers-auth-hooks": [
         "libs/client/sellers/hooks/auth/src/index.ts"
       ],
+      "@kickzone-workspace/sellers-hooks-orders": [
+        "libs/client/sellers/hooks/orders/src/index.ts"
+      ],
       "@kickzone-workspace/sellers-graphql": [
         "libs/client/sellers/graphql/src/index.ts"
       ],

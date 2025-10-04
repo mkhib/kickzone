@@ -86,3 +86,13 @@ export const GET_ORDER_DETAILS_QUERY = gql`
     }
   }
 `;
+
+export const UPDATE_ORDER_MUTATION = gql`
+  mutation UpdateOrder($id: String!, $updateOrderInput: UpdateOrderInput!) {
+    updateOrder(id: $id, updateOrderInput: $updateOrderInput) {
+      id
+      trackingNumber
+      updatedAt
+    }
+  }
+`;

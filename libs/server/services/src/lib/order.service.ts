@@ -5,7 +5,12 @@ import {
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Order, OrderItem, OrderStatus, SellerProduct } from '@kickzone-workspace/entities';
+import {
+  Order,
+  OrderItem,
+  OrderStatus,
+  SellerProduct,
+} from '@kickzone-workspace/entities';
 import {
   CreateOrderInput,
   UpdateOrderInput,
@@ -148,7 +153,8 @@ export class OrderService {
     // If order is being cancelled or rejected, restore stock
     if (
       (status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED) &&
-      (previousStatus !== OrderStatus.CANCELLED && previousStatus !== OrderStatus.REFUNDED)
+      previousStatus !== OrderStatus.CANCELLED &&
+      previousStatus !== OrderStatus.REFUNDED
     ) {
       await this.restoreStock(order.items);
     }
@@ -218,7 +224,9 @@ export class OrderService {
    * Decrease stock quantity for ordered items
    * Best practice: This ensures inventory is reserved when order is placed
    */
-  private async decreaseStock(items: any[]): Promise<void> {
+  private async decreaseStock(
+    items: { productId: string; productName: string; quantity: number }[]
+  ): Promise<void> {
     for (const item of items) {
       const sellerProduct = await this.sellerProductRepository.findOne({
         where: { id: parseInt(item.productId) },

@@ -4,6 +4,7 @@ import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import ReceiptIcon from '@mui/icons-material/Receipt';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -65,6 +66,13 @@ export function Headerbar() {
           >
             Products
           </Button>
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to={SELLER_ROUTES.ORDERS}
+          >
+            Orders
+          </Button>
           {user ? (
             <Box sx={{ display: 'flex', alignItems: 'center' }}>
               <Typography variant="body1" sx={{ mr: 2 }}>
@@ -111,6 +119,17 @@ export function Headerbar() {
               <ShoppingCartIcon />
             </ListItemIcon>
             <CustomListItemText primary="Products" />
+          </ListItemButton>
+
+          <ListItemButton
+            to={SELLER_ROUTES.ORDERS}
+            component={RouterLink}
+            selected={location.pathname === SELLER_ROUTES.ORDERS}
+          >
+            <ListItemIcon>
+              <ReceiptIcon />
+            </ListItemIcon>
+            <CustomListItemText primary="Orders" />
           </ListItemButton>
 
           <ListItemButton
