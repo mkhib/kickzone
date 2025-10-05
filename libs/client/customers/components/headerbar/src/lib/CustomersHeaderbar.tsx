@@ -60,7 +60,7 @@ export function Headerbar() {
             <MenuIcon />
           </IconButton>
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Kickzone
+            {LL.appNames.kickzone()}
           </Typography>
           <Button color="inherit" component={RouterLink} to="/home">
             {LL.navigation.home()}

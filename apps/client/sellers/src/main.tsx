@@ -8,6 +8,8 @@ import {
   detectLocale,
   loadLocaleAsync,
   navigatorDetector,
+  localStorageDetector,
+  LanguageProvider,
 } from '@kickzone-workspace/shared-i18n';
 import { TypesafeI18n } from '@kickzone-workspace/shared-i18n';
 
@@ -15,7 +17,8 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-const detectedLocale = detectLocale(navigatorDetector);
+// Use localStorage detector first, then fallback to navigator
+const detectedLocale = detectLocale(localStorageDetector, navigatorDetector);
 
 loadLocaleAsync(detectedLocale).then(() => {
   // Wrap the application with the generated TypesafeI18n provider component
@@ -24,13 +27,15 @@ loadLocaleAsync(detectedLocale).then(() => {
     <StrictMode>
       {/* Pass the detected locale to the generated provider component */}
       <TypesafeI18n locale={detectedLocale}>
-        <SellersGraphQLProvider>
-          <SellersAuthProvider>
-            <SnackbarProvider>
-              <App />
-            </SnackbarProvider>
-          </SellersAuthProvider>
-        </SellersGraphQLProvider>
+        <LanguageProvider>
+          <SellersGraphQLProvider>
+            <SellersAuthProvider>
+              <SnackbarProvider>
+                <App />
+              </SnackbarProvider>
+            </SellersAuthProvider>
+          </SellersGraphQLProvider>
+        </LanguageProvider>
       </TypesafeI18n>
     </StrictMode>
   );

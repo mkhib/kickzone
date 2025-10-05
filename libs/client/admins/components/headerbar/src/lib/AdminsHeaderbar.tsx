@@ -105,7 +105,7 @@ export function AdminsHeaderbar() {
                 startIcon={<HomeIcon />}
                 sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               >
-                Add New Product
+                {LL.button.addNewProduct()}
               </Button>
               <Button
                 color="inherit"
@@ -114,7 +114,7 @@ export function AdminsHeaderbar() {
                 startIcon={<ShoppingCartIcon />}
                 sx={{ display: { xs: 'none', sm: 'inline-flex' } }}
               >
-                Products
+                {LL.navigation.products()}
               </Button>
             </Box>
           )}
@@ -136,7 +136,7 @@ export function AdminsHeaderbar() {
                 onClick={handleOnLogoutClick}
                 sx={{ fontWeight: 600 }}
               >
-                Logout
+                {LL.button.logout()}
               </Button>
             </Box>
           ) : (
@@ -145,7 +145,7 @@ export function AdminsHeaderbar() {
               component={RouterLink}
               to={ADMIN_ROUTES.LOGIN}
             >
-              Login
+              {LL.button.login()}
             </Button>
           )}
         </Toolbar>

@@ -5,6 +5,7 @@ import {
   useProductsQuery,
   useProducts,
 } from '@kickzone-workspace/products-hook';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -28,6 +29,7 @@ import { ProductImageManagementModal } from './ProductImageManagementModal';
 
 export function AdminProducts() {
   const navigate = useNavigate();
+  const { LL } = useI18nContext();
   const [search, setSearch] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [sort, setSort] = useState<string>('');
@@ -121,30 +123,30 @@ export function AdminProducts() {
             gap: 2,
           }}
         >
-          <Typography variant="h4">Products</Typography>
+          <Typography variant="h4">{LL.navigation.products()}</Typography>
           <Button
             variant="contained"
             color="primary"
             onClick={() => navigate('/products/new')}
           >
-            Add Product
+            {LL.products.addProduct()}
           </Button>
         </Box>
         <Box sx={{ display: 'flex', gap: 2, mb: 3, flexWrap: 'wrap' }}>
           <TextField
-            label="Search by name"
+            label={LL.products.searchByName()}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             size="small"
           />
           <FormControl sx={{ minWidth: 120 }} size="small">
-            <InputLabel>Category</InputLabel>
+            <InputLabel>{LL.form.category()}</InputLabel>
             <Select
               value={category}
-              label="Category"
+              label={LL.form.category()}
               onChange={(e) => setCategory(String(e.target.value))}
             >
-              <MenuItem value="">All</MenuItem>
+              <MenuItem value="">{LL.table.all()}</MenuItem>
               {categories?.map((c: KickzoneGraphqlTypes.Category) => (
                 <MenuItem key={c.id} value={String(c.id)}>
                   {c.name}
@@ -153,50 +155,52 @@ export function AdminProducts() {
             </Select>
           </FormControl>
           <FormControl sx={{ minWidth: 120 }} size="small">
-            <InputLabel>Sort By</InputLabel>
+            <InputLabel>{LL.form.sortBy()}</InputLabel>
             <Select
               value={sort}
-              label="Sort By"
+              label={LL.form.sortBy()}
               onChange={(e) => setSort(e.target.value)}
             >
-              <MenuItem value="">None</MenuItem>
-              <MenuItem value="price">Price</MenuItem>
-              <MenuItem value="color">Color</MenuItem>
+              <MenuItem value="">{LL.products.none()}</MenuItem>
+              <MenuItem value="price">{LL.products.price()}</MenuItem>
+              <MenuItem value="color">{LL.products.color()}</MenuItem>
               {/* Add more sort options as needed */}
             </Select>
           </FormControl>
           <FormControl sx={{ minWidth: 120 }} size="small">
-            <InputLabel>Order</InputLabel>
+            <InputLabel>{LL.form.order()}</InputLabel>
             <Select
               value={sortOrder}
-              label="Order"
+              label={LL.form.order()}
               onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
             >
-              <MenuItem value="asc">Ascending</MenuItem>
-              <MenuItem value="desc">Descending</MenuItem>
+              <MenuItem value="asc">{LL.products.ascending()}</MenuItem>
+              <MenuItem value="desc">{LL.products.descending()}</MenuItem>
             </Select>
           </FormControl>
           <FormControl sx={{ minWidth: 140 }} size="small">
-            <InputLabel>Status</InputLabel>
+            <InputLabel>{LL.form.status()}</InputLabel>
             <Select
               value={status}
-              label="Status"
+              label={LL.form.status()}
               onChange={(e) =>
                 setStatus(
                   e.target.value as KickzoneGraphqlTypes.ProductArchivedStatus
                 )
               }
             >
-              <MenuItem value="ALL">All</MenuItem>
-              <MenuItem value="ACTIVE">Active</MenuItem>
-              <MenuItem value="ARCHIVED">Archived</MenuItem>
+              <MenuItem value="ALL">{LL.table.all()}</MenuItem>
+              <MenuItem value="ACTIVE">{LL.table.active()}</MenuItem>
+              <MenuItem value="ARCHIVED">{LL.table.archived()}</MenuItem>
             </Select>
           </FormControl>
         </Box>
         {loading && !products.length ? (
-          <Typography>Loading...</Typography>
+          <Typography>{LL.status.loading()}</Typography>
         ) : error ? (
-          <Typography color="error">Error loading products</Typography>
+          <Typography color="error">
+            {LL.products.errorLoadingProducts()}
+          </Typography>
         ) : (
           <>
             <Grid container spacing={2}>
@@ -208,13 +212,16 @@ export function AdminProducts() {
                       <CardContent>
                         <Typography variant="h6">{product.name}</Typography>
                         <Typography variant="body2">
-                          Status: {product.archived ? 'Archived' : 'Active'}
+                          {LL.form.status()}:{' '}
+                          {product.archived
+                            ? LL.table.archived()
+                            : LL.table.active()}
                         </Typography>
                         <Typography variant="body2">
-                          Color: {info?.color?.name ?? 'N/A'}
+                          {LL.products.color()}: {info?.color?.name ?? 'N/A'}
                         </Typography>
                         <Typography variant="body2">
-                          Categories:{' '}
+                          {LL.products.categories()}:{' '}
                           {product.categories
                             .map(
                               (cat: KickzoneGraphqlTypes.Category) => cat.name
@@ -230,13 +237,13 @@ export function AdminProducts() {
                             navigate(`/products/edit/${product.id}`)
                           }
                         >
-                          Edit
+                          {LL.button.edit()}
                         </Button>
                         <Button
                           variant="outlined"
                           onClick={() => handleOpenImageModal(product)}
                         >
-                          Images
+                          {LL.products.images()}
                         </Button>
                         {!product.archived && (
                           <Button
@@ -245,7 +252,7 @@ export function AdminProducts() {
                             startIcon={<ArchiveIcon />}
                             onClick={() => handleArchiveClick(product)}
                           >
-                            Archive
+                            {LL.products.archiveProduct()}
                           </Button>
                         )}
                       </CardActions>
@@ -261,18 +268,20 @@ export function AdminProducts() {
               </Typography>
             </Box>
             <Dialog open={archiveDialogOpen} onClose={handleArchiveCancel}>
-              <DialogTitle>Archive Product</DialogTitle>
+              <DialogTitle>{LL.products.archiveProduct()}</DialogTitle>
               <DialogContent>
-                Are you sure you want to archive this product?
+                {LL.products.archiveProductConfirm()}
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleArchiveCancel}>Cancel</Button>
+                <Button onClick={handleArchiveCancel}>
+                  {LL.button.cancel()}
+                </Button>
                 <Button
                   onClick={handleArchiveConfirm}
                   color="secondary"
                   variant="contained"
                 >
-                  Archive
+                  {LL.products.archiveProduct()}
                 </Button>
               </DialogActions>
             </Dialog>

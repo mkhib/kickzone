@@ -7,6 +7,7 @@ import { AdminsUnauthorizedScreen } from '@kickzone-workspace/admins-unauthorize
 import { createPrivateRoute } from '@kickzone-workspace/private-route';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SellerManagement } from '@kickzone-workspace/admin-seller-management';
+import { LanguageComponents } from '@kickzone-workspace/language-components';
 
 export function AdminsRouter() {
   const { admin } = useAdminsAuthContext();
@@ -30,6 +31,7 @@ export function AdminsRouter() {
           <Route path={ADMIN_ROUTES.SELLERS} element={<SellerManagement />} />
         </Route>
         <Route path={ADMIN_ROUTES.LOGIN} element={<AdminsLogin />} />
+        <Route path="/language-settings" element={<LanguageComponents />} />
         <Route
           path={ADMIN_ROUTES.UNAUTHORIZED}
           element={<AdminsUnauthorizedScreen />}

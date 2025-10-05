@@ -28,7 +28,7 @@ const en = {
     filterByStatus: 'Filter by Status',
     changeOrderStatus: 'Change Order Status',
   },
-  
+
   // Navigation and menu items
   navigation: {
     home: 'Home',
@@ -40,6 +40,7 @@ const en = {
     sellers: 'Sellers',
     adminPanel: 'Kickzone Admin Panel',
     sellersPortal: 'Sellers Portal',
+    languageSettings: 'Language Settings',
   },
 
   // Form labels and placeholders
@@ -69,6 +70,9 @@ const en = {
     status: 'Status',
     trackingNumber: 'Enter tracking number',
     newStatus: 'New Status',
+    selectLanguage: 'Select Language',
+    language: 'Language',
+    currentLanguage: 'Current Language',
   },
 
   // Table headers and data
@@ -94,11 +98,20 @@ const en = {
     shippingInformation: 'Shipping Information',
     orderSummary: 'Order Summary',
     demoCheckout: 'This is a demo checkout. No payment is required.',
-    orderProcessed: 'Your order will be processed and you will receive a confirmation email.',
+    orderProcessed:
+      'Your order will be processed and you will receive a confirmation email.',
     itemRemoved: 'Item removed',
     itemRemovedMessage: 'Item has been removed from your cart',
     quantityUpdated: 'Quantity updated',
     quantityUpdatedMessage: 'Item quantity has been updated',
+    updateFailed: 'Update failed',
+    updateFailedMessage: 'Failed to update item quantity',
+    removeFailed: 'Remove failed',
+    removeFailedMessage: 'Failed to remove item from cart',
+    cartCleared: 'Cart cleared',
+    cartClearedMessage: 'All items have been removed from your cart',
+    clearFailed: 'Clear failed',
+    clearFailedMessage: 'Failed to clear cart',
   },
 
   // Product management
@@ -110,6 +123,67 @@ const en = {
     selectImages: 'Select Images',
     saveProductFirst: 'You must save the product before selecting images.',
     editCategory: 'Edit Category',
+    myProducts: 'My Products',
+    addProduct: 'Add Product',
+    addYourFirstProduct: 'Add Your First Product',
+    searchProducts: 'Search products',
+    allCategories: 'All Categories',
+    sortBy: 'Sort by',
+    default: 'Default',
+    name: 'Name',
+    price: 'Price',
+    dateCreated: 'Date Created',
+    active: 'Active',
+    archived: 'Archived',
+    all: 'All',
+    startByAddingFirstProduct: 'Start by adding your first product to sell',
+    viewDetails: 'View Details',
+    editThisVariant: 'Edit this variant',
+    noColorSpecified: 'No color specified',
+    productInformation: 'Product Information',
+    yourProductVariants: 'Your Product Variants',
+    yourVariant: 'Your Variant',
+    size: 'Size',
+    color: 'Color',
+    weight: 'Weight',
+    yourPrice: 'Your Price',
+    costPrice: 'Cost Price',
+    discount: 'Discount',
+    finalPrice: 'Final Price',
+    stock: 'Stock',
+    units: 'units',
+    images: 'Images',
+    image: 'image',
+    categories: 'Categories',
+    noCategories: 'No categories',
+    yourVariants: 'Your Variants',
+    priceRange: 'Price Range',
+    totalStock: 'Total Stock',
+    variants: 'Variants',
+    differentPricing: 'different pricing',
+    loadMore: 'Load More',
+    close: 'Close',
+    searchProductsPlaceholder: 'Search products...',
+    noSellersAvailable: 'No sellers available',
+    checkBackLater: 'Check back later',
+    priceNotAvailable: 'Price not available',
+    contactSeller: 'Contact seller',
+    outOfStock: 'Out of Stock',
+    addToCart: 'Add to Cart',
+    noSellers: 'No Sellers',
+    availableVariants: 'Available Variants',
+    more: 'more',
+    by: 'by',
+    left: 'left',
+    unknownSeller: 'Unknown Seller',
+    searchByName: 'Search by name',
+    none: 'None',
+    ascending: 'Ascending',
+    descending: 'Descending',
+    archiveProduct: 'Archive Product',
+    archiveProductConfirm: 'Are you sure you want to archive this product?',
+    showingProducts: 'Showing {count} of {total} products',
+    errorLoadingProducts: 'Error loading products',
   },
 
   // Status and states
@@ -119,6 +193,7 @@ const en = {
     error: 'Error',
     warning: 'Warning',
     info: 'Info',
+    changingLanguage: 'Changing language...',
   },
 
   // Messages and notifications
@@ -131,6 +206,8 @@ const en = {
     productSaved: 'Product saved successfully',
     categoryAdded: 'Category added successfully',
     colorAdded: 'Color added successfully',
+    languagePreferenceSaved:
+      'Your language preference will be saved and used across all sessions.',
   },
 
   // Authorization
@@ -155,6 +232,12 @@ const en = {
     requiredFields: 'Please fill in all required fields',
     networkError: 'Network error. Please check your connection.',
     serverError: 'Server error. Please try again later.',
+  },
+
+  // App names
+  appNames: {
+    kickzone: 'Kickzone',
+    sellersPortal: 'Sellers Portal',
   },
 
   // Common greetings and text

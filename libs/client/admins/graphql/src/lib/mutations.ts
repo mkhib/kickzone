@@ -16,3 +16,14 @@ export const LOGOUT_MUTATION = gql`
     logout
   }
 `;
+
+export const ME_QUERY = gql`
+  query Me {
+    me {
+      id
+      name
+      email
+      role
+    }
+  }
+`;

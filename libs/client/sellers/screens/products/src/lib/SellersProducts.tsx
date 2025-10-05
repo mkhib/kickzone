@@ -3,6 +3,7 @@ import { useSellersProducts } from '@kickzone-workspace/sellers-products-hooks';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useNavigate } from 'react-router-dom';
 import { useSellersProductsStore } from '@kickzone-workspace/sellers-products-store';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -34,6 +35,7 @@ import { useState } from 'react';
 
 export const SellersProducts = () => {
   const navigate = useNavigate();
+  const { LL } = useI18nContext();
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedProductForView, setSelectedProductForView] =
     useState<KickzoneGraphqlTypes.Product | null>(null);
@@ -95,7 +97,7 @@ export const SellersProducts = () => {
     return (
       <SellersLayout>
         <Box sx={{ p: 3 }}>
-          <Typography>Loading your products...</Typography>
+          <Typography>{LL.products.loadingProducts()}</Typography>
         </Box>
       </SellersLayout>
     );
@@ -106,7 +108,7 @@ export const SellersProducts = () => {
       <SellersLayout>
         <Box sx={{ p: 3 }}>
           <Typography color="error">
-            Error loading products: {sellersProductsError.message}
+            {LL.products.errorLoadingProducts()}: {sellersProductsError.message}
           </Typography>
         </Box>
       </SellersLayout>
@@ -126,7 +128,7 @@ export const SellersProducts = () => {
           }}
         >
           <Typography variant="h4" component="h1">
-            My Products
+            {LL.products.myProducts()}
           </Typography>
           <Button
             variant="contained"
@@ -134,7 +136,7 @@ export const SellersProducts = () => {
             onClick={handleAddProduct}
             sx={{ minWidth: 150 }}
           >
-            Add Product
+            {LL.products.addProduct()}
           </Button>
         </Box>
 
@@ -144,7 +146,7 @@ export const SellersProducts = () => {
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <TextField
                 fullWidth
-                label="Search products"
+                label={LL.products.searchProducts()}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 size="small"

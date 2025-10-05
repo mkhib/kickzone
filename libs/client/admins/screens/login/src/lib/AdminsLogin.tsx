@@ -53,7 +53,7 @@ export function AdminsLogin() {
               required
               fullWidth
               id="email"
-              label="Email Address"
+              label={LL.form.email()}
               name="email"
               autoComplete="email"
               autoFocus
@@ -66,7 +66,7 @@ export function AdminsLogin() {
               required
               fullWidth
               name="password"
-              label="Password"
+              label={LL.form.password()}
               type="password"
               id="password"
               autoComplete="current-password"

@@ -25,8 +25,10 @@ import {
 } from '@kickzone-workspace/customers-product-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 
 export function CustomerProducts() {
+  const { LL } = useI18nContext();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [selectedColor, setSelectedColor] = useState('');
@@ -72,7 +74,8 @@ export function CustomerProducts() {
       finalPrice,
       discount,
       stockQuantity: sellerProduct.stockQuantity,
-      sellerName: sellerProduct.seller?.storeName || 'Unknown Seller',
+      sellerName:
+        sellerProduct.seller?.storeName || LL.products.unknownSeller(),
     };
 
     console.log('💰 Calculated pricing info:', pricingInfo);
@@ -147,10 +150,10 @@ export function CustomerProducts() {
   ) => {
     // Find the sellerProduct that matches this productInfo
     const sellerProduct = product.sellerProducts?.find(
-      (sp) => sp.productInfo.id === productInfo.id
+      (sp) => sp.productInfo?.id === productInfo.id
     );
 
-    if (!sellerProduct) {
+    if (!sellerProduct || !sellerProduct.seller) {
       console.error('No seller product found for this product info');
       return;
     }
@@ -213,7 +216,7 @@ export function CustomerProducts() {
     <CustomersLayout>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Products
+          {LL.navigation.products()}
         </Typography>
 
         {/* Filters */}
@@ -227,7 +230,7 @@ export function CustomerProducts() {
           }}
         >
           <TextField
-            placeholder="Search products..."
+            placeholder={LL.products.searchProductsPlaceholder()}
             value={searchTerm}
             onChange={handleSearch}
             InputProps={{
@@ -241,13 +244,13 @@ export function CustomerProducts() {
           />
 
           <FormControl sx={{ minWidth: 150 }}>
-            <InputLabel>Category</InputLabel>
+            <InputLabel>{LL.form.category()}</InputLabel>
             <Select
               value={selectedCategory}
               onChange={handleCategoryChange}
-              label="Category"
+              label={LL.form.category()}
             >
-              <MenuItem value="">All Categories</MenuItem>
+              <MenuItem value="">{LL.products.allCategories()}</MenuItem>
               {categories.map((category) => (
                 <MenuItem key={category.id} value={category.id.toString()}>
                   {category.name}
@@ -257,13 +260,13 @@ export function CustomerProducts() {
           </FormControl>
 
           <FormControl sx={{ minWidth: 150 }}>
-            <InputLabel>Color</InputLabel>
+            <InputLabel>{LL.form.color()}</InputLabel>
             <Select
               value={selectedColor}
               onChange={handleColorChange}
-              label="Color"
+              label={LL.form.color()}
             >
-              <MenuItem value="">All Colors</MenuItem>
+              <MenuItem value="">{LL.products.allCategories()}</MenuItem>
               {colors.map((color) => (
                 <MenuItem key={color.id} value={color.id.toString()}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
@@ -335,14 +338,14 @@ export function CustomerProducts() {
                           color="text.secondary"
                           sx={{ mb: 1 }}
                         >
-                          No sellers available
+                          {LL.products.noSellersAvailable()}
                         </Typography>
                         <Typography
                           variant="body2"
                           color="warning.main"
                           sx={{ fontWeight: 'bold' }}
                         >
-                          Check back later
+                          {LL.products.checkBackLater()}
                         </Typography>
                       </Box>
                     ) : pricingInfo ? (
@@ -385,7 +388,7 @@ export function CustomerProducts() {
                           )}
                         </Box>
                         <Typography variant="body2" color="text.secondary">
-                          by {pricingInfo.sellerName}
+                          {LL.products.by()} {pricingInfo.sellerName}
                         </Typography>
                         <Typography
                           variant="body2"
@@ -393,8 +396,10 @@ export function CustomerProducts() {
                           sx={{ fontWeight: 'bold' }}
                         >
                           {isOutOfStock
-                            ? 'Out of Stock'
-                            : `${pricingInfo.stockQuantity} left`}
+                            ? LL.products.outOfStock()
+                            : `${
+                                pricingInfo.stockQuantity
+                              } ${LL.products.left()}`}
                         </Typography>
                       </Box>
                     ) : (
@@ -404,14 +409,14 @@ export function CustomerProducts() {
                           color="text.secondary"
                           sx={{ mb: 1 }}
                         >
-                          Price not available
+                          {LL.products.priceNotAvailable()}
                         </Typography>
                         <Typography
                           variant="body2"
                           color="warning.main"
                           sx={{ fontWeight: 'bold' }}
                         >
-                          Contact seller
+                          {LL.products.contactSeller()}
                         </Typography>
                       </Box>
                     )}
@@ -428,7 +433,8 @@ export function CustomerProducts() {
                     </Box>
 
                     <Typography variant="h6" color="primary" sx={{ mb: 2 }}>
-                      Available Variants: {product.productInfos.length}
+                      {LL.products.availableVariants()}:{' '}
+                      {product.productInfos.length}
                     </Typography>
 
                     <Box
@@ -459,7 +465,8 @@ export function CustomerProducts() {
                       ))}
                       {product.productInfos.length > 3 && (
                         <Typography variant="caption">
-                          +{product.productInfos.length - 3} more
+                          +{product.productInfos.length - 3}{' '}
+                          {LL.products.more()}
                         </Typography>
                       )}
                     </Box>
@@ -486,10 +493,10 @@ export function CustomerProducts() {
                       }}
                     >
                       {hasNoSellers
-                        ? 'No Sellers'
+                        ? LL.products.noSellers()
                         : isOutOfStock
-                        ? 'Out of Stock'
-                        : 'Add to Cart'}
+                        ? LL.products.outOfStock()
+                        : LL.products.addToCart()}
                     </Button>
                   </CardContent>
                 </Card>
@@ -513,7 +520,7 @@ export function CustomerProducts() {
         {products.length === 0 && !productsLoading && (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography variant="h6" color="text.secondary">
-              No products found
+              {LL.products.noProductsFound()}
             </Typography>
           </Box>
         )}
