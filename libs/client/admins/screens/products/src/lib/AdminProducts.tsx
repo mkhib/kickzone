@@ -18,9 +18,13 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ArchiveIcon from '@mui/icons-material/Archive';
+import EditIcon from '@mui/icons-material/Edit';
+import ImageIcon from '@mui/icons-material/Image';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
@@ -230,30 +234,35 @@ export function AdminProducts() {
                         </Typography>
                         {/* Show more product info as needed */}
                       </CardContent>
-                      <CardActions>
-                        <Button
-                          variant="outlined"
-                          onClick={() =>
-                            navigate(`/products/edit/${product.id}`)
-                          }
-                        >
-                          {LL.button.edit()}
-                        </Button>
-                        <Button
-                          variant="outlined"
-                          onClick={() => handleOpenImageModal(product)}
-                        >
-                          {LL.products.images()}
-                        </Button>
-                        {!product.archived && (
-                          <Button
-                            variant="outlined"
-                            color="secondary"
-                            startIcon={<ArchiveIcon />}
-                            onClick={() => handleArchiveClick(product)}
+                      <CardActions sx={{ justifyContent: 'center', p: 2 }}>
+                        <Tooltip title={LL.button.edit()}>
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              navigate(`/products/edit/${product.id}`)
+                            }
                           >
-                            {LL.products.archiveProduct()}
-                          </Button>
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title={LL.products.images()}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenImageModal(product)}
+                          >
+                            <ImageIcon />
+                          </IconButton>
+                        </Tooltip>
+                        {!product.archived && (
+                          <Tooltip title={LL.products.archiveProduct()}>
+                            <IconButton
+                              size="small"
+                              color="secondary"
+                              onClick={() => handleArchiveClick(product)}
+                            >
+                              <ArchiveIcon />
+                            </IconButton>
+                          </Tooltip>
                         )}
                       </CardActions>
                     </Card>
@@ -264,7 +273,10 @@ export function AdminProducts() {
             {hasNextPage && <div ref={loaderRef} style={{ height: 40 }} />}
             <Box mt={2} textAlign="center">
               <Typography variant="caption">
-                Showing {products.length} of {totalCount} products
+                {LL.products.showingProducts({
+                  count: products.length,
+                  total: totalCount,
+                })}
               </Typography>
             </Box>
             <Dialog open={archiveDialogOpen} onClose={handleArchiveCancel}>

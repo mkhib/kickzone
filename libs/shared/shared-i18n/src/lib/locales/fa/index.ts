@@ -40,6 +40,7 @@ const fa = {
     sellers: 'فروشندگان',
     adminPanel: 'پنل مدیریت کیک‌زون',
     sellersPortal: 'پورتال فروشندگان',
+    languageSettings: 'تنظیمات زبان',
   },
 
   // Form labels and placeholders
@@ -69,6 +70,9 @@ const fa = {
     status: 'وضعیت',
     trackingNumber: 'شماره پیگیری را وارد کنید',
     newStatus: 'وضعیت جدید',
+    selectLanguage: 'انتخاب زبان',
+    language: 'زبان',
+    currentLanguage: 'زبان فعلی',
   },
 
   // Table headers and data
@@ -100,6 +104,14 @@ const fa = {
     itemRemovedMessage: 'آیتم از سبد خرید شما حذف شد',
     quantityUpdated: 'تعداد به‌روزرسانی شد',
     quantityUpdatedMessage: 'تعداد آیتم به‌روزرسانی شد',
+    updateFailed: 'به‌روزرسانی ناموفق',
+    updateFailedMessage: 'به‌روزرسانی تعداد آیتم ناموفق بود',
+    removeFailed: 'حذف ناموفق',
+    removeFailedMessage: 'حذف آیتم از سبد خرید ناموفق بود',
+    cartCleared: 'سبد خرید پاک شد',
+    cartClearedMessage: 'همه آیتم‌ها از سبد خرید شما حذف شدند',
+    clearFailed: 'پاک‌سازی ناموفق',
+    clearFailedMessage: 'پاک‌سازی سبد خرید ناموفق بود',
   },
 
   // Product management
@@ -111,6 +123,68 @@ const fa = {
     selectImages: 'انتخاب تصاویر',
     saveProductFirst: 'ابتدا باید محصول را ذخیره کنید.',
     editCategory: 'ویرایش دسته‌بندی',
+    myProducts: 'محصولات من',
+    addProduct: 'افزودن محصول',
+    addYourFirstProduct: 'اولین محصول خود را اضافه کنید',
+    searchProducts: 'جستجوی محصولات',
+    allCategories: 'همه دسته‌بندی‌ها',
+    sortBy: 'مرتب‌سازی بر اساس',
+    default: 'پیش‌فرض',
+    name: 'نام',
+    price: 'قیمت',
+    dateCreated: 'تاریخ ایجاد',
+    active: 'فعال',
+    archived: 'بایگانی شده',
+    all: 'همه',
+    startByAddingFirstProduct: 'با افزودن اولین محصول خود برای فروش شروع کنید',
+    viewDetails: 'مشاهده جزئیات',
+    editThisVariant: 'ویرایش این نوع',
+    noColorSpecified: 'رنگی مشخص نشده',
+    productInformation: 'اطلاعات محصول',
+    yourProductVariants: 'انواع محصول شما',
+    yourVariant: 'نوع شما',
+    size: 'اندازه',
+    color: 'رنگ',
+    weight: 'وزن',
+    yourPrice: 'قیمت شما',
+    costPrice: 'قیمت تمام شده',
+    discount: 'تخفیف',
+    finalPrice: 'قیمت نهایی',
+    stock: 'موجودی',
+    units: 'واحد',
+    images: 'تصاویر',
+    image: 'تصویر',
+    categories: 'دسته‌بندی‌ها',
+    noCategories: 'دسته‌بندی‌ای وجود ندارد',
+    yourVariants: 'انواع شما',
+    priceRange: 'محدوده قیمت',
+    totalStock: 'موجودی کل',
+    variants: 'انواع',
+    differentPricing: 'قیمت‌گذاری متفاوت',
+    loadMore: 'بارگذاری بیشتر',
+    close: 'بستن',
+    searchProductsPlaceholder: 'جستجوی محصولات...',
+    noSellersAvailable: 'فروشنده‌ای در دسترس نیست',
+    checkBackLater: 'بعداً بررسی کنید',
+    priceNotAvailable: 'قیمت در دسترس نیست',
+    contactSeller: 'تماس با فروشنده',
+    outOfStock: 'ناموجود',
+    addToCart: 'افزودن به سبد خرید',
+    noSellers: 'فروشنده‌ای وجود ندارد',
+    availableVariants: 'انواع موجود',
+    more: 'بیشتر',
+    by: 'توسط',
+    left: 'باقی مانده',
+    unknownSeller: 'فروشنده ناشناس',
+    searchByName: 'جستجو بر اساس نام',
+    none: 'هیچ‌کدام',
+    ascending: 'صعودی',
+    descending: 'نزولی',
+    archiveProduct: 'بایگانی محصول',
+    archiveProductConfirm:
+      'آیا مطمئن هستید که می‌خواهید این محصول را بایگانی کنید؟',
+    showingProducts: 'نمایش {count} از {total} محصول',
+    errorLoadingProducts: 'خطا در بارگذاری محصولات',
   },
 
   // Status and states
@@ -120,6 +194,7 @@ const fa = {
     error: 'خطا',
     warning: 'هشدار',
     info: 'اطلاعات',
+    changingLanguage: 'در حال تغییر زبان...',
   },
 
   // Messages and notifications
@@ -132,6 +207,8 @@ const fa = {
     productSaved: 'محصول با موفقیت ذخیره شد',
     categoryAdded: 'دسته‌بندی با موفقیت اضافه شد',
     colorAdded: 'رنگ با موفقیت اضافه شد',
+    languagePreferenceSaved:
+      'ترجیح زبان شما ذخیره خواهد شد و در تمام جلسات استفاده خواهد شد.',
   },
 
   // Authorization
@@ -156,6 +233,12 @@ const fa = {
     requiredFields: 'لطفا همه فیلدهای ضروری را پر کنید',
     networkError: 'خطای شبکه. لطفا اتصال خود را بررسی کنید.',
     serverError: 'خطای سرور. لطفا بعدا تلاش کنید.',
+  },
+
+  // App names
+  appNames: {
+    kickzone: 'کیک‌زون',
+    sellersPortal: 'پورتال فروشندگان',
   },
 
   // Common greetings and text

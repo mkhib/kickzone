@@ -5,12 +5,11 @@ import React, {
   useState,
   ReactNode,
 } from 'react';
-import { Locales, loadLocaleAsync } from '../i18n/i18n-util.async';
-import { detectLocale, navigatorDetector } from '../i18n/i18n-util';
-import {
-  I18nContext,
-  useI18nContext as useTypesafeI18nContext,
-} from './locales/i18n-react';
+import { loadLocaleAsync } from './locales/i18n-util.async';
+import { detectLocale } from './locales/i18n-util';
+import { navigatorDetector } from './locales/navigator-detector';
+import type { Locales } from './locales/i18n-types';
+import { I18nContext } from './locales/i18n-react';
 
 interface LanguageContextType {
   currentLocale: Locales;
@@ -28,7 +27,7 @@ const LANGUAGE_STORAGE_KEY = 'kickzone-language-preference';
 // Available languages with their display names
 const AVAILABLE_LOCALES = [
   { code: 'en' as Locales, name: 'English', nativeName: 'English' },
-  { code: 'de' as Locales, name: 'German', nativeName: 'Deutsch' },
+  { code: 'fa' as Locales, name: 'Farsi', nativeName: 'فارسی' },
 ];
 
 interface LanguageProviderProps {
