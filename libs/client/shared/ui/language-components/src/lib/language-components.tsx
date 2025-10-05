@@ -1,3 +1,4 @@
+import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { colors } from '@kickzone-workspace/colors';
 import {
   useI18nContext,
@@ -43,121 +44,125 @@ export function LanguageComponents() {
   );
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        padding: 2,
-      }}
-    >
-      <Card
+    <AdminsLayout>
+      <Box
         sx={{
-          maxWidth: 500,
-          width: '100%',
-          borderRadius: 3,
-          boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+          minHeight: '100vh',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: 2,
         }}
       >
-        <CardContent sx={{ padding: 4 }}>
-          <Typography
-            variant="h4"
-            component="h1"
-            sx={{
-              textAlign: 'center',
-              marginBottom: 3,
-              color: colors.text,
-              fontWeight: 600,
-            }}
-          >
-            {LL.navigation.languageSettings()}
-          </Typography>
-
-          {showSuccess && (
-            <Alert
-              severity="success"
-              sx={{ marginBottom: 3 }}
-              onClose={() => setShowSuccess(false)}
-            >
-              {LL.messages.languagePreferenceSaved()}
-            </Alert>
-          )}
-
-          <Box sx={{ marginBottom: 3 }}>
+        <Card
+          sx={{
+            maxWidth: 500,
+            width: '100%',
+            borderRadius: 3,
+            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+          }}
+        >
+          <CardContent sx={{ padding: 4 }}>
             <Typography
-              variant="body1"
+              variant="h4"
+              component="h1"
               sx={{
-                marginBottom: 2,
-                color: colors.text,
                 textAlign: 'center',
+                marginBottom: 3,
+                color: colors.text,
+                fontWeight: 600,
               }}
             >
-              {LL.form.currentLanguage()}:{' '}
-              <strong>{currentLanguageInfo?.nativeName}</strong>
+              {LL.navigation.languageSettings()}
             </Typography>
-          </Box>
 
-          <FormControl fullWidth sx={{ marginBottom: 3 }}>
-            <InputLabel id="language-select-label">
-              {LL.form.selectLanguage()}
-            </InputLabel>
-            <Select
-              labelId="language-select-label"
-              value={selectedLanguage}
-              label={LL.form.selectLanguage()}
-              onChange={handleLanguageChange}
-              disabled={isLoading}
-              sx={{
-                backgroundColor: colors.accent1,
-                borderRadius: 2,
-              }}
-            >
-              {availableLocales.map((locale) => (
-                <MenuItem key={locale.code} value={locale.code}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <Typography variant="body1">{locale.nativeName}</Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      ({locale.name})
-                    </Typography>
-                  </Box>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+            {showSuccess && (
+              <Alert
+                severity="success"
+                sx={{ marginBottom: 3 }}
+                onClose={() => setShowSuccess(false)}
+              >
+                {LL.messages.languagePreferenceSaved()}
+              </Alert>
+            )}
 
-          {isLoading && (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                gap: 2,
-                marginTop: 2,
-              }}
-            >
-              <CircularProgress size={20} />
-              <Typography variant="body2" color="text.secondary">
-                {LL.status.changingLanguage()}
+            <Box sx={{ marginBottom: 3 }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  marginBottom: 2,
+                  color: colors.text,
+                  textAlign: 'center',
+                }}
+              >
+                {LL.form.currentLanguage()}:{' '}
+                <strong>{currentLanguageInfo?.nativeName}</strong>
               </Typography>
             </Box>
-          )}
 
-          <Typography
-            variant="body2"
-            sx={{
-              textAlign: 'center',
-              color: colors.text,
-              marginTop: 3,
-              fontStyle: 'italic',
-            }}
-          >
-            {LL.messages.languagePreferenceSaved()}
-          </Typography>
-        </CardContent>
-      </Card>
-    </Box>
+            <FormControl fullWidth sx={{ marginBottom: 3 }}>
+              <InputLabel id="language-select-label">
+                {LL.form.selectLanguage()}
+              </InputLabel>
+              <Select
+                labelId="language-select-label"
+                value={selectedLanguage}
+                label={LL.form.selectLanguage()}
+                onChange={handleLanguageChange}
+                disabled={isLoading}
+                sx={{
+                  backgroundColor: colors.accent1,
+                  borderRadius: 2,
+                }}
+              >
+                {availableLocales.map((locale) => (
+                  <MenuItem key={locale.code} value={locale.code}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <Typography variant="body1">
+                        {locale.nativeName}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        ({locale.name})
+                      </Typography>
+                    </Box>
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {isLoading && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  gap: 2,
+                  marginTop: 2,
+                }}
+              >
+                <CircularProgress size={20} />
+                <Typography variant="body2" color="text.secondary">
+                  {LL.status.changingLanguage()}
+                </Typography>
+              </Box>
+            )}
+
+            <Typography
+              variant="body2"
+              sx={{
+                textAlign: 'center',
+                color: colors.text,
+                marginTop: 3,
+                fontStyle: 'italic',
+              }}
+            >
+              {LL.messages.languagePreferenceSaved()}
+            </Typography>
+          </CardContent>
+        </Card>
+      </Box>
+    </AdminsLayout>
   );
 }
 
