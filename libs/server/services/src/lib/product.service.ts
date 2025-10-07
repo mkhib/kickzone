@@ -192,14 +192,17 @@ export class ProductService {
   }
 
   async createCategory(input: CreateCategoryInput) {
-    // Check for duplicate category name
+    // Check for duplicate category slug
     const existing = await this.categoryRepository.findOneBy({
-      name: input.name,
+      slug: input.slug,
     });
     if (existing) {
-      throw new Error('A category with this name already exists.');
+      throw new Error('A category with this slug already exists.');
     }
-    const category = this.categoryRepository.create({ name: input.name });
+    const category = this.categoryRepository.create({ 
+      slug: input.slug,
+      sortOrder: input.sortOrder || 0
+    });
     return this.categoryRepository.save(category);
   }
 

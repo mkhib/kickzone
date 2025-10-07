@@ -1,63 +1,24 @@
-import { Category, UserRole } from '@kickzone-workspace/entities';
-import { RolesGuard } from '@kickzone-workspace/guards';
-import { CategoryService, ProductService } from '@kickzone-workspace/services';
-import { SetMetadata, UseGuards } from '@nestjs/common';
-import {
-  Args,
-  Field,
-  InputType,
-  Int,
-  Mutation,
-  Query,
-  Resolver,
-} from '@nestjs/graphql';
-
-@InputType()
-export class CreateCategoryInput {
-  @Field()
-  name: string;
-}
-
-@InputType()
-export class UpdateCategoryInput {
-  @Field(() => Int)
-  id: number;
-
-  @Field()
-  name: string;
-}
+import { ResolveField, Parent, Context, Resolver } from '@nestjs/graphql';
+import { Category } from '@kickzone-workspace/entities';
+import { TranslationService } from '@kickzone-workspace/services';
 
 @Resolver(() => Category)
 export class CategoryResolver {
-  constructor(
-    private readonly productService: ProductService,
-    private readonly categoryService: CategoryService
-  ) {}
+  constructor(private translationService: TranslationService) {}
 
-  @Query(() => [Category])
-  async categories() {
-    return this.categoryService.getCategories();
-  }
+  @ResolveField(() => String)
+  async name(
+    @Parent() category: Category,
+    @Context() context: { req: { locale?: string } }
+  ): Promise<string> {
+    const locale = context.req.locale || 'en';
 
-  @Mutation(() => Category)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
-  async createCategory(@Args('input') input: CreateCategoryInput) {
-    return this.categoryService.createCategory(input.name);
-  }
-
-  @Mutation(() => Category)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
-  async updateCategory(@Args('input') input: UpdateCategoryInput) {
-    return this.categoryService.updateCategory(input.id, input.name);
-  }
-
-  @Mutation(() => Boolean)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
-  async deleteCategory(@Args('id', { type: () => Int }) id: number) {
-    await this.categoryService.deleteCategory(id);
-    return true;
+    return this.translationService.getTranslation(
+      'category',
+      category.id,
+      locale,
+      'name',
+      category.slug // Fallback to slug if no translation
+    );
   }
 }

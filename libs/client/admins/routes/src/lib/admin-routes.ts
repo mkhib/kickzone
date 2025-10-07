@@ -7,6 +7,8 @@ export const ADMIN_ROUTES = {
   LOGIN: '/login',
   UNAUTHORIZED: '/unauthorized',
   CONTACT: '/contact',
+  TRANSLATIONS: '/translations',
+  LANGUAGE_SETTINGS: '/language-settings',
 } as const;
 
 export type AdminRouteKey = keyof typeof ADMIN_ROUTES;

@@ -1,15 +1,25 @@
-import { Resolver, Query, Mutation, Args, Int } from '@nestjs/graphql';
-import { ColorService } from '@kickzone-workspace/services';
+import {
+  ResolveField,
+  Parent,
+  Context,
+  Resolver,
+  Query,
+  Mutation,
+  Args,
+  Int,
+} from '@nestjs/graphql';
 import { Color } from '@kickzone-workspace/entities';
-import { RolesGuard } from '@kickzone-workspace/guards';
-import { UserRole } from '@kickzone-workspace/entities';
-import { SetMetadata, UseGuards } from '@nestjs/common';
+import { TranslationService, ColorService } from '@kickzone-workspace/services';
 import { CreateColorInput, UpdateColorInput } from '@kickzone-workspace/inputs';
 
 @Resolver(() => Color)
 export class ColorResolver {
-  constructor(private readonly colorService: ColorService) {}
+  constructor(
+    private translationService: TranslationService,
+    private colorService: ColorService
+  ) {}
 
+  // Queries
   @Query(() => [Color])
   async colors(): Promise<Color[]> {
     return this.colorService.getColors();
@@ -22,29 +32,43 @@ export class ColorResolver {
     return this.colorService.getColorById(id);
   }
 
+  // Mutations
   @Mutation(() => Color)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
-  async createColor(@Args('input') input: CreateColorInput): Promise<Color> {
-    return this.colorService.createColor(input);
+  async createColor(
+    @Args('input') input: CreateColorInput,
+    @Args('name', { nullable: true }) name?: string
+  ): Promise<Color> {
+    return this.colorService.createColor(input, name);
   }
 
-  @Mutation(() => Color, { nullable: true })
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
+  @Mutation(() => Color)
   async updateColor(
     @Args('id', { type: () => Int }) id: number,
     @Args('input') input: UpdateColorInput
-  ): Promise<Color | null> {
+  ): Promise<Color> {
     return this.colorService.updateColor(id, input);
   }
 
   @Mutation(() => Boolean)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
   async deleteColor(
     @Args('id', { type: () => Int }) id: number
   ): Promise<boolean> {
     return this.colorService.deleteColor(id);
+  }
+
+  @ResolveField(() => String)
+  async name(
+    @Parent() color: Color,
+    @Context() context: { req: { locale?: string } }
+  ): Promise<string> {
+    const locale = context.req.locale || 'en';
+
+    return this.translationService.getTranslation(
+      'color',
+      color.id,
+      locale,
+      'name',
+      color.hexCode // Fallback to hex code if no translation
+    );
   }
 }

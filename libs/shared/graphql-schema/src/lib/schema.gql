@@ -36,13 +36,27 @@ type UserConnection {
 
 type Category {
   id: Int!
+  slug: String!
+  sortOrder: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
   name: String!
 }
 
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
 type Color {
   id: Int!
-  name: String!
   hexCode: String!
+  sortOrder: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
 }
 
 type ProductInfo {
@@ -140,11 +154,6 @@ enum OrderStatus {
   REFUNDED
 }
 
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
-
 type OrderItem {
   id: ID!
   orderId: String!
@@ -182,6 +191,19 @@ type CartItem {
   sellerId: String!
 }
 
+type Translation {
+  id: Int!
+  entityType: String!
+  entityId: Int!
+  locale: String!
+  fieldName: String!
+  value: String!
+  isAutoTranslated: Boolean!
+  translatedBy: Int
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type OrderEdge {
   node: Order!
   cursor: String!
@@ -190,10 +212,13 @@ type OrderEdge {
 type Query {
   users(first: Int, after: String, searchTerm: String): UserConnection!
   me: User
-  categories: [Category!]!
   products(filter: ProductFilterInput): ProductConnection!
   sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
+  categories: [Category!]!
   product(id: Int!): Product
+  getTranslation(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String): String!
+  getEntityTranslations(entityType: String!, entityId: Int!): [Translation!]!
+  getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
   sellers(filter: SellerFilterInput): SellerConnection!
   findOne(id: Int!): SellerInfo
   mySellerProductById(id: Int!): SellerProduct
@@ -251,16 +276,17 @@ type Mutation {
   logout: Boolean!
   initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!
   setupPassword(token: String!, newPassword: String!): User!
-  createCategory(input: CreateCategoryInput!): Category!
-  updateCategory(input: UpdateCategoryInput!): Category!
-  deleteCategory(id: Int!): Boolean!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): Product!
+  createCategory(input: CreateCategoryInput!): Category!
   uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
   removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
   archiveProduct(id: Int!): Product!
   unarchiveProduct(id: Int!): Product!
   updateProduct(input: UpdateProductInput!): Product!
+  setTranslation(input: TranslationInput!): Translation!
+  bulkTranslateEntities(input: BulkTranslationInput!): Boolean!
+  deleteEntityTranslations(entityType: String!, entityId: Int!): Boolean!
   createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
   updateSeller(id: Int!, updateSellerInput: UpdateSellerInput!): SellerInfo!
   toggleSellerActive(id: Int!): SellerInfo!
@@ -268,8 +294,8 @@ type Mutation {
   updateSellerProduct(sellerId: Int!, input: UpdateSellerProductInput!): SellerProduct!
   createMySellerProduct(input: CreateSellerProductInput!): SellerProduct!
   updateMySellerProduct(input: UpdateSellerProductInput!): SellerProduct!
-  createColor(input: CreateColorInput!): Color!
-  updateColor(id: Int!, input: UpdateColorInput!): Color
+  createColor(input: CreateColorInput!, name: String): Color!
+  updateColor(id: Int!, input: UpdateColorInput!): Color!
   deleteColor(id: Int!): Boolean!
   createOrder(createOrderInput: CreateOrderInput!): Order!
   updateOrder(id: String!, updateOrderInput: UpdateOrderInput!): Order!
@@ -290,15 +316,6 @@ input CreateUserInput {
   role: UserRole!
 }
 
-input CreateCategoryInput {
-  name: String!
-}
-
-input UpdateCategoryInput {
-  id: Int!
-  name: String!
-}
-
 input CreateProductInput {
   name: String!
   categoryIds: [Int!]!
@@ -312,6 +329,11 @@ input CreateProductInfoInput {
   weight: Float!
 }
 
+input CreateCategoryInput {
+  slug: String!
+  sortOrder: Int = 0
+}
+
 """The `Upload` scalar type represents a file upload."""
 scalar Upload
 
@@ -320,6 +342,23 @@ input UpdateProductInput {
   name: String!
   categoryIds: [Int!]!
   description: String
+}
+
+input TranslationInput {
+  entityType: String!
+  entityId: Int!
+  locale: String!
+  fieldName: String!
+  value: String!
+  isAutoTranslated: Boolean = false
+  translatedBy: Int
+}
+
+input BulkTranslationInput {
+  entityType: String!
+  entityIds: [Int!]!
+  sourceLocale: String!
+  targetLocales: [String!]!
 }
 
 input CreateSellerInput {
@@ -363,13 +402,14 @@ input UpdateSellerProductInput {
 }
 
 input CreateColorInput {
-  name: String!
   hexCode: String!
+  sortOrder: Int = 0
 }
 
 input UpdateColorInput {
-  name: String!
   hexCode: String!
+  sortOrder: Int
+  isActive: Boolean
 }
 
 input CreateOrderInput {

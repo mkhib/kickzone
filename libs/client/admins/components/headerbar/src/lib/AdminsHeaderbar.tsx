@@ -25,6 +25,7 @@ import Typography from '@mui/material/Typography';
 import { useCallback, useState } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useTheme, useMediaQuery } from '@mui/material';
+import TranslateIcon from '@mui/icons-material/Translate';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 
 const drawerWidth = 300;
@@ -209,14 +210,24 @@ export function AdminsHeaderbar() {
             </ListItemButton>
 
             <ListItemButton
-              to="/language-settings"
+              to={ADMIN_ROUTES.LANGUAGE_SETTINGS}
               component={RouterLink}
-              selected={location.pathname === '/language-settings'}
+              selected={location.pathname === ADMIN_ROUTES.LANGUAGE_SETTINGS}
             >
               <ListItemIcon>
                 <LanguageIcon />
               </ListItemIcon>
               <CustomListItemText primary={LL.navigation.languageSettings()} />
+            </ListItemButton>
+            <ListItemButton
+              to={ADMIN_ROUTES.TRANSLATIONS}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.TRANSLATIONS}
+            >
+              <ListItemIcon>
+                <TranslateIcon />
+              </ListItemIcon>
+              <CustomListItemText primary="Translation Management" />
             </ListItemButton>
             <ListItemButton
               to={ADMIN_ROUTES.SELLERS}

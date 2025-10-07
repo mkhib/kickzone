@@ -250,6 +250,9 @@
         "libs/client/shared/hooks/snackbar/src/index.ts"
       ],
       "@kickzone-workspace/strategies": ["libs/server/strategies/src/index.ts"],
+      "@kickzone-workspace/translation-management": [
+        "libs/client/admins/screens/translation-management/src/index.ts"
+      ],
       "@kickzone-workspace/translations": [
         "libs/client/shared/translations/src/index.ts"
       ],

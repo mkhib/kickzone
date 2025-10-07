@@ -4,6 +4,8 @@ import {
   CREATE_COLOR,
   UPDATE_COLOR,
   DELETE_COLOR,
+  BULK_TRANSLATE_COLORS,
+  SET_COLOR_TRANSLATION,
 } from './color.graphql';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
@@ -37,16 +39,37 @@ export function useColors() {
       refetchQueries: [{ query: GET_COLORS }],
     });
 
-  const createColor = async (name: string, hexCode: string) => {
+  const [bulkTranslateMutation, { loading: isBulkTranslating }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'bulkTranslateEntities'>,
+    KickzoneGraphqlTypes.MutationBulkTranslateEntitiesArgs
+  >(BULK_TRANSLATE_COLORS);
+
+  const [setTranslationMutation, { loading: isSettingTranslation }] =
+    useMutation<
+      Pick<KickzoneGraphqlTypes.Mutation, 'setTranslation'>,
+      KickzoneGraphqlTypes.MutationSetTranslationArgs
+    >(SET_COLOR_TRANSLATION);
+
+  const createColor = async (
+    name: string,
+    hexCode: string,
+    sortOrder: number = 0
+  ) => {
     const response = await createColorMutation({
-      variables: { input: { name, hexCode } },
+      variables: { input: { hexCode, sortOrder }, name },
     });
     return response.data?.createColor;
   };
 
-  const updateColor = async (id: number, name: string, hexCode: string) => {
+  const updateColor = async (
+    id: number,
+    name: string,
+    hexCode: string,
+    sortOrder?: number,
+    isActive?: boolean
+  ) => {
     const response = await updateColorMutation({
-      variables: { id, input: { name, hexCode } },
+      variables: { id, input: { hexCode, sortOrder, isActive } },
     });
     return response.data?.updateColor;
   };
@@ -56,6 +79,42 @@ export function useColors() {
     return response.data?.deleteColor;
   };
 
+  const bulkTranslateColors = (
+    entityIds: number[],
+    sourceLocale: string,
+    targetLocales: string[]
+  ) =>
+    bulkTranslateMutation({
+      variables: {
+        input: {
+          entityType: 'color',
+          entityIds,
+          sourceLocale,
+          targetLocales,
+        },
+      },
+    });
+
+  const setColorTranslation = (
+    entityId: number,
+    locale: string,
+    fieldName: string,
+    value: string,
+    isAutoTranslated: boolean = false
+  ) =>
+    setTranslationMutation({
+      variables: {
+        input: {
+          entityType: 'color',
+          entityId,
+          locale,
+          fieldName,
+          value,
+          isAutoTranslated,
+        },
+      },
+    });
+
   return {
     colors: data?.colors || [],
     loading: loading || createLoading || updateLoading || deleteLoading,
@@ -64,5 +123,9 @@ export function useColors() {
     createColor,
     updateColor,
     deleteColor,
+    bulkTranslateColors,
+    setColorTranslation,
+    isBulkTranslating,
+    isSettingTranslation,
   };
 }

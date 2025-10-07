@@ -4,18 +4,26 @@ export const GET_COLORS = gql`
   query GetColors {
     colors {
       id
-      name
       hexCode
+      sortOrder
+      isActive
+      createdAt
+      updatedAt
+      name
     }
   }
 `;
 
 export const CREATE_COLOR = gql`
-  mutation CreateColor($input: CreateColorInput!) {
-    createColor(input: $input) {
+  mutation CreateColor($input: CreateColorInput!, $name: String) {
+    createColor(input: $input, name: $name) {
       id
-      name
       hexCode
+      sortOrder
+      isActive
+      createdAt
+      updatedAt
+      name
     }
   }
 `;
@@ -24,8 +32,12 @@ export const UPDATE_COLOR = gql`
   mutation UpdateColor($id: Int!, $input: UpdateColorInput!) {
     updateColor(id: $id, input: $input) {
       id
-      name
       hexCode
+      sortOrder
+      isActive
+      createdAt
+      updatedAt
+      name
     }
   }
 `;
@@ -33,5 +45,28 @@ export const UPDATE_COLOR = gql`
 export const DELETE_COLOR = gql`
   mutation DeleteColor($id: Int!) {
     deleteColor(id: $id)
+  }
+`;
+
+export const BULK_TRANSLATE_COLORS = gql`
+  mutation BulkTranslateColors($input: BulkTranslationInput!) {
+    bulkTranslateEntities(input: $input)
+  }
+`;
+
+export const SET_COLOR_TRANSLATION = gql`
+  mutation SetColorTranslation($input: TranslationInput!) {
+    setTranslation(input: $input) {
+      id
+      entityType
+      entityId
+      locale
+      fieldName
+      value
+      isAutoTranslated
+      translatedBy
+      createdAt
+      updatedAt
+    }
   }
 `;

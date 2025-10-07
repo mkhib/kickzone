@@ -5,6 +5,8 @@ import {
   CREATE_CATEGORY,
   UPDATE_CATEGORY,
   DELETE_CATEGORY,
+  BULK_TRANSLATE_CATEGORIES,
+  SET_CATEGORY_TRANSLATION,
 } from './categories.graphql';
 
 export function useCategoriesQuery() {
@@ -28,7 +30,9 @@ export const useCategories = () => {
   const [createCategoryMutation, { loading: isCreatingCategory }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'createCategory'>,
     KickzoneGraphqlTypes.MutationCreateCategoryArgs
-  >(CREATE_CATEGORY);
+  >(CREATE_CATEGORY, {
+    refetchQueries: [{ query: CATEGORIES_QUERY }],
+  });
 
   const [updateCategoryMutation, { loading: isUpdatingCategory }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateCategory'>,
@@ -40,17 +44,33 @@ export const useCategories = () => {
     KickzoneGraphqlTypes.MutationDeleteCategoryArgs
   >(DELETE_CATEGORY);
 
-  const createCategory = (name: string) =>
+  const [bulkTranslateMutation, { loading: isBulkTranslating }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'bulkTranslateEntities'>,
+    KickzoneGraphqlTypes.MutationBulkTranslateEntitiesArgs
+  >(BULK_TRANSLATE_CATEGORIES);
+
+  const [setTranslationMutation, { loading: isSettingTranslation }] =
+    useMutation<
+      Pick<KickzoneGraphqlTypes.Mutation, 'setTranslation'>,
+      KickzoneGraphqlTypes.MutationSetTranslationArgs
+    >(SET_CATEGORY_TRANSLATION);
+
+  const createCategory = (slug: string, sortOrder: number = 0) =>
     createCategoryMutation({
       variables: {
-        input: { name },
+        input: { slug, sortOrder },
       },
     });
 
-  const updateCategory = (id: number, name: string) =>
+  const updateCategory = (
+    id: number,
+    slug: string,
+    sortOrder?: number,
+    isActive?: boolean
+  ) =>
     updateCategoryMutation({
       variables: {
-        input: { id, name },
+        input: { id, slug, sortOrder, isActive },
       },
     });
 
@@ -62,12 +82,52 @@ export const useCategories = () => {
       },
     });
 
+  const bulkTranslateCategories = (
+    entityIds: number[],
+    sourceLocale: string,
+    targetLocales: string[]
+  ) =>
+    bulkTranslateMutation({
+      variables: {
+        input: {
+          entityType: 'category',
+          entityIds,
+          sourceLocale,
+          targetLocales,
+        },
+      },
+    });
+
+  const setCategoryTranslation = (
+    entityId: number,
+    locale: string,
+    fieldName: string,
+    value: string,
+    isAutoTranslated: boolean = false
+  ) =>
+    setTranslationMutation({
+      variables: {
+        input: {
+          entityType: 'category',
+          entityId,
+          locale,
+          fieldName,
+          value,
+          isAutoTranslated,
+        },
+      },
+    });
+
   return {
     createCategory,
     updateCategory,
     deleteCategory,
+    bulkTranslateCategories,
+    setCategoryTranslation,
     isCreatingCategory,
     isUpdatingCategory,
     isDeletingCategory,
+    isBulkTranslating,
+    isSettingTranslation,
   };
 };

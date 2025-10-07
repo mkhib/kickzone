@@ -6,3 +6,5 @@ export * from './lib/color.resolver';
 export * from './lib/seller-info.resolver';
 export * from './lib/order.resolver';
 export * from './lib/cart.resolver';
+export * from './lib/translation.resolver';
+export * from './lib/translation.input';

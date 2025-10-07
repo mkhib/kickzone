@@ -9,3 +9,4 @@ export * from './lib/email.service';
 export * from './lib/token.service';
 export * from './lib/order.service';
 export * from './lib/cart.service';
+export * from './lib/translation.service';

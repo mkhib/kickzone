@@ -11,3 +11,4 @@ export * from './lib/email.module';
 export * from './lib/token.module';
 export * from './lib/order.module';
 export * from './lib/cart.module';
+export * from './lib/translation.module';

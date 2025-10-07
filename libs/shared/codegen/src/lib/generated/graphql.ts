@@ -29,6 +29,13 @@ export type AddToCartInput = {
   unitPrice: Scalars['Float']['input'];
 };
 
+export type BulkTranslationInput = {
+  entityIds: Array<Scalars['Int']['input']>;
+  entityType: Scalars['String']['input'];
+  sourceLocale: Scalars['String']['input'];
+  targetLocales: Array<Scalars['String']['input']>;
+};
+
 export type Cart = {
   __typename?: 'Cart';
   createdAt: Scalars['DateTime']['output'];
@@ -57,24 +64,34 @@ export type CartItem = {
 
 export type Category = {
   __typename?: 'Category';
+  createdAt: Scalars['DateTime']['output'];
   id: Scalars['Int']['output'];
+  isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+  sortOrder: Scalars['Int']['output'];
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type Color = {
   __typename?: 'Color';
+  createdAt: Scalars['DateTime']['output'];
   hexCode: Scalars['String']['output'];
   id: Scalars['Int']['output'];
+  isActive: Scalars['Boolean']['output'];
   name: Scalars['String']['output'];
+  sortOrder: Scalars['Int']['output'];
+  updatedAt: Scalars['DateTime']['output'];
 };
 
 export type CreateCategoryInput = {
-  name: Scalars['String']['input'];
+  slug: Scalars['String']['input'];
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CreateColorInput = {
   hexCode: Scalars['String']['input'];
-  name: Scalars['String']['input'];
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type CreateOrderInput = {
@@ -147,6 +164,7 @@ export type Mutation = {
   __typename?: 'Mutation';
   addToCart: Cart;
   archiveProduct: Product;
+  bulkTranslateEntities: Scalars['Boolean']['output'];
   clearCart: Cart;
   createCategory: Category;
   createColor: Color;
@@ -157,20 +175,20 @@ export type Mutation = {
   createSeller: SellerInfo;
   createSellerProduct: SellerProduct;
   createUser: User;
-  deleteCategory: Scalars['Boolean']['output'];
   deleteColor: Scalars['Boolean']['output'];
+  deleteEntityTranslations: Scalars['Boolean']['output'];
   deleteOrder: Scalars['Boolean']['output'];
   initiatePasswordSetup: Scalars['Boolean']['output'];
   login: User;
   logout: Scalars['Boolean']['output'];
   removeFromCart: Cart;
   removeProductInfoImage: Scalars['Boolean']['output'];
+  setTranslation: Translation;
   setupPassword: User;
   toggleSellerActive: SellerInfo;
   unarchiveProduct: Product;
   updateCartItem: Cart;
-  updateCategory: Category;
-  updateColor?: Maybe<Color>;
+  updateColor: Color;
   updateMySellerProduct: SellerProduct;
   updateOrder: Order;
   updateOrderStatus: Order;
@@ -191,6 +209,11 @@ export type MutationArchiveProductArgs = {
 };
 
 
+export type MutationBulkTranslateEntitiesArgs = {
+  input: BulkTranslationInput;
+};
+
+
 export type MutationCreateCategoryArgs = {
   input: CreateCategoryInput;
 };
@@ -198,6 +221,7 @@ export type MutationCreateCategoryArgs = {
 
 export type MutationCreateColorArgs = {
   input: CreateColorInput;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -237,13 +261,14 @@ export type MutationCreateUserArgs = {
 };
 
 
-export type MutationDeleteCategoryArgs = {
+export type MutationDeleteColorArgs = {
   id: Scalars['Int']['input'];
 };
 
 
-export type MutationDeleteColorArgs = {
-  id: Scalars['Int']['input'];
+export type MutationDeleteEntityTranslationsArgs = {
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
 };
 
 
@@ -275,6 +300,11 @@ export type MutationRemoveProductInfoImageArgs = {
 };
 
 
+export type MutationSetTranslationArgs = {
+  input: TranslationInput;
+};
+
+
 export type MutationSetupPasswordArgs = {
   newPassword: Scalars['String']['input'];
   token: Scalars['String']['input'];
@@ -294,11 +324,6 @@ export type MutationUnarchiveProductArgs = {
 export type MutationUpdateCartItemArgs = {
   itemId: Scalars['String']['input'];
   updateInput: UpdateCartItemInput;
-};
-
-
-export type MutationUpdateCategoryArgs = {
-  input: UpdateCategoryInput;
 };
 
 
@@ -415,7 +440,7 @@ export type Product = {
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   productInfos: Array<ProductInfo>;
-  sellerProducts: Array<SellerProduct>;
+  sellerProducts?: Maybe<Array<SellerProduct>>;
 };
 
 export enum ProductArchivedStatus {
@@ -480,6 +505,9 @@ export type Query = {
   color?: Maybe<Color>;
   colors: Array<Color>;
   findOne?: Maybe<SellerInfo>;
+  getEntityTranslations: Array<Translation>;
+  getTranslation: Scalars['String']['output'];
+  getTranslationWithFallback: Scalars['String']['output'];
   me?: Maybe<User>;
   myCart: Cart;
   myOrders: Array<Order>;
@@ -516,6 +544,30 @@ export type QueryColorArgs = {
 
 export type QueryFindOneArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QueryGetEntityTranslationsArgs = {
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
+};
+
+
+export type QueryGetTranslationArgs = {
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
+  fallback?: InputMaybe<Scalars['String']['input']>;
+  fieldName: Scalars['String']['input'];
+  locale: Scalars['String']['input'];
+};
+
+
+export type QueryGetTranslationWithFallbackArgs = {
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
+  fallback: Scalars['String']['input'];
+  fieldName: Scalars['String']['input'];
+  locale: Scalars['String']['input'];
 };
 
 
@@ -612,20 +664,40 @@ export type SellerProduct = {
   stockQuantity: Scalars['Int']['output'];
 };
 
+export type Translation = {
+  __typename?: 'Translation';
+  createdAt: Scalars['DateTime']['output'];
+  entityId: Scalars['Int']['output'];
+  entityType: Scalars['String']['output'];
+  fieldName: Scalars['String']['output'];
+  id: Scalars['Int']['output'];
+  isAutoTranslated: Scalars['Boolean']['output'];
+  locale: Scalars['String']['output'];
+  translatedBy?: Maybe<Scalars['Int']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+  value: Scalars['String']['output'];
+};
+
+export type TranslationInput = {
+  entityId: Scalars['Int']['input'];
+  entityType: Scalars['String']['input'];
+  fieldName: Scalars['String']['input'];
+  isAutoTranslated?: InputMaybe<Scalars['Boolean']['input']>;
+  locale: Scalars['String']['input'];
+  translatedBy?: InputMaybe<Scalars['Int']['input']>;
+  value: Scalars['String']['input'];
+};
+
 export type UpdateCartItemInput = {
   color?: InputMaybe<Scalars['String']['input']>;
   quantity?: InputMaybe<Scalars['Int']['input']>;
   size?: InputMaybe<Scalars['String']['input']>;
 };
 
-export type UpdateCategoryInput = {
-  id: Scalars['Int']['input'];
-  name: Scalars['String']['input'];
-};
-
 export type UpdateColorInput = {
   hexCode: Scalars['String']['input'];
-  name: Scalars['String']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type UpdateOrderInput = {

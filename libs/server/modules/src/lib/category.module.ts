@@ -4,9 +4,14 @@ import { Category, Product } from '@kickzone-workspace/entities';
 import { ProductService, CategoryService } from '@kickzone-workspace/services';
 import { CategoryResolver } from '@kickzone-workspace/resolvers';
 import { ProductModule } from './product.module';
+import { TranslationModule } from './translation.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Category, Product]), ProductModule],
+  imports: [
+    TypeOrmModule.forFeature([Category, Product]),
+    ProductModule,
+    TranslationModule,
+  ],
   providers: [ProductService, CategoryResolver, CategoryService],
   exports: [ProductService, CategoryService],
 })

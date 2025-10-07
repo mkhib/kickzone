@@ -8,3 +8,4 @@ export * from './lib/color.entity';
 export * from './lib/order.entity';
 export * from './lib/cart.entity';
 export * from './lib/customer.entity';
+export * from './lib/translation.entity';

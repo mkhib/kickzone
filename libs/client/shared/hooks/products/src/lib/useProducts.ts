@@ -247,13 +247,11 @@ export const useProducts = () => {
 };
 
 export function useProductById(id: number | undefined) {
-  console.log('🔍 useProductById called with id:', id);
   const { data, loading, error, refetch } = useQuery<{
     product: KickzoneGraphqlTypes.Product;
   }>(PRODUCT_BY_ID_QUERY, {
     variables: { id },
     skip: !id,
   });
-  console.log('🔍 useProductById query result:', { data, loading, error, id });
   return { product: data?.product, loading, error, refetch };
 }

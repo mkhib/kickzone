@@ -153,19 +153,16 @@ const DeleteImageModal = ({
   imageType,
   isLoading = false,
   LL,
-}: DeleteImageModalProps & { LL: any }) => (
+}: DeleteImageModalProps & { LL: ReturnType<typeof useI18nContext>['LL'] }) => (
   <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
     <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <WarningIcon color="warning" />
-      {LL.products.deleteImage()}
+      Delete Image
     </DialogTitle>
     <DialogContent>
       <Typography>
-        {LL.messages.confirmDeleteImage()}{' '}
-        {imageType === 'preview'
-          ? LL.products.selectedImage()
-          : LL.products.uploadedImage()}
-        ?
+        Are you sure you want to delete this{' '}
+        {imageType === 'preview' ? 'selected image' : 'uploaded image'}?
       </Typography>
     </DialogContent>
     <DialogActions>
@@ -178,7 +175,7 @@ const DeleteImageModal = ({
         color="error"
         disabled={isLoading}
       >
-        {isLoading ? LL.status.deleting() : LL.button.delete()}
+        {isLoading ? 'Deleting...' : LL.button.delete()}
       </Button>
     </DialogActions>
   </Dialog>
@@ -267,12 +264,9 @@ const ProductInfoCard = React.memo(
     onUploadSelectedImages,
     setProductInfos,
     LL,
-  }: ProductInfoCardProps & { LL: any }) => {
-    console.log(`🎴 ProductInfoCard ${idx} rendering with:`, {
-      uploadedImageUrls: info.uploadedImageUrls,
-      newImagePreviews: info.newImagePreviews,
-      isUploading: info.isUploading,
-    });
+  }: ProductInfoCardProps & {
+    LL: ReturnType<typeof useI18nContext>['LL'];
+  }) => {
     // Tooltip for upload button if product info is not created
     const isSelectImagesDisabled = info.isUploading || !info.createdId;
     const showTooltip = !info.createdId;
@@ -290,7 +284,7 @@ const ProductInfoCard = React.memo(
         }}
         aria-label="Select Images"
       >
-        {info.isUploading ? LL.status.uploading() : LL.products.selectImages()}
+        {info.isUploading ? 'Uploading...' : LL.products.selectImages()}
         <VisuallyHiddenInput
           type="file"
           multiple
@@ -344,7 +338,7 @@ const ProductInfoCard = React.memo(
             sx={{ minWidth: 120, width: '100%', mb: { xs: 2, md: 0 } }}
           />
           <TextField
-            label={LL.form.size()}
+            label="Size"
             name="size"
             value={info.size}
             onChange={(
@@ -358,7 +352,7 @@ const ProductInfoCard = React.memo(
             }}
           />
           <TextField
-            label={LL.form.weight()}
+            label="Weight"
             name="weight"
             type="number"
             value={info.weight}
@@ -432,7 +426,6 @@ const ProductInfoCard = React.memo(
                 color="primary"
                 sx={{ mt: 1 }}
                 onClick={() => {
-                  console.log('🔘 Upload button clicked for idx:', idx);
                   onUploadSelectedImages(idx);
                 }}
                 disabled={
@@ -441,9 +434,7 @@ const ProductInfoCard = React.memo(
                   !info.createdId
                 }
               >
-                {info.isUploading
-                  ? LL.status.uploading()
-                  : LL.products.uploadImages()}
+                {info.isUploading ? 'Uploading...' : 'Upload Images'}
               </Button>
             </Box>
           )}
@@ -527,7 +518,11 @@ const ColorModal = ({
 
   const handleSubmit = useCallback(() => {
     onSubmit(initialColor?.id || null, colorName, hexCode);
-    // Don't reset state here, useEffect will handle it when modal closes or initialColor changes
+    // Reset fields for new colors (when initialColor is null)
+    if (!initialColor) {
+      setColorName('');
+      setHexCode('#ffffff');
+    }
     onClose();
   }, [initialColor, colorName, hexCode, onSubmit, onClose]);
 
@@ -617,17 +612,10 @@ const DeleteColorModal = ({
 };
 
 export function AdminProductEditor() {
-  console.log('🔄 AdminProductEditor component rendering');
   const { LL } = useI18nContext();
   const { id } = useParams<{ id?: string }>();
   const productIdNum = id ? Number(id) : undefined;
-  console.log('🔍 Route params:', { id, productIdNum });
-  const {
-    product: loadedProduct,
-    loading,
-    error,
-  } = useProductById(productIdNum);
-  console.log('🔍 GraphQL query result:', { loadedProduct, loading, error });
+  const { product: loadedProduct } = useProductById(productIdNum);
   const [product, setProduct] = useState({
     name: '',
     categoryIds: [] as number[],
@@ -723,30 +711,17 @@ export function AdminProductEditor() {
 
   // Fetch product if editing
   useEffect(() => {
-    console.log(
-      '📥 useEffect triggered - loadedProduct changed:',
-      loadedProduct
-    );
     if (productIdNum && loadedProduct) {
-      console.log('🔄 Setting product state from loadedProduct');
       setProduct({
         name: loadedProduct.name,
         categoryIds: loadedProduct.categories.map((cat) => cat.id),
         description: loadedProduct.description || '',
       });
-      console.log('🔄 Setting productInfos state from loadedProduct');
       setProductInfos(
         loadedProduct.productInfos.map((info) => ({
           productId: loadedProduct.id,
           size: info.size,
-          color: info.color
-            ? {
-                // Map backend color object to frontend state
-                id: info.color.id,
-                name: info.color.name,
-                hexCode: info.color.hexCode,
-              }
-            : null,
+          color: info.color || null,
           weight: info.weight,
           images: [],
           imagePreviews: [],
@@ -760,7 +735,6 @@ export function AdminProductEditor() {
       setCreatedProductInfoIds(
         loadedProduct.productInfos.map((info) => info.id)
       );
-      console.log('✅ State updated from loadedProduct');
     }
   }, [
     productIdNum,
@@ -1026,34 +1000,15 @@ export function AdminProductEditor() {
       }
 
       try {
-        console.log('🗑️ Calling removeProductInfoImage with:', {
-          productInfoId: info.createdId,
-          imageName: imageName,
-        });
-
         await removeProductInfoImage(info.createdId, imageName);
-        console.log('✅ Remove successful');
 
         // Update local state immediately
-        console.log(
-          '🔄 Updating local state - removing image at index:',
-          imageIdx
-        );
         setProductInfos((prev) => {
-          console.log(
-            '📊 Previous uploadedImageUrls:',
-            prev[infoIdx].uploadedImageUrls
-          );
           const updated = [...prev];
           updated[infoIdx].uploadedImageUrls.splice(imageIdx, 1);
-          console.log(
-            '📊 Updated uploadedImageUrls:',
-            updated[infoIdx].uploadedImageUrls
-          );
           return updated;
         });
 
-        console.log('✅ Remove complete - showing success message');
         showSnackbar('Image removed successfully', { severity: 'success' });
       } catch (error) {
         showSnackbar((error as Error).message, { severity: 'error' });
@@ -1363,12 +1318,12 @@ export function AdminProductEditor() {
                   Add New Color
                 </Button>
                 <Box>
-                  {availableColors
+                  {(availableColors as KickzoneGraphqlTypes.Color[])
                     ?.filter(
                       (color): color is KickzoneGraphqlTypes.Color =>
                         color != null
                     )
-                    .map((color: KickzoneGraphqlTypes.Color) => (
+                    .map((color) => (
                       <Box
                         key={color.id}
                         sx={{
@@ -1388,7 +1343,7 @@ export function AdminProductEditor() {
                               mr: 1,
                               border: '1px solid #ccc',
                             }}
-                          ></Box>
+                          />
                           <Typography>{color.name}</Typography>
                         </Box>
                         <Box>
@@ -1433,7 +1388,7 @@ export function AdminProductEditor() {
                     })
                   }
                   availableColors={
-                    availableColors?.filter(
+                    (availableColors as KickzoneGraphqlTypes.Color[])?.filter(
                       (color): color is KickzoneGraphqlTypes.Color =>
                         color != null
                     ) || []
@@ -1511,8 +1466,13 @@ export function AdminProductEditor() {
         onClose={() => setIsNewCategoryModalOpen(false)}
         onSubmit={async (name) => {
           try {
-            await createCategory(name);
+            // Convert name to slug (lowercase, replace spaces with hyphens)
+            const slug = name.toLowerCase().replace(/\s+/g, '-');
+            await createCategory(slug);
             setIsNewCategoryModalOpen(false);
+            showSnackbar('Category created successfully', {
+              severity: 'success',
+            });
           } catch (error) {
             const message = (error as Error).message;
             if (message.includes('already exists')) {
@@ -1533,10 +1493,16 @@ export function AdminProductEditor() {
         }}
         onSubmit={async (name) => {
           try {
-            if (selectedCategory)
-              await updateCategory(selectedCategory.id, name);
+            if (selectedCategory) {
+              // Convert name to slug (lowercase, replace spaces with hyphens)
+              const slug = name.toLowerCase().replace(/\s+/g, '-');
+              await updateCategory(selectedCategory.id, slug);
+            }
             setIsEditCategoryModalOpen(false);
             setSelectedCategory(null);
+            showSnackbar('Category updated successfully', {
+              severity: 'success',
+            });
           } catch (error) {
             const message = (error as Error).message;
             if (message.includes('already exists')) {

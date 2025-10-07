@@ -14,6 +14,7 @@ import {
   Cart,
   CartItem,
   CustomerProfile,
+  Translation,
 } from '@kickzone-workspace/entities';
 import {
   AuthModule,
@@ -26,6 +27,7 @@ import {
   ColorModule,
   OrderModule,
   CartModule,
+  TranslationModule,
 } from '@kickzone-workspace/modules';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -58,6 +60,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
         Cart,
         CartItem,
         CustomerProfile,
+        Translation,
       ],
       synchronize: true,
     }),
@@ -101,6 +104,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
     ColorModule,
     OrderModule,
     CartModule,
+    TranslationModule,
   ],
 })
 export class AppModule {}
