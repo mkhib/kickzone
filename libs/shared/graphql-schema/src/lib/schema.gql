@@ -60,7 +60,7 @@ type Product {
   productInfos: [ProductInfo!]!
   categories: [Category!]!
   description: String
-  sellerProducts: [SellerProduct!]!
+  sellerProducts: [SellerProduct!]
   archived: Boolean!
 }
 

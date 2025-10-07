@@ -1,6 +1,9 @@
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { useCartItemCount } from '@kickzone-workspace/customer-cart-store';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import {
+  useI18nContext,
+  useThemeContext,
+} from '@kickzone-workspace/shared-i18n';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -42,6 +45,7 @@ export function Headerbar() {
   const location = useLocation();
   const totalItems = useCartItemCount();
   const { LL } = useI18nContext();
+  const { direction } = useThemeContext();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -92,7 +96,7 @@ export function Headerbar() {
         </Toolbar>
       </AppBar>
       <StyledDrawer
-        anchor="left"
+        anchor={direction === 'rtl' ? 'right' : 'left'}
         open={drawerOpen}
         onClose={handleDrawerToggle}
       >

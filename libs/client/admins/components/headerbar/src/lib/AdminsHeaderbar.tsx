@@ -1,11 +1,15 @@
 import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
 import { ADMIN_ROUTES } from '@kickzone-workspace/admins-routes';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import {
+  useI18nContext,
+  useThemeContext,
+} from '@kickzone-workspace/shared-i18n';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import CloseIcon from '@mui/icons-material/Close';
+import LanguageIcon from '@mui/icons-material/Language';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -45,6 +49,7 @@ export function AdminsHeaderbar() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { LL } = useI18nContext();
+  const { direction } = useThemeContext();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -152,7 +157,7 @@ export function AdminsHeaderbar() {
       </AppBar>
       {user && (
         <StyledDrawer
-          anchor="left"
+          anchor={direction === 'rtl' ? 'right' : 'left'}
           open={drawerOpen}
           onClose={handleDrawerToggle}
           variant={isMobile ? 'temporary' : 'persistent'}
@@ -201,6 +206,17 @@ export function AdminsHeaderbar() {
                 <ContactMailIcon />
               </ListItemIcon>
               <CustomListItemText primary={LL.navigation.contact()} />
+            </ListItemButton>
+
+            <ListItemButton
+              to="/language-settings"
+              component={RouterLink}
+              selected={location.pathname === '/language-settings'}
+            >
+              <ListItemIcon>
+                <LanguageIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.languageSettings()} />
             </ListItemButton>
             <ListItemButton
               to={ADMIN_ROUTES.SELLERS}

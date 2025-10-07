@@ -7,6 +7,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { colors } from '@kickzone-workspace/colors';
 import { useProducts, useProductById } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import AddIcon from '@mui/icons-material/Add';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -30,7 +31,7 @@ import { styled, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import React, { ChangeEvent, useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useColors } from '@kickzone-workspace/colors-hook';
 import { SketchPicker, ColorResult } from 'react-color';
@@ -151,21 +152,25 @@ const DeleteImageModal = ({
   onConfirm,
   imageType,
   isLoading = false,
-}: DeleteImageModalProps) => (
+  LL,
+}: DeleteImageModalProps & { LL: any }) => (
   <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
     <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <WarningIcon color="warning" />
-      Delete Image
+      {LL.products.deleteImage()}
     </DialogTitle>
     <DialogContent>
       <Typography>
-        Are you sure you want to delete this{' '}
-        {imageType === 'preview' ? 'selected' : 'uploaded'} image?
+        {LL.messages.confirmDeleteImage()}{' '}
+        {imageType === 'preview'
+          ? LL.products.selectedImage()
+          : LL.products.uploadedImage()}
+        ?
       </Typography>
     </DialogContent>
     <DialogActions>
       <Button onClick={onClose} disabled={isLoading}>
-        Cancel
+        {LL.button.cancel()}
       </Button>
       <Button
         onClick={onConfirm}
@@ -173,7 +178,7 @@ const DeleteImageModal = ({
         color="error"
         disabled={isLoading}
       >
-        {isLoading ? 'Deleting...' : 'Delete'}
+        {isLoading ? LL.status.deleting() : LL.button.delete()}
       </Button>
     </DialogActions>
   </Dialog>
@@ -261,7 +266,8 @@ const ProductInfoCard = React.memo(
     disableRemove,
     onUploadSelectedImages,
     setProductInfos,
-  }: ProductInfoCardProps) => {
+    LL,
+  }: ProductInfoCardProps & { LL: any }) => {
     console.log(`🎴 ProductInfoCard ${idx} rendering with:`, {
       uploadedImageUrls: info.uploadedImageUrls,
       newImagePreviews: info.newImagePreviews,
@@ -284,7 +290,7 @@ const ProductInfoCard = React.memo(
         }}
         aria-label="Select Images"
       >
-        {info.isUploading ? 'Uploading...' : 'Select Images'}
+        {info.isUploading ? LL.status.uploading() : LL.products.selectImages()}
         <VisuallyHiddenInput
           type="file"
           multiple
@@ -333,12 +339,12 @@ const ProductInfoCard = React.memo(
             value={info.color}
             onChange={(_e, newValue) => onColorChange(idx, newValue)}
             renderInput={(params) => (
-              <TextField {...params} label="Color" required />
+              <TextField {...params} label={LL.form.color()} required />
             )}
             sx={{ minWidth: 120, width: '100%', mb: { xs: 2, md: 0 } }}
           />
           <TextField
-            label="Size"
+            label={LL.form.size()}
             name="size"
             value={info.size}
             onChange={(
@@ -352,7 +358,7 @@ const ProductInfoCard = React.memo(
             }}
           />
           <TextField
-            label="Weight (kg)"
+            label={LL.form.weight()}
             name="weight"
             type="number"
             value={info.weight}
@@ -435,7 +441,9 @@ const ProductInfoCard = React.memo(
                   !info.createdId
                 }
               >
-                {info.isUploading ? 'Uploading...' : 'Upload Images'}
+                {info.isUploading
+                  ? LL.status.uploading()
+                  : LL.products.uploadImages()}
               </Button>
             </Box>
           )}
@@ -610,9 +618,16 @@ const DeleteColorModal = ({
 
 export function AdminProductEditor() {
   console.log('🔄 AdminProductEditor component rendering');
+  const { LL } = useI18nContext();
   const { id } = useParams<{ id?: string }>();
   const productIdNum = id ? Number(id) : undefined;
-  const { product: loadedProduct, refetch } = useProductById(productIdNum);
+  console.log('🔍 Route params:', { id, productIdNum });
+  const {
+    product: loadedProduct,
+    loading,
+    error,
+  } = useProductById(productIdNum);
+  console.log('🔍 GraphQL query result:', { loadedProduct, loading, error });
   const [product, setProduct] = useState({
     name: '',
     categoryIds: [] as number[],
@@ -635,9 +650,7 @@ export function AdminProductEditor() {
     },
   ]);
 
-  const [createdProductInfoIds, setCreatedProductInfoIds] = useState<
-    (number | null)[]
-  >([null]);
+  const [, setCreatedProductInfoIds] = useState<(number | null)[]>([null]);
 
   const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
@@ -1209,7 +1222,7 @@ export function AdminProductEditor() {
     <AdminsLayout>
       <Paper elevation={3} sx={{ p: 4, borderRadius: 2, height: '100%' }}>
         <Typography variant="h5" sx={{ mb: 3, color: colors.text }}>
-          Add/Edit Product
+          {productIdNum ? 'Edit Product' : LL.products.addProduct()}
         </Typography>
         <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
           <Grid container spacing={3} sx={{ height: '100%' }}>
@@ -1224,7 +1237,7 @@ export function AdminProductEditor() {
                   input: { 'aria-label': 'Product Name' },
                 }}
                 fullWidth
-                label="Product Name"
+                label={LL.form.productName()}
                 name="name"
                 value={product.name}
                 onChange={handleProductChange}
@@ -1290,7 +1303,7 @@ export function AdminProductEditor() {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Category"
+                      label={LL.form.category()}
                       slotProps={{
                         input: {
                           ...params.InputProps,
@@ -1325,7 +1338,7 @@ export function AdminProductEditor() {
               <Box sx={{ mt: 2 }}>
                 <TextField
                   id="product-description"
-                  label="Description"
+                  label={LL.form.description()}
                   name="description"
                   value={product.description || ''}
                   onChange={handleProductChange}
@@ -1350,46 +1363,51 @@ export function AdminProductEditor() {
                   Add New Color
                 </Button>
                 <Box>
-                  {availableColors.map((color: KickzoneGraphqlTypes.Color) => (
-                    <Box
-                      key={color.id}
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        p: 1,
-                        borderBottom: '1px solid #eee',
-                      }}
-                    >
-                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                        <Box
-                          sx={{
-                            width: 20,
-                            height: 20,
-                            backgroundColor: color.hexCode,
-                            mr: 1,
-                            border: '1px solid #ccc',
-                          }}
-                        ></Box>
-                        <Typography>{color.name}</Typography>
+                  {availableColors
+                    ?.filter(
+                      (color): color is KickzoneGraphqlTypes.Color =>
+                        color != null
+                    )
+                    .map((color: KickzoneGraphqlTypes.Color) => (
+                      <Box
+                        key={color.id}
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          p: 1,
+                          borderBottom: '1px solid #eee',
+                        }}
+                      >
+                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                          <Box
+                            sx={{
+                              width: 20,
+                              height: 20,
+                              backgroundColor: color.hexCode,
+                              mr: 1,
+                              border: '1px solid #ccc',
+                            }}
+                          ></Box>
+                          <Typography>{color.name}</Typography>
+                        </Box>
+                        <Box>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenEditColorModal(color)}
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleOpenDeleteColorModal(color)}
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
                       </Box>
-                      <Box>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleOpenEditColorModal(color)}
-                        >
-                          <EditIcon fontSize="small" />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleOpenDeleteColorModal(color)}
-                          color="error"
-                        >
-                          <DeleteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-                    </Box>
-                  ))}
+                    ))}
                 </Box>
               </Box>
             </Grid>
@@ -1414,7 +1432,12 @@ export function AdminProductEditor() {
                       return updated;
                     })
                   }
-                  availableColors={availableColors || []}
+                  availableColors={
+                    availableColors?.filter(
+                      (color): color is KickzoneGraphqlTypes.Color =>
+                        color != null
+                    ) || []
+                  }
                   onRemove={handleRemoveProductInfo}
                   disableRemove={productInfos.length === 1}
                   onRemoveImage={(infoIdx: number, imageIdx: number) => {
@@ -1444,6 +1467,7 @@ export function AdminProductEditor() {
                   }}
                   onUploadSelectedImages={handleUploadSelectedImages}
                   setProductInfos={setProductInfos}
+                  LL={LL}
                 />
               ))}
               <Button
@@ -1498,7 +1522,7 @@ export function AdminProductEditor() {
             }
           }
         }}
-        title="Add New Category"
+        title="Add Category"
         isLoading={isCreatingCategory}
       />
       <CategoryModal
@@ -1541,6 +1565,7 @@ export function AdminProductEditor() {
           deleteImageModal.imageType === 'preview' ? 'preview' : 'uploaded'
         }
         isLoading={deleteImageModal.isLoading}
+        LL={LL}
       />
       <ColorModal
         open={isNewColorModalOpen || isEditColorModalOpen}

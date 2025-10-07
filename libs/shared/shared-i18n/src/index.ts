@@ -11,3 +11,4 @@ export { navigatorDetector } from './lib/locales/navigator-detector';
 export { localStorageDetector } from './lib/language-detector';
 export * from './lib/language-context';
 export * from './lib/language-detector';
+export * from './lib/theme-provider';

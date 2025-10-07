@@ -257,7 +257,12 @@ export class ProductService {
   async getProductById(id: number): Promise<Product | null> {
     return this.productRepository.findOne({
       where: { id },
-      relations: ['productInfos', 'categories', 'productInfos.color'],
+      relations: [
+        'productInfos',
+        'categories',
+        'productInfos.color',
+        'sellerProducts',
+      ],
       order: {
         productInfos: {
           id: 'ASC',

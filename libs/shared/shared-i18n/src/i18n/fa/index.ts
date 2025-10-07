@@ -73,6 +73,8 @@ const fa = {
     selectLanguage: 'انتخاب زبان',
     language: 'زبان',
     currentLanguage: 'زبان فعلی',
+    size: 'اندازه',
+    weight: 'وزن (کیلوگرم)',
   },
 
   // Table headers and data
@@ -127,6 +129,11 @@ const fa = {
     productDeleted: 'محصول با موفقیت حذف شد',
     imageUploaded: 'تصویر با موفقیت آپلود شد',
     imageDeleted: 'تصویر با موفقیت حذف شد',
+    selectImages: 'انتخاب تصاویر',
+    uploadImages: 'آپلود تصاویر',
+    deleteImage: 'حذف تصویر',
+    selectedImage: 'تصویر انتخاب شده',
+    uploadedImage: 'تصویر آپلود شده',
   },
 
   // Categories
@@ -139,6 +146,14 @@ const fa = {
     categoryDescription: 'توضیحات دسته‌بندی',
     noCategories: 'دسته‌بندی‌ای وجود ندارد',
     default: 'پیش‌فرض',
+  },
+
+  // Colors
+  colors: {
+    addColor: 'افزودن رنگ جدید',
+    editColor: 'ویرایش رنگ',
+    colorName: 'نام رنگ',
+    hexCode: 'کد هگز',
   },
 
   // Sorting and filtering
@@ -159,6 +174,8 @@ const fa = {
     warning: 'هشدار',
     info: 'اطلاعات',
     changingLanguage: 'در حال تغییر زبان...',
+    uploading: 'در حال آپلود...',
+    deleting: 'در حال حذف...',
   },
 
   // Messages
@@ -173,6 +190,7 @@ const fa = {
     colorAdded: 'رنگ با موفقیت اضافه شد',
     languagePreferenceSaved:
       'ترجیح زبان شما ذخیره خواهد شد و در تمام جلسات استفاده خواهد شد.',
+    confirmDeleteImage: 'آیا مطمئن هستید که می‌خواهید این',
   },
 
   // Authorization

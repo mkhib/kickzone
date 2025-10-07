@@ -37,7 +37,7 @@ export class Product {
   @Column({ type: 'text', nullable: true })
   description?: string | null;
 
-  @Field(() => [SellerProduct])
+  @Field(() => [SellerProduct], { nullable: true })
   @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
   sellerProducts: Relation<SellerProduct>[];
 

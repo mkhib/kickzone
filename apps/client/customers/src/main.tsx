@@ -10,6 +10,7 @@ import {
   navigatorDetector,
   localStorageDetector,
   LanguageProvider,
+  RTLThemeProvider,
 } from '@kickzone-workspace/shared-i18n';
 import { TypesafeI18n } from '@kickzone-workspace/shared-i18n';
 
@@ -28,13 +29,15 @@ loadLocaleAsync(detectedLocale).then(() => {
       {/* Pass the detected locale to the generated provider component */}
       <TypesafeI18n locale={detectedLocale}>
         <LanguageProvider>
-          <CustomersGraphQLProvider>
-            <CustomersAuthProvider>
-              <SnackbarProvider>
-                <App />
-              </SnackbarProvider>
-            </CustomersAuthProvider>
-          </CustomersGraphQLProvider>
+          <RTLThemeProvider>
+            <CustomersGraphQLProvider>
+              <CustomersAuthProvider>
+                <SnackbarProvider>
+                  <App />
+                </SnackbarProvider>
+              </CustomersAuthProvider>
+            </CustomersGraphQLProvider>
+          </RTLThemeProvider>
         </LanguageProvider>
       </TypesafeI18n>
     </StrictMode>

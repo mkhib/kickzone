@@ -1,6 +1,9 @@
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import {
+  useI18nContext,
+  useThemeContext,
+} from '@kickzone-workspace/shared-i18n';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
@@ -41,6 +44,7 @@ export function Headerbar() {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const location = useLocation();
   const { LL } = useI18nContext();
+  const { direction } = useThemeContext();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -96,7 +100,7 @@ export function Headerbar() {
         </Toolbar>
       </AppBar>
       <StyledDrawer
-        anchor="left"
+        anchor={direction === 'rtl' ? 'right' : 'left'}
         open={drawerOpen}
         onClose={handleDrawerToggle}
       >
