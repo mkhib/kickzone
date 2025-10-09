@@ -11,9 +11,11 @@ import {
   CreateProductInput,
   CreateProductInfoInput,
   CreateCategoryInput,
+  UpdateCategoryInput,
   ProductFilterInput,
   UpdateProductInput,
 } from '@kickzone-workspace/inputs';
+import { TranslationService } from './translation.service';
 
 @Injectable()
 export class ProductService {
@@ -25,7 +27,8 @@ export class ProductService {
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Color)
-    private readonly colorRepository: Repository<Color>
+    private readonly colorRepository: Repository<Color>,
+    private readonly translationService: TranslationService
   ) {}
 
   async getProducts(filter?: ProductFilterInput): Promise<[Product[], number]> {
@@ -191,7 +194,7 @@ export class ProductService {
     return fullProduct;
   }
 
-  async createCategory(input: CreateCategoryInput) {
+  async createCategory(input: CreateCategoryInput, name?: string) {
     // Check for duplicate category slug
     const existing = await this.categoryRepository.findOneBy({
       slug: input.slug,
@@ -199,11 +202,75 @@ export class ProductService {
     if (existing) {
       throw new Error('A category with this slug already exists.');
     }
-    const category = this.categoryRepository.create({ 
+    const category = this.categoryRepository.create({
       slug: input.slug,
-      sortOrder: input.sortOrder || 0
+      sortOrder: input.sortOrder || 0,
     });
+    const savedCategory = await this.categoryRepository.save(category);
+
+    // Create a translation entry for the category name if provided
+    if (name) {
+      await this.translationService.setTranslation({
+        entityType: 'category',
+        entityId: savedCategory.id,
+        locale: 'en', // Default to English
+        fieldName: 'name',
+        value: name,
+        isAutoTranslated: false,
+      });
+    }
+
+    return savedCategory;
+  }
+
+  async updateCategory(input: UpdateCategoryInput) {
+    const category = await this.categoryRepository.findOneBy({ id: input.id });
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    // Check for duplicate slug if slug is being updated
+    if (input.slug && input.slug !== category.slug) {
+      const existing = await this.categoryRepository.findOneBy({
+        slug: input.slug,
+      });
+      if (existing) {
+        throw new Error('A category with this slug already exists.');
+      }
+    }
+
+    // Update category properties
+    Object.assign(category, {
+      slug: input.slug || category.slug,
+      sortOrder:
+        input.sortOrder !== undefined ? input.sortOrder : category.sortOrder,
+      isActive:
+        input.isActive !== undefined ? input.isActive : category.isActive,
+    });
+
     return this.categoryRepository.save(category);
+  }
+
+  async deleteCategory(id: number) {
+    const category = await this.categoryRepository.findOneBy({ id });
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    // Check if category is being used by any products
+    const productsUsingCategory = await this.productRepository
+      .createQueryBuilder('product')
+      .innerJoin('product.categories', 'category')
+      .where('category.id = :categoryId', { categoryId: id })
+      .getCount();
+    if (productsUsingCategory > 0) {
+      throw new Error('Cannot delete category that is being used by products');
+    }
+
+    // Delete all translations for this category
+    await this.translationService.deleteEntityTranslations('category', id);
+
+    return this.categoryRepository.remove(category);
   }
 
   async getCategories() {

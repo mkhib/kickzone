@@ -256,6 +256,12 @@
       "@kickzone-workspace/translations": [
         "libs/client/shared/translations/src/index.ts"
       ],
+      "@kickzone-workspace/translations-hook": [
+        "libs/client/shared/hooks/translations/src/index.ts"
+      ],
+      "@kickzone-workspace/translations-management-hook": [
+        "libs/client/shared/hooks/translations-management-hook/src/index.ts"
+      ],
       "@kickzone-workspace/unauthorized-path": [
         "libs/client/shared/components/unauthorized/src/index.ts"
       ],

@@ -8,7 +8,7 @@ import { createPrivateRoute } from '@kickzone-workspace/private-route';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SellerManagement } from '@kickzone-workspace/admin-seller-management';
 import { LanguageComponents } from '@kickzone-workspace/language-components';
-import { TranslationManagement } from '@kickzone-workspace/translation-management';
+import { AdminTranslationManagement } from '@kickzone-workspace/translation-management';
 
 export function AdminsRouter() {
   const { admin } = useAdminsAuthContext();
@@ -32,7 +32,7 @@ export function AdminsRouter() {
           <Route path={ADMIN_ROUTES.SELLERS} element={<SellerManagement />} />
           <Route
             path={ADMIN_ROUTES.TRANSLATIONS}
-            element={<TranslationManagement />}
+            element={<AdminTranslationManagement />}
           />
         </Route>
         <Route path={ADMIN_ROUTES.LOGIN} element={<AdminsLogin />} />

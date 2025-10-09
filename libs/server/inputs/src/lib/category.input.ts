@@ -8,3 +8,18 @@ export class CreateCategoryInput {
   @Field(() => Int, { nullable: true, defaultValue: 0 })
   sortOrder?: number;
 }
+
+@InputType()
+export class UpdateCategoryInput {
+  @Field(() => Int)
+  id: number;
+
+  @Field({ nullable: true })
+  slug?: string;
+
+  @Field(() => Int, { nullable: true })
+  sortOrder?: number;
+
+  @Field({ nullable: true })
+  isActive?: boolean;
+}

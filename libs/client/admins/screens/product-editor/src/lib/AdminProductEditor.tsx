@@ -1468,7 +1468,7 @@ export function AdminProductEditor() {
           try {
             // Convert name to slug (lowercase, replace spaces with hyphens)
             const slug = name.toLowerCase().replace(/\s+/g, '-');
-            await createCategory(slug);
+            await createCategory(slug, 0, name);
             setIsNewCategoryModalOpen(false);
             showSnackbar('Category created successfully', {
               severity: 'success',

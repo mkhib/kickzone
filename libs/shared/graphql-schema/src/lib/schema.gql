@@ -276,9 +276,11 @@ type Mutation {
   logout: Boolean!
   initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!
   setupPassword(token: String!, newPassword: String!): User!
+  createCategory(input: CreateCategoryInput!): Category!
+  updateCategory(input: UpdateCategoryInput!): Category!
+  deleteCategory(id: Int!): Boolean!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): Product!
-  createCategory(input: CreateCategoryInput!): Category!
   uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
   removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
   archiveProduct(id: Int!): Product!
@@ -316,6 +318,18 @@ input CreateUserInput {
   role: UserRole!
 }
 
+input CreateCategoryInput {
+  slug: String!
+  sortOrder: Int = 0
+}
+
+input UpdateCategoryInput {
+  id: Int!
+  slug: String
+  sortOrder: Int
+  isActive: Boolean
+}
+
 input CreateProductInput {
   name: String!
   categoryIds: [Int!]!
@@ -327,11 +341,6 @@ input CreateProductInfoInput {
   size: String!
   colorId: Int!
   weight: Float!
-}
-
-input CreateCategoryInput {
-  slug: String!
-  sortOrder: Int = 0
 }
 
 """The `Upload` scalar type represents a file upload."""

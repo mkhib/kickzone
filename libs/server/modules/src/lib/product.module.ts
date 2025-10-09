@@ -20,6 +20,7 @@ import {
   UserService,
 } from '@kickzone-workspace/services';
 import { TokenModule } from './token.module';
+import { TranslationModule } from './translation.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
@@ -41,6 +42,7 @@ import { ConfigService } from '@nestjs/config';
       signOptions: { expiresIn: '60m' },
     }),
     TokenModule,
+    TranslationModule,
   ],
   providers: [
     ProductService,

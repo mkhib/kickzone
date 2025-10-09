@@ -175,6 +175,7 @@ export type Mutation = {
   createSeller: SellerInfo;
   createSellerProduct: SellerProduct;
   createUser: User;
+  deleteCategory: Scalars['Boolean']['output'];
   deleteColor: Scalars['Boolean']['output'];
   deleteEntityTranslations: Scalars['Boolean']['output'];
   deleteOrder: Scalars['Boolean']['output'];
@@ -188,6 +189,7 @@ export type Mutation = {
   toggleSellerActive: SellerInfo;
   unarchiveProduct: Product;
   updateCartItem: Cart;
+  updateCategory: Category;
   updateColor: Color;
   updateMySellerProduct: SellerProduct;
   updateOrder: Order;
@@ -261,6 +263,11 @@ export type MutationCreateUserArgs = {
 };
 
 
+export type MutationDeleteCategoryArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationDeleteColorArgs = {
   id: Scalars['Int']['input'];
 };
@@ -324,6 +331,11 @@ export type MutationUnarchiveProductArgs = {
 export type MutationUpdateCartItemArgs = {
   itemId: Scalars['String']['input'];
   updateInput: UpdateCartItemInput;
+};
+
+
+export type MutationUpdateCategoryArgs = {
+  input: UpdateCategoryInput;
 };
 
 
@@ -692,6 +704,13 @@ export type UpdateCartItemInput = {
   color?: InputMaybe<Scalars['String']['input']>;
   quantity?: InputMaybe<Scalars['Int']['input']>;
   size?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type UpdateCategoryInput = {
+  id: Scalars['Int']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type UpdateColorInput = {

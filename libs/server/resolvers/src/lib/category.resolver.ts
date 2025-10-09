@@ -1,10 +1,51 @@
-import { ResolveField, Parent, Context, Resolver } from '@nestjs/graphql';
+import {
+  ResolveField,
+  Parent,
+  Context,
+  Resolver,
+  Mutation,
+  Args,
+  Int,
+} from '@nestjs/graphql';
 import { Category } from '@kickzone-workspace/entities';
-import { TranslationService } from '@kickzone-workspace/services';
+import {
+  TranslationService,
+  ProductService,
+} from '@kickzone-workspace/services';
+import {
+  CreateCategoryInput,
+  UpdateCategoryInput,
+} from '@kickzone-workspace/inputs';
 
 @Resolver(() => Category)
 export class CategoryResolver {
-  constructor(private translationService: TranslationService) {}
+  constructor(
+    private translationService: TranslationService,
+    private productService: ProductService
+  ) {}
+
+  @Mutation(() => Category)
+  async createCategory(
+    @Args('input') input: CreateCategoryInput,
+    @Args('name', { nullable: true }) name?: string
+  ): Promise<Category> {
+    return this.productService.createCategory(input, name);
+  }
+
+  @Mutation(() => Category)
+  async updateCategory(
+    @Args('input') input: UpdateCategoryInput
+  ): Promise<Category> {
+    return this.productService.updateCategory(input);
+  }
+
+  @Mutation(() => Boolean)
+  async deleteCategory(
+    @Args('id', { type: () => Int }) id: number
+  ): Promise<boolean> {
+    await this.productService.deleteCategory(id);
+    return true;
+  }
 
   @ResolveField(() => String)
   async name(

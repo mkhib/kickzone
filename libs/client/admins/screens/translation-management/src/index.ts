@@ -1,1 +1,1 @@
-export * from './lib/translation-management';
+export * from './lib/AdminTranslationManagement';

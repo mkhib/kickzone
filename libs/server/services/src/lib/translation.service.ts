@@ -139,6 +139,25 @@ export class TranslationService {
         },
       });
 
+      this.logger.log(
+        `Found ${sourceTranslations.length} source translations for ${
+          input.entityType
+        } entities ${input.entityIds.join(', ')} in locale ${
+          input.sourceLocale
+        }`
+      );
+
+      if (sourceTranslations.length === 0) {
+        this.logger.warn(
+          `No source translations found for ${
+            input.entityType
+          } entities ${input.entityIds.join(', ')} in locale ${
+            input.sourceLocale
+          }`
+        );
+        return;
+      }
+
       // Group by entity ID for batch processing
       const translationsByEntity = new Map<number, Translation[]>();
       sourceTranslations.forEach((t) => {

@@ -1,5 +1,6 @@
 import { useQuery, useMutation } from '@apollo/client/react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { CreateCategoryInput } from '@kickzone-workspace/inputs';
 import {
   CATEGORIES_QUERY,
   CREATE_CATEGORY,
@@ -55,11 +56,12 @@ export const useCategories = () => {
       KickzoneGraphqlTypes.MutationSetTranslationArgs
     >(SET_CATEGORY_TRANSLATION);
 
-  const createCategory = (slug: string, sortOrder: number = 0) =>
+  const createCategory = (slug: string, sortOrder = 0, name?: string) =>
     createCategoryMutation({
       variables: {
         input: { slug, sortOrder },
-      },
+        ...(name && { name }),
+      } as { input: CreateCategoryInput; name?: string },
     });
 
   const updateCategory = (
@@ -103,7 +105,7 @@ export const useCategories = () => {
     locale: string,
     fieldName: string,
     value: string,
-    isAutoTranslated: boolean = false
+    isAutoTranslated = false
   ) =>
     setTranslationMutation({
       variables: {
