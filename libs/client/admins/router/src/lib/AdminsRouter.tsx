@@ -10,6 +10,7 @@ import { SellerManagement } from '@kickzone-workspace/admin-seller-management';
 import { LanguageComponents } from '@kickzone-workspace/language-components';
 import { AdminTranslationManagement } from '@kickzone-workspace/translation-management';
 import { AdminSellerOrders } from '@kickzone-workspace/admin-seller-orders';
+import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 
 export function AdminsRouter() {
   const { admin } = useAdminsAuthContext();
@@ -40,7 +41,7 @@ export function AdminsRouter() {
         <Route path={ADMIN_ROUTES.LOGIN} element={<AdminsLogin />} />
         <Route
           path={ADMIN_ROUTES.LANGUAGE_SETTINGS}
-          element={<LanguageComponents />}
+          element={<LanguageComponents LayoutComponent={AdminsLayout} />}
         />
         <Route
           path={ADMIN_ROUTES.UNAUTHORIZED}

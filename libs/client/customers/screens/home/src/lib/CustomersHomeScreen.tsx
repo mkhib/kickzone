@@ -39,42 +39,20 @@ export function CustomersHome() {
   // Add to cart logic
   const handleAddToCart = useCallback(
     (product: KickzoneGraphqlTypes.Product) => {
-      console.log('🛒 Home screen - Add to cart for product:', {
-        productId: product.id,
-        productName: product.name,
-        productInfos: product.productInfos,
-        sellerProducts: product.sellerProducts,
-      });
-
       if (product.productInfos && product.productInfos.length > 0) {
         const productInfo = product.productInfos[0];
-        console.log('📋 Selected product info:', productInfo);
 
         // Find the sellerProduct that matches this productInfo
         const sellerProduct = product.sellerProducts?.find(
           (sp) => sp.productInfoId === productInfo.id
         );
 
-        console.log('🔍 Found seller product:', {
-          sellerProduct,
-          stockQuantity: sellerProduct?.stockQuantity,
-          price: sellerProduct?.price,
-          discount: sellerProduct?.discount,
-        });
-
         if (!sellerProduct || !sellerProduct.seller) {
-          console.error(
-            '❌ No seller product or seller found for this product info'
-          );
           return;
         }
 
         // Check stock availability
         if (sellerProduct.stockQuantity <= 0) {
-          console.error(
-            '❌ Product out of stock - stockQuantity:',
-            sellerProduct.stockQuantity
-          );
           return;
         }
 
@@ -162,19 +140,19 @@ export function CustomersHome() {
                 label={LL.form.order()}
                 onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
               >
-                <MenuItem value="asc">Ascending</MenuItem>
-                <MenuItem value="desc">Descending</MenuItem>
+                <MenuItem value="asc">{LL.products.ascending()}</MenuItem>
+                <MenuItem value="desc">{LL.products.descending()}</MenuItem>
               </Select>
             </FormControl>
           </Stack>
           <Grid container spacing={4} justifyContent="center">
             {loading ? (
               <Typography variant="h6" sx={{ mt: 4 }}>
-                Loading...
+                {LL.status.loading()}
               </Typography>
             ) : products.length === 0 ? (
               <Typography variant="h6" sx={{ mt: 4 }}>
-                No products found.
+                {LL.products.noProductsFound()}
               </Typography>
             ) : (
               products.map((product) => {

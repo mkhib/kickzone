@@ -143,15 +143,6 @@ export class ProductService {
 
     const products = await query.getMany();
 
-    // Debug: Log the first product's seller product to check productInfoId
-    if (products.length > 0 && products[0].sellerProducts?.length > 0) {
-      console.log('🔍 First seller product from DB:', {
-        id: products[0].sellerProducts[0].id,
-        productInfoId: products[0].sellerProducts[0].productInfoId,
-        price: products[0].sellerProducts[0].price,
-      });
-    }
-
     return [products, totalCount];
   }
 

@@ -336,7 +336,7 @@ type RootTranslation = {
 		 */
 		orderSummary: string
 		/**
-		 * T​h​i​s​ ​i​s​ ​a​ ​d​e​m​o​ ​c​h​e​c​k​o​u​t​.​ ​N​o​ ​p​a​y​m​e​n​t​ ​i​s​ ​r​e​q​u​i​r​e​d​.
+		 * W​e​ ​w​i​l​l​ ​c​o​n​t​a​c​t​ ​y​o​u​ ​s​o​o​n​ ​f​o​r​ ​t​h​e​ ​p​a​y​m​e​n​t​ ​i​n​f​o​.
 		 */
 		demoCheckout: string
 		/**
@@ -391,6 +391,50 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​c​l​e​a​r​ ​c​a​r​t
 		 */
 		clearFailedMessage: string
+		/**
+		 * A​u​t​h​e​n​t​i​c​a​t​i​o​n​ ​R​e​q​u​i​r​e​d
+		 */
+		authenticationRequired: string
+		/**
+		 * Y​o​u​ ​n​e​e​d​ ​t​o​ ​b​e​ ​l​o​g​g​e​d​ ​i​n​ ​t​o​ ​p​r​o​c​e​e​d​ ​w​i​t​h​ ​c​h​e​c​k​o​u​t​.​ ​P​l​e​a​s​e​ ​l​o​g​ ​i​n​ ​o​r​ ​r​e​g​i​s​t​e​r​ ​t​o​ ​c​o​n​t​i​n​u​e​.
+		 */
+		authenticationMessage: string
+		/**
+		 * L​o​g​i​n​ ​/​ ​R​e​g​i​s​t​e​r
+		 */
+		loginRegister: string
+		/**
+		 * S​h​o​p​p​i​n​g​ ​C​a​r​t
+		 */
+		shoppingCart: string
+		/**
+		 * Y​o​u​r​ ​c​a​r​t​ ​i​s​ ​e​m​p​t​y
+		 */
+		yourCartIsEmpty: string
+		/**
+		 * C​o​n​t​i​n​u​e​ ​S​h​o​p​p​i​n​g
+		 */
+		continueShopping: string
+		/**
+		 * C​l​e​a​r​ ​C​a​r​t
+		 */
+		clearCart: string
+		/**
+		 * S​u​b​t​o​t​a​l
+		 */
+		subtotal: string
+		/**
+		 * S​h​i​p​p​i​n​g
+		 */
+		shipping: string
+		/**
+		 * T​o​t​a​l
+		 */
+		total: string
+		/**
+		 * P​r​o​c​e​e​d​ ​t​o​ ​C​h​e​c​k​o​u​t
+		 */
+		proceedToCheckout: string
 	}
 	products: {
 		/**
@@ -777,6 +821,10 @@ type RootTranslation = {
 		 * W​r​o​n​g​ ​E​m​a​i​l​ ​o​r​ ​P​a​s​s​w​o​r​d
 		 */
 		wrongEmailOrPassword: string
+		/**
+		 * D​o​n​'​t​ ​h​a​v​e​ ​a​n​ ​a​c​c​o​u​n​t​?
+		 */
+		dontHaveAccount: string
 	}
 	errors: {
 		/**
@@ -1159,7 +1207,7 @@ export type TranslationFunctions = {
 		 */
 		orderSummary: () => LocalizedString
 		/**
-		 * This is a demo checkout. No payment is required.
+		 * We will contact you soon for the payment info.
 		 */
 		demoCheckout: () => LocalizedString
 		/**
@@ -1214,6 +1262,50 @@ export type TranslationFunctions = {
 		 * Failed to clear cart
 		 */
 		clearFailedMessage: () => LocalizedString
+		/**
+		 * Authentication Required
+		 */
+		authenticationRequired: () => LocalizedString
+		/**
+		 * You need to be logged in to proceed with checkout. Please log in or register to continue.
+		 */
+		authenticationMessage: () => LocalizedString
+		/**
+		 * Login / Register
+		 */
+		loginRegister: () => LocalizedString
+		/**
+		 * Shopping Cart
+		 */
+		shoppingCart: () => LocalizedString
+		/**
+		 * Your cart is empty
+		 */
+		yourCartIsEmpty: () => LocalizedString
+		/**
+		 * Continue Shopping
+		 */
+		continueShopping: () => LocalizedString
+		/**
+		 * Clear Cart
+		 */
+		clearCart: () => LocalizedString
+		/**
+		 * Subtotal
+		 */
+		subtotal: () => LocalizedString
+		/**
+		 * Shipping
+		 */
+		shipping: () => LocalizedString
+		/**
+		 * Total
+		 */
+		total: () => LocalizedString
+		/**
+		 * Proceed to Checkout
+		 */
+		proceedToCheckout: () => LocalizedString
 	}
 	products: {
 		/**
@@ -1598,6 +1690,10 @@ export type TranslationFunctions = {
 		 * Wrong Email or Password
 		 */
 		wrongEmailOrPassword: () => LocalizedString
+		/**
+		 * Don't have an account?
+		 */
+		dontHaveAccount: () => LocalizedString
 	}
 	errors: {
 		/**

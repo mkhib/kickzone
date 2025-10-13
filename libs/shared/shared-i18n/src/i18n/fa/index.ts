@@ -103,9 +103,13 @@ const fa = {
     billingAddress: 'آدرس صورتحساب',
     paymentMethod: 'روش پرداخت',
     placeOrder: 'ثبت سفارش',
-    demoCheckout: 'این یک چک‌اوت آزمایشی است. پرداختی لازم نیست.',
+    demoCheckout: 'به زودی برای اطلاعات پرداخت با شما تماس خواهیم گرفت.',
     orderProcessed:
       'سفارش شما پردازش خواهد شد و ایمیل تأیید دریافت خواهید کرد.',
+    authenticationRequired: 'احراز هویت الزامی است',
+    authenticationMessage:
+      'برای ادامه چک‌اوت باید وارد شوید. لطفاً وارد شوید یا ثبت‌نام کنید.',
+    loginRegister: 'ورود / ثبت‌نام',
   },
 
   // Product management

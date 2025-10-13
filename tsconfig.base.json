@@ -152,6 +152,9 @@
       "@kickzone-workspace/customers-router": [
         "libs/client/customers/router/src/index.ts"
       ],
+      "@kickzone-workspace/customers-routes": [
+        "libs/client/customers/routes/src/index.ts"
+      ],
       "@kickzone-workspace/customers-test-utility": [
         "libs/client/customers/utility/test/src/index.ts"
       ],

@@ -103,9 +103,12 @@ const en = {
     billingAddress: 'Billing Address',
     paymentMethod: 'Payment Method',
     placeOrder: 'Place Order',
-    demoCheckout: 'This is a demo checkout. No payment required.',
+    demoCheckout: 'We will contact you soon for the payment info.',
     orderProcessed:
       'Your order will be processed and you will receive a confirmation email.',
+    authenticationRequired: 'Authentication Required',
+    authenticationMessage: 'You need to be logged in to proceed with checkout. Please log in or register to continue.',
+    loginRegister: 'Login / Register',
   },
 
   // Product management

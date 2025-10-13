@@ -4,10 +4,12 @@ import {
   useI18nContext,
   useThemeContext,
 } from '@kickzone-workspace/shared-i18n';
+import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import LanguageIcon from '@mui/icons-material/Language';
 import AppBar from '@mui/material/AppBar';
 import Badge from '@mui/material/Badge';
 import Box from '@mui/material/Box';
@@ -66,13 +68,17 @@ export function Headerbar() {
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
             {LL.appNames.kickzone()}
           </Typography>
-          <Button color="inherit" component={RouterLink} to="/home">
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to={CUSTOMER_ROUTES.PRODUCTS}
+          >
             {LL.navigation.home()}
           </Button>
           <IconButton
             color="inherit"
             component={RouterLink}
-            to="/cart"
+            to={CUSTOMER_ROUTES.CART}
             sx={{ ml: 1 }}
           >
             <Badge badgeContent={user ? totalItems : 0} color="error">
@@ -89,7 +95,11 @@ export function Headerbar() {
               </Button>
             </Box>
           ) : (
-            <Button color="inherit" component={RouterLink} to="/login">
+            <Button
+              color="inherit"
+              component={RouterLink}
+              to={CUSTOMER_ROUTES.LOGIN}
+            >
               {LL.button.login()}
             </Button>
           )}
@@ -102,9 +112,9 @@ export function Headerbar() {
       >
         <List>
           <ListItemButton
-            to="/home"
+            to={CUSTOMER_ROUTES.PRODUCTS}
             component={RouterLink}
-            selected={location.pathname === '/home'}
+            selected={location.pathname === CUSTOMER_ROUTES.PRODUCTS}
           >
             <ListItemIcon>
               <HomeIcon />
@@ -113,20 +123,9 @@ export function Headerbar() {
           </ListItemButton>
 
           <ListItemButton
-            to="/products"
+            to={CUSTOMER_ROUTES.CART}
             component={RouterLink}
-            selected={location.pathname === '/products'}
-          >
-            <ListItemIcon>
-              <ShoppingCartIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.products()} />
-          </ListItemButton>
-
-          <ListItemButton
-            to="/cart"
-            component={RouterLink}
-            selected={location.pathname === '/cart'}
+            selected={location.pathname === CUSTOMER_ROUTES.CART}
           >
             <ListItemIcon>
               <Badge badgeContent={user ? totalItems : 0} color="error">
@@ -137,14 +136,25 @@ export function Headerbar() {
           </ListItemButton>
 
           <ListItemButton
-            to="/contact"
+            to={CUSTOMER_ROUTES.CONTACT}
             component={RouterLink}
-            selected={location.pathname === '/contact'}
+            selected={location.pathname === CUSTOMER_ROUTES.CONTACT}
           >
             <ListItemIcon>
               <ContactMailIcon />
             </ListItemIcon>
             <CustomListItemText primary={LL.navigation.contact()} />
+          </ListItemButton>
+
+          <ListItemButton
+            to={CUSTOMER_ROUTES.LANGUAGE_SETTINGS}
+            component={RouterLink}
+            selected={location.pathname === CUSTOMER_ROUTES.LANGUAGE_SETTINGS}
+          >
+            <ListItemIcon>
+              <LanguageIcon />
+            </ListItemIcon>
+            <CustomListItemText primary={LL.navigation.languageSettings()} />
           </ListItemButton>
         </List>
       </StyledDrawer>

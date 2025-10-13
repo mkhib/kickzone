@@ -1,6 +1,7 @@
 import React from 'react';
 import { Layout } from '@kickzone-workspace/layout';
 import { Headerbar } from '@kickzone-workspace/customers-headerbar';
+import { CustomersFooter } from '@kickzone-workspace/customers-footer';
 
 interface CustomersLayoutProps {
   children: React.ReactNode;
@@ -12,7 +13,7 @@ export function CustomersLayout({
   drawerItems,
 }: CustomersLayoutProps) {
   const header = <Headerbar />;
-  const footer = <div style={{ backgroundColor: 'red' }}>Footer</div>;
+  const footer = <CustomersFooter />;
 
   return <Layout header={header} body={children} footer={footer} />;
 }

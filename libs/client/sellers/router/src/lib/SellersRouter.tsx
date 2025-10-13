@@ -9,6 +9,7 @@ import { createPrivateRoute } from '@kickzone-workspace/private-route';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 import { LanguageComponents } from '@kickzone-workspace/language-components';
+import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 
 export function SellersRouter() {
   const { user } = useSellersAuthContext();
@@ -32,7 +33,10 @@ export function SellersRouter() {
           path={SELLER_ROUTES.SETUP_PASSWORD}
           element={<SellersSetupPassword />}
         />
-        <Route path="/language-settings" element={<LanguageComponents />} />
+        <Route
+          path="/language-settings"
+          element={<LanguageComponents LayoutComponent={SellersLayout} />}
+        />
         <Route path="/unauthorized" element={<SellersUnauthorizedScreen />} />
       </Routes>
     </BrowserRouter>

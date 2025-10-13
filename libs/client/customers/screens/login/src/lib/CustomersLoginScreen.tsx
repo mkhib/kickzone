@@ -19,10 +19,7 @@ export function CustomersLogin() {
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const data = new FormData(event.currentTarget);
-    console.log({
-      email: data.get('email'),
-      password: data.get('password'),
-    });
+    // TODO: Implement login logic
   };
 
   return (
@@ -87,7 +84,8 @@ export function CustomersLogin() {
             <Grid container justifyContent="flex-end" component="div">
               <Grid component="div">
                 <Link href="#" variant="body2" sx={{ color: colors.main }}>
-                  Don't have an account? {LL.authorization.signUp()}
+                  {LL.authorization.dontHaveAccount()}{' '}
+                  {LL.authorization.signUp()}
                 </Link>
               </Grid>
             </Grid>

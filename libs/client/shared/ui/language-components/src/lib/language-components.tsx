@@ -1,4 +1,3 @@
-import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { colors } from '@kickzone-workspace/colors';
 import {
   useI18nContext,
@@ -18,7 +17,13 @@ import {
 } from '@mui/material';
 import React from 'react';
 
-export function LanguageComponents() {
+interface LanguageComponentsProps {
+  LayoutComponent: React.ComponentType<{ children: React.ReactNode }>;
+}
+
+export function LanguageComponents({
+  LayoutComponent,
+}: LanguageComponentsProps) {
   const { currentLocale, setLocale, availableLocales, isLoading } =
     useLanguageContext();
   const { LL } = useI18nContext();
@@ -26,7 +31,9 @@ export function LanguageComponents() {
     React.useState<typeof currentLocale>(currentLocale);
   const [showSuccess, setShowSuccess] = React.useState(false);
 
-  const handleLanguageChange = (event: any) => {
+  const handleLanguageChange = (event: {
+    target: { value: typeof currentLocale };
+  }) => {
     const newLocale = event.target.value;
     setSelectedLanguage(newLocale);
 
@@ -44,7 +51,7 @@ export function LanguageComponents() {
   );
 
   return (
-    <AdminsLayout>
+    <LayoutComponent>
       <Box
         sx={{
           minHeight: '100vh',
@@ -162,7 +169,7 @@ export function LanguageComponents() {
           </CardContent>
         </Card>
       </Box>
-    </AdminsLayout>
+    </LayoutComponent>
   );
 }
 

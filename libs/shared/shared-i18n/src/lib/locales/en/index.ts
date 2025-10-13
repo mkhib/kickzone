@@ -97,7 +97,7 @@ const en = {
     reviewCart: 'Review Cart',
     shippingInformation: 'Shipping Information',
     orderSummary: 'Order Summary',
-    demoCheckout: 'This is a demo checkout. No payment is required.',
+    demoCheckout: 'We will contact you soon for the payment info.',
     orderProcessed:
       'Your order will be processed and you will receive a confirmation email.',
     itemRemoved: 'Item removed',
@@ -112,6 +112,18 @@ const en = {
     cartClearedMessage: 'All items have been removed from your cart',
     clearFailed: 'Clear failed',
     clearFailedMessage: 'Failed to clear cart',
+    authenticationRequired: 'Authentication Required',
+    authenticationMessage:
+      'You need to be logged in to proceed with checkout. Please log in or register to continue.',
+    loginRegister: 'Login / Register',
+    shoppingCart: 'Shopping Cart',
+    yourCartIsEmpty: 'Your cart is empty',
+    continueShopping: 'Continue Shopping',
+    clearCart: 'Clear Cart',
+    subtotal: 'Subtotal',
+    shipping: 'Shipping',
+    total: 'Total',
+    proceedToCheckout: 'Proceed to Checkout',
   },
 
   // Product management
@@ -223,6 +235,7 @@ const en = {
     emailVerificationFailed: 'Email Verification Failed',
     emailVerificationSuccess: 'Email Verification Success',
     wrongEmailOrPassword: 'Wrong Email or Password',
+    dontHaveAccount: "Don't have an account?",
   },
 
   // Errors

@@ -97,7 +97,7 @@ const fa = {
     reviewCart: 'بررسی سبد خرید',
     shippingInformation: 'اطلاعات ارسال',
     orderSummary: 'خلاصه سفارش',
-    demoCheckout: 'این یک چک‌اوت آزمایشی است. پرداختی لازم نیست.',
+    demoCheckout: 'به زودی برای اطلاعات پرداخت با شما تماس خواهیم گرفت.',
     orderProcessed:
       'سفارش شما پردازش خواهد شد و ایمیل تایید دریافت خواهید کرد.',
     itemRemoved: 'آیتم حذف شد',
@@ -112,6 +112,18 @@ const fa = {
     cartClearedMessage: 'همه آیتم‌ها از سبد خرید شما حذف شدند',
     clearFailed: 'پاک‌سازی ناموفق',
     clearFailedMessage: 'پاک‌سازی سبد خرید ناموفق بود',
+    authenticationRequired: 'احراز هویت الزامی است',
+    authenticationMessage:
+      'برای ادامه چک‌اوت باید وارد شوید. لطفاً وارد شوید یا ثبت‌نام کنید.',
+    loginRegister: 'ورود / ثبت‌نام',
+    shoppingCart: 'سبد خرید',
+    yourCartIsEmpty: 'سبد خرید شما خالی است',
+    continueShopping: 'ادامه خرید',
+    clearCart: 'پاک کردن سبد خرید',
+    subtotal: 'جمع جزء',
+    shipping: 'هزینه ارسال',
+    total: 'مجموع',
+    proceedToCheckout: 'ادامه به پرداخت',
   },
 
   // Product management
@@ -224,6 +236,7 @@ const fa = {
     emailVerificationFailed: 'تایید ایمیل ناموفق',
     emailVerificationSuccess: 'تایید ایمیل با موفقیت انجام شد',
     wrongEmailOrPassword: 'ایمیل یا رمز عبور اشتباه است',
+    dontHaveAccount: 'حساب کاربری ندارید؟',
   },
 
   // Errors

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useMutation } from '@apollo/client/react';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
@@ -23,6 +24,9 @@ import {
 } from '@mui/material';
 import { Delete, Add, Remove, ShoppingCartCheckout } from '@mui/icons-material';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
+import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
+import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import {
   UPDATE_CART_ITEM_MUTATION,
   REMOVE_FROM_CART_MUTATION,
@@ -44,9 +48,14 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 // Import types from cart store
 import type { CartItem } from '@kickzone-workspace/customer-cart-store';
 
-const steps = ['Review Cart', 'Shipping Information', 'Order Summary'];
-
 export function CustomerShoppingCart() {
+  const { LL } = useI18nContext();
+  const steps = [
+    LL.checkout.reviewCart(),
+    LL.checkout.shippingInformation(),
+    LL.checkout.orderSummary(),
+  ];
+
   const [activeStep, setActiveStep] = useState(0);
   const [shippingInfo, setShippingInfo] = useState({
     customerName: '',
@@ -60,6 +69,7 @@ export function CustomerShoppingCart() {
     notes: '',
   });
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
+  const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
   // Use cart store
   const cartItems = useCartItems();
@@ -72,6 +82,10 @@ export function CustomerShoppingCart() {
 
   // Use UI store for notifications
   const addToast = useUIStore((state) => state.addToast);
+
+  // Use auth context and navigation
+  const { user } = useCustomersAuth();
+  const navigate = useNavigate();
 
   const [updateCartItem] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateCartItem'>,
@@ -160,6 +174,11 @@ export function CustomerShoppingCart() {
   };
 
   const handleCheckout = () => {
+    // Check if user is authenticated
+    if (!user) {
+      setAuthDialogOpen(true);
+      return;
+    }
     setCheckoutDialogOpen(true);
   };
 
@@ -252,16 +271,20 @@ export function CustomerShoppingCart() {
     <CustomersLayout>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          Shopping Cart
+          {LL.checkout.shoppingCart()}
         </Typography>
 
         {!hasItems ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography variant="h6" color="text.secondary">
-              Your cart is empty
+              {LL.checkout.yourCartIsEmpty()}
             </Typography>
-            <Button variant="contained" sx={{ mt: 2 }} href="/products">
-              Continue Shopping
+            <Button
+              variant="contained"
+              sx={{ mt: 2 }}
+              href={CUSTOMER_ROUTES.PRODUCTS}
+            >
+              {LL.checkout.continueShopping()}
             </Button>
           </Box>
         ) : (
@@ -370,7 +393,7 @@ export function CustomerShoppingCart() {
                   color="error"
                   onClick={handleClearCart}
                 >
-                  Clear Cart
+                  {LL.checkout.clearCart()}
                 </Button>
               </Box>
             </Grid>
@@ -380,7 +403,7 @@ export function CustomerShoppingCart() {
               <Card>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>
-                    Order Summary
+                    {LL.checkout.orderSummary()}
                   </Typography>
                   <Divider sx={{ my: 2 }} />
 
@@ -391,7 +414,7 @@ export function CustomerShoppingCart() {
                       mb: 1,
                     }}
                   >
-                    <Typography>Subtotal:</Typography>
+                    <Typography>{LL.checkout.subtotal()}:</Typography>
                     <Typography>${cartTotal.toFixed(2)}</Typography>
                   </Box>
 
@@ -402,7 +425,7 @@ export function CustomerShoppingCart() {
                       mb: 1,
                     }}
                   >
-                    <Typography>Shipping:</Typography>
+                    <Typography>{LL.checkout.shipping()}:</Typography>
                     <Typography>$0.00</Typography>
                   </Box>
 
@@ -415,7 +438,7 @@ export function CustomerShoppingCart() {
                       mb: 2,
                     }}
                   >
-                    <Typography variant="h6">Total:</Typography>
+                    <Typography variant="h6">{LL.checkout.total()}:</Typography>
                     <Typography variant="h6">
                       ${cartTotal.toFixed(2)}
                     </Typography>
@@ -428,7 +451,7 @@ export function CustomerShoppingCart() {
                     startIcon={<ShoppingCartCheckout />}
                     onClick={handleCheckout}
                   >
-                    Proceed to Checkout
+                    {LL.checkout.proceedToCheckout()}
                   </Button>
                 </CardContent>
               </Card>
@@ -443,7 +466,7 @@ export function CustomerShoppingCart() {
           maxWidth="md"
           fullWidth
         >
-          <DialogTitle>Checkout</DialogTitle>
+          <DialogTitle>{LL.checkout.orderSummary()}</DialogTitle>
           <DialogContent>
             <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
               {steps.map((label) => (
@@ -456,7 +479,7 @@ export function CustomerShoppingCart() {
             {activeStep === 0 && (
               <Box>
                 <Typography variant="h6" gutterBottom>
-                  Review Your Cart
+                  {LL.checkout.reviewCart()}
                 </Typography>
                 {cartItems.map((item: CartItem) => (
                   <Box
@@ -475,7 +498,7 @@ export function CustomerShoppingCart() {
                 ))}
                 <Divider sx={{ my: 2 }} />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h6">Total:</Typography>
+                  <Typography variant="h6">{LL.checkout.total()}:</Typography>
                   <Typography variant="h6">${cartTotal.toFixed(2)}</Typography>
                 </Box>
               </Box>
@@ -484,7 +507,7 @@ export function CustomerShoppingCart() {
             {activeStep === 1 && (
               <Box>
                 <Typography variant="h6" gutterBottom>
-                  Shipping Information
+                  {LL.checkout.shippingInformation()}
                 </Typography>
                 <Grid container spacing={2}>
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -596,30 +619,62 @@ export function CustomerShoppingCart() {
             {activeStep === 2 && (
               <Box>
                 <Typography variant="h6" gutterBottom>
-                  Order Summary
+                  {LL.checkout.orderSummary()}
                 </Typography>
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  This is a demo checkout. No payment is required.
+                  {LL.checkout.demoCheckout()}
                 </Alert>
                 <Typography variant="body1" gutterBottom>
-                  Your order will be processed and you will receive a
-                  confirmation email.
+                  {LL.checkout.orderProcessed()}
                 </Typography>
               </Box>
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setCheckoutDialogOpen(false)}>Cancel</Button>
-            {activeStep > 0 && <Button onClick={handleBack}>Back</Button>}
+            <Button onClick={() => setCheckoutDialogOpen(false)}>
+              {LL.button.cancel()}
+            </Button>
+            {activeStep > 0 && (
+              <Button onClick={handleBack}>{LL.button.back()}</Button>
+            )}
             {activeStep < steps.length - 1 ? (
               <Button variant="contained" onClick={handleNext}>
-                Next
+                {LL.button.next()}
               </Button>
             ) : (
               <Button variant="contained" onClick={handlePlaceOrder}>
-                Place Order
+                {LL.button.placeOrder()}
               </Button>
             )}
+          </DialogActions>
+        </Dialog>
+
+        {/* Authentication Required Dialog */}
+        <Dialog
+          open={authDialogOpen}
+          onClose={() => setAuthDialogOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>{LL.checkout.authenticationRequired()}</DialogTitle>
+          <DialogContent>
+            <Typography variant="body1" gutterBottom>
+              {LL.checkout.authenticationMessage()}
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setAuthDialogOpen(false)}>
+              {LL.button.cancel()}
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                setAuthDialogOpen(false);
+                navigate(CUSTOMER_ROUTES.LOGIN);
+              }}
+            >
+              {LL.checkout.loginRegister()}
+            </Button>
           </DialogActions>
         </Dialog>
       </Box>
