@@ -16,3 +16,47 @@ export const LOGOUT_MUTATION = gql`
     logout
   }
 `;
+
+export const CREATE_SELLER_PRODUCT_MUTATION = gql`
+  mutation CreateMySellerProduct($input: CreateSellerProductInput!) {
+    createMySellerProduct(input: $input) {
+      id
+      price
+      costPrice
+      discount
+      stockQuantity
+      productInfo {
+        id
+        size
+        color {
+          name
+        }
+      }
+      product {
+        name
+      }
+    }
+  }
+`;
+
+export const UPDATE_SELLER_PRODUCT_MUTATION = gql`
+  mutation UpdateMySellerProduct($input: UpdateSellerProductInput!) {
+    updateMySellerProduct(input: $input) {
+      id
+      price
+      costPrice
+      discount
+      stockQuantity
+      productInfo {
+        id
+        size
+        color {
+          name
+        }
+      }
+      product {
+        name
+      }
+    }
+  }
+`;

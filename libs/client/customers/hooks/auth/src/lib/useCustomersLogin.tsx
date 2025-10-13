@@ -1,7 +1,7 @@
 import { gql } from '@apollo/client';
 import { useMutation } from '@apollo/client/react';
-import { User } from '@kickzone-workspace/entities';
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 const LOGIN_MUTATION = gql`
   mutation Login($email: String!, $password: String!) {
@@ -14,26 +14,17 @@ const LOGIN_MUTATION = gql`
   }
 `;
 
-interface LoginResponse {
-  login: Pick<User, 'id' | 'name' | 'email' | 'role'>;
-}
-
-interface LoginVariables {
-  email: string;
-  password: string;
-}
-
 export function useCustomersLogin() {
   const { login: setAuthUser } = useCustomersAuth();
   const [login, { loading: loginLoading }] = useMutation<
-    LoginResponse,
-    LoginVariables
+    Pick<KickzoneGraphqlTypes.Mutation, 'login'>,
+    KickzoneGraphqlTypes.MutationLoginArgs
   >(LOGIN_MUTATION);
 
   const handleLogin = async (email: string, password: string) => {
     try {
       const { data } = await login({ variables: { email, password } });
-      if (data) {
+      if (data?.login) {
         setAuthUser(data.login);
       }
     } catch (error) {

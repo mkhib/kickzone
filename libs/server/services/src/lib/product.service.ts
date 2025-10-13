@@ -42,13 +42,19 @@ export class ProductService {
     if (filter?.onlyWithSellers === true || filter?.onlyInStock === true) {
       query
         .innerJoinAndSelect('product.sellerProducts', 'sellerProduct')
+        .addSelect('sellerProduct.productInfoId')
         .innerJoinAndSelect('sellerProduct.seller', 'seller')
-        .innerJoinAndSelect('seller.user', 'sellerUser');
+        .innerJoinAndSelect('seller.user', 'sellerUser')
+        .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
+        .leftJoinAndSelect('sellerProductInfo.color', 'sellerProductColor');
     } else {
       query
         .leftJoinAndSelect('product.sellerProducts', 'sellerProduct')
+        .addSelect('sellerProduct.productInfoId')
         .leftJoinAndSelect('sellerProduct.seller', 'seller')
-        .leftJoinAndSelect('seller.user', 'sellerUser');
+        .leftJoinAndSelect('seller.user', 'sellerUser')
+        .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
+        .leftJoinAndSelect('sellerProductInfo.color', 'sellerProductColor');
     }
 
     query.orderBy('productInfo.id', 'ASC');
@@ -137,13 +143,12 @@ export class ProductService {
 
     const products = await query.getMany();
 
-    // Debug: Log the first product to see if sellerProducts are loaded
-    if (products.length > 0) {
-      console.log('🔍 Backend - First product sellerProducts:', {
-        productId: products[0].id,
-        productName: products[0].name,
-        sellerProducts: products[0].sellerProducts,
-        sellerProductsLength: products[0].sellerProducts?.length || 0,
+    // Debug: Log the first product's seller product to check productInfoId
+    if (products.length > 0 && products[0].sellerProducts?.length > 0) {
+      console.log('🔍 First seller product from DB:', {
+        id: products[0].sellerProducts[0].id,
+        productInfoId: products[0].sellerProducts[0].productInfoId,
+        price: products[0].sellerProducts[0].price,
       });
     }
 

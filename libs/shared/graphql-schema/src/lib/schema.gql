@@ -94,8 +94,9 @@ type SellerProduct {
   seller: SellerInfo
   product: Product!
   productInfo: ProductInfo
+  productInfoId: Int
   price: Float!
-  costPrice: Float!
+  costPrice: Float
   discount: Float!
   stockQuantity: Int!
 }
@@ -276,7 +277,7 @@ type Mutation {
   logout: Boolean!
   initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!
   setupPassword(token: String!, newPassword: String!): User!
-  createCategory(input: CreateCategoryInput!): Category!
+  createCategory(input: CreateCategoryInput!, name: String): Category!
   updateCategory(input: UpdateCategoryInput!): Category!
   deleteCategory(id: Int!): Boolean!
   createProduct(input: CreateProductInput!): Product!

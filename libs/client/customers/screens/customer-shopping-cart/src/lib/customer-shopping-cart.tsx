@@ -39,6 +39,7 @@ import {
   useClearCart,
 } from '@kickzone-workspace/customer-cart-store';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 // Import types from cart store
 import type { CartItem } from '@kickzone-workspace/customer-cart-store';
@@ -72,10 +73,22 @@ export function CustomerShoppingCart() {
   // Use UI store for notifications
   const addToast = useUIStore((state) => state.addToast);
 
-  const [updateCartItem] = useMutation(UPDATE_CART_ITEM_MUTATION);
-  const [removeFromCart] = useMutation(REMOVE_FROM_CART_MUTATION);
-  const [clearCartMutation] = useMutation(CLEAR_CART_MUTATION);
-  const [createOrder] = useMutation(CREATE_ORDER_MUTATION);
+  const [updateCartItem] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateCartItem'>,
+    KickzoneGraphqlTypes.MutationUpdateCartItemArgs
+  >(UPDATE_CART_ITEM_MUTATION);
+  const [removeFromCart] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'removeFromCart'>,
+    KickzoneGraphqlTypes.MutationRemoveFromCartArgs
+  >(REMOVE_FROM_CART_MUTATION);
+  const [clearCartMutation] =
+    useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'clearCart'>>(
+      CLEAR_CART_MUTATION
+    );
+  const [createOrder] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'createOrder'>,
+    KickzoneGraphqlTypes.MutationCreateOrderArgs
+  >(CREATE_ORDER_MUTATION);
 
   const handleQuantityChange = async (itemId: string, newQuantity: number) => {
     try {
@@ -184,7 +197,17 @@ export function CustomerShoppingCart() {
               createOrderInput: {
                 ...shippingInfo,
                 sellerId,
-                items,
+                // Map cart items to order items, using sellerProductId as productId for stock management
+                items: items.map((item) => ({
+                  productId: item.sellerProductId, // Use sellerProductId for stock management
+                  productName: item.productName,
+                  productImage: item.productImage,
+                  quantity: item.quantity,
+                  unitPrice: item.unitPrice,
+                  totalPrice: item.totalPrice,
+                  color: item.color,
+                  size: item.size,
+                })),
               },
             },
           })

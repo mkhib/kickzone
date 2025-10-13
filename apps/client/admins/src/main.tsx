@@ -18,15 +18,23 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
+// Add global error handlers to prevent unhandled promise rejections
+window.addEventListener('unhandledrejection', (event) => {
+  console.error('Unhandled promise rejection:', event.reason);
+  // Prevent the default browser behavior of logging to console
+  event.preventDefault();
+});
+
+window.addEventListener('error', (event) => {
+  console.error('Global error:', event.error);
+});
+
 // Use localStorage detector first, then fallback to navigator
 const detectedLocale = detectLocale(localStorageDetector, navigatorDetector);
 
 loadLocaleAsync(detectedLocale).then(() => {
-  // Wrap the application with the generated TypesafeI18n provider component
-  // This component handles setting up the I18nContext internally
   root.render(
     <StrictMode>
-      {/* Pass the detected locale to the generated provider component */}
       <TypesafeI18n locale={detectedLocale}>
         <LanguageProvider>
           <RTLThemeProvider>

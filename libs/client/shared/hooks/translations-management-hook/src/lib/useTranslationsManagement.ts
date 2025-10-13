@@ -1,4 +1,4 @@
-import { useMutation } from '@apollo/client/react';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { gql } from '@apollo/client';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
@@ -49,6 +49,18 @@ const GET_COLORS = gql`
   }
 `;
 
+const GET_ENTITY_TRANSLATIONS = gql`
+  query GetEntityTranslations($entityType: String!, $entityId: Int!) {
+    getEntityTranslations(entityType: $entityType, entityId: $entityId) {
+      id
+      locale
+      fieldName
+      value
+      isAutoTranslated
+    }
+  }
+`;
+
 export const useTranslationsManagement = () => {
   const [setTranslationMutation, { loading: isSettingTranslation }] =
     useMutation<
@@ -63,6 +75,7 @@ export const useTranslationsManagement = () => {
     KickzoneGraphqlTypes.MutationBulkTranslateEntitiesArgs
   >(BULK_TRANSLATE_ENTITIES, {
     refetchQueries: [{ query: GET_CATEGORIES }, { query: GET_COLORS }],
+    awaitRefetchQueries: true,
   });
 
   const setTranslation = (
@@ -109,4 +122,24 @@ export const useTranslationsManagement = () => {
     isSettingTranslation,
     isBulkTranslating,
   };
+};
+
+export const useEntityTranslations = (entityType: string, entityId: number) => {
+  const { data, loading, refetch } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'getEntityTranslations'>,
+    KickzoneGraphqlTypes.QueryGetEntityTranslationsArgs
+  >(GET_ENTITY_TRANSLATIONS, {
+    variables: { entityType, entityId },
+    skip: !entityId,
+    fetchPolicy: 'network-only', // Always fetch fresh data from the server
+  });
+
+  const translations = new Map<string, string>();
+  data?.getEntityTranslations?.forEach((t) => {
+    if (t.fieldName === 'name') {
+      translations.set(t.locale, t.value);
+    }
+  });
+
+  return { translations, loading, refetch };
 };

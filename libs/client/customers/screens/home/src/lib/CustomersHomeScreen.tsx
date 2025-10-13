@@ -52,7 +52,7 @@ export function CustomersHome() {
 
         // Find the sellerProduct that matches this productInfo
         const sellerProduct = product.sellerProducts?.find(
-          (sp) => sp.productInfo?.id === productInfo.id
+          (sp) => sp.productInfoId === productInfo.id
         );
 
         console.log('🔍 Found seller product:', {
@@ -96,6 +96,7 @@ export function CustomersHome() {
           sellerId: sellerProduct.seller.id.toString(),
           sellerName: sellerProduct.seller.storeName,
           productInfoId: productInfo.id.toString(),
+          sellerProductId: sellerProduct.id.toString(),
         });
       }
     },

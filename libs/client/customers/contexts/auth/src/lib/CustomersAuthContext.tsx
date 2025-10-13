@@ -1,9 +1,14 @@
 import { createContext, useContext, useState, ReactNode } from 'react';
-import { User } from '@kickzone-workspace/entities';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+
+type CustomerUser = Pick<
+  KickzoneGraphqlTypes.User,
+  'id' | 'name' | 'email' | 'role'
+>;
 
 interface AuthContextType {
-  user: Pick<User, 'id' | 'name' | 'email' | 'role'> | null;
-  login: (user: Pick<User, 'id' | 'name' | 'email' | 'role'>) => void;
+  user: CustomerUser | null;
+  login: (user: CustomerUser) => void;
   logout: () => void;
 }
 
@@ -16,12 +21,9 @@ export const CustomersAuthProvider = ({
 }: {
   children: ReactNode;
 }) => {
-  const [user, setUser] = useState<Pick<
-    User,
-    'id' | 'name' | 'email' | 'role'
-  > | null>(null);
+  const [user, setUser] = useState<CustomerUser | null>(null);
 
-  const login = (user: Pick<User, 'id' | 'name' | 'email' | 'role'>) => {
+  const login = (user: CustomerUser) => {
     setUser(user);
     // Cart will be loaded automatically by useCartService when user logs in
   };

@@ -40,8 +40,8 @@ export const GET_PRODUCTS_QUERY = gql`
           }
           sellerProducts {
             id
+            productInfoId
             price
-            costPrice
             discount
             stockQuantity
             seller {

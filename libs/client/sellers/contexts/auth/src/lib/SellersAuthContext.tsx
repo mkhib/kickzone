@@ -25,14 +25,14 @@ export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const { loading, data, error } = useQuery<{ me: KickzoneGraphqlTypes.User }>(
-    ME_QUERY,
-    {
-      fetchPolicy: 'network-only',
-    }
-  );
+  const { loading, data, error } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'me'>
+  >(ME_QUERY, {
+    fetchPolicy: 'network-only',
+  });
 
-  const [logoutMutation] = useMutation(LOGOUT_MUTATION);
+  const [logoutMutation] =
+    useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'logout'>>(LOGOUT_MUTATION);
 
   // Handle data changes
   useEffect(() => {

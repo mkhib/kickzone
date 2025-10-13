@@ -16,11 +16,11 @@ import {
   UpdateOrderStatusInput,
 } from '@kickzone-workspace/inputs';
 import { Order, OrderStatus } from '@kickzone-workspace/entities';
-import { JwtAuthGuard } from '@kickzone-workspace/guards';
+import { HttpAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
 
 @Controller('orders')
-@UseGuards(JwtAuthGuard)
+@UseGuards(HttpAuthGuard)
 export class OrderController {
   constructor(private readonly orderService: OrderService) {}
 

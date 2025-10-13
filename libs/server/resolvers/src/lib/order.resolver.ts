@@ -14,7 +14,7 @@ import {
   UpdateOrderStatusInput,
 } from '@kickzone-workspace/inputs';
 import { OrderService } from '@kickzone-workspace/services';
-import { JwtAuthGuard } from '@kickzone-workspace/guards';
+import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
 
 @Resolver(() => Order)
@@ -22,7 +22,7 @@ export class OrderResolver {
   constructor(private readonly orderService: OrderService) {}
 
   @Query(() => [Order])
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async orders(
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
     @Args('after', { type: () => String, nullable: true }) after?: string,
@@ -40,13 +40,13 @@ export class OrderResolver {
   }
 
   @Query(() => Order)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async order(@Args('id', { type: () => String }) id: string) {
     return this.orderService.findOne(id);
   }
 
   @Query(() => [Order])
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async myOrders(
     @CurrentUser() user: any,
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
@@ -61,7 +61,7 @@ export class OrderResolver {
   }
 
   @Query(() => [Order])
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async adminSellerOrders(
     @CurrentUser() user: any,
     @Args('sellerId', { type: () => String }) sellerId: string,
@@ -81,7 +81,7 @@ export class OrderResolver {
   }
 
   @Query(() => [Order])
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async allSellerOrders(
     @CurrentUser() user: any,
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
@@ -100,7 +100,7 @@ export class OrderResolver {
   }
 
   @Mutation(() => Order)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async createOrder(
     @Args('createOrderInput') createOrderInput: CreateOrderInput
   ) {
@@ -108,7 +108,7 @@ export class OrderResolver {
   }
 
   @Mutation(() => Order)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async updateOrder(
     @Args('id', { type: () => String }) id: string,
     @Args('updateOrderInput') updateOrderInput: UpdateOrderInput
@@ -117,7 +117,7 @@ export class OrderResolver {
   }
 
   @Mutation(() => Order)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async updateOrderStatus(
     @Args('updateOrderStatusInput')
     updateOrderStatusInput: UpdateOrderStatusInput
@@ -129,7 +129,7 @@ export class OrderResolver {
   }
 
   @Mutation(() => Boolean)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async deleteOrder(@Args('id', { type: () => String }) id: string) {
     await this.orderService.deleteOrder(id);
     return true;

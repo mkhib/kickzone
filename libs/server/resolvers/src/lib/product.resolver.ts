@@ -2,12 +2,12 @@ import {
   Category,
   Product,
   ProductConnection,
+  SellerProduct,
   User,
   UserRole,
 } from '@kickzone-workspace/entities';
 import { RolesGuard } from '@kickzone-workspace/guards';
 import {
-  CreateCategoryInput,
   CreateProductInfoInput,
   CreateProductInput,
   ProductArchivedStatus,
@@ -17,7 +17,16 @@ import {
 import { ProductService, SellerService } from '@kickzone-workspace/services';
 import { createConnection } from '@kickzone-workspace/utils';
 import { SetMetadata, UseGuards } from '@nestjs/common';
-import { Args, Context, Int, Mutation, Query, Resolver } from '@nestjs/graphql';
+import {
+  Args,
+  Context,
+  Int,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
 import * as fs from 'fs';
 import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
 import * as path from 'path';
@@ -98,13 +107,6 @@ export class ProductResolver {
     return this.productService.createProductInfo(input);
   }
 
-  @Mutation(() => Category)
-  async createCategory(
-    @Args('input') input: CreateCategoryInput
-  ): Promise<Category> {
-    return this.productService.createCategory(input);
-  }
-
   @Query(() => [Category])
   async categories(): Promise<Category[]> {
     return this.productService.getCategories();
@@ -149,11 +151,11 @@ export class ProductResolver {
       const uniqueName = `${Date.now()}-${filename}`;
       const filePath = path.join(uploadDir, uniqueName);
       try {
-        await new Promise((resolve, reject) => {
+        await new Promise<void>((resolve, reject) => {
           const stream = createReadStream();
           stream
             .pipe(fs.createWriteStream(filePath))
-            .on('finish', resolve)
+            .on('finish', () => resolve())
             .on('error', reject);
         });
         imageUrls.push(`/uploads/products/${uniqueName}`);
@@ -237,5 +239,24 @@ export class ProductResolver {
     @Args('input') input: UpdateProductInput
   ): Promise<Product> {
     return this.productService.updateProduct(input);
+  }
+}
+
+@Resolver(() => SellerProduct)
+export class SellerProductResolver {
+  @ResolveField(() => Number, { nullable: true })
+  async costPrice(
+    @Parent() sellerProduct: SellerProduct,
+    @Context() context: { req: { user?: User } }
+  ): Promise<number | null> {
+    const user = context.req.user;
+    // Only expose costPrice to sellers and admins, not customers
+    if (
+      !user ||
+      (user.role !== UserRole.SELLER && user.role !== UserRole.ADMIN)
+    ) {
+      return null;
+    }
+    return sellerProduct.costPrice;
   }
 }

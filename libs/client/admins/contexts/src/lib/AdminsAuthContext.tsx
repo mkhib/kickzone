@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from '@apollo/client/react';
 import { LOGOUT_MUTATION, ME_QUERY } from '@kickzone-workspace/admins-graphql';
-import { User } from '@kickzone-workspace/entities';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   createContext,
   ReactNode,
@@ -9,7 +9,10 @@ import {
   useEffect,
 } from 'react';
 
-type AdminUser = Pick<User, 'id' | 'name' | 'email' | 'role'>;
+type AdminUser = Pick<
+  KickzoneGraphqlTypes.User,
+  'id' | 'name' | 'email' | 'role'
+>;
 
 interface AuthContextType {
   admin: AdminUser | null;
@@ -25,11 +28,14 @@ export const AdminsAuthProvider = ({ children }: { children: ReactNode }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
-  const { loading, data, error } = useQuery<{ me: AdminUser }>(ME_QUERY, {
+  const { loading, data, error } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'me'>
+  >(ME_QUERY, {
     fetchPolicy: 'network-only',
   });
 
-  const [logoutMutation] = useMutation(LOGOUT_MUTATION);
+  const [logoutMutation] =
+    useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'logout'>>(LOGOUT_MUTATION);
 
   // Handle data changes
   useEffect(() => {

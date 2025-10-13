@@ -1,4 +1,3 @@
-import { ApolloError } from '@apollo/client';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import {
   useAdminsSellers,
@@ -166,7 +165,7 @@ export const SellerManagement = () => {
       });
       refetchSellers();
     } catch (err) {
-      const error = err as ApolloError;
+      const error = err as Error;
 
       showSnackbar(error.message, {
         severity: 'error',
@@ -239,7 +238,7 @@ export const SellerManagement = () => {
       setCreateModalOpen(false);
       setFormData({});
     } catch (err) {
-      const error = err as ApolloError;
+      const error = err as Error;
 
       showSnackbar(error.message, {
         severity: 'error',
@@ -269,7 +268,7 @@ export const SellerManagement = () => {
       setSelectedSeller(null);
       setFormData({});
     } catch (err) {
-      const error = err as ApolloError;
+      const error = err as Error;
 
       showSnackbar(error.message, {
         severity: 'error',
@@ -361,9 +360,14 @@ export const SellerManagement = () => {
       </Box>
 
       {/* Create Modal */}
-      <Dialog open={createModalOpen} onClose={() => setCreateModalOpen(false)}>
+      <Dialog
+        open={createModalOpen}
+        onClose={() => setCreateModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Create New Seller</DialogTitle>
-        <DialogContent>{renderForm()}</DialogContent>
+        <DialogContent sx={{ pt: 3, pb: 2 }}>{renderForm()}</DialogContent>
         <DialogActions>
           <Button onClick={() => setCreateModalOpen(false)}>Cancel</Button>
           <Button
@@ -377,9 +381,14 @@ export const SellerManagement = () => {
       </Dialog>
 
       {/* Edit Modal */}
-      <Dialog open={editModalOpen} onClose={() => setEditModalOpen(false)}>
+      <Dialog
+        open={editModalOpen}
+        onClose={() => setEditModalOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
         <DialogTitle>Edit Seller</DialogTitle>
-        <DialogContent>{renderForm()}</DialogContent>
+        <DialogContent sx={{ pt: 3, pb: 2 }}>{renderForm()}</DialogContent>
         <DialogActions>
           <Button onClick={() => setEditModalOpen(false)}>Cancel</Button>
           <Button

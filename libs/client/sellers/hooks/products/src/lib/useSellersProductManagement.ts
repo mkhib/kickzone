@@ -1,92 +1,14 @@
-import { gql } from '@apollo/client';
 import { useMutation, useQuery, useLazyQuery } from '@apollo/client/react';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useMemo } from 'react';
 import {
-  SELLER_PRODUCT_MANAGEMENT_FRAGMENT,
-  SELLER_PRODUCT_FRAGMENT,
+  GET_PRODUCTS_QUERY,
+  GET_SELLER_PRODUCT_BY_ID_QUERY,
+  CREATE_SELLER_PRODUCT_MUTATION,
+  UPDATE_SELLER_PRODUCT_MUTATION,
+  SELLER_PRODUCTS_FOR_ME_QUERY,
 } from '@kickzone-workspace/sellers-graphql';
-
-// GraphQL Queries and Mutations
-const GET_PRODUCTS_QUERY = gql`
-  query GetProducts($filter: ProductFilterInput) {
-    products(filter: $filter) {
-      edges {
-        node {
-          ...SellerProductManagementFields
-        }
-      }
-    }
-  }
-  ${SELLER_PRODUCT_MANAGEMENT_FRAGMENT}
-`;
-
-const CREATE_SELLER_PRODUCT_MUTATION = gql`
-  mutation CreateMySellerProduct($input: CreateSellerProductInput!) {
-    createMySellerProduct(input: $input) {
-      id
-      price
-      costPrice
-      discount
-      stockQuantity
-      productInfo {
-        id
-        size
-        color {
-          name
-        }
-      }
-      product {
-        name
-      }
-    }
-  }
-`;
-
-const UPDATE_SELLER_PRODUCT_MUTATION = gql`
-  mutation UpdateMySellerProduct($input: UpdateSellerProductInput!) {
-    updateMySellerProduct(input: $input) {
-      id
-      price
-      costPrice
-      discount
-      stockQuantity
-      productInfo {
-        id
-        size
-        color {
-          name
-        }
-      }
-      product {
-        name
-      }
-    }
-  }
-`;
-
-const GET_SELLER_PRODUCT_BY_ID_QUERY = gql`
-  query GetSellerProductById($id: Int!) {
-    mySellerProductById(id: $id) {
-      ...SellerProductFields
-      product {
-        ...SellerProductManagementFields
-      }
-    }
-  }
-  ${SELLER_PRODUCT_FRAGMENT}
-  ${SELLER_PRODUCT_MANAGEMENT_FRAGMENT}
-`;
-
-interface SellerProductFormData {
-  productId: number | null;
-  productInfoId: number | null;
-  price: number;
-  costPrice: number;
-  discount: number;
-  stockQuantity: number;
-}
 
 export function useSellersProductManagement() {
   const { user } = useSellersAuthContext();
@@ -124,12 +46,18 @@ export function useSellersProductManagement() {
   const [
     createSellerProduct,
     { loading: isCreateLoading, error: createError },
-  ] = useMutation(CREATE_SELLER_PRODUCT_MUTATION);
+  ] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'createMySellerProduct'>,
+    KickzoneGraphqlTypes.MutationCreateMySellerProductArgs
+  >(CREATE_SELLER_PRODUCT_MUTATION);
 
   const [
     updateSellerProduct,
     { loading: isUpdateLoading, error: updateError },
-  ] = useMutation(UPDATE_SELLER_PRODUCT_MUTATION);
+  ] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateMySellerProduct'>,
+    KickzoneGraphqlTypes.MutationUpdateMySellerProductArgs
+  >(UPDATE_SELLER_PRODUCT_MUTATION);
 
   const products = useMemo(
     () =>
@@ -142,7 +70,9 @@ export function useSellersProductManagement() {
   const isManagementLoading =
     isCreateLoading || isUpdateLoading || isProductsLoading;
 
-  const createProduct = async (formData: SellerProductFormData) => {
+  const createProduct = async (
+    formData: KickzoneGraphqlTypes.CreateSellerProductInput
+  ) => {
     if (!user?.id) {
       throw new Error('User not authenticated');
     }
@@ -163,7 +93,7 @@ export function useSellersProductManagement() {
 
     return createSellerProduct({
       variables,
-      refetchQueries: ['SellerProductsForMe'],
+      refetchQueries: [SELLER_PRODUCTS_FOR_ME_QUERY],
       awaitRefetchQueries: true,
       update: (cache, { data }) => {
         // Invalidate the seller products query to force a refetch
@@ -174,7 +104,7 @@ export function useSellersProductManagement() {
   };
 
   const updateProduct = async (
-    formData: SellerProductFormData,
+    formData: KickzoneGraphqlTypes.UpdateSellerProductInput,
     productId: number
   ) => {
     if (!user?.id) {
@@ -198,7 +128,7 @@ export function useSellersProductManagement() {
 
     return updateSellerProduct({
       variables,
-      refetchQueries: ['SellerProductsForMe'],
+      refetchQueries: [SELLER_PRODUCTS_FOR_ME_QUERY],
       awaitRefetchQueries: true,
       update: (cache, { data }) => {
         // Invalidate the seller products query to force a refetch
@@ -241,5 +171,3 @@ export function useSellersProductManagement() {
     getSellerProductById,
   };
 }
-
-export type { SellerProductFormData };

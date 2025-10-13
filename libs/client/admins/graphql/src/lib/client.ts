@@ -22,7 +22,7 @@ const httpLink = new HttpLink({
 });
 
 const apolloClient = new ApolloClient({
-  link: ApolloLink.from([csrfLink, httpLink]),
+  link: csrfLink.concat(httpLink),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {
@@ -31,11 +31,22 @@ const apolloClient = new ApolloClient({
           sellers: relayStylePagination(['input']),
         },
       },
+      Translation: {
+        // Disable normalization for Translation objects since they have duplicate id=0
+        keyFields: false,
+      },
     },
   }),
   defaultOptions: {
+    watchQuery: {
+      errorPolicy: 'all',
+    },
+    query: {
+      errorPolicy: 'all',
+    },
     mutate: {
       fetchPolicy: 'no-cache',
+      errorPolicy: 'all',
     },
   },
 });

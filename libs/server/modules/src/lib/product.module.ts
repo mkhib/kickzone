@@ -10,6 +10,7 @@ import {
 import {
   AuthResolver,
   ProductResolver,
+  SellerProductResolver,
   UserResolver,
 } from '@kickzone-workspace/resolvers';
 import {
@@ -47,6 +48,7 @@ import { ConfigService } from '@nestjs/config';
   providers: [
     ProductService,
     ProductResolver,
+    SellerProductResolver,
     SellerService,
     UserService,
     UserResolver,

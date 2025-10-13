@@ -218,6 +218,7 @@ export type MutationBulkTranslateEntitiesArgs = {
 
 export type MutationCreateCategoryArgs = {
   input: CreateCategoryInput;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -666,12 +667,13 @@ export type SellerInfo = {
 
 export type SellerProduct = {
   __typename?: 'SellerProduct';
-  costPrice: Scalars['Float']['output'];
+  costPrice?: Maybe<Scalars['Float']['output']>;
   discount: Scalars['Float']['output'];
   id: Scalars['Int']['output'];
   price: Scalars['Float']['output'];
   product: Product;
   productInfo?: Maybe<ProductInfo>;
+  productInfoId?: Maybe<Scalars['Int']['output']>;
   seller?: Maybe<SellerInfo>;
   stockQuantity: Scalars['Int']['output'];
 };

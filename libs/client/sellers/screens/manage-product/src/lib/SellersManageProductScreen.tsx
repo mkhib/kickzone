@@ -1,10 +1,7 @@
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
-import {
-  useSellersProductManagement,
-  type SellerProductFormData,
-} from '@kickzone-workspace/sellers-products-hooks';
+import { useSellersProductManagement } from '@kickzone-workspace/sellers-products-hooks';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import Alert from '@mui/material/Alert';
 import Autocomplete from '@mui/material/Autocomplete';
@@ -21,9 +18,8 @@ import Typography from '@mui/material/Typography';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
-const initialFormData: SellerProductFormData = {
-  productId: null,
-  productInfoId: null,
+const initialFormData: KickzoneGraphqlTypes.CreateSellerProductInput = {
+  productInfoId: 0,
   price: 0,
   costPrice: 0,
   discount: 0,
@@ -35,7 +31,7 @@ export function SellersManageProductScreen() {
   const [searchParams] = useSearchParams();
   const { showSnackbar } = useSnackbar();
   const [formData, setFormData] =
-    useState<SellerProductFormData>(initialFormData);
+    useState<KickzoneGraphqlTypes.CreateSellerProductInput>(initialFormData);
   const [selectedProduct, setSelectedProduct] =
     useState<KickzoneGraphqlTypes.Product | null>(null);
   const [selectedProductInfo, setSelectedProductInfo] =
@@ -62,18 +58,12 @@ export function SellersManageProductScreen() {
   // Handle URL parameters for editing - fetch seller product data
   useEffect(() => {
     const sellerProductId = searchParams.get('sellerProductId');
-    console.log('🔍 URL sellerProductId:', sellerProductId);
     if (sellerProductId) {
       const sellerProductIdNum = parseInt(sellerProductId, 10);
-      console.log('🔍 Parsed sellerProductId:', sellerProductIdNum);
       setIsEditing(true);
       setEditingProductId(sellerProductIdNum);
 
       // Fetch the seller product data
-      console.log(
-        '🔍 Calling getSellerProductById with id:',
-        sellerProductIdNum
-      );
       getSellerProductById({ variables: { id: sellerProductIdNum } });
     } else {
       setIsEditing(false);
@@ -83,27 +73,19 @@ export function SellersManageProductScreen() {
 
   // Handle seller product data when it's loaded
   useEffect(() => {
-    console.log('🔍 sellerProduct data:', sellerProduct);
-    console.log('🔍 isEditing:', isEditing);
-    console.log('🔍 sellerProductError:', sellerProductError);
-    console.log('🔍 isSellerProductLoading:', isSellerProductLoading);
-
     if (sellerProduct && isEditing && sellerProduct.productInfo) {
-      console.log('🔍 Setting form data with sellerProduct:', sellerProduct);
       // Set the product and product info
       setSelectedProduct(sellerProduct.product);
       setSelectedProductInfo(sellerProduct.productInfo);
 
       // Set the form data
       const newFormData = {
-        productId: sellerProduct.product.id,
         productInfoId: sellerProduct.productInfo.id,
         price: sellerProduct.price || 0,
         costPrice: sellerProduct.costPrice || 0,
         discount: sellerProduct.discount || 0,
         stockQuantity: sellerProduct.stockQuantity || 0,
       };
-      console.log('🔍 New form data:', newFormData);
       setFormData(newFormData);
     }
   }, [sellerProduct, isEditing, sellerProductError, isSellerProductLoading]);
@@ -123,8 +105,7 @@ export function SellersManageProductScreen() {
     setSelectedProductInfo(null);
     setFormData((prev) => ({
       ...prev,
-      productId: product?.id || null,
-      productInfoId: null,
+      productInfoId: 0,
     }));
   };
 
@@ -134,12 +115,12 @@ export function SellersManageProductScreen() {
     setSelectedProductInfo(productInfo);
     setFormData((prev) => ({
       ...prev,
-      productInfoId: productInfo?.id || null,
+      productInfoId: productInfo?.id || 0,
     }));
   };
 
   const handleInputChange = (
-    field: keyof SellerProductFormData,
+    field: keyof KickzoneGraphqlTypes.CreateSellerProductInput,
     value: string | number
   ) => {
     setFormData((prev) => ({
@@ -163,7 +144,17 @@ export function SellersManageProductScreen() {
 
     try {
       if (isEditing && editingProductId) {
-        await updateProduct(formData, editingProductId);
+        await updateProduct(
+          {
+            id: editingProductId,
+            productInfoId: formData.productInfoId,
+            price: formData.price,
+            costPrice: formData.costPrice,
+            discount: formData.discount,
+            stockQuantity: formData.stockQuantity,
+          },
+          editingProductId
+        );
         showSnackbar('Product updated successfully!', {
           severity: 'success',
           duration: 4000,
@@ -185,7 +176,7 @@ export function SellersManageProductScreen() {
 
   const isFormValid = () => {
     return (
-      formData.productInfoId &&
+      formData.productInfoId > 0 &&
       formData.price > 0 &&
       formData.costPrice > 0 &&
       formData.stockQuantity > 0 &&
@@ -483,7 +474,7 @@ export function SellersManageProductScreen() {
                     onClick={resetForm}
                     disabled={isLoading}
                   >
-                    Cancel
+                    Clear
                   </Button>
                   <Button
                     type="submit"

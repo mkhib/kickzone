@@ -33,6 +33,12 @@ const apolloClient = new ApolloClient({
     },
   }),
   defaultOptions: {
+    watchQuery: {
+      fetchPolicy: 'network-only',
+    },
+    query: {
+      fetchPolicy: 'network-only',
+    },
     mutate: {
       fetchPolicy: 'no-cache',
     },

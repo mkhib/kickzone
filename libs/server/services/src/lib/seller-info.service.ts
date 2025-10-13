@@ -190,12 +190,23 @@ export class SellerService {
       seller,
       product: productInfo.product,
       productInfo,
+      productInfoId: input.productInfoId,
       price: input.price,
       costPrice: input.costPrice,
       discount: input.discount,
       stockQuantity: input.stockQuantity,
     });
-    return this.sellerProductRepository.save(sellerProduct);
+
+    console.log(
+      '💾 Creating seller product with productInfoId:',
+      input.productInfoId
+    );
+    const saved = await this.sellerProductRepository.save(sellerProduct);
+    console.log(
+      '✅ Saved seller product, productInfoId in DB:',
+      saved.productInfoId
+    );
+    return saved;
   }
 
   async updateSellerProduct(

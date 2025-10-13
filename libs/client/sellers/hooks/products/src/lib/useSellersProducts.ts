@@ -1,26 +1,6 @@
-import { gql } from '@apollo/client';
 import { useQuery } from '@apollo/client/react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import { SELLER_PRODUCT_PRODUCT_FRAGMENT } from '@kickzone-workspace/sellers-graphql';
-
-const SELLER_PRODUCTS_FOR_ME_QUERY = gql`
-  query SellerProductsForMe($filter: ProductFilterInput) {
-    sellerProductsForMe(filter: $filter) {
-      edges {
-        cursor
-        node {
-          ...SellerProductProductFields
-        }
-      }
-      pageInfo {
-        endCursor
-        hasNextPage
-      }
-      totalCount
-    }
-  }
-  ${SELLER_PRODUCT_PRODUCT_FRAGMENT}
-`;
+import { SELLER_PRODUCTS_FOR_ME_QUERY } from '@kickzone-workspace/sellers-graphql';
 
 interface UseSellersProductsArgs {
   search?: string;

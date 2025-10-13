@@ -225,16 +225,27 @@ export class OrderService {
    * Best practice: This ensures inventory is reserved when order is placed
    */
   private async decreaseStock(
-    items: { productId: string; productName: string; quantity: number }[]
+    items: {
+      productId: string;
+      productName: string;
+      quantity: number;
+      sellerProductId?: string;
+    }[]
   ): Promise<void> {
     for (const item of items) {
+      // If sellerProductId is provided, use it directly
+      // Otherwise, this is a legacy item and we need to find by productId
+      const sellerProductId = item.sellerProductId
+        ? parseInt(item.sellerProductId)
+        : parseInt(item.productId);
+
       const sellerProduct = await this.sellerProductRepository.findOne({
-        where: { id: parseInt(item.productId) },
+        where: { id: sellerProductId },
       });
 
       if (!sellerProduct) {
         throw new NotFoundException(
-          `Product with ID ${item.productId} not found`
+          `SellerProduct with ID ${sellerProductId} not found for ${item.productName}`
         );
       }
 
@@ -255,6 +266,7 @@ export class OrderService {
    */
   private async restoreStock(items: OrderItem[]): Promise<void> {
     for (const item of items) {
+      // productId in OrderItem is the SellerProduct ID for stock management
       const sellerProduct = await this.sellerProductRepository.findOne({
         where: { id: parseInt(item.productId) },
       });

@@ -4,8 +4,8 @@ import {
   LOGOUT_MUTATION,
 } from '@kickzone-workspace/admins-graphql';
 import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
-import { User } from '@kickzone-workspace/entities';
 import { useNavigate } from 'react-router-dom';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 interface LoginInput {
   email: string;
@@ -17,9 +17,10 @@ export const useAdminLogin = () => {
   const navigate = useNavigate();
 
   const [login, { loading: adminsLoginLoading, error: adminsLoginError }] =
-    useMutation<{
-      login: User;
-    }>(LOGIN_MUTATION);
+    useMutation<
+      Pick<KickzoneGraphqlTypes.Mutation, 'login'>,
+      KickzoneGraphqlTypes.MutationLoginArgs
+    >(LOGIN_MUTATION);
 
   const loginAdmin = async (input: LoginInput) => {
     try {
@@ -36,7 +37,8 @@ export const useAdminLogin = () => {
     }
   };
 
-  const [logoutAdmin] = useMutation(LOGOUT_MUTATION);
+  const [logoutAdmin] =
+    useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'logout'>>(LOGOUT_MUTATION);
 
   return {
     loginAdmin,

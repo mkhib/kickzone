@@ -13,7 +13,7 @@ import {
   UpdateCartItemInput,
 } from '@kickzone-workspace/inputs';
 import { CartService } from '@kickzone-workspace/services';
-import { JwtAuthGuard } from '@kickzone-workspace/guards';
+import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
 
 @Resolver(() => Cart)
@@ -21,13 +21,13 @@ export class CartResolver {
   constructor(private readonly cartService: CartService) {}
 
   @Query(() => Cart)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async myCart(@CurrentUser() user: any) {
     return this.cartService.getCart(user.id);
   }
 
   @Mutation(() => Cart)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async addToCart(
     @CurrentUser() user: any,
     @Args('addToCartInput') addToCartInput: AddToCartInput
@@ -36,7 +36,7 @@ export class CartResolver {
   }
 
   @Mutation(() => Cart)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async updateCartItem(
     @CurrentUser() user: any,
     @Args('itemId', { type: () => String }) itemId: string,
@@ -46,7 +46,7 @@ export class CartResolver {
   }
 
   @Mutation(() => Cart)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async removeFromCart(
     @CurrentUser() user: any,
     @Args('itemId', { type: () => String }) itemId: string
@@ -55,7 +55,7 @@ export class CartResolver {
   }
 
   @Mutation(() => Cart)
-  @UseGuards(JwtAuthGuard)
+  @UseGuards(GraphqlAuthGuard)
   async clearCart(@CurrentUser() user: any) {
     return this.cartService.clearCart(user.id);
   }

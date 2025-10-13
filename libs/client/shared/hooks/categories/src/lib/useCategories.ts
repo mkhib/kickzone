@@ -38,12 +38,16 @@ export const useCategories = () => {
   const [updateCategoryMutation, { loading: isUpdatingCategory }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateCategory'>,
     KickzoneGraphqlTypes.MutationUpdateCategoryArgs
-  >(UPDATE_CATEGORY);
+  >(UPDATE_CATEGORY, {
+    refetchQueries: [{ query: CATEGORIES_QUERY }],
+  });
 
   const [deleteCategoryMutation, { loading: isDeletingCategory }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'deleteCategory'>,
     KickzoneGraphqlTypes.MutationDeleteCategoryArgs
-  >(DELETE_CATEGORY);
+  >(DELETE_CATEGORY, {
+    refetchQueries: [{ query: CATEGORIES_QUERY }],
+  });
 
   const [bulkTranslateMutation, { loading: isBulkTranslating }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'bulkTranslateEntities'>,

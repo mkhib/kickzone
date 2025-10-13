@@ -9,6 +9,7 @@ import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SellerManagement } from '@kickzone-workspace/admin-seller-management';
 import { LanguageComponents } from '@kickzone-workspace/language-components';
 import { AdminTranslationManagement } from '@kickzone-workspace/translation-management';
+import { AdminSellerOrders } from '@kickzone-workspace/admin-seller-orders';
 
 export function AdminsRouter() {
   const { admin } = useAdminsAuthContext();
@@ -30,6 +31,7 @@ export function AdminsRouter() {
             element={<AdminProductEditor />}
           />
           <Route path={ADMIN_ROUTES.SELLERS} element={<SellerManagement />} />
+          <Route path={ADMIN_ROUTES.ORDERS} element={<AdminSellerOrders />} />
           <Route
             path={ADMIN_ROUTES.TRANSLATIONS}
             element={<AdminTranslationManagement />}

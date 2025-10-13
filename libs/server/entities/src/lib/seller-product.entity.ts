@@ -5,6 +5,8 @@ import {
   ManyToOne,
   Column,
   Relation,
+  BeforeInsert,
+  BeforeUpdate,
 } from 'typeorm';
 import { SellerInfo } from './seller-info.entity';
 import { Product } from './product.entity';
@@ -30,11 +32,15 @@ export class SellerProduct {
   @ManyToOne(() => ProductInfo)
   productInfo: ProductInfo;
 
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  productInfoId?: number;
+
   @Field(() => Float)
   @Column('decimal', { precision: 10, scale: 2 })
   price: number;
 
-  @Field(() => Float)
+  @Field(() => Float, { nullable: true })
   @Column('decimal', { precision: 10, scale: 2 })
   costPrice: number;
 
@@ -45,4 +51,18 @@ export class SellerProduct {
   @Field(() => Int)
   @Column()
   stockQuantity: number;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  setProductInfoId() {
+    if (this.productInfo && !this.productInfoId) {
+      this.productInfoId = this.productInfo.id;
+      console.log(
+        '🔧 Setting productInfoId:',
+        this.productInfoId,
+        'from productInfo:',
+        this.productInfo.id
+      );
+    }
+  }
 }

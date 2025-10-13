@@ -1,5 +1,41 @@
 import { gql } from '@apollo/client';
 
+export const GET_MY_ORDERS_QUERY = gql`
+  query GetMyOrders($first: Int = 10, $after: String) {
+    myOrders(first: $first, after: $after) {
+      id
+      orderNumber
+      customerEmail
+      customerPhone
+      customerName
+      shippingAddress
+      city
+      state
+      zipCode
+      country
+      status
+      subtotal
+      shippingCost
+      total
+      notes
+      trackingNumber
+      createdAt
+      updatedAt
+      items {
+        id
+        productId
+        productName
+        productImage
+        quantity
+        unitPrice
+        totalPrice
+        color
+        size
+      }
+    }
+  }
+`;
+
 export const GET_SELLER_ORDERS_QUERY = gql`
   query GetSellerOrders(
     $first: Int = 10

@@ -20,10 +20,18 @@ export const PRODUCT_FRAGMENT = gql`
     }
     sellerProducts {
       id
+      productInfoId
       price
-      costPrice
       discount
       stockQuantity
+      seller {
+        id
+        storeName
+        user {
+          id
+          name
+        }
+      }
       productInfo {
         ...ProductInfoFields
       }

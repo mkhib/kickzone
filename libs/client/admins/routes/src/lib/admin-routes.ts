@@ -4,6 +4,7 @@ export const ADMIN_ROUTES = {
   PRODUCTS_NEW: '/products/new',
   PRODUCTS_EDIT: '/products/edit/:id',
   SELLERS: '/sellers',
+  ORDERS: '/orders',
   LOGIN: '/login',
   UNAUTHORIZED: '/unauthorized',
   CONTACT: '/contact',

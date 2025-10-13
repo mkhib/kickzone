@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useApolloClient } from '@apollo/client/react';
+import { useMutation, useQuery } from '@apollo/client/react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCallback } from 'react';
 import {
@@ -101,8 +101,6 @@ export function useProductsQuery({
 }
 
 export const useProducts = () => {
-  // Get the Apollo Client instance to access cache
-  const client = useApolloClient();
   const [createProductMutation, { loading: isCreatingProduct }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'createProduct'>,
     KickzoneGraphqlTypes.MutationCreateProductArgs
@@ -247,11 +245,12 @@ export const useProducts = () => {
 };
 
 export function useProductById(id: number | undefined) {
-  const { data, loading, error, refetch } = useQuery<{
-    product: KickzoneGraphqlTypes.Product;
-  }>(PRODUCT_BY_ID_QUERY, {
-    variables: { id },
-    skip: !id,
+  const { data, loading, error, refetch } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'product'>,
+    KickzoneGraphqlTypes.QueryProductArgs
+  >(PRODUCT_BY_ID_QUERY, {
+    variables: { id: id || 0 },
+    skip: typeof id === 'undefined',
   });
   return { product: data?.product, loading, error, refetch };
 }

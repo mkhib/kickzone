@@ -1,86 +1,125 @@
-import { useQuery } from '@apollo/client/react';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   GET_SELLERS_QUERY,
   GET_ALL_ORDERS_QUERY,
+  UPDATE_ORDER_STATUS_MUTATION,
+  UPDATE_ORDER_MUTATION,
 } from '@kickzone-workspace/admins-graphql';
 
 export function useAdminsOrders({
   first = 10,
   after,
-  sellerId,
   status,
 }: {
   first?: number;
   after?: string;
-  sellerId?: string;
   status?: KickzoneGraphqlTypes.OrderStatus;
 } = {}) {
   const { data, loading, error, refetch, fetchMore } = useQuery<
-    Pick<KickzoneGraphqlTypes.Query, 'orders'>,
-    KickzoneGraphqlTypes.QueryOrdersArgs
+    Pick<KickzoneGraphqlTypes.Query, 'allSellerOrders'>,
+    KickzoneGraphqlTypes.QueryAllSellerOrdersArgs
   >(GET_ALL_ORDERS_QUERY, {
-    variables: { first, after, sellerId, status },
+    variables: { first, after, status },
     fetchPolicy: 'cache-and-network',
+    notifyOnNetworkStatusChange: true,
   });
 
-  const loadMore = () => {
-    if (data?.orders && data.orders.length > 0) {
-      const lastOrder = data.orders[data.orders.length - 1];
-      return fetchMore({
-        variables: {
-          after: lastOrder.id,
+  const [updateOrderStatusMutation, { loading: updateStatusLoading }] =
+    useMutation<
+      Pick<KickzoneGraphqlTypes.Mutation, 'updateOrderStatus'>,
+      KickzoneGraphqlTypes.MutationUpdateOrderStatusArgs
+    >(UPDATE_ORDER_STATUS_MUTATION, {
+      refetchQueries: [
+        { query: GET_ALL_ORDERS_QUERY, variables: { first, after, status } },
+      ],
+    });
+
+  const [updateOrderMutation, { loading: updateOrderLoading }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateOrder'>,
+    KickzoneGraphqlTypes.MutationUpdateOrderArgs
+  >(UPDATE_ORDER_MUTATION, {
+    refetchQueries: [
+      { query: GET_ALL_ORDERS_QUERY, variables: { first, after, status } },
+    ],
+  });
+
+  const updateOrderStatus = async (
+    orderId: string,
+    status: KickzoneGraphqlTypes.OrderStatus
+  ) => {
+    const response = await updateOrderStatusMutation({
+      variables: {
+        updateOrderStatusInput: {
+          id: orderId,
+          status,
         },
-      });
+      },
+    });
+    return response.data?.updateOrderStatus;
+  };
+
+  const updateTrackingNumber = async (
+    orderId: string,
+    trackingNumber: string
+  ) => {
+    const response = await updateOrderMutation({
+      variables: {
+        id: orderId,
+        updateOrderInput: {
+          trackingNumber,
+        },
+      },
+    });
+    return response.data?.updateOrder;
+  };
+
+  const loadMore = () => {
+    if (data?.allSellerOrders && data.allSellerOrders.length > 0) {
+      const lastOrder = data.allSellerOrders[data.allSellerOrders.length - 1];
+      if (lastOrder) {
+        return fetchMore({
+          variables: {
+            after: lastOrder.id,
+          },
+        });
+      }
     }
   };
 
   return {
-    orders: data?.orders || [],
+    orders: data?.allSellerOrders || [],
     loading,
     error,
     refetch,
     loadMore,
+    updateOrderStatus,
+    updateTrackingNumber,
+    updateStatusLoading,
+    updateOrderLoading,
   };
 }
 
 export function useAdminsSellers({
-  first = 100,
-  after,
   filter,
 }: {
-  first?: number;
-  after?: string;
   filter?: KickzoneGraphqlTypes.SellerFilterInput;
 } = {}) {
-  const { data, loading, error, refetch, fetchMore } = useQuery<
+  const { data, loading, error, refetch } = useQuery<
     Pick<KickzoneGraphqlTypes.Query, 'sellers'>,
     KickzoneGraphqlTypes.QuerySellersArgs
   >(GET_SELLERS_QUERY, {
-    variables: { first, after, filter },
+    variables: { filter },
     fetchPolicy: 'cache-and-network',
   });
 
-  const loadMore = () => {
-    if (
-      data?.sellers?.pageInfo?.hasNextPage &&
-      data.sellers.pageInfo.endCursor
-    ) {
-      return fetchMore({
-        variables: {
-          after: data.sellers.pageInfo.endCursor,
-        },
-      });
-    }
-  };
-
   return {
-    sellers: data?.sellers?.edges?.map((edge) => edge.node) || [],
+    sellers:
+      data?.sellers?.edges?.map((edge) => edge?.node).filter(Boolean) || [],
     pageInfo: data?.sellers?.pageInfo,
     totalCount: data?.sellers?.totalCount || 0,
     loading,
     error,
     refetch,
-    loadMore,
   };
 }

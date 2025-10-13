@@ -45,7 +45,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       '🔍 ProductCard - All seller products:',
       product.sellerProducts.map((sp) => ({
         id: sp.id,
-        productInfoId: sp.productInfo?.id,
+        productInfoId: sp.productInfoId,
         stockQuantity: sp.stockQuantity,
         price: sp.price,
       }))
@@ -53,7 +53,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 
     // Find the sellerProduct that matches the first productInfo
     const sellerProduct = product.sellerProducts.find(
-      (sp) => sp.productInfo?.id === firstInfo?.id
+      (sp) => sp.productInfoId === firstInfo?.id
     );
 
     console.log('🔍 ProductCard - Matching logic:', {
@@ -71,7 +71,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       );
       console.log(
         '❌ ProductCard - Available productInfo IDs in sellerProducts:',
-        product.sellerProducts.map((sp) => sp.productInfo?.id)
+        product.sellerProducts.map((sp) => sp.productInfoId)
       );
       return null;
     }
@@ -88,7 +88,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       finalPrice,
       discount,
       stockQuantity: sellerProduct.stockQuantity,
-      sellerName: sellerProduct.seller.storeName,
+      sellerName: sellerProduct.seller?.storeName || 'Unknown Seller',
     };
 
     console.log('💰 ProductCard - Final pricing info:', pricingInfo);
@@ -232,10 +232,27 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         )}
 
         {firstInfo && (
-          <Typography variant="caption" color="text.secondary">
-            Color: {firstInfo.color ? firstInfo.color.name : 'N/A'} | Size:{' '}
-            {firstInfo.size || 'N/A'}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            {firstInfo.color && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                <Typography variant="caption" color="text.secondary">
+                  Color:
+                </Typography>
+                <Box
+                  sx={{
+                    width: 16,
+                    height: 16,
+                    backgroundColor: firstInfo.color.hexCode,
+                    borderRadius: '50%',
+                    border: '1px solid #ccc',
+                  }}
+                />
+              </Box>
+            )}
+            <Typography variant="caption" color="text.secondary">
+              | Size: {firstInfo.size || 'N/A'}
+            </Typography>
+          </Box>
         )}
       </CardContent>
       <Box sx={{ p: 2, pt: 0, display: 'flex', justifyContent: 'flex-end' }}>

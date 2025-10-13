@@ -48,9 +48,9 @@ export function useCustomersCartService() {
   });
 
   // Load user's cart from server when they log in
-  const { data: serverCartData, loading: cartLoading } = useQuery<{
-    myCart: KickzoneGraphqlTypes.Cart;
-  }>(GET_MY_CART_QUERY, {
+  const { data: serverCartData, loading: cartLoading } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'myCart'>
+  >(GET_MY_CART_QUERY, {
     skip: !isLoggedIn,
   });
 
@@ -88,6 +88,7 @@ export function useCustomersCartService() {
         sellerId: item.sellerId,
         sellerName: 'Unknown Seller', // Server doesn't provide this yet
         productInfoId: '', // Server doesn't provide this yet
+        sellerProductId: item.productId, // For now, use productId as sellerProductId
       })
     );
 
