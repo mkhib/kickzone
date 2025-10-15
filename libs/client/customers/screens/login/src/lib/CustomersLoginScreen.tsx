@@ -1,6 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
+import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
+import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useCustomersLogin } from '@kickzone-workspace/customers-auth-hooks';
+import { getErrorMessage } from '@kickzone-workspace/translations';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -11,15 +16,48 @@ import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import CssBaseline from '@mui/material/CssBaseline';
 import Paper from '@mui/material/Paper';
+import CircularProgress from '@mui/material/CircularProgress';
 import { colors } from '@kickzone-workspace/colors';
 
 export function CustomersLogin() {
   const { LL } = useI18nContext();
+  const navigate = useNavigate();
+  const addToast = useUIStore((state) => state.addToast);
+  const { handleLogin, loginLoading } = useCustomersLogin();
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+  });
+
+  const handleChange =
+    (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+      setFormData((prev) => ({ ...prev, [field]: event.target.value }));
+    };
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    // TODO: Implement login logic
+
+    try {
+      await handleLogin(formData.email, formData.password);
+      addToast({
+        type: 'success',
+        title: LL.authorization.signIn(),
+        message: LL.messages.welcome(),
+      });
+      navigate(CUSTOMER_ROUTES.PRODUCTS);
+    } catch (error) {
+      const { translationKey, rawMessage } = getErrorMessage(error as Error);
+      const errorMessage = translationKey
+        ? LL.errors[translationKey]()
+        : rawMessage || LL.authorization.wrongEmailOrPassword();
+
+      addToast({
+        type: 'error',
+        title: LL.status.error(),
+        message: errorMessage,
+      });
+    }
   };
 
   return (
@@ -55,6 +93,8 @@ export function CustomersLogin() {
               name="email"
               autoComplete="email"
               autoFocus
+              value={formData.email}
+              onChange={handleChange('email')}
               sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <TextField
@@ -66,24 +106,48 @@ export function CustomersLogin() {
               type="password"
               id="password"
               autoComplete="current-password"
+              value={formData.password}
+              onChange={handleChange('password')}
               sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
+            <Grid container justifyContent="space-between" sx={{ mb: 2 }}>
+              <Grid component="div">
+                <Link
+                  component={RouterLink}
+                  to={CUSTOMER_ROUTES.FORGOT_PASSWORD}
+                  variant="body2"
+                  sx={{ color: colors.main, textDecoration: 'none' }}
+                >
+                  {LL.authorization.forgotPassword()}?
+                </Link>
+              </Grid>
+            </Grid>
             <Button
               type="submit"
               fullWidth
               variant="contained"
+              disabled={loginLoading}
               sx={{
-                mt: 3,
+                mt: 1,
                 mb: 2,
                 backgroundColor: colors.main,
                 '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
-              {LL.authorization.signIn()}
+              {loginLoading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                LL.authorization.signIn()
+              )}
             </Button>
             <Grid container justifyContent="flex-end" component="div">
               <Grid component="div">
-                <Link href="#" variant="body2" sx={{ color: colors.main }}>
+                <Link
+                  component={RouterLink}
+                  to={CUSTOMER_ROUTES.SIGNUP}
+                  variant="body2"
+                  sx={{ color: colors.main, textDecoration: 'none' }}
+                >
                   {LL.authorization.dontHaveAccount()}{' '}
                   {LL.authorization.signUp()}
                 </Link>

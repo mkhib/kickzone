@@ -825,6 +825,62 @@ type RootTranslation = {
 		 * D​o​n​'​t​ ​h​a​v​e​ ​a​n​ ​a​c​c​o​u​n​t​?
 		 */
 		dontHaveAccount: string
+		/**
+		 * A​l​r​e​a​d​y​ ​h​a​v​e​ ​a​n​ ​a​c​c​o​u​n​t​?
+		 */
+		alreadyHaveAccount: string
+		/**
+		 * C​r​e​a​t​e​ ​A​c​c​o​u​n​t
+		 */
+		createAccount: string
+		/**
+		 * R​e​s​e​t​ ​Y​o​u​r​ ​P​a​s​s​w​o​r​d
+		 */
+		resetYourPassword: string
+		/**
+		 * E​n​t​e​r​ ​y​o​u​r​ ​e​m​a​i​l​ ​a​d​d​r​e​s​s​ ​a​n​d​ ​w​e​ ​w​i​l​l​ ​s​e​n​d​ ​y​o​u​ ​a​ ​l​i​n​k​ ​t​o​ ​r​e​s​e​t​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​.
+		 */
+		enterEmailForReset: string
+		/**
+		 * S​e​n​d​ ​R​e​s​e​t​ ​L​i​n​k
+		 */
+		sendResetLink: string
+		/**
+		 * B​a​c​k​ ​t​o​ ​L​o​g​i​n
+		 */
+		backToLogin: string
+		/**
+		 * R​e​s​e​t​ ​l​i​n​k​ ​s​e​n​t​!​ ​C​h​e​c​k​ ​y​o​u​r​ ​e​m​a​i​l​.
+		 */
+		resetLinkSent: string
+		/**
+		 * E​n​t​e​r​ ​y​o​u​r​ ​n​e​w​ ​p​a​s​s​w​o​r​d
+		 */
+		enterNewPassword: string
+		/**
+		 * C​o​n​f​i​r​m​ ​P​a​s​s​w​o​r​d
+		 */
+		confirmPassword: string
+		/**
+		 * P​a​s​s​w​o​r​d​ ​r​e​s​e​t​ ​s​u​c​c​e​s​s​f​u​l​l​y​!​ ​Y​o​u​ ​c​a​n​ ​n​o​w​ ​l​o​g​ ​i​n​.
+		 */
+		passwordResetSuccess: string
+		/**
+		 * I​n​v​a​l​i​d​ ​o​r​ ​e​x​p​i​r​e​d​ ​r​e​s​e​t​ ​l​i​n​k
+		 */
+		invalidToken: string
+		/**
+		 * P​a​s​s​w​o​r​d​s​ ​d​o​ ​n​o​t​ ​m​a​t​c​h
+		 */
+		passwordsDoNotMatch: string
+		/**
+		 * R​e​g​i​s​t​r​a​t​i​o​n​ ​s​u​c​c​e​s​s​f​u​l​!​ ​W​e​l​c​o​m​e​ ​t​o​ ​K​i​c​k​z​o​n​e​.
+		 */
+		registrationSuccess: string
+		/**
+		 * R​e​g​i​s​t​r​a​t​i​o​n​ ​f​a​i​l​e​d​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		registrationFailed: string
 	}
 	errors: {
 		/**
@@ -847,6 +903,22 @@ type RootTranslation = {
 		 * S​e​r​v​e​r​ ​e​r​r​o​r​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​ ​l​a​t​e​r​.
 		 */
 		serverError: string
+		/**
+		 * T​h​i​s​ ​e​m​a​i​l​ ​i​s​ ​a​l​r​e​a​d​y​ ​r​e​g​i​s​t​e​r​e​d​.​ ​P​l​e​a​s​e​ ​u​s​e​ ​a​ ​d​i​f​f​e​r​e​n​t​ ​e​m​a​i​l​ ​o​r​ ​t​r​y​ ​l​o​g​g​i​n​g​ ​i​n​.
+		 */
+		emailAlreadyExists: string
+		/**
+		 * U​s​e​r​ ​n​o​t​ ​f​o​u​n​d​.​ ​P​l​e​a​s​e​ ​c​h​e​c​k​ ​y​o​u​r​ ​e​m​a​i​l​ ​a​d​d​r​e​s​s​.
+		 */
+		userNotFound: string
+		/**
+		 * I​n​v​a​l​i​d​ ​o​r​ ​e​x​p​i​r​e​d​ ​r​e​s​e​t​ ​l​i​n​k​.​ ​P​l​e​a​s​e​ ​r​e​q​u​e​s​t​ ​a​ ​n​e​w​ ​o​n​e​.
+		 */
+		invalidToken: string
+		/**
+		 * W​r​o​n​g​ ​e​m​a​i​l​ ​o​r​ ​p​a​s​s​w​o​r​d​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		wrongEmailOrPassword: string
 	}
 	appNames: {
 		/**
@@ -1694,6 +1766,62 @@ export type TranslationFunctions = {
 		 * Don't have an account?
 		 */
 		dontHaveAccount: () => LocalizedString
+		/**
+		 * Already have an account?
+		 */
+		alreadyHaveAccount: () => LocalizedString
+		/**
+		 * Create Account
+		 */
+		createAccount: () => LocalizedString
+		/**
+		 * Reset Your Password
+		 */
+		resetYourPassword: () => LocalizedString
+		/**
+		 * Enter your email address and we will send you a link to reset your password.
+		 */
+		enterEmailForReset: () => LocalizedString
+		/**
+		 * Send Reset Link
+		 */
+		sendResetLink: () => LocalizedString
+		/**
+		 * Back to Login
+		 */
+		backToLogin: () => LocalizedString
+		/**
+		 * Reset link sent! Check your email.
+		 */
+		resetLinkSent: () => LocalizedString
+		/**
+		 * Enter your new password
+		 */
+		enterNewPassword: () => LocalizedString
+		/**
+		 * Confirm Password
+		 */
+		confirmPassword: () => LocalizedString
+		/**
+		 * Password reset successfully! You can now log in.
+		 */
+		passwordResetSuccess: () => LocalizedString
+		/**
+		 * Invalid or expired reset link
+		 */
+		invalidToken: () => LocalizedString
+		/**
+		 * Passwords do not match
+		 */
+		passwordsDoNotMatch: () => LocalizedString
+		/**
+		 * Registration successful! Welcome to Kickzone.
+		 */
+		registrationSuccess: () => LocalizedString
+		/**
+		 * Registration failed. Please try again.
+		 */
+		registrationFailed: () => LocalizedString
 	}
 	errors: {
 		/**
@@ -1716,6 +1844,22 @@ export type TranslationFunctions = {
 		 * Server error. Please try again later.
 		 */
 		serverError: () => LocalizedString
+		/**
+		 * This email is already registered. Please use a different email or try logging in.
+		 */
+		emailAlreadyExists: () => LocalizedString
+		/**
+		 * User not found. Please check your email address.
+		 */
+		userNotFound: () => LocalizedString
+		/**
+		 * Invalid or expired reset link. Please request a new one.
+		 */
+		invalidToken: () => LocalizedString
+		/**
+		 * Wrong email or password. Please try again.
+		 */
+		wrongEmailOrPassword: () => LocalizedString
 	}
 	appNames: {
 		/**

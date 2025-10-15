@@ -65,4 +65,42 @@ export class AuthResolver {
   ): Promise<User> {
     return this.authService.setupPassword(token, newPassword);
   }
+
+  @Mutation(() => User)
+  async register(
+    @Args('name') name: string,
+    @Args('email') email: string,
+    @Args('password') password: string,
+    @Context() context: { res: Response }
+  ): Promise<User> {
+    const user = await this.authService.register(name, email, password);
+
+    // Auto-login after registration
+    const { access_token } = await this.authService.login(user);
+    context.res.cookie('access_token', access_token, {
+      httpOnly: true,
+      maxAge: 2629800000,
+      sameSite: 'none',
+      secure: true,
+    });
+
+    return user;
+  }
+
+  @Mutation(() => Boolean)
+  async forgotPassword(
+    @Args('email') email: string,
+    @Args('baseUrl') baseUrl: string
+  ): Promise<boolean> {
+    await this.authService.initiateForgotPassword(email, baseUrl);
+    return true;
+  }
+
+  @Mutation(() => User)
+  async resetPassword(
+    @Args('token') token: string,
+    @Args('newPassword') newPassword: string
+  ): Promise<User> {
+    return this.authService.resetPassword(token, newPassword);
+  }
 }

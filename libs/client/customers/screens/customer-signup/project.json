@@ -5,5 +5,17 @@
   "projectType": "library",
   "tags": [],
   "// targets": "to see all targets run: nx show project customer-signup --web",
-  "targets": {}
+  "targets": {
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": ["{workspaceRoot}/coverage/{projectRoot}"],
+      "options": {
+        "passWithNoTests": false,
+        "reportsDirectory": "../../../../../coverage/libs/client/customers/screens/customer-signup"
+      }
+    },
+    "lint": {
+      "executor": "@nx/eslint:lint"
+    }
+  }
 }

@@ -179,11 +179,14 @@ export type Mutation = {
   deleteColor: Scalars['Boolean']['output'];
   deleteEntityTranslations: Scalars['Boolean']['output'];
   deleteOrder: Scalars['Boolean']['output'];
+  forgotPassword: Scalars['Boolean']['output'];
   initiatePasswordSetup: Scalars['Boolean']['output'];
   login: User;
   logout: Scalars['Boolean']['output'];
+  register: User;
   removeFromCart: Cart;
   removeProductInfoImage: Scalars['Boolean']['output'];
+  resetPassword: User;
   setTranslation: Translation;
   setupPassword: User;
   toggleSellerActive: SellerInfo;
@@ -285,6 +288,12 @@ export type MutationDeleteOrderArgs = {
 };
 
 
+export type MutationForgotPasswordArgs = {
+  baseUrl: Scalars['String']['input'];
+  email: Scalars['String']['input'];
+};
+
+
 export type MutationInitiatePasswordSetupArgs = {
   baseUrl: Scalars['String']['input'];
   email: Scalars['String']['input'];
@@ -297,6 +306,13 @@ export type MutationLoginArgs = {
 };
 
 
+export type MutationRegisterArgs = {
+  email: Scalars['String']['input'];
+  name: Scalars['String']['input'];
+  password: Scalars['String']['input'];
+};
+
+
 export type MutationRemoveFromCartArgs = {
   itemId: Scalars['String']['input'];
 };
@@ -305,6 +321,12 @@ export type MutationRemoveFromCartArgs = {
 export type MutationRemoveProductInfoImageArgs = {
   imageName: Scalars['String']['input'];
   productInfoId: Scalars['Int']['input'];
+};
+
+
+export type MutationResetPasswordArgs = {
+  newPassword: Scalars['String']['input'];
+  token: Scalars['String']['input'];
 };
 
 
@@ -785,6 +807,7 @@ export type User = {
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   lastName: Scalars['String']['output'];
+  locale?: Maybe<Scalars['String']['output']>;
   name: Scalars['String']['output'];
   role: UserRole;
   username: Scalars['String']['output'];

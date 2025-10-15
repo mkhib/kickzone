@@ -49,6 +49,10 @@ export class User {
     default: UserRole.CUSTOMER,
   })
   role: UserRole;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true, default: 'en' })
+  locale?: string;
 }
 
 @ObjectType()

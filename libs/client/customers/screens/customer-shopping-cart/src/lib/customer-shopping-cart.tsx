@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { useMutation } from '@apollo/client/react';
 import { useNavigate } from 'react-router-dom';
 import {
   Box,
@@ -28,12 +27,6 @@ import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import {
-  UPDATE_CART_ITEM_MUTATION,
-  REMOVE_FROM_CART_MUTATION,
-  CLEAR_CART_MUTATION,
-  CREATE_ORDER_MUTATION,
-} from '@kickzone-workspace/customers-graphql';
-import {
   useCartItems,
   useCartLoading,
   useCartError,
@@ -43,6 +36,7 @@ import {
   useClearCart,
 } from '@kickzone-workspace/customer-cart-store';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useCustomersCartMutations } from '@kickzone-workspace/customers-cart-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 // Import types from cart store
@@ -87,27 +81,18 @@ export function CustomerShoppingCart() {
   const { user } = useCustomersAuth();
   const navigate = useNavigate();
 
-  const [updateCartItem] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'updateCartItem'>,
-    KickzoneGraphqlTypes.MutationUpdateCartItemArgs
-  >(UPDATE_CART_ITEM_MUTATION);
-  const [removeFromCart] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'removeFromCart'>,
-    KickzoneGraphqlTypes.MutationRemoveFromCartArgs
-  >(REMOVE_FROM_CART_MUTATION);
-  const [clearCartMutation] =
-    useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'clearCart'>>(
-      CLEAR_CART_MUTATION
-    );
-  const [createOrder] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'createOrder'>,
-    KickzoneGraphqlTypes.MutationCreateOrderArgs
-  >(CREATE_ORDER_MUTATION);
+  // Use custom cart mutations hook
+  const {
+    updateCartItem: updateCartItemMutation,
+    removeFromCart: removeFromCartMutation,
+    clearCart: clearCartMutation,
+    createOrder: createOrderMutation,
+  } = useCustomersCartMutations();
 
   const handleQuantityChange = async (itemId: string, newQuantity: number) => {
     try {
       if (newQuantity <= 0) {
-        await removeFromCart({ variables: { itemId } });
+        await removeFromCartMutation(itemId);
         removeItem(itemId);
         addToast({
           type: 'success',
@@ -115,12 +100,7 @@ export function CustomerShoppingCart() {
           message: 'Item has been removed from your cart',
         });
       } else {
-        await updateCartItem({
-          variables: {
-            itemId,
-            updateInput: { quantity: newQuantity },
-          },
-        });
+        await updateCartItemMutation(itemId, { quantity: newQuantity });
         updateItemQuantity(itemId, newQuantity);
         addToast({
           type: 'success',
@@ -139,7 +119,7 @@ export function CustomerShoppingCart() {
 
   const handleRemoveItem = async (itemId: string) => {
     try {
-      await removeFromCart({ variables: { itemId } });
+      await removeFromCartMutation(itemId);
       removeItem(itemId);
       addToast({
         type: 'success',
@@ -211,24 +191,20 @@ export function CustomerShoppingCart() {
       // Create orders for each seller
       const orderPromises = Object.entries(itemsBySeller || {}).map(
         ([sellerId, items]) =>
-          createOrder({
-            variables: {
-              createOrderInput: {
-                ...shippingInfo,
-                sellerId,
-                // Map cart items to order items, using sellerProductId as productId for stock management
-                items: items.map((item) => ({
-                  productId: item.sellerProductId, // Use sellerProductId for stock management
-                  productName: item.productName,
-                  productImage: item.productImage,
-                  quantity: item.quantity,
-                  unitPrice: item.unitPrice,
-                  totalPrice: item.totalPrice,
-                  color: item.color,
-                  size: item.size,
-                })),
-              },
-            },
+          createOrderMutation({
+            ...shippingInfo,
+            sellerId,
+            // Map cart items to order items, using sellerProductId as productId for stock management
+            items: items.map((item) => ({
+              productId: item.sellerProductId, // Use sellerProductId for stock management
+              productName: item.productName,
+              productImage: item.productImage,
+              quantity: item.quantity,
+              unitPrice: item.unitPrice,
+              totalPrice: item.totalPrice,
+              color: item.color,
+              size: item.size,
+            })),
           })
       );
 

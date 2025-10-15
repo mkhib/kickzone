@@ -236,6 +236,21 @@ const en = {
     emailVerificationSuccess: 'Email Verification Success',
     wrongEmailOrPassword: 'Wrong Email or Password',
     dontHaveAccount: "Don't have an account?",
+    alreadyHaveAccount: 'Already have an account?',
+    createAccount: 'Create Account',
+    resetYourPassword: 'Reset Your Password',
+    enterEmailForReset:
+      'Enter your email address and we will send you a link to reset your password.',
+    sendResetLink: 'Send Reset Link',
+    backToLogin: 'Back to Login',
+    resetLinkSent: 'Reset link sent! Check your email.',
+    enterNewPassword: 'Enter your new password',
+    confirmPassword: 'Confirm Password',
+    passwordResetSuccess: 'Password reset successfully! You can now log in.',
+    invalidToken: 'Invalid or expired reset link',
+    passwordsDoNotMatch: 'Passwords do not match',
+    registrationSuccess: 'Registration successful! Welcome to Kickzone.',
+    registrationFailed: 'Registration failed. Please try again.',
   },
 
   // Errors
@@ -245,6 +260,11 @@ const en = {
     requiredFields: 'Please fill in all required fields',
     networkError: 'Network error. Please check your connection.',
     serverError: 'Server error. Please try again later.',
+    emailAlreadyExists:
+      'This email is already registered. Please use a different email or try logging in.',
+    userNotFound: 'User not found. Please check your email address.',
+    invalidToken: 'Invalid or expired reset link. Please request a new one.',
+    wrongEmailOrPassword: 'Wrong email or password. Please try again.',
   },
 
   // App names

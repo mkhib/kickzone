@@ -237,6 +237,22 @@ const fa = {
     emailVerificationSuccess: 'تایید ایمیل با موفقیت انجام شد',
     wrongEmailOrPassword: 'ایمیل یا رمز عبور اشتباه است',
     dontHaveAccount: 'حساب کاربری ندارید؟',
+    alreadyHaveAccount: 'قبلاً حساب کاربری دارید؟',
+    createAccount: 'ایجاد حساب کاربری',
+    resetYourPassword: 'بازیابی رمز عبور شما',
+    enterEmailForReset:
+      'ایمیل خود را وارد کنید و ما لینک بازیابی رمز عبور را برای شما ارسال خواهیم کرد.',
+    sendResetLink: 'ارسال لینک بازیابی',
+    backToLogin: 'بازگشت به صفحه ورود',
+    resetLinkSent: 'لینک بازیابی ارسال شد! ایمیل خود را بررسی کنید.',
+    enterNewPassword: 'رمز عبور جدید خود را وارد کنید',
+    confirmPassword: 'تایید رمز عبور',
+    passwordResetSuccess:
+      'رمز عبور با موفقیت بازیابی شد! اکنون می‌توانید وارد شوید.',
+    invalidToken: 'لینک بازیابی نامعتبر یا منقضی شده است',
+    passwordsDoNotMatch: 'رمزهای عبور مطابقت ندارند',
+    registrationSuccess: 'ثبت نام با موفقیت انجام شد! به کیک‌زون خوش آمدید.',
+    registrationFailed: 'ثبت نام ناموفق بود. لطفاً دوباره تلاش کنید.',
   },
 
   // Errors
@@ -246,6 +262,13 @@ const fa = {
     requiredFields: 'لطفا همه فیلدهای ضروری را پر کنید',
     networkError: 'خطای شبکه. لطفا اتصال خود را بررسی کنید.',
     serverError: 'خطای سرور. لطفا بعدا تلاش کنید.',
+    emailAlreadyExists:
+      'این ایمیل قبلاً ثبت شده است. لطفاً از ایمیل دیگری استفاده کنید یا وارد شوید.',
+    userNotFound: 'کاربر یافت نشد. لطفاً آدرس ایمیل خود را بررسی کنید.',
+    invalidToken:
+      'لینک بازیابی نامعتبر یا منقضی شده است. لطفاً لینک جدیدی درخواست کنید.',
+    wrongEmailOrPassword:
+      'ایمیل یا رمز عبور اشتباه است. لطفاً دوباره تلاش کنید.',
   },
 
   // App names

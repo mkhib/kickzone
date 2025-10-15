@@ -15,6 +15,7 @@ type User {
   username: String!
   email: String!
   role: UserRole!
+  locale: String
 }
 
 enum UserRole {
@@ -277,6 +278,9 @@ type Mutation {
   logout: Boolean!
   initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!
   setupPassword(token: String!, newPassword: String!): User!
+  register(name: String!, email: String!, password: String!): User!
+  forgotPassword(email: String!, baseUrl: String!): Boolean!
+  resetPassword(token: String!, newPassword: String!): User!
   createCategory(input: CreateCategoryInput!, name: String): Category!
   updateCategory(input: UpdateCategoryInput!): Category!
   deleteCategory(id: Int!): Boolean!

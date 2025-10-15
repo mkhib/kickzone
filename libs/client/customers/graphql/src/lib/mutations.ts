@@ -143,3 +143,31 @@ export const CREATE_ORDER_MUTATION = gql`
     }
   }
 `;
+
+export const REGISTER_MUTATION = gql`
+  mutation Register($name: String!, $email: String!, $password: String!) {
+    register(name: $name, email: $email, password: $password) {
+      id
+      name
+      email
+      role
+    }
+  }
+`;
+
+export const FORGOT_PASSWORD_MUTATION = gql`
+  mutation ForgotPassword($email: String!, $baseUrl: String!) {
+    forgotPassword(email: $email, baseUrl: $baseUrl)
+  }
+`;
+
+export const RESET_PASSWORD_MUTATION = gql`
+  mutation ResetPassword($token: String!, $newPassword: String!) {
+    resetPassword(token: $token, newPassword: $newPassword) {
+      id
+      name
+      email
+      role
+    }
+  }
+`;

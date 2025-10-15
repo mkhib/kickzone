@@ -92,6 +92,9 @@
       "@kickzone-workspace/customer-checkout": [
         "libs/client/customers/screens/customer-checkout/src/index.ts"
       ],
+      "@kickzone-workspace/customer-forgot-password": [
+        "libs/client/customers/screens/forgot-password/src/index.ts"
+      ],
       "@kickzone-workspace/customer-login": [
         "libs/client/customers/screens/customer-login/src/index.ts"
       ],
@@ -100,6 +103,9 @@
       ],
       "@kickzone-workspace/customer-products": [
         "libs/client/customers/screens/customer-products/src/index.ts"
+      ],
+      "@kickzone-workspace/customer-reset-password": [
+        "libs/client/customers/screens/reset-password/src/index.ts"
       ],
       "@kickzone-workspace/customer-shopping-cart": [
         "libs/client/customers/screens/customer-shopping-cart/src/index.ts"
