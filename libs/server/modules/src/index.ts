@@ -12,3 +12,4 @@ export * from './lib/token.module';
 export * from './lib/order.module';
 export * from './lib/cart.module';
 export * from './lib/translation.module';
+export * from './lib/currency.module';

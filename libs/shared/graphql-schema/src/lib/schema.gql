@@ -206,6 +206,38 @@ type Translation {
   updatedAt: DateTime!
 }
 
+type Currency {
+  id: ID!
+  code: String!
+  name: String!
+  symbol: String!
+  decimalPlaces: Int!
+  isActive: Boolean!
+  isBaseCurrency: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ExchangeRate {
+  id: ID!
+  fromCurrency: Currency!
+  toCurrency: Currency!
+  rate: Float!
+  effectiveDate: DateTime!
+  createdBy: User
+  createdAt: DateTime!
+  notes: String
+}
+
+type CurrencyPreference {
+  id: ID!
+  locale: String!
+  currency: Currency!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
 type OrderEdge {
   node: Order!
   cursor: String!
@@ -232,6 +264,13 @@ type Query {
   adminSellerOrders(sellerId: String!, first: Int! = 10, after: String, status: OrderStatus): [Order!]!
   allSellerOrders(first: Int! = 10, after: String, status: OrderStatus): [Order!]!
   myCart: Cart!
+  currencies: [Currency!]!
+  currency(id: Int!): Currency
+  currencyByCode(code: String!): Currency
+  currentExchangeRate(fromCurrencyCode: String!, toCurrencyCode: String!): ExchangeRate
+  exchangeRateHistory(fromCurrencyCode: String!, toCurrencyCode: String!, limit: Int): [ExchangeRate!]!
+  currencyPreferences: [CurrencyPreference!]!
+  currencyPreferenceByLocale(locale: String!): CurrencyPreference
 }
 
 input ProductFilterInput {
@@ -312,6 +351,11 @@ type Mutation {
   updateCartItem(itemId: String!, updateInput: UpdateCartItemInput!): Cart!
   removeFromCart(itemId: String!): Cart!
   clearCart: Cart!
+  createCurrency(input: CreateCurrencyInput!): Currency!
+  updateCurrency(id: Int!, input: UpdateCurrencyInput!): Currency!
+  setExchangeRate(input: SetExchangeRateInput!): ExchangeRate!
+  setCurrencyPreference(locale: String!, currencyCode: String!): CurrencyPreference!
+  deleteCurrencyPreference(id: Int!): Boolean!
 }
 
 input CreateUserInput {
@@ -497,4 +541,30 @@ input UpdateCartItemInput {
   quantity: Int
   color: String
   size: String
+}
+
+input CreateCurrencyInput {
+  code: String!
+  name: String!
+  symbol: String!
+  decimalPlaces: Int!
+  isActive: Boolean
+  isBaseCurrency: Boolean
+}
+
+input UpdateCurrencyInput {
+  code: String
+  name: String
+  symbol: String
+  decimalPlaces: Int
+  isActive: Boolean
+  isBaseCurrency: Boolean
+}
+
+input SetExchangeRateInput {
+  fromCurrencyCode: String!
+  toCurrencyCode: String!
+  rate: Float!
+  effectiveDate: DateTime
+  notes: String
 }

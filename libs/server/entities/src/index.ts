@@ -9,3 +9,6 @@ export * from './lib/order.entity';
 export * from './lib/cart.entity';
 export * from './lib/customer.entity';
 export * from './lib/translation.entity';
+export * from './lib/currency.entity';
+export * from './lib/exchange-rate.entity';
+export * from './lib/currency-preference.entity';

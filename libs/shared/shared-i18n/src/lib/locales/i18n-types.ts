@@ -954,6 +954,96 @@ type RootTranslation = {
 	 * R​e​q​u​i​r​e​d
 	 */
 	required: string
+	currency: {
+		/**
+		 * C​u​r​r​e​n​c​y​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		title: string
+		/**
+		 * E​x​c​h​a​n​g​e​ ​R​a​t​e
+		 */
+		exchangeRate: string
+		/**
+		 * C​u​r​r​e​n​t​ ​R​a​t​e
+		 */
+		currentRate: string
+		/**
+		 * N​e​w​ ​R​a​t​e
+		 */
+		newRate: string
+		/**
+		 * S​e​t​ ​E​x​c​h​a​n​g​e​ ​R​a​t​e
+		 */
+		setRate: string
+		/**
+		 * E​x​c​h​a​n​g​e​ ​R​a​t​e​ ​H​i​s​t​o​r​y
+		 */
+		rateHistory: string
+		/**
+		 * C​u​r​r​e​n​c​y​ ​P​r​e​f​e​r​e​n​c​e​s
+		 */
+		preferences: string
+		/**
+		 * L​o​c​a​l​e
+		 */
+		locale: string
+		/**
+		 * S​y​m​b​o​l
+		 */
+		symbol: string
+		/**
+		 * C​o​d​e
+		 */
+		code: string
+		/**
+		 * N​a​m​e
+		 */
+		name: string
+		/**
+		 * N​o​t​e​s
+		 */
+		notes: string
+		/**
+		 * U​p​d​a​t​e​d​ ​B​y
+		 */
+		updatedBy: string
+		/**
+		 * E​f​f​e​c​t​i​v​e​ ​D​a​t​e
+		 */
+		effectiveDate: string
+		/**
+		 * S​e​t​ ​P​r​e​f​e​r​e​n​c​e
+		 */
+		setPreference: string
+		/**
+		 * C​u​r​r​e​n​t​ ​P​r​e​f​e​r​e​n​c​e​s
+		 */
+		currentPreferences: string
+		/**
+		 * U​S​ ​D​o​l​l​a​r
+		 */
+		usd: string
+		/**
+		 * I​r​a​n​i​a​n​ ​R​i​a​l
+		 */
+		irr: string
+		/**
+		 * T​o​m​a​n
+		 */
+		toman: string
+		/**
+		 * P​r​i​c​e​ ​(​U​S​D​)
+		 */
+		priceInUSD: string
+		/**
+		 * P​r​i​c​e
+		 */
+		priceConverted: string
+		/**
+		 * C​o​n​v​e​r​t​i​n​g​ ​p​r​i​c​e​.​.​.
+		 */
+		convertingPrice: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -1895,6 +1985,96 @@ export type TranslationFunctions = {
 	 * Required
 	 */
 	required: () => LocalizedString
+	currency: {
+		/**
+		 * Currency Management
+		 */
+		title: () => LocalizedString
+		/**
+		 * Exchange Rate
+		 */
+		exchangeRate: () => LocalizedString
+		/**
+		 * Current Rate
+		 */
+		currentRate: () => LocalizedString
+		/**
+		 * New Rate
+		 */
+		newRate: () => LocalizedString
+		/**
+		 * Set Exchange Rate
+		 */
+		setRate: () => LocalizedString
+		/**
+		 * Exchange Rate History
+		 */
+		rateHistory: () => LocalizedString
+		/**
+		 * Currency Preferences
+		 */
+		preferences: () => LocalizedString
+		/**
+		 * Locale
+		 */
+		locale: () => LocalizedString
+		/**
+		 * Symbol
+		 */
+		symbol: () => LocalizedString
+		/**
+		 * Code
+		 */
+		code: () => LocalizedString
+		/**
+		 * Name
+		 */
+		name: () => LocalizedString
+		/**
+		 * Notes
+		 */
+		notes: () => LocalizedString
+		/**
+		 * Updated By
+		 */
+		updatedBy: () => LocalizedString
+		/**
+		 * Effective Date
+		 */
+		effectiveDate: () => LocalizedString
+		/**
+		 * Set Preference
+		 */
+		setPreference: () => LocalizedString
+		/**
+		 * Current Preferences
+		 */
+		currentPreferences: () => LocalizedString
+		/**
+		 * US Dollar
+		 */
+		usd: () => LocalizedString
+		/**
+		 * Iranian Rial
+		 */
+		irr: () => LocalizedString
+		/**
+		 * Toman
+		 */
+		toman: () => LocalizedString
+		/**
+		 * Price (USD)
+		 */
+		priceInUSD: () => LocalizedString
+		/**
+		 * Price
+		 */
+		priceConverted: () => LocalizedString
+		/**
+		 * Converting price...
+		 */
+		convertingPrice: () => LocalizedString
+	}
 }
 
 export type Formatters = {}

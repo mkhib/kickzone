@@ -26,6 +26,7 @@ import {
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { PriceDisplay } from '@kickzone-workspace/price-display';
 
 export function CustomerProducts() {
   const { LL } = useI18nContext();
@@ -367,7 +368,11 @@ export function CustomerProducts() {
                                 color: 'text.secondary',
                               }}
                             >
-                              ${pricingInfo.originalPrice.toFixed(2)}
+                              <PriceDisplay
+                                priceInUSD={pricingInfo.originalPrice}
+                                showSymbol={true}
+                                showOriginal={false}
+                              />
                             </Typography>
                           )}
                           <Typography
@@ -377,7 +382,11 @@ export function CustomerProducts() {
                             }
                             sx={{ fontWeight: 'bold' }}
                           >
-                            ${pricingInfo.finalPrice.toFixed(2)}
+                            <PriceDisplay
+                              priceInUSD={pricingInfo.finalPrice}
+                              showSymbol={true}
+                              showOriginal={false}
+                            />
                           </Typography>
                           {pricingInfo.discount > 0 && (
                             <Chip

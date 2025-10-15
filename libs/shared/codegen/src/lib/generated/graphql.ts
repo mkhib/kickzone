@@ -94,6 +94,15 @@ export type CreateColorInput = {
   sortOrder?: InputMaybe<Scalars['Int']['input']>;
 };
 
+export type CreateCurrencyInput = {
+  code: Scalars['String']['input'];
+  decimalPlaces: Scalars['Int']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  isBaseCurrency?: InputMaybe<Scalars['Boolean']['input']>;
+  name: Scalars['String']['input'];
+  symbol: Scalars['String']['input'];
+};
+
 export type CreateOrderInput = {
   city: Scalars['String']['input'];
   country: Scalars['String']['input'];
@@ -160,6 +169,41 @@ export type CreateUserInput = {
   username: Scalars['String']['input'];
 };
 
+export type Currency = {
+  __typename?: 'Currency';
+  code: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  decimalPlaces: Scalars['Int']['output'];
+  id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
+  isBaseCurrency: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  symbol: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type CurrencyPreference = {
+  __typename?: 'CurrencyPreference';
+  createdAt: Scalars['DateTime']['output'];
+  currency: Currency;
+  id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
+  locale: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ExchangeRate = {
+  __typename?: 'ExchangeRate';
+  createdAt: Scalars['DateTime']['output'];
+  createdBy?: Maybe<User>;
+  effectiveDate: Scalars['DateTime']['output'];
+  fromCurrency: Currency;
+  id: Scalars['ID']['output'];
+  notes?: Maybe<Scalars['String']['output']>;
+  rate: Scalars['Float']['output'];
+  toCurrency: Currency;
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   addToCart: Cart;
@@ -168,6 +212,7 @@ export type Mutation = {
   clearCart: Cart;
   createCategory: Category;
   createColor: Color;
+  createCurrency: Currency;
   createMySellerProduct: SellerProduct;
   createOrder: Order;
   createProduct: Product;
@@ -177,6 +222,7 @@ export type Mutation = {
   createUser: User;
   deleteCategory: Scalars['Boolean']['output'];
   deleteColor: Scalars['Boolean']['output'];
+  deleteCurrencyPreference: Scalars['Boolean']['output'];
   deleteEntityTranslations: Scalars['Boolean']['output'];
   deleteOrder: Scalars['Boolean']['output'];
   forgotPassword: Scalars['Boolean']['output'];
@@ -187,6 +233,8 @@ export type Mutation = {
   removeFromCart: Cart;
   removeProductInfoImage: Scalars['Boolean']['output'];
   resetPassword: User;
+  setCurrencyPreference: CurrencyPreference;
+  setExchangeRate: ExchangeRate;
   setTranslation: Translation;
   setupPassword: User;
   toggleSellerActive: SellerInfo;
@@ -194,6 +242,7 @@ export type Mutation = {
   updateCartItem: Cart;
   updateCategory: Category;
   updateColor: Color;
+  updateCurrency: Currency;
   updateMySellerProduct: SellerProduct;
   updateOrder: Order;
   updateOrderStatus: Order;
@@ -228,6 +277,11 @@ export type MutationCreateCategoryArgs = {
 export type MutationCreateColorArgs = {
   input: CreateColorInput;
   name?: InputMaybe<Scalars['String']['input']>;
+};
+
+
+export type MutationCreateCurrencyArgs = {
+  input: CreateCurrencyInput;
 };
 
 
@@ -273,6 +327,11 @@ export type MutationDeleteCategoryArgs = {
 
 
 export type MutationDeleteColorArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteCurrencyPreferenceArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -330,6 +389,17 @@ export type MutationResetPasswordArgs = {
 };
 
 
+export type MutationSetCurrencyPreferenceArgs = {
+  currencyCode: Scalars['String']['input'];
+  locale: Scalars['String']['input'];
+};
+
+
+export type MutationSetExchangeRateArgs = {
+  input: SetExchangeRateInput;
+};
+
+
 export type MutationSetTranslationArgs = {
   input: TranslationInput;
 };
@@ -365,6 +435,12 @@ export type MutationUpdateCategoryArgs = {
 export type MutationUpdateColorArgs = {
   id: Scalars['Int']['input'];
   input: UpdateColorInput;
+};
+
+
+export type MutationUpdateCurrencyArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateCurrencyInput;
 };
 
 
@@ -539,6 +615,13 @@ export type Query = {
   categories: Array<Category>;
   color?: Maybe<Color>;
   colors: Array<Color>;
+  currencies: Array<Currency>;
+  currency?: Maybe<Currency>;
+  currencyByCode?: Maybe<Currency>;
+  currencyPreferenceByLocale?: Maybe<CurrencyPreference>;
+  currencyPreferences: Array<CurrencyPreference>;
+  currentExchangeRate?: Maybe<ExchangeRate>;
+  exchangeRateHistory: Array<ExchangeRate>;
   findOne?: Maybe<SellerInfo>;
   getEntityTranslations: Array<Translation>;
   getTranslation: Scalars['String']['output'];
@@ -574,6 +657,34 @@ export type QueryAllSellerOrdersArgs = {
 
 export type QueryColorArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type QueryCurrencyArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryCurrencyByCodeArgs = {
+  code: Scalars['String']['input'];
+};
+
+
+export type QueryCurrencyPreferenceByLocaleArgs = {
+  locale: Scalars['String']['input'];
+};
+
+
+export type QueryCurrentExchangeRateArgs = {
+  fromCurrencyCode: Scalars['String']['input'];
+  toCurrencyCode: Scalars['String']['input'];
+};
+
+
+export type QueryExchangeRateHistoryArgs = {
+  fromCurrencyCode: Scalars['String']['input'];
+  limit?: InputMaybe<Scalars['Int']['input']>;
+  toCurrencyCode: Scalars['String']['input'];
 };
 
 
@@ -700,6 +811,14 @@ export type SellerProduct = {
   stockQuantity: Scalars['Int']['output'];
 };
 
+export type SetExchangeRateInput = {
+  effectiveDate?: InputMaybe<Scalars['DateTime']['input']>;
+  fromCurrencyCode: Scalars['String']['input'];
+  notes?: InputMaybe<Scalars['String']['input']>;
+  rate: Scalars['Float']['input'];
+  toCurrencyCode: Scalars['String']['input'];
+};
+
 export type Translation = {
   __typename?: 'Translation';
   createdAt: Scalars['DateTime']['output'];
@@ -741,6 +860,15 @@ export type UpdateColorInput = {
   hexCode: Scalars['String']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   sortOrder?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UpdateCurrencyInput = {
+  code?: InputMaybe<Scalars['String']['input']>;
+  decimalPlaces?: InputMaybe<Scalars['Int']['input']>;
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  isBaseCurrency?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  symbol?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type UpdateOrderInput = {

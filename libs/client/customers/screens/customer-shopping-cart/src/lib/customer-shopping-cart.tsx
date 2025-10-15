@@ -1,43 +1,41 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  CardMedia,
-  Button,
-  TextField,
-  Grid,
-  Divider,
-  IconButton,
-  Alert,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Stepper,
-  Step,
-  StepLabel,
-} from '@mui/material';
-import { Delete, Add, Remove, ShoppingCartCheckout } from '@mui/icons-material';
-import { CustomersLayout } from '@kickzone-workspace/customers-layout';
-import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
-import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
-import {
+  useCartError,
   useCartItems,
   useCartLoading,
-  useCartError,
   useCartTotal,
+  useClearCart,
   useRemoveItem,
   useUpdateItemQuantity,
-  useClearCart,
 } from '@kickzone-workspace/customer-cart-store';
-import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { useCustomersCartMutations } from '@kickzone-workspace/customers-cart-hook';
-import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { CustomersLayout } from '@kickzone-workspace/customers-layout';
+import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
+import { PriceDisplay } from '@kickzone-workspace/price-display';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { Add, Delete, Remove, ShoppingCartCheckout } from '@mui/icons-material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CardMedia from '@mui/material/CardMedia';
+import CircularProgress from '@mui/material/CircularProgress';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogTitle from '@mui/material/DialogTitle';
+import Divider from '@mui/material/Divider';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import Stepper from '@mui/material/Stepper';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 // Import types from cart store
 import type { CartItem } from '@kickzone-workspace/customer-cart-store';
@@ -294,7 +292,12 @@ export function CustomerShoppingCart() {
                           </Typography>
                         )}
                         <Typography variant="h6" color="primary">
-                          ${item.unitPrice.toFixed(2)} each
+                          <PriceDisplay
+                            priceInUSD={item.unitPrice}
+                            showSymbol={true}
+                            showOriginal={false}
+                          />{' '}
+                          each
                         </Typography>
                       </Grid>
                       <Grid size={{ xs: 12, sm: 12 }}>
@@ -348,7 +351,11 @@ export function CustomerShoppingCart() {
                             variant="h6"
                             sx={{ flexGrow: 1, textAlign: 'right' }}
                           >
-                            ${item.totalPrice.toFixed(2)}
+                            <PriceDisplay
+                              priceInUSD={item.totalPrice}
+                              showSymbol={true}
+                              showOriginal={false}
+                            />
                           </Typography>
                           <IconButton
                             color="error"
@@ -391,7 +398,13 @@ export function CustomerShoppingCart() {
                     }}
                   >
                     <Typography>{LL.checkout.subtotal()}:</Typography>
-                    <Typography>${cartTotal.toFixed(2)}</Typography>
+                    <Typography>
+                      <PriceDisplay
+                        priceInUSD={cartTotal}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
+                    </Typography>
                   </Box>
 
                   <Box
@@ -402,7 +415,13 @@ export function CustomerShoppingCart() {
                     }}
                   >
                     <Typography>{LL.checkout.shipping()}:</Typography>
-                    <Typography>$0.00</Typography>
+                    <Typography>
+                      <PriceDisplay
+                        priceInUSD={0}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
+                    </Typography>
                   </Box>
 
                   <Divider sx={{ my: 2 }} />
@@ -416,7 +435,11 @@ export function CustomerShoppingCart() {
                   >
                     <Typography variant="h6">{LL.checkout.total()}:</Typography>
                     <Typography variant="h6">
-                      ${cartTotal.toFixed(2)}
+                      <PriceDisplay
+                        priceInUSD={cartTotal}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
                     </Typography>
                   </Box>
 
@@ -469,13 +492,25 @@ export function CustomerShoppingCart() {
                     <Typography>
                       {item.productName} x {item.quantity}
                     </Typography>
-                    <Typography>${item.totalPrice.toFixed(2)}</Typography>
+                    <Typography>
+                      <PriceDisplay
+                        priceInUSD={item.totalPrice}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
+                    </Typography>
                   </Box>
                 ))}
                 <Divider sx={{ my: 2 }} />
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                   <Typography variant="h6">{LL.checkout.total()}:</Typography>
-                  <Typography variant="h6">${cartTotal.toFixed(2)}</Typography>
+                  <Typography variant="h6">
+                    <PriceDisplay
+                      priceInUSD={cartTotal}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  </Typography>
                 </Box>
               </Box>
             )}

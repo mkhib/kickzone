@@ -27,6 +27,7 @@ import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useTheme, useMediaQuery } from '@mui/material';
 import TranslateIcon from '@mui/icons-material/Translate';
 import StorefrontIcon from '@mui/icons-material/Storefront';
+import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
 
 const drawerWidth = 300;
 
@@ -238,6 +239,16 @@ export function AdminsHeaderbar() {
                 <StorefrontIcon />
               </ListItemIcon>
               <CustomListItemText primary={LL.navigation.sellers()} />
+            </ListItemButton>
+            <ListItemButton
+              to={ADMIN_ROUTES.CURRENCY}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.CURRENCY}
+            >
+              <ListItemIcon>
+                <AttachMoneyIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.currency.title()} />
             </ListItemButton>
           </List>
         </StyledDrawer>

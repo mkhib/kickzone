@@ -11,6 +11,7 @@ import { LanguageComponents } from '@kickzone-workspace/language-components';
 import { AdminTranslationManagement } from '@kickzone-workspace/translation-management';
 import { AdminSellerOrders } from '@kickzone-workspace/admin-seller-orders';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
+import { CurrencyManagement } from '@kickzone-workspace/currency-management';
 
 export function AdminsRouter() {
   const { admin } = useAdminsAuthContext();
@@ -33,6 +34,10 @@ export function AdminsRouter() {
           />
           <Route path={ADMIN_ROUTES.SELLERS} element={<SellerManagement />} />
           <Route path={ADMIN_ROUTES.ORDERS} element={<AdminSellerOrders />} />
+          <Route
+            path={ADMIN_ROUTES.CURRENCY}
+            element={<CurrencyManagement />}
+          />
           <Route
             path={ADMIN_ROUTES.TRANSLATIONS}
             element={<AdminTranslationManagement />}

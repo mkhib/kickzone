@@ -8,3 +8,4 @@ export * from './lib/order.resolver';
 export * from './lib/cart.resolver';
 export * from './lib/translation.resolver';
 export * from './lib/translation.input';
+export * from './lib/currency.resolver';

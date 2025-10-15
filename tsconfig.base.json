@@ -86,6 +86,12 @@
       "@kickzone-workspace/controllers": [
         "libs/server/controllers/src/index.ts"
       ],
+      "@kickzone-workspace/currency-hook": [
+        "libs/client/shared/hooks/currency/src/index.ts"
+      ],
+      "@kickzone-workspace/currency-management": [
+        "libs/client/admins/screens/currency-management/src/index.ts"
+      ],
       "@kickzone-workspace/customer-cart-store": [
         "libs/client/customers/zustand/customer-cart-store/src/index.ts"
       ],
@@ -186,6 +192,9 @@
       "@kickzone-workspace/modules": ["libs/server/modules/src/index.ts"],
       "@kickzone-workspace/orders-hook": [
         "libs/client/sellers/hooks/orders/src/index.ts"
+      ],
+      "@kickzone-workspace/price-display": [
+        "libs/client/shared/components/price-display/src/index.ts"
       ],
       "@kickzone-workspace/private-route": [
         "libs/client/shared/components/private-route/src/index.ts"

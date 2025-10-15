@@ -284,6 +284,32 @@ const fa = {
   please: 'لطفا',
   optional: 'اختیاری',
   required: 'ضروری',
+
+  // Currency
+  currency: {
+    title: 'مدیریت ارز',
+    exchangeRate: 'نرخ تبدیل ارز',
+    currentRate: 'نرخ فعلی',
+    newRate: 'نرخ جدید',
+    setRate: 'تنظیم نرخ تبدیل',
+    rateHistory: 'تاریخچه نرخ تبدیل',
+    preferences: 'تنظیمات ارز',
+    locale: 'زبان',
+    symbol: 'نماد',
+    code: 'کد',
+    name: 'نام',
+    notes: 'یادداشت‌ها',
+    updatedBy: 'به‌روزرسانی شده توسط',
+    effectiveDate: 'تاریخ اعمال',
+    setPreference: 'تنظیم ارز',
+    currentPreferences: 'تنظیمات فعلی',
+    usd: 'دلار آمریکا',
+    irr: 'ریال ایران',
+    toman: 'تومان',
+    priceInUSD: 'قیمت (دلار)',
+    priceConverted: 'قیمت',
+    convertingPrice: 'در حال تبدیل قیمت...',
+  },
 } satisfies BaseTranslation;
 
 export default fa;

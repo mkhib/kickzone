@@ -280,6 +280,32 @@ const en = {
   please: 'Please',
   optional: 'Optional',
   required: 'Required',
+
+  // Currency
+  currency: {
+    title: 'Currency Management',
+    exchangeRate: 'Exchange Rate',
+    currentRate: 'Current Rate',
+    newRate: 'New Rate',
+    setRate: 'Set Exchange Rate',
+    rateHistory: 'Exchange Rate History',
+    preferences: 'Currency Preferences',
+    locale: 'Locale',
+    symbol: 'Symbol',
+    code: 'Code',
+    name: 'Name',
+    notes: 'Notes',
+    updatedBy: 'Updated By',
+    effectiveDate: 'Effective Date',
+    setPreference: 'Set Preference',
+    currentPreferences: 'Current Preferences',
+    usd: 'US Dollar',
+    irr: 'Iranian Rial',
+    toman: 'Toman',
+    priceInUSD: 'Price (USD)',
+    priceConverted: 'Price',
+    convertingPrice: 'Converting price...',
+  },
 } satisfies BaseTranslation;
 
 export default en;

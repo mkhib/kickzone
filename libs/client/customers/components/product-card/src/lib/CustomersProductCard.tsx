@@ -9,6 +9,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import { PriceDisplay } from '@kickzone-workspace/price-display';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   'https://image-cdn.hypb.st/https%3A%2F%2Fhypebeast.com%2Fimage%2F2021%2F10%2Fair-jordan-1-high-og-rebellionaire-closer-look-release-info-555088-036-000.jpg?w=960&cbr=1&q=90&fit=max';
@@ -137,7 +138,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                     color: 'text.secondary',
                   }}
                 >
-                  ${pricingInfo.originalPrice.toFixed(2)}
+                  <PriceDisplay
+                    priceInUSD={pricingInfo.originalPrice}
+                    showSymbol={true}
+                    showOriginal={false}
+                  />
                 </Typography>
               )}
               <Typography
@@ -145,7 +150,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 color={pricingInfo.discount > 0 ? 'error' : 'primary'}
                 sx={{ fontWeight: 'bold' }}
               >
-                ${pricingInfo.finalPrice.toFixed(2)}
+                <PriceDisplay
+                  priceInUSD={pricingInfo.finalPrice}
+                  showSymbol={true}
+                  showOriginal={false}
+                />
               </Typography>
               {pricingInfo.discount > 0 && (
                 <Chip
