@@ -3,7 +3,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
-import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersResetPassword } from '@kickzone-workspace/customers-auth-hooks';
 import { getErrorMessage } from '@kickzone-workspace/translations';
 import LockResetOutlined from '@mui/icons-material/LockResetOutlined';
@@ -22,7 +22,7 @@ export function CustomerResetPassword() {
   const { LL } = useI18nContext();
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
-  const addToast = useUIStore((state) => state.addToast);
+  const { showSnackbar } = useSnackbar();
   const { handleResetPassword, resetPasswordLoading } =
     useCustomersResetPassword();
 
@@ -53,10 +53,8 @@ export function CustomerResetPassword() {
 
     try {
       await handleResetPassword(token, formData.password);
-      addToast({
-        type: 'success',
-        title: LL.authorization.resetPassword(),
-        message: LL.authorization.passwordResetSuccess(),
+      showSnackbar(LL.authorization.passwordResetSuccess(), {
+        severity: 'success',
       });
       navigate(CUSTOMER_ROUTES.PRODUCTS);
     } catch (error) {
@@ -66,11 +64,7 @@ export function CustomerResetPassword() {
         : rawMessage || LL.authorization.invalidToken();
 
       setError(errorMessage);
-      addToast({
-        type: 'error',
-        title: LL.status.error(),
-        message: errorMessage,
-      });
+      showSnackbar(errorMessage, { severity: 'error' });
     }
   };
 

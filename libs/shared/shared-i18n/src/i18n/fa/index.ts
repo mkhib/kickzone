@@ -202,7 +202,7 @@ const fa = {
     signIn: 'ورود',
     signUp: 'ثبت نام',
     signOut: 'خروج',
-    forgotPassword: 'فراموشی رمز عبور',
+    forgotPassword: 'فراموشی رمز عبور؟',
     resetPassword: 'بازنشانی رمز عبور',
     createAccount: 'ایجاد حساب کاربری',
     alreadyHaveAccount: 'قبلاً حساب کاربری دارید؟',

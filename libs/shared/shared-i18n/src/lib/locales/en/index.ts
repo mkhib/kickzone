@@ -234,7 +234,7 @@ const en = {
     emailVerificationSent: 'Email Verification Sent',
     emailVerificationFailed: 'Email Verification Failed',
     emailVerificationSuccess: 'Email Verification Success',
-    wrongEmailOrPassword: 'Wrong Email or Password',
+    wrongEmailOrPassword: 'Incorrect credentials',
     dontHaveAccount: "Don't have an account?",
     alreadyHaveAccount: 'Already have an account?',
     createAccount: 'Create Account',
@@ -264,7 +264,7 @@ const en = {
       'This email is already registered. Please use a different email or try logging in.',
     userNotFound: 'User not found. Please check your email address.',
     invalidToken: 'Invalid or expired reset link. Please request a new one.',
-    wrongEmailOrPassword: 'Wrong email or password. Please try again.',
+    wrongEmailOrPassword: 'Incorrect credentials.',
   },
 
   // App names

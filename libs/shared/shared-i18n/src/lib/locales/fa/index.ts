@@ -235,7 +235,7 @@ const fa = {
     emailVerificationSent: 'ایمیل تایید ارسال شد',
     emailVerificationFailed: 'تایید ایمیل ناموفق',
     emailVerificationSuccess: 'تایید ایمیل با موفقیت انجام شد',
-    wrongEmailOrPassword: 'ایمیل یا رمز عبور اشتباه است',
+    wrongEmailOrPassword: 'نام کاربری یا رمز عبور اشتباه است',
     dontHaveAccount: 'حساب کاربری ندارید؟',
     alreadyHaveAccount: 'قبلاً حساب کاربری دارید؟',
     createAccount: 'ایجاد حساب کاربری',
@@ -267,8 +267,7 @@ const fa = {
     userNotFound: 'کاربر یافت نشد. لطفاً آدرس ایمیل خود را بررسی کنید.',
     invalidToken:
       'لینک بازیابی نامعتبر یا منقضی شده است. لطفاً لینک جدیدی درخواست کنید.',
-    wrongEmailOrPassword:
-      'ایمیل یا رمز عبور اشتباه است. لطفاً دوباره تلاش کنید.',
+    wrongEmailOrPassword: 'نام کاربری یا رمز عبور اشتباه است',
   },
 
   // App names

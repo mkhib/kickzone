@@ -22,13 +22,12 @@ export function useCustomersLogin() {
   >(LOGIN_MUTATION);
 
   const handleLogin = async (email: string, password: string) => {
-    try {
-      const { data } = await login({ variables: { email, password } });
-      if (data?.login) {
-        setAuthUser(data.login);
-      }
-    } catch (error) {
-      console.error('Login failed', error);
+    const { data } = await login({ variables: { email, password } });
+
+    if (data?.login) {
+      setAuthUser(data.login);
+    } else {
+      throw new Error('Login failed: No user data returned');
     }
   };
 

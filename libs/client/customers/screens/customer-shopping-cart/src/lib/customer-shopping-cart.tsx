@@ -1127,7 +1127,9 @@ export function CustomerShoppingCart() {
               variant="contained"
               onClick={() => {
                 setAuthDialogOpen(false);
-                navigate(CUSTOMER_ROUTES.LOGIN);
+                navigate(CUSTOMER_ROUTES.LOGIN, {
+                  state: { from: CUSTOMER_ROUTES.CART },
+                });
               }}
             >
               {LL.checkout.loginRegister()}

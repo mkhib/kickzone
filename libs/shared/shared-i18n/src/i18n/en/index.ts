@@ -201,7 +201,7 @@ const en = {
     signIn: 'Sign In',
     signUp: 'Sign Up',
     signOut: 'Sign Out',
-    forgotPassword: 'Forgot Password',
+    forgotPassword: 'Forgot Password?',
     resetPassword: 'Reset Password',
     createAccount: 'Create Account',
     alreadyHaveAccount: 'Already have an account?',

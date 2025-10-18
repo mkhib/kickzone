@@ -18,13 +18,7 @@ export type ErrorTranslationKey =
 export function mapApolloErrorToTranslationKey(
   error: ApolloError | Error
 ): ErrorTranslationKey {
-  // Check for Apollo GraphQL errors
-  if ('graphQLErrors' in error) {
-    const code = error?.graphQLErrors?.[0]?.extensions?.code;
-    if (code === 'UNAUTHENTICATED') return 'unauthorized';
-  }
-
-  // Check error message for specific patterns
+  // Check error message for specific patterns first (more specific checks first)
   const message = error?.message?.toLowerCase() || '';
 
   if (message.includes('email already exists')) return 'emailAlreadyExists';
@@ -32,7 +26,6 @@ export function mapApolloErrorToTranslationKey(
   if (message.includes('invalid or expired token')) return 'invalidToken';
   if (message.includes('invalid') && message.includes('token'))
     return 'invalidToken';
-  if (message.includes('unauthorized')) return 'unauthorized';
   if (message.includes('wrong') || message.includes('credentials'))
     return 'wrongEmailOrPassword';
   if (message.includes('network') || message.includes('fetch'))
@@ -43,6 +36,16 @@ export function mapApolloErrorToTranslationKey(
     message.includes('503')
   )
     return 'serverError';
+
+  // Check for Apollo GraphQL errors
+  if ('graphQLErrors' in error) {
+    const code = error?.graphQLErrors?.[0]?.extensions?.code;
+    // UNAUTHENTICATED from login attempts = wrong credentials
+    if (code === 'UNAUTHENTICATED') return 'wrongEmailOrPassword';
+  }
+
+  // Generic unauthorized message check (for login errors without specific code)
+  if (message.includes('unauthorized')) return 'wrongEmailOrPassword';
 
   return 'unknown';
 }

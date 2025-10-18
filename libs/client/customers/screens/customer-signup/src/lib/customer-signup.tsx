@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { useNavigate, Link as RouterLink } from 'react-router-dom';
+import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
-import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersRegister } from '@kickzone-workspace/customers-auth-hooks';
 import { getErrorMessage } from '@kickzone-workspace/translations';
 import PersonAddOutlined from '@mui/icons-material/PersonAddOutlined';
@@ -22,7 +22,8 @@ import { colors } from '@kickzone-workspace/colors';
 export function CustomerSignup() {
   const { LL } = useI18nContext();
   const navigate = useNavigate();
-  const addToast = useUIStore((state) => state.addToast);
+  const location = useLocation();
+  const { showSnackbar } = useSnackbar();
   const { handleRegister, registerLoading } = useCustomersRegister();
 
   const [formData, setFormData] = useState({
@@ -71,23 +72,21 @@ export function CustomerSignup() {
 
     try {
       await handleRegister(formData.name, formData.email, formData.password);
-      addToast({
-        type: 'success',
-        title: LL.authorization.signUp(),
-        message: LL.authorization.registrationSuccess(),
+      showSnackbar(LL.authorization.registrationSuccess(), {
+        severity: 'success',
       });
-      navigate(CUSTOMER_ROUTES.PRODUCTS);
+
+      // Redirect to the page they were trying to access, or default to PRODUCTS
+      const from =
+        (location.state as { from?: string })?.from || CUSTOMER_ROUTES.PRODUCTS;
+      navigate(from, { replace: true });
     } catch (error) {
       const { translationKey, rawMessage } = getErrorMessage(error as Error);
       const errorMessage = translationKey
         ? LL.errors[translationKey]()
         : rawMessage || LL.authorization.registrationFailed();
 
-      addToast({
-        type: 'error',
-        title: LL.status.error(),
-        message: errorMessage,
-      });
+      showSnackbar(errorMessage, { severity: 'error' });
     }
   };
 
@@ -198,6 +197,7 @@ export function CustomerSignup() {
                 <Link
                   component={RouterLink}
                   to={CUSTOMER_ROUTES.LOGIN}
+                  state={location.state}
                   variant="body2"
                   sx={{ color: colors.main, textDecoration: 'none' }}
                 >

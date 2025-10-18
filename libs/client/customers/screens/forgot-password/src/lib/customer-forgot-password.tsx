@@ -3,7 +3,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
-import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersForgotPassword } from '@kickzone-workspace/customers-auth-hooks';
 import { getErrorMessage } from '@kickzone-workspace/translations';
 import LockResetOutlined from '@mui/icons-material/LockResetOutlined';
@@ -21,7 +21,7 @@ import { colors } from '@kickzone-workspace/colors';
 
 export function CustomerForgotPassword() {
   const { LL } = useI18nContext();
-  const addToast = useUIStore((state) => state.addToast);
+  const { showSnackbar } = useSnackbar();
   const { handleForgotPassword, forgotPasswordLoading } =
     useCustomersForgotPassword();
 
@@ -32,11 +32,7 @@ export function CustomerForgotPassword() {
     event.preventDefault();
 
     if (!email.trim()) {
-      addToast({
-        type: 'error',
-        title: LL.status.error(),
-        message: LL.errors.requiredFields(),
-      });
+      showSnackbar(LL.errors.requiredFields(), { severity: 'error' });
       return;
     }
 
@@ -45,22 +41,14 @@ export function CustomerForgotPassword() {
       await handleForgotPassword(email.trim(), baseUrl);
 
       setSubmitted(true);
-      addToast({
-        type: 'success',
-        title: LL.authorization.forgotPassword(),
-        message: LL.authorization.resetLinkSent(),
-      });
+      showSnackbar(LL.authorization.resetLinkSent(), { severity: 'success' });
     } catch (error) {
       const { translationKey, rawMessage } = getErrorMessage(error as Error);
       const errorMessage = translationKey
         ? LL.errors[translationKey]()
         : rawMessage || LL.errors.unknown();
 
-      addToast({
-        type: 'error',
-        title: LL.status.error(),
-        message: errorMessage,
-      });
+      showSnackbar(errorMessage, { severity: 'error' });
     }
   };
 
