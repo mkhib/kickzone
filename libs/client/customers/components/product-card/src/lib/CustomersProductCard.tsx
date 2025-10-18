@@ -1,6 +1,9 @@
 import React, { useCallback } from 'react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import {
+  useI18nContext,
+  useLanguageContext,
+} from '@kickzone-workspace/shared-i18n';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
 import CardContent from '@mui/material/CardContent';
@@ -9,10 +12,17 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   'https://image-cdn.hypb.st/https%3A%2F%2Fhypebeast.com%2Fimage%2F2021%2F10%2Fair-jordan-1-high-og-rebellionaire-closer-look-release-info-555088-036-000.jpg?w=960&cbr=1&q=90&fit=max';
+
+// Utility to convert numbers to locale format (supports Farsi digits)
+const formatNumber = (num: number | string, locale: string): string => {
+  return Number(num).toLocaleString(locale);
+};
 
 interface ProductCardProps {
   product: KickzoneGraphqlTypes.Product;
@@ -24,6 +34,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   onAddToCart,
 }) => {
   const { LL } = useI18nContext();
+  const { currentLocale } = useLanguageContext();
   const firstInfo = product.productInfos?.[0];
   const image = firstInfo?.images?.[0] || PRODUCT_IMAGE_PLACEHOLDER;
 
@@ -75,67 +86,181 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     <Card
       sx={{
         width: '100%',
-        borderRadius: 4,
-        boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-        transition: 'transform 0.2s',
-        '&:hover': {
-          transform: 'translateY(-8px) scale(1.03)',
-          boxShadow: '0 16px 40px 0 rgba(31, 38, 135, 0.18)',
-        },
-        background: 'linear-gradient(135deg, #f8fafc 80%, #e3eafc 100%)',
+        height: '100%',
+        borderRadius: 5,
+        overflow: 'hidden',
+        position: 'relative',
+        boxShadow: '0 10px 40px rgba(0,0,0,0.08)',
+        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+        background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+        border: '1px solid rgba(0,0,0,0.04)',
         display: 'flex',
         flexDirection: 'column',
-        minHeight: 380,
+        '&:hover': {
+          transform: 'translateY(-12px) scale(1.02)',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
+          '& .product-image': {
+            transform: 'scale(1.1)',
+          },
+        },
       }}
     >
-      <CardMedia
-        component="img"
-        height="200"
-        image={image}
-        alt={product.name}
+      <Box
         sx={{
-          objectFit: 'cover',
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          background: '#f0f0f0',
+          position: 'relative',
+          height: 280,
+          overflow: 'hidden',
+          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
         }}
-      />
-      <CardContent sx={{ flexGrow: 1 }}>
+      >
+        <CardMedia
+          component="img"
+          image={image}
+          alt={product.name}
+          className="product-image"
+          sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            transition: 'transform 0.4s ease',
+          }}
+        />
+        {pricingInfo && pricingInfo.discount > 0 && (
+          <Box
+            sx={{
+              position: 'absolute',
+              top: 16,
+              right: 16,
+              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+              color: 'white',
+              borderRadius: 3,
+              px: 2,
+              py: 1,
+              fontWeight: 700,
+              fontSize: '0.9rem',
+              boxShadow: '0 4px 15px rgba(245, 87, 108, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.5,
+            }}
+          >
+            <LocalOfferIcon sx={{ fontSize: 18 }} />
+            {formatNumber(pricingInfo.discount, currentLocale)}%{' '}
+            {LL.products.discount()}
+          </Box>
+        )}
+        {pricingInfo &&
+          pricingInfo.stockQuantity < 10 &&
+          pricingInfo.stockQuantity > 0 && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 16,
+                left: 16,
+                background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                color: '#000',
+                borderRadius: 3,
+                px: 2,
+                py: 1,
+                fontWeight: 700,
+                fontSize: '0.85rem',
+                boxShadow: '0 4px 15px rgba(250, 112, 154, 0.4)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 0.5,
+              }}
+            >
+              <InventoryIcon sx={{ fontSize: 18 }} />
+              {formatNumber(pricingInfo.stockQuantity, currentLocale)}{' '}
+              {LL.products.left()}
+            </Box>
+          )}
+      </Box>
+
+      <CardContent
+        sx={{
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          p: 3,
+          pb: 2,
+        }}
+      >
         <Typography
-          gutterBottom
           variant="h6"
           component="div"
-          sx={{ fontWeight: 600, color: '#222' }}
+          sx={{
+            fontWeight: 700,
+            color: '#1a1a1a',
+            mb: 1.5,
+            fontSize: { xs: '1.1rem', md: '1.25rem' },
+            lineHeight: 1.3,
+            minHeight: 60,
+          }}
         >
           {product.name}
         </Typography>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          {product.categories?.map((cat) => cat.name).join(', ')}
-        </Typography>
+
+        {product.categories && product.categories.length > 0 && (
+          <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
+            {product.categories.slice(0, 2).map((cat) => (
+              <Chip
+                key={cat.id}
+                label={cat.name}
+                size="small"
+                sx={{
+                  background:
+                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  fontWeight: 600,
+                  fontSize: '0.75rem',
+                  height: 24,
+                  '& .MuiChip-label': { px: 1.5 },
+                }}
+              />
+            ))}
+          </Box>
+        )}
 
         {/* Pricing Information */}
         {hasNoSellers ? (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              {LL.products.noSellersAvailable()}
-            </Typography>
+          <Box
+            sx={{
+              mb: 2,
+              p: 2,
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%)',
+            }}
+          >
             <Typography
               variant="body2"
-              color="warning.main"
-              sx={{ fontWeight: 'bold' }}
+              sx={{
+                fontWeight: 600,
+                color: '#2d3436',
+                textAlign: 'center',
+              }}
             >
-              {LL.products.checkBackLater()}
+              {LL.products.noSellersAvailable()}
             </Typography>
           </Box>
         ) : pricingInfo ? (
           <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1 }}>
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'baseline',
+                gap: 1.5,
+                mb: 1.5,
+                flexWrap: 'wrap',
+              }}
+            >
               {pricingInfo.discount > 0 && (
                 <Typography
                   variant="body2"
                   sx={{
                     textDecoration: 'line-through',
-                    color: 'text.secondary',
+                    color: '#999',
+                    fontSize: '0.95rem',
                   }}
                 >
                   <PriceDisplay
@@ -146,9 +271,17 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 </Typography>
               )}
               <Typography
-                variant="h6"
-                color={pricingInfo.discount > 0 ? 'error' : 'primary'}
-                sx={{ fontWeight: 'bold' }}
+                variant="h5"
+                sx={{
+                  fontWeight: 800,
+                  background:
+                    pricingInfo.discount > 0
+                      ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+                      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                }}
               >
                 <PriceDisplay
                   priceInUSD={pricingInfo.finalPrice}
@@ -156,90 +289,143 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   showOriginal={false}
                 />
               </Typography>
-              {pricingInfo.discount > 0 && (
-                <Chip
-                  label={`${pricingInfo.discount}% ${LL.products.discount()}`}
-                  size="small"
-                  color="error"
-                  variant="outlined"
-                />
-              )}
             </Box>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              {LL.products.by()} {pricingInfo.sellerName}
-            </Typography>
             <Typography
               variant="body2"
-              color={isOutOfStock ? 'error' : 'success.main'}
-              sx={{ fontWeight: 'bold' }}
+              sx={{
+                color: '#666',
+                fontSize: '0.9rem',
+                fontWeight: 500,
+              }}
             >
-              {isOutOfStock
-                ? LL.products.outOfStock()
-                : `${pricingInfo.stockQuantity} ${LL.products.left()}`}
+              {LL.products.by()} {pricingInfo.sellerName}
             </Typography>
           </Box>
         ) : (
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-              {LL.products.priceNotAvailable()}
-            </Typography>
+          <Box
+            sx={{
+              mb: 2,
+              p: 2,
+              borderRadius: 3,
+              background: 'linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%)',
+            }}
+          >
             <Typography
               variant="body2"
-              color="warning.main"
-              sx={{ fontWeight: 'bold' }}
+              sx={{
+                fontWeight: 600,
+                color: '#2d3436',
+                textAlign: 'center',
+              }}
             >
-              {LL.products.contactSeller()}
+              {LL.products.priceNotAvailable()}
             </Typography>
           </Box>
         )}
 
         {firstInfo && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 2,
+              mt: 'auto',
+              pt: 2,
+              borderTop: '1px solid rgba(0,0,0,0.06)',
+            }}
+          >
             {firstInfo.color && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Typography variant="caption" color="text.secondary">
-                  {LL.products.color()}:
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: '#666',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  {LL.products.color()}
                 </Typography>
                 <Box
                   sx={{
-                    width: 16,
-                    height: 16,
+                    width: 24,
+                    height: 24,
                     backgroundColor: firstInfo.color.hexCode,
                     borderRadius: '50%',
-                    border: '1px solid #ccc',
+                    border: '2px solid white',
+                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
                   }}
                 />
               </Box>
             )}
-            <Typography variant="caption" color="text.secondary">
-              | {LL.products.size()}: {firstInfo.size || LL.products.none()}
-            </Typography>
+            {firstInfo.size && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: '#666',
+                    fontWeight: 600,
+                    textTransform: 'uppercase',
+                    fontSize: '0.7rem',
+                  }}
+                >
+                  {LL.products.size()}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 700,
+                    color: '#1a1a1a',
+                  }}
+                >
+                  {formatNumber(firstInfo.size, currentLocale)}
+                </Typography>
+              </Box>
+            )}
           </Box>
         )}
       </CardContent>
-      <Box sx={{ p: 2, pt: 0, display: 'flex', justifyContent: 'flex-end' }}>
+
+      <Box sx={{ p: 3, pt: 0 }}>
         <Button
           variant="contained"
-          color="primary"
+          fullWidth
           startIcon={<ShoppingCartIcon />}
           disabled={hasNoSellers || isOutOfStock}
+          onClick={handleAddToCartClick}
           sx={{
-            borderRadius: 3,
-            fontWeight: 600,
-            boxShadow: 'none',
+            borderRadius: 4,
+            py: 1.5,
+            fontWeight: 700,
+            fontSize: '1rem',
             textTransform: 'none',
+            boxShadow:
+              hasNoSellers || isOutOfStock
+                ? 'none'
+                : '0 8px 25px rgba(102, 126, 234, 0.35)',
             background:
               hasNoSellers || isOutOfStock
-                ? 'grey.400'
-                : 'linear-gradient(90deg, #4f8cff 60%, #3358ff 100%)',
+                ? 'linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%)'
+                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            transition: 'all 0.3s ease',
             '&:hover': {
+              transform:
+                hasNoSellers || isOutOfStock ? 'none' : 'translateY(-2px)',
+              boxShadow:
+                hasNoSellers || isOutOfStock
+                  ? 'none'
+                  : '0 12px 35px rgba(102, 126, 234, 0.45)',
               background:
                 hasNoSellers || isOutOfStock
-                  ? 'grey.400'
-                  : 'linear-gradient(90deg, #3d7bff 60%, #2a4dff 100%)',
+                  ? 'linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%)'
+                  : 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+            },
+            '&:disabled': {
+              color: 'white',
+              opacity: 0.7,
             },
           }}
-          onClick={handleAddToCartClick}
         >
           {hasNoSellers
             ? LL.products.noSellers()

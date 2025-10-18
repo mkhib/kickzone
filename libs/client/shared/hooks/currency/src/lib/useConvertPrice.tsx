@@ -34,18 +34,6 @@ export function useConvertPrice({
     return Number(convertedAmount.toFixed(decimalPlaces));
   }, [convertedAmount, exchangeRate]);
 
-  console.log('💰 useConvertPrice:', {
-    amount,
-    fromCurrency,
-    toCurrency,
-    rate,
-    convertedAmount,
-    formattedAmount,
-    decimalPlaces: exchangeRate?.toCurrency?.decimalPlaces,
-    loading,
-    error: error?.message,
-  });
-
   return {
     originalAmount: amount,
     convertedAmount: formattedAmount,

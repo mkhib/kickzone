@@ -123,7 +123,9 @@ export class ProductService {
     if (filter?.sort) {
       const order = filter.sortOrder === 'desc' ? 'DESC' : 'ASC';
       if (filter.sort === 'price') {
-        query.addOrderBy('productInfo.price', order);
+        query.addOrderBy('sellerProduct.price', order);
+      } else if (filter.sort === 'discount') {
+        query.addOrderBy('sellerProduct.discount', order);
       } else if (filter.sort === 'color') {
         query.addOrderBy('color.name', order);
       } else {
@@ -449,7 +451,9 @@ export class ProductService {
     if (filter?.sort) {
       const order = filter.sortOrder === 'desc' ? 'DESC' : 'ASC';
       if (filter.sort === 'price') {
-        query.addOrderBy('productInfo.price', order);
+        query.addOrderBy('sellerProduct.price', order);
+      } else if (filter.sort === 'discount') {
+        query.addOrderBy('sellerProduct.discount', order);
       } else if (filter.sort === 'color') {
         query.addOrderBy('color.name', order);
       } else {

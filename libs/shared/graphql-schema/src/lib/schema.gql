@@ -193,6 +193,17 @@ type CartItem {
   sellerId: String!
 }
 
+type CustomerProfile {
+  id: ID!
+  userId: String!
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+}
+
 type Translation {
   id: Int!
   entityType: String!
@@ -271,6 +282,7 @@ type Query {
   exchangeRateHistory(fromCurrencyCode: String!, toCurrencyCode: String!, limit: Int): [ExchangeRate!]!
   currencyPreferences: [CurrencyPreference!]!
   currencyPreferenceByLocale(locale: String!): CurrencyPreference
+  myProfile: CustomerProfile!
 }
 
 input ProductFilterInput {
@@ -356,6 +368,7 @@ type Mutation {
   setExchangeRate(input: SetExchangeRateInput!): ExchangeRate!
   setCurrencyPreference(locale: String!, currencyCode: String!): CurrencyPreference!
   deleteCurrencyPreference(id: Int!): Boolean!
+  updateMyProfile(input: UpdateCustomerProfileInput!): CustomerProfile!
 }
 
 input CreateUserInput {
@@ -567,4 +580,13 @@ input SetExchangeRateInput {
   rate: Float!
   effectiveDate: DateTime
   notes: String
+}
+
+input UpdateCustomerProfileInput {
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
 }

@@ -20,15 +20,6 @@ export function useCurrencyForLocale() {
 
   const currency = data?.currencyPreferenceByLocale?.currency;
 
-  console.log('🌍 useCurrencyForLocale:', {
-    currentLocale,
-    hasData: !!data,
-    hasCurrencyPreference: !!data?.currencyPreferenceByLocale,
-    currency,
-    loading,
-    error: error?.message,
-  });
-
   return {
     currency,
     currencyCode: currency?.code || 'USD',

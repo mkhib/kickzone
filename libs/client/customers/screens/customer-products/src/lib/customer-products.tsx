@@ -40,28 +40,12 @@ export function CustomerProducts() {
 
   // Helper function to get pricing info for a product
   const getPricingInfo = (product: KickzoneGraphqlTypes.Product) => {
-    console.log('🔍 Product data for stock check:', {
-      productId: product.id,
-      productName: product.name,
-      sellerProducts: product.sellerProducts,
-      sellerProductsLength: product.sellerProducts?.length || 0,
-    });
-
     if (!product.sellerProducts || product.sellerProducts.length === 0) {
-      console.log('❌ No seller products found for product:', product.name);
       return null;
     }
 
     // Get the first available seller product
     const sellerProduct = product.sellerProducts[0];
-    console.log('📦 First seller product data:', {
-      sellerProductId: sellerProduct.id,
-      price: sellerProduct.price,
-      discount: sellerProduct.discount,
-      stockQuantity: sellerProduct.stockQuantity,
-      sellerName: sellerProduct.seller?.storeName,
-      seller: sellerProduct.seller,
-    });
 
     const originalPrice = sellerProduct.price;
     const discount = sellerProduct.discount;
@@ -78,12 +62,6 @@ export function CustomerProducts() {
       sellerName:
         sellerProduct.seller?.storeName || LL.products.unknownSeller(),
     };
-
-    console.log('💰 Calculated pricing info:', pricingInfo);
-    console.log('📊 Stock check result:', {
-      stockQuantity: pricingInfo.stockQuantity,
-      isOutOfStock: pricingInfo.stockQuantity <= 0,
-    });
 
     return pricingInfo;
   };
@@ -110,14 +88,6 @@ export function CustomerProducts() {
         ? btoa(`cursor:${(currentPage - 1) * itemsPerPage}`)
         : undefined,
     filter,
-  });
-
-  // Debug: Log raw products data
-  console.log('📦 Raw products data from API:', {
-    products,
-    productsLength: products?.length || 0,
-    productsLoading,
-    productsError,
   });
 
   const { categories } = useCustomersCategories();
@@ -184,6 +154,7 @@ export function CustomerProducts() {
       sellerName: sellerProduct.seller.storeName,
       productInfoId: productInfo.id.toString(),
       sellerProductId: sellerProduct.id.toString(),
+      availableStock: sellerProduct.stockQuantity,
     });
   };
 

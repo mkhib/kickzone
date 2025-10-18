@@ -22,17 +22,6 @@ export function useExchangeRate({
     fetchPolicy: 'network-only', // Disable cache for debugging
   });
 
-  console.log('💱 useExchangeRate:', {
-    fromCurrencyCode,
-    toCurrencyCode,
-    skip,
-    hasData: !!data,
-    hasRate: !!data?.currentExchangeRate,
-    rate: data?.currentExchangeRate?.rate,
-    loading,
-    error: error?.message,
-  });
-
   return {
     exchangeRate: data?.currentExchangeRate,
     rate: data?.currentExchangeRate?.rate || 1,

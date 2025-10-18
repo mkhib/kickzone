@@ -16,6 +16,7 @@ export interface CartItem {
   sellerName: string;
   productInfoId: string;
   sellerProductId: string; // SellerProduct ID for stock management
+  availableStock: number; // Available stock quantity
 }
 
 // Define cart state interface

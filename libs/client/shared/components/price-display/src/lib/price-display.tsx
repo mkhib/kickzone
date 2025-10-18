@@ -31,31 +31,12 @@ export function PriceDisplay({
     decimalPlaces,
     locale,
     loading: currencyLoading,
-    error: currencyError,
   } = useCurrencyForLocale();
 
-  const {
-    convertedAmount,
-    loading: conversionLoading,
-    error: conversionError,
-  } = useConvertPrice({
+  const { convertedAmount, loading: conversionLoading } = useConvertPrice({
     amount: priceInUSD,
     fromCurrency: 'USD',
     toCurrency: currencyCode,
-  });
-
-  // Debug logging
-  console.log('🔍 PriceDisplay Debug:', {
-    priceInUSD,
-    locale,
-    currencyCode,
-    currencySymbol,
-    decimalPlaces,
-    convertedAmount,
-    currencyLoading,
-    conversionLoading,
-    currencyError,
-    conversionError,
   });
 
   if (currencyLoading || conversionLoading) {

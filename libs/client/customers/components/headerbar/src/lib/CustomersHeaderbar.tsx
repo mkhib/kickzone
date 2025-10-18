@@ -81,7 +81,7 @@ export function Headerbar() {
             to={CUSTOMER_ROUTES.CART}
             sx={{ ml: 1 }}
           >
-            <Badge badgeContent={user ? totalItems : 0} color="error">
+            <Badge badgeContent={totalItems} color="error">
               <ShoppingCartIcon />
             </Badge>
           </IconButton>
@@ -128,7 +128,7 @@ export function Headerbar() {
             selected={location.pathname === CUSTOMER_ROUTES.CART}
           >
             <ListItemIcon>
-              <Badge badgeContent={user ? totalItems : 0} color="error">
+              <Badge badgeContent={totalItems} color="error">
                 <ShoppingCartIcon />
               </Badge>
             </ListItemIcon>
