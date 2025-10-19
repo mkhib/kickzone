@@ -37,7 +37,7 @@ export function SellersManageProductScreen() {
   const [selectedProductInfo, setSelectedProductInfo] =
     useState<KickzoneGraphqlTypes.ProductInfo | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [editingProductId, setEditingProductId] = useState<number | null>(null);
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
 
   // Use the new hook
   const {
@@ -59,12 +59,11 @@ export function SellersManageProductScreen() {
   useEffect(() => {
     const sellerProductId = searchParams.get('sellerProductId');
     if (sellerProductId) {
-      const sellerProductIdNum = parseInt(sellerProductId, 10);
       setIsEditing(true);
-      setEditingProductId(sellerProductIdNum);
+      setEditingProductId(sellerProductId);
 
       // Fetch the seller product data
-      getSellerProductById({ variables: { id: sellerProductIdNum } });
+      getSellerProductById({ variables: { id: sellerProductId } });
     } else {
       setIsEditing(false);
       setEditingProductId(null);

@@ -30,7 +30,7 @@ export const GET_PRODUCTS_QUERY = gql`
 `;
 
 export const GET_SELLER_PRODUCT_BY_ID_QUERY = gql`
-  query GetSellerProductById($id: Int!) {
+  query GetSellerProductById($id: String!) {
     mySellerProductById(id: $id) {
       ...SellerProductFields
       product {

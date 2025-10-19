@@ -3,7 +3,10 @@ import { useSellersProducts } from '@kickzone-workspace/sellers-products-hooks';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useNavigate } from 'react-router-dom';
 import { useSellersProductsStore } from '@kickzone-workspace/sellers-products-store';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import {
+  useI18nContext,
+  useLanguageContext,
+} from '@kickzone-workspace/shared-i18n';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -36,6 +39,7 @@ import { useState } from 'react';
 export const SellersProducts = () => {
   const navigate = useNavigate();
   const { LL } = useI18nContext();
+  const { formatNumber } = useLanguageContext();
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedProductForView, setSelectedProductForView] =
     useState<KickzoneGraphqlTypes.Product | null>(null);
@@ -70,7 +74,7 @@ export const SellersProducts = () => {
     navigate(SELLER_ROUTES.MANAGE_PRODUCT);
   };
 
-  const handleEditSellerProduct = (sellerProductId: number) => {
+  const handleEditSellerProduct = (sellerProductId: string | number) => {
     console.log(
       '🔍 handleEditSellerProduct called with sellerProductId:',
       sellerProductId
@@ -154,35 +158,37 @@ export const SellersProducts = () => {
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Category</InputLabel>
+                <InputLabel>{LL.form.category()}</InputLabel>
                 <Select
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  label="Category"
+                  label={LL.form.category()}
                 >
-                  <MenuItem value="">All Categories</MenuItem>
+                  <MenuItem value="">{LL.table.allCategories()}</MenuItem>
                   {/* TODO: Add categories from API */}
                 </Select>
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Sort by</InputLabel>
+                <InputLabel>{LL.form.sortBy()}</InputLabel>
                 <Select
                   value={sort}
                   onChange={(e) => setSellersProductsSortField(e.target.value)}
-                  label="Sort by"
+                  label={LL.form.sortBy()}
                 >
-                  <MenuItem value="">Default</MenuItem>
-                  <MenuItem value="name">Name</MenuItem>
-                  <MenuItem value="price">Price</MenuItem>
-                  <MenuItem value="createdAt">Date Created</MenuItem>
+                  <MenuItem value="">{LL.table.default()}</MenuItem>
+                  <MenuItem value="name">{LL.table.name()}</MenuItem>
+                  <MenuItem value="price">{LL.table.price()}</MenuItem>
+                  <MenuItem value="createdAt">
+                    {LL.table.dateCreated()}
+                  </MenuItem>
                 </Select>
               </FormControl>
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <FormControl fullWidth size="small">
-                <InputLabel>Status</InputLabel>
+                <InputLabel>{LL.form.status()}</InputLabel>
                 <Select
                   value={status}
                   onChange={(e) =>
@@ -191,22 +197,22 @@ export const SellersProducts = () => {
                         .value as KickzoneGraphqlTypes.ProductArchivedStatus
                     )
                   }
-                  label="Status"
+                  label={LL.form.status()}
                 >
                   <MenuItem
                     value={KickzoneGraphqlTypes.ProductArchivedStatus.Active}
                   >
-                    Active
+                    {LL.table.active()}
                   </MenuItem>
                   <MenuItem
                     value={KickzoneGraphqlTypes.ProductArchivedStatus.Archived}
                   >
-                    Archived
+                    {LL.table.archived()}
                   </MenuItem>
                   <MenuItem
                     value={KickzoneGraphqlTypes.ProductArchivedStatus.All}
                   >
-                    All
+                    {LL.table.all()}
                   </MenuItem>
                 </Select>
               </FormControl>
@@ -228,49 +234,118 @@ export const SellersProducts = () => {
                     height: '100%',
                     display: 'flex',
                     flexDirection: 'column',
-                    transition: 'transform 0.2s, box-shadow 0.2s',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    borderRadius: 2,
                     '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: 3,
+                      transform: 'translateY(-8px)',
+                      boxShadow: '0 12px 24px rgba(0,0,0,0.15)',
                     },
                   }}
+                  onClick={() => handleViewProduct(product.id)}
                 >
-                  <CardContent sx={{ flexGrow: 1 }}>
+                  {/* Product Image */}
+                  {firstSellerProduct?.productInfo?.images?.[0] && (
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        paddingTop: '75%',
+                        backgroundColor: '#f5f5f5',
+                        overflow: 'hidden',
+                      }}
+                    >
+                      <Box
+                        component="img"
+                        src={firstSellerProduct.productInfo.images[0]}
+                        alt={product.name}
+                        sx={{
+                          position: 'absolute',
+                          top: 0,
+                          left: 0,
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          transition: 'transform 0.3s',
+                          '&:hover': {
+                            transform: 'scale(1.05)',
+                          },
+                        }}
+                      />
+                      <Chip
+                        label={
+                          product.archived
+                            ? LL.table.archived()
+                            : LL.table.active()
+                        }
+                        color={product.archived ? 'default' : 'success'}
+                        size="small"
+                        sx={{
+                          position: 'absolute',
+                          top: 12,
+                          right: 12,
+                          fontWeight: 600,
+                        }}
+                      />
+                    </Box>
+                  )}
+
+                  <CardContent sx={{ flexGrow: 1, p: 2.5 }}>
                     <Box
                       sx={{
                         display: 'flex',
                         justifyContent: 'space-between',
                         alignItems: 'flex-start',
-                        mb: 2,
+                        mb: 1.5,
                       }}
                     >
                       <Typography
                         variant="h6"
                         component="h2"
-                        sx={{ fontWeight: 600, flex: 1 }}
+                        sx={{
+                          fontWeight: 700,
+                          flex: 1,
+                          fontSize: '1.1rem',
+                          color: 'text.primary',
+                        }}
                       >
                         {product.name}
                       </Typography>
-                      <Chip
-                        label={product.archived ? 'Archived' : 'Active'}
-                        color={product.archived ? 'default' : 'success'}
-                        size="small"
-                      />
+                      {!firstSellerProduct?.productInfo?.images?.[0] && (
+                        <Chip
+                          label={
+                            product.archived
+                              ? LL.table.archived()
+                              : LL.table.active()
+                          }
+                          color={product.archived ? 'default' : 'success'}
+                          size="small"
+                        />
+                      )}
                     </Box>
 
                     <Stack spacing={1} sx={{ mb: 2 }}>
+                      {product.description && (
+                        <Typography variant="body2" color="text.secondary">
+                          <strong>{LL.form.description()}:</strong>{' '}
+                          {product.description.length > 100
+                            ? `${product.description.substring(0, 100)}...`
+                            : product.description}
+                        </Typography>
+                      )}
+
                       <Typography variant="body2" color="text.secondary">
-                        <strong>Categories:</strong>{' '}
+                        <strong>{LL.products.categories()}:</strong>{' '}
                         {product.categories
                           .map((cat: KickzoneGraphqlTypes.Category) => cat.name)
-                          .join(', ') || 'No categories'}
+                          .join(', ') || LL.products.noCategories()}
                       </Typography>
 
                       {/* Show all seller's variants */}
                       {sellerProducts.length > 0 && (
                         <>
                           <Typography variant="body2" color="text.secondary">
-                            <strong>Sizes:</strong>{' '}
+                            <strong>{LL.products.sizes()}:</strong>{' '}
                             {sellerProducts
                               .map((sp) => sp.productInfo?.size)
                               .filter(Boolean)
@@ -290,7 +365,7 @@ export const SellersProducts = () => {
                               color="text.secondary"
                               component="span"
                             >
-                              <strong>Colors:</strong>{' '}
+                              <strong>{LL.products.colors()}:</strong>{' '}
                             </Typography>
                             {sellerProducts
                               .map((sp) => sp.productInfo?.color)
@@ -338,147 +413,198 @@ export const SellersProducts = () => {
                                 color="text.secondary"
                                 component="span"
                               >
-                                No color (
-                                {
+                                {LL.products.noColor()} (
+                                {formatNumber(
                                   sellerProducts.filter(
                                     (sp) => !sp.productInfo?.color
                                   ).length
-                                }
+                                )}
                                 )
                               </Typography>
                             )}
                           </Box>
                           <Typography variant="body2" color="text.secondary">
-                            <strong>Weight Range:</strong>{' '}
+                            <strong>{LL.products.weightRange()}:</strong>{' '}
                             {(() => {
                               const weights = sellerProducts
                                 .map((sp) => sp.productInfo?.weight)
                                 .filter(Boolean)
                                 .map(Number);
-                              if (weights.length === 0) return 'N/A';
+                              if (weights.length === 0)
+                                return LL.products.notAvailable();
                               if (weights.length === 1)
-                                return `${weights[0]}kg`;
+                                return `${formatNumber(weights[0])}kg`;
                               const min = Math.min(...weights);
                               const max = Math.max(...weights);
                               return min === max
-                                ? `${min}kg`
-                                : `${min}-${max}kg`;
+                                ? `${formatNumber(min)}kg`
+                                : `${formatNumber(min)}-${formatNumber(max)}kg`;
                             })()}
                           </Typography>
                         </>
                       )}
 
                       <Typography variant="body2" color="text.secondary">
-                        <strong>Your Variants:</strong> {sellerProducts.length}
+                        <strong>{LL.products.yourVariants()}:</strong>{' '}
+                        {formatNumber(sellerProducts.length)}
                       </Typography>
 
                       {/* Current Seller's Product Information */}
                       {sellerProducts.length > 0 && (
                         <Box
                           sx={{
-                            mt: 1,
-                            p: 1,
-                            bgcolor: 'grey.50',
-                            borderRadius: 1,
+                            mt: 2,
+                            p: 2,
+                            bgcolor: 'primary.50',
+                            borderRadius: 2,
+                            border: '1px solid',
+                            borderColor: 'primary.100',
                           }}
                         >
                           {sellerProducts.length === 1 ? (
                             <>
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  mb: 1,
+                                }}
                               >
-                                <strong>Your Price:</strong> $
-                                {firstSellerProduct.price}
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                <strong>Stock:</strong>{' '}
-                                {firstSellerProduct.stockQuantity} units
-                              </Typography>
+                                <Typography
+                                  variant="h5"
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: 'primary.main',
+                                  }}
+                                >
+                                  ${formatNumber(firstSellerProduct.price)}
+                                </Typography>
+                                {firstSellerProduct.discount > 0 && (
+                                  <Chip
+                                    label={`-${formatNumber(
+                                      firstSellerProduct.discount
+                                    )}%`}
+                                    color="error"
+                                    size="small"
+                                    sx={{ fontWeight: 600 }}
+                                  />
+                                )}
+                              </Box>
                               {firstSellerProduct.discount > 0 && (
+                                <Typography
+                                  variant="caption"
+                                  color="text.secondary"
+                                  sx={{ display: 'block', mb: 1 }}
+                                >
+                                  {LL.products.finalPrice()}: $
+                                  {formatNumber(
+                                    (
+                                      (firstSellerProduct.price *
+                                        (100 - firstSellerProduct.discount)) /
+                                      100
+                                    ).toFixed(2)
+                                  )}
+                                </Typography>
+                              )}
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                }}
+                              >
                                 <Typography
                                   variant="body2"
                                   color="text.secondary"
                                 >
-                                  <strong>Discount:</strong>{' '}
-                                  {firstSellerProduct.discount}% |{' '}
-                                  <strong>Final Price:</strong> $
-                                  {(
-                                    (firstSellerProduct.price *
-                                      (100 - firstSellerProduct.discount)) /
-                                    100
-                                  ).toFixed(2)}
+                                  {LL.form.stockQuantity()}:
                                 </Typography>
-                              )}
+                                <Chip
+                                  label={`${formatNumber(
+                                    firstSellerProduct.stockQuantity
+                                  )} ${LL.products.units()}`}
+                                  size="small"
+                                  color={
+                                    firstSellerProduct.stockQuantity > 10
+                                      ? 'success'
+                                      : firstSellerProduct.stockQuantity > 0
+                                      ? 'warning'
+                                      : 'error'
+                                  }
+                                  variant="outlined"
+                                />
+                              </Box>
                             </>
                           ) : (
                             <>
                               <Typography
-                                variant="body2"
-                                color="text.secondary"
+                                variant="h6"
+                                sx={{
+                                  fontWeight: 700,
+                                  color: 'primary.main',
+                                  mb: 1,
+                                }}
                               >
-                                <strong>Price Range:</strong> $
-                                {Math.min(
-                                  ...sellerProducts.map((sp) => sp.price)
+                                $
+                                {formatNumber(
+                                  Math.min(
+                                    ...sellerProducts.map((sp) => sp.price)
+                                  )
                                 )}{' '}
                                 - $
-                                {Math.max(
-                                  ...sellerProducts.map((sp) => sp.price)
+                                {formatNumber(
+                                  Math.max(
+                                    ...sellerProducts.map((sp) => sp.price)
+                                  )
                                 )}
                               </Typography>
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                <strong>Total Stock:</strong>{' '}
-                                {sellerProducts.reduce(
-                                  (sum, sp) => sum + sp.stockQuantity,
-                                  0
-                                )}{' '}
-                                units
-                              </Typography>
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                <strong>Variants:</strong>{' '}
-                                {sellerProducts.length} different pricing
-                              </Typography>
+                              <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
+                                <Chip
+                                  label={`${formatNumber(
+                                    sellerProducts.reduce(
+                                      (sum, sp) => sum + sp.stockQuantity,
+                                      0
+                                    )
+                                  )} ${LL.products.unitsInStock()}`}
+                                  size="small"
+                                  color="success"
+                                  variant="outlined"
+                                />
+                                <Chip
+                                  label={`${formatNumber(
+                                    sellerProducts.length
+                                  )} ${LL.products.variants()}`}
+                                  size="small"
+                                  color="info"
+                                  variant="outlined"
+                                />
+                              </Stack>
                             </>
                           )}
                         </Box>
                       )}
                     </Stack>
-
-                    {product.description && (
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        sx={{
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {product.description}
-                      </Typography>
-                    )}
                   </CardContent>
 
-                  <CardActions sx={{ justifyContent: 'center', p: 2 }}>
-                    <Tooltip title="View Details">
-                      <IconButton
-                        size="small"
-                        onClick={() => handleViewProduct(product.id)}
-                      >
-                        <ViewIcon />
-                      </IconButton>
-                    </Tooltip>
+                  <CardActions
+                    sx={{
+                      justifyContent: 'center',
+                      p: 2,
+                      borderTop: '1px solid #e0e0e0',
+                    }}
+                  >
+                    <Button
+                      size="small"
+                      startIcon={<ViewIcon />}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleViewProduct(product.id);
+                      }}
+                      sx={{ textTransform: 'none' }}
+                    >
+                      {LL.button.viewDetails()}
+                    </Button>
                   </CardActions>
                 </Card>
               </Grid>
@@ -488,28 +614,70 @@ export const SellersProducts = () => {
 
         {/* Load More */}
         {hasMoreSellersProducts && (
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Button onClick={loadMoreSellersProducts} variant="outlined">
-              Load More
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
+            <Button
+              onClick={loadMoreSellersProducts}
+              variant="outlined"
+              size="large"
+              sx={{ minWidth: 200, textTransform: 'none' }}
+            >
+              {LL.products.loadMore()}
             </Button>
           </Box>
         )}
 
         {/* Empty State */}
         {sellersProducts.length === 0 && !isSellersProductsLoading && (
-          <Box sx={{ textAlign: 'center', py: 8 }}>
-            <Typography variant="h6" color="text.secondary" sx={{ mb: 2 }}>
-              No products found
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 10,
+              px: 3,
+              backgroundColor: '#f9fafb',
+              borderRadius: 3,
+              border: '2px dashed #e0e0e0',
+            }}
+          >
+            <Box
+              sx={{
+                width: 120,
+                height: 120,
+                margin: '0 auto 24px',
+                backgroundColor: '#e3f2fd',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}
+            >
+              <AddIcon sx={{ fontSize: 60, color: 'primary.main' }} />
+            </Box>
+            <Typography
+              variant="h5"
+              sx={{ fontWeight: 700, mb: 1.5, color: 'text.primary' }}
+            >
+              {LL.products.noProductsFound()}
             </Typography>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Start by adding your first product to sell
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ mb: 4, maxWidth: 500, margin: '0 auto 32px' }}
+            >
+              {LL.products.startBySelling()}
             </Typography>
             <Button
               variant="contained"
+              size="large"
               startIcon={<AddIcon />}
               onClick={handleAddProduct}
+              sx={{
+                textTransform: 'none',
+                px: 4,
+                py: 1.5,
+                fontSize: '1rem',
+              }}
             >
-              Add Your First Product
+              {LL.products.addFirstProduct()}
             </Button>
           </Box>
         )}
@@ -543,12 +711,13 @@ export const SellersProducts = () => {
                 <Grid container spacing={3}>
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                      Product Information
+                      {LL.products.productInformationTitle()}
                     </Typography>
                     <Stack spacing={2}>
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          <strong>Name:</strong> {selectedProductForView.name}
+                          <strong>{LL.table.name()}:</strong>{' '}
+                          {selectedProductForView.name}
                         </Typography>
                       </Box>
                       <Box>
@@ -557,12 +726,12 @@ export const SellersProducts = () => {
                           color="text.secondary"
                           component="div"
                         >
-                          <strong>Status:</strong>{' '}
+                          <strong>{LL.form.status()}:</strong>{' '}
                           <Chip
                             label={
                               selectedProductForView.archived
-                                ? 'Archived'
-                                : 'Active'
+                                ? LL.table.archived()
+                                : LL.table.active()
                             }
                             color={
                               selectedProductForView.archived
@@ -575,24 +744,26 @@ export const SellersProducts = () => {
                       </Box>
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          <strong>Categories:</strong>{' '}
+                          <strong>{LL.products.categories()}:</strong>{' '}
                           {selectedProductForView.categories
                             .map(
                               (cat: KickzoneGraphqlTypes.Category) => cat.name
                             )
-                            .join(', ') || 'No categories'}
+                            .join(', ') || LL.products.noCategories()}
                         </Typography>
                       </Box>
                       <Box>
                         <Typography variant="body2" color="text.secondary">
-                          <strong>Your Variants:</strong>{' '}
-                          {selectedProductForView.sellerProducts?.length || 0}
+                          <strong>{LL.products.yourVariants()}:</strong>{' '}
+                          {formatNumber(
+                            selectedProductForView.sellerProducts?.length || 0
+                          )}
                         </Typography>
                       </Box>
                       {selectedProductForView.description && (
                         <Box>
                           <Typography variant="body2" color="text.secondary">
-                            <strong>Description:</strong>
+                            <strong>{LL.form.description()}:</strong>
                           </Typography>
                           <Typography variant="body2" sx={{ mt: 1 }}>
                             {selectedProductForView.description}
@@ -604,7 +775,7 @@ export const SellersProducts = () => {
 
                   <Grid size={{ xs: 12, md: 6 }}>
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                      Your Product Variants
+                      {LL.products.yourProductVariantsTitle()}
                     </Typography>
                     <Stack spacing={2}>
                       {selectedProductForView.sellerProducts?.map(
@@ -625,9 +796,10 @@ export const SellersProducts = () => {
                                   }}
                                 >
                                   <Typography variant="subtitle2">
-                                    Your Variant {index + 1}
+                                    {LL.products.yourVariant()}{' '}
+                                    {formatNumber(index + 1)}
                                   </Typography>
-                                  <Tooltip title="Edit this variant">
+                                  <Tooltip title={LL.button.editVariant()}>
                                     <IconButton
                                       size="small"
                                       color="primary"
@@ -647,16 +819,16 @@ export const SellersProducts = () => {
                                     variant="body2"
                                     color="text.secondary"
                                   >
-                                    <strong>Size:</strong>{' '}
+                                    <strong>{LL.products.size()}:</strong>{' '}
                                     {sellerProduct.productInfo.size}
                                   </Typography>
                                   <Typography
                                     variant="body2"
                                     color="text.secondary"
                                   >
-                                    <strong>Color:</strong>{' '}
+                                    <strong>{LL.products.color()}:</strong>{' '}
                                     {sellerProduct.productInfo.color?.name ||
-                                      'No color specified'}
+                                      LL.products.noColorSpecified()}
                                     {sellerProduct.productInfo.color && (
                                       <Box
                                         component="span"
@@ -679,48 +851,55 @@ export const SellersProducts = () => {
                                     variant="body2"
                                     color="text.secondary"
                                   >
-                                    <strong>Weight:</strong>{' '}
-                                    {sellerProduct.productInfo.weight}
+                                    <strong>{LL.products.weight()}:</strong>{' '}
+                                    {formatNumber(
+                                      sellerProduct.productInfo.weight
+                                    )}
                                     kg
                                   </Typography>
                                   <Typography
                                     variant="body2"
                                     color="text.secondary"
                                   >
-                                    <strong>Your Price:</strong> $
-                                    {sellerProduct.price}
+                                    <strong>{LL.products.yourPrice()}:</strong>{' '}
+                                    ${formatNumber(sellerProduct.price)}
                                   </Typography>
                                   <Typography
                                     variant="body2"
                                     color="text.secondary"
                                   >
-                                    <strong>Cost Price:</strong> $
-                                    {sellerProduct.costPrice}
+                                    <strong>{LL.products.costPrice()}:</strong>{' '}
+                                    $
+                                    {formatNumber(sellerProduct.costPrice || 0)}
                                   </Typography>
                                   <Typography
                                     variant="body2"
                                     color="text.secondary"
                                   >
-                                    <strong>Discount:</strong>{' '}
-                                    {sellerProduct.discount}%
+                                    <strong>{LL.products.discount()}:</strong>{' '}
+                                    {formatNumber(sellerProduct.discount)}%
                                   </Typography>
                                   <Typography
                                     variant="body2"
                                     color="text.secondary"
                                   >
-                                    <strong>Final Price:</strong> $
-                                    {(
-                                      (sellerProduct.price *
-                                        (100 - sellerProduct.discount)) /
-                                      100
-                                    ).toFixed(2)}
+                                    <strong>{LL.products.finalPrice()}:</strong>{' '}
+                                    $
+                                    {formatNumber(
+                                      (
+                                        (sellerProduct.price *
+                                          (100 - sellerProduct.discount)) /
+                                        100
+                                      ).toFixed(2)
+                                    )}
                                   </Typography>
                                   <Typography
                                     variant="body2"
                                     color="text.secondary"
                                   >
-                                    <strong>Stock:</strong>{' '}
-                                    {sellerProduct.stockQuantity} units
+                                    <strong>{LL.products.stock()}:</strong>{' '}
+                                    {formatNumber(sellerProduct.stockQuantity)}{' '}
+                                    {LL.products.units()}
                                   </Typography>
                                   {sellerProduct.productInfo.images &&
                                     sellerProduct.productInfo.images.length >
@@ -729,12 +908,12 @@ export const SellersProducts = () => {
                                         variant="body2"
                                         color="text.secondary"
                                       >
-                                        <strong>Images:</strong>{' '}
-                                        {
+                                        <strong>{LL.products.images()}:</strong>{' '}
+                                        {formatNumber(
                                           sellerProduct.productInfo.images
                                             .length
-                                        }{' '}
-                                        image(s)
+                                        )}{' '}
+                                        {LL.products.image()}(s)
                                       </Typography>
                                     )}
                                 </Stack>
@@ -750,7 +929,7 @@ export const SellersProducts = () => {
             )}
           </DialogContent>
           <DialogActions>
-            <Button onClick={handleCloseViewModal}>Close</Button>
+            <Button onClick={handleCloseViewModal}>{LL.button.close()}</Button>
           </DialogActions>
         </Dialog>
       </Box>

@@ -105,7 +105,7 @@ export function useSellersProductManagement() {
 
   const updateProduct = async (
     formData: KickzoneGraphqlTypes.UpdateSellerProductInput,
-    productId: number
+    productId: string | number
   ) => {
     if (!user?.id) {
       throw new Error('User not authenticated');
@@ -117,7 +117,7 @@ export function useSellersProductManagement() {
 
     const variables = {
       input: {
-        id: productId,
+        id: String(productId),
         productInfoId: formData.productInfoId,
         price: formData.price,
         costPrice: formData.costPrice,

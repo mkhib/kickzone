@@ -16,6 +16,7 @@ interface LanguageContextType {
   setLocale: (locale: Locales) => void;
   availableLocales: { code: Locales; name: string; nativeName: string }[];
   isLoading: boolean;
+  formatNumber: (num: number | string) => string;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -29,6 +30,20 @@ const AVAILABLE_LOCALES = [
   { code: 'en' as Locales, name: 'English', nativeName: 'English' },
   { code: 'fa' as Locales, name: 'Farsi', nativeName: 'فارسی' },
 ];
+
+// Convert Western numerals to Farsi numerals
+const toFarsiNumber = (num: number | string): string => {
+  const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return String(num).replace(/\d/g, (digit) => farsiDigits[parseInt(digit)]);
+};
+
+// Format number based on locale
+const formatNumberByLocale = (
+  num: number | string,
+  locale: Locales
+): string => {
+  return locale === 'fa' ? toFarsiNumber(num) : String(num);
+};
 
 interface LanguageProviderProps {
   children: ReactNode;
@@ -101,11 +116,16 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     }
   };
 
+  const formatNumber = (num: number | string): string => {
+    return formatNumberByLocale(num, currentLocale);
+  };
+
   const value: LanguageContextType = {
     currentLocale,
     setLocale,
     availableLocales: AVAILABLE_LOCALES,
     isLoading,
+    formatNumber,
   };
 
   return (

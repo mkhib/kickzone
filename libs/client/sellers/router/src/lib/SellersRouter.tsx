@@ -34,7 +34,7 @@ export function SellersRouter() {
           element={<SellersSetupPassword />}
         />
         <Route
-          path="/language-settings"
+          path={SELLER_ROUTES.LANGUAGE_SETTINGS}
           element={<LanguageComponents LayoutComponent={SellersLayout} />}
         />
         <Route path="/unauthorized" element={<SellersUnauthorizedScreen />} />

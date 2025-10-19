@@ -582,6 +582,10 @@ type RootTranslation = {
 		 */
 		units: string
 		/**
+		 * u​n​i​t​s​ ​i​n​ ​s​t​o​c​k
+		 */
+		unitsInStock: string
+		/**
 		 * I​m​a​g​e​s
 		 */
 		images: string
@@ -602,6 +606,34 @@ type RootTranslation = {
 		 */
 		yourVariants: string
 		/**
+		 * S​i​z​e​s
+		 */
+		sizes: string
+		/**
+		 * N​o​ ​c​o​l​o​r
+		 */
+		noColor: string
+		/**
+		 * W​e​i​g​h​t​ ​R​a​n​g​e
+		 */
+		weightRange: string
+		/**
+		 * N​/​A
+		 */
+		notAvailable: string
+		/**
+		 * P​r​o​d​u​c​t​ ​I​n​f​o​r​m​a​t​i​o​n
+		 */
+		productInformationTitle: string
+		/**
+		 * Y​o​u​r​ ​P​r​o​d​u​c​t​ ​V​a​r​i​a​n​t​s
+		 */
+		yourProductVariantsTitle: string
+		/**
+		 * V​a​r​i​a​n​t
+		 */
+		variant: string
+		/**
 		 * P​r​i​c​e​ ​R​a​n​g​e
 		 */
 		priceRange: string
@@ -621,6 +653,14 @@ type RootTranslation = {
 		 * L​o​a​d​ ​M​o​r​e
 		 */
 		loadMore: string
+		/**
+		 * S​t​a​r​t​ ​b​y​ ​a​d​d​i​n​g​ ​y​o​u​r​ ​f​i​r​s​t​ ​p​r​o​d​u​c​t​ ​t​o​ ​s​e​l​l
+		 */
+		startBySelling: string
+		/**
+		 * A​d​d​ ​Y​o​u​r​ ​F​i​r​s​t​ ​P​r​o​d​u​c​t
+		 */
+		addFirstProduct: string
 		/**
 		 * C​l​o​s​e
 		 */
@@ -711,6 +751,92 @@ type RootTranslation = {
 		 * E​r​r​o​r​ ​l​o​a​d​i​n​g​ ​p​r​o​d​u​c​t​s
 		 */
 		errorLoadingProducts: string
+	}
+	orders: {
+		/**
+		 * M​y​ ​O​r​d​e​r​s
+		 */
+		myOrders: string
+		/**
+		 * O​r​d​e​r
+		 */
+		orderNumber: string
+		/**
+		 * N​o​ ​o​r​d​e​r​s​ ​f​o​u​n​d
+		 */
+		noOrdersFound: string
+		/**
+		 * E​r​r​o​r​ ​l​o​a​d​i​n​g​ ​o​r​d​e​r​s
+		 */
+		errorLoadingOrders: string
+		/**
+		 * C​u​s​t​o​m​e​r​ ​I​n​f​o​r​m​a​t​i​o​n
+		 */
+		customerInformation: string
+		/**
+		 * O​r​d​e​r​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		orderManagement: string
+		/**
+		 * O​r​d​e​r​ ​I​t​e​m​s
+		 */
+		orderItems: string
+		/**
+		 * C​h​a​n​g​e​ ​S​t​a​t​u​s
+		 */
+		changeStatus: string
+		/**
+		 * C​h​a​n​g​e​ ​O​r​d​e​r​ ​S​t​a​t​u​s
+		 */
+		changeOrderStatus: string
+		/**
+		 * T​r​a​c​k​i​n​g​ ​N​u​m​b​e​r
+		 */
+		trackingNumber: string
+		/**
+		 * N​o​t​ ​s​e​t
+		 */
+		notSet: string
+		/**
+		 * C​u​s​t​o​m​e​r​ ​N​o​t​e​s
+		 */
+		customerNotes: string
+		/**
+		 * i​t​e​m
+		 */
+		item: string
+		/**
+		 * i​t​e​m​s
+		 */
+		items: string
+		/**
+		 * P​e​n​d​i​n​g
+		 */
+		pending: string
+		/**
+		 * C​o​n​f​i​r​m​e​d
+		 */
+		confirmed: string
+		/**
+		 * P​r​o​c​e​s​s​i​n​g
+		 */
+		processing: string
+		/**
+		 * S​h​i​p​p​e​d
+		 */
+		shipped: string
+		/**
+		 * D​e​l​i​v​e​r​e​d
+		 */
+		delivered: string
+		/**
+		 * C​a​n​c​e​l​l​e​d
+		 */
+		cancelled: string
+		/**
+		 * R​e​f​u​n​d​e​d
+		 */
+		refunded: string
 	}
 	status: {
 		/**
@@ -818,7 +944,7 @@ type RootTranslation = {
 		 */
 		emailVerificationSuccess: string
 		/**
-		 * W​r​o​n​g​ ​E​m​a​i​l​ ​o​r​ ​P​a​s​s​w​o​r​d
+		 * I​n​c​o​r​r​e​c​t​ ​c​r​e​d​e​n​t​i​a​l​s
 		 */
 		wrongEmailOrPassword: string
 		/**
@@ -916,7 +1042,7 @@ type RootTranslation = {
 		 */
 		invalidToken: string
 		/**
-		 * W​r​o​n​g​ ​e​m​a​i​l​ ​o​r​ ​p​a​s​s​w​o​r​d​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
+		 * I​n​c​o​r​r​e​c​t​ ​c​r​e​d​e​n​t​i​a​l​s​.
 		 */
 		wrongEmailOrPassword: string
 	}
@@ -1615,6 +1741,10 @@ export type TranslationFunctions = {
 		 */
 		units: () => LocalizedString
 		/**
+		 * units in stock
+		 */
+		unitsInStock: () => LocalizedString
+		/**
 		 * Images
 		 */
 		images: () => LocalizedString
@@ -1635,6 +1765,34 @@ export type TranslationFunctions = {
 		 */
 		yourVariants: () => LocalizedString
 		/**
+		 * Sizes
+		 */
+		sizes: () => LocalizedString
+		/**
+		 * No color
+		 */
+		noColor: () => LocalizedString
+		/**
+		 * Weight Range
+		 */
+		weightRange: () => LocalizedString
+		/**
+		 * N/A
+		 */
+		notAvailable: () => LocalizedString
+		/**
+		 * Product Information
+		 */
+		productInformationTitle: () => LocalizedString
+		/**
+		 * Your Product Variants
+		 */
+		yourProductVariantsTitle: () => LocalizedString
+		/**
+		 * Variant
+		 */
+		variant: () => LocalizedString
+		/**
 		 * Price Range
 		 */
 		priceRange: () => LocalizedString
@@ -1654,6 +1812,14 @@ export type TranslationFunctions = {
 		 * Load More
 		 */
 		loadMore: () => LocalizedString
+		/**
+		 * Start by adding your first product to sell
+		 */
+		startBySelling: () => LocalizedString
+		/**
+		 * Add Your First Product
+		 */
+		addFirstProduct: () => LocalizedString
 		/**
 		 * Close
 		 */
@@ -1742,6 +1908,92 @@ export type TranslationFunctions = {
 		 * Error loading products
 		 */
 		errorLoadingProducts: () => LocalizedString
+	}
+	orders: {
+		/**
+		 * My Orders
+		 */
+		myOrders: () => LocalizedString
+		/**
+		 * Order
+		 */
+		orderNumber: () => LocalizedString
+		/**
+		 * No orders found
+		 */
+		noOrdersFound: () => LocalizedString
+		/**
+		 * Error loading orders
+		 */
+		errorLoadingOrders: () => LocalizedString
+		/**
+		 * Customer Information
+		 */
+		customerInformation: () => LocalizedString
+		/**
+		 * Order Management
+		 */
+		orderManagement: () => LocalizedString
+		/**
+		 * Order Items
+		 */
+		orderItems: () => LocalizedString
+		/**
+		 * Change Status
+		 */
+		changeStatus: () => LocalizedString
+		/**
+		 * Change Order Status
+		 */
+		changeOrderStatus: () => LocalizedString
+		/**
+		 * Tracking Number
+		 */
+		trackingNumber: () => LocalizedString
+		/**
+		 * Not set
+		 */
+		notSet: () => LocalizedString
+		/**
+		 * Customer Notes
+		 */
+		customerNotes: () => LocalizedString
+		/**
+		 * item
+		 */
+		item: () => LocalizedString
+		/**
+		 * items
+		 */
+		items: () => LocalizedString
+		/**
+		 * Pending
+		 */
+		pending: () => LocalizedString
+		/**
+		 * Confirmed
+		 */
+		confirmed: () => LocalizedString
+		/**
+		 * Processing
+		 */
+		processing: () => LocalizedString
+		/**
+		 * Shipped
+		 */
+		shipped: () => LocalizedString
+		/**
+		 * Delivered
+		 */
+		delivered: () => LocalizedString
+		/**
+		 * Cancelled
+		 */
+		cancelled: () => LocalizedString
+		/**
+		 * Refunded
+		 */
+		refunded: () => LocalizedString
 	}
 	status: {
 		/**
@@ -1849,7 +2101,7 @@ export type TranslationFunctions = {
 		 */
 		emailVerificationSuccess: () => LocalizedString
 		/**
-		 * Wrong Email or Password
+		 * Incorrect credentials
 		 */
 		wrongEmailOrPassword: () => LocalizedString
 		/**
@@ -1947,7 +2199,7 @@ export type TranslationFunctions = {
 		 */
 		invalidToken: () => LocalizedString
 		/**
-		 * Wrong email or password. Please try again.
+		 * Incorrect credentials.
 		 */
 		wrongEmailOrPassword: () => LocalizedString
 	}

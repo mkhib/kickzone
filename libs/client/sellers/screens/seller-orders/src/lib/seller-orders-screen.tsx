@@ -31,6 +31,10 @@ import { ExpandMore, Edit, Save, Cancel } from '@mui/icons-material';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useSellerOrders } from '@kickzone-workspace/orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import {
+  useI18nContext,
+  useLanguageContext,
+} from '@kickzone-workspace/shared-i18n';
 
 const getStatusColor = (
   status: KickzoneGraphqlTypes.OrderStatus
@@ -62,17 +66,10 @@ const getStatusColor = (
   }
 };
 
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-
 export function SellerOrdersScreen() {
+  const { LL } = useI18nContext();
+  const { currentLocale, formatNumber } = useLanguageContext();
+
   const [expandedOrder, setExpandedOrder] = useState<string | false>(false);
   const [selectedStatus, setSelectedStatus] = useState<
     KickzoneGraphqlTypes.OrderStatus | undefined
@@ -84,6 +81,39 @@ export function SellerOrdersScreen() {
   const [newStatus, setNewStatus] = useState<KickzoneGraphqlTypes.OrderStatus>(
     KickzoneGraphqlTypes.OrderStatus.Pending
   );
+
+  // Translate order status
+  const getStatusLabel = (status: KickzoneGraphqlTypes.OrderStatus): string => {
+    switch (status) {
+      case KickzoneGraphqlTypes.OrderStatus.Pending:
+        return LL.orders.pending();
+      case KickzoneGraphqlTypes.OrderStatus.Confirmed:
+        return LL.orders.confirmed();
+      case KickzoneGraphqlTypes.OrderStatus.Processing:
+        return LL.orders.processing();
+      case KickzoneGraphqlTypes.OrderStatus.Shipped:
+        return LL.orders.shipped();
+      case KickzoneGraphqlTypes.OrderStatus.Delivered:
+        return LL.orders.delivered();
+      case KickzoneGraphqlTypes.OrderStatus.Cancelled:
+        return LL.orders.cancelled();
+      case KickzoneGraphqlTypes.OrderStatus.Refunded:
+        return LL.orders.refunded();
+      default:
+        return status;
+    }
+  };
+
+  // Format date according to locale
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString(currentLocale, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   const {
     orders,
@@ -163,7 +193,7 @@ export function SellerOrdersScreen() {
     return (
       <SellersLayout>
         <Alert severity="error">
-          Error loading orders: {ordersError.message}
+          {LL.orders.errorLoadingOrders()}: {ordersError.message}
         </Alert>
       </SellersLayout>
     );
@@ -173,39 +203,39 @@ export function SellerOrdersScreen() {
     <SellersLayout>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          My Orders
+          {LL.orders.myOrders()}
         </Typography>
 
         {/* Status Filter */}
         <Box sx={{ mb: 3 }}>
           <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>Filter by Status</InputLabel>
+            <InputLabel>{LL.button.filterByStatus()}</InputLabel>
             <Select
               value={selectedStatus || ''}
               onChange={(e) => handleStatusFilter(e.target.value)}
-              label="Filter by Status"
+              label={LL.button.filterByStatus()}
             >
-              <MenuItem value="">All Orders</MenuItem>
+              <MenuItem value="">{LL.table.allOrders()}</MenuItem>
               <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Pending}>
-                Pending
+                {LL.orders.pending()}
               </MenuItem>
               <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Confirmed}>
-                Confirmed
+                {LL.orders.confirmed()}
               </MenuItem>
               <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Processing}>
-                Processing
+                {LL.orders.processing()}
               </MenuItem>
               <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Shipped}>
-                Shipped
+                {LL.orders.shipped()}
               </MenuItem>
               <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Delivered}>
-                Delivered
+                {LL.orders.delivered()}
               </MenuItem>
               <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Cancelled}>
-                Cancelled
+                {LL.orders.cancelled()}
               </MenuItem>
               <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Refunded}>
-                Refunded
+                {LL.orders.refunded()}
               </MenuItem>
             </Select>
           </FormControl>
@@ -214,7 +244,7 @@ export function SellerOrdersScreen() {
         {orders.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography variant="h6" color="text.secondary">
-              No orders found
+              {LL.orders.noOrdersFound()}
             </Typography>
           </Box>
         ) : (
@@ -226,33 +256,60 @@ export function SellerOrdersScreen() {
                   onChange={() => handleExpandOrder(order.id)}
                 >
                   <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Grid container spacing={2} alignItems="center">
-                      <Grid size={{ xs: 12, sm: 3 }}>
-                        <Typography variant="h6">
-                          Order #{order.orderNumber}
+                    <Grid
+                      container
+                      spacing={2}
+                      alignItems="center"
+                      sx={{ width: '100%', pr: 2 }}
+                    >
+                      <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }}
+                          noWrap
+                        >
+                          {LL.orders.orderNumber()} #
+                          {formatNumber(order.orderNumber)}
                         </Typography>
                       </Grid>
-                      <Grid size={{ xs: 12, sm: 2 }}>
+                      <Grid size={{ xs: 6, sm: 3, md: 2 }}>
                         <Chip
-                          label={order.status}
+                          label={getStatusLabel(order.status)}
                           color={getStatusColor(order.status)}
                           size="small"
+                          sx={{ maxWidth: '100%', fontSize: '0.75rem' }}
                         />
                       </Grid>
-                      <Grid size={{ xs: 12, sm: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
+                      <Grid size={{ xs: 6, sm: 3, md: 2 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                          noWrap
+                        >
                           {formatDate(order.createdAt)}
                         </Typography>
                       </Grid>
-                      <Grid size={{ xs: 12, sm: 2 }}>
-                        <Typography variant="h6">
-                          ${order.total.toFixed(2)}
+                      <Grid size={{ xs: 6, sm: 6, md: 2 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ fontSize: { xs: '0.95rem', sm: '1.1rem' } }}
+                          noWrap
+                        >
+                          ${formatNumber(order.total.toFixed(2))}
                         </Typography>
                       </Grid>
-                      <Grid size={{ xs: 12, sm: 3 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          {order.items.length} item
-                          {order.items.length !== 1 ? 's' : ''}
+                      <Grid size={{ xs: 6, sm: 6, md: 3 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{ fontSize: { xs: '0.75rem', sm: '0.875rem' } }}
+                          noWrap
+                        >
+                          {formatNumber(order.items.length)}{' '}
+                          {order.items.length !== 1
+                            ? LL.orders.items()
+                            : LL.orders.item()}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -264,22 +321,27 @@ export function SellerOrdersScreen() {
                       <Grid container spacing={3} sx={{ mb: 3 }}>
                         <Grid size={{ xs: 12, md: 6 }}>
                           <Typography variant="h6" gutterBottom>
-                            Customer Information
+                            {LL.orders.customerInformation()}
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Name:</strong> {order.customerName}
+                            <strong>{LL.form.fullName()}:</strong>{' '}
+                            {order.customerName}
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Email:</strong> {order.customerEmail}
+                            <strong>{LL.form.email()}:</strong>{' '}
+                            {order.customerEmail}
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Phone:</strong> {order.customerPhone}
+                            <strong>{LL.form.phone()}:</strong>{' '}
+                            {order.customerPhone}
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Address:</strong> {order.shippingAddress}
+                            <strong>{LL.form.address()}:</strong>{' '}
+                            {order.shippingAddress}
                           </Typography>
                           <Typography variant="body2">
-                            {order.city}, {order.state} {order.zipCode}
+                            {order.city}, {order.state}{' '}
+                            {formatNumber(order.zipCode)}
                           </Typography>
                           <Typography variant="body2">
                             {order.country}
@@ -288,12 +350,13 @@ export function SellerOrdersScreen() {
 
                         <Grid size={{ xs: 12, md: 6 }}>
                           <Typography variant="h6" gutterBottom>
-                            Order Management
+                            {LL.orders.orderManagement()}
                           </Typography>
 
                           <Box sx={{ mb: 2 }}>
                             <Typography variant="body2" gutterBottom>
-                              <strong>Status:</strong> {order.status}
+                              <strong>{LL.form.status()}:</strong>{' '}
+                              {getStatusLabel(order.status)}
                             </Typography>
                             <Button
                               variant="outlined"
@@ -301,13 +364,13 @@ export function SellerOrdersScreen() {
                               onClick={() => handleStatusChange(order.id)}
                               sx={{ mr: 1 }}
                             >
-                              Change Status
+                              {LL.orders.changeStatus()}
                             </Button>
                           </Box>
 
                           <Box sx={{ mb: 2 }}>
                             <Typography variant="body2" gutterBottom>
-                              <strong>Tracking Number:</strong>
+                              <strong>{LL.orders.trackingNumber()}:</strong>
                             </Typography>
                             {editingOrder === order.id ? (
                               <Box
@@ -323,21 +386,21 @@ export function SellerOrdersScreen() {
                                   onChange={(e) =>
                                     setTrackingNumber(e.target.value)
                                   }
-                                  placeholder="Enter tracking number"
+                                  placeholder={LL.form.trackingNumber()}
                                 />
                                 <Button
                                   size="small"
                                   startIcon={<Save />}
                                   onClick={() => handleSaveTracking(order.id)}
                                 >
-                                  Save
+                                  {LL.button.save()}
                                 </Button>
                                 <Button
                                   size="small"
                                   startIcon={<Cancel />}
                                   onClick={handleCancelEdit}
                                 >
-                                  Cancel
+                                  {LL.button.cancel()}
                                 </Button>
                               </Box>
                             ) : (
@@ -349,7 +412,7 @@ export function SellerOrdersScreen() {
                                 }}
                               >
                                 <Typography variant="body2">
-                                  {order.trackingNumber || 'Not set'}
+                                  {order.trackingNumber || LL.orders.notSet()}
                                 </Typography>
                                 <Button
                                   size="small"
@@ -361,7 +424,7 @@ export function SellerOrdersScreen() {
                                     )
                                   }
                                 >
-                                  Edit
+                                  {LL.button.edit()}
                                 </Button>
                               </Box>
                             )}
@@ -374,9 +437,9 @@ export function SellerOrdersScreen() {
                               mb: 1,
                             }}
                           >
-                            <Typography>Subtotal:</Typography>
+                            <Typography>{LL.checkout.subtotal()}:</Typography>
                             <Typography>
-                              ${order.subtotal.toFixed(2)}
+                              ${formatNumber(order.subtotal.toFixed(2))}
                             </Typography>
                           </Box>
                           <Box
@@ -386,9 +449,9 @@ export function SellerOrdersScreen() {
                               mb: 1,
                             }}
                           >
-                            <Typography>Shipping:</Typography>
+                            <Typography>{LL.checkout.shipping()}:</Typography>
                             <Typography>
-                              ${order.shippingCost.toFixed(2)}
+                              ${formatNumber(order.shippingCost.toFixed(2))}
                             </Typography>
                           </Box>
                           <Divider sx={{ my: 1 }} />
@@ -399,15 +462,18 @@ export function SellerOrdersScreen() {
                               mb: 1,
                             }}
                           >
-                            <Typography variant="h6">Total:</Typography>
                             <Typography variant="h6">
-                              ${order.total.toFixed(2)}
+                              {LL.checkout.total()}:
+                            </Typography>
+                            <Typography variant="h6">
+                              ${formatNumber(order.total.toFixed(2))}
                             </Typography>
                           </Box>
                           {order.notes && (
                             <Box sx={{ mt: 2 }}>
                               <Typography variant="body2">
-                                <strong>Customer Notes:</strong> {order.notes}
+                                <strong>{LL.orders.customerNotes()}:</strong>{' '}
+                                {order.notes}
                               </Typography>
                             </Box>
                           )}
@@ -416,16 +482,16 @@ export function SellerOrdersScreen() {
 
                       {/* Order Items */}
                       <Typography variant="h6" gutterBottom>
-                        Order Items
+                        {LL.orders.orderItems()}
                       </Typography>
                       <TableContainer component={Paper} variant="outlined">
                         <Table>
                           <TableHead>
                             <TableRow>
-                              <TableCell>Product</TableCell>
-                              <TableCell>Quantity</TableCell>
-                              <TableCell>Unit Price</TableCell>
-                              <TableCell>Total</TableCell>
+                              <TableCell>{LL.table.product()}</TableCell>
+                              <TableCell>{LL.table.quantity()}</TableCell>
+                              <TableCell>{LL.table.unitPrice()}</TableCell>
+                              <TableCell>{LL.table.total()}</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -473,12 +539,14 @@ export function SellerOrdersScreen() {
                                       </Box>
                                     </Box>
                                   </TableCell>
-                                  <TableCell>{item.quantity}</TableCell>
                                   <TableCell>
-                                    ${item.unitPrice.toFixed(2)}
+                                    {formatNumber(item.quantity)}
                                   </TableCell>
                                   <TableCell>
-                                    ${item.totalPrice.toFixed(2)}
+                                    ${formatNumber(item.unitPrice.toFixed(2))}
+                                  </TableCell>
+                                  <TableCell>
+                                    ${formatNumber(item.totalPrice.toFixed(2))}
                                   </TableCell>
                                 </TableRow>
                               )
@@ -501,10 +569,10 @@ export function SellerOrdersScreen() {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Change Order Status</DialogTitle>
+          <DialogTitle>{LL.orders.changeOrderStatus()}</DialogTitle>
           <DialogContent>
             <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>New Status</InputLabel>
+              <InputLabel>{LL.form.newStatus()}</InputLabel>
               <Select
                 value={newStatus}
                 onChange={(e) =>
@@ -512,36 +580,38 @@ export function SellerOrdersScreen() {
                     e.target.value as KickzoneGraphqlTypes.OrderStatus
                   )
                 }
-                label="New Status"
+                label={LL.form.newStatus()}
               >
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Pending}>
-                  Pending
+                  {LL.orders.pending()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Confirmed}>
-                  Confirmed
+                  {LL.orders.confirmed()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Processing}>
-                  Processing
+                  {LL.orders.processing()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Shipped}>
-                  Shipped
+                  {LL.orders.shipped()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Delivered}>
-                  Delivered
+                  {LL.orders.delivered()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Cancelled}>
-                  Cancelled
+                  {LL.orders.cancelled()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Refunded}>
-                  Refunded
+                  {LL.orders.refunded()}
                 </MenuItem>
               </Select>
             </FormControl>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setStatusDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setStatusDialogOpen(false)}>
+              {LL.button.cancel()}
+            </Button>
             <Button variant="contained" onClick={handleUpdateStatus}>
-              Update Status
+              {LL.button.updateStatus()}
             </Button>
           </DialogActions>
         </Dialog>
