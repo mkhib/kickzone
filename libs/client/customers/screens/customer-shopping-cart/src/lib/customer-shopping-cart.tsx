@@ -20,7 +20,7 @@ import {
   useI18nContext,
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
-import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { Add, Delete, Remove, ShoppingCartCheckout } from '@mui/icons-material';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -86,8 +86,8 @@ export function CustomerShoppingCart() {
   const updateItemQuantity = useUpdateItemQuantity();
   const clearCartAction = useClearCart();
 
-  // Use UI store for notifications
-  const addToast = useUIStore((state) => state.addToast);
+  // Use snackbar for notifications
+  const { showSnackbar } = useSnackbar();
 
   // Use auth context and navigation
   const { user } = useCustomersAuth();
@@ -165,33 +165,29 @@ export function CustomerShoppingCart() {
     // Validate positive quantity
     if (newQuantity <= 0) {
       try {
-        await removeFromCartMutation(itemId);
+        // Only call server mutation if user is logged in
+        if (user) {
+          await removeFromCartMutation(itemId);
+        }
         removeItem(itemId);
-        addToast({
-          type: 'success',
-          title: 'Item removed',
-          message: 'Item has been removed from your cart',
+        showSnackbar(LL.checkout.itemRemovedMessage(), {
+          severity: 'success',
         });
       } catch {
-        addToast({
-          type: 'error',
-          title: LL.status.error(),
-          message: 'Failed to remove item',
-        });
+        showSnackbar(LL.checkout.removeFailedMessage(), { severity: 'error' });
       }
       return;
     }
 
     // Validate stock limit
     if (newQuantity > availableStock) {
-      addToast({
-        type: 'error',
-        title: 'Stock Limit',
-        message: `Only ${formatNumber(
+      showSnackbar(
+        `Only ${formatNumber(
           availableStock,
           currentLocale
         )} items available in stock`,
-      });
+        { severity: 'error' }
+      );
       return;
     }
 
@@ -204,53 +200,45 @@ export function CustomerShoppingCart() {
         await updateCartItemMutation(itemId, { quantity: newQuantity });
       }
 
-      addToast({
-        type: 'success',
-        title: 'Quantity updated',
-        message: 'Item quantity has been updated',
+      showSnackbar(LL.checkout.quantityUpdatedMessage(), {
+        severity: 'success',
       });
     } catch {
-      addToast({
-        type: 'error',
-        title: LL.status.error(),
-        message: 'Failed to update item quantity',
-      });
+      showSnackbar(LL.checkout.updateFailedMessage(), { severity: 'error' });
     }
   };
 
   const handleRemoveItem = async (itemId: string) => {
     try {
-      await removeFromCartMutation(itemId);
+      // Only call server mutation if user is logged in
+      if (user) {
+        await removeFromCartMutation(itemId);
+      }
       removeItem(itemId);
-      addToast({
-        type: 'success',
-        title: 'Item removed',
-        message: 'Item has been removed from your cart',
+      showSnackbar(LL.checkout.itemRemovedMessage(), {
+        severity: 'success',
       });
     } catch {
-      addToast({
-        type: 'error',
-        title: 'Remove failed',
-        message: 'Failed to remove item from cart',
-      });
+      showSnackbar(LL.checkout.removeFailedMessage(), { severity: 'error' });
     }
   };
 
   const handleClearCart = async () => {
     try {
-      await clearCartMutation();
+      // Clear server first if logged in
+      if (user) {
+        await clearCartMutation();
+      }
+
+      // Then clear local
       clearCartAction();
-      addToast({
-        type: 'success',
-        title: 'Cart cleared',
-        message: 'All items have been removed from your cart',
+
+      showSnackbar(LL.checkout.cartClearedMessage(), {
+        severity: 'success',
       });
-    } catch {
-      addToast({
-        type: 'error',
-        title: 'Clear failed',
-        message: 'Failed to clear cart',
-      });
+    } catch (error) {
+      console.error('Clear cart error:', error);
+      showSnackbar(LL.checkout.clearFailedMessage(), { severity: 'error' });
     }
   };
 
@@ -277,6 +265,23 @@ export function CustomerShoppingCart() {
 
   const handlePlaceOrder = async () => {
     try {
+      // Validate cart items have valid sellerProductId (UUID format)
+      const invalidItems = cartItems.filter(
+        (item) =>
+          !item.sellerProductId ||
+          !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+            item.sellerProductId
+          )
+      );
+
+      if (invalidItems.length > 0) {
+        showSnackbar(
+          'Your cart has outdated items. Please clear your cart and add items again.',
+          { severity: 'error' }
+        );
+        return;
+      }
+
       // Save customer profile for future orders
       if (user) {
         await updateProfileMutation({
@@ -310,10 +315,11 @@ export function CustomerShoppingCart() {
         ([sellerId, items]) =>
           createOrderMutation({
             ...shippingInfo,
-            sellerId,
-            // Map cart items to order items, using sellerProductId as productId for stock management
+            sellerId: parseInt(sellerId, 10),
+            // Map cart items to order items
             items: items.map((item) => ({
-              productId: item.sellerProductId, // Use sellerProductId for stock management
+              productId: item.productId,
+              sellerProductId: item.sellerProductId, // UUID for stock management
               productName: item.productName,
               productImage: item.productImage,
               quantity: item.quantity,
@@ -327,11 +333,33 @@ export function CustomerShoppingCart() {
 
       await Promise.all(orderPromises);
       await clearCartMutation();
+      clearCartAction();
       setCheckoutDialogOpen(false);
       setActiveStep(0);
-      // Cart will be cleared by the mutation
+
+      showSnackbar('Your order has been placed successfully!', {
+        severity: 'success',
+      });
     } catch (error) {
       console.error('Error placing order:', error);
+      const errorMessage = (error as Error).message;
+
+      // Check if it's a product not found error
+      if (errorMessage.includes('not found')) {
+        showSnackbar(
+          'Some products in your cart are no longer available. Please remove them and try again.',
+          { severity: 'error' }
+        );
+      } else if (errorMessage.includes('Insufficient stock')) {
+        showSnackbar(
+          'Some products in your cart are out of stock. Please adjust quantities and try again.',
+          { severity: 'error' }
+        );
+      } else {
+        showSnackbar('Failed to place order. Please try again.', {
+          severity: 'error',
+        });
+      }
     }
   };
 
@@ -374,8 +402,15 @@ export function CustomerShoppingCart() {
             </Typography>
             <Button
               variant="contained"
-              sx={{ mt: 2 }}
-              href={CUSTOMER_ROUTES.PRODUCTS}
+              sx={{
+                mt: 2,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                },
+              }}
+              onClick={() => navigate(CUSTOMER_ROUTES.PRODUCTS)}
             >
               {LL.checkout.continueShopping()}
             </Button>
@@ -528,17 +563,6 @@ export function CustomerShoppingCart() {
                                 showSymbol={true}
                                 showOriginal={false}
                               />
-                              <Typography
-                                component="span"
-                                variant="body2"
-                                sx={{
-                                  ml: 0.5,
-                                  color: '#999',
-                                  fontWeight: 400,
-                                }}
-                              >
-                                {LL.products.units()}
-                              </Typography>
                             </Typography>
 
                             {item.availableStock < 10 && (
@@ -701,9 +725,11 @@ export function CustomerShoppingCart() {
                     borderColor: '#f5576c',
                     color: '#f5576c',
                     fontWeight: 600,
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
                       borderColor: '#f5576c',
                       background: 'rgba(245, 87, 108, 0.08)',
+                      transform: 'translateY(-1px)',
                     },
                   }}
                 >
@@ -794,15 +820,22 @@ export function CustomerShoppingCart() {
                       mb: 3,
                       p: 2,
                       borderRadius: 3,
-                      background:
+                      backgroundImage:
                         'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      color: 'white',
+                      color: '#ffffff',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                    <Typography
+                      variant="h6"
+                      sx={{ fontWeight: 700, color: '#ffffff' }}
+                    >
                       {LL.checkout.total()}:
                     </Typography>
-                    <Typography variant="h5" sx={{ fontWeight: 800 }}>
+                    <Typography
+                      variant="h5"
+                      sx={{ fontWeight: 800, color: '#ffffff' }}
+                    >
                       <PriceDisplay
                         priceInUSD={cartTotal}
                         showSymbol={true}
@@ -818,20 +851,43 @@ export function CustomerShoppingCart() {
                     startIcon={<ShoppingCartCheckout />}
                     onClick={handleCheckout}
                     sx={{
+                      position: 'relative',
                       borderRadius: 3,
                       py: 1.5,
                       fontWeight: 700,
                       fontSize: '1rem',
                       textTransform: 'none',
                       boxShadow: '0 8px 25px rgba(102, 126, 234, 0.35)',
-                      background:
+                      backgroundImage:
                         'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      transition: 'all 0.3s ease',
+                      color: '#ffffff',
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      overflow: 'hidden',
+                      zIndex: 1,
+                      '&::before': {
+                        content: '""',
+                        position: 'absolute',
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        bottom: 0,
+                        backgroundImage:
+                          'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                        opacity: 0,
+                        transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        zIndex: -1,
+                      },
                       '&:hover': {
                         transform: 'translateY(-2px)',
                         boxShadow: '0 12px 35px rgba(102, 126, 234, 0.45)',
-                        background:
-                          'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                        color: '#ffffff',
+                        '&::before': {
+                          opacity: 1,
+                        },
+                      },
+                      '& .MuiButton-startIcon': {
+                        position: 'relative',
+                        zIndex: 1,
                       },
                     }}
                   >
@@ -1081,7 +1137,137 @@ export function CustomerShoppingCart() {
                 <Alert severity="info" sx={{ mb: 2 }}>
                   {LL.checkout.demoCheckout()}
                 </Alert>
-                <Typography variant="body1" gutterBottom>
+
+                {/* Display cart items */}
+                <Box sx={{ mb: 3 }}>
+                  {cartItems.map((item: CartItem) => (
+                    <Box
+                      key={item.id}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        py: 1,
+                        borderBottom: '1px solid #e0e0e0',
+                      }}
+                    >
+                      <Box>
+                        <Typography variant="body1" fontWeight={500}>
+                          {item.productName}
+                        </Typography>
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 1.5,
+                            mt: 0.5,
+                          }}
+                        >
+                          {item.color && (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {LL.products.color()}:
+                              </Typography>
+                              <Box
+                                sx={{
+                                  width: 16,
+                                  height: 16,
+                                  backgroundColor: item.color,
+                                  borderRadius: '50%',
+                                  border: '1px solid #ccc',
+                                }}
+                              />
+                            </Box>
+                          )}
+                          {item.size && (
+                            <Box
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
+                              }}
+                            >
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {LL.products.size()}:
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                fontWeight={500}
+                              >
+                                {formatNumber(item.size, currentLocale)}
+                              </Typography>
+                            </Box>
+                          )}
+                        </Box>
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          sx={{ mt: 0.5 }}
+                        >
+                          {LL.table.quantity()}:{' '}
+                          {formatNumber(item.quantity, currentLocale)}
+                        </Typography>
+                      </Box>
+                      <Box sx={{ textAlign: 'right' }}>
+                        <PriceDisplay
+                          priceInUSD={item.totalPrice}
+                          showSymbol={true}
+                          showOriginal={false}
+                        />
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+
+                {/* Order totals */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    mb: 1,
+                  }}
+                >
+                  <Typography variant="body1">
+                    {LL.checkout.subtotal()}:
+                  </Typography>
+                  <Typography variant="body1">
+                    <PriceDisplay
+                      priceInUSD={cartTotal}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  </Typography>
+                </Box>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    mb: 2,
+                  }}
+                >
+                  <Typography variant="h6">{LL.checkout.total()}:</Typography>
+                  <Typography variant="h6" color="primary">
+                    <PriceDisplay
+                      priceInUSD={cartTotal}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  </Typography>
+                </Box>
+
+                <Typography variant="body2" color="text.secondary" gutterBottom>
                   {LL.checkout.orderProcessed()}
                 </Typography>
               </Box>
@@ -1095,11 +1281,31 @@ export function CustomerShoppingCart() {
               <Button onClick={handleBack}>{LL.button.back()}</Button>
             )}
             {activeStep < steps.length - 1 ? (
-              <Button variant="contained" onClick={handleNext}>
+              <Button
+                variant="contained"
+                onClick={handleNext}
+                sx={{
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  },
+                }}
+              >
                 {LL.button.next()}
               </Button>
             ) : (
-              <Button variant="contained" onClick={handlePlaceOrder}>
+              <Button
+                variant="contained"
+                onClick={handlePlaceOrder}
+                sx={{
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  '&:hover': {
+                    transform: 'translateY(-1px)',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                  },
+                }}
+              >
                 {LL.button.placeOrder()}
               </Button>
             )}
@@ -1130,6 +1336,13 @@ export function CustomerShoppingCart() {
                 navigate(CUSTOMER_ROUTES.LOGIN, {
                   state: { from: CUSTOMER_ROUTES.CART },
                 });
+              }}
+              sx={{
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  transform: 'translateY(-1px)',
+                  boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                },
               }}
             >
               {LL.checkout.loginRegister()}

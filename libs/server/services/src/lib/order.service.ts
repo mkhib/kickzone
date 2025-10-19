@@ -233,11 +233,8 @@ export class OrderService {
     }[]
   ): Promise<void> {
     for (const item of items) {
-      // If sellerProductId is provided, use it directly
-      // Otherwise, this is a legacy item and we need to find by productId
-      const sellerProductId = item.sellerProductId
-        ? parseInt(item.sellerProductId)
-        : parseInt(item.productId);
+      // Use sellerProductId directly as UUID string (no parsing needed)
+      const sellerProductId = item.sellerProductId || item.productId;
 
       const sellerProduct = await this.sellerProductRepository.findOne({
         where: { id: sellerProductId },
@@ -266,9 +263,9 @@ export class OrderService {
    */
   private async restoreStock(items: OrderItem[]): Promise<void> {
     for (const item of items) {
-      // productId in OrderItem is the SellerProduct ID for stock management
+      // productId in OrderItem is the SellerProduct ID (UUID) for stock management
       const sellerProduct = await this.sellerProductRepository.findOne({
-        where: { id: parseInt(item.productId) },
+        where: { id: item.productId },
       });
 
       if (sellerProduct) {

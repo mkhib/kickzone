@@ -91,7 +91,7 @@ type ProductConnection {
 }
 
 type SellerProduct {
-  id: Int!
+  id: String!
   seller: SellerInfo
   product: Product!
   productInfo: ProductInfo
@@ -142,7 +142,7 @@ type Order {
   trackingNumber: String
   createdAt: DateTime!
   updatedAt: DateTime!
-  sellerId: String!
+  sellerId: Int!
   items: [OrderItem!]!
 }
 
@@ -167,6 +167,7 @@ type OrderItem {
   totalPrice: Float!
   color: String
   size: String
+  sellerProductId: String
 }
 
 type Cart {
@@ -191,6 +192,10 @@ type CartItem {
   color: String
   size: String
   sellerId: String!
+  sellerName: String
+  productInfoId: String
+  sellerProductId: String
+  availableStock: Int
 }
 
 type CustomerProfile {
@@ -266,7 +271,7 @@ type Query {
   getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
   sellers(filter: SellerFilterInput): SellerConnection!
   findOne(id: Int!): SellerInfo
-  mySellerProductById(id: Int!): SellerProduct
+  mySellerProductById(id: String!): SellerProduct
   colors: [Color!]!
   color(id: Int!): Color
   orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): [Order!]!
@@ -464,7 +469,7 @@ input CreateSellerProductInput {
 }
 
 input UpdateSellerProductInput {
-  id: Int!
+  id: String!
   productInfoId: Int
   price: Float
   costPrice: Float
@@ -492,13 +497,14 @@ input CreateOrderInput {
   state: String!
   zipCode: String!
   country: String!
-  sellerId: String!
+  sellerId: Int!
   items: [CreateOrderItemInput!]!
   notes: String
 }
 
 input CreateOrderItemInput {
   productId: String!
+  sellerProductId: String
   productName: String!
   productImage: String
   quantity: Int!
@@ -525,6 +531,7 @@ input UpdateOrderInput {
 input UpdateOrderItemInput {
   id: String
   productId: String!
+  sellerProductId: String
   productName: String!
   productImage: String
   quantity: Int!
@@ -540,14 +547,8 @@ input UpdateOrderStatusInput {
 }
 
 input AddToCartInput {
-  productId: String!
-  productName: String!
-  productImage: String
+  sellerProductId: String!
   quantity: Int!
-  unitPrice: Float!
-  color: String
-  size: String
-  sellerId: String!
 }
 
 input UpdateCartItemInput {

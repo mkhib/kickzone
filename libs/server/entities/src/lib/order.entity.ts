@@ -1,23 +1,23 @@
 import {
   Field,
-  ObjectType,
+  Float,
   ID,
   Int,
-  Float,
+  ObjectType,
   registerEnumType,
 } from '@nestjs/graphql';
 import {
-  Entity,
-  PrimaryGeneratedColumn,
   Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
   ManyToOne,
   OneToMany,
-  CreateDateColumn,
+  PrimaryGeneratedColumn,
   UpdateDateColumn,
-  JoinColumn,
 } from 'typeorm';
-import { User } from './user.entity';
 import { Product } from './product.entity';
+import { SellerInfo } from './seller-info.entity';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
@@ -112,13 +112,13 @@ export class Order {
   @UpdateDateColumn()
   updatedAt: Date;
 
-  @Field(() => String)
+  @Field(() => Int)
   @Column()
-  sellerId: string;
+  sellerId: number;
 
-  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @ManyToOne(() => SellerInfo, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'sellerId' })
-  seller: User;
+  seller: SellerInfo;
 
   @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
   items: OrderItem[];
@@ -166,6 +166,10 @@ export class OrderItem {
   @Field(() => String, { nullable: true })
   @Column({ nullable: true })
   size?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerProductId?: string;
 
   @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orderId' })

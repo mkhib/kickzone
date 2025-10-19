@@ -16,9 +16,9 @@ import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
 @ObjectType()
 @Entity()
 export class SellerProduct {
-  @Field(() => Int)
-  @PrimaryGeneratedColumn()
-  id: number;
+  @Field(() => String)
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @Field(() => SellerInfo, { nullable: true })
   @ManyToOne(() => SellerInfo, (seller) => seller.sellerProducts)

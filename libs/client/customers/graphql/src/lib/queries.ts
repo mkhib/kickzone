@@ -92,6 +92,10 @@ export const GET_MY_CART_QUERY = gql`
         color
         size
         sellerId
+        sellerName
+        productInfoId
+        sellerProductId
+        availableStock
       }
     }
   }

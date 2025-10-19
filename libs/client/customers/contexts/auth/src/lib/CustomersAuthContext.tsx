@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
+import { gql } from '@apollo/client';
+import { useQuery, useMutation } from '@apollo/client/react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 type CustomerUser = Pick<
@@ -9,12 +17,30 @@ type CustomerUser = Pick<
 interface AuthContextType {
   user: CustomerUser | null;
   login: (user: CustomerUser) => void;
-  logout: () => void;
+  logout: () => Promise<void>;
+  loading: boolean;
 }
 
 const CustomersAuthContext = createContext<AuthContextType | undefined>(
   undefined
 );
+
+const ME_QUERY = gql`
+  query Me {
+    me {
+      id
+      name
+      email
+      role
+    }
+  }
+`;
+
+const LOGOUT_MUTATION = gql`
+  mutation Logout {
+    logout
+  }
+`;
 
 export const CustomersAuthProvider = ({
   children,
@@ -23,18 +49,45 @@ export const CustomersAuthProvider = ({
 }) => {
   const [user, setUser] = useState<CustomerUser | null>(null);
 
+  // Check if user is already authenticated on mount
+  const { data, loading } = useQuery<Pick<KickzoneGraphqlTypes.Query, 'me'>>(
+    ME_QUERY,
+    {
+      fetchPolicy: 'network-only', // Always check with server
+      errorPolicy: 'ignore', // Ignore errors if not authenticated
+    }
+  );
+
+  const [logoutMutation] =
+    useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'logout'>>(LOGOUT_MUTATION);
+
+  // Update user when query returns
+  useEffect(() => {
+    if (data?.me) {
+      setUser(data.me);
+    }
+  }, [data]);
+
   const login = (user: CustomerUser) => {
     setUser(user);
     // Cart will be loaded automatically by useCartService when user logs in
   };
 
-  const logout = () => {
-    setUser(null);
-    // Cart will be cleared automatically by useCartService when user logs out
+  const logout = async () => {
+    try {
+      // Call server to clear cookies
+      await logoutMutation();
+    } catch {
+      // Ignore logout errors - always clear local state
+    } finally {
+      // Always clear local user state
+      setUser(null);
+      // Cart will be cleared automatically by useCartService when user logs out
+    }
   };
 
   return (
-    <CustomersAuthContext.Provider value={{ user, login, logout }}>
+    <CustomersAuthContext.Provider value={{ user, login, logout, loading }}>
       {children}
     </CustomersAuthContext.Provider>
   );

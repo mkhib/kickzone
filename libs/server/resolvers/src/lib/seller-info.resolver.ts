@@ -178,7 +178,7 @@ export class SellerResolver {
   @SetMetadata('roles', [UserRole.SELLER])
   async mySellerProductById(
     @Context() context: { req: { user: User } },
-    @Args('id', { type: () => Int }) id: number
+    @Args('id', { type: () => String }) id: string
   ) {
     const user = context.req.user;
     if (!user) throw new Error('Not authenticated');

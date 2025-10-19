@@ -224,7 +224,7 @@ export class SellerService {
   }
 
   async findSellerProductById(
-    sellerProductId: number,
+    sellerProductId: string,
     sellerId: number
   ): Promise<SellerProduct | null> {
     return this.sellerProductRepository.findOne({

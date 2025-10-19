@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
-import { Cart, CartItem } from '@kickzone-workspace/entities';
+import { Cart, CartItem, SellerProduct } from '@kickzone-workspace/entities';
 import {
   AddToCartInput,
   UpdateCartItemInput,
@@ -13,7 +13,9 @@ export class CartService {
     @InjectRepository(Cart)
     private cartRepository: Repository<Cart>,
     @InjectRepository(CartItem)
-    private cartItemRepository: Repository<CartItem>
+    private cartItemRepository: Repository<CartItem>,
+    @InjectRepository(SellerProduct)
+    private sellerProductRepository: Repository<SellerProduct>
   ) {}
 
   async getOrCreateCart(userId: string): Promise<Cart> {
@@ -38,14 +40,37 @@ export class CartService {
     userId: string,
     addToCartInput: AddToCartInput
   ): Promise<Cart> {
+    // Fetch the SellerProduct from database to get all product info
+    const sellerProduct = await this.sellerProductRepository.findOne({
+      where: { id: addToCartInput.sellerProductId },
+      relations: ['product', 'productInfo', 'productInfo.color', 'seller'],
+    });
+
+    if (!sellerProduct) {
+      throw new NotFoundException(
+        `SellerProduct with ID ${addToCartInput.sellerProductId} not found`
+      );
+    }
+
+    // Check stock availability
+    if (sellerProduct.stockQuantity < addToCartInput.quantity) {
+      throw new NotFoundException(
+        `Insufficient stock. Available: ${sellerProduct.stockQuantity}, Requested: ${addToCartInput.quantity}`
+      );
+    }
+
+    // Calculate final price after discount
+    const finalPrice =
+      sellerProduct.discount > 0
+        ? sellerProduct.price -
+          (sellerProduct.price * sellerProduct.discount) / 100
+        : sellerProduct.price;
+
     const cart = await this.getOrCreateCart(userId);
 
     // Check if item already exists in cart
     const existingItem = cart.items.find(
-      (item) =>
-        item.productId === addToCartInput.productId &&
-        item.color === addToCartInput.color &&
-        item.size === addToCartInput.size
+      (item) => item.sellerProductId === addToCartInput.sellerProductId
     );
 
     if (existingItem) {
@@ -54,13 +79,32 @@ export class CartService {
       existingItem.totalPrice = existingItem.quantity * existingItem.unitPrice;
       await this.cartItemRepository.save(existingItem);
     } else {
-      // Add new item
-      const cartItem = this.cartItemRepository.create({
-        ...addToCartInput,
-        cartId: cart.id,
-        totalPrice: addToCartInput.quantity * addToCartInput.unitPrice,
+      // Add new item with data from database
+      const cartItem = new CartItem();
+      cartItem.cartId = cart.id;
+      cartItem.productId = sellerProduct.product.id.toString();
+      cartItem.productName = sellerProduct.product.name;
+      cartItem.productImage = sellerProduct.productInfo?.images?.[0];
+      cartItem.quantity = addToCartInput.quantity;
+      cartItem.unitPrice = finalPrice;
+      cartItem.totalPrice = addToCartInput.quantity * finalPrice;
+      cartItem.color = sellerProduct.productInfo?.color?.hexCode;
+      cartItem.size = sellerProduct.productInfo?.size;
+      cartItem.sellerId = sellerProduct.seller.id.toString();
+      cartItem.sellerName = sellerProduct.seller.storeName;
+      cartItem.productInfoId = sellerProduct.productInfo?.id.toString();
+      cartItem.sellerProductId = sellerProduct.id;
+      cartItem.availableStock = sellerProduct.stockQuantity;
+
+      console.log('💾 Creating cart item from database data:', {
+        productId: cartItem.productId,
+        sellerProductId: cartItem.sellerProductId,
+        unitPrice: cartItem.unitPrice,
+        totalPrice: cartItem.totalPrice,
       });
+
       await this.cartItemRepository.save(cartItem);
+      console.log('✅ Saved new cart item to database');
     }
 
     // Recalculate cart totals
@@ -112,16 +156,32 @@ export class CartService {
   }
 
   async clearCart(userId: string): Promise<Cart> {
+    console.log('🧹 Clearing cart for user:', userId);
     const cart = await this.getOrCreateCart(userId);
 
-    await this.cartItemRepository.delete({ cartId: cart.id });
+    console.log(`📊 Cart has ${cart.items?.length || 0} items before clear`);
+
+    // Remove all items using the entities (more reliable than delete query)
+    if (cart.items && cart.items.length > 0) {
+      await this.cartItemRepository.remove(cart.items);
+      console.log(`🗑️ Removed ${cart.items.length} items from cart`);
+    }
 
     // Reset cart totals
     cart.subtotal = 0;
     cart.total = 0;
+    cart.items = []; // Clear items array
     await this.cartRepository.save(cart);
 
-    return cart;
+    console.log('✅ Cart cleared successfully');
+
+    // Verify it's actually cleared
+    const freshCart = await this.getOrCreateCart(userId);
+    console.log(
+      `🔍 Verification: Cart now has ${freshCart.items?.length || 0} items`
+    );
+
+    return freshCart;
   }
 
   async getCart(userId: string): Promise<Cart> {

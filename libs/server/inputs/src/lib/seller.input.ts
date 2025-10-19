@@ -126,10 +126,9 @@ export class CreateSellerProductInput {
 
 @InputType()
 export class UpdateSellerProductInput {
-  @Field(() => Int)
+  @Field(() => String)
   @IsNotEmpty()
-  @IsNumber()
-  id: number;
+  id: string;
 
   @Field(() => Int, { nullable: true })
   @IsOptional()

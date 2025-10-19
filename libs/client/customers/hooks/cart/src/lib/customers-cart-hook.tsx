@@ -50,6 +50,7 @@ export function useCustomersCartMutations() {
     Pick<KickzoneGraphqlTypes.Mutation, 'clearCart'>
   >(CLEAR_CART_MUTATION, {
     refetchQueries: [{ query: GET_MY_CART_QUERY }],
+    awaitRefetchQueries: true,
   });
 
   const [createOrderMutation, { loading: orderLoading }] = useMutation<
@@ -57,6 +58,7 @@ export function useCustomersCartMutations() {
     KickzoneGraphqlTypes.MutationCreateOrderArgs
   >(CREATE_ORDER_MUTATION, {
     refetchQueries: [{ query: GET_MY_CART_QUERY }],
+    awaitRefetchQueries: true,
   });
 
   const addToCart = async (input: KickzoneGraphqlTypes.AddToCartInput) => {

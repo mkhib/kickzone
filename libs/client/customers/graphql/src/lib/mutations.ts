@@ -34,6 +34,10 @@ export const ADD_TO_CART_MUTATION = gql`
         color
         size
         sellerId
+        sellerName
+        productInfoId
+        sellerProductId
+        availableStock
       }
     }
   }

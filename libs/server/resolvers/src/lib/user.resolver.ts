@@ -1,6 +1,6 @@
 import { User, UserConnection, UserRole } from '@kickzone-workspace/entities';
 import { RolesGuard } from '@kickzone-workspace/guards';
-import { UserService } from '@kickzone-workspace/services';
+import { UserService, AuthService } from '@kickzone-workspace/services';
 import { SetMetadata, UseGuards } from '@nestjs/common';
 import { Args, Query, Resolver, Mutation } from '@nestjs/graphql';
 import { Connection } from '@kickzone-workspace/utils';
@@ -8,7 +8,10 @@ import { CreateUserInput } from '@kickzone-workspace/inputs';
 
 @Resolver(() => User)
 export class UserResolver {
-  constructor(private userService: UserService) {}
+  constructor(
+    private userService: UserService,
+    private authService: AuthService
+  ) {}
 
   @Query(() => UserConnection)
   @UseGuards(RolesGuard)
@@ -29,6 +32,11 @@ export class UserResolver {
   async createUser(
     @Args('createUserInput') createUserInput: CreateUserInput
   ): Promise<User> {
-    return this.userService.createUser(createUserInput);
+    // Use the register method which handles password hashing
+    return this.authService.register(
+      createUserInput.name,
+      createUserInput.email,
+      createUserInput.password
+    );
   }
 }

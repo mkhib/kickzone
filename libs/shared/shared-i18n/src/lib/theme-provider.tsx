@@ -77,6 +77,23 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
           },
         },
       },
+      MuiButton: {
+        defaultProps: {
+          disableRipple: false,
+        },
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          },
+          contained: {
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            '&:hover': {
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            },
+          },
+        },
+      },
     },
   });
 

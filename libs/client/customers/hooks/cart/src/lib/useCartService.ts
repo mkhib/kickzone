@@ -67,13 +67,19 @@ export function useCustomersCartService() {
 
   // Sync server cart to local store when data changes
   useEffect(() => {
-    if (serverCartData?.myCart?.items) {
+    if (serverCartData?.myCart) {
       syncServerCartToLocal(serverCartData.myCart);
     }
   }, [serverCartData]);
 
   // Sync server cart data to local Zustand store
   const syncServerCartToLocal = (serverCart: KickzoneGraphqlTypes.Cart) => {
+    // If server cart is empty, clear local cart
+    if (!serverCart.items || serverCart.items.length === 0) {
+      useCartStore.getState().clearCart();
+      return;
+    }
+
     const localItems: CartItem[] = serverCart.items.map(
       (item: KickzoneGraphqlTypes.CartItem) => ({
         id: item.id,
@@ -86,9 +92,10 @@ export function useCustomersCartService() {
         color: item.color || null,
         size: item.size || null,
         sellerId: item.sellerId,
-        sellerName: 'Unknown Seller', // Server doesn't provide this yet
-        productInfoId: '', // Server doesn't provide this yet
-        sellerProductId: item.productId, // For now, use productId as sellerProductId
+        sellerName: item.sellerName || 'Unknown Seller',
+        productInfoId: item.productInfoId || '',
+        sellerProductId: item.sellerProductId || item.productId,
+        availableStock: item.availableStock || 0,
       })
     );
 
@@ -107,14 +114,8 @@ export function useCustomersCartService() {
         await addToCartMutation({
           variables: {
             addToCartInput: {
-              productId: itemData.productId,
-              productName: itemData.productName,
-              productImage: itemData.productImage,
+              sellerProductId: itemData.sellerProductId,
               quantity: itemData.quantity,
-              unitPrice: itemData.unitPrice,
-              color: itemData.color,
-              size: itemData.size,
-              sellerId: itemData.sellerId,
             },
           },
         });

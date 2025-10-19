@@ -19,14 +19,8 @@ export type Scalars = {
 };
 
 export type AddToCartInput = {
-  color?: InputMaybe<Scalars['String']['input']>;
-  productId: Scalars['String']['input'];
-  productImage?: InputMaybe<Scalars['String']['input']>;
-  productName: Scalars['String']['input'];
   quantity: Scalars['Int']['input'];
-  sellerId: Scalars['String']['input'];
-  size?: InputMaybe<Scalars['String']['input']>;
-  unitPrice: Scalars['Float']['input'];
+  sellerProductId: Scalars['String']['input'];
 };
 
 export type BulkTranslationInput = {
@@ -49,14 +43,18 @@ export type Cart = {
 
 export type CartItem = {
   __typename?: 'CartItem';
+  availableStock?: Maybe<Scalars['Int']['output']>;
   cartId: Scalars['String']['output'];
   color?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   productId: Scalars['String']['output'];
   productImage?: Maybe<Scalars['String']['output']>;
+  productInfoId?: Maybe<Scalars['String']['output']>;
   productName: Scalars['String']['output'];
   quantity: Scalars['Int']['output'];
   sellerId: Scalars['String']['output'];
+  sellerName?: Maybe<Scalars['String']['output']>;
+  sellerProductId?: Maybe<Scalars['String']['output']>;
   size?: Maybe<Scalars['String']['output']>;
   totalPrice: Scalars['Float']['output'];
   unitPrice: Scalars['Float']['output'];
@@ -111,7 +109,7 @@ export type CreateOrderInput = {
   customerPhone: Scalars['String']['input'];
   items: Array<CreateOrderItemInput>;
   notes?: InputMaybe<Scalars['String']['input']>;
-  sellerId: Scalars['String']['input'];
+  sellerId: Scalars['Int']['input'];
   shippingAddress: Scalars['String']['input'];
   state: Scalars['String']['input'];
   zipCode: Scalars['String']['input'];
@@ -123,6 +121,7 @@ export type CreateOrderItemInput = {
   productImage?: InputMaybe<Scalars['String']['input']>;
   productName: Scalars['String']['input'];
   quantity: Scalars['Int']['input'];
+  sellerProductId?: InputMaybe<Scalars['String']['input']>;
   size?: InputMaybe<Scalars['String']['input']>;
   totalPrice: Scalars['Float']['input'];
   unitPrice: Scalars['Float']['input'];
@@ -192,6 +191,18 @@ export type CurrencyPreference = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type CustomerProfile = {
+  __typename?: 'CustomerProfile';
+  address?: Maybe<Scalars['String']['output']>;
+  city?: Maybe<Scalars['String']['output']>;
+  country?: Maybe<Scalars['String']['output']>;
+  id: Scalars['ID']['output'];
+  phone?: Maybe<Scalars['String']['output']>;
+  state?: Maybe<Scalars['String']['output']>;
+  userId: Scalars['String']['output'];
+  zipCode?: Maybe<Scalars['String']['output']>;
+};
+
 export type ExchangeRate = {
   __typename?: 'ExchangeRate';
   createdAt: Scalars['DateTime']['output'];
@@ -243,6 +254,7 @@ export type Mutation = {
   updateCategory: Category;
   updateColor: Color;
   updateCurrency: Currency;
+  updateMyProfile: CustomerProfile;
   updateMySellerProduct: SellerProduct;
   updateOrder: Order;
   updateOrderStatus: Order;
@@ -444,6 +456,11 @@ export type MutationUpdateCurrencyArgs = {
 };
 
 
+export type MutationUpdateMyProfileArgs = {
+  input: UpdateCustomerProfileInput;
+};
+
+
 export type MutationUpdateMySellerProductArgs = {
   input: UpdateSellerProductInput;
 };
@@ -494,7 +511,7 @@ export type Order = {
   items: Array<OrderItem>;
   notes?: Maybe<Scalars['String']['output']>;
   orderNumber: Scalars['String']['output'];
-  sellerId: Scalars['String']['output'];
+  sellerId: Scalars['Int']['output'];
   shippingAddress: Scalars['String']['output'];
   shippingCost: Scalars['Float']['output'];
   state: Scalars['String']['output'];
@@ -521,6 +538,7 @@ export type OrderItem = {
   productImage?: Maybe<Scalars['String']['output']>;
   productName: Scalars['String']['output'];
   quantity: Scalars['Int']['output'];
+  sellerProductId?: Maybe<Scalars['String']['output']>;
   size?: Maybe<Scalars['String']['output']>;
   totalPrice: Scalars['Float']['output'];
   unitPrice: Scalars['Float']['output'];
@@ -629,6 +647,7 @@ export type Query = {
   me?: Maybe<User>;
   myCart: Cart;
   myOrders: Array<Order>;
+  myProfile: CustomerProfile;
   mySellerProductById?: Maybe<SellerProduct>;
   order: Order;
   orders: Array<Order>;
@@ -724,7 +743,7 @@ export type QueryMyOrdersArgs = {
 
 
 export type QueryMySellerProductByIdArgs = {
-  id: Scalars['Int']['input'];
+  id: Scalars['String']['input'];
 };
 
 
@@ -802,7 +821,7 @@ export type SellerProduct = {
   __typename?: 'SellerProduct';
   costPrice?: Maybe<Scalars['Float']['output']>;
   discount: Scalars['Float']['output'];
-  id: Scalars['Int']['output'];
+  id: Scalars['String']['output'];
   price: Scalars['Float']['output'];
   product: Product;
   productInfo?: Maybe<ProductInfo>;
@@ -871,6 +890,15 @@ export type UpdateCurrencyInput = {
   symbol?: InputMaybe<Scalars['String']['input']>;
 };
 
+export type UpdateCustomerProfileInput = {
+  address?: InputMaybe<Scalars['String']['input']>;
+  city?: InputMaybe<Scalars['String']['input']>;
+  country?: InputMaybe<Scalars['String']['input']>;
+  phone?: InputMaybe<Scalars['String']['input']>;
+  state?: InputMaybe<Scalars['String']['input']>;
+  zipCode?: InputMaybe<Scalars['String']['input']>;
+};
+
 export type UpdateOrderInput = {
   city?: InputMaybe<Scalars['String']['input']>;
   country?: InputMaybe<Scalars['String']['input']>;
@@ -892,6 +920,7 @@ export type UpdateOrderItemInput = {
   productImage?: InputMaybe<Scalars['String']['input']>;
   productName: Scalars['String']['input'];
   quantity: Scalars['Int']['input'];
+  sellerProductId?: InputMaybe<Scalars['String']['input']>;
   size?: InputMaybe<Scalars['String']['input']>;
   totalPrice: Scalars['Float']['input'];
   unitPrice: Scalars['Float']['input'];
@@ -924,7 +953,7 @@ export type UpdateSellerInput = {
 export type UpdateSellerProductInput = {
   costPrice?: InputMaybe<Scalars['Float']['input']>;
   discount?: InputMaybe<Scalars['Float']['input']>;
-  id: Scalars['Int']['input'];
+  id: Scalars['String']['input'];
   price?: InputMaybe<Scalars['Float']['input']>;
   productInfoId?: InputMaybe<Scalars['Int']['input']>;
   stockQuantity?: InputMaybe<Scalars['Int']['input']>;

@@ -6,6 +6,9 @@ export class CreateOrderItemInput {
   @Field(() => String)
   productId: string;
 
+  @Field(() => String, { nullable: true })
+  sellerProductId?: string;
+
   @Field(() => String)
   productName: string;
 
@@ -54,8 +57,8 @@ export class CreateOrderInput {
   @Field(() => String)
   country: string;
 
-  @Field(() => String)
-  sellerId: string;
+  @Field(() => Int)
+  sellerId: number;
 
   @Field(() => [CreateOrderItemInput])
   items: CreateOrderItemInput[];
@@ -71,6 +74,9 @@ export class UpdateOrderItemInput {
 
   @Field(() => String)
   productId: string;
+
+  @Field(() => String, { nullable: true })
+  sellerProductId?: string;
 
   @Field(() => String)
   productName: string;

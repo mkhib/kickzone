@@ -52,12 +52,10 @@ export class UserService {
   }
 
   async createUser(createUserInput: CreateUserInput): Promise<User> {
-    const salt = parseInt(process.env['SALT_ROUNDS'] ?? '10', 10) || 10;
-
-    const hashedPassword = await bcrypt.hash(createUserInput.password, salt);
+    // Note: Password should already be hashed by the caller (auth.service)
+    // This service is just for CRUD operations
     const user = this.userRepository.create({
       ...createUserInput,
-      password: hashedPassword,
     });
     return this.userRepository.save(user);
   }

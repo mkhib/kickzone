@@ -20,10 +20,28 @@ export class AuthService {
   ) {}
 
   async validateUser(email: string, pass: string): Promise<User | null> {
+    console.log('=== validateUser called ===');
+    console.log('Email:', email);
+    console.log('Password (first 3 chars):', pass.substring(0, 3) + '***');
+
     const user = await this.userService.findByEmail(email);
-    if (user && (await bcrypt.compare(pass, user.password))) {
-      return user;
+    console.log('User found:', !!user);
+
+    if (user) {
+      console.log(
+        'Stored password hash (first 20 chars):',
+        user.password.substring(0, 20) + '...'
+      );
+      const isPasswordValid = await bcrypt.compare(pass, user.password);
+      console.log('Password comparison result:', isPasswordValid);
+
+      if (isPasswordValid) {
+        console.log('Login successful for:', email);
+        return user;
+      }
     }
+
+    console.log('Login failed for:', email);
     return null;
   }
 
@@ -78,6 +96,10 @@ export class AuthService {
   }
 
   async register(name: string, email: string, password: string): Promise<User> {
+    console.log('=== register called ===');
+    console.log('Email:', email);
+    console.log('Password (first 3 chars):', password.substring(0, 3) + '***');
+
     // Check if user already exists
     const existingUser = await this.userService.findByEmail(email);
     if (existingUser) {
@@ -86,6 +108,11 @@ export class AuthService {
 
     // Create new customer user
     const hashedPassword = await bcrypt.hash(password, 10);
+    console.log(
+      'Hashed password (first 20 chars):',
+      hashedPassword.substring(0, 20) + '...'
+    );
+
     const user = await this.userService.createUser({
       name,
       lastName: '', // Optional for customers
@@ -95,6 +122,7 @@ export class AuthService {
       role: UserRole.CUSTOMER,
     });
 
+    console.log('User created successfully with ID:', user.id);
     return user;
   }
 

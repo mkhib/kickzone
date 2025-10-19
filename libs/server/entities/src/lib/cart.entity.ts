@@ -94,6 +94,22 @@ export class CartItem {
   @Column()
   sellerId: string;
 
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerName?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  productInfoId?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerProductId?: string;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  availableStock?: number;
+
   @ManyToOne(() => Cart, (cart) => cart.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'cartId' })
   cart: Cart;
