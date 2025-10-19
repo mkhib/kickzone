@@ -17,6 +17,10 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import {
+  useI18nContext,
+  useLanguageContext,
+} from '@kickzone-workspace/shared-i18n';
 
 const initialFormData: KickzoneGraphqlTypes.CreateSellerProductInput = {
   productInfoId: 0,
@@ -30,6 +34,8 @@ export function SellersManageProductScreen() {
   const { user } = useSellersAuthContext();
   const [searchParams] = useSearchParams();
   const { showSnackbar } = useSnackbar();
+  const { LL } = useI18nContext();
+  const { formatNumber } = useLanguageContext();
   const [formData, setFormData] =
     useState<KickzoneGraphqlTypes.CreateSellerProductInput>(initialFormData);
   const [selectedProduct, setSelectedProduct] =
@@ -154,13 +160,13 @@ export function SellersManageProductScreen() {
           },
           editingProductId
         );
-        showSnackbar('Product updated successfully!', {
+        showSnackbar(LL.messages.productUpdated(), {
           severity: 'success',
           duration: 4000,
         });
       } else {
         await createProduct(formData);
-        showSnackbar('Product created successfully!', {
+        showSnackbar(LL.messages.productSaved(), {
           severity: 'success',
           duration: 4000,
         });
@@ -203,7 +209,7 @@ export function SellersManageProductScreen() {
             >
               <CircularProgress size={40} />
               <Typography variant="h6" sx={{ ml: 2 }}>
-                Loading products...
+                {LL.products.loadingProducts()}
               </Typography>
             </Box>
           </Paper>
@@ -217,7 +223,7 @@ export function SellersManageProductScreen() {
       <Box sx={{ p: 3, maxWidth: 1200, margin: '0 auto' }}>
         <Paper elevation={3} sx={{ p: 4, borderRadius: 2 }}>
           <Typography variant="h4" sx={{ mb: 3, color: 'primary.main' }}>
-            {isEditing ? 'Edit Product' : 'Add New Product'}
+            {isEditing ? LL.products.editProduct() : LL.button.addNewProduct()}
           </Typography>
 
           {(createError ||
@@ -237,7 +243,7 @@ export function SellersManageProductScreen() {
               {/* Product Selection */}
               <Grid size={{ xs: 12 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                  Select Product
+                  {LL.products.selectProduct()}
                 </Typography>
                 <Autocomplete
                   options={products}
@@ -247,7 +253,7 @@ export function SellersManageProductScreen() {
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Choose a product"
+                      label={LL.button.chooseProduct()}
                       required
                       disabled={isLoading}
                     />
@@ -274,14 +280,14 @@ export function SellersManageProductScreen() {
               {selectedProduct && (
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="h6" sx={{ mb: 2 }}>
-                    Select Variant
+                    {LL.products.selectVariant()}
                   </Typography>
                   <Autocomplete
                     options={selectedProduct.productInfos}
                     getOptionLabel={(option) =>
-                      `${option.size} - ${option.color?.name || 'No Color'} (${
-                        option.weight
-                      }kg)`
+                      `${option.size} - ${
+                        option.color?.name || LL.products.noColorSpecified()
+                      } (${option.weight}kg)`
                     }
                     value={selectedProductInfo}
                     onChange={(_, newValue) =>
@@ -290,7 +296,7 @@ export function SellersManageProductScreen() {
                     renderInput={(params) => (
                       <TextField
                         {...params}
-                        label="Choose a variant"
+                        label={LL.button.chooseVariant()}
                         required
                         disabled={isLoading}
                       />
@@ -318,8 +324,10 @@ export function SellersManageProductScreen() {
                               />
                             )}
                             <Typography>
-                              {option.size} - {option.color?.name || 'No Color'}{' '}
-                              ({option.weight}
+                              {option.size} -{' '}
+                              {option.color?.name ||
+                                LL.products.noColorSpecified()}{' '}
+                              ({formatNumber(option.weight)}
                               kg)
                             </Typography>
                           </Box>
@@ -336,28 +344,31 @@ export function SellersManageProductScreen() {
                   <Card variant="outlined">
                     <CardContent>
                       <Typography variant="h6" sx={{ mb: 2 }}>
-                        Product Details
+                        {LL.products.productDetails()}
                       </Typography>
                       <Grid container spacing={2}>
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="body2" color="text.secondary">
-                            Product: {selectedProduct.name}
+                            {LL.form.productName()}: {selectedProduct.name}
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="body2" color="text.secondary">
-                            Variant: {selectedProductInfo.size} -{' '}
-                            {selectedProductInfo.color?.name || 'No Color'}
+                            {LL.products.variant()}: {selectedProductInfo.size}{' '}
+                            -{' '}
+                            {selectedProductInfo.color?.name ||
+                              LL.products.noColorSpecified()}
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="body2" color="text.secondary">
-                            Weight: {selectedProductInfo.weight}kg
+                            {LL.products.weight()}:{' '}
+                            {formatNumber(selectedProductInfo.weight)}kg
                           </Typography>
                         </Grid>
                         <Grid size={{ xs: 12, sm: 6 }}>
                           <Typography variant="body2" color="text.secondary">
-                            Categories:{' '}
+                            {LL.products.categories()}:{' '}
                             {selectedProduct.categories
                               .map((cat) => cat.name)
                               .join(', ')}
@@ -375,14 +386,14 @@ export function SellersManageProductScreen() {
                   <Grid size={{ xs: 12 }}>
                     <Divider sx={{ my: 2 }} />
                     <Typography variant="h6" sx={{ mb: 2 }}>
-                      Pricing & Stock
+                      {LL.products.pricingInformation()}
                     </Typography>
                   </Grid>
 
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
-                      label="Price ($)"
+                      label={LL.form.price()}
                       type="number"
                       value={formData.price}
                       onChange={(e) =>
@@ -397,7 +408,7 @@ export function SellersManageProductScreen() {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
-                      label="Cost Price ($)"
+                      label={LL.form.costPrice()}
                       type="number"
                       value={formData.costPrice}
                       onChange={(e) =>
@@ -412,7 +423,7 @@ export function SellersManageProductScreen() {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
-                      label="Discount (%)"
+                      label={LL.form.discount()}
                       type="number"
                       value={formData.discount}
                       onChange={(e) =>
@@ -420,14 +431,14 @@ export function SellersManageProductScreen() {
                       }
                       disabled={isLoading}
                       inputProps={{ min: 0, max: 100, step: 0.01 }}
-                      helperText="Enter discount percentage (0-100)"
+                      helperText={LL.products.discountHelper()}
                     />
                   </Grid>
 
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
-                      label="Stock Quantity"
+                      label={LL.form.stockQuantity()}
                       type="number"
                       value={formData.stockQuantity}
                       onChange={(e) =>
@@ -447,15 +458,19 @@ export function SellersManageProductScreen() {
                     >
                       <CardContent>
                         <Typography variant="h6" color="primary">
-                          Final Price: $
-                          {(
-                            (formData.price * (100 - formData.discount)) /
-                            100
-                          ).toFixed(2)}
+                          {LL.products.finalPriceAfterDiscount()}: $
+                          {formatNumber(
+                            (
+                              (formData.price * (100 - formData.discount)) /
+                              100
+                            ).toFixed(2)
+                          )}
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          Original: ${formData.price} | Discount:{' '}
-                          {formData.discount}%
+                          {LL.products.original()}: $
+                          {formatNumber(formData.price)} |{' '}
+                          {LL.products.discount()}:{' '}
+                          {formatNumber(formData.discount)}%
                         </Typography>
                       </CardContent>
                     </Card>
@@ -473,7 +488,7 @@ export function SellersManageProductScreen() {
                     onClick={resetForm}
                     disabled={isLoading}
                   >
-                    Clear
+                    {LL.button.clear()}
                   </Button>
                   <Button
                     type="submit"
@@ -485,11 +500,11 @@ export function SellersManageProductScreen() {
                   >
                     {isLoading
                       ? isEditing
-                        ? 'Updating...'
-                        : 'Creating...'
+                        ? LL.button.updating()
+                        : LL.button.creating()
                       : isEditing
-                      ? 'Update Product'
-                      : 'Add Product'}
+                      ? LL.button.updateProduct()
+                      : LL.button.addProduct()}
                   </Button>
                 </Box>
               </Grid>

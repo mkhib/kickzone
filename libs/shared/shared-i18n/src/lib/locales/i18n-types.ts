@@ -111,6 +111,26 @@ type RootTranslation = {
 		 * C​h​a​n​g​e​ ​O​r​d​e​r​ ​S​t​a​t​u​s
 		 */
 		changeOrderStatus: string
+		/**
+		 * C​l​e​a​r
+		 */
+		clear: string
+		/**
+		 * U​p​d​a​t​i​n​g​.​.​.
+		 */
+		updating: string
+		/**
+		 * C​r​e​a​t​i​n​g​.​.​.
+		 */
+		creating: string
+		/**
+		 * U​p​d​a​t​e​ ​P​r​o​d​u​c​t
+		 */
+		updateProduct: string
+		/**
+		 * A​d​d​ ​P​r​o​d​u​c​t
+		 */
+		addProduct: string
 	}
 	navigation: {
 		/**
@@ -662,6 +682,38 @@ type RootTranslation = {
 		 */
 		addFirstProduct: string
 		/**
+		 * S​e​l​e​c​t​ ​P​r​o​d​u​c​t
+		 */
+		selectProduct: string
+		/**
+		 * S​e​l​e​c​t​ ​V​a​r​i​a​n​t
+		 */
+		selectVariant: string
+		/**
+		 * E​d​i​t​ ​P​r​o​d​u​c​t
+		 */
+		editProduct: string
+		/**
+		 * P​r​o​d​u​c​t​ ​D​e​t​a​i​l​s
+		 */
+		productDetails: string
+		/**
+		 * P​r​i​c​i​n​g​ ​I​n​f​o​r​m​a​t​i​o​n
+		 */
+		pricingInformation: string
+		/**
+		 * E​n​t​e​r​ ​d​i​s​c​o​u​n​t​ ​p​e​r​c​e​n​t​a​g​e​ ​(​0​-​1​0​0​)
+		 */
+		discountHelper: string
+		/**
+		 * F​i​n​a​l​ ​P​r​i​c​e​ ​(​a​f​t​e​r​ ​d​i​s​c​o​u​n​t​)
+		 */
+		finalPriceAfterDiscount: string
+		/**
+		 * O​r​i​g​i​n​a​l
+		 */
+		original: string
+		/**
 		 * C​l​o​s​e
 		 */
 		close: string
@@ -889,6 +941,10 @@ type RootTranslation = {
 		 * P​r​o​d​u​c​t​ ​s​a​v​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
 		 */
 		productSaved: string
+		/**
+		 * P​r​o​d​u​c​t​ ​u​p​d​a​t​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		productUpdated: string
 		/**
 		 * C​a​t​e​g​o​r​y​ ​a​d​d​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
 		 */
@@ -1270,6 +1326,26 @@ export type TranslationFunctions = {
 		 * Change Order Status
 		 */
 		changeOrderStatus: () => LocalizedString
+		/**
+		 * Clear
+		 */
+		clear: () => LocalizedString
+		/**
+		 * Updating...
+		 */
+		updating: () => LocalizedString
+		/**
+		 * Creating...
+		 */
+		creating: () => LocalizedString
+		/**
+		 * Update Product
+		 */
+		updateProduct: () => LocalizedString
+		/**
+		 * Add Product
+		 */
+		addProduct: () => LocalizedString
 	}
 	navigation: {
 		/**
@@ -1821,6 +1897,38 @@ export type TranslationFunctions = {
 		 */
 		addFirstProduct: () => LocalizedString
 		/**
+		 * Select Product
+		 */
+		selectProduct: () => LocalizedString
+		/**
+		 * Select Variant
+		 */
+		selectVariant: () => LocalizedString
+		/**
+		 * Edit Product
+		 */
+		editProduct: () => LocalizedString
+		/**
+		 * Product Details
+		 */
+		productDetails: () => LocalizedString
+		/**
+		 * Pricing Information
+		 */
+		pricingInformation: () => LocalizedString
+		/**
+		 * Enter discount percentage (0-100)
+		 */
+		discountHelper: () => LocalizedString
+		/**
+		 * Final Price (after discount)
+		 */
+		finalPriceAfterDiscount: () => LocalizedString
+		/**
+		 * Original
+		 */
+		original: () => LocalizedString
+		/**
 		 * Close
 		 */
 		close: () => LocalizedString
@@ -2046,6 +2154,10 @@ export type TranslationFunctions = {
 		 * Product saved successfully
 		 */
 		productSaved: () => LocalizedString
+		/**
+		 * Product updated successfully
+		 */
+		productUpdated: () => LocalizedString
 		/**
 		 * Category added successfully
 		 */
