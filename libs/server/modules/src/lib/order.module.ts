@@ -4,9 +4,13 @@ import { Order, OrderItem, SellerProduct } from '@kickzone-workspace/entities';
 import { OrderService } from '@kickzone-workspace/services';
 import { OrderResolver } from '@kickzone-workspace/resolvers';
 import { OrderController } from '@kickzone-workspace/controllers';
+import { SellerInfoModule } from './seller-info.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Order, OrderItem, SellerProduct])],
+  imports: [
+    TypeOrmModule.forFeature([Order, OrderItem, SellerProduct]),
+    SellerInfoModule,
+  ],
   providers: [OrderService, OrderResolver],
   controllers: [OrderController],
   exports: [OrderService],

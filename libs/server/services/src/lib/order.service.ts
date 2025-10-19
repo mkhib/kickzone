@@ -72,7 +72,14 @@ export class OrderService {
       .orderBy('order.createdAt', 'DESC');
 
     if (sellerId) {
-      queryBuilder.andWhere('order.sellerId = :sellerId', { sellerId });
+      // Parse sellerId as integer since the database column is an integer
+      const sellerIdInt = parseInt(sellerId, 10);
+      if (isNaN(sellerIdInt)) {
+        throw new BadRequestException('Invalid sellerId');
+      }
+      queryBuilder.andWhere('order.sellerId = :sellerId', {
+        sellerId: sellerIdInt,
+      });
     }
 
     if (status) {
@@ -210,7 +217,13 @@ export class OrderService {
     const queryBuilder = this.orderRepository.createQueryBuilder('order');
 
     if (sellerId) {
-      queryBuilder.andWhere('order.sellerId = :sellerId', { sellerId });
+      // Parse sellerId as integer since the database column is an integer
+      const sellerIdInt = parseInt(sellerId, 10);
+      if (!isNaN(sellerIdInt)) {
+        queryBuilder.andWhere('order.sellerId = :sellerId', {
+          sellerId: sellerIdInt,
+        });
+      }
     }
 
     if (status) {

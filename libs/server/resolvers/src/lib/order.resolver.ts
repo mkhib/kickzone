@@ -13,13 +13,16 @@ import {
   UpdateOrderInput,
   UpdateOrderStatusInput,
 } from '@kickzone-workspace/inputs';
-import { OrderService } from '@kickzone-workspace/services';
+import { OrderService, SellerService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
 
 @Resolver(() => Order)
 export class OrderResolver {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    private readonly sellerService: SellerService
+  ) {}
 
   @Query(() => [Order])
   @UseGuards(GraphqlAuthGuard)
@@ -52,8 +55,14 @@ export class OrderResolver {
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
     @Args('after', { type: () => String, nullable: true }) after?: string
   ) {
+    // Get the seller's integer ID from the user's UUID
+    const seller = await this.sellerService.findOneByUserId(user.id);
+    if (!seller) {
+      throw new Error('Seller not found');
+    }
+
     const result = await this.orderService.getOrdersBySeller(
-      user.id,
+      seller.id.toString(),
       first,
       after
     );
