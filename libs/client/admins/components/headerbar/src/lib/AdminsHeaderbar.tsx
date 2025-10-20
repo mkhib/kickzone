@@ -9,6 +9,7 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import CloseIcon from '@mui/icons-material/Close';
 import LanguageIcon from '@mui/icons-material/Language';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -18,6 +19,8 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -47,6 +50,7 @@ const CustomListItemText = styled(ListItemText)(({ theme }) => ({
 export function AdminsHeaderbar() {
   const { admin: user, setAdmin, logoutAdmin } = useAdminsAuthContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -57,7 +61,16 @@ export function AdminsHeaderbar() {
     setDrawerOpen(!drawerOpen);
   };
 
+  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
+
   const handleOnLogoutClick = useCallback(() => {
+    handleUserMenuClose();
     logoutAdmin();
     setAdmin(null);
   }, [setAdmin, logoutAdmin]);
@@ -126,31 +139,50 @@ export function AdminsHeaderbar() {
             </Box>
           )}
           {user ? (
-            <Box sx={{ display: 'flex', alignItems: 'center', ml: 2 }}>
-              <Typography
-                variant="body2"
+            <>
+              <Button
+                color="inherit"
+                onClick={handleUserMenuOpen}
+                startIcon={<AccountCircleIcon />}
                 sx={{
-                  mr: 2,
-                  color: '#fff',
-                  fontWeight: 500,
-                  display: { xs: 'none', sm: 'block' },
+                  textTransform: 'none',
+                  ml: 2,
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  },
                 }}
               >
                 {user.name}
-              </Typography>
-              <Button
-                color="inherit"
-                onClick={handleOnLogoutClick}
-                sx={{ fontWeight: 600 }}
-              >
-                {LL.button.logout()}
               </Button>
-            </Box>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleUserMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+              >
+                <MenuItem onClick={handleOnLogoutClick}>
+                  {LL.button.logout()}
+                </MenuItem>
+              </Menu>
+            </>
           ) : (
             <Button
               color="inherit"
               component={RouterLink}
               to={ADMIN_ROUTES.LOGIN}
+              sx={{
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                },
+              }}
             >
               {LL.button.login()}
             </Button>

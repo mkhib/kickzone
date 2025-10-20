@@ -4,11 +4,13 @@ import {
   useI18nContext,
   useThemeContext,
 } from '@kickzone-workspace/shared-i18n';
-import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptIcon from '@mui/icons-material/Receipt';
+import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import CloseIcon from '@mui/icons-material/Close';
+import LanguageIcon from '@mui/icons-material/Language';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -18,6 +20,9 @@ import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
+import Divider from '@mui/material/Divider';
 import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
@@ -42,12 +47,26 @@ const CustomListItemText = styled(ListItemText)(({ theme }) => ({
 export function Headerbar() {
   const { user, logout } = useSellersAuthContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const location = useLocation();
   const { LL } = useI18nContext();
   const { direction } = useThemeContext();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
+  };
+
+  const handleUserMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = () => {
+    handleUserMenuClose();
+    logout();
   };
 
   return (
@@ -59,56 +78,93 @@ export function Headerbar() {
             color="inherit"
             aria-label="menu"
             onClick={handleDrawerToggle}
+            sx={{ mr: 2 }}
           >
             <MenuIcon />
           </IconButton>
-          <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            {LL.appNames.kickzone()}
-          </Typography>
-          <Button
-            color="inherit"
+
+          <Typography
+            variant="h6"
             component={RouterLink}
             to={SELLER_ROUTES.PRODUCTS}
+            sx={{
+              flexGrow: 1,
+              textDecoration: 'none',
+              color: 'inherit',
+              '&:hover': {
+                opacity: 0.8,
+              },
+            }}
           >
-            {LL.navigation.products()}
-          </Button>
-          <Button
-            color="inherit"
-            component={RouterLink}
-            to={SELLER_ROUTES.ORDERS}
-          >
-            {LL.navigation.orders()}
-          </Button>
+            {LL.appNames.kickzone()} - {LL.navigation.sellersPortal()}
+          </Typography>
+
           {user ? (
-            <Box sx={{ display: 'flex', alignItems: 'center' }}>
-              <Typography variant="body1" sx={{ mr: 2 }}>
+            <>
+              <Button
+                color="inherit"
+                onClick={handleUserMenuOpen}
+                startIcon={<AccountCircleIcon />}
+                sx={{
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  },
+                }}
+              >
                 {user.name}
-              </Typography>
-              <Button color="inherit" onClick={logout}>
-                {LL.button.logout()}
               </Button>
-            </Box>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleUserMenuClose}
+                anchorOrigin={{
+                  vertical: 'bottom',
+                  horizontal: 'right',
+                }}
+                transformOrigin={{
+                  vertical: 'top',
+                  horizontal: 'right',
+                }}
+              >
+                <MenuItem onClick={handleLogout}>{LL.button.logout()}</MenuItem>
+              </Menu>
+            </>
           ) : (
             <Button
               color="inherit"
               component={RouterLink}
               to={SELLER_ROUTES.LOGIN}
+              sx={{
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                },
+              }}
             >
               {LL.button.login()}
             </Button>
           )}
         </Toolbar>
       </AppBar>
+
       <StyledDrawer
         anchor={direction === 'rtl' ? 'right' : 'left'}
         open={drawerOpen}
         onClose={handleDrawerToggle}
       >
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+          <IconButton onClick={handleDrawerToggle}>
+            <CloseIcon />
+          </IconButton>
+        </Box>
+        <Divider />
         <List>
           <ListItemButton
             to={SELLER_ROUTES.HOME}
             component={RouterLink}
             selected={location.pathname === SELLER_ROUTES.HOME}
+            onClick={handleDrawerToggle}
           >
             <ListItemIcon>
               <HomeIcon />
@@ -120,6 +176,7 @@ export function Headerbar() {
             to={SELLER_ROUTES.PRODUCTS}
             component={RouterLink}
             selected={location.pathname === SELLER_ROUTES.PRODUCTS}
+            onClick={handleDrawerToggle}
           >
             <ListItemIcon>
               <ShoppingCartIcon />
@@ -131,6 +188,7 @@ export function Headerbar() {
             to={SELLER_ROUTES.ORDERS}
             component={RouterLink}
             selected={location.pathname === SELLER_ROUTES.ORDERS}
+            onClick={handleDrawerToggle}
           >
             <ListItemIcon>
               <ReceiptIcon />
@@ -139,14 +197,15 @@ export function Headerbar() {
           </ListItemButton>
 
           <ListItemButton
-            to={SELLER_ROUTES.CONTACT}
+            to={SELLER_ROUTES.LANGUAGE_SETTINGS}
             component={RouterLink}
-            selected={location.pathname === SELLER_ROUTES.CONTACT}
+            selected={location.pathname === SELLER_ROUTES.LANGUAGE_SETTINGS}
+            onClick={handleDrawerToggle}
           >
             <ListItemIcon>
-              <ContactMailIcon />
+              <LanguageIcon />
             </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.contact()} />
+            <CustomListItemText primary={LL.navigation.languageSettings()} />
           </ListItemButton>
         </List>
       </StyledDrawer>

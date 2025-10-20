@@ -220,6 +220,7 @@ const en = {
     archiveProductConfirm: 'Are you sure you want to archive this product?',
     showingProducts: 'Showing {count} of {total} products',
     errorLoadingProducts: 'Error loading products',
+    savings: 'Savings',
   },
 
   // Orders

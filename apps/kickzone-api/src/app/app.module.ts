@@ -89,6 +89,10 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
         },
         uploads: false, // Disable built-in upload handling since we're using graphql-upload middleware
         context: async ({ req, res }) => {
+          // Get the locale from headers
+          const locale = req.headers['x-locale'] || 'en';
+          req.locale = locale;
+
           // Get the token from cookies
           const token = req.cookies['access_token'];
           if (token) {

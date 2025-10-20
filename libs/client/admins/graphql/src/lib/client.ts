@@ -7,10 +7,14 @@ import {
 import { relayStylePagination } from '@apollo/client/utilities';
 
 const csrfLink = new ApolloLink((operation, forward) => {
+  // Get current locale from localStorage (used by LanguageContext)
+  const currentLocale = localStorage.getItem('lang') || 'en';
+
   operation.setContext(({ headers = {} }) => ({
     headers: {
       ...headers,
       'apollo-require-preflight': 'true',
+      'x-locale': currentLocale,
     },
   }));
   return forward(operation);

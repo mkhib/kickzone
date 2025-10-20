@@ -221,6 +221,7 @@ const fa = {
       'آیا مطمئن هستید که می‌خواهید این محصول را بایگانی کنید؟',
     showingProducts: 'نمایش {count} از {total} محصول',
     errorLoadingProducts: 'خطا در بارگذاری محصولات',
+    savings: 'صرفه‌جویی',
   },
 
   // Orders

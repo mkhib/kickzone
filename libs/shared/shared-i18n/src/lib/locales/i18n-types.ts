@@ -807,6 +807,10 @@ type RootTranslation = {
 		 * E​r​r​o​r​ ​l​o​a​d​i​n​g​ ​p​r​o​d​u​c​t​s
 		 */
 		errorLoadingProducts: string
+		/**
+		 * S​a​v​i​n​g​s
+		 */
+		savings: string
 	}
 	orders: {
 		/**
@@ -2124,6 +2128,10 @@ export type TranslationFunctions = {
 		 * Error loading products
 		 */
 		errorLoadingProducts: () => LocalizedString
+		/**
+		 * Savings
+		 */
+		savings: () => LocalizedString
 	}
 	orders: {
 		/**
