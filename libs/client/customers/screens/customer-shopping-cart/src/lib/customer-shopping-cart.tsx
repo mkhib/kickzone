@@ -268,6 +268,23 @@ export function CustomerShoppingCart() {
 
   const handlePlaceOrder = async () => {
     try {
+      // Validate required shipping information
+      if (
+        !shippingInfo.customerName ||
+        !shippingInfo.customerEmail ||
+        !shippingInfo.customerPhone ||
+        !shippingInfo.shippingAddress ||
+        !shippingInfo.city ||
+        !shippingInfo.state ||
+        !shippingInfo.zipCode ||
+        !shippingInfo.country
+      ) {
+        showSnackbar(LL.errors.missingShippingInfo(), {
+          severity: 'error',
+        });
+        return;
+      }
+
       // Validate cart items have valid sellerProductId (UUID format)
       const invalidItems = cartItems.filter(
         (item) =>

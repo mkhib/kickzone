@@ -207,7 +207,40 @@ export function AdminsHeaderbar() {
               <ListItemIcon>
                 <ShoppingCartIcon />
               </ListItemIcon>
-              <CustomListItemText primary="All Orders" />
+              <CustomListItemText primary={LL.orders.allSellerOrders()} />
+            </ListItemButton>
+
+            <ListItemButton
+              to={ADMIN_ROUTES.SELLERS}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.SELLERS}
+            >
+              <ListItemIcon>
+                <StorefrontIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.sellers()} />
+            </ListItemButton>
+
+            <ListItemButton
+              to={ADMIN_ROUTES.CURRENCY}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.CURRENCY}
+            >
+              <ListItemIcon>
+                <AttachMoneyIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.currency.title()} />
+            </ListItemButton>
+
+            <ListItemButton
+              to={ADMIN_ROUTES.TRANSLATIONS}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.TRANSLATIONS}
+            >
+              <ListItemIcon>
+                <TranslateIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.translations()} />
             </ListItemButton>
 
             <ListItemButton
@@ -219,36 +252,6 @@ export function AdminsHeaderbar() {
                 <LanguageIcon />
               </ListItemIcon>
               <CustomListItemText primary={LL.navigation.languageSettings()} />
-            </ListItemButton>
-            <ListItemButton
-              to={ADMIN_ROUTES.TRANSLATIONS}
-              component={RouterLink}
-              selected={location.pathname === ADMIN_ROUTES.TRANSLATIONS}
-            >
-              <ListItemIcon>
-                <TranslateIcon />
-              </ListItemIcon>
-              <CustomListItemText primary="Translation Management" />
-            </ListItemButton>
-            <ListItemButton
-              to={ADMIN_ROUTES.SELLERS}
-              component={RouterLink}
-              selected={location.pathname === ADMIN_ROUTES.SELLERS}
-            >
-              <ListItemIcon>
-                <StorefrontIcon />
-              </ListItemIcon>
-              <CustomListItemText primary={LL.navigation.sellers()} />
-            </ListItemButton>
-            <ListItemButton
-              to={ADMIN_ROUTES.CURRENCY}
-              component={RouterLink}
-              selected={location.pathname === ADMIN_ROUTES.CURRENCY}
-            >
-              <ListItemIcon>
-                <AttachMoneyIcon />
-              </ListItemIcon>
-              <CustomListItemText primary={LL.currency.title()} />
             </ListItemButton>
           </List>
         </StyledDrawer>

@@ -46,6 +46,7 @@ const fa = {
     adminPanel: 'پنل مدیریت کیک‌زون',
     sellersPortal: 'پورتال فروشندگان',
     languageSettings: 'تنظیمات زبان',
+    translations: 'مدیریت ترجمه‌ها',
   },
 
   // Form labels and placeholders
@@ -225,15 +226,24 @@ const fa = {
   // Orders
   orders: {
     myOrders: 'سفارشات من',
+    allSellerOrders: 'همه سفارشات فروشندگان',
     orderNumber: 'سفارش',
     noOrdersFound: 'سفارشی یافت نشد',
     errorLoadingOrders: 'خطا در بارگذاری سفارشات',
     customerInformation: 'اطلاعات مشتری',
     orderManagement: 'مدیریت سفارش',
     orderItems: 'اقلام سفارش',
+    orderDetails: 'جزئیات سفارش',
+    orderSummary: 'خلاصه سفارش',
     changeStatus: 'تغییر وضعیت',
     changeOrderStatus: 'تغییر وضعیت سفارش',
     trackingNumber: 'شماره پیگیری',
+    tracking: 'پیگیری',
+    customer: 'مشتری',
+    email: 'ایمیل',
+    orderDate: 'تاریخ سفارش',
+    actions: 'عملیات',
+    filterBySeller: 'فیلتر بر اساس فروشنده',
     notSet: 'تنظیم نشده',
     customerNotes: 'یادداشت مشتری',
     item: 'مورد',
@@ -344,6 +354,7 @@ const fa = {
     orderFailed: 'ثبت سفارش با شکست مواجه شد. لطفا دوباره تلاش کنید.',
     outdatedCartItems:
       'سبد خرید شما حاوی اقلام قدیمی است. لطفاً سبد خرید خود را پاک کرده و دوباره آیتم‌ها را اضافه کنید.',
+    missingShippingInfo: 'لطفاً تمام اطلاعات ارسال مورد نیاز را وارد کنید',
   },
 
   // App names

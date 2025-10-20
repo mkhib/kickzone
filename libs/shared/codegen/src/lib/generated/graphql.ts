@@ -909,7 +909,6 @@ export type UpdateOrderInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   shippingAddress?: InputMaybe<Scalars['String']['input']>;
   state?: InputMaybe<Scalars['String']['input']>;
-  trackingNumber?: InputMaybe<Scalars['String']['input']>;
   zipCode?: InputMaybe<Scalars['String']['input']>;
 };
 

@@ -173,6 +173,10 @@ type RootTranslation = {
 		 * L​a​n​g​u​a​g​e​ ​S​e​t​t​i​n​g​s
 		 */
 		languageSettings: string
+		/**
+		 * T​r​a​n​s​l​a​t​i​o​n​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		translations: string
 	}
 	form: {
 		/**
@@ -810,6 +814,10 @@ type RootTranslation = {
 		 */
 		myOrders: string
 		/**
+		 * A​l​l​ ​S​e​l​l​e​r​ ​O​r​d​e​r​s
+		 */
+		allSellerOrders: string
+		/**
 		 * O​r​d​e​r
 		 */
 		orderNumber: string
@@ -834,6 +842,14 @@ type RootTranslation = {
 		 */
 		orderItems: string
 		/**
+		 * O​r​d​e​r​ ​D​e​t​a​i​l​s
+		 */
+		orderDetails: string
+		/**
+		 * O​r​d​e​r​ ​S​u​m​m​a​r​y
+		 */
+		orderSummary: string
+		/**
 		 * C​h​a​n​g​e​ ​S​t​a​t​u​s
 		 */
 		changeStatus: string
@@ -845,6 +861,30 @@ type RootTranslation = {
 		 * T​r​a​c​k​i​n​g​ ​N​u​m​b​e​r
 		 */
 		trackingNumber: string
+		/**
+		 * T​r​a​c​k​i​n​g
+		 */
+		tracking: string
+		/**
+		 * C​u​s​t​o​m​e​r
+		 */
+		customer: string
+		/**
+		 * E​m​a​i​l
+		 */
+		email: string
+		/**
+		 * O​r​d​e​r​ ​D​a​t​e
+		 */
+		orderDate: string
+		/**
+		 * A​c​t​i​o​n​s
+		 */
+		actions: string
+		/**
+		 * F​i​l​t​e​r​ ​b​y​ ​S​e​l​l​e​r
+		 */
+		filterBySeller: string
 		/**
 		 * N​o​t​ ​s​e​t
 		 */
@@ -1161,6 +1201,10 @@ type RootTranslation = {
 		 * Y​o​u​r​ ​c​a​r​t​ ​h​a​s​ ​o​u​t​d​a​t​e​d​ ​i​t​e​m​s​.​ ​P​l​e​a​s​e​ ​c​l​e​a​r​ ​y​o​u​r​ ​c​a​r​t​ ​a​n​d​ ​a​d​d​ ​i​t​e​m​s​ ​a​g​a​i​n​.
 		 */
 		outdatedCartItems: string
+		/**
+		 * P​l​e​a​s​e​ ​f​i​l​l​ ​i​n​ ​a​l​l​ ​r​e​q​u​i​r​e​d​ ​s​h​i​p​p​i​n​g​ ​i​n​f​o​r​m​a​t​i​o​n
+		 */
+		missingShippingInfo: string
 	}
 	appNames: {
 		/**
@@ -1448,6 +1492,10 @@ export type TranslationFunctions = {
 		 * Language Settings
 		 */
 		languageSettings: () => LocalizedString
+		/**
+		 * Translation Management
+		 */
+		translations: () => LocalizedString
 	}
 	form: {
 		/**
@@ -2083,6 +2131,10 @@ export type TranslationFunctions = {
 		 */
 		myOrders: () => LocalizedString
 		/**
+		 * All Seller Orders
+		 */
+		allSellerOrders: () => LocalizedString
+		/**
 		 * Order
 		 */
 		orderNumber: () => LocalizedString
@@ -2107,6 +2159,14 @@ export type TranslationFunctions = {
 		 */
 		orderItems: () => LocalizedString
 		/**
+		 * Order Details
+		 */
+		orderDetails: () => LocalizedString
+		/**
+		 * Order Summary
+		 */
+		orderSummary: () => LocalizedString
+		/**
 		 * Change Status
 		 */
 		changeStatus: () => LocalizedString
@@ -2118,6 +2178,30 @@ export type TranslationFunctions = {
 		 * Tracking Number
 		 */
 		trackingNumber: () => LocalizedString
+		/**
+		 * Tracking
+		 */
+		tracking: () => LocalizedString
+		/**
+		 * Customer
+		 */
+		customer: () => LocalizedString
+		/**
+		 * Email
+		 */
+		email: () => LocalizedString
+		/**
+		 * Order Date
+		 */
+		orderDate: () => LocalizedString
+		/**
+		 * Actions
+		 */
+		actions: () => LocalizedString
+		/**
+		 * Filter by Seller
+		 */
+		filterBySeller: () => LocalizedString
 		/**
 		 * Not set
 		 */
@@ -2432,6 +2516,10 @@ export type TranslationFunctions = {
 		 * Your cart has outdated items. Please clear your cart and add items again.
 		 */
 		outdatedCartItems: () => LocalizedString
+		/**
+		 * Please fill in all required shipping information
+		 */
+		missingShippingInfo: () => LocalizedString
 	}
 	appNames: {
 		/**

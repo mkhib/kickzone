@@ -207,58 +207,256 @@ export function AdminProducts() {
           </Typography>
         ) : (
           <>
-            <Grid container spacing={2}>
+            <Grid container spacing={3}>
               {filteredProducts.map((product: KickzoneGraphqlTypes.Product) => {
                 const info = product.productInfos[0];
+                const firstImage = info?.images?.[0];
+                const imageUrl = firstImage?.startsWith('/uploads/')
+                  ? `https://localhost:4000${firstImage}`
+                  : firstImage;
+
                 return (
-                  <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4 }}>
-                    <Card>
-                      <CardContent>
-                        <Typography variant="h6">{product.name}</Typography>
-                        <Typography variant="body2">
-                          {LL.form.status()}:{' '}
+                  <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
+                    <Card
+                      sx={{
+                        height: '100%',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        '&:hover': {
+                          transform: 'translateY(-8px)',
+                          boxShadow: '0 12px 24px rgba(0, 0, 0, 0.15)',
+                        },
+                        ...(product.archived && {
+                          opacity: 0.7,
+                          backgroundColor: 'action.disabledBackground',
+                        }),
+                      }}
+                    >
+                      {/* Product Image */}
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          paddingTop: '100%', // 1:1 aspect ratio
+                          backgroundColor: 'grey.100',
+                          overflow: 'hidden',
+                        }}
+                      >
+                        {imageUrl ? (
+                          <Box
+                            component="img"
+                            src={imageUrl}
+                            alt={product.name}
+                            sx={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: 0,
+                              left: 0,
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: 'text.disabled',
+                            }}
+                          >
+                            <ImageIcon sx={{ fontSize: 60 }} />
+                          </Box>
+                        )}
+
+                        {/* Status Badge */}
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 12,
+                            right: 12,
+                            backgroundColor: product.archived
+                              ? 'error.main'
+                              : 'success.main',
+                            color: 'white',
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: 1,
+                            fontSize: '0.75rem',
+                            fontWeight: 600,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                          }}
+                        >
                           {product.archived
                             ? LL.table.archived()
                             : LL.table.active()}
+                        </Box>
+
+                        {/* Color Indicator */}
+                        {info?.color && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              bottom: 12,
+                              left: 12,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                              px: 1.5,
+                              py: 0.5,
+                              borderRadius: 1,
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                            }}
+                          >
+                            <Box
+                              sx={{
+                                width: 16,
+                                height: 16,
+                                borderRadius: '50%',
+                                backgroundColor: info.color.hexCode,
+                                border: '2px solid white',
+                                boxShadow: '0 0 4px rgba(0,0,0,0.2)',
+                              }}
+                            />
+                            <Typography variant="caption" fontWeight={600}>
+                              {info.color.name}
+                            </Typography>
+                          </Box>
+                        )}
+                      </Box>
+
+                      {/* Card Content */}
+                      <CardContent sx={{ flexGrow: 1, p: 2 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 600,
+                            mb: 1,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            minHeight: '3em',
+                          }}
+                        >
+                          {product.name}
                         </Typography>
-                        <Typography variant="body2">
-                          {LL.products.color()}: {info?.color?.name ?? 'N/A'}
-                        </Typography>
-                        <Typography variant="body2">
-                          {LL.products.categories()}:{' '}
+
+                        {/* Categories */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            flexWrap: 'wrap',
+                            gap: 0.5,
+                            mb: 1,
+                          }}
+                        >
                           {product.categories
-                            .map(
-                              (cat: KickzoneGraphqlTypes.Category) => cat.name
-                            )
-                            .join(', ')}
+                            .slice(0, 2)
+                            .map((cat: KickzoneGraphqlTypes.Category) => (
+                              <Box
+                                key={cat.id}
+                                sx={{
+                                  backgroundColor: 'primary.50',
+                                  color: 'primary.main',
+                                  px: 1,
+                                  py: 0.25,
+                                  borderRadius: 0.5,
+                                  fontSize: '0.7rem',
+                                  fontWeight: 500,
+                                }}
+                              >
+                                {cat.name}
+                              </Box>
+                            ))}
+                          {product.categories.length > 2 && (
+                            <Box
+                              sx={{
+                                backgroundColor: 'grey.200',
+                                color: 'text.secondary',
+                                px: 1,
+                                py: 0.25,
+                                borderRadius: 0.5,
+                                fontSize: '0.7rem',
+                                fontWeight: 500,
+                              }}
+                            >
+                              +{product.categories.length - 2}
+                            </Box>
+                          )}
+                        </Box>
+
+                        {/* Product Variants */}
+                        <Typography variant="caption" color="text.secondary">
+                          {product.productInfos.length}{' '}
+                          {product.productInfos.length === 1
+                            ? 'variant'
+                            : 'variants'}
                         </Typography>
-                        {/* Show more product info as needed */}
                       </CardContent>
-                      <CardActions sx={{ justifyContent: 'center', p: 2 }}>
+
+                      {/* Action Buttons */}
+                      <CardActions
+                        sx={{
+                          justifyContent: 'space-around',
+                          borderTop: '1px solid',
+                          borderColor: 'divider',
+                          p: 1.5,
+                          gap: 1,
+                        }}
+                      >
                         <Tooltip title={LL.button.edit()}>
                           <IconButton
-                            size="small"
+                            size="medium"
                             onClick={() =>
                               navigate(`/products/edit/${product.id}`)
                             }
+                            sx={{
+                              color: 'primary.main',
+                              '&:hover': {
+                                backgroundColor: 'primary.50',
+                              },
+                            }}
                           >
                             <EditIcon />
                           </IconButton>
                         </Tooltip>
+
                         <Tooltip title={LL.products.images()}>
                           <IconButton
-                            size="small"
+                            size="medium"
                             onClick={() => handleOpenImageModal(product)}
+                            sx={{
+                              color: 'info.main',
+                              '&:hover': {
+                                backgroundColor: 'info.50',
+                              },
+                            }}
                           >
                             <ImageIcon />
                           </IconButton>
                         </Tooltip>
+
                         {!product.archived && (
                           <Tooltip title={LL.products.archiveProduct()}>
                             <IconButton
-                              size="small"
-                              color="secondary"
+                              size="medium"
                               onClick={() => handleArchiveClick(product)}
+                              sx={{
+                                color: 'error.main',
+                                '&:hover': {
+                                  backgroundColor: 'error.50',
+                                },
+                              }}
                             >
                               <ArchiveIcon />
                             </IconButton>

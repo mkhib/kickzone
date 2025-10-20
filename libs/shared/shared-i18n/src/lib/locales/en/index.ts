@@ -46,6 +46,7 @@ const en = {
     adminPanel: 'Kickzone Admin Panel',
     sellersPortal: 'Sellers Portal',
     languageSettings: 'Language Settings',
+    translations: 'Translation Management',
   },
 
   // Form labels and placeholders
@@ -224,15 +225,24 @@ const en = {
   // Orders
   orders: {
     myOrders: 'My Orders',
+    allSellerOrders: 'All Seller Orders',
     orderNumber: 'Order',
     noOrdersFound: 'No orders found',
     errorLoadingOrders: 'Error loading orders',
     customerInformation: 'Customer Information',
     orderManagement: 'Order Management',
     orderItems: 'Order Items',
+    orderDetails: 'Order Details',
+    orderSummary: 'Order Summary',
     changeStatus: 'Change Status',
     changeOrderStatus: 'Change Order Status',
     trackingNumber: 'Tracking Number',
+    tracking: 'Tracking',
+    customer: 'Customer',
+    email: 'Email',
+    orderDate: 'Order Date',
+    actions: 'Actions',
+    filterBySeller: 'Filter by Seller',
     notSet: 'Not set',
     customerNotes: 'Customer Notes',
     item: 'item',
@@ -341,6 +351,7 @@ const en = {
     orderFailed: 'Failed to place order. Please try again.',
     outdatedCartItems:
       'Your cart has outdated items. Please clear your cart and add items again.',
+    missingShippingInfo: 'Please fill in all required shipping information',
   },
 
   // App names

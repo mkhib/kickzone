@@ -21,6 +21,7 @@ import {
 } from '@kickzone-workspace/admins-orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -40,6 +41,7 @@ const formatDate = (dateString: string) => {
 };
 
 export function AdminSellerOrders() {
+  const { LL } = useI18nContext();
   const [selectedStatus, setSelectedStatus] = useState<
     KickzoneGraphqlTypes.OrderStatus | undefined
   >(undefined);
@@ -101,13 +103,13 @@ export function AdminSellerOrders() {
   const columns: MRT_ColumnDef<Order>[] = [
     {
       accessorKey: 'orderNumber',
-      header: 'Order #',
+      header: LL.orders.orderNumber(),
       size: 100,
       Cell: ({ cell }) => `#${cell.getValue<string>()}`,
     },
     {
       accessorKey: 'trackingNumber',
-      header: 'Tracking',
+      header: LL.orders.tracking(),
       size: 150,
       Cell: ({ cell }) => (
         <Box
@@ -123,17 +125,17 @@ export function AdminSellerOrders() {
     },
     {
       accessorKey: 'customerName',
-      header: 'Customer',
+      header: LL.orders.customer(),
       size: 150,
     },
     {
       accessorKey: 'customerEmail',
-      header: 'Email',
+      header: LL.orders.email(),
       size: 200,
     },
     {
       accessorKey: 'status',
-      header: 'Status',
+      header: LL.form.status(),
       size: 120,
       Cell: ({ cell }) => (
         <OrderStatusChip status={cell.getValue<string>()} size="small" />
@@ -142,20 +144,20 @@ export function AdminSellerOrders() {
     },
     {
       accessorKey: 'total',
-      header: 'Total',
+      header: LL.checkout.total(),
       size: 100,
       Cell: ({ cell }) => `$${cell.getValue<number>().toFixed(2)}`,
     },
     {
       accessorKey: 'createdAt',
-      header: 'Order Date',
+      header: LL.orders.orderDate(),
       size: 150,
       Cell: ({ cell }) => formatDate(cell.getValue<string>()),
       sortingFn: 'datetime',
     },
     {
       id: 'actions',
-      header: 'Actions',
+      header: LL.orders.actions(),
       size: 120,
       Cell: ({ row }) => (
         <Button
@@ -163,7 +165,7 @@ export function AdminSellerOrders() {
           size="small"
           onClick={() => handleStatusChange(row.original)}
         >
-          Change Status
+          {LL.orders.changeStatus()}
         </Button>
       ),
     },
@@ -191,7 +193,7 @@ export function AdminSellerOrders() {
     renderDetailPanel: ({ row }) => (
       <Box sx={{ p: 2, bgcolor: 'background.default' }}>
         <Typography variant="h6" gutterBottom>
-          Order Details
+          {LL.orders.orderDetails()}
         </Typography>
 
         <Box
@@ -204,19 +206,20 @@ export function AdminSellerOrders() {
         >
           <Box>
             <Typography variant="subtitle2" color="text.secondary">
-              Customer Information
+              {LL.orders.customerInformation()}
             </Typography>
             <Typography variant="body2">
-              <strong>Name:</strong> {row.original.customerName}
+              <strong>{LL.form.fullName()}:</strong> {row.original.customerName}
             </Typography>
             <Typography variant="body2">
-              <strong>Email:</strong> {row.original.customerEmail}
+              <strong>{LL.form.email()}:</strong> {row.original.customerEmail}
             </Typography>
             <Typography variant="body2">
-              <strong>Phone:</strong> {row.original.customerPhone}
+              <strong>{LL.form.phone()}:</strong> {row.original.customerPhone}
             </Typography>
             <Typography variant="body2">
-              <strong>Address:</strong> {row.original.shippingAddress}
+              <strong>{LL.form.address()}:</strong>{' '}
+              {row.original.shippingAddress}
             </Typography>
             <Typography variant="body2">
               {row.original.city}, {row.original.state} {row.original.zipCode}
@@ -226,27 +229,30 @@ export function AdminSellerOrders() {
 
           <Box>
             <Typography variant="subtitle2" color="text.secondary">
-              Order Summary
+              {LL.orders.orderSummary()}
             </Typography>
             <Typography variant="body2">
-              <strong>Subtotal:</strong> ${row.original.subtotal.toFixed(2)}
+              <strong>{LL.checkout.subtotal()}:</strong> $
+              {row.original.subtotal.toFixed(2)}
             </Typography>
             <Typography variant="body2">
-              <strong>Shipping:</strong> ${row.original.shippingCost.toFixed(2)}
+              <strong>{LL.checkout.shipping()}:</strong> $
+              {row.original.shippingCost.toFixed(2)}
             </Typography>
             <Typography variant="body2">
-              <strong>Total:</strong> ${row.original.total.toFixed(2)}
+              <strong>{LL.checkout.total()}:</strong> $
+              {row.original.total.toFixed(2)}
             </Typography>
             {row.original.notes && (
               <Typography variant="body2" sx={{ mt: 1 }}>
-                <strong>Notes:</strong> {row.original.notes}
+                <strong>{LL.form.notes()}:</strong> {row.original.notes}
               </Typography>
             )}
           </Box>
         </Box>
 
         <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-          Order Items ({row.original.items.length})
+          {LL.orders.orderItems()} ({row.original.items.length})
         </Typography>
         {row.original.items.map((item: KickzoneGraphqlTypes.OrderItem) => (
           <Box
@@ -276,7 +282,9 @@ export function AdminSellerOrders() {
                 </Typography>
               )}
             </Box>
-            <Typography variant="body2">Qty: {item.quantity}</Typography>
+            <Typography variant="body2">
+              {LL.table.quantity()}: {item.quantity}
+            </Typography>
             <Typography variant="body2" fontWeight="medium">
               ${item.totalPrice.toFixed(2)}
             </Typography>
@@ -287,34 +295,34 @@ export function AdminSellerOrders() {
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
         <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>Filter by Status</InputLabel>
+          <InputLabel>{LL.button.filterByStatus()}</InputLabel>
           <Select
             value={selectedStatus || ''}
             onChange={(e) => handleStatusFilter(e.target.value)}
-            label="Filter by Status"
+            label={LL.button.filterByStatus()}
             size="small"
           >
-            <MenuItem value="">All Orders</MenuItem>
+            <MenuItem value="">{LL.table.allOrders()}</MenuItem>
             <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Pending}>
-              Pending
+              {LL.orders.pending()}
             </MenuItem>
             <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Confirmed}>
-              Confirmed
+              {LL.orders.confirmed()}
             </MenuItem>
             <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Processing}>
-              Processing
+              {LL.orders.processing()}
             </MenuItem>
             <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Shipped}>
-              Shipped
+              {LL.orders.shipped()}
             </MenuItem>
             <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Delivered}>
-              Delivered
+              {LL.orders.delivered()}
             </MenuItem>
             <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Cancelled}>
-              Cancelled
+              {LL.orders.cancelled()}
             </MenuItem>
             <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Refunded}>
-              Refunded
+              {LL.orders.refunded()}
             </MenuItem>
           </Select>
         </FormControl>
@@ -335,7 +343,7 @@ export function AdminSellerOrders() {
           renderInput={(params) => (
             <TextField
               {...params}
-              label="Filter by Seller"
+              label={LL.orders.filterBySeller()}
               slotProps={{
                 input: {
                   ...params.InputProps,
@@ -361,7 +369,7 @@ export function AdminSellerOrders() {
     return (
       <AdminsLayout>
         <Alert severity="error">
-          Error loading orders: {ordersError.message}
+          {LL.orders.errorLoadingOrders()}: {ordersError.message}
         </Alert>
       </AdminsLayout>
     );
@@ -371,7 +379,7 @@ export function AdminSellerOrders() {
     <AdminsLayout>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          All Seller Orders
+          {LL.orders.allSellerOrders()}
         </Typography>
 
         <MaterialReactTable table={table} />
@@ -383,10 +391,10 @@ export function AdminSellerOrders() {
           maxWidth="sm"
           fullWidth
         >
-          <DialogTitle>Change Order Status</DialogTitle>
+          <DialogTitle>{LL.orders.changeOrderStatus()}</DialogTitle>
           <DialogContent>
             <FormControl fullWidth sx={{ mt: 2 }}>
-              <InputLabel>New Status</InputLabel>
+              <InputLabel>{LL.form.newStatus()}</InputLabel>
               <Select
                 value={newStatus}
                 onChange={(e) =>
@@ -394,36 +402,38 @@ export function AdminSellerOrders() {
                     e.target.value as KickzoneGraphqlTypes.OrderStatus
                   )
                 }
-                label="New Status"
+                label={LL.form.newStatus()}
               >
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Pending}>
-                  Pending
+                  {LL.orders.pending()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Confirmed}>
-                  Confirmed
+                  {LL.orders.confirmed()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Processing}>
-                  Processing
+                  {LL.orders.processing()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Shipped}>
-                  Shipped
+                  {LL.orders.shipped()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Delivered}>
-                  Delivered
+                  {LL.orders.delivered()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Cancelled}>
-                  Cancelled
+                  {LL.orders.cancelled()}
                 </MenuItem>
                 <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Refunded}>
-                  Refunded
+                  {LL.orders.refunded()}
                 </MenuItem>
               </Select>
             </FormControl>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setStatusDialogOpen(false)}>Cancel</Button>
+            <Button onClick={() => setStatusDialogOpen(false)}>
+              {LL.button.cancel()}
+            </Button>
             <Button variant="contained" onClick={handleUpdateStatus}>
-              Update Status
+              {LL.button.updateStatus()}
             </Button>
           </DialogActions>
         </Dialog>
