@@ -2,19 +2,17 @@ import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { useSetupPassword } from '@kickzone-workspace/sellers-auth-hooks';
-import {
-  Box,
-  Paper,
-  Typography,
-  TextField,
-  Button,
-  Grid,
-  Container,
-  InputAdornment,
-  IconButton,
-  Alert,
-  CircularProgress,
-} from '@mui/material';
+import Box from '@mui/material/Box';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
+import Container from '@mui/material/Container';
+import InputAdornment from '@mui/material/InputAdornment';
+import IconButton from '@mui/material/IconButton';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
 import Visibility from '@mui/icons-material/Visibility';
 import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';

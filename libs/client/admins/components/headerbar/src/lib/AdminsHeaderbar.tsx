@@ -4,7 +4,6 @@ import {
   useI18nContext,
   useThemeContext,
 } from '@kickzone-workspace/shared-i18n';
-import ContactMailIcon from '@mui/icons-material/ContactMail';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -201,14 +200,14 @@ export function AdminsHeaderbar() {
             </ListItemButton>
 
             <ListItemButton
-              to={ADMIN_ROUTES.CONTACT}
+              to={ADMIN_ROUTES.ORDERS}
               component={RouterLink}
-              selected={location.pathname === ADMIN_ROUTES.CONTACT}
+              selected={location.pathname === ADMIN_ROUTES.ORDERS}
             >
               <ListItemIcon>
-                <ContactMailIcon />
+                <ShoppingCartIcon />
               </ListItemIcon>
-              <CustomListItemText primary={LL.navigation.contact()} />
+              <CustomListItemText primary="All Orders" />
             </ListItemButton>
 
             <ListItemButton

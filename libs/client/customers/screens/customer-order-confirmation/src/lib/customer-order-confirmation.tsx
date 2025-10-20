@@ -1,27 +1,23 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import {
-  Box,
-  Typography,
-  Card,
-  CardContent,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Divider,
-  Alert,
-} from '@mui/material';
-import {
-  CheckCircle,
-  LocalShipping,
-  ShoppingBag,
-  Receipt,
-} from '@mui/icons-material';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Button from '@mui/material/Button';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Paper from '@mui/material/Paper';
+import Divider from '@mui/material/Divider';
+import Alert from '@mui/material/Alert';
+import CheckCircle from '@mui/icons-material/CheckCircle';
+import LocalShipping from '@mui/icons-material/LocalShipping';
+import ShoppingBag from '@mui/icons-material/ShoppingBag';
+import Receipt from '@mui/icons-material/Receipt';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';

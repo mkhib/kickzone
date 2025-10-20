@@ -1,35 +1,18 @@
-import React, { useState } from 'react';
-import {
-  Box,
-  Typography,
-  Card,
-  Grid,
-  Button,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  CircularProgress,
-  Alert,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
-  Divider,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Autocomplete,
-} from '@mui/material';
-import ExpandMore from '@mui/icons-material/ExpandMore';
+import React, { useMemo, useState } from 'react';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
+import TextField from '@mui/material/TextField';
+import Autocomplete from '@mui/material/Autocomplete';
 import FilterList from '@mui/icons-material/FilterList';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import {
@@ -38,11 +21,18 @@ import {
 } from '@kickzone-workspace/admins-orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
+import {
+  MaterialReactTable,
+  useMaterialReactTable,
+  type MRT_ColumnDef,
+} from 'material-react-table';
+
+type Order = KickzoneGraphqlTypes.Order;
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
-    month: 'long',
+    month: 'short',
     day: 'numeric',
     hour: '2-digit',
     minute: '2-digit',
@@ -50,13 +40,12 @@ const formatDate = (dateString: string) => {
 };
 
 export function AdminSellerOrders() {
-  const [expandedOrder, setExpandedOrder] = useState<string | false>(false);
   const [selectedStatus, setSelectedStatus] = useState<
     KickzoneGraphqlTypes.OrderStatus | undefined
   >(undefined);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
-  const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [newStatus, setNewStatus] = useState<KickzoneGraphqlTypes.OrderStatus>(
     KickzoneGraphqlTypes.OrderStatus.Pending
   );
@@ -66,17 +55,12 @@ export function AdminSellerOrders() {
     loading: ordersLoading,
     error: ordersError,
     updateOrderStatus,
-    loadMore,
   } = useAdminsOrders({
-    first: 50,
+    first: 100,
     status: selectedStatus,
   });
 
   const { sellers, loading: sellersLoading } = useAdminsSellers();
-
-  const handleExpandOrder = (orderId: string) => {
-    setExpandedOrder(expandedOrder === orderId ? false : orderId);
-  };
 
   const handleStatusFilter = (status: string) => {
     setSelectedStatus(
@@ -88,46 +72,290 @@ export function AdminSellerOrders() {
     setSelectedSellerId(sellerId);
   };
 
-  const handleStatusChange = (orderId: string) => {
-    setSelectedOrderId(orderId);
+  const handleStatusChange = (order: Order) => {
+    setSelectedOrder(order);
+    setNewStatus(order.status);
     setStatusDialogOpen(true);
   };
 
   const handleUpdateStatus = async () => {
-    if (!selectedOrderId || !newStatus) return;
+    if (!selectedOrder || !newStatus) return;
 
     try {
-      await updateOrderStatus(selectedOrderId, newStatus);
+      await updateOrderStatus(selectedOrder.id, newStatus);
       setStatusDialogOpen(false);
-      setSelectedOrderId(null);
-      setNewStatus(KickzoneGraphqlTypes.OrderStatus.Pending);
+      setSelectedOrder(null);
     } catch (error) {
       console.error('Error updating order status:', error);
     }
   };
 
   // Filter orders by seller if seller filter is applied
-  const filteredOrders = selectedSellerId
-    ? orders.filter(
-        (order: KickzoneGraphqlTypes.Order) =>
-          order.sellerId === parseInt(selectedSellerId, 10)
-      )
-    : orders;
-
-  if (ordersLoading || sellersLoading) {
-    return (
-      <AdminsLayout>
-        <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          minHeight="400px"
-        >
-          <CircularProgress />
-        </Box>
-      </AdminsLayout>
+  const filteredOrders = useMemo(() => {
+    if (!selectedSellerId) return orders;
+    return orders.filter(
+      (order: Order) => order.sellerId === parseInt(selectedSellerId, 10)
     );
-  }
+  }, [orders, selectedSellerId]);
+
+  const columns: MRT_ColumnDef<Order>[] = [
+    {
+      accessorKey: 'orderNumber',
+      header: 'Order #',
+      size: 100,
+      Cell: ({ cell }) => `#${cell.getValue<string>()}`,
+    },
+    {
+      accessorKey: 'trackingNumber',
+      header: 'Tracking',
+      size: 150,
+      Cell: ({ cell }) => (
+        <Box
+          sx={{
+            fontFamily: 'monospace',
+            fontWeight: 600,
+            color: 'primary.main',
+          }}
+        >
+          {cell.getValue<string>() || 'N/A'}
+        </Box>
+      ),
+    },
+    {
+      accessorKey: 'customerName',
+      header: 'Customer',
+      size: 150,
+    },
+    {
+      accessorKey: 'customerEmail',
+      header: 'Email',
+      size: 200,
+    },
+    {
+      accessorKey: 'status',
+      header: 'Status',
+      size: 120,
+      Cell: ({ cell }) => (
+        <OrderStatusChip status={cell.getValue<string>()} size="small" />
+      ),
+      filterFn: 'equals',
+    },
+    {
+      accessorKey: 'total',
+      header: 'Total',
+      size: 100,
+      Cell: ({ cell }) => `$${cell.getValue<number>().toFixed(2)}`,
+    },
+    {
+      accessorKey: 'createdAt',
+      header: 'Order Date',
+      size: 150,
+      Cell: ({ cell }) => formatDate(cell.getValue<string>()),
+      sortingFn: 'datetime',
+    },
+    {
+      id: 'actions',
+      header: 'Actions',
+      size: 120,
+      Cell: ({ row }) => (
+        <Button
+          variant="outlined"
+          size="small"
+          onClick={() => handleStatusChange(row.original)}
+        >
+          Change Status
+        </Button>
+      ),
+    },
+  ];
+
+  const table = useMaterialReactTable({
+    columns,
+    data: filteredOrders,
+    enableRowSelection: false,
+    enableColumnOrdering: true,
+    enableGlobalFilter: true,
+    enableSorting: true,
+    initialState: {
+      sorting: [{ id: 'createdAt', desc: true }],
+      density: 'compact',
+    },
+    muiTableBodyRowProps: ({ row }) => ({
+      sx: {
+        cursor: 'pointer',
+        '&:hover': {
+          backgroundColor: 'action.hover',
+        },
+      },
+    }),
+    renderDetailPanel: ({ row }) => (
+      <Box sx={{ p: 2, bgcolor: 'background.default' }}>
+        <Typography variant="h6" gutterBottom>
+          Order Details
+        </Typography>
+
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 2,
+            mb: 2,
+          }}
+        >
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Customer Information
+            </Typography>
+            <Typography variant="body2">
+              <strong>Name:</strong> {row.original.customerName}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Email:</strong> {row.original.customerEmail}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Phone:</strong> {row.original.customerPhone}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Address:</strong> {row.original.shippingAddress}
+            </Typography>
+            <Typography variant="body2">
+              {row.original.city}, {row.original.state} {row.original.zipCode}
+            </Typography>
+            <Typography variant="body2">{row.original.country}</Typography>
+          </Box>
+
+          <Box>
+            <Typography variant="subtitle2" color="text.secondary">
+              Order Summary
+            </Typography>
+            <Typography variant="body2">
+              <strong>Subtotal:</strong> ${row.original.subtotal.toFixed(2)}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Shipping:</strong> ${row.original.shippingCost.toFixed(2)}
+            </Typography>
+            <Typography variant="body2">
+              <strong>Total:</strong> ${row.original.total.toFixed(2)}
+            </Typography>
+            {row.original.notes && (
+              <Typography variant="body2" sx={{ mt: 1 }}>
+                <strong>Notes:</strong> {row.original.notes}
+              </Typography>
+            )}
+          </Box>
+        </Box>
+
+        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
+          Order Items ({row.original.items.length})
+        </Typography>
+        {row.original.items.map((item: KickzoneGraphqlTypes.OrderItem) => (
+          <Box
+            key={item.id}
+            sx={{ display: 'flex', gap: 2, mb: 1, alignItems: 'center' }}
+          >
+            {item.productImage && (
+              <Box
+                component="img"
+                src={item.productImage}
+                alt={item.productName}
+                sx={{
+                  width: 40,
+                  height: 40,
+                  objectFit: 'cover',
+                  borderRadius: 1,
+                }}
+              />
+            )}
+            <Box sx={{ flex: 1 }}>
+              <Typography variant="body2" fontWeight="medium">
+                {item.productName}
+              </Typography>
+              {(item.color || item.size) && (
+                <Typography variant="caption" color="text.secondary">
+                  {[item.color, item.size].filter(Boolean).join(' - ')}
+                </Typography>
+              )}
+            </Box>
+            <Typography variant="body2">Qty: {item.quantity}</Typography>
+            <Typography variant="body2" fontWeight="medium">
+              ${item.totalPrice.toFixed(2)}
+            </Typography>
+          </Box>
+        ))}
+      </Box>
+    ),
+    renderTopToolbarCustomActions: () => (
+      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        <FormControl sx={{ minWidth: 200 }}>
+          <InputLabel>Filter by Status</InputLabel>
+          <Select
+            value={selectedStatus || ''}
+            onChange={(e) => handleStatusFilter(e.target.value)}
+            label="Filter by Status"
+            size="small"
+          >
+            <MenuItem value="">All Orders</MenuItem>
+            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Pending}>
+              Pending
+            </MenuItem>
+            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Confirmed}>
+              Confirmed
+            </MenuItem>
+            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Processing}>
+              Processing
+            </MenuItem>
+            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Shipped}>
+              Shipped
+            </MenuItem>
+            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Delivered}>
+              Delivered
+            </MenuItem>
+            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Cancelled}>
+              Cancelled
+            </MenuItem>
+            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Refunded}>
+              Refunded
+            </MenuItem>
+          </Select>
+        </FormControl>
+
+        <Autocomplete<KickzoneGraphqlTypes.SellerInfo>
+          sx={{ minWidth: 300 }}
+          options={sellers}
+          size="small"
+          getOptionLabel={(seller) =>
+            `${seller.storeName} (${seller.user.email})`
+          }
+          value={
+            sellers.find((s) => s.id.toString() === selectedSellerId) || null
+          }
+          onChange={(_, newValue) => {
+            handleSellerFilter(newValue ? newValue.id.toString() : null);
+          }}
+          renderInput={(params) => (
+            <TextField
+              {...params}
+              label="Filter by Seller"
+              slotProps={{
+                input: {
+                  ...params.InputProps,
+                  startAdornment: (
+                    <>
+                      <FilterList sx={{ ml: 1, color: 'text.secondary' }} />
+                      {params.InputProps.startAdornment}
+                    </>
+                  ),
+                },
+              }}
+            />
+          )}
+        />
+      </Box>
+    ),
+    state: {
+      isLoading: ordersLoading || sellersLoading,
+    },
+  });
 
   if (ordersError) {
     return (
@@ -146,328 +374,7 @@ export function AdminSellerOrders() {
           All Seller Orders
         </Typography>
 
-        {/* Filters */}
-        <Box sx={{ mb: 3, display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-          <FormControl sx={{ minWidth: 200 }}>
-            <InputLabel>Filter by Status</InputLabel>
-            <Select
-              value={selectedStatus || ''}
-              onChange={(e) => handleStatusFilter(e.target.value)}
-              label="Filter by Status"
-            >
-              <MenuItem value="">All Orders</MenuItem>
-              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Pending}>
-                Pending
-              </MenuItem>
-              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Confirmed}>
-                Confirmed
-              </MenuItem>
-              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Processing}>
-                Processing
-              </MenuItem>
-              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Shipped}>
-                Shipped
-              </MenuItem>
-              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Delivered}>
-                Delivered
-              </MenuItem>
-              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Cancelled}>
-                Cancelled
-              </MenuItem>
-              <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Refunded}>
-                Refunded
-              </MenuItem>
-            </Select>
-          </FormControl>
-
-          <Autocomplete<KickzoneGraphqlTypes.SellerInfo>
-            sx={{ minWidth: 300 }}
-            options={sellers}
-            getOptionLabel={(seller) =>
-              `${seller.storeName} (${seller.user.email})`
-            }
-            value={
-              sellers.find((s) => s.id.toString() === selectedSellerId) || null
-            }
-            onChange={(_, newValue) => {
-              handleSellerFilter(newValue ? newValue.id.toString() : null);
-            }}
-            renderInput={(params) => (
-              <TextField
-                {...params}
-                label="Filter by Seller"
-                slotProps={{
-                  input: {
-                    ...params.InputProps,
-                    startAdornment: (
-                      <>
-                        <FilterList sx={{ ml: 1, color: 'text.secondary' }} />
-                        {params.InputProps.startAdornment}
-                      </>
-                    ),
-                  },
-                }}
-              />
-            )}
-          />
-        </Box>
-
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          Showing {filteredOrders.length} orders
-        </Typography>
-
-        {filteredOrders.length === 0 ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
-            <Typography variant="h6" color="text.secondary">
-              No orders found
-            </Typography>
-          </Box>
-        ) : (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {filteredOrders.map((order: KickzoneGraphqlTypes.Order) => (
-              <Card key={order.id}>
-                <Accordion
-                  expanded={expandedOrder === order.id}
-                  onChange={() => handleExpandOrder(order.id)}
-                >
-                  <AccordionSummary expandIcon={<ExpandMore />}>
-                    <Grid container spacing={2} alignItems="center">
-                      <Grid size={{ xs: 12, sm: 3 }}>
-                        <Typography variant="h6">
-                          Order #{order.orderNumber}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 2 }}>
-                        <OrderStatusChip status={order.status} />
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 2 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          {formatDate(order.createdAt)}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 2 }}>
-                        <Typography variant="h6">
-                          ${order.total.toFixed(2)}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 3 }}>
-                        <Typography variant="body2" color="text.secondary">
-                          {order.items.length} item
-                          {order.items.length !== 1 ? 's' : ''}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </AccordionSummary>
-
-                  <AccordionDetails>
-                    <Box sx={{ width: '100%' }}>
-                      {/* Order Details */}
-                      <Grid container spacing={3} sx={{ mb: 3 }}>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Typography variant="h6" gutterBottom>
-                            Customer Information
-                          </Typography>
-                          <Typography variant="body2">
-                            <strong>Name:</strong> {order.customerName}
-                          </Typography>
-                          <Typography variant="body2">
-                            <strong>Email:</strong> {order.customerEmail}
-                          </Typography>
-                          <Typography variant="body2">
-                            <strong>Phone:</strong> {order.customerPhone}
-                          </Typography>
-                          <Typography variant="body2">
-                            <strong>Address:</strong> {order.shippingAddress}
-                          </Typography>
-                          <Typography variant="body2">
-                            {order.city}, {order.state} {order.zipCode}
-                          </Typography>
-                          <Typography variant="body2">
-                            {order.country}
-                          </Typography>
-                        </Grid>
-
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Typography variant="h6" gutterBottom>
-                            Order Management
-                          </Typography>
-
-                          <Box sx={{ mb: 2 }}>
-                            <Typography variant="body2" gutterBottom>
-                              <strong>Status:</strong> {order.status}
-                            </Typography>
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              onClick={() => handleStatusChange(order.id)}
-                              sx={{ mr: 1 }}
-                            >
-                              Change Status
-                            </Button>
-                          </Box>
-
-                          <Box sx={{ mb: 2 }}>
-                            <Typography variant="body2" gutterBottom>
-                              <strong>Tracking Number:</strong>
-                            </Typography>
-                            <Box
-                              sx={{
-                                p: 1.5,
-                                bgcolor: 'primary.50',
-                                borderRadius: 1,
-                                border: '2px solid',
-                                borderColor: 'primary.main',
-                              }}
-                            >
-                              <Typography
-                                variant="body1"
-                                sx={{
-                                  fontFamily: 'monospace',
-                                  fontWeight: 700,
-                                  letterSpacing: 1,
-                                  color: 'primary.main',
-                                }}
-                              >
-                                {order.trackingNumber || 'Not set'}
-                              </Typography>
-                            </Box>
-                          </Box>
-
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              mb: 1,
-                            }}
-                          >
-                            <Typography>Subtotal:</Typography>
-                            <Typography>
-                              ${order.subtotal.toFixed(2)}
-                            </Typography>
-                          </Box>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              mb: 1,
-                            }}
-                          >
-                            <Typography>Shipping:</Typography>
-                            <Typography>
-                              ${order.shippingCost.toFixed(2)}
-                            </Typography>
-                          </Box>
-                          <Divider sx={{ my: 1 }} />
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              justifyContent: 'space-between',
-                              mb: 1,
-                            }}
-                          >
-                            <Typography variant="h6">Total:</Typography>
-                            <Typography variant="h6">
-                              ${order.total.toFixed(2)}
-                            </Typography>
-                          </Box>
-                          {order.notes && (
-                            <Box sx={{ mt: 2 }}>
-                              <Typography variant="body2">
-                                <strong>Customer Notes:</strong> {order.notes}
-                              </Typography>
-                            </Box>
-                          )}
-                        </Grid>
-                      </Grid>
-
-                      {/* Order Items */}
-                      <Typography variant="h6" gutterBottom>
-                        Order Items
-                      </Typography>
-                      <TableContainer component={Paper} variant="outlined">
-                        <Table>
-                          <TableHead>
-                            <TableRow>
-                              <TableCell>Product</TableCell>
-                              <TableCell>Quantity</TableCell>
-                              <TableCell>Unit Price</TableCell>
-                              <TableCell>Total</TableCell>
-                            </TableRow>
-                          </TableHead>
-                          <TableBody>
-                            {order.items.map(
-                              (item: KickzoneGraphqlTypes.OrderItem) => (
-                                <TableRow key={item.id}>
-                                  <TableCell>
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 2,
-                                      }}
-                                    >
-                                      {item.productImage && (
-                                        <Box
-                                          component="img"
-                                          src={item.productImage}
-                                          alt={item.productName}
-                                          sx={{
-                                            width: 50,
-                                            height: 50,
-                                            objectFit: 'cover',
-                                            borderRadius: 1,
-                                          }}
-                                        />
-                                      )}
-                                      <Box>
-                                        <Typography
-                                          variant="body2"
-                                          fontWeight="medium"
-                                        >
-                                          {item.productName}
-                                        </Typography>
-                                        {(item.color || item.size) && (
-                                          <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                          >
-                                            {[item.color, item.size]
-                                              .filter(Boolean)
-                                              .join(' - ')}
-                                          </Typography>
-                                        )}
-                                      </Box>
-                                    </Box>
-                                  </TableCell>
-                                  <TableCell>{item.quantity}</TableCell>
-                                  <TableCell>
-                                    ${item.unitPrice.toFixed(2)}
-                                  </TableCell>
-                                  <TableCell>
-                                    ${item.totalPrice.toFixed(2)}
-                                  </TableCell>
-                                </TableRow>
-                              )
-                            )}
-                          </TableBody>
-                        </Table>
-                      </TableContainer>
-                    </Box>
-                  </AccordionDetails>
-                </Accordion>
-              </Card>
-            ))}
-          </Box>
-        )}
-
-        {/* Load More Button */}
-        {filteredOrders.length > 0 && (
-          <Box sx={{ mt: 3, textAlign: 'center' }}>
-            <Button variant="outlined" onClick={loadMore}>
-              Load More Orders
-            </Button>
-          </Box>
-        )}
+        <MaterialReactTable table={table} />
 
         {/* Status Change Dialog */}
         <Dialog

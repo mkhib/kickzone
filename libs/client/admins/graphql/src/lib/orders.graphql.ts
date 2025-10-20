@@ -1,12 +1,7 @@
 import { gql } from '@apollo/client';
 
 export const GET_ALL_ORDERS_QUERY = gql`
-  query GetAllOrders(
-    $first: Int = 10
-    $after: String
-    $sellerId: String
-    $status: OrderStatus
-  ) {
+  query GetAllOrders($first: Int = 10, $after: String, $status: OrderStatus) {
     allSellerOrders(first: $first, after: $after, status: $status) {
       id
       orderNumber

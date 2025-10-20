@@ -3,18 +3,16 @@ import {
   useI18nContext,
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
-import {
-  Alert,
-  Box,
-  Card,
-  CardContent,
-  CircularProgress,
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  Typography,
-} from '@mui/material';
+import Alert from '@mui/material/Alert';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import CircularProgress from '@mui/material/CircularProgress';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Typography from '@mui/material/Typography';
 import React from 'react';
 
 interface LanguageComponentsProps {
