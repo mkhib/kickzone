@@ -1,5 +1,9 @@
 import React from 'react';
-import { Box, Typography, Button, Container, Paper } from '@mui/material';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Paper from '@mui/material/Paper';
 import { useNavigate } from 'react-router-dom';
 import { LottieUnauthorized } from '@kickzone-workspace/lottie-unauthorized';
 import styles from './unauthorized-path.module.css';

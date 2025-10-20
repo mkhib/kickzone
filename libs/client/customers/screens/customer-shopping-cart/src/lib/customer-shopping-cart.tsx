@@ -21,7 +21,10 @@ import {
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
-import { Add, Delete, Remove, ShoppingCartCheckout } from '@mui/icons-material';
+import Add from '@mui/icons-material/Add';
+import Delete from '@mui/icons-material/Delete';
+import Remove from '@mui/icons-material/Remove';
+import ShoppingCartCheckout from '@mui/icons-material/ShoppingCartCheckout';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';

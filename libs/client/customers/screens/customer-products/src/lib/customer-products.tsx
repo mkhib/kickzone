@@ -16,7 +16,8 @@ import Pagination from '@mui/material/Pagination';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import InputAdornment from '@mui/material/InputAdornment';
-import { Search, ShoppingCart } from '@mui/icons-material';
+import Search from '@mui/icons-material/Search';
+import ShoppingCart from '@mui/icons-material/ShoppingCart';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import {
   useCustomersProducts,

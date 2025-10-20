@@ -25,7 +25,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import { ExpandMore } from '@mui/icons-material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useSellerOrders } from '@kickzone-workspace/orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';

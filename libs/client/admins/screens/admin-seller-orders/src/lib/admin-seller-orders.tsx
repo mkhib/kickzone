@@ -29,7 +29,8 @@ import {
   DialogActions,
   Autocomplete,
 } from '@mui/material';
-import { ExpandMore, FilterList } from '@mui/icons-material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
+import FilterList from '@mui/icons-material/FilterList';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import {
   useAdminsOrders,

@@ -18,7 +18,7 @@ import Accordion from '@mui/material/Accordion';
 import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Divider from '@mui/material/Divider';
-import { ExpandMore } from '@mui/icons-material';
+import ExpandMore from '@mui/icons-material/ExpandMore';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { GET_MY_ORDERS_QUERY } from '@kickzone-workspace/customers-graphql';
 import {

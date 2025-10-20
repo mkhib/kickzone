@@ -3,7 +3,9 @@ import {
   useI18nContext,
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
-import { Box, Typography, Button } from '@mui/material';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
 import LanguageIcon from '@mui/icons-material/Language';
 import { useNavigate } from 'react-router-dom';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';

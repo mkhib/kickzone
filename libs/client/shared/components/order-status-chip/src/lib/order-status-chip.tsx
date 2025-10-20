@@ -1,4 +1,4 @@
-import { Chip } from '@mui/material';
+import Chip from '@mui/material/Chip';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
