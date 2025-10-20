@@ -525,7 +525,6 @@ input UpdateOrderInput {
   country: String
   items: [UpdateOrderItemInput!]
   notes: String
-  trackingNumber: String
 }
 
 input UpdateOrderItemInput {

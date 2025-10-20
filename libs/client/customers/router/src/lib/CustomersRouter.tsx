@@ -6,6 +6,8 @@ import { CustomerShoppingCart } from '@kickzone-workspace/customer-shopping-cart
 import { CustomerSignup } from '@kickzone-workspace/customer-signup';
 import { CustomerForgotPassword } from '@kickzone-workspace/customer-forgot-password';
 import { CustomerResetPassword } from '@kickzone-workspace/customer-reset-password';
+import { CustomerOrders } from '@kickzone-workspace/customer-orders';
+import { CustomerOrderConfirmation } from '@kickzone-workspace/customer-order-confirmation';
 import { LanguageComponents } from '@kickzone-workspace/language-components';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
@@ -18,9 +20,20 @@ export function CustomersRouter() {
         <Route path={CUSTOMER_ROUTES.PRODUCTS} element={<CustomersHome />} />
         <Route path={CUSTOMER_ROUTES.LOGIN} element={<CustomersLogin />} />
         <Route path={CUSTOMER_ROUTES.SIGNUP} element={<CustomerSignup />} />
-        <Route path={CUSTOMER_ROUTES.FORGOT_PASSWORD} element={<CustomerForgotPassword />} />
-        <Route path={CUSTOMER_ROUTES.RESET_PASSWORD} element={<CustomerResetPassword />} />
+        <Route
+          path={CUSTOMER_ROUTES.FORGOT_PASSWORD}
+          element={<CustomerForgotPassword />}
+        />
+        <Route
+          path={CUSTOMER_ROUTES.RESET_PASSWORD}
+          element={<CustomerResetPassword />}
+        />
         <Route path={CUSTOMER_ROUTES.CART} element={<CustomerShoppingCart />} />
+        <Route path={CUSTOMER_ROUTES.ORDERS} element={<CustomerOrders />} />
+        <Route
+          path={CUSTOMER_ROUTES.ORDER_CONFIRMATION}
+          element={<CustomerOrderConfirmation />}
+        />
         <Route
           path={CUSTOMER_ROUTES.LANGUAGE_SETTINGS}
           element={<LanguageComponents LayoutComponent={CustomersLayout} />}

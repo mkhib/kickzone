@@ -890,6 +890,36 @@ type RootTranslation = {
 		 */
 		refunded: string
 	}
+	orderConfirmation: {
+		/**
+		 * O​r​d​e​r​ ​P​l​a​c​e​d​ ​S​u​c​c​e​s​s​f​u​l​l​y​!
+		 */
+		title: string
+		/**
+		 * T​h​a​n​k​ ​y​o​u​ ​f​o​r​ ​y​o​u​r​ ​o​r​d​e​r​.​ ​A​ ​c​o​n​f​i​r​m​a​t​i​o​n​ ​e​m​a​i​l​ ​h​a​s​ ​b​e​e​n​ ​s​e​n​t​ ​t​o​ ​y​o​u​.
+		 */
+		thankYouMessage: string
+		/**
+		 * O​r​d​e​r​ ​S​u​m​m​a​r​y
+		 */
+		orderSummary: string
+		/**
+		 * S​h​i​p​p​i​n​g​ ​A​d​d​r​e​s​s
+		 */
+		shippingAddress: string
+		/**
+		 * Y​o​u​ ​w​i​l​l​ ​r​e​c​e​i​v​e​ ​a​n​ ​e​m​a​i​l​ ​c​o​n​f​i​r​m​a​t​i​o​n​ ​w​i​t​h​ ​y​o​u​r​ ​o​r​d​e​r​ ​d​e​t​a​i​l​s​ ​a​n​d​ ​t​r​a​c​k​i​n​g​ ​i​n​f​o​r​m​a​t​i​o​n​.
+		 */
+		emailConfirmation: string
+		/**
+		 * V​i​e​w​ ​M​y​ ​O​r​d​e​r​s
+		 */
+		viewOrders: string
+		/**
+		 * C​o​n​t​i​n​u​e​ ​S​h​o​p​p​i​n​g
+		 */
+		continueShopping: string
+	}
 	status: {
 		/**
 		 * L​o​a​d​i​n​g​.​.​.
@@ -937,6 +967,20 @@ type RootTranslation = {
 		 * O​r​d​e​r​ ​p​l​a​c​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
 		 */
 		orderPlaced: string
+		/**
+		 * Y​o​u​r​ ​o​r​d​e​r​ ​h​a​s​ ​b​e​e​n​ ​p​l​a​c​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y​!​ ​C​h​e​c​k​ ​y​o​u​r​ ​o​r​d​e​r​s​ ​p​a​g​e​ ​f​o​r​ ​t​r​a​c​k​i​n​g​ ​i​n​f​o​r​m​a​t​i​o​n​.
+		 */
+		orderPlacedWithTracking: string
+		/**
+		 * Y​o​u​r​ ​o​r​d​e​r​ ​h​a​s​ ​b​e​e​n​ ​p​l​a​c​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y​!​ ​T​r​a​c​k​i​n​g​ ​n​u​m​b​e​r​:​ ​{​t​r​a​c​k​i​n​g​N​u​m​b​e​r​}
+		 * @param {unknown} trackingNumber
+		 */
+		orderPlacedWithSingleTracking: RequiredParams<'trackingNumber'>
+		/**
+		 * Y​o​u​r​ ​o​r​d​e​r​s​ ​h​a​v​e​ ​b​e​e​n​ ​p​l​a​c​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y​!​ ​T​r​a​c​k​i​n​g​ ​n​u​m​b​e​r​s​:​ ​{​t​r​a​c​k​i​n​g​N​u​m​b​e​r​s​}
+		 * @param {unknown} trackingNumbers
+		 */
+		orderPlacedWithMultipleTracking: RequiredParams<'trackingNumbers'>
 		/**
 		 * P​r​o​d​u​c​t​ ​s​a​v​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
 		 */
@@ -1101,6 +1145,22 @@ type RootTranslation = {
 		 * I​n​c​o​r​r​e​c​t​ ​c​r​e​d​e​n​t​i​a​l​s​.
 		 */
 		wrongEmailOrPassword: string
+		/**
+		 * S​o​m​e​ ​p​r​o​d​u​c​t​s​ ​i​n​ ​y​o​u​r​ ​c​a​r​t​ ​a​r​e​ ​n​o​ ​l​o​n​g​e​r​ ​a​v​a​i​l​a​b​l​e​.​ ​P​l​e​a​s​e​ ​r​e​m​o​v​e​ ​t​h​e​m​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		productsNotAvailable: string
+		/**
+		 * S​o​m​e​ ​p​r​o​d​u​c​t​s​ ​i​n​ ​y​o​u​r​ ​c​a​r​t​ ​a​r​e​ ​o​u​t​ ​o​f​ ​s​t​o​c​k​.​ ​P​l​e​a​s​e​ ​a​d​j​u​s​t​ ​q​u​a​n​t​i​t​i​e​s​ ​a​n​d​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		insufficientStock: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​p​l​a​c​e​ ​o​r​d​e​r​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		orderFailed: string
+		/**
+		 * Y​o​u​r​ ​c​a​r​t​ ​h​a​s​ ​o​u​t​d​a​t​e​d​ ​i​t​e​m​s​.​ ​P​l​e​a​s​e​ ​c​l​e​a​r​ ​y​o​u​r​ ​c​a​r​t​ ​a​n​d​ ​a​d​d​ ​i​t​e​m​s​ ​a​g​a​i​n​.
+		 */
+		outdatedCartItems: string
 	}
 	appNames: {
 		/**
@@ -2103,6 +2163,36 @@ export type TranslationFunctions = {
 		 */
 		refunded: () => LocalizedString
 	}
+	orderConfirmation: {
+		/**
+		 * Order Placed Successfully!
+		 */
+		title: () => LocalizedString
+		/**
+		 * Thank you for your order. A confirmation email has been sent to you.
+		 */
+		thankYouMessage: () => LocalizedString
+		/**
+		 * Order Summary
+		 */
+		orderSummary: () => LocalizedString
+		/**
+		 * Shipping Address
+		 */
+		shippingAddress: () => LocalizedString
+		/**
+		 * You will receive an email confirmation with your order details and tracking information.
+		 */
+		emailConfirmation: () => LocalizedString
+		/**
+		 * View My Orders
+		 */
+		viewOrders: () => LocalizedString
+		/**
+		 * Continue Shopping
+		 */
+		continueShopping: () => LocalizedString
+	}
 	status: {
 		/**
 		 * Loading...
@@ -2150,6 +2240,18 @@ export type TranslationFunctions = {
 		 * Order placed successfully
 		 */
 		orderPlaced: () => LocalizedString
+		/**
+		 * Your order has been placed successfully! Check your orders page for tracking information.
+		 */
+		orderPlacedWithTracking: () => LocalizedString
+		/**
+		 * Your order has been placed successfully! Tracking number: {trackingNumber}
+		 */
+		orderPlacedWithSingleTracking: (arg: { trackingNumber: unknown }) => LocalizedString
+		/**
+		 * Your orders have been placed successfully! Tracking numbers: {trackingNumbers}
+		 */
+		orderPlacedWithMultipleTracking: (arg: { trackingNumbers: unknown }) => LocalizedString
 		/**
 		 * Product saved successfully
 		 */
@@ -2314,6 +2416,22 @@ export type TranslationFunctions = {
 		 * Incorrect credentials.
 		 */
 		wrongEmailOrPassword: () => LocalizedString
+		/**
+		 * Some products in your cart are no longer available. Please remove them and try again.
+		 */
+		productsNotAvailable: () => LocalizedString
+		/**
+		 * Some products in your cart are out of stock. Please adjust quantities and try again.
+		 */
+		insufficientStock: () => LocalizedString
+		/**
+		 * Failed to place order. Please try again.
+		 */
+		orderFailed: () => LocalizedString
+		/**
+		 * Your cart has outdated items. Please clear your cart and add items again.
+		 */
+		outdatedCartItems: () => LocalizedString
 	}
 	appNames: {
 		/**

@@ -22,6 +22,7 @@ import Divider from '@mui/material/Divider';
 import { ExpandMore } from '@mui/icons-material';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { GET_MY_ORDERS_QUERY } from '@kickzone-workspace/customers-graphql';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 
 interface OrderItem {
   id: string;
@@ -93,6 +94,7 @@ const formatDate = (dateString: string) => {
 };
 
 export function CustomerOrders() {
+  const { LL } = useI18nContext();
   const [expandedOrder, setExpandedOrder] = useState<string | false>(false);
 
   const {
@@ -228,10 +230,32 @@ export function CustomerOrders() {
                             {order.country}
                           </Typography>
                           {order.trackingNumber && (
-                            <Typography variant="body2" sx={{ mt: 1 }}>
-                              <strong>Tracking Number:</strong>{' '}
-                              {order.trackingNumber}
-                            </Typography>
+                            <Box sx={{ mt: 2 }}>
+                              <Typography variant="body2" gutterBottom>
+                                <strong>{LL.orders.trackingNumber()}:</strong>
+                              </Typography>
+                              <Box
+                                sx={{
+                                  p: 1.5,
+                                  bgcolor: 'primary.50',
+                                  borderRadius: 1,
+                                  border: '2px solid',
+                                  borderColor: 'primary.main',
+                                }}
+                              >
+                                <Typography
+                                  variant="body1"
+                                  sx={{
+                                    fontFamily: 'monospace',
+                                    fontWeight: 700,
+                                    letterSpacing: 1,
+                                    color: 'primary.main',
+                                  }}
+                                >
+                                  {order.trackingNumber}
+                                </Typography>
+                              </Box>
+                            </Box>
                           )}
                         </Grid>
 

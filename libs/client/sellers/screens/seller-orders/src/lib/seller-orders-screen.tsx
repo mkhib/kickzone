@@ -22,12 +22,11 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import TextField from '@mui/material/TextField';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
-import { ExpandMore, Edit, Save, Cancel } from '@mui/icons-material';
+import { ExpandMore } from '@mui/icons-material';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useSellerOrders } from '@kickzone-workspace/orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
@@ -74,8 +73,6 @@ export function SellerOrdersScreen() {
   const [selectedStatus, setSelectedStatus] = useState<
     KickzoneGraphqlTypes.OrderStatus | undefined
   >(undefined);
-  const [editingOrder, setEditingOrder] = useState<string | null>(null);
-  const [trackingNumber, setTrackingNumber] = useState('');
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState<KickzoneGraphqlTypes.OrderStatus>(
@@ -120,7 +117,6 @@ export function SellerOrdersScreen() {
     loading: ordersLoading,
     error: ordersError,
     updateOrderStatus,
-    updateTrackingNumber,
   } = useSellerOrders({
     first: 50,
     status: selectedStatus,
@@ -134,26 +130,6 @@ export function SellerOrdersScreen() {
     setSelectedStatus(
       (status as KickzoneGraphqlTypes.OrderStatus) || undefined
     );
-  };
-
-  const handleEditOrder = (orderId: string, currentTrackingNumber: string) => {
-    setEditingOrder(orderId);
-    setTrackingNumber(currentTrackingNumber || '');
-  };
-
-  const handleSaveTracking = async (orderId: string) => {
-    try {
-      await updateTrackingNumber(orderId, trackingNumber);
-      setEditingOrder(null);
-      setTrackingNumber('');
-    } catch (error) {
-      console.error('Error updating tracking number:', error);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingOrder(null);
-    setTrackingNumber('');
   };
 
   const handleStatusChange = (orderId: string) => {
@@ -372,62 +348,26 @@ export function SellerOrdersScreen() {
                             <Typography variant="body2" gutterBottom>
                               <strong>{LL.orders.trackingNumber()}:</strong>
                             </Typography>
-                            {editingOrder === order.id ? (
-                              <Box
+                            <Box
+                              sx={{
+                                p: 1.5,
+                                bgcolor: 'grey.100',
+                                borderRadius: 1,
+                                border: '1px solid',
+                                borderColor: 'grey.300',
+                              }}
+                            >
+                              <Typography
+                                variant="body1"
                                 sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1,
+                                  fontFamily: 'monospace',
+                                  fontWeight: 600,
+                                  letterSpacing: 1,
                                 }}
                               >
-                                <TextField
-                                  size="small"
-                                  value={trackingNumber}
-                                  onChange={(e) =>
-                                    setTrackingNumber(e.target.value)
-                                  }
-                                  placeholder={LL.form.trackingNumber()}
-                                />
-                                <Button
-                                  size="small"
-                                  startIcon={<Save />}
-                                  onClick={() => handleSaveTracking(order.id)}
-                                >
-                                  {LL.button.save()}
-                                </Button>
-                                <Button
-                                  size="small"
-                                  startIcon={<Cancel />}
-                                  onClick={handleCancelEdit}
-                                >
-                                  {LL.button.cancel()}
-                                </Button>
-                              </Box>
-                            ) : (
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1,
-                                }}
-                              >
-                                <Typography variant="body2">
-                                  {order.trackingNumber || LL.orders.notSet()}
-                                </Typography>
-                                <Button
-                                  size="small"
-                                  startIcon={<Edit />}
-                                  onClick={() =>
-                                    handleEditOrder(
-                                      order.id,
-                                      order.trackingNumber || ''
-                                    )
-                                  }
-                                >
-                                  {LL.button.edit()}
-                                </Button>
-                              </Box>
-                            )}
+                                {order.trackingNumber || LL.orders.notSet()}
+                              </Typography>
+                            </Box>
                           </Box>
 
                           <Box

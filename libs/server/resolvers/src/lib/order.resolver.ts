@@ -7,22 +7,24 @@ import {
   Parent,
 } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { Order, OrderItem, OrderStatus } from '@kickzone-workspace/entities';
+import {
+  Order,
+  OrderItem,
+  OrderStatus,
+  User,
+} from '@kickzone-workspace/entities';
 import {
   CreateOrderInput,
   UpdateOrderInput,
   UpdateOrderStatusInput,
 } from '@kickzone-workspace/inputs';
-import { OrderService, SellerService } from '@kickzone-workspace/services';
+import { OrderService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
 
 @Resolver(() => Order)
 export class OrderResolver {
-  constructor(
-    private readonly orderService: OrderService,
-    private readonly sellerService: SellerService
-  ) {}
+  constructor(private readonly orderService: OrderService) {}
 
   @Query(() => [Order])
   @UseGuards(GraphqlAuthGuard)
@@ -51,18 +53,14 @@ export class OrderResolver {
   @Query(() => [Order])
   @UseGuards(GraphqlAuthGuard)
   async myOrders(
-    @CurrentUser() user: any,
+    @CurrentUser() user: User,
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
     @Args('after', { type: () => String, nullable: true }) after?: string
   ) {
-    // Get the seller's integer ID from the user's UUID
-    const seller = await this.sellerService.findOneByUserId(user.id);
-    if (!seller) {
-      throw new Error('Seller not found');
-    }
-
-    const result = await this.orderService.getOrdersBySeller(
-      seller.id.toString(),
+    // Get orders by customer email
+    // User.email is the customer's email address
+    const result = await this.orderService.getOrdersByCustomerEmail(
+      user.email,
       first,
       after
     );
@@ -72,7 +70,7 @@ export class OrderResolver {
   @Query(() => [Order])
   @UseGuards(GraphqlAuthGuard)
   async adminSellerOrders(
-    @CurrentUser() user: any,
+    @CurrentUser() _user: User,
     @Args('sellerId', { type: () => String }) sellerId: string,
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
     @Args('after', { type: () => String, nullable: true }) after?: string,
@@ -92,7 +90,7 @@ export class OrderResolver {
   @Query(() => [Order])
   @UseGuards(GraphqlAuthGuard)
   async allSellerOrders(
-    @CurrentUser() user: any,
+    @CurrentUser() _user: User,
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
     @Args('after', { type: () => String, nullable: true }) after?: string,
     @Args('status', { type: () => OrderStatus, nullable: true })

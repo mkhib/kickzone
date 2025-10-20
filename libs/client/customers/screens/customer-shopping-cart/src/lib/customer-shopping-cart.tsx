@@ -275,10 +275,9 @@ export function CustomerShoppingCart() {
       );
 
       if (invalidItems.length > 0) {
-        showSnackbar(
-          'Your cart has outdated items. Please clear your cart and add items again.',
-          { severity: 'error' }
-        );
+        showSnackbar(LL.errors.outdatedCartItems(), {
+          severity: 'error',
+        });
         return;
       }
 
@@ -331,32 +330,37 @@ export function CustomerShoppingCart() {
           })
       );
 
-      await Promise.all(orderPromises);
+      const orderResults = await Promise.all(orderPromises);
       await clearCartMutation();
       clearCartAction();
       setCheckoutDialogOpen(false);
       setActiveStep(0);
 
-      showSnackbar('Your order has been placed successfully!', {
-        severity: 'success',
-      });
+      // Navigate to order confirmation screen with first order data
+      // (If multiple orders were created, we show the first one's details)
+      const firstOrder = orderResults[0];
+      if (firstOrder) {
+        navigate(CUSTOMER_ROUTES.ORDER_CONFIRMATION, {
+          state: {
+            orderData: firstOrder,
+          },
+        });
+      }
     } catch (error) {
       console.error('Error placing order:', error);
       const errorMessage = (error as Error).message;
 
       // Check if it's a product not found error
       if (errorMessage.includes('not found')) {
-        showSnackbar(
-          'Some products in your cart are no longer available. Please remove them and try again.',
-          { severity: 'error' }
-        );
+        showSnackbar(LL.errors.productsNotAvailable(), {
+          severity: 'error',
+        });
       } else if (errorMessage.includes('Insufficient stock')) {
-        showSnackbar(
-          'Some products in your cart are out of stock. Please adjust quantities and try again.',
-          { severity: 'error' }
-        );
+        showSnackbar(LL.errors.insufficientStock(), {
+          severity: 'error',
+        });
       } else {
-        showSnackbar('Failed to place order. Please try again.', {
+        showSnackbar(LL.errors.orderFailed(), {
           severity: 'error',
         });
       }

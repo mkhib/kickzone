@@ -1,0 +1,9 @@
+{
+  "name": "customer-order-confirmation",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/customer-order-confirmation/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-order-confirmation --web",
+  "targets": {}
+}

@@ -30,13 +30,7 @@ import {
   DialogActions,
   Autocomplete,
 } from '@mui/material';
-import {
-  ExpandMore,
-  Edit,
-  Save,
-  Cancel,
-  FilterList,
-} from '@mui/icons-material';
+import { ExpandMore, FilterList } from '@mui/icons-material';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import {
   useAdminsOrders,
@@ -90,8 +84,6 @@ export function AdminSellerOrders() {
     KickzoneGraphqlTypes.OrderStatus | undefined
   >(undefined);
   const [selectedSellerId, setSelectedSellerId] = useState<string | null>(null);
-  const [editingOrder, setEditingOrder] = useState<string | null>(null);
-  const [trackingNumber, setTrackingNumber] = useState('');
   const [statusDialogOpen, setStatusDialogOpen] = useState(false);
   const [selectedOrderId, setSelectedOrderId] = useState<string | null>(null);
   const [newStatus, setNewStatus] = useState<KickzoneGraphqlTypes.OrderStatus>(
@@ -103,7 +95,6 @@ export function AdminSellerOrders() {
     loading: ordersLoading,
     error: ordersError,
     updateOrderStatus,
-    updateTrackingNumber,
     loadMore,
   } = useAdminsOrders({
     first: 50,
@@ -124,26 +115,6 @@ export function AdminSellerOrders() {
 
   const handleSellerFilter = (sellerId: string | null) => {
     setSelectedSellerId(sellerId);
-  };
-
-  const handleEditOrder = (orderId: string, currentTrackingNumber: string) => {
-    setEditingOrder(orderId);
-    setTrackingNumber(currentTrackingNumber || '');
-  };
-
-  const handleSaveTracking = async (orderId: string) => {
-    try {
-      await updateTrackingNumber(orderId, trackingNumber);
-      setEditingOrder(null);
-      setTrackingNumber('');
-    } catch (error) {
-      console.error('Error updating tracking number:', error);
-    }
-  };
-
-  const handleCancelEdit = () => {
-    setEditingOrder(null);
-    setTrackingNumber('');
   };
 
   const handleStatusChange = (orderId: string) => {
@@ -168,7 +139,7 @@ export function AdminSellerOrders() {
   const filteredOrders = selectedSellerId
     ? orders.filter(
         (order: KickzoneGraphqlTypes.Order) =>
-          order.sellerId === selectedSellerId
+          order.sellerId === parseInt(selectedSellerId, 10)
       )
     : orders;
 
@@ -372,62 +343,27 @@ export function AdminSellerOrders() {
                             <Typography variant="body2" gutterBottom>
                               <strong>Tracking Number:</strong>
                             </Typography>
-                            {editingOrder === order.id ? (
-                              <Box
+                            <Box
+                              sx={{
+                                p: 1.5,
+                                bgcolor: 'primary.50',
+                                borderRadius: 1,
+                                border: '2px solid',
+                                borderColor: 'primary.main',
+                              }}
+                            >
+                              <Typography
+                                variant="body1"
                                 sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1,
+                                  fontFamily: 'monospace',
+                                  fontWeight: 700,
+                                  letterSpacing: 1,
+                                  color: 'primary.main',
                                 }}
                               >
-                                <TextField
-                                  size="small"
-                                  value={trackingNumber}
-                                  onChange={(e) =>
-                                    setTrackingNumber(e.target.value)
-                                  }
-                                  placeholder="Enter tracking number"
-                                />
-                                <Button
-                                  size="small"
-                                  startIcon={<Save />}
-                                  onClick={() => handleSaveTracking(order.id)}
-                                >
-                                  Save
-                                </Button>
-                                <Button
-                                  size="small"
-                                  startIcon={<Cancel />}
-                                  onClick={handleCancelEdit}
-                                >
-                                  Cancel
-                                </Button>
-                              </Box>
-                            ) : (
-                              <Box
-                                sx={{
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: 1,
-                                }}
-                              >
-                                <Typography variant="body2">
-                                  {order.trackingNumber || 'Not set'}
-                                </Typography>
-                                <Button
-                                  size="small"
-                                  startIcon={<Edit />}
-                                  onClick={() =>
-                                    handleEditOrder(
-                                      order.id,
-                                      order.trackingNumber || ''
-                                    )
-                                  }
-                                >
-                                  Edit
-                                </Button>
-                              </Box>
-                            )}
+                                {order.trackingNumber || 'Not set'}
+                              </Typography>
+                            </Box>
                           </Box>
 
                           <Box

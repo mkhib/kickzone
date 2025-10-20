@@ -248,6 +248,19 @@ const fa = {
     refunded: 'بازپرداخت شده',
   },
 
+  // Order Confirmation
+  orderConfirmation: {
+    title: 'سفارش با موفقیت ثبت شد!',
+    thankYouMessage:
+      'با تشکر از سفارش شما. ایمیل تایید برای شما ارسال شده است.',
+    orderSummary: 'خلاصه سفارش',
+    shippingAddress: 'آدرس ارسال',
+    emailConfirmation:
+      'شما یک ایمیل تایید با جزئیات سفارش و اطلاعات پیگیری دریافت خواهید کرد.',
+    viewOrders: 'مشاهده سفارشات من',
+    continueShopping: 'ادامه خرید',
+  },
+
   // Status and states
   status: {
     loading: 'در حال بارگذاری...',
@@ -265,6 +278,12 @@ const fa = {
     itemRemoved: 'آیتم از سبد خرید حذف شد',
     quantityUpdated: 'تعداد به‌روزرسانی شد',
     orderPlaced: 'سفارش با موفقیت ثبت شد',
+    orderPlacedWithTracking:
+      'سفارش شما با موفقیت ثبت شد! برای اطلاعات پیگیری به صفحه سفارشات مراجعه کنید.',
+    orderPlacedWithSingleTracking:
+      'سفارش شما با موفقیت ثبت شد! کد پیگیری: {trackingNumber}',
+    orderPlacedWithMultipleTracking:
+      'سفارشات شما با موفقیت ثبت شد! کدهای پیگیری: {trackingNumbers}',
     productSaved: 'محصول با موفقیت ذخیره شد',
     productUpdated: 'محصول با موفقیت به‌روزرسانی شد',
     categoryAdded: 'دسته‌بندی با موفقیت اضافه شد',
@@ -318,6 +337,13 @@ const fa = {
     invalidToken:
       'لینک بازیابی نامعتبر یا منقضی شده است. لطفاً لینک جدیدی درخواست کنید.',
     wrongEmailOrPassword: 'نام کاربری یا رمز عبور اشتباه است',
+    productsNotAvailable:
+      'برخی از محصولات موجود در سبد خرید شما دیگر در دسترس نیستند. لطفاً آنها را حذف کرده و دوباره امتحان کنید.',
+    insufficientStock:
+      'برخی از محصولات موجود در سبد خرید شما موجود نیستند. لطفاً تعداد را تنظیم کرده و دوباره امتحان کنید.',
+    orderFailed: 'ثبت سفارش با شکست مواجه شد. لطفا دوباره تلاش کنید.',
+    outdatedCartItems:
+      'سبد خرید شما حاوی اقلام قدیمی است. لطفاً سبد خرید خود را پاک کرده و دوباره آیتم‌ها را اضافه کنید.',
   },
 
   // App names

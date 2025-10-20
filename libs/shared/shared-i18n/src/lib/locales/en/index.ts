@@ -247,6 +247,19 @@ const en = {
     refunded: 'Refunded',
   },
 
+  // Order Confirmation
+  orderConfirmation: {
+    title: 'Order Placed Successfully!',
+    thankYouMessage:
+      'Thank you for your order. A confirmation email has been sent to you.',
+    orderSummary: 'Order Summary',
+    shippingAddress: 'Shipping Address',
+    emailConfirmation:
+      'You will receive an email confirmation with your order details and tracking information.',
+    viewOrders: 'View My Orders',
+    continueShopping: 'Continue Shopping',
+  },
+
   // Status and states
   status: {
     loading: 'Loading...',
@@ -264,6 +277,12 @@ const en = {
     itemRemoved: 'Item removed from cart',
     quantityUpdated: 'Quantity updated',
     orderPlaced: 'Order placed successfully',
+    orderPlacedWithTracking:
+      'Your order has been placed successfully! Check your orders page for tracking information.',
+    orderPlacedWithSingleTracking:
+      'Your order has been placed successfully! Tracking number: {trackingNumber}',
+    orderPlacedWithMultipleTracking:
+      'Your orders have been placed successfully! Tracking numbers: {trackingNumbers}',
     productSaved: 'Product saved successfully',
     productUpdated: 'Product updated successfully',
     categoryAdded: 'Category added successfully',
@@ -315,6 +334,13 @@ const en = {
     userNotFound: 'User not found. Please check your email address.',
     invalidToken: 'Invalid or expired reset link. Please request a new one.',
     wrongEmailOrPassword: 'Incorrect credentials.',
+    productsNotAvailable:
+      'Some products in your cart are no longer available. Please remove them and try again.',
+    insufficientStock:
+      'Some products in your cart are out of stock. Please adjust quantities and try again.',
+    orderFailed: 'Failed to place order. Please try again.',
+    outdatedCartItems:
+      'Your cart has outdated items. Please clear your cart and add items again.',
   },
 
   // App names

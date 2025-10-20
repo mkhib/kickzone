@@ -15,7 +15,6 @@
     ],
     "sharedGlobals": ["{workspaceRoot}/.github/workflows/kickzone-cl.yml"]
   },
-  "nxCloudId": "67fc28f3ebe23f324e74a8f0",
   "plugins": [
     {
       "plugin": "@nx/webpack/plugin",

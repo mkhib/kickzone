@@ -35,6 +35,9 @@ export class OrderService {
     // Generate unique order number
     order.orderNumber = this.generateOrderNumber();
 
+    // Generate unique tracking number
+    order.trackingNumber = this.generateTrackingNumber();
+
     // Calculate totals
     order.subtotal = order.items.reduce(
       (sum, item) => sum + item.totalPrice,
@@ -191,10 +194,58 @@ export class OrderService {
     return this.findAll(first, after, undefined, status);
   }
 
+  async getOrdersByCustomerEmail(
+    customerEmail: string,
+    first = 10,
+    after?: string
+  ): Promise<OrdersConnection> {
+    const queryBuilder = this.orderRepository
+      .createQueryBuilder('order')
+      .leftJoinAndSelect('order.items', 'items')
+      .leftJoinAndSelect('order.seller', 'seller')
+      .where('order.customerEmail = :customerEmail', { customerEmail })
+      .orderBy('order.createdAt', 'DESC');
+
+    if (after) {
+      const cursor = await this.decodeCursor(after);
+      queryBuilder.andWhere('order.createdAt < :cursor', { cursor });
+    }
+
+    const orders = await queryBuilder.take(first + 1).getMany();
+
+    const hasNextPage = orders.length > first;
+    const edges: OrderEdge[] = orders.slice(0, first).map((order) => ({
+      node: order,
+      cursor: this.encodeCursor(order.createdAt),
+    }));
+
+    return {
+      edges,
+      pageInfo: {
+        hasNextPage,
+        hasPreviousPage: !!after,
+        endCursor: edges[edges.length - 1]?.cursor,
+      },
+      totalCount: await this.orderRepository.count({
+        where: { customerEmail },
+      }),
+    };
+  }
+
   private generateOrderNumber(): string {
     const timestamp = Date.now().toString();
     const random = Math.random().toString(36).substring(2, 8).toUpperCase();
     return `ORD-${timestamp}-${random}`;
+  }
+
+  private generateTrackingNumber(): string {
+    // Generate a tracking number in format: KZ-YYYYMMDD-XXXXXX
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const random = Math.random().toString(36).substring(2, 8).toUpperCase();
+    return `KZ-${year}${month}${day}-${random}`;
   }
 
   private encodeCursor(date: Date): string {

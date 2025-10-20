@@ -4,7 +4,6 @@ import {
   GET_SELLERS_QUERY,
   GET_ALL_ORDERS_QUERY,
   UPDATE_ORDER_STATUS_MUTATION,
-  UPDATE_ORDER_MUTATION,
 } from '@kickzone-workspace/admins-graphql';
 
 export function useAdminsOrders({
@@ -35,15 +34,6 @@ export function useAdminsOrders({
       ],
     });
 
-  const [updateOrderMutation, { loading: updateOrderLoading }] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'updateOrder'>,
-    KickzoneGraphqlTypes.MutationUpdateOrderArgs
-  >(UPDATE_ORDER_MUTATION, {
-    refetchQueries: [
-      { query: GET_ALL_ORDERS_QUERY, variables: { first, after, status } },
-    ],
-  });
-
   const updateOrderStatus = async (
     orderId: string,
     status: KickzoneGraphqlTypes.OrderStatus
@@ -57,21 +47,6 @@ export function useAdminsOrders({
       },
     });
     return response.data?.updateOrderStatus;
-  };
-
-  const updateTrackingNumber = async (
-    orderId: string,
-    trackingNumber: string
-  ) => {
-    const response = await updateOrderMutation({
-      variables: {
-        id: orderId,
-        updateOrderInput: {
-          trackingNumber,
-        },
-      },
-    });
-    return response.data?.updateOrder;
   };
 
   const loadMore = () => {
@@ -94,9 +69,7 @@ export function useAdminsOrders({
     refetch,
     loadMore,
     updateOrderStatus,
-    updateTrackingNumber,
     updateStatusLoading,
-    updateOrderLoading,
   };
 }
 

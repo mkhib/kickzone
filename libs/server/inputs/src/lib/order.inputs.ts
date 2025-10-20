@@ -131,9 +131,6 @@ export class UpdateOrderInput {
 
   @Field(() => String, { nullable: true })
   notes?: string;
-
-  @Field(() => String, { nullable: true })
-  trackingNumber?: string;
 }
 
 @InputType()
