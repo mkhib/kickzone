@@ -139,23 +139,11 @@ export function CustomerOrderConfirmation() {
               </Typography>
             </Box>
 
-            <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap' }}>
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  {LL.orders.orderNumber()}
-                </Typography>
-                <Typography variant="body1" fontWeight="medium">
-                  {orderData.orderNumber}
-                </Typography>
-              </Box>
-              <Box>
-                <Typography variant="caption" color="text.secondary">
-                  {LL.form.email()}
-                </Typography>
-                <Typography variant="body1">
-                  {orderData.customerEmail}
-                </Typography>
-              </Box>
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="caption" color="text.secondary">
+                {LL.form.email()}
+              </Typography>
+              <Typography variant="body1">{orderData.customerEmail}</Typography>
             </Box>
 
             <Divider sx={{ my: 2 }} />

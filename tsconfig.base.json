@@ -193,6 +193,9 @@
         "libs/client/shared/lottie/unauthorized/src/index.ts"
       ],
       "@kickzone-workspace/modules": ["libs/server/modules/src/index.ts"],
+      "@kickzone-workspace/order-status-chip": [
+        "libs/client/shared/components/order-status-chip/src/index.ts"
+      ],
       "@kickzone-workspace/orders-hook": [
         "libs/client/sellers/hooks/orders/src/index.ts"
       ],

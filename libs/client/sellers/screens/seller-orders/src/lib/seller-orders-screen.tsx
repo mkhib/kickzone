@@ -3,7 +3,6 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
-import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -34,36 +33,7 @@ import {
   useI18nContext,
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
-
-const getStatusColor = (
-  status: KickzoneGraphqlTypes.OrderStatus
-):
-  | 'default'
-  | 'primary'
-  | 'secondary'
-  | 'error'
-  | 'info'
-  | 'success'
-  | 'warning' => {
-  switch (status) {
-    case KickzoneGraphqlTypes.OrderStatus.Pending:
-      return 'warning';
-    case KickzoneGraphqlTypes.OrderStatus.Confirmed:
-      return 'info';
-    case KickzoneGraphqlTypes.OrderStatus.Processing:
-      return 'primary';
-    case KickzoneGraphqlTypes.OrderStatus.Shipped:
-      return 'secondary';
-    case KickzoneGraphqlTypes.OrderStatus.Delivered:
-      return 'success';
-    case KickzoneGraphqlTypes.OrderStatus.Cancelled:
-      return 'error';
-    case KickzoneGraphqlTypes.OrderStatus.Refunded:
-      return 'default';
-    default:
-      return 'default';
-  }
-};
+import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 
 export function SellerOrdersScreen() {
   const { LL } = useI18nContext();
@@ -78,28 +48,6 @@ export function SellerOrdersScreen() {
   const [newStatus, setNewStatus] = useState<KickzoneGraphqlTypes.OrderStatus>(
     KickzoneGraphqlTypes.OrderStatus.Pending
   );
-
-  // Translate order status
-  const getStatusLabel = (status: KickzoneGraphqlTypes.OrderStatus): string => {
-    switch (status) {
-      case KickzoneGraphqlTypes.OrderStatus.Pending:
-        return LL.orders.pending();
-      case KickzoneGraphqlTypes.OrderStatus.Confirmed:
-        return LL.orders.confirmed();
-      case KickzoneGraphqlTypes.OrderStatus.Processing:
-        return LL.orders.processing();
-      case KickzoneGraphqlTypes.OrderStatus.Shipped:
-        return LL.orders.shipped();
-      case KickzoneGraphqlTypes.OrderStatus.Delivered:
-        return LL.orders.delivered();
-      case KickzoneGraphqlTypes.OrderStatus.Cancelled:
-        return LL.orders.cancelled();
-      case KickzoneGraphqlTypes.OrderStatus.Refunded:
-        return LL.orders.refunded();
-      default:
-        return status;
-    }
-  };
 
   // Format date according to locale
   const formatDate = (dateString: string) => {
@@ -249,12 +197,7 @@ export function SellerOrdersScreen() {
                         </Typography>
                       </Grid>
                       <Grid size={{ xs: 6, sm: 3, md: 2 }}>
-                        <Chip
-                          label={getStatusLabel(order.status)}
-                          color={getStatusColor(order.status)}
-                          size="small"
-                          sx={{ maxWidth: '100%', fontSize: '0.75rem' }}
-                        />
+                        <OrderStatusChip status={order.status} />
                       </Grid>
                       <Grid size={{ xs: 6, sm: 3, md: 2 }}>
                         <Typography
@@ -332,7 +275,7 @@ export function SellerOrdersScreen() {
                           <Box sx={{ mb: 2 }}>
                             <Typography variant="body2" gutterBottom>
                               <strong>{LL.form.status()}:</strong>{' '}
-                              {getStatusLabel(order.status)}
+                              <OrderStatusChip status={order.status} />
                             </Typography>
                             <Button
                               variant="outlined"

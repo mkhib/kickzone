@@ -4,7 +4,6 @@ import {
   Typography,
   Card,
   Grid,
-  Chip,
   Button,
   Table,
   TableBody,
@@ -37,36 +36,7 @@ import {
   useAdminsSellers,
 } from '@kickzone-workspace/admins-orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-
-const getStatusColor = (
-  status: KickzoneGraphqlTypes.OrderStatus
-):
-  | 'default'
-  | 'primary'
-  | 'secondary'
-  | 'error'
-  | 'info'
-  | 'success'
-  | 'warning' => {
-  switch (status) {
-    case KickzoneGraphqlTypes.OrderStatus.Pending:
-      return 'warning';
-    case KickzoneGraphqlTypes.OrderStatus.Confirmed:
-      return 'info';
-    case KickzoneGraphqlTypes.OrderStatus.Processing:
-      return 'primary';
-    case KickzoneGraphqlTypes.OrderStatus.Shipped:
-      return 'secondary';
-    case KickzoneGraphqlTypes.OrderStatus.Delivered:
-      return 'success';
-    case KickzoneGraphqlTypes.OrderStatus.Cancelled:
-      return 'error';
-    case KickzoneGraphqlTypes.OrderStatus.Refunded:
-      return 'default';
-    default:
-      return 'default';
-  }
-};
+import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 
 const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('en-US', {
@@ -267,11 +237,7 @@ export function AdminSellerOrders() {
                         </Typography>
                       </Grid>
                       <Grid size={{ xs: 12, sm: 2 }}>
-                        <Chip
-                          label={order.status}
-                          color={getStatusColor(order.status)}
-                          size="small"
-                        />
+                        <OrderStatusChip status={order.status} />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 2 }}>
                         <Typography variant="body2" color="text.secondary">

@@ -4,7 +4,6 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
 import Grid from '@mui/material/Grid';
-import Chip from '@mui/material/Chip';
 import Button from '@mui/material/Button';
 import Table from '@mui/material/Table';
 import TableBody from '@mui/material/TableBody';
@@ -22,7 +21,13 @@ import Divider from '@mui/material/Divider';
 import { ExpandMore } from '@mui/icons-material';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { GET_MY_ORDERS_QUERY } from '@kickzone-workspace/customers-graphql';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import {
+  useI18nContext,
+  useLanguageContext,
+} from '@kickzone-workspace/shared-i18n';
+import { PriceDisplay } from '@kickzone-workspace/price-display';
+import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
+import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 
 interface OrderItem {
   id: string;
@@ -62,40 +67,20 @@ interface OrdersData {
   myOrders: Order[];
 }
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'PENDING':
-      return 'warning';
-    case 'CONFIRMED':
-      return 'info';
-    case 'PROCESSING':
-      return 'primary';
-    case 'SHIPPED':
-      return 'secondary';
-    case 'DELIVERED':
-      return 'success';
-    case 'CANCELLED':
-      return 'error';
-    case 'REFUNDED':
-      return 'default';
-    default:
-      return 'default';
-  }
-};
-
-const formatDate = (dateString: string) => {
-  return new Date(dateString).toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-  });
-};
-
 export function CustomerOrders() {
   const { LL } = useI18nContext();
+  const { currentLocale } = useLanguageContext();
   const [expandedOrder, setExpandedOrder] = useState<string | false>(false);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString(currentLocale, {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
 
   const {
     data: ordersData,
@@ -129,7 +114,7 @@ export function CustomerOrders() {
     return (
       <CustomersLayout>
         <Alert severity="error">
-          Error loading orders: {ordersError.message}
+          {LL.orders.errorLoadingOrders()}: {ordersError.message}
         </Alert>
       </CustomersLayout>
     );
@@ -141,16 +126,20 @@ export function CustomerOrders() {
     <CustomersLayout>
       <Box sx={{ p: 3 }}>
         <Typography variant="h4" gutterBottom>
-          My Orders
+          {LL.orders.myOrders()}
         </Typography>
 
         {orders.length === 0 ? (
           <Box sx={{ textAlign: 'center', py: 4 }}>
             <Typography variant="h6" color="text.secondary">
-              You haven't placed any orders yet
+              {LL.orders.noOrdersFound()}
             </Typography>
-            <Button variant="contained" sx={{ mt: 2 }} href="/products">
-              Start Shopping
+            <Button
+              variant="contained"
+              sx={{ mt: 2 }}
+              href={CUSTOMER_ROUTES.HOME}
+            >
+              {LL.checkout.continueShopping()}
             </Button>
           </Box>
         ) : (
@@ -163,41 +152,48 @@ export function CustomerOrders() {
                 >
                   <AccordionSummary expandIcon={<ExpandMore />}>
                     <Grid container spacing={2} alignItems="center">
-                      <Grid size={{ xs: 12, sm: 3 }}>
-                        <Typography variant="h6">
-                          Order #{order.orderNumber}
+                      <Grid size={{ xs: 12, sm: 4 }}>
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          gutterBottom
+                        >
+                          {LL.orders.trackingNumber()}
+                        </Typography>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontFamily: 'monospace',
+                            fontWeight: 700,
+                            letterSpacing: 1,
+                          }}
+                        >
+                          {order.trackingNumber || LL.orders.notSet()}
                         </Typography>
                       </Grid>
-                      <Grid size={{ xs: 12, sm: 2 }}>
-                        <Chip
-                          label={order.status}
-                          color={
-                            getStatusColor(order.status) as
-                              | 'default'
-                              | 'primary'
-                              | 'secondary'
-                              | 'error'
-                              | 'info'
-                              | 'success'
-                              | 'warning'
-                          }
-                          size="small"
-                        />
+                      <Grid size={{ xs: 12, sm: 3 }}>
+                        <OrderStatusChip status={order.status} />
                       </Grid>
                       <Grid size={{ xs: 12, sm: 2 }}>
                         <Typography variant="body2" color="text.secondary">
                           {formatDate(order.createdAt)}
                         </Typography>
                       </Grid>
-                      <Grid size={{ xs: 12, sm: 2 }}>
+                      <Grid size={{ xs: 12, sm: 3 }}>
                         <Typography variant="h6">
-                          ${order.total.toFixed(2)}
+                          <PriceDisplay
+                            priceInUSD={order.total}
+                            showSymbol={true}
+                            showOriginal={false}
+                          />
                         </Typography>
                       </Grid>
-                      <Grid size={{ xs: 12, sm: 3 }}>
+                      <Grid size={{ xs: 12, sm: 2 }}>
                         <Typography variant="body2" color="text.secondary">
-                          {order.items.length} item
-                          {order.items.length !== 1 ? 's' : ''}
+                          {order.items.length}{' '}
+                          {order.items.length === 1
+                            ? LL.orders.item()
+                            : LL.orders.items()}
                         </Typography>
                       </Grid>
                     </Grid>
@@ -209,19 +205,23 @@ export function CustomerOrders() {
                       <Grid container spacing={3} sx={{ mb: 3 }}>
                         <Grid size={{ xs: 12, md: 6 }}>
                           <Typography variant="h6" gutterBottom>
-                            Shipping Information
+                            {LL.orderConfirmation.shippingAddress()}
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Name:</strong> {order.customerName}
+                            <strong>{LL.form.fullName()}:</strong>{' '}
+                            {order.customerName}
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Email:</strong> {order.customerEmail}
+                            <strong>{LL.form.email()}:</strong>{' '}
+                            {order.customerEmail}
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Phone:</strong> {order.customerPhone}
+                            <strong>{LL.form.phone()}:</strong>{' '}
+                            {order.customerPhone}
                           </Typography>
                           <Typography variant="body2">
-                            <strong>Address:</strong> {order.shippingAddress}
+                            <strong>{LL.form.address()}:</strong>{' '}
+                            {order.shippingAddress}
                           </Typography>
                           <Typography variant="body2">
                             {order.city}, {order.state} {order.zipCode}
@@ -261,7 +261,7 @@ export function CustomerOrders() {
 
                         <Grid size={{ xs: 12, md: 6 }}>
                           <Typography variant="h6" gutterBottom>
-                            Order Summary
+                            {LL.orderConfirmation.orderSummary()}
                           </Typography>
                           <Box
                             sx={{
@@ -270,9 +270,13 @@ export function CustomerOrders() {
                               mb: 1,
                             }}
                           >
-                            <Typography>Subtotal:</Typography>
+                            <Typography>{LL.checkout.subtotal()}:</Typography>
                             <Typography>
-                              ${order.subtotal.toFixed(2)}
+                              <PriceDisplay
+                                priceInUSD={order.subtotal}
+                                showSymbol={true}
+                                showOriginal={false}
+                              />
                             </Typography>
                           </Box>
                           <Box
@@ -282,9 +286,13 @@ export function CustomerOrders() {
                               mb: 1,
                             }}
                           >
-                            <Typography>Shipping:</Typography>
+                            <Typography>{LL.checkout.shipping()}:</Typography>
                             <Typography>
-                              ${order.shippingCost.toFixed(2)}
+                              <PriceDisplay
+                                priceInUSD={order.shippingCost}
+                                showSymbol={true}
+                                showOriginal={false}
+                              />
                             </Typography>
                           </Box>
                           <Divider sx={{ my: 1 }} />
@@ -295,15 +303,22 @@ export function CustomerOrders() {
                               mb: 1,
                             }}
                           >
-                            <Typography variant="h6">Total:</Typography>
                             <Typography variant="h6">
-                              ${order.total.toFixed(2)}
+                              {LL.checkout.total()}:
+                            </Typography>
+                            <Typography variant="h6">
+                              <PriceDisplay
+                                priceInUSD={order.total}
+                                showSymbol={true}
+                                showOriginal={false}
+                              />
                             </Typography>
                           </Box>
                           {order.notes && (
                             <Box sx={{ mt: 2 }}>
                               <Typography variant="body2">
-                                <strong>Notes:</strong> {order.notes}
+                                <strong>{LL.form.notes()}:</strong>{' '}
+                                {order.notes}
                               </Typography>
                             </Box>
                           )}
@@ -312,16 +327,16 @@ export function CustomerOrders() {
 
                       {/* Order Items */}
                       <Typography variant="h6" gutterBottom>
-                        Order Items
+                        {LL.orders.orderItems()}
                       </Typography>
                       <TableContainer component={Paper} variant="outlined">
                         <Table>
                           <TableHead>
                             <TableRow>
-                              <TableCell>Product</TableCell>
-                              <TableCell>Quantity</TableCell>
-                              <TableCell>Unit Price</TableCell>
-                              <TableCell>Total</TableCell>
+                              <TableCell>{LL.table.product()}</TableCell>
+                              <TableCell>{LL.table.quantity()}</TableCell>
+                              <TableCell>{LL.table.unitPrice()}</TableCell>
+                              <TableCell>{LL.table.total()}</TableCell>
                             </TableRow>
                           </TableHead>
                           <TableBody>
@@ -370,10 +385,18 @@ export function CustomerOrders() {
                                 </TableCell>
                                 <TableCell>{item.quantity}</TableCell>
                                 <TableCell>
-                                  ${item.unitPrice.toFixed(2)}
+                                  <PriceDisplay
+                                    priceInUSD={item.unitPrice}
+                                    showSymbol={true}
+                                    showOriginal={false}
+                                  />
                                 </TableCell>
                                 <TableCell>
-                                  ${item.totalPrice.toFixed(2)}
+                                  <PriceDisplay
+                                    priceInUSD={item.totalPrice}
+                                    showSymbol={true}
+                                    showOriginal={false}
+                                  />
                                 </TableCell>
                               </TableRow>
                             ))}
