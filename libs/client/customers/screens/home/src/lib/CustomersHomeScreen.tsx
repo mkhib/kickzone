@@ -187,7 +187,7 @@ export function CustomersHome() {
                   />
                   <FormControl
                     sx={{
-                      minWidth: { xs: '100%', sm: 180 },
+                      minWidth: { xs: '100%', sm: 240 },
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 3,
                         background: '#f8f9fa',
@@ -217,7 +217,7 @@ export function CustomersHome() {
                   </FormControl>
                   <FormControl
                     sx={{
-                      minWidth: { xs: '100%', sm: 160 },
+                      minWidth: { xs: '100%', sm: 180 },
                       '& .MuiOutlinedInput-root': {
                         borderRadius: 3,
                         background: '#f8f9fa',

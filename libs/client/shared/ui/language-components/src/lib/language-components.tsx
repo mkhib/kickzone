@@ -53,7 +53,6 @@ export function LanguageComponents({
       <Box
         sx={{
           minHeight: '100vh',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -61,11 +60,16 @@ export function LanguageComponents({
         }}
       >
         <Card
+          elevation={0}
           sx={{
             maxWidth: 500,
             width: '100%',
-            borderRadius: 3,
-            boxShadow: '0 20px 40px rgba(0,0,0,0.1)',
+            backgroundColor: 'rgba(255, 255, 255, 0.85)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            borderRadius: '24px',
+            border: '1px solid rgba(255, 255, 255, 0.3)',
+            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
           }}
         >
           <CardContent sx={{ padding: 4 }}>
@@ -116,10 +120,6 @@ export function LanguageComponents({
                 label={LL.form.selectLanguage()}
                 onChange={handleLanguageChange}
                 disabled={isLoading}
-                sx={{
-                  backgroundColor: colors.accent1,
-                  borderRadius: 2,
-                }}
               >
                 {availableLocales.map((locale) => (
                   <MenuItem key={locale.code} value={locale.code}>

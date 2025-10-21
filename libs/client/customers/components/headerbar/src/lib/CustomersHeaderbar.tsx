@@ -1,50 +1,30 @@
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { useCartItemCount } from '@kickzone-workspace/customer-cart-store';
-import {
-  useI18nContext,
-  useThemeContext,
-} from '@kickzone-workspace/shared-i18n';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
+import {
+  StyledDrawer,
+  CustomListItemText,
+} from '@kickzone-workspace/styled-drawer';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import LanguageIcon from '@mui/icons-material/Language';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
-import CloseIcon from '@mui/icons-material/Close';
 import AppBar from '@mui/material/AppBar';
 import Badge from '@mui/material/Badge';
-import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Drawer from '@mui/material/Drawer';
 import IconButton from '@mui/material/IconButton';
-import List from '@mui/material/List';
 import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
-import { styled } from '@mui/material/styles';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { useState } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
-
-const drawerWidth = 300;
-
-const StyledDrawer = styled(Drawer)(({ theme }) => ({
-  width: drawerWidth,
-  flexShrink: 0,
-  '& .MuiDrawer-paper': {
-    width: drawerWidth,
-    boxSizing: 'border-box',
-  },
-}));
-
-const CustomListItemText = styled(ListItemText)(({ theme }) => ({
-  color: '#000000',
-}));
 
 export function Headerbar() {
   const { user, logout } = useCustomersAuth();
@@ -54,7 +34,6 @@ export function Headerbar() {
   const navigate = useNavigate();
   const totalItems = useCartItemCount();
   const { LL } = useI18nContext();
-  const { direction } = useThemeContext();
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -80,7 +59,17 @@ export function Headerbar() {
 
   return (
     <>
-      <AppBar position="static" sx={{ backgroundColor: '#333333' }}>
+      <AppBar
+        position="fixed"
+        sx={{
+          background: 'rgba(255, 255, 255, 0.1)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+          zIndex: (theme) => theme.zIndex.appBar + 1,
+        }}
+      >
         <Toolbar>
           <IconButton
             edge="start"
@@ -183,70 +172,58 @@ export function Headerbar() {
       </AppBar>
 
       {/* Drawer */}
-      <StyledDrawer
-        anchor={direction === 'rtl' ? 'right' : 'left'}
-        open={drawerOpen}
-        onClose={handleDrawerToggle}
-      >
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
-          <IconButton onClick={handleDrawerToggle}>
-            <CloseIcon />
-          </IconButton>
-        </Box>
-        <Divider />
-        <List>
+      <StyledDrawer open={drawerOpen} onClose={handleDrawerToggle}>
+        <ListItemButton
+          to={CUSTOMER_ROUTES.PRODUCTS}
+          component={RouterLink}
+          selected={location.pathname === CUSTOMER_ROUTES.PRODUCTS}
+          onClick={handleDrawerToggle}
+        >
+          <ListItemIcon>
+            <HomeIcon />
+          </ListItemIcon>
+          <CustomListItemText primary={LL.navigation.home()} />
+        </ListItemButton>
+
+        <ListItemButton
+          to={CUSTOMER_ROUTES.CART}
+          component={RouterLink}
+          selected={location.pathname === CUSTOMER_ROUTES.CART}
+          onClick={handleDrawerToggle}
+        >
+          <ListItemIcon>
+            <Badge badgeContent={totalItems} color="error">
+              <ShoppingCartIcon />
+            </Badge>
+          </ListItemIcon>
+          <CustomListItemText primary={LL.navigation.shoppingCart()} />
+        </ListItemButton>
+
+        {user && (
           <ListItemButton
-            to={CUSTOMER_ROUTES.PRODUCTS}
+            to={CUSTOMER_ROUTES.ORDERS}
             component={RouterLink}
-            selected={location.pathname === CUSTOMER_ROUTES.PRODUCTS}
+            selected={location.pathname === CUSTOMER_ROUTES.ORDERS}
             onClick={handleDrawerToggle}
           >
             <ListItemIcon>
-              <HomeIcon />
+              <ReceiptIcon />
             </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.home()} />
+            <CustomListItemText primary={LL.orders.myOrders()} />
           </ListItemButton>
+        )}
 
-          <ListItemButton
-            to={CUSTOMER_ROUTES.CART}
-            component={RouterLink}
-            selected={location.pathname === CUSTOMER_ROUTES.CART}
-            onClick={handleDrawerToggle}
-          >
-            <ListItemIcon>
-              <Badge badgeContent={totalItems} color="error">
-                <ShoppingCartIcon />
-              </Badge>
-            </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.shoppingCart()} />
-          </ListItemButton>
-
-          {user && (
-            <ListItemButton
-              to={CUSTOMER_ROUTES.ORDERS}
-              component={RouterLink}
-              selected={location.pathname === CUSTOMER_ROUTES.ORDERS}
-              onClick={handleDrawerToggle}
-            >
-              <ListItemIcon>
-                <ReceiptIcon />
-              </ListItemIcon>
-              <CustomListItemText primary={LL.orders.myOrders()} />
-            </ListItemButton>
-          )}
-
-          <ListItemButton
-            to={CUSTOMER_ROUTES.LANGUAGE_SETTINGS}
-            component={RouterLink}
-            selected={location.pathname === CUSTOMER_ROUTES.LANGUAGE_SETTINGS}
-            onClick={handleDrawerToggle}
-          >
-            <ListItemIcon>
-              <LanguageIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.languageSettings()} />
-          </ListItemButton>
-        </List>
+        <ListItemButton
+          to={CUSTOMER_ROUTES.LANGUAGE_SETTINGS}
+          component={RouterLink}
+          selected={location.pathname === CUSTOMER_ROUTES.LANGUAGE_SETTINGS}
+          onClick={handleDrawerToggle}
+        >
+          <ListItemIcon>
+            <LanguageIcon />
+          </ListItemIcon>
+          <CustomListItemText primary={LL.navigation.languageSettings()} />
+        </ListItemButton>
       </StyledDrawer>
     </>
   );

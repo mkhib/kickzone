@@ -11,9 +11,28 @@ import {
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  TextField,
+  Button,
+  MenuItem,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Alert,
+  Stack,
+} from '@mui/material';
 
 export function CurrencyManagement() {
   const { showSnackbar } = useSnackbar();
+  const { LL } = useI18nContext();
   const [selectedFromCurrency, setSelectedFromCurrency] = useState('USD');
   const [selectedToCurrency, setSelectedToCurrency] = useState('IRR');
   const [newRate, setNewRate] = useState('');
@@ -118,497 +137,257 @@ export function CurrencyManagement() {
 
   return (
     <AdminsLayout>
-      <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <h1>Currency Management</h1>
+      <Box sx={{ maxWidth: '1200px', margin: '0 auto' }}>
+        <Typography
+          variant="h4"
+          component="h1"
+          gutterBottom
+          sx={{ mb: 3, fontWeight: 600 }}
+        >
+          {LL.currency.title()}
+        </Typography>
 
         {/* Current Exchange Rates */}
-        <section
-          style={{
-            background: 'white',
-            borderRadius: '8px',
-            padding: '1.5rem',
-            marginBottom: '2rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h2
-            style={{
-              marginTop: 0,
-              color: '#333',
-              borderBottom: '2px solid #f0f0f0',
-              paddingBottom: '0.5rem',
-            }}
-          >
-            Current Exchange Rate
-          </h2>
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '1rem',
-              marginBottom: '1rem',
-            }}
-          >
-            <select
-              value={selectedFromCurrency}
-              onChange={(e) => setSelectedFromCurrency(e.target.value)}
-              style={{
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ fontWeight: 600, mb: 2 }}
             >
-              {currencies.map((currency) => (
-                <option key={currency.code} value={currency.code}>
-                  {currency.code} - {currency.name}
-                </option>
-              ))}
-            </select>
-            <span> → </span>
-            <select
-              value={selectedToCurrency}
-              onChange={(e) => setSelectedToCurrency(e.target.value)}
-              style={{
-                padding: '0.5rem',
-                border: '1px solid #ddd',
-                borderRadius: '4px',
-                fontSize: '1rem',
-              }}
+              {LL.currency.currentExchangeRate()}
+            </Typography>
+            <Stack
+              direction="row"
+              spacing={2}
+              alignItems="center"
+              sx={{ mb: 2 }}
             >
-              {currencies.map((currency) => (
-                <option key={currency.code} value={currency.code}>
-                  {currency.code} - {currency.name}
-                </option>
-              ))}
-            </select>
-          </div>
+              <TextField
+                select
+                value={selectedFromCurrency}
+                onChange={(e) => setSelectedFromCurrency(e.target.value)}
+                size="small"
+                sx={{ minWidth: 200 }}
+              >
+                {currencies.map((currency) => (
+                  <MenuItem key={currency.code} value={currency.code}>
+                    {currency.code} - {currency.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <Typography>→</Typography>
+              <TextField
+                select
+                value={selectedToCurrency}
+                onChange={(e) => setSelectedToCurrency(e.target.value)}
+                size="small"
+                sx={{ minWidth: 200 }}
+              >
+                {currencies.map((currency) => (
+                  <MenuItem key={currency.code} value={currency.code}>
+                    {currency.code} - {currency.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Stack>
 
-          {currentRate && (
-            <div
-              style={{
-                background: '#f9f9f9',
-                padding: '1rem',
-                borderRadius: '4px',
-                borderLeft: '4px solid #4caf50',
-              }}
-            >
-              <p>
-                <strong>Current Rate:</strong> 1 {selectedFromCurrency} ={' '}
-                {currentRate.rate} {selectedToCurrency}
-              </p>
-              <p>
-                <small>
-                  Last updated:{' '}
+            {currentRate && (
+              <Alert severity="success" sx={{ mt: 2 }}>
+                <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                  {LL.currency.currentRate()}: 1 {selectedFromCurrency} ={' '}
+                  {currentRate.rate} {selectedToCurrency}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {LL.currency.lastUpdated()}:{' '}
                   {new Date(currentRate.effectiveDate).toLocaleString()}
-                </small>
-              </p>
-            </div>
-          )}
-        </section>
+                </Typography>
+              </Alert>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Set New Exchange Rate */}
-        <section
-          style={{
-            background: 'white',
-            borderRadius: '8px',
-            padding: '1.5rem',
-            marginBottom: '2rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h2
-            style={{
-              marginTop: 0,
-              color: '#333',
-              borderBottom: '2px solid #f0f0f0',
-              paddingBottom: '0.5rem',
-            }}
-          >
-            Set New Exchange Rate
-          </h2>
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-              }}
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ fontWeight: 600, mb: 2 }}
             >
-              <label style={{ fontWeight: 500, color: '#555' }}>
-                New Rate (1 {selectedFromCurrency} = ? {selectedToCurrency}):
-              </label>
-              <input
+              {LL.currency.setNewExchangeRate()}
+            </Typography>
+            <Stack spacing={2}>
+              <TextField
+                label={`${LL.currency.newRate()} (1 ${selectedFromCurrency} = ? ${selectedToCurrency})`}
                 type="number"
                 value={newRate}
                 onChange={(e) => setNewRate(e.target.value)}
-                placeholder="Enter exchange rate"
-                style={{
-                  padding: '0.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '1rem',
-                }}
-                step="0.000001"
+                placeholder={LL.currency.enterExchangeRate()}
+                fullWidth
+                inputProps={{ step: 0.000001 }}
               />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-              }}
-            >
-              <label style={{ fontWeight: 500, color: '#555' }}>
-                Notes (optional):
-              </label>
-              <textarea
+              <TextField
+                label={`${LL.currency.notes()} (${LL.optional()})`}
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Reason for rate change..."
-                style={{
-                  padding: '0.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '1rem',
-                  fontFamily: 'inherit',
-                }}
+                placeholder={LL.currency.reasonForRateChange()}
+                multiline
                 rows={3}
+                fullWidth
               />
-            </div>
-            <button
-              onClick={handleSetExchangeRate}
-              disabled={settingRate}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: settingRate ? '#ccc' : '#2196f3',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '1rem',
-                cursor: settingRate ? 'not-allowed' : 'pointer',
-                alignSelf: 'flex-start',
-              }}
-            >
-              {settingRate ? 'Saving...' : 'Set Exchange Rate'}
-            </button>
-          </div>
-        </section>
+              <Button
+                variant="contained"
+                onClick={handleSetExchangeRate}
+                disabled={settingRate}
+                sx={{ alignSelf: 'flex-start' }}
+              >
+                {settingRate
+                  ? LL.currency.saving()
+                  : LL.currency.setExchangeRate()}
+              </Button>
+            </Stack>
+          </CardContent>
+        </Card>
 
         {/* Exchange Rate History */}
-        <section
-          style={{
-            background: 'white',
-            borderRadius: '8px',
-            padding: '1.5rem',
-            marginBottom: '2rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h2
-            style={{
-              marginTop: 0,
-              color: '#333',
-              borderBottom: '2px solid #f0f0f0',
-              paddingBottom: '0.5rem',
-            }}
-          >
-            Exchange Rate History ({selectedFromCurrency} → {selectedToCurrency}
-            )
-          </h2>
-          <div style={{ marginTop: '1rem' }}>
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ fontWeight: 600, mb: 2 }}
+            >
+              {LL.currency.exchangeRateHistory()} ({selectedFromCurrency} →{' '}
+              {selectedToCurrency})
+            </Typography>
             {history.length === 0 ? (
-              <p>No history available</p>
+              <Typography color="text.secondary">
+                {LL.currency.noHistoryAvailable()}
+              </Typography>
             ) : (
-              <table
-                style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  marginTop: '1rem',
-                }}
-              >
-                <thead>
-                  <tr>
-                    <th
-                      style={{
-                        padding: '0.75rem',
-                        textAlign: 'left',
-                        borderBottom: '1px solid #eee',
-                        background: '#f5f5f5',
-                        fontWeight: 600,
-                        color: '#333',
-                      }}
-                    >
-                      Date
-                    </th>
-                    <th
-                      style={{
-                        padding: '0.75rem',
-                        textAlign: 'left',
-                        borderBottom: '1px solid #eee',
-                        background: '#f5f5f5',
-                        fontWeight: 600,
-                        color: '#333',
-                      }}
-                    >
-                      Rate
-                    </th>
-                    <th
-                      style={{
-                        padding: '0.75rem',
-                        textAlign: 'left',
-                        borderBottom: '1px solid #eee',
-                        background: '#f5f5f5',
-                        fontWeight: 600,
-                        color: '#333',
-                      }}
-                    >
-                      Notes
-                    </th>
-                    <th
-                      style={{
-                        padding: '0.75rem',
-                        textAlign: 'left',
-                        borderBottom: '1px solid #eee',
-                        background: '#f5f5f5',
-                        fontWeight: 600,
-                        color: '#333',
-                      }}
-                    >
-                      Updated By
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {history.map((rate) => (
-                    <tr key={rate.id} style={{ background: 'transparent' }}>
-                      <td
-                        style={{
-                          padding: '0.75rem',
-                          textAlign: 'left',
-                          borderBottom: '1px solid #eee',
-                        }}
-                      >
-                        {new Date(rate.effectiveDate).toLocaleString()}
-                      </td>
-                      <td
-                        style={{
-                          padding: '0.75rem',
-                          textAlign: 'left',
-                          borderBottom: '1px solid #eee',
-                        }}
-                      >
-                        {rate.rate}
-                      </td>
-                      <td
-                        style={{
-                          padding: '0.75rem',
-                          textAlign: 'left',
-                          borderBottom: '1px solid #eee',
-                        }}
-                      >
-                        {rate.notes || '-'}
-                      </td>
-                      <td
-                        style={{
-                          padding: '0.75rem',
-                          textAlign: 'left',
-                          borderBottom: '1px solid #eee',
-                        }}
-                      >
-                        {rate.createdBy?.name || '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+              <TableContainer sx={{ mt: 2 }}>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {LL.currency.date()}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {LL.currency.rate()}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {LL.currency.notes()}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {LL.currency.updatedBy()}
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {history.map((rate) => (
+                      <TableRow key={rate.id}>
+                        <TableCell>
+                          {new Date(rate.effectiveDate).toLocaleString()}
+                        </TableCell>
+                        <TableCell>{rate.rate}</TableCell>
+                        <TableCell>{rate.notes || '-'}</TableCell>
+                        <TableCell>{rate.createdBy?.name || '-'}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             )}
-          </div>
-        </section>
+          </CardContent>
+        </Card>
 
         {/* Currency Preferences (Locale → Currency Mapping) */}
-        <section
-          style={{
-            background: 'white',
-            borderRadius: '8px',
-            padding: '1.5rem',
-            marginBottom: '2rem',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-          }}
-        >
-          <h2
-            style={{
-              marginTop: 0,
-              color: '#333',
-              borderBottom: '2px solid #f0f0f0',
-              paddingBottom: '0.5rem',
-            }}
-          >
-            Currency Preferences
-          </h2>
-          <div
-            style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-              }}
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ fontWeight: 600, mb: 2 }}
             >
-              <label style={{ fontWeight: 500, color: '#555' }}>Locale:</label>
-              <input
-                type="text"
+              {LL.currency.currencyPreferences()}
+            </Typography>
+            <Stack spacing={2}>
+              <TextField
+                label={LL.currency.locale()}
                 value={locale}
                 onChange={(e) => setLocale(e.target.value)}
                 placeholder="e.g., fa, en, en-US"
-                style={{
-                  padding: '0.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '1rem',
-                }}
+                fullWidth
               />
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '0.5rem',
-              }}
-            >
-              <label style={{ fontWeight: 500, color: '#555' }}>
-                Currency:
-              </label>
-              <select
+              <TextField
+                select
+                label={LL.currency.currency()}
                 value={currencyCode}
                 onChange={(e) => setCurrencyCode(e.target.value)}
-                style={{
-                  padding: '0.5rem',
-                  border: '1px solid #ddd',
-                  borderRadius: '4px',
-                  fontSize: '1rem',
-                }}
+                fullWidth
               >
                 {currencies.map((currency) => (
-                  <option key={currency.code} value={currency.code}>
+                  <MenuItem key={currency.code} value={currency.code}>
                     {currency.code} - {currency.name}
-                  </option>
+                  </MenuItem>
                 ))}
-              </select>
-            </div>
-            <button
-              onClick={handleSetCurrencyPreference}
-              disabled={settingPreference}
-              style={{
-                padding: '0.75rem 1.5rem',
-                background: settingPreference ? '#ccc' : '#2196f3',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-                fontSize: '1rem',
-                cursor: settingPreference ? 'not-allowed' : 'pointer',
-                alignSelf: 'flex-start',
-              }}
-            >
-              {settingPreference ? 'Saving...' : 'Set Preference'}
-            </button>
-          </div>
-
-          <div style={{ marginTop: '1rem' }}>
-            <h3 style={{ marginTop: '1.5rem', color: '#555' }}>
-              Current Preferences
-            </h3>
-            {preferences.length === 0 ? (
-              <p>No preferences set</p>
-            ) : (
-              <table
-                style={{
-                  width: '100%',
-                  borderCollapse: 'collapse',
-                  marginTop: '1rem',
-                }}
+              </TextField>
+              <Button
+                variant="contained"
+                onClick={handleSetCurrencyPreference}
+                disabled={settingPreference}
+                sx={{ alignSelf: 'flex-start' }}
               >
-                <thead>
-                  <tr>
-                    <th
-                      style={{
-                        padding: '0.75rem',
-                        textAlign: 'left',
-                        borderBottom: '1px solid #eee',
-                        background: '#f5f5f5',
-                        fontWeight: 600,
-                        color: '#333',
-                      }}
-                    >
-                      Locale
-                    </th>
-                    <th
-                      style={{
-                        padding: '0.75rem',
-                        textAlign: 'left',
-                        borderBottom: '1px solid #eee',
-                        background: '#f5f5f5',
-                        fontWeight: 600,
-                        color: '#333',
-                      }}
-                    >
-                      Currency
-                    </th>
-                    <th
-                      style={{
-                        padding: '0.75rem',
-                        textAlign: 'left',
-                        borderBottom: '1px solid #eee',
-                        background: '#f5f5f5',
-                        fontWeight: 600,
-                        color: '#333',
-                      }}
-                    >
-                      Symbol
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {preferences.map((pref) => (
-                    <tr key={pref.id}>
-                      <td
-                        style={{
-                          padding: '0.75rem',
-                          textAlign: 'left',
-                          borderBottom: '1px solid #eee',
-                        }}
-                      >
-                        {pref.locale}
-                      </td>
-                      <td
-                        style={{
-                          padding: '0.75rem',
-                          textAlign: 'left',
-                          borderBottom: '1px solid #eee',
-                        }}
-                      >
-                        {pref.currency.code} - {pref.currency.name}
-                      </td>
-                      <td
-                        style={{
-                          padding: '0.75rem',
-                          textAlign: 'left',
-                          borderBottom: '1px solid #eee',
-                        }}
-                      >
-                        {pref.currency.symbol}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                {settingPreference
+                  ? LL.currency.saving()
+                  : LL.currency.setPreference()}
+              </Button>
+            </Stack>
+
+            <Typography
+              variant="subtitle1"
+              sx={{ mt: 3, mb: 2, fontWeight: 600 }}
+            >
+              {LL.currency.currentPreferences()}
+            </Typography>
+            {preferences.length === 0 ? (
+              <Typography color="text.secondary">
+                {LL.currency.noPreferencesSet()}
+              </Typography>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {LL.currency.locale()}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {LL.currency.currency()}
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>
+                        {LL.currency.symbol()}
+                      </TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {preferences.map((pref) => (
+                      <TableRow key={pref.id}>
+                        <TableCell>{pref.locale}</TableCell>
+                        <TableCell>
+                          {pref.currency.code} - {pref.currency.name}
+                        </TableCell>
+                        <TableCell>{pref.currency.symbol}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
             )}
-          </div>
-        </section>
-      </div>
+          </CardContent>
+        </Card>
+      </Box>
     </AdminsLayout>
   );
 }

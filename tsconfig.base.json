@@ -277,6 +277,9 @@
         "libs/client/shared/hooks/snackbar/src/index.ts"
       ],
       "@kickzone-workspace/strategies": ["libs/server/strategies/src/index.ts"],
+      "@kickzone-workspace/styled-drawer": [
+        "libs/client/shared/components/styled-drawer/src/index.ts"
+      ],
       "@kickzone-workspace/translation-management": [
         "libs/client/admins/screens/translation-management/src/index.ts"
       ],

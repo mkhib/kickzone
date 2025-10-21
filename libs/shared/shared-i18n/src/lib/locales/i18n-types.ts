@@ -1254,6 +1254,10 @@ type RootTranslation = {
 		 */
 		exchangeRate: string
 		/**
+		 * C​u​r​r​e​n​t​ ​E​x​c​h​a​n​g​e​ ​R​a​t​e
+		 */
+		currentExchangeRate: string
+		/**
 		 * C​u​r​r​e​n​t​ ​R​a​t​e
 		 */
 		currentRate: string
@@ -1266,13 +1270,29 @@ type RootTranslation = {
 		 */
 		setRate: string
 		/**
+		 * S​e​t​ ​E​x​c​h​a​n​g​e​ ​R​a​t​e
+		 */
+		setExchangeRate: string
+		/**
+		 * S​e​t​ ​N​e​w​ ​E​x​c​h​a​n​g​e​ ​R​a​t​e
+		 */
+		setNewExchangeRate: string
+		/**
 		 * E​x​c​h​a​n​g​e​ ​R​a​t​e​ ​H​i​s​t​o​r​y
 		 */
 		rateHistory: string
 		/**
+		 * E​x​c​h​a​n​g​e​ ​R​a​t​e​ ​H​i​s​t​o​r​y
+		 */
+		exchangeRateHistory: string
+		/**
 		 * C​u​r​r​e​n​c​y​ ​P​r​e​f​e​r​e​n​c​e​s
 		 */
 		preferences: string
+		/**
+		 * C​u​r​r​e​n​c​y​ ​P​r​e​f​e​r​e​n​c​e​s
+		 */
+		currencyPreferences: string
 		/**
 		 * L​o​c​a​l​e
 		 */
@@ -1333,6 +1353,42 @@ type RootTranslation = {
 		 * C​o​n​v​e​r​t​i​n​g​ ​p​r​i​c​e​.​.​.
 		 */
 		convertingPrice: string
+		/**
+		 * E​n​t​e​r​ ​e​x​c​h​a​n​g​e​ ​r​a​t​e
+		 */
+		enterExchangeRate: string
+		/**
+		 * R​e​a​s​o​n​ ​f​o​r​ ​r​a​t​e​ ​c​h​a​n​g​e​.​.​.
+		 */
+		reasonForRateChange: string
+		/**
+		 * S​a​v​i​n​g​.​.​.
+		 */
+		saving: string
+		/**
+		 * N​o​ ​h​i​s​t​o​r​y​ ​a​v​a​i​l​a​b​l​e
+		 */
+		noHistoryAvailable: string
+		/**
+		 * N​o​ ​p​r​e​f​e​r​e​n​c​e​s​ ​s​e​t
+		 */
+		noPreferencesSet: string
+		/**
+		 * D​a​t​e
+		 */
+		date: string
+		/**
+		 * R​a​t​e
+		 */
+		rate: string
+		/**
+		 * C​u​r​r​e​n​c​y
+		 */
+		currency: string
+		/**
+		 * L​a​s​t​ ​u​p​d​a​t​e​d
+		 */
+		lastUpdated: string
 	}
 }
 
@@ -2573,6 +2629,10 @@ export type TranslationFunctions = {
 		 */
 		exchangeRate: () => LocalizedString
 		/**
+		 * Current Exchange Rate
+		 */
+		currentExchangeRate: () => LocalizedString
+		/**
 		 * Current Rate
 		 */
 		currentRate: () => LocalizedString
@@ -2585,13 +2645,29 @@ export type TranslationFunctions = {
 		 */
 		setRate: () => LocalizedString
 		/**
+		 * Set Exchange Rate
+		 */
+		setExchangeRate: () => LocalizedString
+		/**
+		 * Set New Exchange Rate
+		 */
+		setNewExchangeRate: () => LocalizedString
+		/**
 		 * Exchange Rate History
 		 */
 		rateHistory: () => LocalizedString
 		/**
+		 * Exchange Rate History
+		 */
+		exchangeRateHistory: () => LocalizedString
+		/**
 		 * Currency Preferences
 		 */
 		preferences: () => LocalizedString
+		/**
+		 * Currency Preferences
+		 */
+		currencyPreferences: () => LocalizedString
 		/**
 		 * Locale
 		 */
@@ -2652,6 +2728,42 @@ export type TranslationFunctions = {
 		 * Converting price...
 		 */
 		convertingPrice: () => LocalizedString
+		/**
+		 * Enter exchange rate
+		 */
+		enterExchangeRate: () => LocalizedString
+		/**
+		 * Reason for rate change...
+		 */
+		reasonForRateChange: () => LocalizedString
+		/**
+		 * Saving...
+		 */
+		saving: () => LocalizedString
+		/**
+		 * No history available
+		 */
+		noHistoryAvailable: () => LocalizedString
+		/**
+		 * No preferences set
+		 */
+		noPreferencesSet: () => LocalizedString
+		/**
+		 * Date
+		 */
+		date: () => LocalizedString
+		/**
+		 * Rate
+		 */
+		rate: () => LocalizedString
+		/**
+		 * Currency
+		 */
+		currency: () => LocalizedString
+		/**
+		 * Last updated
+		 */
+		lastUpdated: () => LocalizedString
 	}
 }
 

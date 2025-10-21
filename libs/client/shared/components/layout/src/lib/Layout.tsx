@@ -25,21 +25,34 @@ export function Layout({
   const { handleClose, open, message, severity, progress } = useSnackbar();
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+    <Box
+      sx={{
+        display: 'flex',
+        flexDirection: 'column',
+        minHeight: '100vh',
+        // Ensure the layout doesn't interfere with the gradient background
+        background: 'transparent',
+      }}
+    >
       <Box
         sx={{
           position: 'fixed',
           top: 0,
           left: 0,
           right: 0,
-          zIndex: (theme) => theme.zIndex.appBar,
+          zIndex: (theme) => theme.zIndex.appBar + 1,
         }}
       >
         {header}
       </Box>
-      <Box sx={{ flex: 1, pt: 8 }}>
-        {' '}
-        {/* Add top padding to account for fixed header */}
+      <Box
+        sx={{
+          flex: 1,
+          pt: 10, // Increased padding to account for fixed header with blur
+          px: { xs: 2, sm: 3, md: 4 },
+          pb: 4,
+        }}
+      >
         <Grid container spacing={2}>
           <Grid size={12} component="div">
             {isLoading ? loadingComponent : body}

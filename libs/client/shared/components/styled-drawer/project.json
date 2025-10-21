@@ -1,0 +1,9 @@
+{
+  "name": "styled-drawer",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/shared/components/styled-drawer/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project styled-drawer --web",
+  "targets": {}
+}
