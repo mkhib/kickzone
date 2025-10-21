@@ -7,6 +7,7 @@ import {
   useI18nContext,
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
+import { PriceDisplay } from '@kickzone-workspace/price-display';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -478,7 +479,10 @@ export const SellersProducts = () => {
                                     color: 'primary.main',
                                   }}
                                 >
-                                  ${formatNumber(firstSellerProduct.price)}
+                                  <PriceDisplay
+                                    priceInUSD={firstSellerProduct.price}
+                                    showOriginal={true}
+                                  />
                                 </Typography>
                                 {firstSellerProduct.discount > 0 && (
                                   <Chip
@@ -497,14 +501,15 @@ export const SellersProducts = () => {
                                   color="text.secondary"
                                   sx={{ display: 'block', mb: 1 }}
                                 >
-                                  {LL.products.finalPrice()}: $
-                                  {formatNumber(
-                                    (
+                                  {LL.products.finalPrice()}:{' '}
+                                  <PriceDisplay
+                                    priceInUSD={
                                       (firstSellerProduct.price *
                                         (100 - firstSellerProduct.discount)) /
                                       100
-                                    ).toFixed(2)
-                                  )}
+                                    }
+                                    showOriginal={true}
+                                  />
                                 </Typography>
                               )}
                               <Box
@@ -546,18 +551,19 @@ export const SellersProducts = () => {
                                   mb: 1,
                                 }}
                               >
-                                $
-                                {formatNumber(
-                                  Math.min(
+                                <PriceDisplay
+                                  priceInUSD={Math.min(
                                     ...sellerProducts.map((sp) => sp.price)
-                                  )
-                                )}{' '}
-                                - $
-                                {formatNumber(
-                                  Math.max(
+                                  )}
+                                  showOriginal={true}
+                                />{' '}
+                                -{' '}
+                                <PriceDisplay
+                                  priceInUSD={Math.max(
                                     ...sellerProducts.map((sp) => sp.price)
-                                  )
-                                )}
+                                  )}
+                                  showOriginal={true}
+                                />
                               </Typography>
                               <Stack direction="row" spacing={1} sx={{ mb: 1 }}>
                                 <Chip
@@ -862,15 +868,20 @@ export const SellersProducts = () => {
                                     color="text.secondary"
                                   >
                                     <strong>{LL.products.yourPrice()}:</strong>{' '}
-                                    ${formatNumber(sellerProduct.price)}
+                                    <PriceDisplay
+                                      priceInUSD={sellerProduct.price}
+                                      showOriginal={true}
+                                    />
                                   </Typography>
                                   <Typography
                                     variant="body2"
                                     color="text.secondary"
                                   >
                                     <strong>{LL.products.costPrice()}:</strong>{' '}
-                                    $
-                                    {formatNumber(sellerProduct.costPrice || 0)}
+                                    <PriceDisplay
+                                      priceInUSD={sellerProduct.costPrice || 0}
+                                      showOriginal={true}
+                                    />
                                   </Typography>
                                   <Typography
                                     variant="body2"
@@ -884,14 +895,14 @@ export const SellersProducts = () => {
                                     color="text.secondary"
                                   >
                                     <strong>{LL.products.finalPrice()}:</strong>{' '}
-                                    $
-                                    {formatNumber(
-                                      (
+                                    <PriceDisplay
+                                      priceInUSD={
                                         (sellerProduct.price *
                                           (100 - sellerProduct.discount)) /
                                         100
-                                      ).toFixed(2)
-                                    )}
+                                      }
+                                      showOriginal={true}
+                                    />
                                   </Typography>
                                   <Typography
                                     variant="body2"

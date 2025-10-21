@@ -8,7 +8,8 @@ import { relayStylePagination } from '@apollo/client/utilities';
 
 const csrfLink = new ApolloLink((operation, forward) => {
   // Get current locale from localStorage (used by LanguageContext)
-  const currentLocale = localStorage.getItem('lang') || 'en';
+  const currentLocale =
+    localStorage.getItem('kickzone-language-preference') || 'en';
 
   operation.setContext(({ headers = {} }) => ({
     headers: {
