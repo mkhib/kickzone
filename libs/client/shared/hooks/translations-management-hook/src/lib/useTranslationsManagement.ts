@@ -62,20 +62,36 @@ const GET_ENTITY_TRANSLATIONS = gql`
 `;
 
 export const useTranslationsManagement = () => {
-  const [setTranslationMutation, { loading: isSettingTranslation }] =
+  const [setTranslationMutation, { loading: isSettingTranslation, client }] =
     useMutation<
       Pick<KickzoneGraphqlTypes.Mutation, 'setTranslation'>,
       KickzoneGraphqlTypes.MutationSetTranslationArgs
     >(SET_TRANSLATION, {
       refetchQueries: [{ query: GET_CATEGORIES }, { query: GET_COLORS }],
+      awaitRefetchQueries: true,
+      onCompleted: () => {
+        // Clear the Apollo cache for categories and colors to force refetch with new translations
+        client?.refetchQueries({
+          include: ['GetCategories', 'GetColors'],
+        });
+      },
     });
 
-  const [bulkTranslateMutation, { loading: isBulkTranslating }] = useMutation<
+  const [
+    bulkTranslateMutation,
+    { loading: isBulkTranslating, client: bulkClient },
+  ] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'bulkTranslateEntities'>,
     KickzoneGraphqlTypes.MutationBulkTranslateEntitiesArgs
   >(BULK_TRANSLATE_ENTITIES, {
     refetchQueries: [{ query: GET_CATEGORIES }, { query: GET_COLORS }],
     awaitRefetchQueries: true,
+    onCompleted: () => {
+      // Clear the Apollo cache to force refetch with new translations
+      bulkClient?.refetchQueries({
+        include: ['GetCategories', 'GetColors'],
+      });
+    },
   });
 
   const setTranslation = (
@@ -85,8 +101,17 @@ export const useTranslationsManagement = () => {
     fieldName: string,
     value: string,
     isAutoTranslated = false
-  ) =>
-    setTranslationMutation({
+  ) => {
+    console.log('🔵 [CLIENT] Setting translation:', {
+      entityType,
+      entityId,
+      locale,
+      fieldName,
+      value,
+      isAutoTranslated,
+    });
+
+    return setTranslationMutation({
       variables: {
         input: {
           entityType,
@@ -97,15 +122,32 @@ export const useTranslationsManagement = () => {
           isAutoTranslated,
         },
       },
-    });
+    })
+      .then((result) => {
+        console.log('✅ [CLIENT] Translation saved successfully:', result);
+        return result;
+      })
+      .catch((error) => {
+        console.error('❌ [CLIENT] Failed to save translation:', error);
+        throw error;
+      });
+  };
 
   const bulkTranslate = (
     entityType: string,
     entityIds: number[],
     sourceLocale: string,
     targetLocales: string[]
-  ) =>
-    bulkTranslateMutation({
+  ) => {
+    console.log('═══════════════════════════════════════════════');
+    console.log('🌍 [CLIENT] BULK TRANSLATION REQUEST');
+    console.log('📦 Entity Type:', entityType);
+    console.log('🆔 Entity IDs:', entityIds);
+    console.log('🔤 Source Locale:', sourceLocale);
+    console.log('🎯 Target Locales:', targetLocales);
+    console.log('═══════════════════════════════════════════════');
+
+    return bulkTranslateMutation({
       variables: {
         input: {
           entityType,
@@ -114,7 +156,20 @@ export const useTranslationsManagement = () => {
           targetLocales,
         },
       },
-    });
+    })
+      .then((result) => {
+        console.log('✅ [CLIENT] Bulk translation completed successfully!');
+        console.log('📊 Result:', result);
+        console.log('═══════════════════════════════════════════════');
+        return result;
+      })
+      .catch((error) => {
+        console.error('❌ [CLIENT] Bulk translation FAILED!');
+        console.error('Error details:', error);
+        console.error('═══════════════════════════════════════════════');
+        throw error;
+      });
+  };
 
   return {
     setTranslation,

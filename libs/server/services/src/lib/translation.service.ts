@@ -2,6 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import { Translation } from '@kickzone-workspace/entities';
+import axios from 'axios';
 
 export interface TranslationInput {
   entityType: string;
@@ -23,11 +24,25 @@ export interface BulkTranslationInput {
 @Injectable()
 export class TranslationService {
   private readonly logger = new Logger(TranslationService.name);
+  private readonly translateApiUrl: string;
 
   constructor(
     @InjectRepository(Translation)
     private translationRepository: Repository<Translation>
-  ) {}
+  ) {
+    // Use LibreTranslate - free and open source translation API
+    // You can use the public instance or self-host your own
+    this.translateApiUrl =
+      process.env['LIBRE_TRANSLATE_URL'] ||
+      'https://libretranslate.com/translate';
+
+    this.logger.log('🌍 LibreTranslate configured');
+    this.logger.log(`📡 API URL: ${this.translateApiUrl}`);
+    this.logger.log('✅ No API key required - using free public instance');
+    this.logger.log(
+      '💡 To self-host: docker run -ti --rm -p 5000:5000 libretranslate/libretranslate'
+    );
+  }
 
   /**
    * Get translation with fallback support
@@ -130,6 +145,14 @@ export class TranslationService {
    */
   async bulkTranslateEntities(input: BulkTranslationInput): Promise<void> {
     try {
+      this.logger.log('═══════════════════════════════════════════════');
+      this.logger.log('🌍 BULK TRANSLATION STARTED');
+      this.logger.log(`📦 Entity Type: ${input.entityType}`);
+      this.logger.log(`🆔 Entity IDs: [${input.entityIds.join(', ')}]`);
+      this.logger.log(`🔤 Source Locale: ${input.sourceLocale}`);
+      this.logger.log(`🎯 Target Locales: [${input.targetLocales.join(', ')}]`);
+      this.logger.log('═══════════════════════════════════════════════');
+
       // Get source translations
       const sourceTranslations = await this.translationRepository.find({
         where: {
@@ -140,7 +163,7 @@ export class TranslationService {
       });
 
       this.logger.log(
-        `Found ${sourceTranslations.length} source translations for ${
+        `✅ Found ${sourceTranslations.length} source translations for ${
           input.entityType
         } entities ${input.entityIds.join(', ')} in locale ${
           input.sourceLocale
@@ -171,8 +194,18 @@ export class TranslationService {
       });
 
       // Process each entity
+      let successCount = 0;
+      let skipCount = 0;
+      let errorCount = 0;
+
       for (const [entityId, translations] of translationsByEntity) {
+        this.logger.log(`\n📝 Processing Entity ID: ${entityId}`);
+
         for (const sourceTranslation of translations) {
+          this.logger.log(
+            `  📄 Field: ${sourceTranslation.fieldName} = "${sourceTranslation.value}"`
+          );
+
           for (const targetLocale of input.targetLocales) {
             // Check if translation already exists
             const exists = await this.translationRepository.findOne({
@@ -184,35 +217,65 @@ export class TranslationService {
               },
             });
 
-            if (!exists) {
-              try {
-                const translatedValue = await this.autoTranslate(
-                  sourceTranslation.value,
-                  targetLocale
-                );
+            // Skip if translation exists AND is not a placeholder from failed translation
+            const isPlaceholder =
+              exists &&
+              (exists.value.startsWith('[') ||
+                exists.value.includes('[فارسی]') ||
+                exists.value.includes('[العربية]'));
 
-                await this.setTranslation({
-                  entityType: input.entityType,
-                  entityId,
-                  locale: targetLocale,
-                  fieldName: sourceTranslation.fieldName,
-                  value: translatedValue,
-                  isAutoTranslated: true,
-                });
+            if (exists && !isPlaceholder) {
+              this.logger.log(
+                `    ⏭️  Skipping ${targetLocale}: Translation already exists`
+              );
+              skipCount++;
+              continue;
+            }
 
-                this.logger.log(
-                  `Auto-translated ${input.entityType}:${entityId}:${sourceTranslation.fieldName} to ${targetLocale}`
-                );
-              } catch (error) {
-                this.logger.error(
-                  `Failed to translate ${input.entityType}:${entityId}:${sourceTranslation.fieldName} to ${targetLocale}`,
-                  error
-                );
-              }
+            if (isPlaceholder) {
+              this.logger.log(
+                `    🔄 Replacing placeholder translation in ${targetLocale}...`
+              );
+            }
+
+            try {
+              this.logger.log(`    🔄 Translating to ${targetLocale}...`);
+
+              const translatedValue = await this.autoTranslate(
+                sourceTranslation.value,
+                targetLocale
+              );
+
+              await this.setTranslation({
+                entityType: input.entityType,
+                entityId,
+                locale: targetLocale,
+                fieldName: sourceTranslation.fieldName,
+                value: translatedValue,
+                isAutoTranslated: true,
+              });
+
+              this.logger.log(
+                `    ✅ SUCCESS: "${sourceTranslation.value}" → "${translatedValue}" (${targetLocale})`
+              );
+              successCount++;
+            } catch (error) {
+              this.logger.error(
+                `    ❌ FAILED: ${input.entityType}:${entityId}:${sourceTranslation.fieldName} to ${targetLocale}`,
+                error
+              );
+              errorCount++;
             }
           }
         }
       }
+
+      this.logger.log('\n═══════════════════════════════════════════════');
+      this.logger.log('📊 BULK TRANSLATION SUMMARY');
+      this.logger.log(`✅ Successful: ${successCount}`);
+      this.logger.log(`⏭️  Skipped (already exist): ${skipCount}`);
+      this.logger.log(`❌ Failed: ${errorCount}`);
+      this.logger.log('═══════════════════════════════════════════════\n');
     } catch (error) {
       this.logger.error('Bulk translation failed', error);
       throw error;
@@ -313,31 +376,110 @@ export class TranslationService {
   }
 
   /**
-   * Auto-translate text using external service
-   * TODO: Integrate with Google Translate API, DeepL, or similar
+   * Auto-translate text using LibreTranslate API (free and open source)
    */
   private async autoTranslate(
     text: string,
     targetLanguage: string
   ): Promise<string> {
-    // For now, return a placeholder with language code
-    // In production, integrate with translation API
-    const languageNames: Record<string, string> = {
-      en: 'English',
-      fa: 'Farsi',
-      ar: 'Arabic',
-      es: 'Spanish',
-      fr: 'French',
-      de: 'German',
-      zh: 'Chinese',
-      ja: 'Japanese',
-      ko: 'Korean',
-      ru: 'Russian',
-    };
+    const startTime = Date.now();
 
-    const languageName =
-      languageNames[targetLanguage] || targetLanguage.toUpperCase();
-    return `[${languageName}] ${text}`;
+    try {
+      // Map locale codes to LibreTranslate language codes
+      const langMap: Record<string, string> = {
+        en: 'en',
+        fa: 'fa', // Persian/Farsi
+        ar: 'ar', // Arabic
+        es: 'es',
+        fr: 'fr',
+        de: 'de',
+        zh: 'zh',
+        ja: 'ja',
+        ko: 'ko',
+        ru: 'ru',
+        pt: 'pt',
+        it: 'it',
+        nl: 'nl',
+        pl: 'pl',
+        tr: 'tr',
+      };
+
+      const targetLang = langMap[targetLanguage] || targetLanguage;
+
+      this.logger.log(
+        `🔄 Calling LibreTranslate API: "${text}" → ${targetLang}`
+      );
+
+      // Call LibreTranslate API
+      const response = await axios.post(
+        this.translateApiUrl,
+        {
+          q: text,
+          source: 'en', // Assuming source is always English
+          target: targetLang,
+          format: 'text',
+        },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          timeout: 10000, // 10 second timeout
+        }
+      );
+
+      const translatedText = response.data.translatedText;
+      const duration = Date.now() - startTime;
+
+      this.logger.log(
+        `✅ LibreTranslate Response (${duration}ms): "${translatedText}"`
+      );
+
+      return translatedText;
+    } catch (error) {
+      const duration = Date.now() - startTime;
+
+      this.logger.error('═══════════════════════════════════════════════');
+      this.logger.error('❌ LIBRETRANSLATE API ERROR');
+      this.logger.error(`Duration: ${duration}ms`);
+      this.logger.error(`Target Language: ${targetLanguage}`);
+      this.logger.error(`Text: "${text}"`);
+
+      if (axios.isAxiosError(error)) {
+        this.logger.error(`Status: ${error.response?.status}`);
+        this.logger.error(`Response: ${JSON.stringify(error.response?.data)}`);
+        this.logger.error(`Message: ${error.message}`);
+      } else if (error instanceof Error) {
+        this.logger.error(`Error Message: ${error.message}`);
+        this.logger.error(`Error Name: ${error.name}`);
+        if (error.stack) {
+          this.logger.error(`Stack: ${error.stack.split('\n')[0]}`);
+        }
+      }
+
+      this.logger.error('═══════════════════════════════════════════════');
+
+      // Fallback: return original text with language indicator
+      const languageNames: Record<string, string> = {
+        en: 'English',
+        fa: 'فارسی',
+        ar: 'العربية',
+        es: 'Español',
+        fr: 'Français',
+        de: 'Deutsch',
+        zh: '中文',
+        ja: '日本語',
+        ko: '한국어',
+        ru: 'Русский',
+      };
+
+      const languageName =
+        languageNames[targetLanguage] || targetLanguage.toUpperCase();
+
+      const fallbackText = `[${languageName}] ${text}`;
+      this.logger.warn(`⚠️  Using fallback text: "${fallbackText}"`);
+
+      return fallbackText;
+    }
   }
 
   /**
