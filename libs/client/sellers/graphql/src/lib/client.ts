@@ -5,6 +5,8 @@ import {
   HttpLink,
 } from '@apollo/client';
 import { relayStylePagination } from '@apollo/client/utilities';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { onError } from '@apollo/client/link/error';
 
 const csrfLink = new ApolloLink((operation, forward) => {
   // Get current locale from localStorage (used by LanguageContext)
@@ -26,6 +28,92 @@ const httpLink = new HttpLink({
   credentials: 'include',
 });
 
+export const createSellersApolloClient = (onAuthError: () => void) => {
+  const authErrorLink = onError((errorContext: any) => {
+    const { graphQLErrors, networkError, operation, forward, error, result } =
+      errorContext;
+
+    // Check the main error object
+    if (error && error.message) {
+      if (
+        error.message.toLowerCase().includes('not authenticated') ||
+        error.message.toLowerCase().includes('unauthorized')
+      ) {
+        onAuthError();
+        return;
+      }
+    }
+
+    // Check result.errors array
+    if (result && result.errors) {
+      result.errors.forEach((err: any) => {
+        if (
+          err.message?.toLowerCase().includes('not authenticated') ||
+          err.message?.toLowerCase().includes('unauthorized')
+        ) {
+          onAuthError();
+          return;
+        }
+      });
+    }
+
+    if (graphQLErrors) {
+      graphQLErrors.forEach(({ message, extensions }: any) => {
+        // Check if this is an authentication error
+        if (
+          message.toLowerCase().includes('not authenticated') ||
+          message.toLowerCase().includes('unauthorized') ||
+          extensions?.code === 'UNAUTHENTICATED' ||
+          extensions?.code === 'FORBIDDEN'
+        ) {
+          onAuthError();
+        }
+      });
+    }
+
+    if (networkError) {
+      // Check for authentication-related network errors
+      if (
+        networkError.message?.toLowerCase().includes('not authenticated') ||
+        networkError.message?.toLowerCase().includes('unauthorized') ||
+        networkError?.statusCode === 401 ||
+        networkError?.statusCode === 403
+      ) {
+        onAuthError();
+      }
+    }
+  });
+
+  return new ApolloClient({
+    link: ApolloLink.from([csrfLink, authErrorLink, httpLink]),
+    cache: new InMemoryCache({
+      typePolicies: {
+        Query: {
+          fields: {
+            products: relayStylePagination(['filter']),
+          },
+        },
+        Translation: {
+          // Disable normalization for Translation objects since they have duplicate id=0
+          keyFields: false,
+        },
+      },
+    }),
+    defaultOptions: {
+      watchQuery: {
+        fetchPolicy: 'network-only', // Always fetch fresh data
+      },
+      query: {
+        fetchPolicy: 'network-only', // Always fetch fresh data
+      },
+      mutate: {
+        fetchPolicy: 'no-cache',
+      },
+    },
+  });
+};
+
+// Default client for backward compatibility (without error handling)
 const apolloClient = new ApolloClient({
   link: ApolloLink.from([csrfLink, httpLink]),
   cache: new InMemoryCache({

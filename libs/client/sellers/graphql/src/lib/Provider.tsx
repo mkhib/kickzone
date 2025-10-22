@@ -1,6 +1,5 @@
 import React from 'react';
-import { ApolloProviderBase } from '@kickzone-workspace/apollo-provider-base';
-import apolloClient from './client';
+import { SellersApolloProvider } from './SellersApolloProvider';
 
 interface GraphQLProviderProps {
   children: React.ReactNode;
@@ -9,7 +8,5 @@ interface GraphQLProviderProps {
 export const SellersGraphQLProvider: React.FC<GraphQLProviderProps> = ({
   children,
 }) => {
-  return (
-    <ApolloProviderBase client={apolloClient}>{children}</ApolloProviderBase>
-  );
+  return <SellersApolloProvider>{children}</SellersApolloProvider>;
 };

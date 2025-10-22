@@ -5,6 +5,8 @@ import {
   HttpLink,
 } from '@apollo/client';
 import { relayStylePagination } from '@apollo/client/utilities';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { onError } from '@apollo/client/link/error';
 
 const csrfLink = new ApolloLink((operation, forward) => {
   // Get current locale from localStorage (used by LanguageContext)
@@ -26,6 +28,91 @@ const httpLink = new HttpLink({
   credentials: 'include',
 });
 
+export const createAdminsApolloClient = (onAuthError: () => void) => {
+  const authErrorLink = onError((errorContext: any) => {
+    const { graphQLErrors, networkError, error, result } = errorContext;
+
+    // Check the main error object
+    if (error && error.message) {
+      if (
+        error.message.toLowerCase().includes('not authenticated') ||
+        error.message.toLowerCase().includes('unauthorized')
+      ) {
+        onAuthError();
+        return;
+      }
+    }
+
+    // Check result.errors array
+    if (result && result.errors) {
+      result.errors.forEach((err: any) => {
+        if (
+          err.message?.toLowerCase().includes('not authenticated') ||
+          err.message?.toLowerCase().includes('unauthorized')
+        ) {
+          onAuthError();
+          return;
+        }
+      });
+    }
+
+    if (graphQLErrors) {
+      graphQLErrors.forEach(({ message, extensions }: any) => {
+        if (
+          message.toLowerCase().includes('not authenticated') ||
+          message.toLowerCase().includes('unauthorized') ||
+          extensions?.code === 'UNAUTHENTICATED' ||
+          extensions?.code === 'FORBIDDEN'
+        ) {
+          onAuthError();
+        }
+      });
+    }
+
+    if (networkError) {
+      if (
+        networkError.message?.toLowerCase().includes('not authenticated') ||
+        networkError.message?.toLowerCase().includes('unauthorized') ||
+        (networkError as any)?.statusCode === 401 ||
+        (networkError as any)?.statusCode === 403
+      ) {
+        onAuthError();
+      }
+    }
+  });
+
+  return new ApolloClient({
+    link: csrfLink.concat(authErrorLink).concat(httpLink),
+    cache: new InMemoryCache({
+      typePolicies: {
+        Query: {
+          fields: {
+            products: relayStylePagination(['filter']),
+            sellers: relayStylePagination(['input']),
+          },
+        },
+        Translation: {
+          // Disable normalization for Translation objects since they have duplicate id=0
+          keyFields: false,
+        },
+      },
+    }),
+    defaultOptions: {
+      watchQuery: {
+        errorPolicy: 'all',
+      },
+      query: {
+        errorPolicy: 'all',
+      },
+      mutate: {
+        fetchPolicy: 'no-cache',
+        errorPolicy: 'all',
+      },
+    },
+  });
+};
+
+// Default client for backward compatibility (without error handling)
 const apolloClient = new ApolloClient({
   link: csrfLink.concat(httpLink),
   cache: new InMemoryCache({
