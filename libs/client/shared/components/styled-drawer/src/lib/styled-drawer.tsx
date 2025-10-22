@@ -1,4 +1,5 @@
 import { useThemeContext } from '@kickzone-workspace/shared-i18n';
+import { DRAWER_WIDTH, HEIGHTS } from '@kickzone-workspace/sizes';
 import CloseIcon from '@mui/icons-material/Close';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
@@ -9,16 +10,14 @@ import Divider from '@mui/material/Divider';
 import { styled } from '@mui/material/styles';
 import { ReactNode } from 'react';
 
-const drawerWidth = 300;
-
 const BaseStyledDrawer = styled(Drawer)(({ theme }) => ({
-  width: drawerWidth,
+  width: DRAWER_WIDTH,
   flexShrink: 0,
   '& .MuiDrawer-paper': {
-    width: drawerWidth,
+    width: DRAWER_WIDTH,
     boxSizing: 'border-box',
-    marginTop: '64px', // Account for fixed AppBar
-    height: 'calc(100vh - 64px)',
+    marginTop: HEIGHTS.header,
+    height: HEIGHTS.drawer,
     backgroundColor: 'rgba(255, 255, 255, 0.85)',
     backdropFilter: 'blur(20px) saturate(180%)',
     WebkitBackdropFilter: 'blur(20px) saturate(180%)',

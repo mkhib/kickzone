@@ -276,6 +276,7 @@
       "@kickzone-workspace/shared-ui-store": [
         "libs/client/shared/zustand/shared-ui-store/src/index.ts"
       ],
+      "@kickzone-workspace/sizes": ["libs/client/shared/ui/sizes/src/index.ts"],
       "@kickzone-workspace/snackbar": [
         "libs/client/shared/components/snackbar/src/index.ts"
       ],
