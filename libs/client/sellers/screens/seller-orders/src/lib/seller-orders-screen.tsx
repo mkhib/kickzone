@@ -34,6 +34,7 @@ import {
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 
 export function SellerOrdersScreen() {
   const { LL } = useI18nContext();
@@ -125,7 +126,7 @@ export function SellerOrdersScreen() {
 
   return (
     <SellersLayout>
-      <Box sx={{ p: 3 }}>
+      <GlassmorphismContainer fullHeight>
         <Typography variant="h4" gutterBottom>
           {LL.orders.myOrders()}
         </Typography>
@@ -500,7 +501,7 @@ export function SellerOrdersScreen() {
             </Button>
           </DialogActions>
         </Dialog>
-      </Box>
+      </GlassmorphismContainer>
     </SellersLayout>
   );
 }

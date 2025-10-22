@@ -28,6 +28,7 @@ import {
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 
 interface OrderItem {
   id: string;
@@ -124,7 +125,7 @@ export function CustomerOrders() {
 
   return (
     <CustomersLayout>
-      <Box sx={{ p: 3 }}>
+      <GlassmorphismContainer fullHeight>
         <Typography variant="h4" gutterBottom>
           {LL.orders.myOrders()}
         </Typography>
@@ -410,7 +411,7 @@ export function CustomerOrders() {
             ))}
           </Box>
         )}
-      </Box>
+      </GlassmorphismContainer>
     </CustomersLayout>
   );
 }

@@ -21,6 +21,7 @@ import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Fade from '@mui/material/Fade';
 import { useCallback, useState } from 'react';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 
 export function CustomersHome() {

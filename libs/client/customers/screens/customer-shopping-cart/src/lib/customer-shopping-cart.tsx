@@ -20,6 +20,7 @@ import {
   useI18nContext,
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import Add from '@mui/icons-material/Add';
 import Delete from '@mui/icons-material/Delete';
@@ -414,7 +415,7 @@ export function CustomerShoppingCart() {
 
   return (
     <CustomersLayout>
-      <Box sx={{ p: 3 }}>
+      <GlassmorphismContainer fullHeight>
         <Typography variant="h4" gutterBottom>
           {LL.checkout.shoppingCart()}
         </Typography>
@@ -1373,7 +1374,7 @@ export function CustomerShoppingCart() {
             </Button>
           </DialogActions>
         </Dialog>
-      </Box>
+      </GlassmorphismContainer>
     </CustomersLayout>
   );
 }
