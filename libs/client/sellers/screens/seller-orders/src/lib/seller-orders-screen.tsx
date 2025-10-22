@@ -274,9 +274,11 @@ export function SellerOrdersScreen() {
 
                           <Box sx={{ mb: 2 }}>
                             <Typography variant="body2" gutterBottom>
-                              <strong>{LL.form.status()}:</strong>{' '}
-                              <OrderStatusChip status={order.status} />
+                              <strong>{LL.form.status()}:</strong>
                             </Typography>
+                            <Box sx={{ mb: 1 }}>
+                              <OrderStatusChip status={order.status} />
+                            </Box>
                             <Button
                               variant="outlined"
                               size="small"
