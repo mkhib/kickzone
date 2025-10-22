@@ -13,7 +13,6 @@ import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import WarningIcon from '@mui/icons-material/Warning';
-import Tooltip from '@mui/material/Tooltip';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -43,6 +42,7 @@ interface CategoryModalProps {
   initialName?: string;
   title: string;
   isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
 }
 
 const CategoryModal = ({
@@ -52,6 +52,7 @@ const CategoryModal = ({
   initialName = '',
   title,
   isLoading = false,
+  LL,
 }: CategoryModalProps) => {
   const [categoryName, setCategoryName] = useState(initialName);
 
@@ -72,24 +73,21 @@ const CategoryModal = ({
         <TextField
           autoFocus
           margin="dense"
-          label="Category Name"
+          label={LL.form.categoryName()}
           fullWidth
           value={categoryName}
           onChange={(e) => setCategoryName(e.target.value)}
-          slotProps={{
-            input: { 'aria-label': 'Category Name' },
-          }}
         />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
         <Button
           onClick={handleSubmit}
           loading={isLoading}
           variant="contained"
           color="primary"
         >
-          Save
+          {LL.button.save()}
         </Button>
       </DialogActions>
     </Dialog>
@@ -102,6 +100,7 @@ interface DeleteCategoryModalProps {
   onConfirm: () => void;
   categoryName: string;
   isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
 }
 
 const DeleteCategoryModal = ({
@@ -110,28 +109,28 @@ const DeleteCategoryModal = ({
   onConfirm,
   categoryName,
   isLoading = false,
+  LL,
 }: DeleteCategoryModalProps) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <WarningIcon color="warning" />
-        Delete Category
+        {LL.categories.deleteCategory()}
       </DialogTitle>
       <DialogContent>
         <Typography>
-          Are you sure you want to delete the category "{categoryName}"? This
-          action cannot be undone.
+          {LL.categories.deleteCategoryConfirm({ name: categoryName })}
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
         <Button
           onClick={onConfirm}
           loading={isLoading}
           variant="contained"
           color="error"
         >
-          Delete
+          {LL.button.delete()}
         </Button>
       </DialogActions>
     </Dialog>
@@ -157,12 +156,16 @@ const DeleteImageModal = ({
   <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
     <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
       <WarningIcon color="warning" />
-      Delete Image
+      {LL.modal.deleteImage()}
     </DialogTitle>
     <DialogContent>
       <Typography>
-        Are you sure you want to delete this{' '}
-        {imageType === 'preview' ? 'selected image' : 'uploaded image'}?
+        {LL.modal.deleteImageConfirm({
+          imageType:
+            imageType === 'preview'
+              ? LL.products.selectedImage()
+              : LL.products.uploadedImage(),
+        })}
       </Typography>
     </DialogContent>
     <DialogActions>
@@ -175,7 +178,7 @@ const DeleteImageModal = ({
         color="error"
         disabled={isLoading}
       >
-        {isLoading ? 'Deleting...' : LL.button.delete()}
+        {isLoading ? LL.status.deleting() : LL.button.delete()}
       </Button>
     </DialogActions>
   </Dialog>
@@ -267,9 +270,8 @@ const ProductInfoCard = React.memo(
   }: ProductInfoCardProps & {
     LL: ReturnType<typeof useI18nContext>['LL'];
   }) => {
-    // Tooltip for upload button if product info is not created
+    // Only allow image selection when editing (product info is already created)
     const isSelectImagesDisabled = info.isUploading || !info.createdId;
-    const showTooltip = !info.createdId;
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
     const uploadButton = (
@@ -282,9 +284,8 @@ const ProductInfoCard = React.memo(
           backgroundColor: colors.main,
           '&:hover': { backgroundColor: colors.hoverMain },
         }}
-        aria-label="Select Images"
       >
-        {info.isUploading ? 'Uploading...' : LL.products.selectImages()}
+        {info.isUploading ? LL.status.uploading() : LL.products.selectImages()}
         <VisuallyHiddenInput
           type="file"
           multiple
@@ -317,7 +318,20 @@ const ProductInfoCard = React.memo(
       </Button>
     );
     return (
-      <Paper sx={{ mb: 2, p: 2, position: 'relative' }}>
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 2,
+          p: 2,
+          position: 'relative',
+          backgroundColor: 'transparent !important',
+          backdropFilter: 'none !important',
+          WebkitBackdropFilter: 'none !important',
+          border: '2px solid rgba(255, 255, 255, 0.4) !important',
+          borderRadius: '16px !important',
+          boxShadow: 'none !important',
+        }}
+      >
         <Box
           sx={{
             display: 'flex',
@@ -338,7 +352,7 @@ const ProductInfoCard = React.memo(
             sx={{ minWidth: 120, width: '100%', mb: { xs: 2, md: 0 } }}
           />
           <TextField
-            label="Size"
+            label={LL.products.size()}
             name="size"
             value={info.size}
             onChange={(
@@ -352,7 +366,7 @@ const ProductInfoCard = React.memo(
             }}
           />
           <TextField
-            label="Weight"
+            label={LL.products.weight()}
             name="weight"
             type="number"
             value={info.weight}
@@ -368,16 +382,7 @@ const ProductInfoCard = React.memo(
           />
         </Box>
         <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
-          {showTooltip ? (
-            <Tooltip
-              title="You must save the product before selecting images."
-              placement="top"
-            >
-              <span>{uploadButton}</span>
-            </Tooltip>
-          ) : (
-            uploadButton
-          )}
+          {info.createdId && uploadButton}
           <IconButton
             onClick={() => onRemove(idx)}
             color="error"
@@ -397,7 +402,7 @@ const ProductInfoCard = React.memo(
                 color="text.secondary"
                 sx={{ mb: 1 }}
               >
-                Selected Images (not yet uploaded):
+                {LL.products.selectedImagesNotUploaded()}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 {info.newImagePreviews.map((previewObj, imageIdx) => (
@@ -434,7 +439,9 @@ const ProductInfoCard = React.memo(
                   !info.createdId
                 }
               >
-                {info.isUploading ? 'Uploading...' : 'Upload Images'}
+                {info.isUploading
+                  ? LL.status.uploading()
+                  : LL.products.uploadImages()}
               </Button>
             </Box>
           )}
@@ -446,7 +453,7 @@ const ProductInfoCard = React.memo(
                 color="text.secondary"
                 sx={{ mb: 1 }}
               >
-                Uploaded Images:
+                {LL.products.uploadedImages()}
               </Typography>
               <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
                 {info.uploadedImageUrls.map(
@@ -498,6 +505,7 @@ interface ColorModalProps {
   initialColor?: KickzoneGraphqlTypes.Color | null;
   title: string;
   isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
 }
 
 const ColorModal = ({
@@ -507,6 +515,7 @@ const ColorModal = ({
   initialColor = null,
   title,
   isLoading = false,
+  LL,
 }: ColorModalProps) => {
   const [colorName, setColorName] = useState(initialColor?.name || '');
   const [hexCode, setHexCode] = useState(initialColor?.hexCode || '#ffffff');
@@ -533,7 +542,7 @@ const ColorModal = ({
         <TextField
           autoFocus
           margin="dense"
-          label="Color Name"
+          label={LL.colorManagement.colorName()}
           fullWidth
           value={colorName}
           onChange={(e) => setColorName(e.target.value)}
@@ -541,7 +550,7 @@ const ColorModal = ({
         />
         <TextField
           margin="dense"
-          label="Hex Code"
+          label={LL.colorManagement.hexCode()}
           fullWidth
           value={hexCode}
           onChange={(e) => setHexCode(e.target.value)}
@@ -555,14 +564,14 @@ const ColorModal = ({
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
         <Button
           onClick={handleSubmit}
-          disabled={isLoading} // Use disabled instead of loading prop if not available
+          disabled={isLoading}
           variant="contained"
           color="primary"
         >
-          Save
+          {LL.button.save()}
         </Button>
       </DialogActions>
     </Dialog>
@@ -575,6 +584,7 @@ interface DeleteColorModalProps {
   onConfirm: () => void;
   colorName: string;
   isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
 }
 
 const DeleteColorModal = ({
@@ -583,28 +593,28 @@ const DeleteColorModal = ({
   onConfirm,
   colorName,
   isLoading = false,
+  LL,
 }: DeleteColorModalProps) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
         <WarningIcon color="warning" />
-        Delete Color
+        {LL.colorManagement.deleteColor()}
       </DialogTitle>
       <DialogContent>
         <Typography>
-          Are you sure you want to delete the color "{colorName}"? This action
-          cannot be undone.
+          {LL.colorManagement.deleteColorConfirm({ name: colorName })}
         </Typography>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Cancel</Button>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
         <Button
           onClick={onConfirm}
           loading={isLoading}
           variant="contained"
           color="error"
         >
-          Delete
+          {LL.button.delete()}
         </Button>
       </DialogActions>
     </Dialog>
@@ -1177,7 +1187,7 @@ export function AdminProductEditor() {
     <AdminsLayout>
       <Paper elevation={3} sx={{ p: 4, borderRadius: 2, height: '100%' }}>
         <Typography variant="h5" sx={{ mb: 3, color: colors.text }}>
-          {productIdNum ? 'Edit Product' : LL.products.addProduct()}
+          {productIdNum ? LL.products.editProduct() : LL.products.addProduct()}
         </Typography>
         <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
           <Grid container spacing={3} sx={{ height: '100%' }}>
@@ -1306,7 +1316,7 @@ export function AdminProductEditor() {
               </Box>
               <Box sx={{ mt: 2 }}>
                 <Typography variant="h6" sx={{ mb: 2 }}>
-                  Colors
+                  {LL.products.colors()}
                 </Typography>
                 <Button
                   variant="outlined"
@@ -1315,7 +1325,7 @@ export function AdminProductEditor() {
                   sx={{ mb: 2 }}
                   disabled={colorMutationsLoading}
                 >
-                  Add New Color
+                  {LL.colorManagement.addNewColor()}
                 </Button>
                 <Box>
                   {(availableColors as KickzoneGraphqlTypes.Color[])
@@ -1369,7 +1379,7 @@ export function AdminProductEditor() {
             {/* Right Side - ProductInfos Section */}
             <Grid size={{ xs: 12, md: 6 }}>
               <Typography variant="h6" sx={{ mb: 2 }}>
-                Product Variants
+                {LL.products.productVariants()}
               </Typography>
               {productInfos.map((info, idx) => (
                 <ProductInfoCard
@@ -1433,7 +1443,7 @@ export function AdminProductEditor() {
                 disabled={isCreatingProduct}
                 fullWidth={isMobile}
               >
-                Add Variant
+                {LL.products.addVariant()}
               </Button>
             </Grid>
             {/* Save Button */}
@@ -1450,11 +1460,12 @@ export function AdminProductEditor() {
                   sx={{
                     backgroundColor: colors.main,
                     '&:hover': { backgroundColor: colors.hoverMain },
+                    textTransform: 'none',
                   }}
                   loading={isCreatingProduct}
                   fullWidth={isMobile}
                 >
-                  Save Product
+                  {LL.products.saveProduct()}
                 </Button>
               </Box>
             </Grid>
@@ -1482,8 +1493,9 @@ export function AdminProductEditor() {
             }
           }
         }}
-        title="Add Category"
+        title={LL.categories.addCategory()}
         isLoading={isCreatingCategory}
+        LL={LL}
       />
       <CategoryModal
         open={isEditCategoryModalOpen}
@@ -1513,8 +1525,9 @@ export function AdminProductEditor() {
           }
         }}
         initialName={selectedCategory?.name || ''}
-        title="Edit Category"
+        title={LL.categories.editCategory()}
         isLoading={isUpdatingCategory}
+        LL={LL}
       />
       <DeleteCategoryModal
         open={isDeleteCategoryModalOpen}
@@ -1522,6 +1535,7 @@ export function AdminProductEditor() {
         onConfirm={handleDeleteCategory}
         categoryName={categoryToDelete?.name || ''}
         isLoading={isDeletingCategory}
+        LL={LL}
       />
       <DeleteImageModal
         open={deleteImageModal.open}
@@ -1538,8 +1552,13 @@ export function AdminProductEditor() {
         onClose={handleCloseColorModal}
         onSubmit={handleSaveColor}
         initialColor={selectedColor}
-        title={selectedColor ? 'Edit Color' : 'Add New Color'}
+        title={
+          selectedColor
+            ? LL.colorManagement.editColor()
+            : LL.colorManagement.addNewColor()
+        }
         isLoading={colorMutationsLoading}
+        LL={LL}
       />
       <DeleteColorModal
         open={isDeleteColorModalOpen}
@@ -1547,6 +1566,7 @@ export function AdminProductEditor() {
         onConfirm={handleDeleteColor}
         colorName={colorToDelete?.name || ''}
         isLoading={colorMutationsLoading}
+        LL={LL}
       />
     </AdminsLayout>
   );

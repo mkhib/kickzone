@@ -189,6 +189,9 @@
       "@kickzone-workspace/layout": [
         "libs/client/shared/components/layout/src/index.ts"
       ],
+      "@kickzone-workspace/lottie-success-check": [
+        "libs/client/shared/lottie/success-check/src/index.ts"
+      ],
       "@kickzone-workspace/lottie-unauthorized": [
         "libs/client/shared/lottie/unauthorized/src/index.ts"
       ],

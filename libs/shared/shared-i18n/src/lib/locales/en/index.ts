@@ -139,6 +139,11 @@ const en = {
     productVariants: 'Product Variants',
     colors: 'Colors',
     selectImages: 'Select Images',
+    selectedImagesNotUploaded: 'Selected Images (not yet uploaded):',
+    uploadImages: 'Upload Images',
+    uploadedImages: 'Uploaded Images:',
+    selectedImage: 'selected image',
+    uploadedImage: 'uploaded image',
     saveProductFirst: 'You must save the product before selecting images.',
     editCategory: 'Edit Category',
     myProducts: 'My Products',
@@ -183,6 +188,8 @@ const en = {
     productInformationTitle: 'Product Information',
     yourProductVariantsTitle: 'Your Product Variants',
     variant: 'Variant',
+    addVariant: 'Add Variant',
+    saveProduct: 'Save Product',
     priceRange: 'Price Range',
     totalStock: 'Total Stock',
     variants: 'Variants',
@@ -274,11 +281,39 @@ const en = {
   // Status and states
   status: {
     loading: 'Loading...',
+    uploading: 'Uploading...',
+    deleting: 'Deleting...',
     success: 'Success',
     error: 'Error',
     warning: 'Warning',
     info: 'Info',
     changingLanguage: 'Changing language...',
+  },
+
+  // Color Management
+  colorManagement: {
+    addNewColor: 'Add New Color',
+    editColor: 'Edit Color',
+    deleteColor: 'Delete Color',
+    deleteColorConfirm:
+      'Are you sure you want to delete the color "{name}"? This action cannot be undone.',
+    colorName: 'Color Name',
+    hexCode: 'Hex Code',
+  },
+
+  // Categories
+  categories: {
+    addCategory: 'Add Category',
+    editCategory: 'Edit Category',
+    deleteCategory: 'Delete Category',
+    deleteCategoryConfirm:
+      'Are you sure you want to delete the category "{name}"? This action cannot be undone.',
+  },
+
+  // Modal
+  modal: {
+    deleteImage: 'Delete Image',
+    deleteImageConfirm: 'Are you sure you want to delete this {imageType}?',
   },
 
   // Messages and notifications

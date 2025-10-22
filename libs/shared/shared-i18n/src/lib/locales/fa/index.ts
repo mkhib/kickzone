@@ -139,6 +139,11 @@ const fa = {
     productVariants: 'انواع محصول',
     colors: 'رنگ‌ها',
     selectImages: 'انتخاب تصاویر',
+    selectedImagesNotUploaded: 'تصاویر انتخاب شده (هنوز آپلود نشده):',
+    uploadImages: 'آپلود تصاویر',
+    uploadedImages: 'تصاویر آپلود شده:',
+    selectedImage: 'تصویر انتخاب شده',
+    uploadedImage: 'تصویر آپلود شده',
     saveProductFirst: 'ابتدا باید محصول را ذخیره کنید.',
     editCategory: 'ویرایش دسته‌بندی',
     myProducts: 'محصولات من',
@@ -183,6 +188,8 @@ const fa = {
     productInformationTitle: 'اطلاعات محصول',
     yourProductVariantsTitle: 'انواع محصول شما',
     variant: 'نوع',
+    addVariant: 'افزودن نوع',
+    saveProduct: 'ذخیره محصول',
     priceRange: 'محدوده قیمت',
     totalStock: 'موجودی کل',
     variants: 'انواع',
@@ -275,11 +282,37 @@ const fa = {
   // Status and states
   status: {
     loading: 'در حال بارگذاری...',
+    uploading: 'در حال آپلود...',
+    deleting: 'در حال حذف...',
     success: 'موفق',
     error: 'خطا',
     warning: 'هشدار',
     info: 'اطلاعات',
     changingLanguage: 'در حال تغییر زبان...',
+  },
+
+  // Color Management
+  colorManagement: {
+    addNewColor: 'افزودن رنگ جدید',
+    editColor: 'ویرایش رنگ',
+    deleteColor: 'حذف رنگ',
+    deleteColorConfirm: 'آیا مطمئن هستید که می‌خواهید رنگ "{name}" را حذف کنید؟ این عمل قابل بازگشت نیست.',
+    colorName: 'نام رنگ',
+    hexCode: 'کد هگز',
+  },
+
+  // Categories
+  categories: {
+    addCategory: 'افزودن دسته‌بندی',
+    editCategory: 'ویرایش دسته‌بندی',
+    deleteCategory: 'حذف دسته‌بندی',
+    deleteCategoryConfirm: 'آیا مطمئن هستید که می‌خواهید دسته‌بندی "{name}" را حذف کنید؟ این عمل قابل بازگشت نیست.',
+  },
+
+  // Modal
+  modal: {
+    deleteImage: 'حذف تصویر',
+    deleteImageConfirm: 'آیا مطمئن هستید که می‌خواهید این {imageType} را حذف کنید؟',
   },
 
   // Messages and notifications

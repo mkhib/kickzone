@@ -23,17 +23,27 @@ import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 
 export function Headerbar() {
   const { user, logout } = useCustomersAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const totalItems = useCartItemCount();
   const { LL } = useI18nContext();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -62,12 +72,20 @@ export function Headerbar() {
       <AppBar
         position="fixed"
         sx={{
-          background: 'rgba(255, 255, 255, 0.1)',
+          background: isScrolled
+            ? 'rgba(255, 255, 255, 0.95)'
+            : 'rgba(255, 255, 255, 0.1)',
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+          borderBottom: isScrolled
+            ? '1px solid rgba(0, 0, 0, 0.1)'
+            : '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: isScrolled
+            ? '0 2px 8px rgba(0, 0, 0, 0.1)'
+            : '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
           zIndex: (theme) => theme.zIndex.appBar + 1,
+          color: isScrolled ? '#000' : '#fff',
+          transition: 'all 0.3s ease-in-out',
         }}
       >
         <Toolbar>

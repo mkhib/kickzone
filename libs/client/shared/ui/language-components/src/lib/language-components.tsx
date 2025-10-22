@@ -3,7 +3,7 @@ import {
   useI18nContext,
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
-import Alert from '@mui/material/Alert';
+import { LottieSuccessCheck } from '@kickzone-workspace/lottie-success-check';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -38,10 +38,13 @@ export function LanguageComponents({
     try {
       setLocale(newLocale);
       setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       console.error('Failed to change language:', error);
     }
+  };
+
+  const handleAnimationComplete = () => {
+    setShowSuccess(false);
   };
 
   const currentLanguageInfo = availableLocales.find(
@@ -86,15 +89,24 @@ export function LanguageComponents({
               {LL.navigation.languageSettings()}
             </Typography>
 
-            {showSuccess && (
-              <Alert
-                severity="success"
-                sx={{ marginBottom: 3 }}
-                onClose={() => setShowSuccess(false)}
-              >
-                {LL.messages.languagePreferenceSaved()}
-              </Alert>
-            )}
+            <Box
+              sx={{
+                height: 50,
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                marginBottom: 3,
+                position: 'relative',
+              }}
+            >
+              {showSuccess && (
+                <LottieSuccessCheck
+                  width={50}
+                  height={50}
+                  onComplete={handleAnimationComplete}
+                />
+              )}
+            </Box>
 
             <Box sx={{ marginBottom: 3 }}>
               <Typography

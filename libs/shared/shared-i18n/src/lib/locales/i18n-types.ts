@@ -482,6 +482,26 @@ type RootTranslation = {
 		 */
 		selectImages: string
 		/**
+		 * S​e​l​e​c​t​e​d​ ​I​m​a​g​e​s​ ​(​n​o​t​ ​y​e​t​ ​u​p​l​o​a​d​e​d​)​:
+		 */
+		selectedImagesNotUploaded: string
+		/**
+		 * U​p​l​o​a​d​ ​I​m​a​g​e​s
+		 */
+		uploadImages: string
+		/**
+		 * U​p​l​o​a​d​e​d​ ​I​m​a​g​e​s​:
+		 */
+		uploadedImages: string
+		/**
+		 * s​e​l​e​c​t​e​d​ ​i​m​a​g​e
+		 */
+		selectedImage: string
+		/**
+		 * u​p​l​o​a​d​e​d​ ​i​m​a​g​e
+		 */
+		uploadedImage: string
+		/**
 		 * Y​o​u​ ​m​u​s​t​ ​s​a​v​e​ ​t​h​e​ ​p​r​o​d​u​c​t​ ​b​e​f​o​r​e​ ​s​e​l​e​c​t​i​n​g​ ​i​m​a​g​e​s​.
 		 */
 		saveProductFirst: string
@@ -657,6 +677,14 @@ type RootTranslation = {
 		 * V​a​r​i​a​n​t
 		 */
 		variant: string
+		/**
+		 * A​d​d​ ​V​a​r​i​a​n​t
+		 */
+		addVariant: string
+		/**
+		 * S​a​v​e​ ​P​r​o​d​u​c​t
+		 */
+		saveProduct: string
 		/**
 		 * P​r​i​c​e​ ​R​a​n​g​e
 		 */
@@ -970,6 +998,14 @@ type RootTranslation = {
 		 */
 		loading: string
 		/**
+		 * U​p​l​o​a​d​i​n​g​.​.​.
+		 */
+		uploading: string
+		/**
+		 * D​e​l​e​t​i​n​g​.​.​.
+		 */
+		deleting: string
+		/**
 		 * S​u​c​c​e​s​s
 		 */
 		success: string
@@ -989,6 +1025,63 @@ type RootTranslation = {
 		 * C​h​a​n​g​i​n​g​ ​l​a​n​g​u​a​g​e​.​.​.
 		 */
 		changingLanguage: string
+	}
+	colorManagement: {
+		/**
+		 * A​d​d​ ​N​e​w​ ​C​o​l​o​r
+		 */
+		addNewColor: string
+		/**
+		 * E​d​i​t​ ​C​o​l​o​r
+		 */
+		editColor: string
+		/**
+		 * D​e​l​e​t​e​ ​C​o​l​o​r
+		 */
+		deleteColor: string
+		/**
+		 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​t​h​e​ ​c​o​l​o​r​ ​"​{​n​a​m​e​}​"​?​ ​T​h​i​s​ ​a​c​t​i​o​n​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+		 * @param {unknown} name
+		 */
+		deleteColorConfirm: RequiredParams<'name'>
+		/**
+		 * C​o​l​o​r​ ​N​a​m​e
+		 */
+		colorName: string
+		/**
+		 * H​e​x​ ​C​o​d​e
+		 */
+		hexCode: string
+	}
+	categories: {
+		/**
+		 * A​d​d​ ​C​a​t​e​g​o​r​y
+		 */
+		addCategory: string
+		/**
+		 * E​d​i​t​ ​C​a​t​e​g​o​r​y
+		 */
+		editCategory: string
+		/**
+		 * D​e​l​e​t​e​ ​C​a​t​e​g​o​r​y
+		 */
+		deleteCategory: string
+		/**
+		 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​t​h​e​ ​c​a​t​e​g​o​r​y​ ​"​{​n​a​m​e​}​"​?​ ​T​h​i​s​ ​a​c​t​i​o​n​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+		 * @param {unknown} name
+		 */
+		deleteCategoryConfirm: RequiredParams<'name'>
+	}
+	modal: {
+		/**
+		 * D​e​l​e​t​e​ ​I​m​a​g​e
+		 */
+		deleteImage: string
+		/**
+		 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​t​h​i​s​ ​{​i​m​a​g​e​T​y​p​e​}​?
+		 * @param {unknown} imageType
+		 */
+		deleteImageConfirm: RequiredParams<'imageType'>
 	}
 	messages: {
 		/**
@@ -1861,6 +1954,26 @@ export type TranslationFunctions = {
 		 */
 		selectImages: () => LocalizedString
 		/**
+		 * Selected Images (not yet uploaded):
+		 */
+		selectedImagesNotUploaded: () => LocalizedString
+		/**
+		 * Upload Images
+		 */
+		uploadImages: () => LocalizedString
+		/**
+		 * Uploaded Images:
+		 */
+		uploadedImages: () => LocalizedString
+		/**
+		 * selected image
+		 */
+		selectedImage: () => LocalizedString
+		/**
+		 * uploaded image
+		 */
+		uploadedImage: () => LocalizedString
+		/**
 		 * You must save the product before selecting images.
 		 */
 		saveProductFirst: () => LocalizedString
@@ -2036,6 +2149,14 @@ export type TranslationFunctions = {
 		 * Variant
 		 */
 		variant: () => LocalizedString
+		/**
+		 * Add Variant
+		 */
+		addVariant: () => LocalizedString
+		/**
+		 * Save Product
+		 */
+		saveProduct: () => LocalizedString
 		/**
 		 * Price Range
 		 */
@@ -2347,6 +2468,14 @@ export type TranslationFunctions = {
 		 */
 		loading: () => LocalizedString
 		/**
+		 * Uploading...
+		 */
+		uploading: () => LocalizedString
+		/**
+		 * Deleting...
+		 */
+		deleting: () => LocalizedString
+		/**
 		 * Success
 		 */
 		success: () => LocalizedString
@@ -2366,6 +2495,60 @@ export type TranslationFunctions = {
 		 * Changing language...
 		 */
 		changingLanguage: () => LocalizedString
+	}
+	colorManagement: {
+		/**
+		 * Add New Color
+		 */
+		addNewColor: () => LocalizedString
+		/**
+		 * Edit Color
+		 */
+		editColor: () => LocalizedString
+		/**
+		 * Delete Color
+		 */
+		deleteColor: () => LocalizedString
+		/**
+		 * Are you sure you want to delete the color "{name}"? This action cannot be undone.
+		 */
+		deleteColorConfirm: (arg: { name: unknown }) => LocalizedString
+		/**
+		 * Color Name
+		 */
+		colorName: () => LocalizedString
+		/**
+		 * Hex Code
+		 */
+		hexCode: () => LocalizedString
+	}
+	categories: {
+		/**
+		 * Add Category
+		 */
+		addCategory: () => LocalizedString
+		/**
+		 * Edit Category
+		 */
+		editCategory: () => LocalizedString
+		/**
+		 * Delete Category
+		 */
+		deleteCategory: () => LocalizedString
+		/**
+		 * Are you sure you want to delete the category "{name}"? This action cannot be undone.
+		 */
+		deleteCategoryConfirm: (arg: { name: unknown }) => LocalizedString
+	}
+	modal: {
+		/**
+		 * Delete Image
+		 */
+		deleteImage: () => LocalizedString
+		/**
+		 * Are you sure you want to delete this {imageType}?
+		 */
+		deleteImageConfirm: (arg: { imageType: unknown }) => LocalizedString
 	}
 	messages: {
 		/**

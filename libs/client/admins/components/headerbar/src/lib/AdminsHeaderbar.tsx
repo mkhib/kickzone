@@ -20,7 +20,7 @@ import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
@@ -32,10 +32,20 @@ export function AdminsHeaderbar() {
   const { admin: user, setAdmin, logoutAdmin } = useAdminsAuthContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { LL } = useI18nContext();
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 50);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   const handleDrawerToggle = () => {
     setDrawerOpen(!drawerOpen);
@@ -60,12 +70,20 @@ export function AdminsHeaderbar() {
       <AppBar
         position="fixed"
         sx={{
-          background: 'rgba(255, 255, 255, 0.1)',
+          background: isScrolled
+            ? 'rgba(255, 255, 255, 0.95)'
+            : 'rgba(255, 255, 255, 0.1)',
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+          borderBottom: isScrolled
+            ? '1px solid rgba(0, 0, 0, 0.1)'
+            : '1px solid rgba(255, 255, 255, 0.2)',
+          boxShadow: isScrolled
+            ? '0 2px 8px rgba(0, 0, 0, 0.1)'
+            : '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
           zIndex: (theme) => theme.zIndex.appBar + 1,
+          color: isScrolled ? '#000' : '#fff',
+          transition: 'all 0.3s ease-in-out',
         }}
       >
         <Toolbar
@@ -93,7 +111,7 @@ export function AdminsHeaderbar() {
               flexGrow: 1,
               fontWeight: 700,
               letterSpacing: 1,
-              color: '#fff',
+              color: isScrolled ? '#000' : '#fff',
               userSelect: 'none',
             }}
             noWrap

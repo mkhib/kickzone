@@ -59,7 +59,6 @@ export function AdminsLogin() {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <TextField
               margin="normal"
@@ -72,7 +71,6 @@ export function AdminsLogin() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <Button
               type="submit"

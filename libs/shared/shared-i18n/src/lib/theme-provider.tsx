@@ -160,59 +160,6 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
           },
         },
       },
-      MuiButton: {
-        defaultProps: {
-          disableRipple: false,
-        },
-        styleOverrides: {
-          root: {
-            textTransform: 'none',
-            borderRadius: '12px',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            fontWeight: 500,
-          },
-          contained: {
-            boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.15)',
-            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            '&:hover': {
-              transform: 'translateY(-2px)',
-              boxShadow: '0 8px 24px 0 rgba(31, 38, 135, 0.25)',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-            },
-          },
-          outlined: {
-            borderWidth: '1.5px',
-            backgroundColor: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(10px)',
-            WebkitBackdropFilter: 'blur(10px)',
-            '&:hover': {
-              borderWidth: '1.5px',
-              backgroundColor: 'rgba(255, 255, 255, 0.2)',
-              transform: 'translateY(-2px)',
-            },
-          },
-        },
-      },
-      MuiTextField: {
-        styleOverrides: {
-          root: {
-            '& .MuiOutlinedInput-root': {
-              backgroundColor: 'rgba(255, 255, 255, 0.8)',
-              backdropFilter: 'blur(10px)',
-              WebkitBackdropFilter: 'blur(10px)',
-              borderRadius: '12px',
-              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-              '&:hover': {
-                backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              },
-              '&.Mui-focused': {
-                backgroundColor: 'rgba(255, 255, 255, 0.95)',
-                boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.1)',
-              },
-            },
-          },
-        },
-      },
       MuiMenu: {
         styleOverrides: {
           paper: {
