@@ -94,70 +94,110 @@ export function CustomersHome() {
       {/* Hero Section */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-          color: 'white',
+          position: 'relative',
           pt: { xs: 8, md: 12 },
           pb: { xs: 6, md: 10 },
-          position: 'relative',
           overflow: 'hidden',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background:
-              "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")",
-            opacity: 0.3,
-          },
         }}
       >
         <Container maxWidth="lg">
           <Fade in timeout={1000}>
             <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-              <Typography
-                component="h1"
-                variant="h2"
+              {/* Hero Title with Glassmorphic Background */}
+              <Paper
+                elevation={0}
                 sx={{
-                  fontWeight: 900,
-                  mb: 2,
-                  fontSize: { xs: '2.5rem', md: '3.5rem' },
-                  textShadow: '0 4px 20px rgba(0,0,0,0.2)',
-                  letterSpacing: '-0.02em',
+                  p: 4,
+                  mb: 4,
+                  borderRadius: 6,
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(25px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(25px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background:
+                      'linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%)',
+                    animation: 'shimmer 3s ease-in-out infinite',
+                  },
                 }}
               >
-                {LL.messages.welcome()}
-              </Typography>
-              <Typography
-                variant="h6"
-                sx={{
-                  mb: 6,
-                  opacity: 0.95,
-                  fontWeight: 400,
-                  fontSize: { xs: '1rem', md: '1.25rem' },
-                  maxWidth: 600,
-                  mx: 'auto',
-                }}
-              >
-                Discover premium sneakers from top brands
-              </Typography>
+                <Typography
+                  component="h1"
+                  variant="h2"
+                  sx={{
+                    fontWeight: 900,
+                    mb: 2,
+                    fontSize: { xs: '2.5rem', md: '3.5rem' },
+                    background:
+                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '-0.02em',
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                >
+                  {LL.messages.welcome()}
+                </Typography>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    mb: 2,
+                    fontWeight: 400,
+                    fontSize: { xs: '1rem', md: '1.25rem' },
+                    color: 'rgba(102, 126, 234, 0.8)',
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                >
+                  Discover premium sneakers from top brands
+                </Typography>
+              </Paper>
 
               {/* Search and Filter Bar */}
               <Paper
-                elevation={8}
+                elevation={0}
                 sx={{
-                  p: 3,
-                  borderRadius: 4,
-                  background: 'rgba(255, 255, 255, 0.98)',
-                  backdropFilter: 'blur(10px)',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                  p: 4,
+                  borderRadius: 6,
+                  background: 'rgba(255, 255, 255, 0.25)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.3)',
+                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.25)',
+                  position: 'relative',
+                  overflow: 'hidden',
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background:
+                      'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
+                  },
                 }}
               >
                 <Stack
                   direction={{ xs: 'column', sm: 'row' }}
-                  spacing={2}
-                  sx={{ alignItems: 'center', justifyContent: 'center' }}
+                  spacing={3}
+                  sx={{
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
                 >
                   <TextField
                     variant="outlined"
@@ -168,14 +208,7 @@ export function CustomersHome() {
                       flex: 1,
                       minWidth: { xs: '100%', sm: 280 },
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 3,
-                        background: '#f8f9fa',
-                        '&:hover': {
-                          background: '#fff',
-                        },
-                        '&.Mui-focused': {
-                          background: '#fff',
-                        },
+                        borderRadius: 4,
                       },
                     }}
                     InputProps={{
@@ -190,14 +223,7 @@ export function CustomersHome() {
                     sx={{
                       minWidth: { xs: '100%', sm: 240 },
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 3,
-                        background: '#f8f9fa',
-                        '&:hover': {
-                          background: '#fff',
-                        },
-                        '&.Mui-focused': {
-                          background: '#fff',
-                        },
+                        borderRadius: 4,
                       },
                     }}
                   >
@@ -220,14 +246,7 @@ export function CustomersHome() {
                     sx={{
                       minWidth: { xs: '100%', sm: 180 },
                       '& .MuiOutlinedInput-root': {
-                        borderRadius: 3,
-                        background: '#f8f9fa',
-                        '&:hover': {
-                          background: '#fff',
-                        },
-                        '&.Mui-focused': {
-                          background: '#fff',
-                        },
+                        borderRadius: 4,
                       },
                     }}
                   >
@@ -268,7 +287,19 @@ export function CustomersHome() {
               minHeight: 400,
             }}
           >
-            <Box sx={{ textAlign: 'center' }}>
+            <Paper
+              elevation={0}
+              sx={{
+                p: 6,
+                borderRadius: 6,
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
+                textAlign: 'center',
+              }}
+            >
               <Box
                 sx={{
                   width: 60,
@@ -287,42 +318,80 @@ export function CustomersHome() {
               />
               <Typography
                 variant="h6"
-                sx={{ color: '#667eea', fontWeight: 600 }}
+                sx={{
+                  color: '#667eea',
+                  fontWeight: 600,
+                  background:
+                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
               >
                 {LL.status.loading()}
               </Typography>
-            </Box>
+            </Paper>
           </Box>
         ) : products.length === 0 ? (
           <Box
             sx={{
-              textAlign: 'center',
-              py: 10,
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: 400,
             }}
           >
-            <Typography
-              variant="h5"
+            <Paper
+              elevation={0}
               sx={{
-                color: '#666',
-                fontWeight: 600,
-                mb: 2,
+                p: 6,
+                borderRadius: 6,
+                background: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(20px) saturate(180%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
+                textAlign: 'center',
               }}
             >
-              {LL.products.noProductsFound()}
-            </Typography>
-            <Typography variant="body1" sx={{ color: '#999' }}>
-              Try adjusting your search or filters
-            </Typography>
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 600,
+                  mb: 2,
+                  background:
+                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  backgroundClip: 'text',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                }}
+              >
+                {LL.products.noProductsFound()}
+              </Typography>
+              <Typography
+                variant="body1"
+                sx={{
+                  color: 'rgba(102, 126, 234, 0.7)',
+                  fontWeight: 400,
+                }}
+              >
+                Try adjusting your search or filters
+              </Typography>
+            </Paper>
           </Box>
         ) : (
           <Fade in timeout={800}>
-            <Grid container spacing={{ xs: 2, sm: 3, md: 4 }}>
+            <Grid
+              container
+              spacing={{ xs: 2, sm: 3, md: 4 }}
+              sx={products.length === 1 ? { justifyContent: 'center' } : {}}
+            >
               {products.map((product, index) => (
                 <Grid
                   key={product.id}
                   size={
                     products.length === 1
-                      ? { xs: 12, sm: 12, md: 12, lg: 12, xl: 12 }
+                      ? { xs: 12, sm: 8, md: 6, lg: 4, xl: 4 }
                       : { xs: 12, sm: 6, md: 4, lg: 3 }
                   }
                   sx={{
