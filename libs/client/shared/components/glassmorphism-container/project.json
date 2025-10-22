@@ -1,0 +1,9 @@
+{
+  "name": "glassmorphism-container",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/shared/components/glassmorphism-container/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project glassmorphism-container --web",
+  "targets": {}
+}

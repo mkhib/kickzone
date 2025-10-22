@@ -8,6 +8,7 @@ import {
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
@@ -122,7 +123,7 @@ export const SellersProducts = () => {
 
   return (
     <SellersLayout>
-      <Box sx={{ p: 3 }}>
+      <GlassmorphismContainer fullHeight>
         {/* Header with Add Product button */}
         <Box
           sx={{
@@ -943,7 +944,7 @@ export const SellersProducts = () => {
             <Button onClick={handleCloseViewModal}>{LL.button.close()}</Button>
           </DialogActions>
         </Dialog>
-      </Box>
+      </GlassmorphismContainer>
     </SellersLayout>
   );
 };

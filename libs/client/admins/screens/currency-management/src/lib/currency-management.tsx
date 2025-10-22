@@ -12,6 +12,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import {
   Box,
   Card,
@@ -137,7 +138,9 @@ export function CurrencyManagement() {
 
   return (
     <AdminsLayout>
-      <Box sx={{ maxWidth: '1200px', margin: '0 auto' }}>
+      <GlassmorphismContainer
+        containerSx={{ maxWidth: '1200px', margin: '0 auto' }}
+      >
         <Typography
           variant="h4"
           component="h1"
@@ -387,7 +390,7 @@ export function CurrencyManagement() {
             )}
           </CardContent>
         </Card>
-      </Box>
+      </GlassmorphismContainer>
     </AdminsLayout>
   );
 }

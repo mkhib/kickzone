@@ -15,6 +15,7 @@ import TextField from '@mui/material/TextField';
 import Autocomplete from '@mui/material/Autocomplete';
 import FilterList from '@mui/icons-material/FilterList';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import {
   useAdminsOrders,
   useAdminsSellers,
@@ -377,7 +378,7 @@ export function AdminSellerOrders() {
 
   return (
     <AdminsLayout>
-      <Box sx={{ p: 3 }}>
+      <GlassmorphismContainer fullHeight>
         <Typography variant="h4" gutterBottom>
           {LL.orders.allSellerOrders()}
         </Typography>
@@ -437,7 +438,7 @@ export function AdminSellerOrders() {
             </Button>
           </DialogActions>
         </Dialog>
-      </Box>
+      </GlassmorphismContainer>
     </AdminsLayout>
   );
 }

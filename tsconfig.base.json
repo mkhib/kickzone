@@ -178,6 +178,9 @@
       ],
       "@kickzone-workspace/decorators": ["libs/server/decorators/src/index.ts"],
       "@kickzone-workspace/entities": ["libs/server/entities/src/index.ts"],
+      "@kickzone-workspace/glassmorphism-container": [
+        "libs/client/shared/components/glassmorphism-container/src/index.ts"
+      ],
       "@kickzone-workspace/graphql-schema": [
         "libs/shared/graphql-schema/src/index.ts"
       ],

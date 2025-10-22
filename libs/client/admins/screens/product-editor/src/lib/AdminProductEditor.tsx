@@ -8,6 +8,7 @@ import { colors } from '@kickzone-workspace/colors';
 import { useProducts, useProductById } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import AddIcon from '@mui/icons-material/Add';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -1185,7 +1186,7 @@ export function AdminProductEditor() {
 
   return (
     <AdminsLayout>
-      <Paper elevation={3} sx={{ p: 4, borderRadius: 2, height: '100%' }}>
+      <GlassmorphismContainer>
         <Typography variant="h5" sx={{ mb: 3, color: colors.text }}>
           {productIdNum ? LL.products.editProduct() : LL.products.addProduct()}
         </Typography>
@@ -1471,7 +1472,7 @@ export function AdminProductEditor() {
             </Grid>
           </Grid>
         </form>
-      </Paper>
+      </GlassmorphismContainer>
       <CategoryModal
         open={isNewCategoryModalOpen}
         onClose={() => setIsNewCategoryModalOpen(false)}

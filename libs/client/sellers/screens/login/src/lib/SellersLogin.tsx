@@ -71,7 +71,6 @@ export function SellersLogin() {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <TextField
               margin="normal"
@@ -84,7 +83,6 @@ export function SellersLogin() {
               autoComplete="current-password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <Button
               type="submit"
@@ -110,7 +108,8 @@ export function SellersLogin() {
             <Grid container justifyContent="flex-end" component="div">
               <Grid component="div">
                 <Link href="#" variant="body2" sx={{ color: colors.main }}>
-                  Don't have an account? Sign Up
+                  {LL.authorization.dontHaveAccount()}{' '}
+                  {LL.authorization.signUp()}
                 </Link>
               </Grid>
             </Grid>

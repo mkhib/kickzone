@@ -26,6 +26,7 @@ import { gql } from '@apollo/client';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import {
   useTranslationsManagement,
   useEntityTranslations,
@@ -283,7 +284,7 @@ export function AdminTranslationManagement() {
 
   return (
     <AdminsLayout>
-      <Box sx={{ p: 3 }}>
+      <GlassmorphismContainer fullHeight>
         <Typography variant="h4" gutterBottom>
           Translation Management
         </Typography>
@@ -484,7 +485,7 @@ export function AdminTranslationManagement() {
             }
           />
         )}
-      </Box>
+      </GlassmorphismContainer>
     </AdminsLayout>
   );
 }

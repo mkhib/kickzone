@@ -5,6 +5,7 @@ import {
 } from '@kickzone-workspace/admins-sellers-hooks';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
@@ -353,131 +354,132 @@ export const SellerManagement = () => {
 
   return (
     <AdminsLayout>
-      <Box sx={{ p: 2 }}>
+      <GlassmorphismContainer fullHeight>
         <MaterialReactTable table={table} />
-      </Box>
 
-      {/* Create Modal */}
-      <Dialog
-        open={createModalOpen}
-        onClose={() => setCreateModalOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Create New Seller</DialogTitle>
-        <DialogContent sx={{ pt: 3, pb: 2 }}>{renderForm()}</DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCreateModalOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleCreateSubmit}
-            variant="contained"
-            color="primary"
-          >
-            Create
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {/* Create Modal */}
+        <Dialog
+          open={createModalOpen}
+          onClose={() => setCreateModalOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Create New Seller</DialogTitle>
+          <DialogContent sx={{ pt: 3, pb: 2 }}>{renderForm()}</DialogContent>
+          <DialogActions>
+            <Button onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleCreateSubmit}
+              variant="contained"
+              color="primary"
+            >
+              Create
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      {/* Edit Modal */}
-      <Dialog
-        open={editModalOpen}
-        onClose={() => setEditModalOpen(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>Edit Seller</DialogTitle>
-        <DialogContent sx={{ pt: 3, pb: 2 }}>{renderForm()}</DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEditModalOpen(false)}>Cancel</Button>
-          <Button
-            onClick={handleEditSubmit}
-            variant="contained"
-            color="primary"
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+        {/* Edit Modal */}
+        <Dialog
+          open={editModalOpen}
+          onClose={() => setEditModalOpen(false)}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>Edit Seller</DialogTitle>
+          <DialogContent sx={{ pt: 3, pb: 2 }}>{renderForm()}</DialogContent>
+          <DialogActions>
+            <Button onClick={() => setEditModalOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleEditSubmit}
+              variant="contained"
+              color="primary"
+            >
+              Save
+            </Button>
+          </DialogActions>
+        </Dialog>
 
-      {/* Delete Confirmation Modal */}
-      <Dialog
-        open={deleteModalOpen}
-        onClose={() => {
-          setDeleteModalOpen(false);
-          setSelectedSeller(null);
-          setUsernameConfirmation('');
-          setNeedsReconfirmation(false);
-        }}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          {needsReconfirmation
-            ? `Final Confirmation to ${
-                selectedSeller?.isActive ? 'Deactivate' : 'Activate'
-              }`
-            : `Confirm ${
-                selectedSeller?.isActive ? 'Deactivation' : 'Activation'
-              }`}
-        </DialogTitle>
-        <DialogContent>
-          <Alert
-            severity={selectedSeller?.isActive ? 'error' : 'success'}
-            sx={{ mb: 2 }}
-          >
-            <Typography variant="subtitle1" fontWeight="bold">
-              {selectedSeller?.isActive
-                ? 'Warning: This action will deactivate the seller account!'
-                : 'This action will reactivate the seller account.'}
-            </Typography>
-            <Typography>
-              You are about to{' '}
-              {selectedSeller?.isActive ? 'deactivate' : 'activate'} the seller
-              account for <strong>{selectedSeller?.user.username}</strong>.
-            </Typography>
-          </Alert>
-          <Typography sx={{ mb: 2 }}>
-            To confirm this action, please type the seller's username:{' '}
-            <strong>{selectedSeller?.user.username}</strong>
-          </Typography>
-          <TextField
-            fullWidth
-            label="Enter username"
-            value={usernameConfirmation}
-            onChange={handleUsernameConfirmationChange}
-            error={usernameConfirmation !== '' && !isDeleteEnabled}
-            helperText={
-              usernameConfirmation !== '' && !isDeleteEnabled
-                ? 'Username does not match'
-                : ''
-            }
-          />
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setDeleteModalOpen(false);
-              setSelectedSeller(null);
-              setUsernameConfirmation('');
-              setNeedsReconfirmation(false);
-            }}
-          >
-            Cancel
-          </Button>
-          <Button
-            onClick={handleDeleteConfirm}
-            variant="contained"
-            color={selectedSeller?.isActive ? 'error' : 'success'}
-            disabled={!isDeleteEnabled}
-          >
+        {/* Delete Confirmation Modal */}
+        <Dialog
+          open={deleteModalOpen}
+          onClose={() => {
+            setDeleteModalOpen(false);
+            setSelectedSeller(null);
+            setUsernameConfirmation('');
+            setNeedsReconfirmation(false);
+          }}
+          maxWidth="sm"
+          fullWidth
+        >
+          <DialogTitle>
             {needsReconfirmation
-              ? 'Reconfirm'
-              : selectedSeller?.isActive
-              ? 'Deactivate Anyway'
-              : 'Activate Anyway'}
-          </Button>
-        </DialogActions>
-      </Dialog>
+              ? `Final Confirmation to ${
+                  selectedSeller?.isActive ? 'Deactivate' : 'Activate'
+                }`
+              : `Confirm ${
+                  selectedSeller?.isActive ? 'Deactivation' : 'Activation'
+                }`}
+          </DialogTitle>
+          <DialogContent>
+            <Alert
+              severity={selectedSeller?.isActive ? 'error' : 'success'}
+              sx={{ mb: 2 }}
+            >
+              <Typography variant="subtitle1" fontWeight="bold">
+                {selectedSeller?.isActive
+                  ? 'Warning: This action will deactivate the seller account!'
+                  : 'This action will reactivate the seller account.'}
+              </Typography>
+              <Typography>
+                You are about to{' '}
+                {selectedSeller?.isActive ? 'deactivate' : 'activate'} the
+                seller account for{' '}
+                <strong>{selectedSeller?.user.username}</strong>.
+              </Typography>
+            </Alert>
+            <Typography sx={{ mb: 2 }}>
+              To confirm this action, please type the seller's username:{' '}
+              <strong>{selectedSeller?.user.username}</strong>
+            </Typography>
+            <TextField
+              fullWidth
+              label="Enter username"
+              value={usernameConfirmation}
+              onChange={handleUsernameConfirmationChange}
+              error={usernameConfirmation !== '' && !isDeleteEnabled}
+              helperText={
+                usernameConfirmation !== '' && !isDeleteEnabled
+                  ? 'Username does not match'
+                  : ''
+              }
+            />
+          </DialogContent>
+          <DialogActions>
+            <Button
+              onClick={() => {
+                setDeleteModalOpen(false);
+                setSelectedSeller(null);
+                setUsernameConfirmation('');
+                setNeedsReconfirmation(false);
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleDeleteConfirm}
+              variant="contained"
+              color={selectedSeller?.isActive ? 'error' : 'success'}
+              disabled={!isDeleteEnabled}
+            >
+              {needsReconfirmation
+                ? 'Reconfirm'
+                : selectedSeller?.isActive
+                ? 'Deactivate Anyway'
+                : 'Activate Anyway'}
+            </Button>
+          </DialogActions>
+        </Dialog>
+      </GlassmorphismContainer>
     </AdminsLayout>
   );
 };
