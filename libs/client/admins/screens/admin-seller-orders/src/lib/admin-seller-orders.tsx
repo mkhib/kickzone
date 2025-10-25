@@ -11,9 +11,6 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
-import TextField from '@mui/material/TextField';
-import Autocomplete from '@mui/material/Autocomplete';
-import FilterList from '@mui/icons-material/FilterList';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import {
@@ -25,13 +22,9 @@ import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 import {
   useI18nContext,
   useLanguageContext,
-  useTableLocalization,
 } from '@kickzone-workspace/shared-i18n';
-import {
-  MaterialReactTable,
-  useMaterialReactTable,
-  type MRT_ColumnDef,
-} from 'material-react-table';
+import { DataTable } from '@kickzone-workspace/material-data-table';
+import { type MRT_ColumnDef } from 'material-react-table';
 
 type Order = KickzoneGraphqlTypes.Order;
 
@@ -47,8 +40,7 @@ const formatDate = (dateString: string) => {
 
 export function AdminSellerOrders() {
   const { LL } = useI18nContext();
-  const { isRTL } = useLanguageContext();
-  const tableLocalization = useTableLocalization();
+  const { isRTL, currentLocale } = useLanguageContext();
   const [selectedStatus, setSelectedStatus] = useState<
     KickzoneGraphqlTypes.OrderStatus | undefined
   >(undefined);
@@ -69,17 +61,7 @@ export function AdminSellerOrders() {
     status: selectedStatus,
   });
 
-  const { sellers, loading: sellersLoading } = useAdminsSellers();
-
-  const handleStatusFilter = (status: string) => {
-    setSelectedStatus(
-      (status as KickzoneGraphqlTypes.OrderStatus) || undefined
-    );
-  };
-
-  const handleSellerFilter = (sellerId: string | null) => {
-    setSelectedSellerId(sellerId);
-  };
+  const { loading: sellersLoading } = useAdminsSellers();
 
   const handleStatusChange = useCallback((order: Order) => {
     setSelectedOrder(order);
@@ -113,11 +95,7 @@ export function AdminSellerOrders() {
         accessorKey: 'orderNumber',
         header: LL.orders.orderNumber(),
         size: 100,
-        Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            #{cell.getValue<string>()}
-          </div>
-        ),
+        Cell: ({ cell }) => `#${cell.getValue<string>()}`,
       },
       {
         accessorKey: 'trackingNumber',
@@ -129,7 +107,6 @@ export function AdminSellerOrders() {
               fontFamily: 'monospace',
               fontWeight: 600,
               color: 'primary.main',
-              textAlign: isRTL ? 'right' : 'left',
             }}
           >
             {cell.getValue<string>() || 'N/A'}
@@ -140,30 +117,20 @@ export function AdminSellerOrders() {
         accessorKey: 'customerName',
         header: LL.orders.customer(),
         size: 150,
-        Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {cell.getValue<string>()}
-          </div>
-        ),
+        Cell: ({ cell }) => cell.getValue<string>(),
       },
       {
         accessorKey: 'customerEmail',
         header: LL.orders.email(),
         size: 200,
-        Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {cell.getValue<string>()}
-          </div>
-        ),
+        Cell: ({ cell }) => cell.getValue<string>(),
       },
       {
         accessorKey: 'status',
         header: LL.form.status(),
         size: 120,
         Cell: ({ cell }) => (
-          <Box sx={{ textAlign: isRTL ? 'right' : 'left' }}>
-            <OrderStatusChip status={cell.getValue<string>()} size="small" />
-          </Box>
+          <OrderStatusChip status={cell.getValue<string>()} size="small" />
         ),
         filterFn: 'equals',
       },
@@ -171,21 +138,13 @@ export function AdminSellerOrders() {
         accessorKey: 'total',
         header: LL.checkout.total(),
         size: 100,
-        Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            ${cell.getValue<number>().toFixed(2)}
-          </div>
-        ),
+        Cell: ({ cell }) => `$${cell.getValue<number>().toFixed(2)}`,
       },
       {
         accessorKey: 'createdAt',
         header: LL.orders.orderDate(),
         size: 150,
-        Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {formatDate(cell.getValue<string>())}
-          </div>
-        ),
+        Cell: ({ cell }) => formatDate(cell.getValue<string>()),
         sortingFn: 'datetime',
       },
     ];
@@ -217,207 +176,6 @@ export function AdminSellerOrders() {
     return [...dataColumns, actionsColumn];
   }, [LL, handleStatusChange, isRTL]);
 
-  const table = useMaterialReactTable({
-    columns,
-    data: filteredOrders,
-    enableRowSelection: false,
-    enableRowActions: false, // Disable built-in row actions to prevent duplicate actions column
-    enableColumnOrdering: false, // Disable manual column ordering to respect our order
-    enableGlobalFilter: true,
-    enableSorting: true,
-    localization: tableLocalization,
-    muiTableHeadCellProps: {
-      sx: {
-        textAlign: isRTL ? 'right' : 'left',
-      },
-    },
-    initialState: {
-      sorting: [{ id: 'createdAt', desc: true }],
-      density: 'compact',
-    },
-    muiTableBodyRowProps: ({ row }) => ({
-      sx: {
-        cursor: 'pointer',
-        '&:hover': {
-          backgroundColor: 'action.hover',
-        },
-      },
-    }),
-    renderDetailPanel: ({ row }) => (
-      <Box sx={{ p: 2, bgcolor: 'background.default' }}>
-        <Typography variant="h6" gutterBottom>
-          {LL.orders.orderDetails()}
-        </Typography>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: 2,
-            mb: 2,
-          }}
-        >
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {LL.orders.customerInformation()}
-            </Typography>
-            <Typography variant="body2">
-              <strong>{LL.form.fullName()}:</strong> {row.original.customerName}
-            </Typography>
-            <Typography variant="body2">
-              <strong>{LL.form.email()}:</strong> {row.original.customerEmail}
-            </Typography>
-            <Typography variant="body2">
-              <strong>{LL.form.phone()}:</strong> {row.original.customerPhone}
-            </Typography>
-            <Typography variant="body2">
-              <strong>{LL.form.address()}:</strong>{' '}
-              {row.original.shippingAddress}
-            </Typography>
-            <Typography variant="body2">
-              {row.original.city}, {row.original.state} {row.original.zipCode}
-            </Typography>
-            <Typography variant="body2">{row.original.country}</Typography>
-          </Box>
-
-          <Box>
-            <Typography variant="subtitle2" color="text.secondary">
-              {LL.orders.orderSummary()}
-            </Typography>
-            <Typography variant="body2">
-              <strong>{LL.checkout.subtotal()}:</strong> $
-              {row.original.subtotal.toFixed(2)}
-            </Typography>
-            <Typography variant="body2">
-              <strong>{LL.checkout.shipping()}:</strong> $
-              {row.original.shippingCost.toFixed(2)}
-            </Typography>
-            <Typography variant="body2">
-              <strong>{LL.checkout.total()}:</strong> $
-              {row.original.total.toFixed(2)}
-            </Typography>
-            {row.original.notes && (
-              <Typography variant="body2" sx={{ mt: 1 }}>
-                <strong>{LL.form.notes()}:</strong> {row.original.notes}
-              </Typography>
-            )}
-          </Box>
-        </Box>
-
-        <Typography variant="subtitle2" color="text.secondary" gutterBottom>
-          {LL.orders.orderItems()} ({row.original.items.length})
-        </Typography>
-        {row.original.items.map((item: KickzoneGraphqlTypes.OrderItem) => (
-          <Box
-            key={item.id}
-            sx={{ display: 'flex', gap: 2, mb: 1, alignItems: 'center' }}
-          >
-            {item.productImage && (
-              <Box
-                component="img"
-                src={item.productImage}
-                alt={item.productName}
-                sx={{
-                  width: 40,
-                  height: 40,
-                  objectFit: 'cover',
-                  borderRadius: 1,
-                }}
-              />
-            )}
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" fontWeight="medium">
-                {item.productName}
-              </Typography>
-              {(item.color || item.size) && (
-                <Typography variant="caption" color="text.secondary">
-                  {[item.color, item.size].filter(Boolean).join(' - ')}
-                </Typography>
-              )}
-            </Box>
-            <Typography variant="body2">
-              {LL.table.quantity()}: {item.quantity}
-            </Typography>
-            <Typography variant="body2" fontWeight="medium">
-              ${item.totalPrice.toFixed(2)}
-            </Typography>
-          </Box>
-        ))}
-      </Box>
-    ),
-    renderTopToolbarCustomActions: () => (
-      <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-        <FormControl sx={{ minWidth: 200 }}>
-          <InputLabel>{LL.button.filterByStatus()}</InputLabel>
-          <Select
-            value={selectedStatus || ''}
-            onChange={(e) => handleStatusFilter(e.target.value)}
-            label={LL.button.filterByStatus()}
-            size="small"
-          >
-            <MenuItem value="">{LL.table.allOrders()}</MenuItem>
-            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Pending}>
-              {LL.orders.pending()}
-            </MenuItem>
-            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Confirmed}>
-              {LL.orders.confirmed()}
-            </MenuItem>
-            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Processing}>
-              {LL.orders.processing()}
-            </MenuItem>
-            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Shipped}>
-              {LL.orders.shipped()}
-            </MenuItem>
-            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Delivered}>
-              {LL.orders.delivered()}
-            </MenuItem>
-            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Cancelled}>
-              {LL.orders.cancelled()}
-            </MenuItem>
-            <MenuItem value={KickzoneGraphqlTypes.OrderStatus.Refunded}>
-              {LL.orders.refunded()}
-            </MenuItem>
-          </Select>
-        </FormControl>
-
-        <Autocomplete<KickzoneGraphqlTypes.SellerInfo>
-          sx={{ minWidth: 300 }}
-          options={sellers}
-          size="small"
-          getOptionLabel={(seller) =>
-            `${seller.storeName} (${seller.user.email})`
-          }
-          value={
-            sellers.find((s) => s.id.toString() === selectedSellerId) || null
-          }
-          onChange={(_, newValue) => {
-            handleSellerFilter(newValue ? newValue.id.toString() : null);
-          }}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              label={LL.orders.filterBySeller()}
-              slotProps={{
-                input: {
-                  ...params.InputProps,
-                  startAdornment: (
-                    <>
-                      <FilterList sx={{ ml: 1, color: 'text.secondary' }} />
-                      {params.InputProps.startAdornment}
-                    </>
-                  ),
-                },
-              }}
-            />
-          )}
-        />
-      </Box>
-    ),
-    state: {
-      isLoading: ordersLoading || sellersLoading,
-    },
-  });
-
   if (ordersError) {
     return (
       <AdminsLayout>
@@ -431,13 +189,145 @@ export function AdminSellerOrders() {
   return (
     <AdminsLayout>
       <GlassmorphismContainer fullHeight>
-        <Typography variant="h4" gutterBottom>
-          {LL.orders.allSellerOrders()}
-        </Typography>
+        <Box style={{ direction: currentLocale === 'fa' ? 'rtl' : 'ltr' }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            style={{
+              textAlign: currentLocale === 'fa' ? 'right' : 'left',
+              direction: currentLocale === 'fa' ? 'rtl' : 'ltr',
+            }}
+          >
+            {LL.orders.allSellerOrders()}
+          </Typography>
+        </Box>
 
-        <MaterialReactTable
-          table={table}
-          key={`admin-orders-table-${isRTL ? 'rtl' : 'ltr'}`}
+        <DataTable
+          columns={columns}
+          data={filteredOrders}
+          loading={ordersLoading || sellersLoading}
+          error={ordersError}
+          config={{
+            preset: 'orders',
+            renderDetailPanel: ({ row }) => (
+              <Box
+                sx={{
+                  p: 2,
+                  bgcolor: 'background.default',
+                  direction: isRTL ? 'rtl' : 'ltr',
+                }}
+              >
+                <Typography
+                  variant="h6"
+                  gutterBottom
+                  sx={{ textAlign: isRTL ? 'right' : 'left' }}
+                >
+                  {LL.orders.orderDetails()}
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '1fr 1fr',
+                    gap: 2,
+                    mb: 2,
+                  }}
+                >
+                  <Box>
+                    <Typography
+                      variant="subtitle2"
+                      color="text.secondary"
+                      sx={{ textAlign: isRTL ? 'right' : 'left' }}
+                    >
+                      {LL.orders.customerInformation()}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>{LL.form.fullName()}:</strong>{' '}
+                      {row.original.customerName}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>{LL.form.email()}:</strong>{' '}
+                      {row.original.customerEmail}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>{LL.form.phone()}:</strong>{' '}
+                      {row.original.customerPhone}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>{LL.form.address()}:</strong>{' '}
+                      {row.original.shippingAddress}
+                    </Typography>
+                    <Typography variant="body2">
+                      {row.original.city}, {row.original.state}{' '}
+                      {row.original.zipCode}
+                    </Typography>
+                    <Typography variant="body2">
+                      {row.original.country}
+                    </Typography>
+                  </Box>
+
+                  <Box>
+                    <Typography
+                      variant="subtitle2"
+                      color="text.secondary"
+                      sx={{ textAlign: isRTL ? 'right' : 'left' }}
+                    >
+                      {LL.orders.orderSummary()}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>{LL.checkout.subtotal()}:</strong> $
+                      {row.original.subtotal.toFixed(2)}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>{LL.checkout.shipping()}:</strong> $
+                      {row.original.shippingCost.toFixed(2)}
+                    </Typography>
+                    <Typography variant="body2">
+                      <strong>{LL.checkout.total()}:</strong> $
+                      {row.original.total.toFixed(2)}
+                    </Typography>
+                    {row.original.notes && (
+                      <Typography variant="body2">
+                        <strong>{LL.form.notes()}:</strong> {row.original.notes}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                  sx={{ textAlign: isRTL ? 'right' : 'left' }}
+                >
+                  {LL.orders.orderItems()}
+                </Typography>
+                <Box sx={{ maxHeight: 200, overflow: 'auto' }}>
+                  {row.original.items.map(
+                    (item: KickzoneGraphqlTypes.OrderItem, index: number) => (
+                      <Box
+                        key={index}
+                        sx={{
+                          display: 'flex',
+                          justifyContent: 'space-between',
+                          py: 1,
+                          borderBottom: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Typography variant="body2">
+                          {item.productName} ({item.quantity}x)
+                        </Typography>
+                        <Typography variant="body2">
+                          ${item.totalPrice.toFixed(2)}
+                        </Typography>
+                      </Box>
+                    )
+                  )}
+                </Box>
+              </Box>
+            ),
+          }}
         />
 
         {/* Status Change Dialog */}
