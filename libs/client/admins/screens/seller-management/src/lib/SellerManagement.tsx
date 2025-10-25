@@ -6,6 +6,11 @@ import {
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import {
+  useI18nContext,
+  useLanguageContext,
+  useTableLocalization,
+} from '@kickzone-workspace/shared-i18n';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
@@ -33,6 +38,9 @@ type CreateSellerInput = KickzoneGraphqlTypes.CreateSellerInput;
 type SellerFilterInput = KickzoneGraphqlTypes.SellerFilterInput;
 
 export const SellerManagement = () => {
+  const { LL } = useI18nContext();
+  const { isRTL } = useLanguageContext();
+  const tableLocalization = useTableLocalization();
   const [filter, setFilter] = useState<SellerFilterInput>({
     isActive: true,
   });
@@ -40,7 +48,7 @@ export const SellerManagement = () => {
   const { createSeller, updateSeller, toggleSellerActive } =
     useAdminsSellers(filter);
 
-  const { sellers, isLoadingSellers, refetchSellers } =
+  const { sellers, isLoadingSellers, sellersError, refetchSellers } =
     useAdminsSellersQuery(filter);
   const sellersData = useMemo(
     () => sellers?.edges?.map((edge) => edge.node) || [],
@@ -56,59 +64,125 @@ export const SellerManagement = () => {
   const [needsReconfirmation, setNeedsReconfirmation] = useState(false);
   const { showSnackbar } = useSnackbar();
 
+  // Refetch sellers when filter changes
   useEffect(() => {
     refetchSellers();
   }, [filter, refetchSellers]);
 
-  const columns: MRT_ColumnDef<Seller>[] = [
-    {
-      accessorKey: 'user.name',
-      header: 'Name',
-    },
-    {
-      accessorKey: 'user.lastName',
-      header: 'Last Name',
-    },
-    {
-      accessorKey: 'user.username',
-      header: 'Username',
-    },
-    {
-      accessorKey: 'user.email',
-      header: 'Email',
-    },
-    {
-      accessorKey: 'storeName',
-      header: 'Store Name',
-    },
-    {
-      accessorKey: 'phone',
-      header: 'Phone',
-    },
-    {
-      accessorKey: 'address',
-      header: 'Address',
-    },
-    {
-      accessorKey: 'isActive',
-      header: 'Status',
+  // Handle query errors (non-auth errors)
+  useEffect(() => {
+    if (sellersError) {
+      console.error('Sellers query error:', sellersError);
+
+      // Only show snackbar for non-authentication errors
+      // Authentication errors are handled by Apollo client error link
+      if (
+        !sellersError.message.includes('Forbidden') &&
+        !sellersError.message.includes('Unauthorized') &&
+        !sellersError.message.includes('Authentication')
+      ) {
+        showSnackbar(`Error loading sellers: ${sellersError.message}`, {
+          severity: 'error',
+        });
+      }
+    }
+  }, [sellersError, showSnackbar]);
+
+  const columns: MRT_ColumnDef<Seller>[] = useMemo(() => {
+    const dataColumns: MRT_ColumnDef<Seller>[] = [
+      {
+        accessorKey: 'user.name',
+        header: LL.table.name(),
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'user.lastName',
+        header: LL.table.lastName(),
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'user.username',
+        header: LL.table.username(),
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'user.email',
+        header: LL.table.email(),
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'storeName',
+        header: LL.table.storeName(),
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'phone',
+        header: LL.table.phone(),
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'address',
+        header: LL.table.address(),
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'isActive',
+        header: LL.table.status(),
+        Cell: ({ row }) => (
+          <Box
+            sx={{
+              color: row.original.isActive ? 'success.main' : 'error.main',
+              fontWeight: 'bold',
+              textAlign: isRTL ? 'right' : 'left',
+            }}
+          >
+            {row.original.isActive ? LL.table.active() : LL.table.inactive()}
+          </Box>
+        ),
+      },
+    ];
+
+    const actionsColumn: MRT_ColumnDef<Seller> = {
+      id: 'actions',
+      header: LL.table.actions(),
       Cell: ({ row }) => (
         <Box
           sx={{
-            color: row.original.isActive ? 'success.main' : 'error.main',
-            fontWeight: 'bold',
+            display: 'flex',
+            gap: 1,
+            justifyContent: isRTL ? 'flex-end' : 'flex-start',
+            flexDirection: isRTL ? 'row-reverse' : 'row',
           }}
         >
-          {row.original.isActive ? 'Active' : 'Inactive'}
-        </Box>
-      ),
-    },
-    {
-      id: 'actions',
-      header: 'Actions',
-      Cell: ({ row }) => (
-        <Box sx={{ display: 'flex', gap: 1 }}>
-          <Tooltip title="Edit">
+          <Tooltip title={LL.button.edit()}>
             <IconButton
               onClick={() => {
                 setSelectedSeller(row.original);
@@ -142,8 +216,12 @@ export const SellerManagement = () => {
           </Tooltip>
         </Box>
       ),
-    },
-  ];
+    };
+
+    // For RTL languages, put actions column last (right side)
+    // For LTR languages, put actions column last (right side) as well
+    return [...dataColumns, actionsColumn];
+  }, [LL, isRTL]);
 
   const handleDeleteConfirm = async () => {
     if (!selectedSeller) return;
@@ -185,7 +263,14 @@ export const SellerManagement = () => {
     columns,
     data: sellersData,
     state: { isLoading: isLoadingSellers },
-    enableRowActions: true,
+    enableRowActions: false, // Disable built-in row actions to prevent duplicate actions column
+    enableColumnOrdering: false, // Disable manual column ordering to respect our order
+    localization: tableLocalization,
+    muiTableHeadCellProps: {
+      sx: {
+        textAlign: isRTL ? 'right' : 'left',
+      },
+    },
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Button
@@ -197,7 +282,7 @@ export const SellerManagement = () => {
           startIcon={<AddIcon />}
           variant="contained"
         >
-          Add Seller
+          {LL.button.addSeller()}
         </Button>
         <Button
           color={filter.isActive ? 'error' : 'success'}
@@ -209,7 +294,7 @@ export const SellerManagement = () => {
           }
           variant="outlined"
         >
-          {filter.isActive ? 'Show Inactive' : 'Show Active'}
+          {filter.isActive ? LL.button.showInactive() : LL.button.showActive()}
         </Button>
       </Box>
     ),
@@ -289,7 +374,7 @@ export const SellerManagement = () => {
         fullWidth
         required
         name="name"
-        label="Name"
+        label={LL.table.name()}
         value={formData.name || ''}
         onChange={handleInputChange}
         sx={{ mb: 2 }}
@@ -298,7 +383,7 @@ export const SellerManagement = () => {
         fullWidth
         required
         name="lastName"
-        label="Last Name"
+        label={LL.table.lastName()}
         value={formData.lastName || ''}
         onChange={handleInputChange}
         sx={{ mb: 2 }}
@@ -307,7 +392,7 @@ export const SellerManagement = () => {
         fullWidth
         required
         name="username"
-        label="Username"
+        label={LL.table.username()}
         value={formData.username || ''}
         onChange={handleInputChange}
         sx={{ mb: 2 }}
@@ -316,7 +401,7 @@ export const SellerManagement = () => {
         fullWidth
         required
         name="email"
-        label="Email"
+        label={LL.table.email()}
         type="email"
         value={formData.email || ''}
         onChange={handleInputChange}
@@ -326,7 +411,7 @@ export const SellerManagement = () => {
         fullWidth
         required
         name="storeName"
-        label="Store Name"
+        label={LL.table.storeName()}
         value={formData.storeName || ''}
         onChange={handleInputChange}
         sx={{ mb: 2 }}
@@ -335,7 +420,7 @@ export const SellerManagement = () => {
         fullWidth
         required
         name="phone"
-        label="Phone"
+        label={LL.table.phone()}
         value={formData.phone || ''}
         onChange={handleInputChange}
         sx={{ mb: 2 }}
@@ -344,7 +429,7 @@ export const SellerManagement = () => {
         fullWidth
         required
         name="address"
-        label="Address"
+        label={LL.table.address()}
         value={formData.address || ''}
         onChange={handleInputChange}
         sx={{ mb: 2 }}
@@ -355,7 +440,10 @@ export const SellerManagement = () => {
   return (
     <AdminsLayout>
       <GlassmorphismContainer fullHeight>
-        <MaterialReactTable table={table} />
+        <MaterialReactTable
+          table={table}
+          key={`seller-table-${isRTL ? 'rtl' : 'ltr'}`}
+        />
 
         {/* Create Modal */}
         <Dialog
@@ -438,18 +526,18 @@ export const SellerManagement = () => {
               </Typography>
             </Alert>
             <Typography sx={{ mb: 2 }}>
-              To confirm this action, please type the seller's username:{' '}
+              {LL.authorization.confirmAction()}{' '}
               <strong>{selectedSeller?.user.username}</strong>
             </Typography>
             <TextField
               fullWidth
-              label="Enter username"
+              label={LL.authorization.enterUsername()}
               value={usernameConfirmation}
               onChange={handleUsernameConfirmationChange}
               error={usernameConfirmation !== '' && !isDeleteEnabled}
               helperText={
                 usernameConfirmation !== '' && !isDeleteEnabled
-                  ? 'Username does not match'
+                  ? LL.authorization.usernameMismatch()
                   : ''
               }
             />

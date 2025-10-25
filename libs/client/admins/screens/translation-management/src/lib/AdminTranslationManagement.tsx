@@ -31,6 +31,10 @@ import {
   useTranslationsManagement,
   useEntityTranslations,
 } from '@kickzone-workspace/translations-management-hook';
+import {
+  useI18nContext,
+  useLanguageContext,
+} from '@kickzone-workspace/shared-i18n';
 
 // GraphQL queries
 const GET_CATEGORIES = gql`
@@ -226,6 +230,8 @@ function TranslationsModal({
 }
 
 export function AdminTranslationManagement() {
+  const { LL } = useI18nContext();
+  const { isRTL } = useLanguageContext();
   const { showSnackbar } = useSnackbarContext();
   const { bulkTranslate } = useTranslationsManagement();
   const [tabValue, setTabValue] = useState(0);
@@ -308,66 +314,141 @@ export function AdminTranslationManagement() {
               Category Translations
             </Typography>
             {categoriesLoading ? (
-              <Typography>Loading categories...</Typography>
+              <Typography>{LL.table.loadingCategories()}</Typography>
             ) : (
               <TableContainer>
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Category (English)</TableCell>
-                      <TableCell>Slug</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>View</TableCell>
-                      <TableCell>Actions</TableCell>
+                      {isRTL ? (
+                        <>
+                          <TableCell>{LL.table.actions()}</TableCell>
+                          <TableCell>{LL.table.view()}</TableCell>
+                          <TableCell>{LL.table.status()}</TableCell>
+                          <TableCell>{LL.table.slug()}</TableCell>
+                          <TableCell>{LL.table.categoryEnglish()}</TableCell>
+                        </>
+                      ) : (
+                        <>
+                          <TableCell>{LL.table.categoryEnglish()}</TableCell>
+                          <TableCell>{LL.table.slug()}</TableCell>
+                          <TableCell>{LL.table.status()}</TableCell>
+                          <TableCell>{LL.table.view()}</TableCell>
+                          <TableCell>{LL.table.actions()}</TableCell>
+                        </>
+                      )}
                     </TableRow>
                   </TableHead>
                   <TableBody>
                     {categoriesData?.categories?.map((category) => (
                       <TableRow key={category?.id}>
-                        <TableCell>
-                          <Typography>{category?.name}</Typography>
-                        </TableCell>
-                        <TableCell>{category?.slug}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={category?.isActive ? 'Active' : 'Inactive'}
-                            color={category?.isActive ? 'success' : 'default'}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <IconButton
-                            size="small"
-                            onClick={() =>
-                              category?.id &&
-                              setTranslationsModal({
-                                open: true,
-                                entityType: 'category',
-                                entityId: category.id,
-                                entityName: category.name,
-                              })
-                            }
-                          >
-                            <VisibilityIcon />
-                          </IconButton>
-                        </TableCell>
-                        <TableCell>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            onClick={() =>
-                              category?.id &&
-                              handleBulkTranslate(
-                                'category',
-                                [category.id],
-                                'en',
-                                ['fa', 'ar']
-                              )
-                            }
-                          >
-                            Translate to Other Languages
-                          </Button>
-                        </TableCell>
+                        {isRTL ? (
+                          <>
+                            <TableCell>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() =>
+                                  category?.id &&
+                                  handleBulkTranslate(
+                                    'category',
+                                    [category.id],
+                                    'en',
+                                    ['fa', 'ar']
+                                  )
+                                }
+                              >
+                                Translate to Other Languages
+                              </Button>
+                            </TableCell>
+                            <TableCell>
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  category?.id &&
+                                  setTranslationsModal({
+                                    open: true,
+                                    entityType: 'category',
+                                    entityId: category.id,
+                                    entityName: category.name,
+                                  })
+                                }
+                              >
+                                <VisibilityIcon />
+                              </IconButton>
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={
+                                  category?.isActive
+                                    ? LL.table.active()
+                                    : LL.table.inactive()
+                                }
+                                color={
+                                  category?.isActive ? 'success' : 'default'
+                                }
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell>{category?.slug}</TableCell>
+                            <TableCell>
+                              <Typography>{category?.name}</Typography>
+                            </TableCell>
+                          </>
+                        ) : (
+                          <>
+                            <TableCell>
+                              <Typography>{category?.name}</Typography>
+                            </TableCell>
+                            <TableCell>{category?.slug}</TableCell>
+                            <TableCell>
+                              <Chip
+                                label={
+                                  category?.isActive
+                                    ? LL.table.active()
+                                    : LL.table.inactive()
+                                }
+                                color={
+                                  category?.isActive ? 'success' : 'default'
+                                }
+                                size="small"
+                              />
+                            </TableCell>
+                            <TableCell>
+                              <IconButton
+                                size="small"
+                                onClick={() =>
+                                  category?.id &&
+                                  setTranslationsModal({
+                                    open: true,
+                                    entityType: 'category',
+                                    entityId: category.id,
+                                    entityName: category.name,
+                                  })
+                                }
+                              >
+                                <VisibilityIcon />
+                              </IconButton>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                onClick={() =>
+                                  category?.id &&
+                                  handleBulkTranslate(
+                                    'category',
+                                    [category.id],
+                                    'en',
+                                    ['fa', 'ar']
+                                  )
+                                }
+                              >
+                                Translate to Other Languages
+                              </Button>
+                            </TableCell>
+                          </>
+                        )}
                       </TableRow>
                     ))}
                   </TableBody>

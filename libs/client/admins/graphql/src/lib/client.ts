@@ -36,7 +36,8 @@ export const createAdminsApolloClient = (onAuthError: () => void) => {
     if (error && error.message) {
       if (
         error.message.toLowerCase().includes('not authenticated') ||
-        error.message.toLowerCase().includes('unauthorized')
+        error.message.toLowerCase().includes('unauthorized') ||
+        error.message.toLowerCase().includes('forbidden')
       ) {
         onAuthError();
         return;
@@ -48,7 +49,8 @@ export const createAdminsApolloClient = (onAuthError: () => void) => {
       result.errors.forEach((err: any) => {
         if (
           err.message?.toLowerCase().includes('not authenticated') ||
-          err.message?.toLowerCase().includes('unauthorized')
+          err.message?.toLowerCase().includes('unauthorized') ||
+          err.message?.toLowerCase().includes('forbidden')
         ) {
           onAuthError();
           return;
@@ -61,6 +63,7 @@ export const createAdminsApolloClient = (onAuthError: () => void) => {
         if (
           message.toLowerCase().includes('not authenticated') ||
           message.toLowerCase().includes('unauthorized') ||
+          message.toLowerCase().includes('forbidden') ||
           extensions?.code === 'UNAUTHENTICATED' ||
           extensions?.code === 'FORBIDDEN'
         ) {
@@ -88,7 +91,7 @@ export const createAdminsApolloClient = (onAuthError: () => void) => {
         Query: {
           fields: {
             products: relayStylePagination(['filter']),
-            sellers: relayStylePagination(['input']),
+            sellers: relayStylePagination(['filter']),
           },
         },
         Translation: {
@@ -120,7 +123,7 @@ const apolloClient = new ApolloClient({
       Query: {
         fields: {
           products: relayStylePagination(['filter']),
-          sellers: relayStylePagination(['input']),
+          sellers: relayStylePagination(['filter']),
         },
       },
       Translation: {

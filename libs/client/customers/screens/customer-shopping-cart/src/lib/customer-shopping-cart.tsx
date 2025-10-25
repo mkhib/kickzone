@@ -22,6 +22,10 @@ import {
 } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
+import {
+  validateShippingInfo,
+  type ShippingInfoFormData,
+} from '@kickzone-workspace/shipping-validation';
 import Add from '@mui/icons-material/Add';
 import Delete from '@mui/icons-material/Delete';
 import Remove from '@mui/icons-material/Remove';
@@ -67,7 +71,9 @@ export function CustomerShoppingCart() {
   ];
 
   const [activeStep, setActiveStep] = useState(0);
-  const [shippingInfo, setShippingInfo] = useState({
+  const [shippingInfo, setShippingInfo] = useState<
+    Partial<ShippingInfoFormData>
+  >({
     customerName: '',
     customerEmail: '',
     customerPhone: '',
@@ -78,6 +84,9 @@ export function CustomerShoppingCart() {
     country: '',
     notes: '',
   });
+  const [validationErrors, setValidationErrors] = useState<
+    Record<string, string | undefined>
+  >({});
   const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
   const [authDialogOpen, setAuthDialogOpen] = useState(false);
 
@@ -257,9 +266,35 @@ export function CustomerShoppingCart() {
 
   const handleShippingInfoChange = (field: string, value: string) => {
     setShippingInfo((prev) => ({ ...prev, [field]: value }));
+
+    // Clear validation error for this field when user starts typing
+    if (validationErrors[field]) {
+      setValidationErrors((prev) => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
   };
 
   const handleNext = () => {
+    // If moving from step 1 (shipping info) to step 2 (order summary), validate the form
+    if (activeStep === 1) {
+      // Validate shipping information using Zod
+      const validation = validateShippingInfo(shippingInfo, LL);
+
+      if (!validation.isValid) {
+        setValidationErrors(validation.errors);
+        showSnackbar(LL.errors.missingShippingInfo(), {
+          severity: 'error',
+        });
+        return;
+      }
+
+      // Clear any previous validation errors
+      setValidationErrors({});
+    }
+
     setActiveStep((prev) => prev + 1);
   };
 
@@ -269,22 +304,19 @@ export function CustomerShoppingCart() {
 
   const handlePlaceOrder = async () => {
     try {
-      // Validate required shipping information
-      if (
-        !shippingInfo.customerName ||
-        !shippingInfo.customerEmail ||
-        !shippingInfo.customerPhone ||
-        !shippingInfo.shippingAddress ||
-        !shippingInfo.city ||
-        !shippingInfo.state ||
-        !shippingInfo.zipCode ||
-        !shippingInfo.country
-      ) {
+      // Validate shipping information using Zod
+      const validation = validateShippingInfo(shippingInfo, LL);
+
+      if (!validation.isValid) {
+        setValidationErrors(validation.errors);
         showSnackbar(LL.errors.missingShippingInfo(), {
           severity: 'error',
         });
         return;
       }
+
+      // Clear any previous validation errors
+      setValidationErrors({});
 
       // Validate cart items have valid sellerProductId (UUID format)
       const invalidItems = cartItems.filter(
@@ -334,7 +366,15 @@ export function CustomerShoppingCart() {
       const orderPromises = Object.entries(itemsBySeller || {}).map(
         ([sellerId, items]) =>
           createOrderMutation({
-            ...shippingInfo,
+            customerName: shippingInfo.customerName || '',
+            customerEmail: shippingInfo.customerEmail || '',
+            customerPhone: shippingInfo.customerPhone || '',
+            shippingAddress: shippingInfo.shippingAddress || '',
+            city: shippingInfo.city || '',
+            state: shippingInfo.state || '',
+            zipCode: shippingInfo.zipCode || '',
+            country: shippingInfo.country || '',
+            notes: shippingInfo.notes || '',
             sellerId: parseInt(sellerId, 10),
             // Map cart items to order items
             items: items.map((item) => ({
@@ -1000,10 +1040,12 @@ export function CustomerShoppingCart() {
                       fullWidth
                       required
                       label={LL.form.fullName()}
-                      value={shippingInfo.customerName}
+                      value={shippingInfo.customerName || ''}
                       onChange={(e) =>
                         handleShippingInfoChange('customerName', e.target.value)
                       }
+                      error={!!validationErrors.customerName}
+                      helperText={validationErrors.customerName}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -1017,13 +1059,15 @@ export function CustomerShoppingCart() {
                       required
                       label={LL.form.email()}
                       type="email"
-                      value={shippingInfo.customerEmail}
+                      value={shippingInfo.customerEmail || ''}
                       onChange={(e) =>
                         handleShippingInfoChange(
                           'customerEmail',
                           e.target.value
                         )
                       }
+                      error={!!validationErrors.customerEmail}
+                      helperText={validationErrors.customerEmail}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -1036,13 +1080,15 @@ export function CustomerShoppingCart() {
                       fullWidth
                       required
                       label={LL.form.phone()}
-                      value={shippingInfo.customerPhone}
+                      value={shippingInfo.customerPhone || ''}
                       onChange={(e) =>
                         handleShippingInfoChange(
                           'customerPhone',
                           e.target.value
                         )
                       }
+                      error={!!validationErrors.customerPhone}
+                      helperText={validationErrors.customerPhone}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -1055,10 +1101,12 @@ export function CustomerShoppingCart() {
                       fullWidth
                       required
                       label={LL.form.country()}
-                      value={shippingInfo.country}
+                      value={shippingInfo.country || ''}
                       onChange={(e) =>
                         handleShippingInfoChange('country', e.target.value)
                       }
+                      error={!!validationErrors.country}
+                      helperText={validationErrors.country}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -1071,13 +1119,15 @@ export function CustomerShoppingCart() {
                       fullWidth
                       required
                       label={LL.form.address()}
-                      value={shippingInfo.shippingAddress}
+                      value={shippingInfo.shippingAddress || ''}
                       onChange={(e) =>
                         handleShippingInfoChange(
                           'shippingAddress',
                           e.target.value
                         )
                       }
+                      error={!!validationErrors.shippingAddress}
+                      helperText={validationErrors.shippingAddress}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -1090,10 +1140,12 @@ export function CustomerShoppingCart() {
                       fullWidth
                       required
                       label={LL.form.city()}
-                      value={shippingInfo.city}
+                      value={shippingInfo.city || ''}
                       onChange={(e) =>
                         handleShippingInfoChange('city', e.target.value)
                       }
+                      error={!!validationErrors.city}
+                      helperText={validationErrors.city}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -1106,10 +1158,12 @@ export function CustomerShoppingCart() {
                       fullWidth
                       required
                       label={LL.form.state()}
-                      value={shippingInfo.state}
+                      value={shippingInfo.state || ''}
                       onChange={(e) =>
                         handleShippingInfoChange('state', e.target.value)
                       }
+                      error={!!validationErrors.state}
+                      helperText={validationErrors.state}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -1122,10 +1176,12 @@ export function CustomerShoppingCart() {
                       fullWidth
                       required
                       label={LL.form.zipCode()}
-                      value={shippingInfo.zipCode}
+                      value={shippingInfo.zipCode || ''}
                       onChange={(e) =>
                         handleShippingInfoChange('zipCode', e.target.value)
                       }
+                      error={!!validationErrors.zipCode}
+                      helperText={validationErrors.zipCode}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -1139,10 +1195,12 @@ export function CustomerShoppingCart() {
                       label={LL.form.notes()}
                       multiline
                       rows={3}
-                      value={shippingInfo.notes}
+                      value={shippingInfo.notes || ''}
                       onChange={(e) =>
                         handleShippingInfoChange('notes', e.target.value)
                       }
+                      error={!!validationErrors.notes}
+                      helperText={validationErrors.notes}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,

@@ -2,6 +2,7 @@ import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { useSetupPassword } from '@kickzone-workspace/sellers-auth-hooks';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -18,6 +19,7 @@ import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 export const SellersSetupPassword = () => {
+  const { LL } = useI18nContext();
   const { token } = useParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -32,12 +34,12 @@ export const SellersSetupPassword = () => {
     setError('');
 
     if (password !== confirmPassword) {
-      setError('Passwords do not match');
+      setError(LL.authorization.passwordsDoNotMatch());
       return;
     }
 
     if (password.length < 8) {
-      setError('Password must be at least 8 characters long');
+      setError(LL.authorization.passwordTooShort());
       return;
     }
 
@@ -93,7 +95,7 @@ export const SellersSetupPassword = () => {
               variant="h5"
               sx={{ mb: 3, fontWeight: 600 }}
             >
-              Set Up Your Password
+              {LL.authorization.setupPasswordTitle()}
             </Typography>
 
             <Typography
@@ -101,8 +103,7 @@ export const SellersSetupPassword = () => {
               color="text.secondary"
               sx={{ mb: 3, textAlign: 'center' }}
             >
-              Welcome to Kickzone! Please set up your password to secure your
-              seller account.
+              {LL.authorization.setupPasswordDescription()}
             </Typography>
 
             <Box
@@ -115,7 +116,7 @@ export const SellersSetupPassword = () => {
                   <TextField
                     required
                     fullWidth
-                    label="New Password"
+                    label={LL.authorization.newPassword()}
                     type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
@@ -138,7 +139,7 @@ export const SellersSetupPassword = () => {
                   <TextField
                     required
                     fullWidth
-                    label="Confirm Password"
+                    label={LL.authorization.confirmNewPassword()}
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
@@ -186,7 +187,7 @@ export const SellersSetupPassword = () => {
                 {setupPasswordLoading ? (
                   <CircularProgress size={24} color="inherit" />
                 ) : (
-                  'Set Password'
+                  LL.authorization.setPassword()
                 )}
               </Button>
 
@@ -195,8 +196,7 @@ export const SellersSetupPassword = () => {
                 color="text.secondary"
                 sx={{ mt: 2, textAlign: 'center' }}
               >
-                Your password must be at least 8 characters long and include a
-                mix of letters, numbers, and special characters.
+                {LL.authorization.passwordRequirements()}
               </Typography>
             </Box>
           </Paper>

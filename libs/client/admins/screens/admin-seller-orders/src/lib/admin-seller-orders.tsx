@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
@@ -22,7 +22,11 @@ import {
 } from '@kickzone-workspace/admins-orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import {
+  useI18nContext,
+  useLanguageContext,
+  useTableLocalization,
+} from '@kickzone-workspace/shared-i18n';
 import {
   MaterialReactTable,
   useMaterialReactTable,
@@ -43,6 +47,8 @@ const formatDate = (dateString: string) => {
 
 export function AdminSellerOrders() {
   const { LL } = useI18nContext();
+  const { isRTL } = useLanguageContext();
+  const tableLocalization = useTableLocalization();
   const [selectedStatus, setSelectedStatus] = useState<
     KickzoneGraphqlTypes.OrderStatus | undefined
   >(undefined);
@@ -75,11 +81,11 @@ export function AdminSellerOrders() {
     setSelectedSellerId(sellerId);
   };
 
-  const handleStatusChange = (order: Order) => {
+  const handleStatusChange = useCallback((order: Order) => {
     setSelectedOrder(order);
     setNewStatus(order.status);
     setStatusDialogOpen(true);
-  };
+  }, []);
 
   const handleUpdateStatus = async () => {
     if (!selectedOrder || !newStatus) return;
@@ -101,84 +107,130 @@ export function AdminSellerOrders() {
     );
   }, [orders, selectedSellerId]);
 
-  const columns: MRT_ColumnDef<Order>[] = [
-    {
-      accessorKey: 'orderNumber',
-      header: LL.orders.orderNumber(),
-      size: 100,
-      Cell: ({ cell }) => `#${cell.getValue<string>()}`,
-    },
-    {
-      accessorKey: 'trackingNumber',
-      header: LL.orders.tracking(),
-      size: 150,
-      Cell: ({ cell }) => (
-        <Box
-          sx={{
-            fontFamily: 'monospace',
-            fontWeight: 600,
-            color: 'primary.main',
-          }}
-        >
-          {cell.getValue<string>() || 'N/A'}
-        </Box>
-      ),
-    },
-    {
-      accessorKey: 'customerName',
-      header: LL.orders.customer(),
-      size: 150,
-    },
-    {
-      accessorKey: 'customerEmail',
-      header: LL.orders.email(),
-      size: 200,
-    },
-    {
-      accessorKey: 'status',
-      header: LL.form.status(),
-      size: 120,
-      Cell: ({ cell }) => (
-        <OrderStatusChip status={cell.getValue<string>()} size="small" />
-      ),
-      filterFn: 'equals',
-    },
-    {
-      accessorKey: 'total',
-      header: LL.checkout.total(),
-      size: 100,
-      Cell: ({ cell }) => `$${cell.getValue<number>().toFixed(2)}`,
-    },
-    {
-      accessorKey: 'createdAt',
-      header: LL.orders.orderDate(),
-      size: 150,
-      Cell: ({ cell }) => formatDate(cell.getValue<string>()),
-      sortingFn: 'datetime',
-    },
-    {
+  const columns: MRT_ColumnDef<Order>[] = useMemo(() => {
+    const dataColumns: MRT_ColumnDef<Order>[] = [
+      {
+        accessorKey: 'orderNumber',
+        header: LL.orders.orderNumber(),
+        size: 100,
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            #{cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'trackingNumber',
+        header: LL.orders.tracking(),
+        size: 150,
+        Cell: ({ cell }) => (
+          <Box
+            sx={{
+              fontFamily: 'monospace',
+              fontWeight: 600,
+              color: 'primary.main',
+              textAlign: isRTL ? 'right' : 'left',
+            }}
+          >
+            {cell.getValue<string>() || 'N/A'}
+          </Box>
+        ),
+      },
+      {
+        accessorKey: 'customerName',
+        header: LL.orders.customer(),
+        size: 150,
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'customerEmail',
+        header: LL.orders.email(),
+        size: 200,
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {cell.getValue<string>()}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'status',
+        header: LL.form.status(),
+        size: 120,
+        Cell: ({ cell }) => (
+          <Box sx={{ textAlign: isRTL ? 'right' : 'left' }}>
+            <OrderStatusChip status={cell.getValue<string>()} size="small" />
+          </Box>
+        ),
+        filterFn: 'equals',
+      },
+      {
+        accessorKey: 'total',
+        header: LL.checkout.total(),
+        size: 100,
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            ${cell.getValue<number>().toFixed(2)}
+          </div>
+        ),
+      },
+      {
+        accessorKey: 'createdAt',
+        header: LL.orders.orderDate(),
+        size: 150,
+        Cell: ({ cell }) => (
+          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
+            {formatDate(cell.getValue<string>())}
+          </div>
+        ),
+        sortingFn: 'datetime',
+      },
+    ];
+
+    const actionsColumn: MRT_ColumnDef<Order> = {
       id: 'actions',
       header: LL.orders.actions(),
       size: 120,
       Cell: ({ row }) => (
-        <Button
-          variant="outlined"
-          size="small"
-          onClick={() => handleStatusChange(row.original)}
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: isRTL ? 'flex-end' : 'flex-start',
+          }}
         >
-          {LL.orders.changeStatus()}
-        </Button>
+          <Button
+            variant="outlined"
+            size="small"
+            onClick={() => handleStatusChange(row.original)}
+          >
+            {LL.orders.changeStatus()}
+          </Button>
+        </Box>
       ),
-    },
-  ];
+    };
+
+    // For RTL languages, put actions column last (right side)
+    // For LTR languages, put actions column last (right side) as well
+    return [...dataColumns, actionsColumn];
+  }, [LL, handleStatusChange, isRTL]);
 
   const table = useMaterialReactTable({
     columns,
     data: filteredOrders,
     enableRowSelection: false,
-    enableColumnOrdering: true,
+    enableRowActions: false, // Disable built-in row actions to prevent duplicate actions column
+    enableColumnOrdering: false, // Disable manual column ordering to respect our order
     enableGlobalFilter: true,
     enableSorting: true,
+    localization: tableLocalization,
+    muiTableHeadCellProps: {
+      sx: {
+        textAlign: isRTL ? 'right' : 'left',
+      },
+    },
     initialState: {
       sorting: [{ id: 'createdAt', desc: true }],
       density: 'compact',
@@ -383,7 +435,10 @@ export function AdminSellerOrders() {
           {LL.orders.allSellerOrders()}
         </Typography>
 
-        <MaterialReactTable table={table} />
+        <MaterialReactTable
+          table={table}
+          key={`admin-orders-table-${isRTL ? 'rtl' : 'ltr'}`}
+        />
 
         {/* Status Change Dialog */}
         <Dialog

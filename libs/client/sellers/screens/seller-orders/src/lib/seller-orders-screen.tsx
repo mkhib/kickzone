@@ -38,7 +38,7 @@ import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-contai
 
 export function SellerOrdersScreen() {
   const { LL } = useI18nContext();
-  const { currentLocale, formatNumber } = useLanguageContext();
+  const { currentLocale, formatNumber, isRTL } = useLanguageContext();
 
   const [expandedOrder, setExpandedOrder] = useState<string | false>(false);
   const [selectedStatus, setSelectedStatus] = useState<
@@ -374,66 +374,134 @@ export function SellerOrdersScreen() {
                         <Table>
                           <TableHead>
                             <TableRow>
-                              <TableCell>{LL.table.product()}</TableCell>
-                              <TableCell>{LL.table.quantity()}</TableCell>
-                              <TableCell>{LL.table.unitPrice()}</TableCell>
-                              <TableCell>{LL.table.total()}</TableCell>
+                              {isRTL ? (
+                                <>
+                                  <TableCell>{LL.table.total()}</TableCell>
+                                  <TableCell>{LL.table.unitPrice()}</TableCell>
+                                  <TableCell>{LL.table.quantity()}</TableCell>
+                                  <TableCell>{LL.table.product()}</TableCell>
+                                </>
+                              ) : (
+                                <>
+                                  <TableCell>{LL.table.product()}</TableCell>
+                                  <TableCell>{LL.table.quantity()}</TableCell>
+                                  <TableCell>{LL.table.unitPrice()}</TableCell>
+                                  <TableCell>{LL.table.total()}</TableCell>
+                                </>
+                              )}
                             </TableRow>
                           </TableHead>
                           <TableBody>
                             {order.items.map(
                               (item: KickzoneGraphqlTypes.OrderItem) => (
                                 <TableRow key={item.id}>
-                                  <TableCell>
-                                    <Box
-                                      sx={{
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: 2,
-                                      }}
-                                    >
-                                      {item.productImage && (
+                                  {isRTL ? (
+                                    <>
+                                      <TableCell>
+                                        ${formatNumber(item.totalPrice.toFixed(2))}
+                                      </TableCell>
+                                      <TableCell>
+                                        ${formatNumber(item.unitPrice.toFixed(2))}
+                                      </TableCell>
+                                      <TableCell>
+                                        {formatNumber(item.quantity)}
+                                      </TableCell>
+                                      <TableCell>
                                         <Box
-                                          component="img"
-                                          src={item.productImage}
-                                          alt={item.productName}
                                           sx={{
-                                            width: 50,
-                                            height: 50,
-                                            objectFit: 'cover',
-                                            borderRadius: 1,
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 2,
                                           }}
-                                        />
-                                      )}
-                                      <Box>
-                                        <Typography
-                                          variant="body2"
-                                          fontWeight="medium"
                                         >
-                                          {item.productName}
-                                        </Typography>
-                                        {(item.color || item.size) && (
-                                          <Typography
-                                            variant="caption"
-                                            color="text.secondary"
-                                          >
-                                            {[item.color, item.size]
-                                              .filter(Boolean)
-                                              .join(' - ')}
-                                          </Typography>
-                                        )}
-                                      </Box>
-                                    </Box>
-                                  </TableCell>
-                                  <TableCell>
-                                    {formatNumber(item.quantity)}
-                                  </TableCell>
-                                  <TableCell>
-                                    ${formatNumber(item.unitPrice.toFixed(2))}
-                                  </TableCell>
-                                  <TableCell>
-                                    ${formatNumber(item.totalPrice.toFixed(2))}
-                                  </TableCell>
+                                          {item.productImage && (
+                                            <Box
+                                              component="img"
+                                              src={item.productImage}
+                                              alt={item.productName}
+                                              sx={{
+                                                width: 50,
+                                                height: 50,
+                                                objectFit: 'cover',
+                                                borderRadius: 1,
+                                              }}
+                                            />
+                                          )}
+                                          <Box>
+                                            <Typography
+                                              variant="body2"
+                                              fontWeight="medium"
+                                            >
+                                              {item.productName}
+                                            </Typography>
+                                            {(item.color || item.size) && (
+                                              <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                              >
+                                                {[item.color, item.size]
+                                                  .filter(Boolean)
+                                                  .join(' - ')}
+                                              </Typography>
+                                            )}
+                                          </Box>
+                                        </Box>
+                                      </TableCell>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <TableCell>
+                                        <Box
+                                          sx={{
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: 2,
+                                          }}
+                                        >
+                                          {item.productImage && (
+                                            <Box
+                                              component="img"
+                                              src={item.productImage}
+                                              alt={item.productName}
+                                              sx={{
+                                                width: 50,
+                                                height: 50,
+                                                objectFit: 'cover',
+                                                borderRadius: 1,
+                                              }}
+                                            />
+                                          )}
+                                          <Box>
+                                            <Typography
+                                              variant="body2"
+                                              fontWeight="medium"
+                                            >
+                                              {item.productName}
+                                            </Typography>
+                                            {(item.color || item.size) && (
+                                              <Typography
+                                                variant="caption"
+                                                color="text.secondary"
+                                              >
+                                                {[item.color, item.size]
+                                                  .filter(Boolean)
+                                                  .join(' - ')}
+                                              </Typography>
+                                            )}
+                                          </Box>
+                                        </Box>
+                                      </TableCell>
+                                      <TableCell>
+                                        {formatNumber(item.quantity)}
+                                      </TableCell>
+                                      <TableCell>
+                                        ${formatNumber(item.unitPrice.toFixed(2))}
+                                      </TableCell>
+                                      <TableCell>
+                                        ${formatNumber(item.totalPrice.toFixed(2))}
+                                      </TableCell>
+                                    </>
+                                  )}
                                 </TableRow>
                               )
                             )}

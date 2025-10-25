@@ -20,6 +20,9 @@ export const useAdminsSellersQuery = (
     KickzoneGraphqlTypes.QuerySellersArgs
   >(GET_SELLERS, {
     variables: { filter },
+    fetchPolicy: 'cache-and-network', // Always fetch fresh data
+    errorPolicy: 'all', // Return both data and errors
+    notifyOnNetworkStatusChange: true, // Notify on loading state changes
   });
 
   return {

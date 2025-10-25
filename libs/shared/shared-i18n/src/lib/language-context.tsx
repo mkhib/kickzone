@@ -17,6 +17,7 @@ interface LanguageContextType {
   availableLocales: { code: Locales; name: string; nativeName: string }[];
   isLoading: boolean;
   formatNumber: (num: number | string) => string;
+  isRTL: boolean;
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -120,12 +121,16 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     return formatNumberByLocale(num, currentLocale);
   };
 
+  // Determine if the current locale is RTL
+  const isRTL = currentLocale === 'fa';
+
   const value: LanguageContextType = {
     currentLocale,
     setLocale,
     availableLocales: AVAILABLE_LOCALES,
     isLoading,
     formatNumber,
+    isRTL,
   };
 
   return (

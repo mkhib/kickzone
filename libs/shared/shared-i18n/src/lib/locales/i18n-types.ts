@@ -131,6 +131,18 @@ type RootTranslation = {
 		 * A​d​d​ ​P​r​o​d​u​c​t
 		 */
 		addProduct: string
+		/**
+		 * A​d​d​ ​S​e​l​l​e​r
+		 */
+		addSeller: string
+		/**
+		 * S​h​o​w​ ​I​n​a​c​t​i​v​e
+		 */
+		showInactive: string
+		/**
+		 * S​h​o​w​ ​A​c​t​i​v​e
+		 */
+		showActive: string
 	}
 	navigation: {
 		/**
@@ -345,6 +357,58 @@ type RootTranslation = {
 		 * D​e​f​a​u​l​t
 		 */
 		'default': string
+		/**
+		 * L​a​s​t​ ​N​a​m​e
+		 */
+		lastName: string
+		/**
+		 * U​s​e​r​n​a​m​e
+		 */
+		username: string
+		/**
+		 * E​m​a​i​l
+		 */
+		email: string
+		/**
+		 * S​t​o​r​e​ ​N​a​m​e
+		 */
+		storeName: string
+		/**
+		 * P​h​o​n​e
+		 */
+		phone: string
+		/**
+		 * A​d​d​r​e​s​s
+		 */
+		address: string
+		/**
+		 * S​t​a​t​u​s
+		 */
+		status: string
+		/**
+		 * A​c​t​i​o​n​s
+		 */
+		actions: string
+		/**
+		 * C​a​t​e​g​o​r​y​ ​(​E​n​g​l​i​s​h​)
+		 */
+		categoryEnglish: string
+		/**
+		 * S​l​u​g
+		 */
+		slug: string
+		/**
+		 * V​i​e​w
+		 */
+		view: string
+		/**
+		 * I​n​a​c​t​i​v​e
+		 */
+		inactive: string
+		/**
+		 * L​o​a​d​i​n​g​ ​c​a​t​e​g​o​r​i​e​s​.​.​.
+		 */
+		loadingCategories: string
 	}
 	checkout: {
 		/**
@@ -1244,6 +1308,192 @@ type RootTranslation = {
 		 * R​e​g​i​s​t​r​a​t​i​o​n​ ​f​a​i​l​e​d​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
 		 */
 		registrationFailed: string
+		/**
+		 * S​e​t​ ​U​p​ ​Y​o​u​r​ ​P​a​s​s​w​o​r​d
+		 */
+		setupPassword: string
+		/**
+		 * S​e​t​ ​U​p​ ​Y​o​u​r​ ​P​a​s​s​w​o​r​d
+		 */
+		setupPasswordTitle: string
+		/**
+		 * W​e​l​c​o​m​e​ ​t​o​ ​K​i​c​k​z​o​n​e​!​ ​P​l​e​a​s​e​ ​s​e​t​ ​u​p​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​s​e​c​u​r​e​ ​y​o​u​r​ ​s​e​l​l​e​r​ ​a​c​c​o​u​n​t​.
+		 */
+		setupPasswordDescription: string
+		/**
+		 * N​e​w​ ​P​a​s​s​w​o​r​d
+		 */
+		newPassword: string
+		/**
+		 * C​o​n​f​i​r​m​ ​P​a​s​s​w​o​r​d
+		 */
+		confirmNewPassword: string
+		/**
+		 * S​e​t​ ​P​a​s​s​w​o​r​d
+		 */
+		setPassword: string
+		/**
+		 * Y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​8​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g​ ​a​n​d​ ​i​n​c​l​u​d​e​ ​a​ ​m​i​x​ ​o​f​ ​l​e​t​t​e​r​s​,​ ​n​u​m​b​e​r​s​,​ ​a​n​d​ ​s​p​e​c​i​a​l​ ​c​h​a​r​a​c​t​e​r​s​.
+		 */
+		passwordRequirements: string
+		/**
+		 * P​a​s​s​w​o​r​d​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​8​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+		 */
+		passwordTooShort: string
+		/**
+		 * T​o​ ​c​o​n​f​i​r​m​ ​t​h​i​s​ ​a​c​t​i​o​n​,​ ​p​l​e​a​s​e​ ​t​y​p​e​ ​t​h​e​ ​s​e​l​l​e​r​'​s​ ​u​s​e​r​n​a​m​e​:
+		 */
+		confirmAction: string
+		/**
+		 * E​n​t​e​r​ ​u​s​e​r​n​a​m​e
+		 */
+		enterUsername: string
+		/**
+		 * U​s​e​r​n​a​m​e​ ​d​o​e​s​ ​n​o​t​ ​m​a​t​c​h
+		 */
+		usernameMismatch: string
+	}
+	validation: {
+		name: {
+			/**
+			 * N​a​m​e​ ​i​s​ ​r​e​q​u​i​r​e​d
+			 */
+			required: string
+			/**
+			 * N​a​m​e​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​2​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			minLength: string
+			/**
+			 * N​a​m​e​ ​c​a​n​n​o​t​ ​e​x​c​e​e​d​ ​1​0​0​ ​c​h​a​r​a​c​t​e​r​s
+			 */
+			maxLength: string
+			/**
+			 * N​a​m​e​ ​c​a​n​ ​o​n​l​y​ ​c​o​n​t​a​i​n​ ​l​e​t​t​e​r​s​,​ ​s​p​a​c​e​s​,​ ​h​y​p​h​e​n​s​,​ ​a​n​d​ ​a​p​o​s​t​r​o​p​h​e​s
+			 */
+			invalidCharacters: string
+		}
+		email: {
+			/**
+			 * E​m​a​i​l​ ​i​s​ ​r​e​q​u​i​r​e​d
+			 */
+			required: string
+			/**
+			 * E​m​a​i​l​ ​c​a​n​n​o​t​ ​e​x​c​e​e​d​ ​2​5​5​ ​c​h​a​r​a​c​t​e​r​s
+			 */
+			maxLength: string
+			/**
+			 * P​l​e​a​s​e​ ​e​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​e​m​a​i​l​ ​a​d​d​r​e​s​s
+			 */
+			invalid: string
+		}
+		phone: {
+			/**
+			 * P​h​o​n​e​ ​n​u​m​b​e​r​ ​i​s​ ​r​e​q​u​i​r​e​d
+			 */
+			required: string
+			/**
+			 * P​l​e​a​s​e​ ​e​n​t​e​r​ ​a​ ​v​a​l​i​d​ ​p​h​o​n​e​ ​n​u​m​b​e​r
+			 */
+			invalid: string
+		}
+		address: {
+			/**
+			 * A​d​d​r​e​s​s​ ​i​s​ ​r​e​q​u​i​r​e​d
+			 */
+			required: string
+			/**
+			 * A​d​d​r​e​s​s​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​3​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			minLength: string
+			/**
+			 * A​d​d​r​e​s​s​ ​c​a​n​n​o​t​ ​e​x​c​e​e​d​ ​2​0​0​ ​c​h​a​r​a​c​t​e​r​s
+			 */
+			maxLength: string
+		}
+		city: {
+			/**
+			 * C​i​t​y​ ​i​s​ ​r​e​q​u​i​r​e​d
+			 */
+			required: string
+			/**
+			 * C​i​t​y​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​2​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			minLength: string
+			/**
+			 * C​i​t​y​ ​c​a​n​n​o​t​ ​e​x​c​e​e​d​ ​1​0​0​ ​c​h​a​r​a​c​t​e​r​s
+			 */
+			maxLength: string
+			/**
+			 * C​i​t​y​ ​c​a​n​ ​o​n​l​y​ ​c​o​n​t​a​i​n​ ​l​e​t​t​e​r​s​,​ ​s​p​a​c​e​s​,​ ​h​y​p​h​e​n​s​,​ ​a​n​d​ ​a​p​o​s​t​r​o​p​h​e​s
+			 */
+			invalidCharacters: string
+		}
+		state: {
+			/**
+			 * S​t​a​t​e​/​P​r​o​v​i​n​c​e​ ​i​s​ ​r​e​q​u​i​r​e​d
+			 */
+			required: string
+			/**
+			 * S​t​a​t​e​/​P​r​o​v​i​n​c​e​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​2​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			minLength: string
+			/**
+			 * S​t​a​t​e​/​P​r​o​v​i​n​c​e​ ​c​a​n​n​o​t​ ​e​x​c​e​e​d​ ​1​0​0​ ​c​h​a​r​a​c​t​e​r​s
+			 */
+			maxLength: string
+			/**
+			 * S​t​a​t​e​/​P​r​o​v​i​n​c​e​ ​c​a​n​ ​o​n​l​y​ ​c​o​n​t​a​i​n​ ​l​e​t​t​e​r​s​,​ ​s​p​a​c​e​s​,​ ​h​y​p​h​e​n​s​,​ ​a​n​d​ ​a​p​o​s​t​r​o​p​h​e​s
+			 */
+			invalidCharacters: string
+		}
+		zipCode: {
+			/**
+			 * Z​I​P​/​P​o​s​t​a​l​ ​c​o​d​e​ ​i​s​ ​r​e​q​u​i​r​e​d
+			 */
+			required: string
+			/**
+			 * Z​I​P​/​P​o​s​t​a​l​ ​c​o​d​e​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​3​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			minLength: string
+			/**
+			 * Z​I​P​/​P​o​s​t​a​l​ ​c​o​d​e​ ​c​a​n​n​o​t​ ​e​x​c​e​e​d​ ​2​0​ ​c​h​a​r​a​c​t​e​r​s
+			 */
+			maxLength: string
+			/**
+			 * Z​I​P​/​P​o​s​t​a​l​ ​c​o​d​e​ ​c​a​n​ ​o​n​l​y​ ​c​o​n​t​a​i​n​ ​l​e​t​t​e​r​s​,​ ​n​u​m​b​e​r​s​,​ ​s​p​a​c​e​s​,​ ​a​n​d​ ​h​y​p​h​e​n​s
+			 */
+			invalidCharacters: string
+		}
+		country: {
+			/**
+			 * C​o​u​n​t​r​y​ ​i​s​ ​r​e​q​u​i​r​e​d
+			 */
+			required: string
+			/**
+			 * C​o​u​n​t​r​y​ ​m​u​s​t​ ​b​e​ ​a​t​ ​l​e​a​s​t​ ​2​ ​c​h​a​r​a​c​t​e​r​s​ ​l​o​n​g
+			 */
+			minLength: string
+			/**
+			 * C​o​u​n​t​r​y​ ​c​a​n​n​o​t​ ​e​x​c​e​e​d​ ​1​0​0​ ​c​h​a​r​a​c​t​e​r​s
+			 */
+			maxLength: string
+			/**
+			 * C​o​u​n​t​r​y​ ​c​a​n​ ​o​n​l​y​ ​c​o​n​t​a​i​n​ ​l​e​t​t​e​r​s​,​ ​s​p​a​c​e​s​,​ ​h​y​p​h​e​n​s​,​ ​a​n​d​ ​a​p​o​s​t​r​o​p​h​e​s
+			 */
+			invalidCharacters: string
+		}
+		notes: {
+			/**
+			 * N​o​t​e​s​ ​c​a​n​n​o​t​ ​e​x​c​e​e​d​ ​5​0​0​ ​c​h​a​r​a​c​t​e​r​s
+			 */
+			maxLength: string
+		}
+		general: {
+			/**
+			 * A​n​ ​u​n​e​x​p​e​c​t​e​d​ ​v​a​l​i​d​a​t​i​o​n​ ​e​r​r​o​r​ ​o​c​c​u​r​r​e​d
+			 */
+			error: string
+		}
 	}
 	errors: {
 		/**
@@ -1483,6 +1733,553 @@ type RootTranslation = {
 		 */
 		lastUpdated: string
 	}
+	tableMenu: {
+		/**
+		 * F​i​l​t​e​r
+		 */
+		filter: string
+		/**
+		 * S​o​r​t
+		 */
+		sort: string
+		/**
+		 * E​x​p​o​r​t
+		 */
+		'export': string
+		/**
+		 * S​e​a​r​c​h
+		 */
+		search: string
+		/**
+		 * C​l​e​a​r​ ​F​i​l​t​e​r
+		 */
+		clearFilter: string
+		/**
+		 * C​l​e​a​r​ ​S​o​r​t
+		 */
+		clearSort: string
+		/**
+		 * C​l​e​a​r​ ​S​e​a​r​c​h
+		 */
+		clearSearch: string
+		/**
+		 * S​h​o​w​ ​C​o​l​u​m​n​s
+		 */
+		showColumns: string
+		/**
+		 * H​i​d​e​ ​C​o​l​u​m​n​s
+		 */
+		hideColumns: string
+		/**
+		 * D​e​n​s​i​t​y
+		 */
+		density: string
+		/**
+		 * C​o​m​p​a​c​t
+		 */
+		densityCompact: string
+		/**
+		 * C​o​m​f​o​r​t​a​b​l​e
+		 */
+		densityComfortable: string
+		/**
+		 * S​p​a​c​i​o​u​s
+		 */
+		densitySpacious: string
+		/**
+		 * R​e​f​r​e​s​h
+		 */
+		refresh: string
+		/**
+		 * F​u​l​l​ ​S​c​r​e​e​n
+		 */
+		fullScreen: string
+		/**
+		 * E​x​i​t​ ​F​u​l​l​ ​S​c​r​e​e​n
+		 */
+		exitFullScreen: string
+		/**
+		 * C​o​l​u​m​n​ ​A​c​t​i​o​n​s
+		 */
+		columnActions: string
+		/**
+		 * R​o​w​ ​A​c​t​i​o​n​s
+		 */
+		rowActions: string
+		/**
+		 * S​e​l​e​c​t​ ​A​l​l
+		 */
+		selectAll: string
+		/**
+		 * S​e​l​e​c​t​ ​R​o​w
+		 */
+		selectRow: string
+		/**
+		 * T​o​g​g​l​e​ ​S​e​l​e​c​t​ ​A​l​l
+		 */
+		toggleSelectAll: string
+		/**
+		 * T​o​g​g​l​e​ ​S​e​l​e​c​t​ ​R​o​w
+		 */
+		toggleSelectRow: string
+		/**
+		 * C​l​e​a​r​ ​S​e​l​e​c​t​i​o​n
+		 */
+		clearSelection: string
+		/**
+		 * E​x​p​a​n​d​ ​A​l​l
+		 */
+		expandAll: string
+		/**
+		 * C​o​l​l​a​p​s​e​ ​A​l​l
+		 */
+		collapseAll: string
+		/**
+		 * E​x​p​a​n​d​ ​R​o​w
+		 */
+		expandRow: string
+		/**
+		 * C​o​l​l​a​p​s​e​ ​R​o​w
+		 */
+		collapseRow: string
+		/**
+		 * P​i​n​ ​t​o​ ​L​e​f​t
+		 */
+		pinToLeft: string
+		/**
+		 * P​i​n​ ​t​o​ ​R​i​g​h​t
+		 */
+		pinToRight: string
+		/**
+		 * U​n​p​i​n
+		 */
+		unpin: string
+		/**
+		 * G​r​o​u​p​ ​B​y
+		 */
+		groupBy: string
+		/**
+		 * U​n​g​r​o​u​p​ ​B​y
+		 */
+		ungroupBy: string
+		/**
+		 * A​g​g​r​e​g​a​t​e
+		 */
+		aggregate: string
+		/**
+		 * C​l​e​a​r​ ​A​g​g​r​e​g​a​t​i​o​n
+		 */
+		clearAggregation: string
+		/**
+		 * C​l​e​a​r​ ​G​r​o​u​p​i​n​g
+		 */
+		clearGrouping: string
+		/**
+		 * C​l​e​a​r​ ​S​o​r​t​i​n​g
+		 */
+		clearSorting: string
+		/**
+		 * C​l​e​a​r​ ​F​i​l​t​e​r​s
+		 */
+		clearFilters: string
+		/**
+		 * C​l​e​a​r​ ​A​l​l
+		 */
+		clearAll: string
+		/**
+		 * R​e​s​e​t
+		 */
+		reset: string
+		/**
+		 * R​e​s​e​t​ ​C​o​l​u​m​n​s
+		 */
+		resetColumns: string
+		/**
+		 * R​e​s​e​t​ ​D​e​n​s​i​t​y
+		 */
+		resetDensity: string
+		/**
+		 * R​e​s​e​t​ ​F​i​l​t​e​r​s
+		 */
+		resetFilters: string
+		/**
+		 * R​e​s​e​t​ ​S​o​r​t​i​n​g
+		 */
+		resetSorting: string
+		/**
+		 * R​e​s​e​t​ ​G​r​o​u​p​i​n​g
+		 */
+		resetGrouping: string
+		/**
+		 * R​e​s​e​t​ ​P​i​n​n​i​n​g
+		 */
+		resetPinning: string
+		/**
+		 * R​e​s​e​t​ ​E​x​p​a​n​d​i​n​g
+		 */
+		resetExpanding: string
+		/**
+		 * R​e​s​e​t​ ​S​e​l​e​c​t​i​o​n
+		 */
+		resetSelection: string
+		/**
+		 * R​e​s​e​t​ ​A​l​l
+		 */
+		resetAll: string
+		/**
+		 * S​a​v​e
+		 */
+		save: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * A​p​p​l​y
+		 */
+		apply: string
+		/**
+		 * C​l​o​s​e
+		 */
+		close: string
+		/**
+		 * O​p​e​n
+		 */
+		open: string
+		/**
+		 * E​d​i​t
+		 */
+		edit: string
+		/**
+		 * D​e​l​e​t​e
+		 */
+		'delete': string
+		/**
+		 * A​d​d
+		 */
+		add: string
+		/**
+		 * R​e​m​o​v​e
+		 */
+		remove: string
+		/**
+		 * C​r​e​a​t​e
+		 */
+		create: string
+		/**
+		 * U​p​d​a​t​e
+		 */
+		update: string
+		/**
+		 * S​u​b​m​i​t
+		 */
+		submit: string
+		/**
+		 * C​o​n​f​i​r​m
+		 */
+		confirm: string
+		/**
+		 * Y​e​s
+		 */
+		yes: string
+		/**
+		 * N​o
+		 */
+		no: string
+		/**
+		 * O​K
+		 */
+		ok: string
+		/**
+		 * L​o​a​d​i​n​g​.​.​.
+		 */
+		loading: string
+		/**
+		 * N​o​ ​D​a​t​a
+		 */
+		noData: string
+		/**
+		 * N​o​ ​R​e​s​u​l​t​s
+		 */
+		noResults: string
+		/**
+		 * E​r​r​o​r
+		 */
+		error: string
+		/**
+		 * S​u​c​c​e​s​s
+		 */
+		success: string
+		/**
+		 * W​a​r​n​i​n​g
+		 */
+		warning: string
+		/**
+		 * I​n​f​o
+		 */
+		info: string
+		/**
+		 * P​r​e​v​i​o​u​s
+		 */
+		previous: string
+		/**
+		 * N​e​x​t
+		 */
+		next: string
+		/**
+		 * F​i​r​s​t
+		 */
+		first: string
+		/**
+		 * L​a​s​t
+		 */
+		last: string
+		/**
+		 * P​a​g​e
+		 */
+		page: string
+		/**
+		 * o​f
+		 */
+		of: string
+		/**
+		 * R​o​w​s​ ​p​e​r​ ​p​a​g​e
+		 */
+		rowsPerPage: string
+		/**
+		 * S​h​o​w​i​n​g​ ​{​s​t​a​r​t​}​-​{​e​n​d​}​ ​o​f​ ​{​t​o​t​a​l​}
+		 * @param {unknown} end
+		 * @param {unknown} start
+		 * @param {unknown} total
+		 */
+		showingRows: RequiredParams<'end' | 'start' | 'total'>
+		/**
+		 * T​o​t​a​l​:​ ​{​t​o​t​a​l​}
+		 * @param {unknown} total
+		 */
+		totalRows: RequiredParams<'total'>
+		/**
+		 * F​i​l​t​e​r​e​d​:​ ​{​t​o​t​a​l​}
+		 * @param {unknown} total
+		 */
+		filteredRows: RequiredParams<'total'>
+		/**
+		 * S​e​l​e​c​t​e​d​:​ ​{​t​o​t​a​l​}
+		 * @param {unknown} total
+		 */
+		selectedRows: RequiredParams<'total'>
+		/**
+		 * S​e​a​r​c​h​.​.​.
+		 */
+		searchPlaceholder: string
+		/**
+		 * F​i​l​t​e​r​.​.​.
+		 */
+		filterPlaceholder: string
+		/**
+		 * S​o​r​t​ ​A​s​c​e​n​d​i​n​g
+		 */
+		sortAscending: string
+		/**
+		 * S​o​r​t​ ​D​e​s​c​e​n​d​i​n​g
+		 */
+		sortDescending: string
+		/**
+		 * S​o​r​t​ ​B​y
+		 */
+		sortBy: string
+		/**
+		 * F​i​l​t​e​r​ ​B​y
+		 */
+		filterBy: string
+		/**
+		 * A​g​g​r​e​g​a​t​e​ ​B​y
+		 */
+		aggregateBy: string
+		/**
+		 * P​i​n​ ​T​o
+		 */
+		pinTo: string
+		/**
+		 * U​n​p​i​n​ ​F​r​o​m
+		 */
+		unpinFrom: string
+		/**
+		 * E​x​p​a​n​d​ ​T​o
+		 */
+		expandTo: string
+		/**
+		 * C​o​l​l​a​p​s​e​ ​T​o
+		 */
+		collapseTo: string
+		/**
+		 * S​e​l​e​c​t​ ​T​o
+		 */
+		selectTo: string
+		/**
+		 * D​e​s​e​l​e​c​t​ ​T​o
+		 */
+		deselectTo: string
+		/**
+		 * A​c​t​i​o​n​s
+		 */
+		actions: string
+		/**
+		 * a​n​d
+		 */
+		and: string
+		/**
+		 * o​r
+		 */
+		or: string
+		/**
+		 * C​h​a​n​g​e​ ​f​i​l​t​e​r​ ​m​o​d​e
+		 */
+		changeFilterMode: string
+		/**
+		 * C​l​i​c​k​ ​t​o​ ​c​o​p​y
+		 */
+		clickToCopy: string
+		/**
+		 * C​o​p​y​ ​t​o​ ​c​l​i​p​b​o​a​r​d
+		 */
+		copyToClipboard: string
+		/**
+		 * E​x​p​a​n​d
+		 */
+		expand: string
+		/**
+		 * F​i​l​t​e​r​ ​m​o​d​e
+		 */
+		filterMode: string
+		/**
+		 * G​l​o​b​a​l​ ​f​i​l​t​e​r
+		 */
+		globalFilter: string
+		/**
+		 * H​i​d​e​ ​a​l​l
+		 */
+		hideAll: string
+		/**
+		 * H​i​d​e​ ​c​o​l​u​m​n
+		 */
+		hideColumn: string
+		/**
+		 * M​a​x
+		 */
+		max: string
+		/**
+		 * M​i​n
+		 */
+		min: string
+		/**
+		 * M​o​v​e
+		 */
+		move: string
+		/**
+		 * N​o​ ​r​e​c​o​r​d​s​ ​t​o​ ​d​i​s​p​l​a​y
+		 */
+		noRecordsToDisplay: string
+		/**
+		 * N​o​ ​r​e​s​u​l​t​s​ ​f​o​u​n​d
+		 */
+		noResultsFound: string
+		/**
+		 * R​e​s​e​t​ ​c​o​l​u​m​n​ ​s​i​z​e
+		 */
+		resetColumnSize: string
+		/**
+		 * R​e​s​e​t​ ​c​o​l​u​m​n​ ​v​i​s​i​b​i​l​i​t​y
+		 */
+		resetColumnVisibility: string
+		/**
+		 * R​o​w​ ​n​u​m​b​e​r
+		 */
+		rowNumber: string
+		/**
+		 * R​o​w​ ​n​u​m​b​e​r​s
+		 */
+		rowNumbers: string
+		/**
+		 * S​e​l​e​c​t
+		 */
+		select: string
+		/**
+		 * {​s​e​l​e​c​t​e​d​C​o​u​n​t​}​ ​o​f​ ​{​r​o​w​C​o​u​n​t​}​ ​r​o​w​(​s​)​ ​s​e​l​e​c​t​e​d
+		 * @param {unknown} rowCount
+		 * @param {unknown} selectedCount
+		 */
+		selectedCountOfRowCountRowsSelected: RequiredParams<'rowCount' | 'selectedCount'>
+		/**
+		 * S​h​o​w​ ​a​l​l
+		 */
+		showAll: string
+		/**
+		 * S​h​o​w​ ​a​l​l​ ​c​o​l​u​m​n​s
+		 */
+		showAllColumns: string
+		/**
+		 * S​h​o​w​/​H​i​d​e​ ​c​o​l​u​m​n​s
+		 */
+		showHideColumns: string
+		/**
+		 * S​h​o​w​/​H​i​d​e​ ​f​i​l​t​e​r​s
+		 */
+		showHideFilters: string
+		/**
+		 * S​h​o​w​/​H​i​d​e​ ​s​e​a​r​c​h
+		 */
+		showHideSearch: string
+		/**
+		 * S​o​r​t​ ​b​y​ ​{​c​o​l​u​m​n​}​ ​a​s​c​e​n​d​i​n​g
+		 * @param {unknown} column
+		 */
+		sortByColumnAsc: RequiredParams<'column'>
+		/**
+		 * S​o​r​t​ ​b​y​ ​{​c​o​l​u​m​n​}​ ​d​e​s​c​e​n​d​i​n​g
+		 * @param {unknown} column
+		 */
+		sortByColumnDesc: RequiredParams<'column'>
+		/**
+		 * S​o​r​t​e​d​ ​b​y​ ​{​c​o​l​u​m​n​}​ ​a​s​c​e​n​d​i​n​g
+		 * @param {unknown} column
+		 */
+		sortedByColumnAsc: RequiredParams<'column'>
+		/**
+		 * S​o​r​t​e​d​ ​b​y​ ​{​c​o​l​u​m​n​}​ ​d​e​s​c​e​n​d​i​n​g
+		 * @param {unknown} column
+		 */
+		sortedByColumnDesc: RequiredParams<'column'>
+		/**
+		 * t​h​e​n​ ​b​y
+		 */
+		thenBy: string
+		/**
+		 * T​o​g​g​l​e​ ​d​e​n​s​i​t​y
+		 */
+		toggleDensity: string
+		/**
+		 * T​o​g​g​l​e​ ​f​u​l​l​ ​s​c​r​e​e​n
+		 */
+		toggleFullScreen: string
+		/**
+		 * T​o​g​g​l​e​ ​v​i​s​i​b​i​l​i​t​y
+		 */
+		toggleVisibility: string
+		/**
+		 * U​n​g​r​o​u​p​ ​b​y​ ​{​c​o​l​u​m​n​}
+		 * @param {unknown} column
+		 */
+		ungroupByColumn: RequiredParams<'column'>
+		/**
+		 * U​n​p​i​n​ ​a​l​l
+		 */
+		unpinAll: string
+		/**
+		 * U​n​s​o​r​t​e​d
+		 */
+		unsorted: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -1603,6 +2400,18 @@ export type TranslationFunctions = {
 		 * Add Product
 		 */
 		addProduct: () => LocalizedString
+		/**
+		 * Add Seller
+		 */
+		addSeller: () => LocalizedString
+		/**
+		 * Show Inactive
+		 */
+		showInactive: () => LocalizedString
+		/**
+		 * Show Active
+		 */
+		showActive: () => LocalizedString
 	}
 	navigation: {
 		/**
@@ -1817,6 +2626,58 @@ export type TranslationFunctions = {
 		 * Default
 		 */
 		'default': () => LocalizedString
+		/**
+		 * Last Name
+		 */
+		lastName: () => LocalizedString
+		/**
+		 * Username
+		 */
+		username: () => LocalizedString
+		/**
+		 * Email
+		 */
+		email: () => LocalizedString
+		/**
+		 * Store Name
+		 */
+		storeName: () => LocalizedString
+		/**
+		 * Phone
+		 */
+		phone: () => LocalizedString
+		/**
+		 * Address
+		 */
+		address: () => LocalizedString
+		/**
+		 * Status
+		 */
+		status: () => LocalizedString
+		/**
+		 * Actions
+		 */
+		actions: () => LocalizedString
+		/**
+		 * Category (English)
+		 */
+		categoryEnglish: () => LocalizedString
+		/**
+		 * Slug
+		 */
+		slug: () => LocalizedString
+		/**
+		 * View
+		 */
+		view: () => LocalizedString
+		/**
+		 * Inactive
+		 */
+		inactive: () => LocalizedString
+		/**
+		 * Loading categories...
+		 */
+		loadingCategories: () => LocalizedString
 	}
 	checkout: {
 		/**
@@ -2709,6 +3570,192 @@ export type TranslationFunctions = {
 		 * Registration failed. Please try again.
 		 */
 		registrationFailed: () => LocalizedString
+		/**
+		 * Set Up Your Password
+		 */
+		setupPassword: () => LocalizedString
+		/**
+		 * Set Up Your Password
+		 */
+		setupPasswordTitle: () => LocalizedString
+		/**
+		 * Welcome to Kickzone! Please set up your password to secure your seller account.
+		 */
+		setupPasswordDescription: () => LocalizedString
+		/**
+		 * New Password
+		 */
+		newPassword: () => LocalizedString
+		/**
+		 * Confirm Password
+		 */
+		confirmNewPassword: () => LocalizedString
+		/**
+		 * Set Password
+		 */
+		setPassword: () => LocalizedString
+		/**
+		 * Your password must be at least 8 characters long and include a mix of letters, numbers, and special characters.
+		 */
+		passwordRequirements: () => LocalizedString
+		/**
+		 * Password must be at least 8 characters long
+		 */
+		passwordTooShort: () => LocalizedString
+		/**
+		 * To confirm this action, please type the seller's username:
+		 */
+		confirmAction: () => LocalizedString
+		/**
+		 * Enter username
+		 */
+		enterUsername: () => LocalizedString
+		/**
+		 * Username does not match
+		 */
+		usernameMismatch: () => LocalizedString
+	}
+	validation: {
+		name: {
+			/**
+			 * Name is required
+			 */
+			required: () => LocalizedString
+			/**
+			 * Name must be at least 2 characters long
+			 */
+			minLength: () => LocalizedString
+			/**
+			 * Name cannot exceed 100 characters
+			 */
+			maxLength: () => LocalizedString
+			/**
+			 * Name can only contain letters, spaces, hyphens, and apostrophes
+			 */
+			invalidCharacters: () => LocalizedString
+		}
+		email: {
+			/**
+			 * Email is required
+			 */
+			required: () => LocalizedString
+			/**
+			 * Email cannot exceed 255 characters
+			 */
+			maxLength: () => LocalizedString
+			/**
+			 * Please enter a valid email address
+			 */
+			invalid: () => LocalizedString
+		}
+		phone: {
+			/**
+			 * Phone number is required
+			 */
+			required: () => LocalizedString
+			/**
+			 * Please enter a valid phone number
+			 */
+			invalid: () => LocalizedString
+		}
+		address: {
+			/**
+			 * Address is required
+			 */
+			required: () => LocalizedString
+			/**
+			 * Address must be at least 3 characters long
+			 */
+			minLength: () => LocalizedString
+			/**
+			 * Address cannot exceed 200 characters
+			 */
+			maxLength: () => LocalizedString
+		}
+		city: {
+			/**
+			 * City is required
+			 */
+			required: () => LocalizedString
+			/**
+			 * City must be at least 2 characters long
+			 */
+			minLength: () => LocalizedString
+			/**
+			 * City cannot exceed 100 characters
+			 */
+			maxLength: () => LocalizedString
+			/**
+			 * City can only contain letters, spaces, hyphens, and apostrophes
+			 */
+			invalidCharacters: () => LocalizedString
+		}
+		state: {
+			/**
+			 * State/Province is required
+			 */
+			required: () => LocalizedString
+			/**
+			 * State/Province must be at least 2 characters long
+			 */
+			minLength: () => LocalizedString
+			/**
+			 * State/Province cannot exceed 100 characters
+			 */
+			maxLength: () => LocalizedString
+			/**
+			 * State/Province can only contain letters, spaces, hyphens, and apostrophes
+			 */
+			invalidCharacters: () => LocalizedString
+		}
+		zipCode: {
+			/**
+			 * ZIP/Postal code is required
+			 */
+			required: () => LocalizedString
+			/**
+			 * ZIP/Postal code must be at least 3 characters long
+			 */
+			minLength: () => LocalizedString
+			/**
+			 * ZIP/Postal code cannot exceed 20 characters
+			 */
+			maxLength: () => LocalizedString
+			/**
+			 * ZIP/Postal code can only contain letters, numbers, spaces, and hyphens
+			 */
+			invalidCharacters: () => LocalizedString
+		}
+		country: {
+			/**
+			 * Country is required
+			 */
+			required: () => LocalizedString
+			/**
+			 * Country must be at least 2 characters long
+			 */
+			minLength: () => LocalizedString
+			/**
+			 * Country cannot exceed 100 characters
+			 */
+			maxLength: () => LocalizedString
+			/**
+			 * Country can only contain letters, spaces, hyphens, and apostrophes
+			 */
+			invalidCharacters: () => LocalizedString
+		}
+		notes: {
+			/**
+			 * Notes cannot exceed 500 characters
+			 */
+			maxLength: () => LocalizedString
+		}
+		general: {
+			/**
+			 * An unexpected validation error occurred
+			 */
+			error: () => LocalizedString
+		}
 	}
 	errors: {
 		/**
@@ -2947,6 +3994,540 @@ export type TranslationFunctions = {
 		 * Last updated
 		 */
 		lastUpdated: () => LocalizedString
+	}
+	tableMenu: {
+		/**
+		 * Filter
+		 */
+		filter: () => LocalizedString
+		/**
+		 * Sort
+		 */
+		sort: () => LocalizedString
+		/**
+		 * Export
+		 */
+		'export': () => LocalizedString
+		/**
+		 * Search
+		 */
+		search: () => LocalizedString
+		/**
+		 * Clear Filter
+		 */
+		clearFilter: () => LocalizedString
+		/**
+		 * Clear Sort
+		 */
+		clearSort: () => LocalizedString
+		/**
+		 * Clear Search
+		 */
+		clearSearch: () => LocalizedString
+		/**
+		 * Show Columns
+		 */
+		showColumns: () => LocalizedString
+		/**
+		 * Hide Columns
+		 */
+		hideColumns: () => LocalizedString
+		/**
+		 * Density
+		 */
+		density: () => LocalizedString
+		/**
+		 * Compact
+		 */
+		densityCompact: () => LocalizedString
+		/**
+		 * Comfortable
+		 */
+		densityComfortable: () => LocalizedString
+		/**
+		 * Spacious
+		 */
+		densitySpacious: () => LocalizedString
+		/**
+		 * Refresh
+		 */
+		refresh: () => LocalizedString
+		/**
+		 * Full Screen
+		 */
+		fullScreen: () => LocalizedString
+		/**
+		 * Exit Full Screen
+		 */
+		exitFullScreen: () => LocalizedString
+		/**
+		 * Column Actions
+		 */
+		columnActions: () => LocalizedString
+		/**
+		 * Row Actions
+		 */
+		rowActions: () => LocalizedString
+		/**
+		 * Select All
+		 */
+		selectAll: () => LocalizedString
+		/**
+		 * Select Row
+		 */
+		selectRow: () => LocalizedString
+		/**
+		 * Toggle Select All
+		 */
+		toggleSelectAll: () => LocalizedString
+		/**
+		 * Toggle Select Row
+		 */
+		toggleSelectRow: () => LocalizedString
+		/**
+		 * Clear Selection
+		 */
+		clearSelection: () => LocalizedString
+		/**
+		 * Expand All
+		 */
+		expandAll: () => LocalizedString
+		/**
+		 * Collapse All
+		 */
+		collapseAll: () => LocalizedString
+		/**
+		 * Expand Row
+		 */
+		expandRow: () => LocalizedString
+		/**
+		 * Collapse Row
+		 */
+		collapseRow: () => LocalizedString
+		/**
+		 * Pin to Left
+		 */
+		pinToLeft: () => LocalizedString
+		/**
+		 * Pin to Right
+		 */
+		pinToRight: () => LocalizedString
+		/**
+		 * Unpin
+		 */
+		unpin: () => LocalizedString
+		/**
+		 * Group By
+		 */
+		groupBy: () => LocalizedString
+		/**
+		 * Ungroup By
+		 */
+		ungroupBy: () => LocalizedString
+		/**
+		 * Aggregate
+		 */
+		aggregate: () => LocalizedString
+		/**
+		 * Clear Aggregation
+		 */
+		clearAggregation: () => LocalizedString
+		/**
+		 * Clear Grouping
+		 */
+		clearGrouping: () => LocalizedString
+		/**
+		 * Clear Sorting
+		 */
+		clearSorting: () => LocalizedString
+		/**
+		 * Clear Filters
+		 */
+		clearFilters: () => LocalizedString
+		/**
+		 * Clear All
+		 */
+		clearAll: () => LocalizedString
+		/**
+		 * Reset
+		 */
+		reset: () => LocalizedString
+		/**
+		 * Reset Columns
+		 */
+		resetColumns: () => LocalizedString
+		/**
+		 * Reset Density
+		 */
+		resetDensity: () => LocalizedString
+		/**
+		 * Reset Filters
+		 */
+		resetFilters: () => LocalizedString
+		/**
+		 * Reset Sorting
+		 */
+		resetSorting: () => LocalizedString
+		/**
+		 * Reset Grouping
+		 */
+		resetGrouping: () => LocalizedString
+		/**
+		 * Reset Pinning
+		 */
+		resetPinning: () => LocalizedString
+		/**
+		 * Reset Expanding
+		 */
+		resetExpanding: () => LocalizedString
+		/**
+		 * Reset Selection
+		 */
+		resetSelection: () => LocalizedString
+		/**
+		 * Reset All
+		 */
+		resetAll: () => LocalizedString
+		/**
+		 * Save
+		 */
+		save: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * Apply
+		 */
+		apply: () => LocalizedString
+		/**
+		 * Close
+		 */
+		close: () => LocalizedString
+		/**
+		 * Open
+		 */
+		open: () => LocalizedString
+		/**
+		 * Edit
+		 */
+		edit: () => LocalizedString
+		/**
+		 * Delete
+		 */
+		'delete': () => LocalizedString
+		/**
+		 * Add
+		 */
+		add: () => LocalizedString
+		/**
+		 * Remove
+		 */
+		remove: () => LocalizedString
+		/**
+		 * Create
+		 */
+		create: () => LocalizedString
+		/**
+		 * Update
+		 */
+		update: () => LocalizedString
+		/**
+		 * Submit
+		 */
+		submit: () => LocalizedString
+		/**
+		 * Confirm
+		 */
+		confirm: () => LocalizedString
+		/**
+		 * Yes
+		 */
+		yes: () => LocalizedString
+		/**
+		 * No
+		 */
+		no: () => LocalizedString
+		/**
+		 * OK
+		 */
+		ok: () => LocalizedString
+		/**
+		 * Loading...
+		 */
+		loading: () => LocalizedString
+		/**
+		 * No Data
+		 */
+		noData: () => LocalizedString
+		/**
+		 * No Results
+		 */
+		noResults: () => LocalizedString
+		/**
+		 * Error
+		 */
+		error: () => LocalizedString
+		/**
+		 * Success
+		 */
+		success: () => LocalizedString
+		/**
+		 * Warning
+		 */
+		warning: () => LocalizedString
+		/**
+		 * Info
+		 */
+		info: () => LocalizedString
+		/**
+		 * Previous
+		 */
+		previous: () => LocalizedString
+		/**
+		 * Next
+		 */
+		next: () => LocalizedString
+		/**
+		 * First
+		 */
+		first: () => LocalizedString
+		/**
+		 * Last
+		 */
+		last: () => LocalizedString
+		/**
+		 * Page
+		 */
+		page: () => LocalizedString
+		/**
+		 * of
+		 */
+		of: () => LocalizedString
+		/**
+		 * Rows per page
+		 */
+		rowsPerPage: () => LocalizedString
+		/**
+		 * Showing {start}-{end} of {total}
+		 */
+		showingRows: (arg: { end: unknown, start: unknown, total: unknown }) => LocalizedString
+		/**
+		 * Total: {total}
+		 */
+		totalRows: (arg: { total: unknown }) => LocalizedString
+		/**
+		 * Filtered: {total}
+		 */
+		filteredRows: (arg: { total: unknown }) => LocalizedString
+		/**
+		 * Selected: {total}
+		 */
+		selectedRows: (arg: { total: unknown }) => LocalizedString
+		/**
+		 * Search...
+		 */
+		searchPlaceholder: () => LocalizedString
+		/**
+		 * Filter...
+		 */
+		filterPlaceholder: () => LocalizedString
+		/**
+		 * Sort Ascending
+		 */
+		sortAscending: () => LocalizedString
+		/**
+		 * Sort Descending
+		 */
+		sortDescending: () => LocalizedString
+		/**
+		 * Sort By
+		 */
+		sortBy: () => LocalizedString
+		/**
+		 * Filter By
+		 */
+		filterBy: () => LocalizedString
+		/**
+		 * Aggregate By
+		 */
+		aggregateBy: () => LocalizedString
+		/**
+		 * Pin To
+		 */
+		pinTo: () => LocalizedString
+		/**
+		 * Unpin From
+		 */
+		unpinFrom: () => LocalizedString
+		/**
+		 * Expand To
+		 */
+		expandTo: () => LocalizedString
+		/**
+		 * Collapse To
+		 */
+		collapseTo: () => LocalizedString
+		/**
+		 * Select To
+		 */
+		selectTo: () => LocalizedString
+		/**
+		 * Deselect To
+		 */
+		deselectTo: () => LocalizedString
+		/**
+		 * Actions
+		 */
+		actions: () => LocalizedString
+		/**
+		 * and
+		 */
+		and: () => LocalizedString
+		/**
+		 * or
+		 */
+		or: () => LocalizedString
+		/**
+		 * Change filter mode
+		 */
+		changeFilterMode: () => LocalizedString
+		/**
+		 * Click to copy
+		 */
+		clickToCopy: () => LocalizedString
+		/**
+		 * Copy to clipboard
+		 */
+		copyToClipboard: () => LocalizedString
+		/**
+		 * Expand
+		 */
+		expand: () => LocalizedString
+		/**
+		 * Filter mode
+		 */
+		filterMode: () => LocalizedString
+		/**
+		 * Global filter
+		 */
+		globalFilter: () => LocalizedString
+		/**
+		 * Hide all
+		 */
+		hideAll: () => LocalizedString
+		/**
+		 * Hide column
+		 */
+		hideColumn: () => LocalizedString
+		/**
+		 * Max
+		 */
+		max: () => LocalizedString
+		/**
+		 * Min
+		 */
+		min: () => LocalizedString
+		/**
+		 * Move
+		 */
+		move: () => LocalizedString
+		/**
+		 * No records to display
+		 */
+		noRecordsToDisplay: () => LocalizedString
+		/**
+		 * No results found
+		 */
+		noResultsFound: () => LocalizedString
+		/**
+		 * Reset column size
+		 */
+		resetColumnSize: () => LocalizedString
+		/**
+		 * Reset column visibility
+		 */
+		resetColumnVisibility: () => LocalizedString
+		/**
+		 * Row number
+		 */
+		rowNumber: () => LocalizedString
+		/**
+		 * Row numbers
+		 */
+		rowNumbers: () => LocalizedString
+		/**
+		 * Select
+		 */
+		select: () => LocalizedString
+		/**
+		 * {selectedCount} of {rowCount} row(s) selected
+		 */
+		selectedCountOfRowCountRowsSelected: (arg: { rowCount: unknown, selectedCount: unknown }) => LocalizedString
+		/**
+		 * Show all
+		 */
+		showAll: () => LocalizedString
+		/**
+		 * Show all columns
+		 */
+		showAllColumns: () => LocalizedString
+		/**
+		 * Show/Hide columns
+		 */
+		showHideColumns: () => LocalizedString
+		/**
+		 * Show/Hide filters
+		 */
+		showHideFilters: () => LocalizedString
+		/**
+		 * Show/Hide search
+		 */
+		showHideSearch: () => LocalizedString
+		/**
+		 * Sort by {column} ascending
+		 */
+		sortByColumnAsc: (arg: { column: unknown }) => LocalizedString
+		/**
+		 * Sort by {column} descending
+		 */
+		sortByColumnDesc: (arg: { column: unknown }) => LocalizedString
+		/**
+		 * Sorted by {column} ascending
+		 */
+		sortedByColumnAsc: (arg: { column: unknown }) => LocalizedString
+		/**
+		 * Sorted by {column} descending
+		 */
+		sortedByColumnDesc: (arg: { column: unknown }) => LocalizedString
+		/**
+		 * then by
+		 */
+		thenBy: () => LocalizedString
+		/**
+		 * Toggle density
+		 */
+		toggleDensity: () => LocalizedString
+		/**
+		 * Toggle full screen
+		 */
+		toggleFullScreen: () => LocalizedString
+		/**
+		 * Toggle visibility
+		 */
+		toggleVisibility: () => LocalizedString
+		/**
+		 * Ungroup by {column}
+		 */
+		ungroupByColumn: (arg: { column: unknown }) => LocalizedString
+		/**
+		 * Unpin all
+		 */
+		unpinAll: () => LocalizedString
+		/**
+		 * Unsorted
+		 */
+		unsorted: () => LocalizedString
 	}
 }
 
