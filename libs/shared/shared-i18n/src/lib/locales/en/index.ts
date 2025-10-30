@@ -47,7 +47,7 @@ const en = {
     shoppingCart: 'Shopping Cart',
     cart: 'Cart',
     sellers: 'Sellers',
-    adminPanel: 'Kickzone Admin Panel',
+    adminPanel: 'Admin Panel',
     sellersPortal: 'Sellers Portal',
     languageSettings: 'Language Settings',
     translations: 'Translation Management',

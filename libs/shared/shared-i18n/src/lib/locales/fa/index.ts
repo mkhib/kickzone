@@ -47,7 +47,7 @@ const fa = {
     shoppingCart: 'سبد خرید',
     cart: 'سبد',
     sellers: 'فروشندگان',
-    adminPanel: 'پنل مدیریت کیک‌زون',
+    adminPanel: 'پنل مدیریت',
     sellersPortal: 'پورتال فروشندگان',
     languageSettings: 'تنظیمات زبان',
     translations: 'مدیریت ترجمه‌ها',
