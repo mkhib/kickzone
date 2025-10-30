@@ -33,14 +33,11 @@ export class SellerService {
   ) {}
 
   async create(createSellerInput: CreateSellerInput): Promise<SellerInfo> {
-    console.log(`Creating new seller with email: ${createSellerInput.email}`);
-
     // Check if email already exists
     const existingUser = await this.userRepository.findOne({
       where: { email: createSellerInput.email },
     });
     if (existingUser) {
-      console.log(`Email ${createSellerInput.email} already exists`);
       throw new Error('Email already exists');
     }
 
@@ -55,7 +52,6 @@ export class SellerService {
       role: UserRole.SELLER,
     });
     await this.userRepository.save(user);
-    console.log(`Created user for seller: ${user.email}`);
 
     // Create seller info
     const newSeller = this.sellerRepository.create({
@@ -65,14 +61,12 @@ export class SellerService {
       user,
     });
     const savedSeller = await this.sellerRepository.save(newSeller);
-    console.log(`Created seller info for: ${user.email}`);
 
     // Initiate password setup
     try {
       const baseUrl =
         process.env['SELLERS_FRONTEND_URL'] || 'https://localhost:4500';
       await this.authService.initiatePasswordSetup(user.email, baseUrl);
-      console.log(`Initiated password setup for seller: ${user.email}`);
     } catch (error) {
       console.error(
         `Failed to initiate password setup for ${user.email}:`,
@@ -197,15 +191,7 @@ export class SellerService {
       stockQuantity: input.stockQuantity,
     });
 
-    console.log(
-      '💾 Creating seller product with productInfoId:',
-      input.productInfoId
-    );
     const saved = await this.sellerProductRepository.save(sellerProduct);
-    console.log(
-      '✅ Saved seller product, productInfoId in DB:',
-      saved.productInfoId
-    );
     return saved;
   }
 

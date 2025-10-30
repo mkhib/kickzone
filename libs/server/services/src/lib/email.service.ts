@@ -21,8 +21,6 @@ export class EmailService {
 
   async sendEmail(to: string, subject: string, html: string) {
     const from = this.configService.get('GMAIL_CUSTOM_FROM_ADDRESS');
-    console.log(`Sending email to: ${to}`);
-    console.log(`Subject: ${subject}`);
 
     const message = [
       'Content-Type: text/html; charset=utf-8',
@@ -47,7 +45,6 @@ export class EmailService {
           raw: encodedMessage,
         },
       });
-      console.log(`Successfully sent email to: ${to}`);
     } catch (error) {
       console.error('Error sending email:', error);
       throw new Error('Failed to send email');

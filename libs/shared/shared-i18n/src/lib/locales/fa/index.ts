@@ -28,6 +28,7 @@ const fa = {
     filterByStatus: 'فیلتر بر اساس وضعیت',
     changeOrderStatus: 'تغییر وضعیت سفارش',
     clear: 'پاک کردن',
+    search: 'جستجو',
     updating: 'در حال به‌روزرسانی...',
     creating: 'در حال ایجاد...',
     updateProduct: 'به‌روزرسانی محصول',

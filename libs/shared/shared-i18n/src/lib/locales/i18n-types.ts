@@ -116,6 +116,10 @@ type RootTranslation = {
 		 */
 		clear: string
 		/**
+		 * S​e​a​r​c​h
+		 */
+		search: string
+		/**
 		 * U​p​d​a​t​i​n​g​.​.​.
 		 */
 		updating: string
@@ -2384,6 +2388,10 @@ export type TranslationFunctions = {
 		 * Clear
 		 */
 		clear: () => LocalizedString
+		/**
+		 * Search
+		 */
+		search: () => LocalizedString
 		/**
 		 * Updating...
 		 */

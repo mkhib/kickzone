@@ -26,6 +26,8 @@ export class TranslationService {
   private readonly logger = new Logger(TranslationService.name);
   private readonly translateApiUrl: string;
 
+  private readonly apiKey: string | undefined;
+
   constructor(
     @InjectRepository(Translation)
     private translationRepository: Repository<Translation>
@@ -36,12 +38,23 @@ export class TranslationService {
       process.env['LIBRE_TRANSLATE_URL'] ||
       'https://libretranslate.com/translate';
 
+    // API key is optional (only needed for public LibreTranslate instance)
+    this.apiKey = process.env['LIBRE_TRANSLATE_API_KEY'];
+
     this.logger.log('🌍 LibreTranslate configured');
     this.logger.log(`📡 API URL: ${this.translateApiUrl}`);
-    this.logger.log('✅ No API key required - using free public instance');
-    this.logger.log(
-      '💡 To self-host: docker run -ti --rm -p 5000:5000 libretranslate/libretranslate'
-    );
+
+    if (this.apiKey) {
+      this.logger.log('🔑 API key configured');
+    } else {
+      this.logger.warn('⚠️  No API key - translations may fail');
+      this.logger.warn(
+        '💡 Get API key from: https://portal.libretranslate.com'
+      );
+      this.logger.log(
+        '💡 OR self-host: docker run -ti --rm -p 5000:5000 libretranslate/libretranslate'
+      );
+    }
   }
 
   /**
@@ -410,22 +423,26 @@ export class TranslationService {
         `🔄 Calling LibreTranslate API: "${text}" → ${targetLang}`
       );
 
+      // Prepare request body
+      const requestBody: any = {
+        q: text,
+        source: 'en', // Assuming source is always English
+        target: targetLang,
+        format: 'text',
+      };
+
+      // Add API key if available
+      if (this.apiKey) {
+        requestBody.api_key = this.apiKey;
+      }
+
       // Call LibreTranslate API
-      const response = await axios.post(
-        this.translateApiUrl,
-        {
-          q: text,
-          source: 'en', // Assuming source is always English
-          target: targetLang,
-          format: 'text',
+      const response = await axios.post(this.translateApiUrl, requestBody, {
+        headers: {
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          timeout: 10000, // 10 second timeout
-        }
-      );
+        timeout: 10000, // 10 second timeout
+      });
 
       const translatedText = response.data.translatedText;
       const duration = Date.now() - startTime;

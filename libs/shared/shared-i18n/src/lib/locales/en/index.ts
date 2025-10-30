@@ -28,6 +28,7 @@ const en = {
     filterByStatus: 'Filter by Status',
     changeOrderStatus: 'Change Order Status',
     clear: 'Clear',
+    search: 'Search',
     updating: 'Updating...',
     creating: 'Creating...',
     updateProduct: 'Update Product',

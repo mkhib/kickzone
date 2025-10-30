@@ -184,6 +184,13 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
           },
         },
       },
+      MuiButton: {
+        styleOverrides: {
+          root: {
+            textTransform: 'none',
+          },
+        },
+      },
     },
   });
 

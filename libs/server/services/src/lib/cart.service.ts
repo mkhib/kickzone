@@ -96,15 +96,7 @@ export class CartService {
       cartItem.sellerProductId = sellerProduct.id;
       cartItem.availableStock = sellerProduct.stockQuantity;
 
-      console.log('💾 Creating cart item from database data:', {
-        productId: cartItem.productId,
-        sellerProductId: cartItem.sellerProductId,
-        unitPrice: cartItem.unitPrice,
-        totalPrice: cartItem.totalPrice,
-      });
-
       await this.cartItemRepository.save(cartItem);
-      console.log('✅ Saved new cart item to database');
     }
 
     // Recalculate cart totals
@@ -156,15 +148,11 @@ export class CartService {
   }
 
   async clearCart(userId: string): Promise<Cart> {
-    console.log('🧹 Clearing cart for user:', userId);
     const cart = await this.getOrCreateCart(userId);
-
-    console.log(`📊 Cart has ${cart.items?.length || 0} items before clear`);
 
     // Remove all items using the entities (more reliable than delete query)
     if (cart.items && cart.items.length > 0) {
       await this.cartItemRepository.remove(cart.items);
-      console.log(`🗑️ Removed ${cart.items.length} items from cart`);
     }
 
     // Reset cart totals
@@ -173,13 +161,8 @@ export class CartService {
     cart.items = []; // Clear items array
     await this.cartRepository.save(cart);
 
-    console.log('✅ Cart cleared successfully');
-
     // Verify it's actually cleared
     const freshCart = await this.getOrCreateCart(userId);
-    console.log(
-      `🔍 Verification: Cart now has ${freshCart.items?.length || 0} items`
-    );
 
     return freshCart;
   }

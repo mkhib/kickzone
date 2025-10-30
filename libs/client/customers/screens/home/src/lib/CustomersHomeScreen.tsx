@@ -18,13 +18,15 @@ import Select from '@mui/material/Select';
 import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import Paper from '@mui/material/Paper';
 import Fade from '@mui/material/Fade';
+import Paper from '@mui/material/Paper';
 import { useCallback, useState } from 'react';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
+import Button from '@mui/material/Button';
 
 export function CustomersHome() {
+  const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('price');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
@@ -40,6 +42,21 @@ export function CustomersHome() {
   });
 
   const { addItem } = useCustomersCartService();
+
+  // Handle search submission (Enter key or button click)
+  const handleSearch = useCallback(() => {
+    setSearch(searchInput);
+  }, [searchInput]);
+
+  // Handle Enter key in search input
+  const handleKeyPress = useCallback(
+    (e: React.KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Enter') {
+        handleSearch();
+      }
+    },
+    [handleSearch]
+  );
 
   // Add to cart logic
   const handleAddToCart = useCallback(
@@ -104,19 +121,12 @@ export function CustomersHome() {
           <Fade in timeout={1000}>
             <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
               {/* Hero Title with Glassmorphic Background */}
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 4,
-                  mb: 4,
-                  borderRadius: 6,
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(25px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(25px) saturate(180%)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
+              <GlassmorphismContainer
+                wrapperSx={{ mb: 4, p: 0 }}
+                containerSx={{
                   position: 'relative',
                   overflow: 'hidden',
+                  background: 'rgba(255, 255, 255, 0.15)',
                   '&::before': {
                     content: '""',
                     position: 'absolute',
@@ -162,21 +172,15 @@ export function CustomersHome() {
                 >
                   Discover premium sneakers from top brands
                 </Typography>
-              </Paper>
+              </GlassmorphismContainer>
 
               {/* Search and Filter Bar */}
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 4,
-                  borderRadius: 6,
-                  background: 'rgba(255, 255, 255, 0.25)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                  border: '1px solid rgba(255, 255, 255, 0.3)',
-                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.25)',
+              <GlassmorphismContainer
+                wrapperSx={{ p: 0 }}
+                containerSx={{
                   position: 'relative',
                   overflow: 'hidden',
+                  background: 'rgba(255, 255, 255, 0.25)',
                   '&::before': {
                     content: '""',
                     position: 'absolute',
@@ -202,8 +206,9 @@ export function CustomersHome() {
                   <TextField
                     variant="outlined"
                     placeholder={LL.form.searchProducts()}
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
+                    value={searchInput}
+                    onChange={(e) => setSearchInput(e.target.value)}
+                    onKeyPress={handleKeyPress}
                     sx={{
                       flex: 1,
                       minWidth: { xs: '100%', sm: 280 },
@@ -219,6 +224,25 @@ export function CustomersHome() {
                       ),
                     }}
                   />
+                  <Button
+                    variant="contained"
+                    onClick={handleSearch}
+                    sx={{
+                      borderRadius: 4,
+                      px: 4,
+                      py: 1.5,
+                      background:
+                        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      boxShadow: '0 4px 15px 0 rgba(102, 126, 234, 0.4)',
+                      '&:hover': {
+                        background:
+                          'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                        boxShadow: '0 6px 20px 0 rgba(102, 126, 234, 0.6)',
+                      },
+                    }}
+                  >
+                    {LL.button.search()}
+                  </Button>
                   <FormControl
                     sx={{
                       minWidth: { xs: '100%', sm: 240 },
@@ -270,7 +294,7 @@ export function CustomersHome() {
                     </Select>
                   </FormControl>
                 </Stack>
-              </Paper>
+              </GlassmorphismContainer>
             </Box>
           </Fade>
         </Container>
@@ -380,42 +404,51 @@ export function CustomersHome() {
             </Paper>
           </Box>
         ) : (
-          <Fade in timeout={800}>
-            <Grid
-              container
-              spacing={{ xs: 2, sm: 3, md: 4 }}
-              sx={products.length === 1 ? { justifyContent: 'center' } : {}}
-            >
-              {products.map((product, index) => (
-                <Grid
-                  key={product.id}
-                  size={
-                    products.length === 1
-                      ? { xs: 12, sm: 8, md: 6, lg: 4, xl: 4 }
-                      : { xs: 12, sm: 6, md: 4, lg: 3 }
-                  }
-                  sx={{
-                    animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
-                    '@keyframes fadeInUp': {
-                      '0%': {
-                        opacity: 0,
-                        transform: 'translateY(30px)',
+          <GlassmorphismContainer
+            wrapperSx={{ p: 0 }}
+            containerSx={{
+              background: 'rgba(255, 255, 255, 0.1)',
+              backdropFilter: 'blur(15px) saturate(180%)',
+              WebkitBackdropFilter: 'blur(15px) saturate(180%)',
+            }}
+          >
+            <Fade in timeout={800}>
+              <Grid
+                container
+                spacing={{ xs: 2, sm: 3, md: 4 }}
+                sx={products.length === 1 ? { justifyContent: 'center' } : {}}
+              >
+                {products.map((product, index) => (
+                  <Grid
+                    key={product.id}
+                    size={
+                      products.length === 1
+                        ? { xs: 12, sm: 8, md: 6, lg: 4, xl: 4 }
+                        : { xs: 12, sm: 6, md: 4, lg: 3 }
+                    }
+                    sx={{
+                      animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
+                      '@keyframes fadeInUp': {
+                        '0%': {
+                          opacity: 0,
+                          transform: 'translateY(30px)',
+                        },
+                        '100%': {
+                          opacity: 1,
+                          transform: 'translateY(0)',
+                        },
                       },
-                      '100%': {
-                        opacity: 1,
-                        transform: 'translateY(0)',
-                      },
-                    },
-                  }}
-                >
-                  <CustomersProductCard
-                    product={product}
-                    onAddToCart={handleAddToCart}
-                  />
-                </Grid>
-              ))}
-            </Grid>
-          </Fade>
+                    }}
+                  >
+                    <CustomersProductCard
+                      product={product}
+                      onAddToCart={handleAddToCart}
+                    />
+                  </Grid>
+                ))}
+              </Grid>
+            </Fade>
+          </GlassmorphismContainer>
         )}
       </Container>
     </CustomersLayout>

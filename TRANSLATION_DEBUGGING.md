@@ -9,11 +9,20 @@ LibreTranslate works **without any configuration** by default! It uses the free 
 **Optional**: If you want to use a custom instance, add to `.env` file in project root:
 
 ```bash
-# Optional - only if using custom instance
-LIBRE_TRANSLATE_URL=https://your-custom-instance.com/translate
+# Option 1: Add API key for public LibreTranslate instance
+LIBRE_TRANSLATE_API_KEY=your_api_key_here
+
+# Option 2: Use self-hosted LibreTranslate instance (no API key needed)
+LIBRE_TRANSLATE_URL=http://localhost:5000/translate
 ```
 
 ⚠️ **Note**: The `.env` file must be in the **root directory** (same level as `package.json`), NOT in `apps/kickzone-api/`
+
+💡 **Recommended**: Use self-hosted instance for development (no API key needed):
+
+```bash
+docker run -ti --rm -p 5000:5000 libretranslate/libretranslate
+```
 
 ### Step 2: Restart the API Server
 
@@ -96,7 +105,40 @@ Response: {"error": "Too Many Requests"}
   docker run -ti --rm -p 5000:5000 libretranslate/libretranslate
   ```
 
-#### Error 5: "Bad request"
+#### Error 5: "API key required"
+
+```
+Status: 400
+Response: {"error":"Visit https://portal.libretranslate.com to get an API key"}
+```
+
+**Solution (Choose ONE):**
+
+**Option A: Get API Key (Recommended for production)**
+
+1. Visit https://portal.libretranslate.com
+2. Create a free account and get your API key
+3. Add to `.env` file in project root:
+   ```bash
+   LIBRE_TRANSLATE_API_KEY=your_api_key_here
+   ```
+4. Restart the API server
+
+**Option B: Self-Host LibreTranslate (Recommended for development)**
+
+```bash
+docker run -ti --rm -p 5000:5000 libretranslate/libretranslate
+```
+
+Then set in `.env`:
+
+```bash
+LIBRE_TRANSLATE_URL=http://localhost:5000/translate
+```
+
+Self-hosted instances don't require an API key.
+
+#### Error 6: "Bad request"
 
 ```
 Status: 400
