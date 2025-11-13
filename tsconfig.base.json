@@ -218,6 +218,9 @@
         "libs/client/shared/hooks/products/src/index.ts"
       ],
       "@kickzone-workspace/resolvers": ["libs/server/resolvers/src/index.ts"],
+      "@kickzone-workspace/rtl-table-utils": [
+        "libs/client/shared/components/rtl-table-utils/src/index.ts"
+      ],
       "@kickzone-workspace/seller-orders-screen": [
         "libs/client/sellers/screens/seller-orders/src/index.ts"
       ],

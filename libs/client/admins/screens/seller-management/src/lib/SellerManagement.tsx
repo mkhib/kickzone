@@ -10,6 +10,14 @@ import {
   useI18nContext,
   useLanguageContext,
 } from '@kickzone-workspace/shared-i18n';
+import {
+  useTableAlignment,
+  getRTLTableProps,
+  createRTLTextColumn,
+  createRTLStatusColumn,
+  RTLStatusCell,
+  getRTLColumnProps,
+} from '@kickzone-workspace/rtl-table-utils';
 import { MRT_Localization_FA } from 'material-react-table/locales/fa';
 import { MRT_Localization_EN } from 'material-react-table/locales/en';
 import type { MRT_Localization } from 'material-react-table';
@@ -41,11 +49,8 @@ type SellerFilterInput = KickzoneGraphqlTypes.SellerFilterInput;
 
 export const SellerManagement = () => {
   const { LL } = useI18nContext();
-  const { isRTL, currentLocale } = useLanguageContext();
-
-  // Ensure RTL is correctly determined for Farsi
-  const isFarsi = currentLocale === 'fa';
-  const alignment: 'left' | 'right' | 'center' = isFarsi ? 'right' : 'left';
+  const { isRTL } = useLanguageContext();
+  const { alignment, isFarsi, currentLocale } = useTableAlignment();
 
   // Convert Western numerals to Farsi numerals
   const toFarsiNumber = (num: number | string): string => {
@@ -134,285 +139,41 @@ export const SellerManagement = () => {
 
   const columns: MRT_ColumnDef<Seller>[] = useMemo(() => {
     const dataColumns: MRT_ColumnDef<Seller>[] = [
+      createRTLTextColumn<Seller>('user.name', LL.table.name(), { alignment }),
+      createRTLTextColumn<Seller>('user.lastName', LL.table.lastName(), {
+        alignment,
+      }),
+      createRTLTextColumn<Seller>('user.username', LL.table.username(), {
+        alignment,
+      }),
+      createRTLTextColumn<Seller>('user.email', LL.table.email(), {
+        alignment,
+      }),
+      createRTLTextColumn<Seller>('storeName', LL.table.storeName(), {
+        alignment,
+      }),
+      createRTLTextColumn<Seller>('phone', LL.table.phone(), { alignment }),
+      createRTLTextColumn<Seller>('address', LL.table.address(), { alignment }),
       {
-        accessorKey: 'user.name',
-        header: LL.table.name(),
-        Cell: ({ cell }) => (
-          <Typography
-            component="div"
-            sx={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-            style={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-          >
-            {cell.getValue<string>() || ''}
-          </Typography>
-        ),
-        muiTableBodyCellProps: {
-          align: alignment,
-          sx: {
-            textAlign: alignment,
-            '& > *': {
-              textAlign: alignment,
-            },
-          },
-        },
-        muiTableHeadCellProps: {
-          sx: {
-            textAlign: alignment,
-          },
-        },
-      },
-      {
-        accessorKey: 'user.lastName',
-        header: LL.table.lastName(),
-        Cell: ({ cell }) => (
-          <Typography
-            component="div"
-            sx={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-            style={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-          >
-            {cell.getValue<string>() || ''}
-          </Typography>
-        ),
-        muiTableBodyCellProps: {
-          align: alignment,
-          sx: {
-            textAlign: alignment,
-            '& > *': {
-              textAlign: alignment,
-            },
-          },
-        },
-        muiTableHeadCellProps: {
-          sx: {
-            textAlign: alignment,
-          },
-        },
-      },
-      {
-        accessorKey: 'user.username',
-        header: LL.table.username(),
-        Cell: ({ cell }) => (
-          <Typography
-            component="div"
-            sx={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-            style={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-          >
-            {cell.getValue<string>() || ''}
-          </Typography>
-        ),
-        muiTableBodyCellProps: {
-          align: alignment,
-          sx: {
-            textAlign: alignment,
-            '& > *': {
-              textAlign: alignment,
-            },
-          },
-        },
-        muiTableHeadCellProps: {
-          sx: {
-            textAlign: alignment,
-          },
-        },
-      },
-      {
-        accessorKey: 'user.email',
-        header: LL.table.email(),
-        Cell: ({ cell }) => (
-          <Typography
-            component="div"
-            sx={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-            style={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-          >
-            {cell.getValue<string>() || ''}
-          </Typography>
-        ),
-        muiTableBodyCellProps: {
-          align: alignment,
-          sx: {
-            textAlign: alignment,
-            '& > *': {
-              textAlign: alignment,
-            },
-          },
-        },
-        muiTableHeadCellProps: {
-          sx: {
-            textAlign: alignment,
-          },
-        },
-      },
-      {
-        accessorKey: 'storeName',
-        header: LL.table.storeName(),
-        Cell: ({ cell }) => (
-          <Typography
-            component="div"
-            sx={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-            style={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-          >
-            {cell.getValue<string>() || ''}
-          </Typography>
-        ),
-        muiTableBodyCellProps: {
-          align: alignment,
-          sx: {
-            textAlign: alignment,
-            '& > *': {
-              textAlign: alignment,
-            },
-          },
-        },
-        muiTableHeadCellProps: {
-          sx: {
-            textAlign: alignment,
-          },
-        },
-      },
-      {
-        accessorKey: 'phone',
-        header: LL.table.phone(),
-        Cell: ({ cell }) => (
-          <Typography
-            component="div"
-            sx={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-            style={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-          >
-            {cell.getValue<string>() || ''}
-          </Typography>
-        ),
-        muiTableBodyCellProps: {
-          align: alignment,
-          sx: {
-            textAlign: alignment,
-            '& > *': {
-              textAlign: alignment,
-            },
-          },
-        },
-        muiTableHeadCellProps: {
-          sx: {
-            textAlign: alignment,
-          },
-        },
-      },
-      {
-        accessorKey: 'address',
-        header: LL.table.address(),
-        Cell: ({ cell }) => (
-          <Typography
-            component="div"
-            sx={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-            style={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-          >
-            {cell.getValue<string>() || ''}
-          </Typography>
-        ),
-        muiTableBodyCellProps: {
-          align: alignment,
-          sx: {
-            textAlign: alignment,
-            '& > *': {
-              textAlign: alignment,
-            },
-          },
-        },
-        muiTableHeadCellProps: {
-          sx: {
-            textAlign: alignment,
-          },
-        },
-      },
-      {
-        accessorKey: 'isActive',
-        header: LL.table.status(),
-        Cell: ({ row }) => (
-          <Box
-            sx={{
-              color: row.original.isActive ? 'success.main' : 'error.main',
-              fontWeight: 'bold',
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-            style={{
-              textAlign: alignment,
-              width: '100%',
-              display: 'block',
-            }}
-          >
-            {row.original.isActive ? LL.table.active() : LL.table.inactive()}
-          </Box>
-        ),
-        muiTableBodyCellProps: {
-          align: alignment,
-          sx: {
-            textAlign: alignment,
-            '& > *': {
-              textAlign: alignment,
-            },
-          },
-        },
-        muiTableHeadCellProps: {
-          sx: {
-            textAlign: alignment,
-          },
+        ...createRTLStatusColumn<Seller>('isActive', LL.table.status(), {
+          alignment,
+          activeColor: 'success.main',
+          inactiveColor: 'error.main',
+          getIsActive: (row) => row.isActive,
+        }),
+        Cell: ({ row }) => {
+          const statusText = row.original.isActive
+            ? LL.table.active()
+            : LL.table.inactive();
+          return (
+            <RTLStatusCell
+              alignment={alignment}
+              value={statusText}
+              isActive={row.original.isActive}
+              activeColor="success.main"
+              inactiveColor="error.main"
+            />
+          );
         },
       },
     ];
@@ -420,16 +181,7 @@ export const SellerManagement = () => {
     const actionsColumn: MRT_ColumnDef<Seller> = {
       id: 'actions',
       header: LL.table.actions(),
-      muiTableBodyCellProps: {
-        sx: {
-          textAlign: alignment,
-        },
-      },
-      muiTableHeadCellProps: {
-        sx: {
-          textAlign: alignment,
-        },
-      },
+      ...getRTLColumnProps(alignment),
       Cell: ({ row }) => (
         <Box
           sx={{
@@ -516,36 +268,14 @@ export const SellerManagement = () => {
   const isDeleteEnabled =
     selectedSeller && usernameConfirmation === selectedSeller.user.username;
 
-  const table = useMaterialReactTable({
+  const table = useMaterialReactTable<Seller>({
     columns,
     data: sellersData,
     state: { isLoading: isLoadingSellers },
     enableRowActions: false, // Disable built-in row actions to prevent duplicate actions column
     enableColumnOrdering: false, // Disable manual column ordering to respect our order
     localization: tableLocalization,
-    muiTableHeadCellProps: {
-      sx: {
-        textAlign: alignment,
-        '& .MuiTableSortLabel-root': {
-          justifyContent: isFarsi ? 'flex-end' : 'flex-start',
-        },
-      },
-    },
-    muiTableBodyCellProps: {
-      align: alignment,
-      sx: {
-        textAlign: alignment,
-        '& > *': {
-          textAlign: alignment,
-        },
-        '& .MuiBox-root': {
-          textAlign: alignment,
-        },
-        '& .MuiTypography-root': {
-          textAlign: alignment,
-        },
-      },
-    },
+    ...getRTLTableProps({ alignment, isFarsi }),
     renderTopToolbarCustomActions: () => (
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Button
