@@ -49,6 +49,9 @@ export function createTableLocalization(
     toggleVisibility: LL.tableMenu.toggleVisibility(),
     unpin: LL.tableMenu.unpin(),
     unpinAll: LL.tableMenu.unpinAll(),
+    // Note: sortByColumnAsc/Desc and other sort/filter properties require column parameters
+    // which MaterialReactTable provides. These are handled by built-in localizations
+    // (MRT_Localization_FA/EN) when used, or can be overridden in components that use this hook.
   };
 }
 

@@ -178,7 +178,7 @@ type RootTranslation = {
 		 */
 		sellers: string
 		/**
-		 * K​i​c​k​z​o​n​e​ ​A​d​m​i​n​ ​P​a​n​e​l
+		 * A​d​m​i​n​ ​P​a​n​e​l
 		 */
 		adminPanel: string
 		/**
@@ -2284,6 +2284,84 @@ type RootTranslation = {
 		 */
 		unsorted: string
 	}
+	admin: {
+		translationManagement: {
+			/**
+			 * T​r​a​n​s​l​a​t​i​o​n​ ​M​a​n​a​g​e​m​e​n​t
+			 */
+			title: string
+			/**
+			 * M​a​n​a​g​e​ ​t​r​a​n​s​l​a​t​i​o​n​s​ ​f​o​r​ ​c​a​t​e​g​o​r​i​e​s​ ​a​n​d​ ​c​o​l​o​r​s​.​ ​C​l​i​c​k​ ​"​A​u​t​o​-​t​r​a​n​s​l​a​t​e​"​ ​t​o​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​g​e​n​e​r​a​t​e​ ​t​r​a​n​s​l​a​t​i​o​n​s​.
+			 */
+			description: string
+			/**
+			 * C​a​t​e​g​o​r​i​e​s
+			 */
+			categories: string
+			/**
+			 * C​o​l​o​r​s
+			 */
+			colors: string
+			/**
+			 * C​a​t​e​g​o​r​y​ ​T​r​a​n​s​l​a​t​i​o​n​s
+			 */
+			categoryTranslations: string
+			/**
+			 * C​o​l​o​r​ ​T​r​a​n​s​l​a​t​i​o​n​s
+			 */
+			colorTranslations: string
+			/**
+			 * T​r​a​n​s​l​a​t​e​ ​t​o​ ​O​t​h​e​r​ ​L​a​n​g​u​a​g​e​s
+			 */
+			translateToOtherLanguages: string
+			/**
+			 * L​o​a​d​i​n​g​ ​c​o​l​o​r​s​.​.​.
+			 */
+			loadingColors: string
+			/**
+			 * C​o​l​o​r​ ​(​E​n​g​l​i​s​h​)
+			 */
+			colorEnglish: string
+			/**
+			 * H​e​x​ ​C​o​d​e
+			 */
+			hexCode: string
+			/**
+			 * T​r​a​n​s​l​a​t​i​o​n​s​ ​f​o​r​ ​{​e​n​t​i​t​y​T​y​p​e​}​:​ ​{​e​n​t​i​t​y​N​a​m​e​}
+			 * @param {unknown} entityName
+			 * @param {unknown} entityType
+			 */
+			translationsFor: RequiredParams<'entityName' | 'entityType'>
+			/**
+			 * L​a​n​g​u​a​g​e
+			 */
+			language: string
+			/**
+			 * T​r​a​n​s​l​a​t​i​o​n
+			 */
+			translation: string
+			/**
+			 * N​o​ ​t​r​a​n​s​l​a​t​i​o​n
+			 */
+			noTranslation: string
+			/**
+			 * T​r​a​n​s​l​a​t​i​o​n​ ​s​a​v​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+			 */
+			translationSavedSuccessfully: string
+			/**
+			 * F​a​i​l​e​d​ ​t​o​ ​s​a​v​e​ ​t​r​a​n​s​l​a​t​i​o​n
+			 */
+			failedToSaveTranslation: string
+			/**
+			 * B​u​l​k​ ​t​r​a​n​s​l​a​t​i​o​n​ ​c​o​m​p​l​e​t​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+			 */
+			bulkTranslationCompletedSuccessfully: string
+			/**
+			 * B​u​l​k​ ​t​r​a​n​s​l​a​t​i​o​n​ ​f​a​i​l​e​d
+			 */
+			bulkTranslationFailed: string
+		}
+	}
 }
 
 export type TranslationFunctions = {
@@ -2451,7 +2529,7 @@ export type TranslationFunctions = {
 		 */
 		sellers: () => LocalizedString
 		/**
-		 * Kickzone Admin Panel
+		 * Admin Panel
 		 */
 		adminPanel: () => LocalizedString
 		/**
@@ -4536,6 +4614,82 @@ export type TranslationFunctions = {
 		 * Unsorted
 		 */
 		unsorted: () => LocalizedString
+	}
+	admin: {
+		translationManagement: {
+			/**
+			 * Translation Management
+			 */
+			title: () => LocalizedString
+			/**
+			 * Manage translations for categories and colors. Click "Auto-translate" to automatically generate translations.
+			 */
+			description: () => LocalizedString
+			/**
+			 * Categories
+			 */
+			categories: () => LocalizedString
+			/**
+			 * Colors
+			 */
+			colors: () => LocalizedString
+			/**
+			 * Category Translations
+			 */
+			categoryTranslations: () => LocalizedString
+			/**
+			 * Color Translations
+			 */
+			colorTranslations: () => LocalizedString
+			/**
+			 * Translate to Other Languages
+			 */
+			translateToOtherLanguages: () => LocalizedString
+			/**
+			 * Loading colors...
+			 */
+			loadingColors: () => LocalizedString
+			/**
+			 * Color (English)
+			 */
+			colorEnglish: () => LocalizedString
+			/**
+			 * Hex Code
+			 */
+			hexCode: () => LocalizedString
+			/**
+			 * Translations for {entityType}: {entityName}
+			 */
+			translationsFor: (arg: { entityName: unknown, entityType: unknown }) => LocalizedString
+			/**
+			 * Language
+			 */
+			language: () => LocalizedString
+			/**
+			 * Translation
+			 */
+			translation: () => LocalizedString
+			/**
+			 * No translation
+			 */
+			noTranslation: () => LocalizedString
+			/**
+			 * Translation saved successfully
+			 */
+			translationSavedSuccessfully: () => LocalizedString
+			/**
+			 * Failed to save translation
+			 */
+			failedToSaveTranslation: () => LocalizedString
+			/**
+			 * Bulk translation completed successfully
+			 */
+			bulkTranslationCompletedSuccessfully: () => LocalizedString
+			/**
+			 * Bulk translation failed
+			 */
+			bulkTranslationFailed: () => LocalizedString
+		}
 	}
 }
 

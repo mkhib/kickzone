@@ -668,6 +668,30 @@ const en = {
     unpinAll: 'Unpin all',
     unsorted: 'Unsorted',
   },
+  admin: {
+    translationManagement: {
+      title: 'Translation Management',
+      description:
+        'Manage translations for categories and colors. Click "Auto-translate" to automatically generate translations.',
+      categories: 'Categories',
+      colors: 'Colors',
+      categoryTranslations: 'Category Translations',
+      colorTranslations: 'Color Translations',
+      translateToOtherLanguages: 'Translate to Other Languages',
+      loadingColors: 'Loading colors...',
+      colorEnglish: 'Color (English)',
+      hexCode: 'Hex Code',
+      translationsFor: 'Translations for {entityType}: {entityName}',
+      language: 'Language',
+      translation: 'Translation',
+      noTranslation: 'No translation',
+      translationSavedSuccessfully: 'Translation saved successfully',
+      failedToSaveTranslation: 'Failed to save translation',
+      bulkTranslationCompletedSuccessfully:
+        'Bulk translation completed successfully',
+      bulkTranslationFailed: 'Bulk translation failed',
+    },
+  },
 } satisfies BaseTranslation;
 
 export default en;

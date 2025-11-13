@@ -304,6 +304,11 @@ const fa = {
       'آیا مطمئن هستید که می‌خواهید این محصول را بایگانی کنید؟',
     showingProducts: 'نمایش {count} از {total} محصول',
     errorLoadingProducts: 'خطا در بارگذاری محصولات',
+    translationManagement: {
+      title: 'مدیریت ترجمه',
+      description:
+        'مدیریت ترجمه‌های دسته‌بندی‌ها و رنگ‌ها. برای تولید خودکار ترجمه‌ها روی "ترجمه خودکار" کلیک کنید.',
+    },
   },
 } satisfies BaseTranslation;
 

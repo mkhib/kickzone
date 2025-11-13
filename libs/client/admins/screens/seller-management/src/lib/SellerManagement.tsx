@@ -9,8 +9,10 @@ import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-contai
 import {
   useI18nContext,
   useLanguageContext,
-  useTableLocalization,
 } from '@kickzone-workspace/shared-i18n';
+import { MRT_Localization_FA } from 'material-react-table/locales/fa';
+import { MRT_Localization_EN } from 'material-react-table/locales/en';
+import type { MRT_Localization } from 'material-react-table';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
@@ -39,8 +41,50 @@ type SellerFilterInput = KickzoneGraphqlTypes.SellerFilterInput;
 
 export const SellerManagement = () => {
   const { LL } = useI18nContext();
-  const { isRTL } = useLanguageContext();
-  const tableLocalization = useTableLocalization();
+  const { isRTL, currentLocale } = useLanguageContext();
+
+  // Ensure RTL is correctly determined for Farsi
+  const isFarsi = currentLocale === 'fa';
+  const alignment: 'left' | 'right' | 'center' = isFarsi ? 'right' : 'left';
+
+  // Convert Western numerals to Farsi numerals
+  const toFarsiNumber = (num: number | string): string => {
+    const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+    return String(num).replace(/\d/g, (digit) => farsiDigits[parseInt(digit)]);
+  };
+
+  // Format numbers in strings for Farsi locale
+  const formatNumbersInString = (str: string): string => {
+    if (currentLocale !== 'fa') return str;
+    return str.replace(/\d+/g, (match) => toFarsiNumber(match));
+  };
+
+  // Use built-in MaterialReactTable localizations and merge with custom overrides
+  const baseLocalization =
+    currentLocale === 'fa'
+      ? MRT_Localization_FA
+      : currentLocale === 'en'
+      ? MRT_Localization_EN
+      : MRT_Localization_EN; // Fallback to English
+
+  // Merge with custom translations and format numbers
+  const tableLocalization: Partial<MRT_Localization> = {
+    ...baseLocalization,
+    // Override sort strings with correct Farsi word order
+    // MaterialReactTable expects string templates with {column} placeholder
+    sortByColumnAsc: formatNumbersInString(
+      LL.tableMenu.sortByColumnAsc({ column: '{column}' })
+    ),
+    sortByColumnDesc: formatNumbersInString(
+      LL.tableMenu.sortByColumnDesc({ column: '{column}' })
+    ),
+    sortedByColumnAsc: formatNumbersInString(
+      LL.tableMenu.sortedByColumnAsc({ column: '{column}' })
+    ),
+    sortedByColumnDesc: formatNumbersInString(
+      LL.tableMenu.sortedByColumnDesc({ column: '{column}' })
+    ),
+  };
   const [filter, setFilter] = useState<SellerFilterInput>({
     isActive: true,
   });
@@ -94,64 +138,246 @@ export const SellerManagement = () => {
         accessorKey: 'user.name',
         header: LL.table.name(),
         Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {cell.getValue<string>()}
-          </div>
+          <Typography
+            component="div"
+            sx={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+            style={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+          >
+            {cell.getValue<string>() || ''}
+          </Typography>
         ),
+        muiTableBodyCellProps: {
+          align: alignment,
+          sx: {
+            textAlign: alignment,
+            '& > *': {
+              textAlign: alignment,
+            },
+          },
+        },
+        muiTableHeadCellProps: {
+          sx: {
+            textAlign: alignment,
+          },
+        },
       },
       {
         accessorKey: 'user.lastName',
         header: LL.table.lastName(),
         Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {cell.getValue<string>()}
-          </div>
+          <Typography
+            component="div"
+            sx={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+            style={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+          >
+            {cell.getValue<string>() || ''}
+          </Typography>
         ),
+        muiTableBodyCellProps: {
+          align: alignment,
+          sx: {
+            textAlign: alignment,
+            '& > *': {
+              textAlign: alignment,
+            },
+          },
+        },
+        muiTableHeadCellProps: {
+          sx: {
+            textAlign: alignment,
+          },
+        },
       },
       {
         accessorKey: 'user.username',
         header: LL.table.username(),
         Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {cell.getValue<string>()}
-          </div>
+          <Typography
+            component="div"
+            sx={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+            style={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+          >
+            {cell.getValue<string>() || ''}
+          </Typography>
         ),
+        muiTableBodyCellProps: {
+          align: alignment,
+          sx: {
+            textAlign: alignment,
+            '& > *': {
+              textAlign: alignment,
+            },
+          },
+        },
+        muiTableHeadCellProps: {
+          sx: {
+            textAlign: alignment,
+          },
+        },
       },
       {
         accessorKey: 'user.email',
         header: LL.table.email(),
         Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {cell.getValue<string>()}
-          </div>
+          <Typography
+            component="div"
+            sx={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+            style={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+          >
+            {cell.getValue<string>() || ''}
+          </Typography>
         ),
+        muiTableBodyCellProps: {
+          align: alignment,
+          sx: {
+            textAlign: alignment,
+            '& > *': {
+              textAlign: alignment,
+            },
+          },
+        },
+        muiTableHeadCellProps: {
+          sx: {
+            textAlign: alignment,
+          },
+        },
       },
       {
         accessorKey: 'storeName',
         header: LL.table.storeName(),
         Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {cell.getValue<string>()}
-          </div>
+          <Typography
+            component="div"
+            sx={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+            style={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+          >
+            {cell.getValue<string>() || ''}
+          </Typography>
         ),
+        muiTableBodyCellProps: {
+          align: alignment,
+          sx: {
+            textAlign: alignment,
+            '& > *': {
+              textAlign: alignment,
+            },
+          },
+        },
+        muiTableHeadCellProps: {
+          sx: {
+            textAlign: alignment,
+          },
+        },
       },
       {
         accessorKey: 'phone',
         header: LL.table.phone(),
         Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {cell.getValue<string>()}
-          </div>
+          <Typography
+            component="div"
+            sx={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+            style={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+          >
+            {cell.getValue<string>() || ''}
+          </Typography>
         ),
+        muiTableBodyCellProps: {
+          align: alignment,
+          sx: {
+            textAlign: alignment,
+            '& > *': {
+              textAlign: alignment,
+            },
+          },
+        },
+        muiTableHeadCellProps: {
+          sx: {
+            textAlign: alignment,
+          },
+        },
       },
       {
         accessorKey: 'address',
         header: LL.table.address(),
         Cell: ({ cell }) => (
-          <div style={{ textAlign: isRTL ? 'right' : 'left' }}>
-            {cell.getValue<string>()}
-          </div>
+          <Typography
+            component="div"
+            sx={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+            style={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+          >
+            {cell.getValue<string>() || ''}
+          </Typography>
         ),
+        muiTableBodyCellProps: {
+          align: alignment,
+          sx: {
+            textAlign: alignment,
+            '& > *': {
+              textAlign: alignment,
+            },
+          },
+        },
+        muiTableHeadCellProps: {
+          sx: {
+            textAlign: alignment,
+          },
+        },
       },
       {
         accessorKey: 'isActive',
@@ -161,18 +387,49 @@ export const SellerManagement = () => {
             sx={{
               color: row.original.isActive ? 'success.main' : 'error.main',
               fontWeight: 'bold',
-              textAlign: isRTL ? 'right' : 'left',
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
+            }}
+            style={{
+              textAlign: alignment,
+              width: '100%',
+              display: 'block',
             }}
           >
             {row.original.isActive ? LL.table.active() : LL.table.inactive()}
           </Box>
         ),
+        muiTableBodyCellProps: {
+          align: alignment,
+          sx: {
+            textAlign: alignment,
+            '& > *': {
+              textAlign: alignment,
+            },
+          },
+        },
+        muiTableHeadCellProps: {
+          sx: {
+            textAlign: alignment,
+          },
+        },
       },
     ];
 
     const actionsColumn: MRT_ColumnDef<Seller> = {
       id: 'actions',
       header: LL.table.actions(),
+      muiTableBodyCellProps: {
+        sx: {
+          textAlign: alignment,
+        },
+      },
+      muiTableHeadCellProps: {
+        sx: {
+          textAlign: alignment,
+        },
+      },
       Cell: ({ row }) => (
         <Box
           sx={{
@@ -221,7 +478,7 @@ export const SellerManagement = () => {
     // For RTL languages, put actions column last (right side)
     // For LTR languages, put actions column last (right side) as well
     return [...dataColumns, actionsColumn];
-  }, [LL, isRTL]);
+  }, [LL, isRTL, alignment]);
 
   const handleDeleteConfirm = async () => {
     if (!selectedSeller) return;
@@ -268,7 +525,25 @@ export const SellerManagement = () => {
     localization: tableLocalization,
     muiTableHeadCellProps: {
       sx: {
-        textAlign: isRTL ? 'right' : 'left',
+        textAlign: alignment,
+        '& .MuiTableSortLabel-root': {
+          justifyContent: isFarsi ? 'flex-end' : 'flex-start',
+        },
+      },
+    },
+    muiTableBodyCellProps: {
+      align: alignment,
+      sx: {
+        textAlign: alignment,
+        '& > *': {
+          textAlign: alignment,
+        },
+        '& .MuiBox-root': {
+          textAlign: alignment,
+        },
+        '& .MuiTypography-root': {
+          textAlign: alignment,
+        },
       },
     },
     renderTopToolbarCustomActions: () => (

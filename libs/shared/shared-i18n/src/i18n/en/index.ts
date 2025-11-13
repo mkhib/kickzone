@@ -107,7 +107,8 @@ const en = {
     orderProcessed:
       'Your order will be processed and you will receive a confirmation email.',
     authenticationRequired: 'Authentication Required',
-    authenticationMessage: 'You need to be logged in to proceed with checkout. Please log in or register to continue.',
+    authenticationMessage:
+      'You need to be logged in to proceed with checkout. Please log in or register to continue.',
     loginRegister: 'Login / Register',
   },
 
@@ -302,6 +303,11 @@ const en = {
     archiveProductConfirm: 'Are you sure you want to archive this product?',
     showingProducts: 'Showing {count} of {total} products',
     errorLoadingProducts: 'Error loading products',
+    translationManagement: {
+      title: 'Translation Management',
+      description:
+        'Manage translations for categories and colors. Click "Auto-translate" to automatically generate translations.',
+    },
   },
 } satisfies BaseTranslation;
 
