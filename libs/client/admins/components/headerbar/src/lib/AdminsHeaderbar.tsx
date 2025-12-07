@@ -111,12 +111,11 @@ export function AdminsHeaderbar() {
               flexGrow: 1,
               fontWeight: 700,
               letterSpacing: 1,
-              color: isScrolled ? '#000' : '#fff',
               userSelect: 'none',
+              color: isScrolled ? '#000' : '#fff',
             }}
-            noWrap
           >
-            {LL.navigation.adminPanel()}
+            {LL.appNames.siteName()} Admin Panel
           </Typography>
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

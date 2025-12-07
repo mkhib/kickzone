@@ -1,4 +1,5 @@
 import type { BaseTranslation } from '../i18n-types';
+import { SITE_NAME } from '../../site-name';
 
 const en = {
   // Common UI elements
@@ -335,7 +336,7 @@ const en = {
 
   // Messages and notifications
   messages: {
-    welcome: 'Welcome to Kickzone',
+    welcome: `Welcome to ${SITE_NAME.en}`,
     itemAdded: 'Item added to cart',
     itemRemoved: 'Item removed from cart',
     quantityUpdated: 'Quantity updated',
@@ -381,12 +382,11 @@ const en = {
     passwordResetSuccess: 'Password reset successfully! You can now log in.',
     invalidToken: 'Invalid or expired reset link',
     passwordsDoNotMatch: 'Passwords do not match',
-    registrationSuccess: 'Registration successful! Welcome to Kickzone.',
+    registrationSuccess: `Registration successful! Welcome to ${SITE_NAME.en}.`,
     registrationFailed: 'Registration failed. Please try again.',
     setupPassword: 'Set Up Your Password',
     setupPasswordTitle: 'Set Up Your Password',
-    setupPasswordDescription:
-      'Welcome to Kickzone! Please set up your password to secure your seller account.',
+    setupPasswordDescription: `Welcome to ${SITE_NAME.en}! Please set up your password to secure your seller account.`,
     newPassword: 'New Password',
     confirmNewPassword: 'Confirm Password',
     setPassword: 'Set Password',
@@ -480,8 +480,9 @@ const en = {
   },
 
   // App names
+  // Note: siteName should match SITE_NAME.en from '../../site-name.ts' for consistency
   appNames: {
-    kickzone: 'Kickzone',
+    siteName: SITE_NAME.en,
     sellersPortal: 'Sellers Portal',
   },
 

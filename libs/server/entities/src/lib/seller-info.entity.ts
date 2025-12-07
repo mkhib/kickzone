@@ -1,4 +1,4 @@
-import { ObjectType, Field, Int } from '@nestjs/graphql';
+import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
 import {
   Entity,
   Column,
@@ -34,6 +34,10 @@ export class SellerInfo {
   @Field({ defaultValue: true })
   @Column({ default: true })
   isActive: boolean;
+
+  @Field(() => Float, { defaultValue: 0 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  shippingFee: number;
 
   @Field(() => User)
   @OneToOne(() => User)

@@ -26,13 +26,27 @@ async function bootstrap() {
     module.hot.dispose(() => app.close());
   }
 
+  // CORS configuration - supports both development and production subdomains
+  const allowedOrigins = [
+    // Development origins
+    'https://localhost:4300',
+    'https://localhost:4400',
+    'https://localhost:4500',
+    'https://studio.apollographql.com',
+    // Production origins
+    'https://masterskey.store',
+    'https://www.masterskey.store',
+    'https://admins.masterskey.store',
+    'https://seller.masterskey.store',
+  ];
+
+  // Add additional origins from environment variable if provided
+  if (process.env.ALLOWED_ORIGINS) {
+    allowedOrigins.push(...process.env.ALLOWED_ORIGINS.split(','));
+  }
+
   app.enableCors({
-    origin: [
-      'https://localhost:4300',
-      'https://localhost:4400',
-      'https://localhost:4500',
-      'https://studio.apollographql.com',
-    ],
+    origin: allowedOrigins,
     credentials: true,
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE,OPTIONS',
     // allowedHeaders: 'Content-Type,Authorization',

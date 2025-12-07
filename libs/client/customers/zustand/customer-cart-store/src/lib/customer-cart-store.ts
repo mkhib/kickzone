@@ -14,6 +14,7 @@ export interface CartItem {
   size: string | null;
   sellerId: string;
   sellerName: string;
+  sellerShippingFee: number; // Seller's shipping fee
   productInfoId: string;
   sellerProductId: string; // SellerProduct ID for stock management
   availableStock: number; // Available stock quantity

@@ -23,8 +23,26 @@ const csrfLink = new ApolloLink((operation, forward) => {
   return forward(operation);
 });
 
+// Get GraphQL endpoint from environment variable or use default
+// In production, nginx proxies /graphql to the API, so we use a relative path
+// In development, we use the full localhost URL
+const getGraphQLEndpoint = () => {
+  // Check for Vite environment variable (VITE_ prefix required for client-side)
+  if (import.meta.env.VITE_GRAPHQL_ENDPOINT) {
+    return import.meta.env.VITE_GRAPHQL_ENDPOINT;
+  }
+  
+  // In production, use relative path (nginx will proxy it)
+  if (import.meta.env.PROD) {
+    return '/graphql';
+  }
+  
+  // Default to localhost for development
+  return 'https://localhost:4000/graphql';
+};
+
 const httpLink = new HttpLink({
-  uri: 'https://localhost:4000/graphql',
+  uri: getGraphQLEndpoint(),
   credentials: 'include',
 });
 

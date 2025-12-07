@@ -112,7 +112,7 @@ export function Headerbar() {
               },
             }}
           >
-            {LL.appNames.kickzone()}
+            {LL.appNames.siteName()}
           </Typography>
 
           {/* Cart Button */}

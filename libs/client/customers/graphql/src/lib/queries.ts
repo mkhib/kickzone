@@ -47,6 +47,7 @@ export const GET_PRODUCTS_QUERY = gql`
             seller {
               id
               storeName
+              shippingFee
               user {
                 id
                 name

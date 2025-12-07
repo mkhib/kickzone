@@ -1,6 +1,11 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { Order, OrderItem, SellerProduct } from '@kickzone-workspace/entities';
+import {
+  Order,
+  OrderItem,
+  SellerProduct,
+  SellerInfo,
+} from '@kickzone-workspace/entities';
 import { OrderService } from '@kickzone-workspace/services';
 import { OrderResolver } from '@kickzone-workspace/resolvers';
 import { OrderController } from '@kickzone-workspace/controllers';
@@ -8,7 +13,7 @@ import { SellerInfoModule } from './seller-info.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, SellerProduct]),
+    TypeOrmModule.forFeature([Order, OrderItem, SellerProduct, SellerInfo]),
     SellerInfoModule,
   ],
   providers: [OrderService, OrderResolver],

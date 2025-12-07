@@ -36,10 +36,7 @@ export function AdminsFooter() {
       }}
     >
       <Typography variant="body2" color="text.secondary">
-        © 2024{' '}
-        <>
-          {LL.appNames.kickzone()} {LL.navigation.adminPanel()}
-        </>
+        © 2024 {LL.appNames.siteName()} Admin Panel
       </Typography>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

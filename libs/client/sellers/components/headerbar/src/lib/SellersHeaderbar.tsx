@@ -19,7 +19,6 @@ import ListItemIcon from '@mui/material/ListItemIcon';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
-import Typography from '@mui/material/Typography';
 import { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 
@@ -102,7 +101,7 @@ export function Headerbar() {
               },
             }}
           >
-            {LL.appNames.kickzone()} - {LL.navigation.sellersPortal()}
+            {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}
           </Typography>
 
           {user ? (

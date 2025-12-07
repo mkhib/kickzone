@@ -1,4 +1,5 @@
 import type { BaseTranslation } from '../i18n-types';
+import { SITE_NAME } from '../../site-name';
 
 const fa = {
   // Common UI elements
@@ -337,7 +338,7 @@ const fa = {
 
   // Messages and notifications
   messages: {
-    welcome: 'به کیک‌زون خوش آمدید',
+    welcome: `به ${SITE_NAME.fa} خوش آمدید`,
     itemAdded: 'آیتم به سبد خرید اضافه شد',
     itemRemoved: 'آیتم از سبد خرید حذف شد',
     quantityUpdated: 'تعداد به‌روزرسانی شد',
@@ -384,12 +385,12 @@ const fa = {
       'رمز عبور با موفقیت بازیابی شد! اکنون می‌توانید وارد شوید.',
     invalidToken: 'لینک بازیابی نامعتبر یا منقضی شده است',
     passwordsDoNotMatch: 'رمزهای عبور مطابقت ندارند',
-    registrationSuccess: 'ثبت نام با موفقیت انجام شد! به کیک‌زون خوش آمدید.',
+    registrationSuccess: `ثبت نام با موفقیت انجام شد! به ${SITE_NAME.fa} خوش آمدید.`,
     registrationFailed: 'ثبت نام ناموفق بود. لطفاً دوباره تلاش کنید.',
     setupPassword: 'تنظیم رمز عبور شما',
     setupPasswordTitle: 'تنظیم رمز عبور شما',
     setupPasswordDescription:
-      'به کیک‌زون خوش آمدید! لطفاً رمز عبور خود را برای امنیت حساب فروشنده‌تان تنظیم کنید.',
+      `به ${SITE_NAME.fa} خوش آمدید! لطفاً رمز عبور خود را برای امنیت حساب فروشنده‌تان تنظیم کنید.`,
     newPassword: 'رمز عبور جدید',
     confirmNewPassword: 'تایید رمز عبور',
     setPassword: 'تنظیم رمز عبور',
@@ -484,8 +485,9 @@ const fa = {
   },
 
   // App names
+  // Note: siteName should match SITE_NAME.fa from '../../site-name.ts' for consistency
   appNames: {
-    kickzone: 'کیک‌زون',
+    siteName: SITE_NAME.fa,
     sellersPortal: 'پورتال فروشندگان',
   },
 

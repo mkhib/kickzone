@@ -10,6 +10,7 @@ import {
   OrderItem,
   OrderStatus,
   SellerProduct,
+  SellerInfo,
 } from '@kickzone-workspace/entities';
 import {
   CreateOrderInput,
@@ -26,7 +27,9 @@ export class OrderService {
     @InjectRepository(OrderItem)
     private orderItemRepository: Repository<OrderItem>,
     @InjectRepository(SellerProduct)
-    private sellerProductRepository: Repository<SellerProduct>
+    private sellerProductRepository: Repository<SellerProduct>,
+    @InjectRepository(SellerInfo)
+    private sellerInfoRepository: Repository<SellerInfo>
   ) {}
 
   async createOrder(createOrderInput: CreateOrderInput): Promise<Order> {
@@ -38,12 +41,23 @@ export class OrderService {
     // Generate unique tracking number
     order.trackingNumber = this.generateTrackingNumber();
 
+    // Get seller's shipping fee
+    const seller = await this.sellerInfoRepository.findOne({
+      where: { id: createOrderInput.sellerId },
+    });
+
+    if (!seller) {
+      throw new NotFoundException(
+        `Seller with ID ${createOrderInput.sellerId} not found`
+      );
+    }
+
     // Calculate totals
     order.subtotal = order.items.reduce(
       (sum, item) => sum + item.totalPrice,
       0
     );
-    order.shippingCost = 10.0; // Fixed shipping cost for now
+    order.shippingCost = seller.shippingFee || 0; // Use seller's shipping fee
     order.total = order.subtotal + order.shippingCost;
 
     // Decrease stock for each ordered item

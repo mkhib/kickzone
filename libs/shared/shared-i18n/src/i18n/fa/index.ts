@@ -1,4 +1,5 @@
 import type { BaseTranslation } from '../i18n-types';
+import { SITE_NAME } from '../../lib/site-name';
 
 const fa = {
   // Common UI elements
@@ -38,7 +39,7 @@ const fa = {
     shoppingCart: 'سبد خرید',
     cart: 'سبد',
     sellers: 'فروشندگان',
-    adminPanel: 'پنل مدیریت کیک‌زون',
+    adminPanel: `پنل مدیریت ${SITE_NAME.fa}`,
     sellersPortal: 'پورتال فروشندگان',
     languageSettings: 'تنظیمات زبان',
   },
@@ -184,7 +185,7 @@ const fa = {
 
   // Messages
   messages: {
-    welcome: 'به کیک‌زون خوش آمدید',
+    welcome: `به ${SITE_NAME.fa} خوش آمدید`,
     itemAdded: 'آیتم به سبد خرید اضافه شد',
     itemRemoved: 'آیتم از سبد خرید حذف شد',
     quantityUpdated: 'تعداد به‌روزرسانی شد',

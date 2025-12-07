@@ -37,7 +37,7 @@ export function CustomersFooter() {
       }}
     >
       <Typography variant="body2" color="text.secondary">
-        © 2024 {LL.appNames.kickzone()}
+        © 2024 {LL.appNames.siteName()}
       </Typography>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

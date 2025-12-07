@@ -1,4 +1,5 @@
 import type { BaseTranslation } from '../i18n-types';
+import { SITE_NAME } from '../../lib/site-name';
 
 const en = {
   // Common UI elements
@@ -38,7 +39,7 @@ const en = {
     shoppingCart: 'Shopping Cart',
     cart: 'Cart',
     sellers: 'Sellers',
-    adminPanel: 'Kickzone Admin Panel',
+    adminPanel: `${SITE_NAME.en} Admin Panel`,
     sellersPortal: 'Sellers Portal',
     languageSettings: 'Language Settings',
   },
@@ -184,7 +185,7 @@ const en = {
 
   // Messages
   messages: {
-    welcome: 'Welcome to Kickzone',
+    welcome: `Welcome to ${SITE_NAME.en}`,
     itemAdded: 'Item added to cart',
     itemRemoved: 'Item removed from cart',
     quantityUpdated: 'Quantity updated',

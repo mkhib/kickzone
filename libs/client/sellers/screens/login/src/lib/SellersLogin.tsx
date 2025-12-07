@@ -7,8 +7,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import Grid from '@mui/material/Grid';
-import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -105,14 +103,6 @@ export function SellersLogin() {
                 {getDisplayError()}
               </Typography>
             )}
-            <Grid container justifyContent="flex-end" component="div">
-              <Grid component="div">
-                <Link href="#" variant="body2" sx={{ color: colors.main }}>
-                  {LL.authorization.dontHaveAccount()}{' '}
-                  {LL.authorization.signUp()}
-                </Link>
-              </Grid>
-            </Grid>
           </Box>
         </Paper>
       </Container>

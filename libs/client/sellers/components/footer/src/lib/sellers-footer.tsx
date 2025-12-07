@@ -37,7 +37,7 @@ export function SellersFooter() {
       }}
     >
       <Typography variant="body2" color="text.secondary">
-        © 2024 {LL.appNames.kickzone()} - {LL.navigation.sellersPortal()}
+        © 2024 {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}
       </Typography>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

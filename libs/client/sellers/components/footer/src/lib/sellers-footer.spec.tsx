@@ -5,12 +5,15 @@ import { SellersFooter } from './sellers-footer';
 import { BrowserRouter } from 'react-router-dom';
 
 // Mock the i18n context
-vi.mock('@kickzone-workspace/shared-i18n', () => ({
-  useI18nContext: () => ({
-    LL: {
-      appNames: {
-        kickzone: () => 'Kickzone',
-      },
+vi.mock('@kickzone-workspace/shared-i18n', async () => {
+  const actual = await vi.importActual<typeof import('@kickzone-workspace/shared-i18n')>('@kickzone-workspace/shared-i18n');
+  return {
+    ...actual,
+    useI18nContext: () => ({
+      LL: {
+        appNames: {
+          siteName: () => actual.SITE_NAME.en,
+        },
       navigation: {
         sellersPortal: () => 'Sellers Portal',
         languageSettings: () => 'Language Settings',

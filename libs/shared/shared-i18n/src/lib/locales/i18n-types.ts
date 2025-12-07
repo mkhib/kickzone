@@ -1153,7 +1153,7 @@ type RootTranslation = {
 	}
 	messages: {
 		/**
-		 * W​e​l​c​o​m​e​ ​t​o​ ​K​i​c​k​z​o​n​e
+		 * W​e​l​c​o​m​e​ ​t​o​ ​M​a​s​t​e​r​'​s​ ​K​e​y
 		 */
 		welcome: string
 		/**
@@ -1305,7 +1305,7 @@ type RootTranslation = {
 		 */
 		passwordsDoNotMatch: string
 		/**
-		 * R​e​g​i​s​t​r​a​t​i​o​n​ ​s​u​c​c​e​s​s​f​u​l​!​ ​W​e​l​c​o​m​e​ ​t​o​ ​K​i​c​k​z​o​n​e​.
+		 * R​e​g​i​s​t​r​a​t​i​o​n​ ​s​u​c​c​e​s​s​f​u​l​!​ ​W​e​l​c​o​m​e​ ​t​o​ ​M​a​s​t​e​r​'​s​ ​K​e​y​.
 		 */
 		registrationSuccess: string
 		/**
@@ -1321,7 +1321,7 @@ type RootTranslation = {
 		 */
 		setupPasswordTitle: string
 		/**
-		 * W​e​l​c​o​m​e​ ​t​o​ ​K​i​c​k​z​o​n​e​!​ ​P​l​e​a​s​e​ ​s​e​t​ ​u​p​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​s​e​c​u​r​e​ ​y​o​u​r​ ​s​e​l​l​e​r​ ​a​c​c​o​u​n​t​.
+		 * W​e​l​c​o​m​e​ ​t​o​ ​M​a​s​t​e​r​'​s​ ​K​e​y​!​ ​P​l​e​a​s​e​ ​s​e​t​ ​u​p​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​s​e​c​u​r​e​ ​y​o​u​r​ ​s​e​l​l​e​r​ ​a​c​c​o​u​n​t​.
 		 */
 		setupPasswordDescription: string
 		/**
@@ -1559,9 +1559,9 @@ type RootTranslation = {
 	}
 	appNames: {
 		/**
-		 * K​i​c​k​z​o​n​e
+		 * M​a​s​t​e​r​'​s​ ​K​e​y
 		 */
-		kickzone: string
+		siteName: string
 		/**
 		 * S​e​l​l​e​r​s​ ​P​o​r​t​a​l
 		 */
@@ -3499,7 +3499,7 @@ export type TranslationFunctions = {
 	}
 	messages: {
 		/**
-		 * Welcome to Kickzone
+		 * Welcome to Master's Key
 		 */
 		welcome: () => LocalizedString
 		/**
@@ -3649,7 +3649,7 @@ export type TranslationFunctions = {
 		 */
 		passwordsDoNotMatch: () => LocalizedString
 		/**
-		 * Registration successful! Welcome to Kickzone.
+		 * Registration successful! Welcome to Master's Key.
 		 */
 		registrationSuccess: () => LocalizedString
 		/**
@@ -3665,7 +3665,7 @@ export type TranslationFunctions = {
 		 */
 		setupPasswordTitle: () => LocalizedString
 		/**
-		 * Welcome to Kickzone! Please set up your password to secure your seller account.
+		 * Welcome to Master's Key! Please set up your password to secure your seller account.
 		 */
 		setupPasswordDescription: () => LocalizedString
 		/**
@@ -3903,9 +3903,9 @@ export type TranslationFunctions = {
 	}
 	appNames: {
 		/**
-		 * Kickzone
+		 * Master's Key
 		 */
-		kickzone: () => LocalizedString
+		siteName: () => LocalizedString
 		/**
 		 * Sellers Portal
 		 */

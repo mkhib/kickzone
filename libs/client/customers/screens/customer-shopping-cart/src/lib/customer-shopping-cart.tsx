@@ -49,7 +49,7 @@ import StepLabel from '@mui/material/StepLabel';
 import Stepper from '@mui/material/Stepper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
 
@@ -98,6 +98,29 @@ export function CustomerShoppingCart() {
   const removeItem = useRemoveItem();
   const updateItemQuantity = useUpdateItemQuantity();
   const clearCartAction = useClearCart();
+
+  // Calculate shipping costs per seller
+  const shippingCostsBySeller = useMemo(() => {
+    const sellerShipping: Record<string, { name: string; fee: number }> = {};
+    cartItems.forEach((item) => {
+      if (!sellerShipping[item.sellerId]) {
+        sellerShipping[item.sellerId] = {
+          name: item.sellerName,
+          fee: item.sellerShippingFee || 0,
+        };
+      }
+    });
+    return sellerShipping;
+  }, [cartItems]);
+
+  const totalShippingCost = useMemo(() => {
+    return Object.values(shippingCostsBySeller).reduce(
+      (sum, seller) => sum + seller.fee,
+      0
+    );
+  }, [shippingCostsBySeller]);
+
+  const grandTotal = cartTotal + totalShippingCost;
 
   // Use snackbar for notifications
   const { showSnackbar } = useSnackbar();
@@ -858,21 +881,56 @@ export function CustomerShoppingCart() {
                     </Typography>
                   </Box>
 
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      mb: 1,
-                    }}
-                  >
-                    <Typography>{LL.checkout.shipping()}:</Typography>
-                    <Typography>
-                      <PriceDisplay
-                        priceInUSD={0}
-                        showSymbol={true}
-                        showOriginal={false}
-                      />
+                  {/* Shipping costs breakdown by seller */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography sx={{ fontWeight: 600, mb: 1 }}>
+                      {LL.checkout.shipping()}:
                     </Typography>
+                    {Object.entries(shippingCostsBySeller).map(
+                      ([sellerId, { name, fee }]) => (
+                        <Box
+                          key={sellerId}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            mb: 0.5,
+                            pl: 2,
+                          }}
+                        >
+                          <Typography variant="body2" color="text.secondary">
+                            {name}:
+                          </Typography>
+                          <Typography variant="body2">
+                            <PriceDisplay
+                              priceInUSD={fee}
+                              showSymbol={true}
+                              showOriginal={false}
+                            />
+                          </Typography>
+                        </Box>
+                      )
+                    )}
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        mt: 1,
+                        pt: 1,
+                        borderTop: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Typography sx={{ fontWeight: 600 }}>
+                        Total Shipping:
+                      </Typography>
+                      <Typography sx={{ fontWeight: 600 }}>
+                        <PriceDisplay
+                          priceInUSD={totalShippingCost}
+                          showSymbol={true}
+                          showOriginal={false}
+                        />
+                      </Typography>
+                    </Box>
                   </Box>
 
                   <Divider sx={{ my: 2 }} />
@@ -902,7 +960,7 @@ export function CustomerShoppingCart() {
                       sx={{ fontWeight: 800, color: '#ffffff' }}
                     >
                       <PriceDisplay
-                        priceInUSD={cartTotal}
+                        priceInUSD={grandTotal}
                         showSymbol={true}
                         showOriginal={false}
                       />

@@ -48,6 +48,11 @@ export class CreateSellerInput {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  shippingFee?: number;
 }
 
 @InputType()
@@ -90,6 +95,11 @@ export class UpdateSellerInput {
   @IsOptional()
   @IsString()
   address?: string;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  shippingFee?: number;
 
   @Field({ nullable: true })
   @IsOptional()

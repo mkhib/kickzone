@@ -155,6 +155,12 @@ export const SellerManagement = () => {
       createRTLTextColumn<Seller>('phone', LL.table.phone(), { alignment }),
       createRTLTextColumn<Seller>('address', LL.table.address(), { alignment }),
       {
+        accessorKey: 'shippingFee',
+        header: 'Shipping Fee',
+        ...getRTLColumnProps(alignment),
+        Cell: ({ row }) => `$${row.original.shippingFee?.toFixed(2) || '0.00'}`,
+      },
+      {
         ...createRTLStatusColumn<Seller>('isActive', LL.table.status(), {
           alignment,
           activeColor: 'success.main',
@@ -203,6 +209,7 @@ export const SellerManagement = () => {
                   storeName: row.original.storeName,
                   phone: row.original.phone,
                   address: row.original.address,
+                  shippingFee: row.original.shippingFee,
                 });
                 setEditModalOpen(true);
               }}
@@ -320,6 +327,7 @@ export const SellerManagement = () => {
         variables: {
           createSellerInput: {
             ...formData,
+            shippingFee: formData.shippingFee !== undefined ? Number(formData.shippingFee) : 0,
             password: 'defaultPassword123',
           } as CreateSellerInput,
         },
@@ -350,6 +358,7 @@ export const SellerManagement = () => {
             storeName: formData.storeName || undefined,
             phone: formData.phone || undefined,
             address: formData.address || undefined,
+            shippingFee: formData.shippingFee !== undefined ? Number(formData.shippingFee) : undefined,
           },
         },
       });
@@ -438,6 +447,19 @@ export const SellerManagement = () => {
         value={formData.address || ''}
         onChange={handleInputChange}
         sx={{ mb: 2 }}
+      />
+      <TextField
+        fullWidth
+        name="shippingFee"
+        label="Shipping Fee ($)"
+        type="number"
+        value={formData.shippingFee || ''}
+        onChange={handleInputChange}
+        sx={{ mb: 2 }}
+        inputProps={{
+          step: '0.01',
+          min: '0',
+        }}
       />
     </>
   );

@@ -1,3 +1,5 @@
+import { SITE_NAME } from '@kickzone-workspace/shared-i18n';
+
 type Locale = 'en' | 'fa';
 
 interface EmailTemplateContent {
@@ -6,10 +8,8 @@ interface EmailTemplateContent {
 }
 
 // Email translations using a central site name variable for easy future change
-const SITE_NAMES = {
-  en: 'Kickzone',
-  fa: 'کیک‌زون',
-};
+// Imported from @kickzone-workspace/shared-i18n to ensure consistency across the app
+const SITE_NAMES = SITE_NAME;
 
 const emailTranslations = {
   en: {

@@ -153,6 +153,7 @@ export function CustomerProducts() {
       size: productInfo.size || null,
       sellerId: sellerProduct.seller.id.toString(),
       sellerName: sellerProduct.seller.storeName,
+      sellerShippingFee: sellerProduct.seller.shippingFee || 0,
       productInfoId: productInfo.id.toString(),
       sellerProductId: sellerProduct.id.toString(),
       availableStock: sellerProduct.stockQuantity,

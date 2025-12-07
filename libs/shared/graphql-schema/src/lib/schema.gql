@@ -108,6 +108,7 @@ type SellerInfo {
   phone: String
   address: String
   isActive: Boolean!
+  shippingFee: Float!
   user: User!
   sellerProducts: [SellerProduct!]!
 }
@@ -446,6 +447,7 @@ input CreateSellerInput {
   storeName: String!
   phone: String
   address: String
+  shippingFee: Float
 }
 
 input UpdateSellerInput {
@@ -457,6 +459,7 @@ input UpdateSellerInput {
   storeName: String
   phone: String
   address: String
+  shippingFee: Float
   isActive: Boolean
 }
 

@@ -9,7 +9,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
   useI18nContext: () => ({
     LL: {
       appNames: {
-        kickzone: () => 'Kickzone',
+        siteName: () => "Master's Key",
       },
       navigation: {
         adminPanel: () => 'Admin Panel',

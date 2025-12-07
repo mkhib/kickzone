@@ -147,6 +147,7 @@ export type CreateSellerInput = {
   name: Scalars['String']['input'];
   password: Scalars['String']['input'];
   phone?: InputMaybe<Scalars['String']['input']>;
+  shippingFee?: InputMaybe<Scalars['Float']['input']>;
   storeName: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
@@ -813,6 +814,7 @@ export type SellerInfo = {
   isActive: Scalars['Boolean']['output'];
   phone?: Maybe<Scalars['String']['output']>;
   sellerProducts: Array<SellerProduct>;
+  shippingFee: Scalars['Float']['output'];
   storeName: Scalars['String']['output'];
   user: User;
 };
@@ -945,6 +947,7 @@ export type UpdateSellerInput = {
   lastName?: InputMaybe<Scalars['String']['input']>;
   name?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
+  shippingFee?: InputMaybe<Scalars['Float']['input']>;
   storeName?: InputMaybe<Scalars['String']['input']>;
   username?: InputMaybe<Scalars['String']['input']>;
 };
