@@ -13,6 +13,7 @@ import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import {
   GET_MY_PROFILE,
   UPDATE_MY_PROFILE,
+  CALCULATE_SHIPPING_COST_QUERY,
 } from '@kickzone-workspace/customers-graphql';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
@@ -99,26 +100,69 @@ export function CustomerShoppingCart() {
   const updateItemQuantity = useUpdateItemQuantity();
   const clearCartAction = useClearCart();
 
-  // Calculate shipping costs per seller
-  const shippingCostsBySeller = useMemo(() => {
-    const sellerShipping: Record<string, { name: string; fee: number }> = {};
+  // Calculate shipping costs using smart shipping logic
+  const sellerShippingFees = useMemo(() => {
+    const sellerMap = new Map<string, { name: string; fee: number }>();
     cartItems.forEach((item) => {
-      if (!sellerShipping[item.sellerId]) {
-        sellerShipping[item.sellerId] = {
-          name: item.sellerName,
+      if (!sellerMap.has(item.sellerId)) {
+        sellerMap.set(item.sellerId, {
+          name: item.sellerName || '',
           fee: item.sellerShippingFee || 0,
-        };
+        });
       }
     });
-    return sellerShipping;
+    return Array.from(sellerMap.entries()).map(([sellerId, info]) => ({
+      sellerId,
+      shippingFee: info.fee,
+      sellerName: info.name,
+    }));
   }, [cartItems]);
 
+  const cartSubtotal = useMemo(() => {
+    return cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  }, [cartItems]);
+
+  // Query shipping calculation
+  const { data: shippingData, loading: shippingLoading } = useQuery(
+    CALCULATE_SHIPPING_COST_QUERY,
+    {
+      variables: {
+        cartSubtotal,
+        sellerShippingFees,
+      },
+      skip: sellerShippingFees.length === 0 || cartItems.length === 0,
+      fetchPolicy: 'cache-and-network',
+    }
+  );
+
+  // Get calculated shipping costs
   const totalShippingCost = useMemo(() => {
-    return Object.values(shippingCostsBySeller).reduce(
-      (sum, seller) => sum + seller.fee,
+    if (shippingData?.calculateShippingCost) {
+      return shippingData.calculateShippingCost.totalShippingCost || 0;
+    }
+    // Fallback: sum all shipping fees (old behavior)
+    return sellerShippingFees.reduce(
+      (sum, seller) => sum + seller.shippingFee,
       0
     );
-  }, [shippingCostsBySeller]);
+  }, [shippingData, sellerShippingFees]);
+
+  // Create a map of sellerId -> calculated shipping cost for order creation
+  const shippingCostsBySeller = useMemo(() => {
+    const breakdown =
+      shippingData?.calculateShippingCost?.shippingBreakdown || [];
+    const map: Record<string, number> = {};
+    breakdown.forEach((item: any) => {
+      map[String(item.sellerId)] = item.appliedFee || 0;
+    });
+    // Fallback: use original fees if breakdown not available
+    sellerShippingFees.forEach((seller) => {
+      if (!(seller.sellerId in map)) {
+        map[seller.sellerId] = seller.shippingFee;
+      }
+    });
+    return map;
+  }, [shippingData, sellerShippingFees]);
 
   const grandTotal = cartTotal + totalShippingCost;
 
@@ -385,7 +429,7 @@ export function CustomerShoppingCart() {
         {} as Record<string, CartItem[]>
       );
 
-      // Create orders for each seller
+      // Create orders for each seller with calculated shipping costs
       const orderPromises = Object.entries(itemsBySeller || {}).map(
         ([sellerId, items]) =>
           createOrderMutation({
@@ -399,6 +443,8 @@ export function CustomerShoppingCart() {
             country: shippingInfo.country || '',
             notes: shippingInfo.notes || '',
             sellerId: parseInt(sellerId, 10),
+            // Pass calculated shipping cost (from smart shipping logic)
+            shippingCost: shippingCostsBySeller[sellerId] || 0,
             // Map cart items to order items
             items: items.map((item) => ({
               productId: item.productId,

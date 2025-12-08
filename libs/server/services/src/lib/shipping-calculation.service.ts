@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -31,7 +31,7 @@ export class ShippingCalculationService {
     freeShippingEnabled: true,
     shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
     additionalSellerDiscount: 0.5, // 50% discount
-    additionalSellerFixedFee: null,
+    additionalSellerFixedFee: undefined,
     maxShippingCap: 15.0,
     maxShippingCapEnabled: true,
   };
@@ -119,7 +119,7 @@ export class ShippingCalculationService {
         );
         break;
 
-      case ShippingStrategy.TIERED_FIXED:
+      case ShippingStrategy.TIERED_FIXED: {
         // First seller: full fee, others: fixed fee
         const fixedFee = settings.additionalSellerFixedFee || 0;
         shippingBreakdown = sellerShippingFees.map((seller, index) => {
@@ -144,8 +144,9 @@ export class ShippingCalculationService {
           0
         );
         break;
+      }
 
-      case ShippingStrategy.HIGHEST_ONLY:
+      case ShippingStrategy.HIGHEST_ONLY: {
         // Charge only the highest shipping fee
         const highestFee = Math.max(
           ...sellerShippingFees.map((s) => s.shippingFee)
@@ -158,8 +159,9 @@ export class ShippingCalculationService {
         }));
         totalShippingCost = highestFee;
         break;
+      }
 
-      case ShippingStrategy.AVERAGE:
+      case ShippingStrategy.AVERAGE: {
         // Charge average of all shipping fees
         const averageFee =
           sellerShippingFees.reduce((sum, s) => sum + s.shippingFee, 0) /
@@ -172,6 +174,7 @@ export class ShippingCalculationService {
         }));
         totalShippingCost = averageFee;
         break;
+      }
     }
 
     // Apply maximum shipping cap if enabled
@@ -205,10 +208,26 @@ export class ShippingCalculationService {
       const settings = await this.platformSettingsRepository.findOne({
         where: { id: 1 },
       });
-      return settings || this.defaultSettings;
-    } catch (error) {
+      if (settings) {
+        return settings;
+      }
+      // Return defaults with required fields
+      return {
+        id: 1,
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        freeShippingEnabled: true,
+        maxShippingCapEnabled: true,
+        ...this.defaultSettings,
+      } as PlatformSettings;
+    } catch (_error) {
       // If table doesn't exist or error, return defaults
-      return this.defaultSettings;
+      return {
+        id: 1,
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        freeShippingEnabled: true,
+        maxShippingCapEnabled: true,
+        ...this.defaultSettings,
+      } as PlatformSettings;
     }
   }
 
@@ -231,9 +250,15 @@ export class ShippingCalculationService {
       }
 
       return settings;
-    } catch (error) {
+    } catch (_error) {
       // If error, return defaults
-      return this.defaultSettings;
+      return {
+        id: 1,
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        freeShippingEnabled: true,
+        maxShippingCapEnabled: true,
+        ...this.defaultSettings,
+      } as PlatformSettings;
     }
   }
 
@@ -248,4 +273,3 @@ export class ShippingCalculationService {
     return this.platformSettingsRepository.save(settings);
   }
 }
-

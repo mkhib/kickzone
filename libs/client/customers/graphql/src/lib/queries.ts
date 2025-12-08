@@ -1,89 +1,17 @@
 import { gql } from '@apollo/client';
 
-export const ME_QUERY = gql`
-  query Me {
-    me {
-      id
-      name
-      email
-      role
-    }
-  }
-`;
-
-export const GET_PRODUCTS_QUERY = gql`
-  query GetProducts(
-    $first: Int = 10
-    $after: String
-    $filter: ProductFilterInput
-  ) {
-    products(filter: $filter) {
-      edges {
-        node {
-          id
-          name
-          description
-          categories {
-            id
-            name
-          }
-          productInfos {
-            id
-            size
-            color {
-              id
-              name
-              hexCode
-            }
-            weight
-            images
-          }
-          sellerProducts {
-            id
-            productInfoId
-            price
-            discount
-            stockQuantity
-            seller {
-              id
-              storeName
-              shippingFee
-              user {
-                id
-                name
-              }
-            }
-            productInfo {
-              id
-              size
-              color {
-                id
-                name
-                hexCode
-              }
-            }
-          }
-        }
-        cursor
-      }
-      pageInfo {
-        hasNextPage
-        hasPreviousPage
-        endCursor
-      }
-      totalCount
-    }
-  }
-`;
-
-export const GET_MY_CART_QUERY = gql`
-  query GetMyCart {
+export const GET_CART_QUERY = gql`
+  query GetCart {
     myCart {
       id
+      userId
       subtotal
       total
+      createdAt
+      updatedAt
       items {
         id
+        cartId
         productId
         productName
         productImage
@@ -98,6 +26,57 @@ export const GET_MY_CART_QUERY = gql`
         sellerProductId
         availableStock
       }
+    }
+  }
+`;
+
+export const GET_PRODUCTS_QUERY = gql`
+  query GetProducts($filter: ProductFilterInput) {
+    products(filter: $filter) {
+      edges {
+        cursor
+        node {
+          id
+          name
+          description
+          archived
+          productInfos {
+            id
+            size
+            color {
+              id
+              name
+              hexCode
+            }
+            weight
+            images
+          }
+          categories {
+            id
+            name
+            slug
+          }
+          sellerProducts {
+            id
+            price
+            costPrice
+            discount
+            stockQuantity
+            productInfoId
+            seller {
+              id
+              storeName
+              shippingFee
+            }
+          }
+        }
+      }
+      pageInfo {
+        hasNextPage
+        hasPreviousPage
+        endCursor
+      }
+      totalCount
     }
   }
 `;
@@ -145,21 +124,28 @@ export const GET_MY_ORDERS_QUERY = gql`
   }
 `;
 
-export const GET_CATEGORIES_QUERY = gql`
-  query GetCategories {
-    categories {
-      id
-      name
-    }
-  }
-`;
-
-export const GET_COLORS_QUERY = gql`
-  query GetColors {
-    colors {
-      id
-      name
-      hexCode
+/**
+ * Calculate shipping cost using smart shipping logic
+ * Returns total shipping cost with breakdown per seller
+ */
+export const CALCULATE_SHIPPING_COST_QUERY = gql`
+  query CalculateShippingCost(
+    $cartSubtotal: Float!
+    $sellerShippingFees: [SellerShippingInfoInput!]!
+  ) {
+    calculateShippingCost(
+      cartSubtotal: $cartSubtotal
+      sellerShippingFees: $sellerShippingFees
+    ) {
+      totalShippingCost
+      freeShippingApplied
+      strategyUsed
+      shippingBreakdown {
+        sellerId
+        sellerName
+        originalFee
+        appliedFee
+      }
     }
   }
 `;

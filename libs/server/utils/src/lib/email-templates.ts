@@ -1,4 +1,10 @@
-import { SITE_NAME } from '@kickzone-workspace/shared-i18n';
+// SITE_NAME constant - duplicated here to avoid importing from shared-i18n
+// which would pull in React dependencies and cause webpack TSX compilation errors
+// TODO: Keep this in sync with libs/shared/shared-i18n/src/lib/site-name.ts
+const SITE_NAME = {
+  en: "Master's Key",
+  fa: 'مسترز کی',
+} as const;
 
 type Locale = 'en' | 'fa';
 

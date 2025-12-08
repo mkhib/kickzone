@@ -14,3 +14,4 @@ export * from './lib/cart.module';
 export * from './lib/translation.module';
 export * from './lib/currency.module';
 export * from './lib/customer-profile.module';
+export * from './lib/platform-settings.module';

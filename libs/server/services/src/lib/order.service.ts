@@ -62,7 +62,14 @@ export class OrderService {
       (sum, item) => sum + item.totalPrice,
       0
     );
-    order.shippingCost = seller.shippingFee || 0; // Use seller's shipping fee
+
+    // Use provided shipping cost (from smart calculation) or fallback to seller's fee
+    // This allows frontend to pass calculated shipping cost from smart shipping logic
+    order.shippingCost =
+      createOrderInput.shippingCost !== undefined
+        ? createOrderInput.shippingCost
+        : seller.shippingFee || 0;
+
     order.total = order.subtotal + order.shippingCost;
 
     // Fetch seller products to get pricing details for snapshot
