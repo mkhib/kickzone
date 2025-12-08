@@ -30,6 +30,9 @@ export const GET_CART_QUERY = gql`
   }
 `;
 
+// Alias for backward compatibility with existing code
+export const GET_MY_CART_QUERY = GET_CART_QUERY;
+
 export const GET_PRODUCTS_QUERY = gql`
   query GetProducts($filter: ProductFilterInput) {
     products(filter: $filter) {

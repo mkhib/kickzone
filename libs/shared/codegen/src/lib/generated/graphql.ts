@@ -111,6 +111,7 @@ export type CreateOrderInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   sellerId: Scalars['Int']['input'];
   shippingAddress: Scalars['String']['input'];
+  shippingCost?: InputMaybe<Scalars['Float']['input']>;
   state: Scalars['String']['input'];
   zipCode: Scalars['String']['input'];
 };
@@ -512,7 +513,10 @@ export type Order = {
   items: Array<OrderItem>;
   notes?: Maybe<Scalars['String']['output']>;
   orderNumber: Scalars['String']['output'];
+  sellerAddress?: Maybe<Scalars['String']['output']>;
   sellerId: Scalars['Int']['output'];
+  sellerPhone?: Maybe<Scalars['String']['output']>;
+  sellerStoreName?: Maybe<Scalars['String']['output']>;
   shippingAddress: Scalars['String']['output'];
   shippingCost: Scalars['Float']['output'];
   state: Scalars['String']['output'];
@@ -533,10 +537,13 @@ export type OrderEdge = {
 export type OrderItem = {
   __typename?: 'OrderItem';
   color?: Maybe<Scalars['String']['output']>;
+  discountPercentage?: Maybe<Scalars['Float']['output']>;
   id: Scalars['ID']['output'];
   orderId: Scalars['String']['output'];
+  originalPrice?: Maybe<Scalars['Float']['output']>;
   productId: Scalars['String']['output'];
   productImage?: Maybe<Scalars['String']['output']>;
+  productInfoId?: Maybe<Scalars['Int']['output']>;
   productName: Scalars['String']['output'];
   quantity: Scalars['Int']['output'];
   sellerProductId?: Maybe<Scalars['String']['output']>;
@@ -631,6 +638,7 @@ export type Query = {
   __typename?: 'Query';
   adminSellerOrders: Array<Order>;
   allSellerOrders: Array<Order>;
+  calculateShippingCost: ShippingCalculationResult;
   categories: Array<Category>;
   color?: Maybe<Color>;
   colors: Array<Color>;
@@ -649,6 +657,7 @@ export type Query = {
   myCart: Cart;
   myOrders: Array<Order>;
   myProfile: CustomerProfile;
+  mySellerOrders: Array<SellerOrder>;
   mySellerProductById?: Maybe<SellerProduct>;
   order: Order;
   orders: Array<Order>;
@@ -672,6 +681,12 @@ export type QueryAllSellerOrdersArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: Scalars['Int']['input'];
   status?: InputMaybe<OrderStatus>;
+};
+
+
+export type QueryCalculateShippingCostArgs = {
+  cartSubtotal: Scalars['Float']['input'];
+  sellerShippingFees: Array<SellerShippingInfoInput>;
 };
 
 
@@ -738,6 +753,12 @@ export type QueryGetTranslationWithFallbackArgs = {
 
 
 export type QueryMyOrdersArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: Scalars['Int']['input'];
+};
+
+
+export type QueryMySellerOrdersArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: Scalars['Int']['input'];
 };
@@ -819,6 +840,25 @@ export type SellerInfo = {
   user: User;
 };
 
+export type SellerOrder = {
+  __typename?: 'SellerOrder';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  items: Array<OrderItem>;
+  notes?: Maybe<Scalars['String']['output']>;
+  orderNumber: Scalars['String']['output'];
+  sellerAddress?: Maybe<Scalars['String']['output']>;
+  sellerId: Scalars['Int']['output'];
+  sellerPhone?: Maybe<Scalars['String']['output']>;
+  sellerStoreName?: Maybe<Scalars['String']['output']>;
+  shippingCost: Scalars['Float']['output'];
+  status: OrderStatus;
+  subtotal: Scalars['Float']['output'];
+  total: Scalars['Float']['output'];
+  trackingNumber?: Maybe<Scalars['String']['output']>;
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export type SellerProduct = {
   __typename?: 'SellerProduct';
   costPrice?: Maybe<Scalars['Float']['output']>;
@@ -832,12 +872,34 @@ export type SellerProduct = {
   stockQuantity: Scalars['Int']['output'];
 };
 
+export type SellerShippingBreakdown = {
+  __typename?: 'SellerShippingBreakdown';
+  appliedFee: Scalars['Float']['output'];
+  originalFee: Scalars['Float']['output'];
+  sellerId: Scalars['String']['output'];
+  sellerName?: Maybe<Scalars['String']['output']>;
+};
+
+export type SellerShippingInfoInput = {
+  sellerId: Scalars['String']['input'];
+  sellerName?: InputMaybe<Scalars['String']['input']>;
+  shippingFee: Scalars['Float']['input'];
+};
+
 export type SetExchangeRateInput = {
   effectiveDate?: InputMaybe<Scalars['DateTime']['input']>;
   fromCurrencyCode: Scalars['String']['input'];
   notes?: InputMaybe<Scalars['String']['input']>;
   rate: Scalars['Float']['input'];
   toCurrencyCode: Scalars['String']['input'];
+};
+
+export type ShippingCalculationResult = {
+  __typename?: 'ShippingCalculationResult';
+  freeShippingApplied: Scalars['Boolean']['output'];
+  shippingBreakdown?: Maybe<Array<SellerShippingBreakdown>>;
+  strategyUsed: Scalars['String']['output'];
+  totalShippingCost: Scalars['Float']['output'];
 };
 
 export type Translation = {
@@ -911,6 +973,7 @@ export type UpdateOrderInput = {
   notes?: InputMaybe<Scalars['String']['input']>;
   shippingAddress?: InputMaybe<Scalars['String']['input']>;
   state?: InputMaybe<Scalars['String']['input']>;
+  trackingNumber?: InputMaybe<Scalars['String']['input']>;
   zipCode?: InputMaybe<Scalars['String']['input']>;
 };
 

@@ -139,6 +139,9 @@ type Order {
   subtotal: Float!
   shippingCost: Float!
   total: Float!
+  sellerStoreName: String
+  sellerPhone: String
+  sellerAddress: String
   notes: String
   trackingNumber: String
   createdAt: DateTime!
@@ -169,6 +172,9 @@ type OrderItem {
   color: String
   size: String
   sellerProductId: String
+  originalPrice: Float
+  discountPercentage: Float
+  productInfoId: Int
 }
 
 type Cart {
@@ -255,9 +261,41 @@ type CurrencyPreference {
   updatedAt: DateTime!
 }
 
+type SellerOrder {
+  id: ID!
+  orderNumber: String!
+  status: OrderStatus!
+  subtotal: Float!
+  shippingCost: Float!
+  total: Float!
+  notes: String
+  trackingNumber: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  sellerId: Int!
+  sellerStoreName: String
+  sellerPhone: String
+  sellerAddress: String
+  items: [OrderItem!]!
+}
+
 type OrderEdge {
   node: Order!
   cursor: String!
+}
+
+type ShippingCalculationResult {
+  totalShippingCost: Float!
+  freeShippingApplied: Boolean!
+  strategyUsed: String!
+  shippingBreakdown: [SellerShippingBreakdown!]
+}
+
+type SellerShippingBreakdown {
+  sellerId: String!
+  sellerName: String
+  originalFee: Float!
+  appliedFee: Float!
 }
 
 type Query {
@@ -278,9 +316,11 @@ type Query {
   orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): [Order!]!
   order(id: String!): Order!
   myOrders(first: Int! = 10, after: String): [Order!]!
+  mySellerOrders(first: Int! = 10, after: String): [SellerOrder!]!
   adminSellerOrders(sellerId: String!, first: Int! = 10, after: String, status: OrderStatus): [Order!]!
   allSellerOrders(first: Int! = 10, after: String, status: OrderStatus): [Order!]!
   myCart: Cart!
+  calculateShippingCost(cartSubtotal: Float!, sellerShippingFees: [SellerShippingInfoInput!]!): ShippingCalculationResult!
   currencies: [Currency!]!
   currency(id: Int!): Currency
   currencyByCode(code: String!): Currency
@@ -327,6 +367,12 @@ input SellerFilterInput {
   isActive: Boolean
   first: Int
   after: String
+}
+
+input SellerShippingInfoInput {
+  sellerId: String!
+  shippingFee: Float!
+  sellerName: String
 }
 
 type Mutation {
@@ -503,6 +549,7 @@ input CreateOrderInput {
   sellerId: Int!
   items: [CreateOrderItemInput!]!
   notes: String
+  shippingCost: Float
 }
 
 input CreateOrderItemInput {
@@ -528,6 +575,7 @@ input UpdateOrderInput {
   country: String
   items: [UpdateOrderItemInput!]
   notes: String
+  trackingNumber: String
 }
 
 input UpdateOrderItemInput {
