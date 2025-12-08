@@ -18,6 +18,7 @@ import {
   Currency,
   ExchangeRate,
   CurrencyPreference,
+  PlatformSettings,
 } from '@kickzone-workspace/entities';
 import {
   AuthModule,
@@ -69,6 +70,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
         Currency,
         ExchangeRate,
         CurrencyPreference,
+        PlatformSettings,
       ],
       synchronize: true,
     }),

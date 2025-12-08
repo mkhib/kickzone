@@ -123,6 +123,9 @@ export const GET_MY_ORDERS_QUERY = gql`
       trackingNumber
       createdAt
       updatedAt
+      sellerStoreName
+      sellerPhone
+      sellerAddress
       items {
         id
         productId
@@ -133,6 +136,10 @@ export const GET_MY_ORDERS_QUERY = gql`
         totalPrice
         color
         size
+        originalPrice
+        discountPercentage
+        productInfoId
+        sellerProductId
       }
     }
   }

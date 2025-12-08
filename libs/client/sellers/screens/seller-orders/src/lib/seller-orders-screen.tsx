@@ -239,34 +239,8 @@ export function SellerOrdersScreen() {
                     <Box sx={{ width: '100%' }}>
                       {/* Order Details */}
                       <Grid container spacing={3} sx={{ mb: 3 }}>
-                        <Grid size={{ xs: 12, md: 6 }}>
-                          <Typography variant="h6" gutterBottom>
-                            {LL.orders.customerInformation()}
-                          </Typography>
-                          <Typography variant="body2">
-                            <strong>{LL.form.fullName()}:</strong>{' '}
-                            {order.customerName}
-                          </Typography>
-                          <Typography variant="body2">
-                            <strong>{LL.form.email()}:</strong>{' '}
-                            {order.customerEmail}
-                          </Typography>
-                          <Typography variant="body2">
-                            <strong>{LL.form.phone()}:</strong>{' '}
-                            {order.customerPhone}
-                          </Typography>
-                          <Typography variant="body2">
-                            <strong>{LL.form.address()}:</strong>{' '}
-                            {order.shippingAddress}
-                          </Typography>
-                          <Typography variant="body2">
-                            {order.city}, {order.state}{' '}
-                            {formatNumber(order.zipCode)}
-                          </Typography>
-                          <Typography variant="body2">
-                            {order.country}
-                          </Typography>
-                        </Grid>
+                        {/* Customer Information REMOVED for Security */}
+                        {/* Sellers should NOT see customer name, email, phone, or address */}
 
                         <Grid size={{ xs: 12, md: 6 }}>
                           <Typography variant="h6" gutterBottom>
@@ -398,10 +372,16 @@ export function SellerOrdersScreen() {
                                   {isRTL ? (
                                     <>
                                       <TableCell>
-                                        ${formatNumber(item.totalPrice.toFixed(2))}
+                                        $
+                                        {formatNumber(
+                                          item.totalPrice.toFixed(2)
+                                        )}
                                       </TableCell>
                                       <TableCell>
-                                        ${formatNumber(item.unitPrice.toFixed(2))}
+                                        $
+                                        {formatNumber(
+                                          item.unitPrice.toFixed(2)
+                                        )}
                                       </TableCell>
                                       <TableCell>
                                         {formatNumber(item.quantity)}
@@ -495,10 +475,16 @@ export function SellerOrdersScreen() {
                                         {formatNumber(item.quantity)}
                                       </TableCell>
                                       <TableCell>
-                                        ${formatNumber(item.unitPrice.toFixed(2))}
+                                        $
+                                        {formatNumber(
+                                          item.unitPrice.toFixed(2)
+                                        )}
                                       </TableCell>
                                       <TableCell>
-                                        ${formatNumber(item.totalPrice.toFixed(2))}
+                                        $
+                                        {formatNumber(
+                                          item.totalPrice.toFixed(2)
+                                        )}
                                       </TableCell>
                                     </>
                                   )}

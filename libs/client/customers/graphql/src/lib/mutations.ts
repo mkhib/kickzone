@@ -133,6 +133,9 @@ export const CREATE_ORDER_MUTATION = gql`
       trackingNumber
       createdAt
       updatedAt
+      sellerStoreName
+      sellerPhone
+      sellerAddress
       items {
         id
         productId
@@ -143,6 +146,10 @@ export const CREATE_ORDER_MUTATION = gql`
         totalPrice
         color
         size
+        originalPrice
+        discountPercentage
+        productInfoId
+        sellerProductId
       }
     }
   }

@@ -21,6 +21,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Toolbar from '@mui/material/Toolbar';
 import { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
+import Typography from '@mui/material/Typography';
 
 export function Headerbar() {
   const { user, logout } = useSellersAuthContext();

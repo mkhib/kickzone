@@ -96,6 +96,19 @@ export class Order {
   @Column('decimal', { precision: 10, scale: 2 })
   total: number;
 
+  // Seller snapshot fields - preserve seller info at order time
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerStoreName?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerPhone?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerAddress?: string;
+
   @Field(() => String, { nullable: true })
   @Column({ nullable: true })
   notes?: string;
@@ -170,6 +183,19 @@ export class OrderItem {
   @Field(() => String, { nullable: true })
   @Column({ nullable: true })
   sellerProductId?: string;
+
+  // Product pricing snapshot fields - preserve pricing details at order time
+  @Field(() => Float, { nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  originalPrice?: number;
+
+  @Field(() => Float, { nullable: true })
+  @Column('decimal', { precision: 5, scale: 2, nullable: true })
+  discountPercentage?: number;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  productInfoId?: number;
 
   @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orderId' })

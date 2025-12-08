@@ -6,25 +6,31 @@ import {
   ResolveField,
   Parent,
 } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, NotFoundException } from '@nestjs/common';
 import {
   Order,
   OrderItem,
   OrderStatus,
   User,
+  UserRole,
+  SellerOrder,
+  toSellerOrder,
 } from '@kickzone-workspace/entities';
 import {
   CreateOrderInput,
   UpdateOrderInput,
   UpdateOrderStatusInput,
 } from '@kickzone-workspace/inputs';
-import { OrderService } from '@kickzone-workspace/services';
+import { OrderService, SellerService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
 
 @Resolver(() => Order)
 export class OrderResolver {
-  constructor(private readonly orderService: OrderService) {}
+  constructor(
+    private readonly orderService: OrderService,
+    private readonly sellerService: SellerService
+  ) {}
 
   @Query(() => [Order])
   @UseGuards(GraphqlAuthGuard)
@@ -46,8 +52,23 @@ export class OrderResolver {
 
   @Query(() => Order)
   @UseGuards(GraphqlAuthGuard)
-  async order(@Args('id', { type: () => String }) id: string) {
-    return this.orderService.findOne(id);
+  async order(
+    @CurrentUser() user: User,
+    @Args('id', { type: () => String }) id: string
+  ) {
+    const order = await this.orderService.findOne(id);
+
+    // If user is a seller and this is their order, return SellerOrder (no customer PII)
+    if (user.role === UserRole.SELLER) {
+      const seller = await this.sellerService.findOneByUserId(user.id);
+      if (seller && order.sellerId === seller.id) {
+        // Sellers should use mySellerOrders, but for single order query, convert to SellerOrder
+        return toSellerOrder(order);
+      }
+    }
+
+    // For customers and admins, return full Order
+    return order;
   }
 
   @Query(() => [Order])
@@ -57,14 +78,53 @@ export class OrderResolver {
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
     @Args('after', { type: () => String, nullable: true }) after?: string
   ) {
-    // Get orders by customer email
-    // User.email is the customer's email address
-    const result = await this.orderService.getOrdersByCustomerEmail(
-      user.email,
+    // For CUSTOMER: Get orders by customer email
+    if (user.role === UserRole.CUSTOMER) {
+      const result = await this.orderService.getOrdersByCustomerEmail(
+        user.email,
+        first,
+        after
+      );
+      return result.edges.map((edge) => edge.node);
+    }
+
+    // For SELLER: Use mySellerOrders query instead (returns SellerOrder without customer PII)
+    throw new NotFoundException(
+      'Sellers should use mySellerOrders query instead'
+    );
+  }
+
+  /**
+   * Seller orders query - returns SellerOrder type WITHOUT customer PII
+   * Sellers should NOT see customer name, email, phone, or address
+   */
+  @Query(() => [SellerOrder])
+  @UseGuards(GraphqlAuthGuard)
+  async mySellerOrders(
+    @CurrentUser() user: User,
+    @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
+    @Args('after', { type: () => String, nullable: true }) after?: string
+  ) {
+    // Only sellers can access this
+    if (user.role !== UserRole.SELLER) {
+      throw new NotFoundException('Only sellers can access seller orders');
+    }
+
+    // Get seller info from user
+    const seller = await this.sellerService.findOneByUserId(user.id);
+    if (!seller) {
+      throw new NotFoundException('Seller not found for this user');
+    }
+
+    // Get orders for this seller
+    const result = await this.orderService.getOrdersBySeller(
+      seller.id.toString(),
       first,
       after
     );
-    return result.edges.map((edge) => edge.node);
+
+    // Convert to SellerOrder (removes customer PII)
+    return result.edges.map((edge) => toSellerOrder(edge.node));
   }
 
   @Query(() => [Order])

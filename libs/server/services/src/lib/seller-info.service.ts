@@ -151,6 +151,10 @@ export class SellerService {
       seller.storeName = updateSellerInput.storeName;
     if (updateSellerInput.phone) seller.phone = updateSellerInput.phone;
     if (updateSellerInput.address) seller.address = updateSellerInput.address;
+    if (updateSellerInput.shippingFee !== undefined)
+      seller.shippingFee = updateSellerInput.shippingFee;
+    if (updateSellerInput.isActive !== undefined)
+      seller.isActive = updateSellerInput.isActive;
 
     return this.sellerRepository.save(seller);
   }

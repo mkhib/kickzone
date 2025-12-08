@@ -41,7 +41,7 @@ export class OrderService {
     // Generate unique tracking number
     order.trackingNumber = this.generateTrackingNumber();
 
-    // Get seller's shipping fee
+    // Get seller's information to preserve snapshot
     const seller = await this.sellerInfoRepository.findOne({
       where: { id: createOrderInput.sellerId },
     });
@@ -52,6 +52,11 @@ export class OrderService {
       );
     }
 
+    // Preserve seller snapshot at order time
+    order.sellerStoreName = seller.storeName;
+    order.sellerPhone = seller.phone || undefined;
+    order.sellerAddress = seller.address || undefined;
+
     // Calculate totals
     order.subtotal = order.items.reduce(
       (sum, item) => sum + item.totalPrice,
@@ -60,13 +65,37 @@ export class OrderService {
     order.shippingCost = seller.shippingFee || 0; // Use seller's shipping fee
     order.total = order.subtotal + order.shippingCost;
 
+    // Fetch seller products to get pricing details for snapshot
+    const orderItemsWithSnapshots = await Promise.all(
+      order.items.map(async (item) => {
+        if (item.sellerProductId) {
+          const sellerProduct = await this.sellerProductRepository.findOne({
+            where: { id: item.sellerProductId },
+            relations: ['productInfo'],
+          });
+
+          if (sellerProduct) {
+            // Preserve product pricing snapshot
+            return {
+              ...item,
+              originalPrice: sellerProduct.price,
+              discountPercentage: sellerProduct.discount,
+              productInfoId: sellerProduct.productInfoId || undefined,
+            };
+          }
+        }
+        // If sellerProduct not found, keep item as is
+        return item;
+      })
+    );
+
     // Decrease stock for each ordered item
     await this.decreaseStock(order.items);
 
     const savedOrder = await this.orderRepository.save(order);
 
-    // Save order items
-    const orderItems = order.items.map((item) => ({
+    // Save order items with snapshot data
+    const orderItems = orderItemsWithSnapshots.map((item) => ({
       ...item,
       orderId: savedOrder.id,
     }));

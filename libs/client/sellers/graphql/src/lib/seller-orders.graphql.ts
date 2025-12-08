@@ -1,18 +1,23 @@
 import { gql } from '@apollo/client';
 
+/**
+ * Seller orders query - NO customer PII (name, email, phone, address)
+ * Security: Sellers should NOT see customer personal information
+ */
 export const GET_MY_ORDERS_QUERY = gql`
-  query GetMyOrders($first: Int = 10, $after: String) {
-    myOrders(first: $first, after: $after) {
+  query GetMySellerOrders($first: Int = 10, $after: String) {
+    mySellerOrders(first: $first, after: $after) {
       id
       orderNumber
-      customerEmail
-      customerPhone
-      customerName
-      shippingAddress
-      city
-      state
-      zipCode
-      country
+      # Customer PII REMOVED for security:
+      # customerEmail - REMOVED
+      # customerPhone - REMOVED
+      # customerName - REMOVED
+      # shippingAddress - REMOVED
+      # city - REMOVED
+      # state - REMOVED
+      # zipCode - REMOVED
+      # country - REMOVED
       status
       subtotal
       shippingCost
@@ -21,6 +26,10 @@ export const GET_MY_ORDERS_QUERY = gql`
       trackingNumber
       createdAt
       updatedAt
+      sellerId
+      sellerStoreName
+      sellerPhone
+      sellerAddress
       items {
         id
         productId
@@ -31,11 +40,19 @@ export const GET_MY_ORDERS_QUERY = gql`
         totalPrice
         color
         size
+        originalPrice
+        discountPercentage
+        productInfoId
+        sellerProductId
       }
     }
   }
 `;
 
+/**
+ * NOTE: This query is for admins only - it includes customer PII
+ * Sellers should use GET_MY_ORDERS_QUERY instead
+ */
 export const GET_SELLER_ORDERS_QUERY = gql`
   query GetSellerOrders(
     $first: Int = 10
@@ -61,6 +78,10 @@ export const GET_SELLER_ORDERS_QUERY = gql`
       trackingNumber
       createdAt
       updatedAt
+      sellerId
+      sellerStoreName
+      sellerPhone
+      sellerAddress
       items {
         id
         productId
@@ -71,6 +92,10 @@ export const GET_SELLER_ORDERS_QUERY = gql`
         totalPrice
         color
         size
+        originalPrice
+        discountPercentage
+        productInfoId
+        sellerProductId
       }
     }
   }
@@ -87,11 +112,16 @@ export const UPDATE_ORDER_STATUS_MUTATION = gql`
   }
 `;
 
+/**
+ * Order details query - Returns SellerOrder for sellers (no customer PII)
+ * Security: If user is seller, customer PII is automatically filtered out
+ */
 export const GET_ORDER_DETAILS_QUERY = gql`
   query GetOrderDetails($id: String!) {
     order(id: $id) {
       id
       orderNumber
+      # Customer PII will be null/empty for sellers (handled by resolver)
       customerEmail
       customerPhone
       customerName
@@ -108,6 +138,10 @@ export const GET_ORDER_DETAILS_QUERY = gql`
       trackingNumber
       createdAt
       updatedAt
+      sellerId
+      sellerStoreName
+      sellerPhone
+      sellerAddress
       items {
         id
         productId
@@ -118,6 +152,10 @@ export const GET_ORDER_DETAILS_QUERY = gql`
         totalPrice
         color
         size
+        originalPrice
+        discountPercentage
+        productInfoId
+        sellerProductId
       }
     }
   }

@@ -22,6 +22,9 @@ export const GET_ALL_ORDERS_QUERY = gql`
       createdAt
       updatedAt
       sellerId
+      sellerStoreName
+      sellerPhone
+      sellerAddress
       items {
         id
         productId
@@ -32,6 +35,10 @@ export const GET_ALL_ORDERS_QUERY = gql`
         totalPrice
         color
         size
+        originalPrice
+        discountPercentage
+        productInfoId
+        sellerProductId
       }
     }
   }
@@ -69,6 +76,9 @@ export const GET_SELLER_ORDERS_QUERY = gql`
       createdAt
       updatedAt
       sellerId
+      sellerStoreName
+      sellerPhone
+      sellerAddress
       items {
         id
         productId
@@ -79,6 +89,10 @@ export const GET_SELLER_ORDERS_QUERY = gql`
         totalPrice
         color
         size
+        originalPrice
+        discountPercentage
+        productInfoId
+        sellerProductId
       }
     }
   }

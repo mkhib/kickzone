@@ -12,3 +12,4 @@ export * from './lib/order.service';
 export * from './lib/cart.service';
 export * from './lib/translation.service';
 export * from './lib/currency.service';
+export * from './lib/shipping-calculation.service';

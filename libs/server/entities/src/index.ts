@@ -12,3 +12,5 @@ export * from './lib/translation.entity';
 export * from './lib/currency.entity';
 export * from './lib/exchange-rate.entity';
 export * from './lib/currency-preference.entity';
+export * from './lib/platform-settings.entity';
+export * from './lib/seller-order.entity';

@@ -16,39 +16,40 @@ export function useSellerOrders({
   after?: string;
   status?: KickzoneGraphqlTypes.OrderStatus;
 } = {}) {
-  const { data, loading, error, refetch, fetchMore } = useQuery<
-    Pick<KickzoneGraphqlTypes.Query, 'myOrders'>,
-    KickzoneGraphqlTypes.QueryMyOrdersArgs
-  >(GET_MY_ORDERS_QUERY, {
-    variables: { first, after },
-    notifyOnNetworkStatusChange: true,
-    fetchPolicy: 'cache-and-network',
-  });
+  // Note: Types will be auto-generated when server starts and schema regenerates
+  // Using any temporarily to avoid type errors until schema regeneration
+  const { data, loading, error, refetch, fetchMore } = useQuery<any, any>(
+    GET_MY_ORDERS_QUERY,
+    {
+      variables: { first, after },
+      notifyOnNetworkStatusChange: true,
+      fetchPolicy: 'cache-and-network',
+    }
+  );
+
+  const orders = data?.mySellerOrders || [];
 
   const [updateOrderStatusMutation, { loading: updateStatusLoading }] =
-    useMutation<
-      Pick<KickzoneGraphqlTypes.Mutation, 'updateOrderStatus'>,
-      KickzoneGraphqlTypes.MutationUpdateOrderStatusArgs
-    >(UPDATE_ORDER_STATUS_MUTATION, {
+    useMutation<any, any>(UPDATE_ORDER_STATUS_MUTATION, {
       refetchQueries: [{ query: GET_MY_ORDERS_QUERY, variables: { first } }],
     });
 
   const [updateOrderMutation, { loading: updateOrderLoading }] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'updateOrder'>,
-    KickzoneGraphqlTypes.MutationUpdateOrderArgs
+    any,
+    any
   >(UPDATE_ORDER_MUTATION, {
     refetchQueries: [{ query: GET_MY_ORDERS_QUERY, variables: { first } }],
   });
 
   const updateOrderStatus = async (
     orderId: string,
-    status: KickzoneGraphqlTypes.OrderStatus
+    newStatus: KickzoneGraphqlTypes.OrderStatus
   ) => {
     const response = await updateOrderStatusMutation({
       variables: {
         updateOrderStatusInput: {
           id: orderId,
-          status,
+          status: newStatus,
         },
       },
     });
@@ -71,8 +72,8 @@ export function useSellerOrders({
   };
 
   const loadMore = () => {
-    if (data?.myOrders && data.myOrders.length > 0) {
-      const lastOrder = data.myOrders[data.myOrders.length - 1];
+    if (orders && orders.length > 0) {
+      const lastOrder = orders[orders.length - 1];
       return fetchMore({
         variables: {
           after: lastOrder.id,
@@ -83,8 +84,8 @@ export function useSellerOrders({
 
   // Filter orders by status on the client side if status filter is provided
   const filteredOrders = status
-    ? (data?.myOrders || []).filter((order) => order.status === status)
-    : data?.myOrders || [];
+    ? orders.filter((order: any) => order.status === status)
+    : orders;
 
   return {
     orders: filteredOrders,
