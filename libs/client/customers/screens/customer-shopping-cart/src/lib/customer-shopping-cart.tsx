@@ -102,11 +102,10 @@ export function CustomerShoppingCart() {
 
   // Calculate shipping costs using smart shipping logic
   const sellerShippingFees = useMemo(() => {
-    const sellerMap = new Map<string, { name: string; fee: number }>();
+    const sellerMap = new Map<string, { fee: number }>();
     cartItems.forEach((item) => {
       if (!sellerMap.has(item.sellerId)) {
         sellerMap.set(item.sellerId, {
-          name: item.sellerName || '',
           fee: item.sellerShippingFee || 0,
         });
       }
@@ -114,7 +113,6 @@ export function CustomerShoppingCart() {
     return Array.from(sellerMap.entries()).map(([sellerId, info]) => ({
       sellerId,
       shippingFee: info.fee,
-      sellerName: info.name,
     }));
   }, [cartItems]);
 
@@ -933,7 +931,7 @@ export function CustomerShoppingCart() {
                       {LL.checkout.shipping()}:
                     </Typography>
                     {Object.entries(shippingCostsBySeller).map(
-                      ([sellerId, { name, fee }]) => (
+                      ([sellerId, fee]) => (
                         <Box
                           key={sellerId}
                           sx={{
@@ -944,7 +942,7 @@ export function CustomerShoppingCart() {
                           }}
                         >
                           <Typography variant="body2" color="text.secondary">
-                            {name}:
+                            {LL.checkout.shipping()}:
                           </Typography>
                           <Typography variant="body2">
                             <PriceDisplay
