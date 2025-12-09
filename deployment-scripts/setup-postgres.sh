@@ -70,3 +70,4 @@ echo "  DB_PASSWORD=$DB_PASSWORD"
 echo "  DB_NAME=$DB_NAME"
 echo ""
 
+

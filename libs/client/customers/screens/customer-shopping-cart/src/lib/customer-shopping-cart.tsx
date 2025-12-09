@@ -120,8 +120,22 @@ export function CustomerShoppingCart() {
     return cartItems.reduce((sum, item) => sum + item.totalPrice, 0);
   }, [cartItems]);
 
+  // Type for shipping calculation query result
+  type ShippingCalculationData = {
+    calculateShippingCost?: {
+      totalShippingCost: number;
+      freeShippingApplied: boolean;
+      strategyUsed: string;
+      shippingBreakdown: Array<{
+        sellerId: string;
+        originalFee: number;
+        appliedFee: number;
+      }>;
+    };
+  };
+
   // Query shipping calculation
-  const { data: shippingData, loading: shippingLoading } = useQuery(
+  const { data: shippingData } = useQuery<ShippingCalculationData>(
     CALCULATE_SHIPPING_COST_QUERY,
     {
       variables: {
@@ -150,7 +164,7 @@ export function CustomerShoppingCart() {
     const breakdown =
       shippingData?.calculateShippingCost?.shippingBreakdown || [];
     const map: Record<string, number> = {};
-    breakdown.forEach((item: any) => {
+    breakdown.forEach((item) => {
       map[String(item.sellerId)] = item.appliedFee || 0;
     });
     // Fallback: use original fees if breakdown not available

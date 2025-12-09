@@ -111,3 +111,4 @@ echo "  1. Built the API: nx build kickzone-api --configuration=production"
 echo "  2. Created .env file with database credentials"
 echo "  3. PostgreSQL is running and database is created"
 
+
