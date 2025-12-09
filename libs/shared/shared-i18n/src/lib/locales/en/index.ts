@@ -337,6 +337,8 @@ const en = {
   // Messages and notifications
   messages: {
     welcome: `Welcome to ${SITE_NAME.en}`,
+    homeDescription:
+      'Discover premium clothes from top brands and express your unique style',
     itemAdded: 'Item added to cart',
     itemRemoved: 'Item removed from cart',
     quantityUpdated: 'Quantity updated',

@@ -95,6 +95,7 @@ export function CustomersHome() {
           size: productInfo.size || null,
           sellerId: sellerProduct.seller.id.toString(),
           sellerName: sellerProduct.seller.storeName,
+          sellerShippingFee: sellerProduct.seller.shippingFee || 0,
           productInfoId: productInfo.id.toString(),
           sellerProductId: sellerProduct.id.toString(),
           availableStock: sellerProduct.stockQuantity,
@@ -112,17 +113,17 @@ export function CustomersHome() {
       <Box
         sx={{
           position: 'relative',
-          pt: { xs: 8, md: 12 },
-          pb: { xs: 6, md: 10 },
+          pt: { xs: 2, md: 3 },
+          pb: { xs: 2, md: 3 },
           overflow: 'hidden',
         }}
       >
-        <Container maxWidth="lg">
+        <Container maxWidth="lg" sx={{ px: { xs: 1, md: 2 } }}>
           <Fade in timeout={1000}>
             <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
               {/* Hero Title with Glassmorphic Background */}
               <GlassmorphismContainer
-                wrapperSx={{ mb: 4, p: 0 }}
+                wrapperSx={{ mb: 0.5, p: 0, mx: { xs: -1, md: -2 } }}
                 containerSx={{
                   position: 'relative',
                   overflow: 'hidden',
@@ -145,7 +146,7 @@ export function CustomersHome() {
                   variant="h2"
                   sx={{
                     fontWeight: 900,
-                    mb: 2,
+                    mb: 1,
                     fontSize: { xs: '2.5rem', md: '3.5rem' },
                     background:
                       'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -160,140 +161,37 @@ export function CustomersHome() {
                   {LL.messages.welcome()}
                 </Typography>
                 <Typography
-                  variant="h6"
+                  variant="h5"
+                  component="h2"
                   sx={{
-                    mb: 2,
+                    fontWeight: 600,
+                    mb: 1,
+                    fontSize: { xs: '1.25rem', md: '1.75rem' },
+                    background:
+                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    letterSpacing: '0.02em',
+                    position: 'relative',
+                    zIndex: 1,
+                  }}
+                >
+                  Unlock Your Icon
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    mb: 1,
                     fontWeight: 400,
-                    fontSize: { xs: '1rem', md: '1.25rem' },
+                    fontSize: { xs: '0.875rem', md: '1rem' },
                     color: 'rgba(102, 126, 234, 0.8)',
                     position: 'relative',
                     zIndex: 1,
                   }}
                 >
-                  Discover premium sneakers from top brands
+                  {LL.messages.homeDescription()}
                 </Typography>
-              </GlassmorphismContainer>
-
-              {/* Search and Filter Bar */}
-              <GlassmorphismContainer
-                wrapperSx={{ p: 0 }}
-                containerSx={{
-                  position: 'relative',
-                  overflow: 'hidden',
-                  background: 'rgba(255, 255, 255, 0.25)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background:
-                      'linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%)',
-                  },
-                }}
-              >
-                <Stack
-                  direction={{ xs: 'column', sm: 'row' }}
-                  spacing={3}
-                  sx={{
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
-                    zIndex: 1,
-                  }}
-                >
-                  <TextField
-                    variant="outlined"
-                    placeholder={LL.form.searchProducts()}
-                    value={searchInput}
-                    onChange={(e) => setSearchInput(e.target.value)}
-                    onKeyPress={handleKeyPress}
-                    sx={{
-                      flex: 1,
-                      minWidth: { xs: '100%', sm: 280 },
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 4,
-                      },
-                    }}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon sx={{ color: '#667eea' }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                  <Button
-                    variant="contained"
-                    onClick={handleSearch}
-                    sx={{
-                      borderRadius: 4,
-                      px: 4,
-                      py: 1.5,
-                      background:
-                        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      boxShadow: '0 4px 15px 0 rgba(102, 126, 234, 0.4)',
-                      '&:hover': {
-                        background:
-                          'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                        boxShadow: '0 6px 20px 0 rgba(102, 126, 234, 0.6)',
-                      },
-                    }}
-                  >
-                    {LL.button.search()}
-                  </Button>
-                  <FormControl
-                    sx={{
-                      minWidth: { xs: '100%', sm: 240 },
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 4,
-                      },
-                    }}
-                  >
-                    <InputLabel>{LL.form.sortBy()}</InputLabel>
-                    <Select
-                      value={sort}
-                      label={LL.form.sortBy()}
-                      onChange={(e) => setSort(e.target.value)}
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <TrendingUpIcon sx={{ color: '#667eea', ml: 1 }} />
-                        </InputAdornment>
-                      }
-                    >
-                      <MenuItem value="price">{LL.table.price()}</MenuItem>
-                      <MenuItem value="discount">{LL.form.discount()}</MenuItem>
-                    </Select>
-                  </FormControl>
-                  <FormControl
-                    sx={{
-                      minWidth: { xs: '100%', sm: 180 },
-                      '& .MuiOutlinedInput-root': {
-                        borderRadius: 4,
-                      },
-                    }}
-                  >
-                    <InputLabel>{LL.form.order()}</InputLabel>
-                    <Select
-                      value={sortOrder}
-                      label={LL.form.order()}
-                      onChange={(e) =>
-                        setSortOrder(e.target.value as 'asc' | 'desc')
-                      }
-                      startAdornment={
-                        <InputAdornment position="start">
-                          <LocalOfferIcon sx={{ color: '#667eea', ml: 1 }} />
-                        </InputAdornment>
-                      }
-                    >
-                      <MenuItem value="asc">{LL.products.ascending()}</MenuItem>
-                      <MenuItem value="desc">
-                        {LL.products.descending()}
-                      </MenuItem>
-                    </Select>
-                  </FormControl>
-                </Stack>
               </GlassmorphismContainer>
             </Box>
           </Fade>
@@ -301,122 +199,233 @@ export function CustomersHome() {
       </Box>
 
       {/* Products Section */}
-      <Container maxWidth="xl" sx={{ py: { xs: 4, md: 8 } }}>
-        {loading ? (
-          <Box
+      <Container
+        maxWidth="xl"
+        sx={{
+          py: { xs: 1, md: 2 },
+          px: { xs: 1, md: 2 },
+        }}
+      >
+        <GlassmorphismContainer
+          wrapperSx={{ p: 0, mx: { xs: -1, md: -2 } }}
+          containerSx={{
+            background: 'rgba(255, 255, 255, 0.1)',
+            backdropFilter: 'blur(15px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(15px) saturate(180%)',
+          }}
+        >
+          {/* Search and Filter Bar */}
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={2}
             sx={{
-              display: 'flex',
-              justifyContent: 'center',
               alignItems: 'center',
-              minHeight: 400,
+              justifyContent: 'center',
+              position: 'relative',
+              zIndex: 1,
+              p: { xs: 1.5, md: 2 },
+              pb: { xs: 2, md: 3 },
             }}
           >
-            <Paper
-              elevation={0}
+            <TextField
+              variant="outlined"
+              placeholder={LL.form.searchProducts()}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyPress={handleKeyPress}
               sx={{
-                p: 6,
-                borderRadius: 6,
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
-                textAlign: 'center',
+                flex: 1,
+                minWidth: { xs: '100%', sm: 280 },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 4,
+                },
+              }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchIcon sx={{ color: '#667eea' }} />
+                  </InputAdornment>
+                ),
+              }}
+            />
+            <Button
+              variant="contained"
+              onClick={handleSearch}
+              sx={{
+                borderRadius: 4,
+                px: 4,
+                py: 1.5,
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                boxShadow: '0 4px 15px 0 rgba(102, 126, 234, 0.4)',
+                '&:hover': {
+                  background:
+                    'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                  boxShadow: '0 6px 20px 0 rgba(102, 126, 234, 0.6)',
+                },
               }}
             >
-              <Box
-                sx={{
-                  width: 60,
-                  height: 60,
-                  borderRadius: '50%',
-                  border: '4px solid #667eea',
-                  borderTopColor: 'transparent',
-                  animation: 'spin 1s linear infinite',
-                  mb: 2,
-                  mx: 'auto',
-                  '@keyframes spin': {
-                    '0%': { transform: 'rotate(0deg)' },
-                    '100%': { transform: 'rotate(360deg)' },
-                  },
-                }}
-              />
-              <Typography
-                variant="h6"
-                sx={{
-                  color: '#667eea',
-                  fontWeight: 600,
-                  background:
-                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                }}
-              >
-                {LL.status.loading()}
-              </Typography>
-            </Paper>
-          </Box>
-        ) : products.length === 0 ? (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              minHeight: 400,
-            }}
-          >
-            <Paper
-              elevation={0}
+              {LL.button.search()}
+            </Button>
+            <FormControl
               sx={{
-                p: 6,
-                borderRadius: 6,
-                background: 'rgba(255, 255, 255, 0.15)',
-                backdropFilter: 'blur(20px) saturate(180%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
-                textAlign: 'center',
+                minWidth: { xs: '100%', sm: 240 },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 4,
+                },
               }}
             >
-              <Typography
-                variant="h5"
+              <InputLabel>{LL.form.sortBy()}</InputLabel>
+              <Select
+                value={sort}
+                label={LL.form.sortBy()}
+                onChange={(e) => setSort(e.target.value)}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <TrendingUpIcon sx={{ color: '#667eea', ml: 1 }} />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="price">{LL.table.price()}</MenuItem>
+                <MenuItem value="discount">{LL.form.discount()}</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl
+              sx={{
+                minWidth: { xs: '100%', sm: 180 },
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: 4,
+                },
+              }}
+            >
+              <InputLabel>{LL.form.order()}</InputLabel>
+              <Select
+                value={sortOrder}
+                label={LL.form.order()}
+                onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                startAdornment={
+                  <InputAdornment position="start">
+                    <LocalOfferIcon sx={{ color: '#667eea', ml: 1 }} />
+                  </InputAdornment>
+                }
+              >
+                <MenuItem value="asc">{LL.products.ascending()}</MenuItem>
+                <MenuItem value="desc">{LL.products.descending()}</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+          {loading ? (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: 400,
+              }}
+            >
+              <Paper
+                elevation={0}
                 sx={{
-                  fontWeight: 600,
-                  mb: 2,
-                  background:
-                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  backgroundClip: 'text',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
+                  p: 6,
+                  borderRadius: 6,
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
+                  textAlign: 'center',
                 }}
               >
-                {LL.products.noProductsFound()}
-              </Typography>
-              <Typography
-                variant="body1"
+                <Box
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    border: '4px solid #667eea',
+                    borderTopColor: 'transparent',
+                    animation: 'spin 1s linear infinite',
+                    mb: 2,
+                    mx: 'auto',
+                    '@keyframes spin': {
+                      '0%': { transform: 'rotate(0deg)' },
+                      '100%': { transform: 'rotate(360deg)' },
+                    },
+                  }}
+                />
+                <Typography
+                  variant="h6"
+                  sx={{
+                    color: '#667eea',
+                    fontWeight: 600,
+                    background:
+                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  {LL.status.loading()}
+                </Typography>
+              </Paper>
+            </Box>
+          ) : products.length === 0 ? (
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                minHeight: 400,
+              }}
+            >
+              <Paper
+                elevation={0}
                 sx={{
-                  color: 'rgba(102, 126, 234, 0.7)',
-                  fontWeight: 400,
+                  p: 6,
+                  borderRadius: 6,
+                  background: 'rgba(255, 255, 255, 0.15)',
+                  backdropFilter: 'blur(20px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                  border: '1px solid rgba(255, 255, 255, 0.2)',
+                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
+                  textAlign: 'center',
                 }}
               >
-                Try adjusting your search or filters
-              </Typography>
-            </Paper>
-          </Box>
-        ) : (
-          <GlassmorphismContainer
-            wrapperSx={{ p: 0 }}
-            containerSx={{
-              background: 'rgba(255, 255, 255, 0.1)',
-              backdropFilter: 'blur(15px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(15px) saturate(180%)',
-            }}
-          >
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 600,
+                    mb: 2,
+                    background:
+                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    backgroundClip: 'text',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}
+                >
+                  {LL.products.noProductsFound()}
+                </Typography>
+                <Typography
+                  variant="body1"
+                  sx={{
+                    color: 'rgba(102, 126, 234, 0.7)',
+                    fontWeight: 400,
+                  }}
+                >
+                  Try adjusting your search or filters
+                </Typography>
+              </Paper>
+            </Box>
+          ) : (
             <Fade in timeout={800}>
               <Grid
                 container
                 spacing={{ xs: 2, sm: 3, md: 4 }}
-                sx={products.length === 1 ? { justifyContent: 'center' } : {}}
+                sx={{
+                  ...(products.length === 1
+                    ? { justifyContent: 'center' }
+                    : {}),
+                  px: { xs: 1.5, md: 2 },
+                  pb: { xs: 1.5, md: 2 },
+                }}
               >
                 {products.map((product, index) => (
                   <Grid
@@ -448,8 +457,8 @@ export function CustomersHome() {
                 ))}
               </Grid>
             </Fade>
-          </GlassmorphismContainer>
-        )}
+          )}
+        </GlassmorphismContainer>
       </Container>
     </CustomersLayout>
   );

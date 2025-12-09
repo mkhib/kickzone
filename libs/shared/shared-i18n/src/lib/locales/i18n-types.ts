@@ -1157,6 +1157,10 @@ type RootTranslation = {
 		 */
 		welcome: string
 		/**
+		 * D​i​s​c​o​v​e​r​ ​p​r​e​m​i​u​m​ ​c​l​o​t​h​e​s​ ​f​r​o​m​ ​t​o​p​ ​b​r​a​n​d​s​ ​a​n​d​ ​e​x​p​r​e​s​s​ ​y​o​u​r​ ​u​n​i​q​u​e​ ​s​t​y​l​e
+		 */
+		homeDescription: string
+		/**
 		 * I​t​e​m​ ​a​d​d​e​d​ ​t​o​ ​c​a​r​t
 		 */
 		itemAdded: string
@@ -3502,6 +3506,10 @@ export type TranslationFunctions = {
 		 * Welcome to Master's Key
 		 */
 		welcome: () => LocalizedString
+		/**
+		 * Discover premium clothes from top brands and express your unique style
+		 */
+		homeDescription: () => LocalizedString
 		/**
 		 * Item added to cart
 		 */

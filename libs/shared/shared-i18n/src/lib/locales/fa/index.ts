@@ -339,6 +339,8 @@ const fa = {
   // Messages and notifications
   messages: {
     welcome: `به ${SITE_NAME.fa} خوش آمدید`,
+    homeDescription:
+      'لباس‌های پریمیوم از برندهای با کیفیت رو کشف کن و سبک منحصر به فرد خودت رو نشون بده',
     itemAdded: 'آیتم به سبد خرید اضافه شد',
     itemRemoved: 'آیتم از سبد خرید حذف شد',
     quantityUpdated: 'تعداد به‌روزرسانی شد',
@@ -389,8 +391,7 @@ const fa = {
     registrationFailed: 'ثبت نام ناموفق بود. لطفاً دوباره تلاش کنید.',
     setupPassword: 'تنظیم رمز عبور شما',
     setupPasswordTitle: 'تنظیم رمز عبور شما',
-    setupPasswordDescription:
-      `به ${SITE_NAME.fa} خوش آمدید! لطفاً رمز عبور خود را برای امنیت حساب فروشنده‌تان تنظیم کنید.`,
+    setupPasswordDescription: `به ${SITE_NAME.fa} خوش آمدید! لطفاً رمز عبور خود را برای امنیت حساب فروشنده‌تان تنظیم کنید.`,
     newPassword: 'رمز عبور جدید',
     confirmNewPassword: 'تایید رمز عبور',
     setPassword: 'تنظیم رمز عبور',
