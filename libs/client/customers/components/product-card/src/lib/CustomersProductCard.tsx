@@ -65,8 +65,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       finalPrice,
       discount,
       stockQuantity: sellerProduct.stockQuantity,
-      sellerName:
-        sellerProduct.seller?.storeName || LL.products.unknownSeller(),
     };
 
     return pricingInfo;
@@ -290,16 +288,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 />
               </Typography>
             </Box>
-            <Typography
-              variant="body2"
-              sx={{
-                color: '#666',
-                fontSize: '0.9rem',
-                fontWeight: 500,
-              }}
-            >
-              {LL.products.by()} {pricingInfo.sellerName}
-            </Typography>
           </Box>
         ) : (
           <Box

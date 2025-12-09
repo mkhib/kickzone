@@ -60,8 +60,6 @@ export function CustomerProducts() {
       finalPrice,
       discount,
       stockQuantity: sellerProduct.stockQuantity,
-      sellerName:
-        sellerProduct.seller?.storeName || LL.products.unknownSeller(),
     };
 
     return pricingInfo;
@@ -152,7 +150,7 @@ export function CustomerProducts() {
       color: productInfo.color?.name || null,
       size: productInfo.size || null,
       sellerId: sellerProduct.seller.id.toString(),
-      sellerName: sellerProduct.seller.storeName,
+      sellerName: '', // Not displayed to customers
       sellerShippingFee: sellerProduct.seller.shippingFee || 0,
       productInfoId: productInfo.id.toString(),
       sellerProductId: sellerProduct.id.toString(),
@@ -370,9 +368,6 @@ export function CustomerProducts() {
                             />
                           )}
                         </Box>
-                        <Typography variant="body2" color="text.secondary">
-                          {LL.products.by()} {pricingInfo.sellerName}
-                        </Typography>
                         <Typography
                           variant="body2"
                           color={isOutOfStock ? 'error' : 'success.main'}

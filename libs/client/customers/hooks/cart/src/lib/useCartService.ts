@@ -92,7 +92,7 @@ export function useCustomersCartService() {
         color: item.color || null,
         size: item.size || null,
         sellerId: item.sellerId,
-        sellerName: item.sellerName || 'Unknown Seller',
+        sellerName: '', // Not displayed to customers
         productInfoId: item.productInfoId || '',
         sellerProductId: item.sellerProductId || item.productId,
         availableStock: item.availableStock || 0,

@@ -34,7 +34,6 @@ export const ADD_TO_CART_MUTATION = gql`
         color
         size
         sellerId
-        sellerName
         productInfoId
         sellerProductId
         availableStock
@@ -133,7 +132,6 @@ export const CREATE_ORDER_MUTATION = gql`
       trackingNumber
       createdAt
       updatedAt
-      sellerStoreName
       sellerPhone
       sellerAddress
       items {

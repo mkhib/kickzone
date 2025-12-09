@@ -21,7 +21,6 @@ export const GET_CART_QUERY = gql`
         color
         size
         sellerId
-        sellerName
         productInfoId
         sellerProductId
         availableStock
@@ -68,7 +67,6 @@ export const GET_PRODUCTS_QUERY = gql`
             productInfoId
             seller {
               id
-              storeName
               shippingFee
             }
           }
@@ -105,7 +103,6 @@ export const GET_MY_ORDERS_QUERY = gql`
       trackingNumber
       createdAt
       updatedAt
-      sellerStoreName
       sellerPhone
       sellerAddress
       items {
@@ -145,7 +142,6 @@ export const CALCULATE_SHIPPING_COST_QUERY = gql`
       strategyUsed
       shippingBreakdown {
         sellerId
-        sellerName
         originalFee
         appliedFee
       }

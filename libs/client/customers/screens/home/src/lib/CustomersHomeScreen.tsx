@@ -94,7 +94,7 @@ export function CustomersHome() {
           color: productInfo.color?.name || null,
           size: productInfo.size || null,
           sellerId: sellerProduct.seller.id.toString(),
-          sellerName: sellerProduct.seller.storeName,
+          sellerName: '', // Not displayed to customers
           sellerShippingFee: sellerProduct.seller.shippingFee || 0,
           productInfoId: productInfo.id.toString(),
           sellerProductId: sellerProduct.id.toString(),
