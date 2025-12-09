@@ -74,7 +74,7 @@ export function Headerbar() {
             ? '0 2px 8px rgba(0, 0, 0, 0.1)'
             : '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
           zIndex: (theme) => theme.zIndex.appBar + 1,
-          color: isScrolled ? '#000' : '#fff',
+          color: '#000',
           transition: 'all 0.3s ease-in-out',
         }}
       >
