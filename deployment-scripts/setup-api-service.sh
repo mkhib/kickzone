@@ -3,10 +3,10 @@
 
 set -e
 
-echo "Setting up Kickzone API as a systemd service..."
+echo "Setting up Master's Key API as a systemd service..."
 
 # Get the project directory
-PROJECT_DIR="/opt/kickzone"
+PROJECT_DIR="/opt/masterskey"
 SERVICE_USER="www-data"
 
 # Check if running as root
@@ -49,10 +49,10 @@ chown -R $SERVICE_USER:$SERVICE_USER "$PROJECT_DIR/uploads"
 chmod -R 755 "$PROJECT_DIR/uploads"
 
 # Create systemd service file
-SERVICE_FILE="/etc/systemd/system/kickzone-api.service"
+SERVICE_FILE="/etc/systemd/system/masterskey-api.service"
 cat > "$SERVICE_FILE" <<EOF
 [Unit]
-Description=Kickzone API Server
+Description=Master's Key API Server
 After=network.target postgresql.service
 
 [Service]
@@ -62,7 +62,7 @@ Group=$SERVICE_USER
 WorkingDirectory=$PROJECT_DIR
 EnvironmentFile=$PROJECT_DIR/.env
 Environment=NODE_ENV=production
-ExecStart=$NODE_BIN $PROJECT_DIR/apps/kickzone-api/dist/main.js
+ExecStart=$NODE_BIN $PROJECT_DIR/apps/kickzone-api/main.js
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -92,19 +92,19 @@ chmod 600 "$PROJECT_DIR/.env" 2>/dev/null || true
 systemctl daemon-reload
 
 # Enable service
-systemctl enable kickzone-api
+systemctl enable masterskey-api
 
 echo ""
 echo "✅ Service created and enabled!"
 echo ""
 echo "To start the service:"
-echo "  sudo systemctl start kickzone-api"
+echo "  sudo systemctl start masterskey-api"
 echo ""
 echo "To check status:"
-echo "  sudo systemctl status kickzone-api"
+echo "  sudo systemctl status masterskey-api"
 echo ""
 echo "To view logs:"
-echo "  sudo journalctl -u kickzone-api -f"
+echo "  sudo journalctl -u masterskey-api -f"
 echo ""
 echo "⚠️  Make sure you have:"
 echo "  1. Built the API: nx build kickzone-api --configuration=production"

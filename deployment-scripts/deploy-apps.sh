@@ -3,7 +3,7 @@
 
 set -e
 
-PROJECT_DIR="/opt/kickzone"
+PROJECT_DIR="/opt/masterskey"
 WEB_DIR="/var/www/masterskey/dist/apps/client"
 
 echo "Building and deploying React applications..."
@@ -24,18 +24,23 @@ cd "$PROJECT_DIR"
 # Check if dependencies are installed
 if [ ! -d "node_modules" ]; then
     echo "📦 Installing dependencies..."
-    yarn install
+    # Use memory limits to prevent OOM
+    export NODE_OPTIONS="--max-old-space-size=2048"
+    yarn install --network-concurrency 1 || {
+        echo "❌ yarn install failed. Set up swap space: sudo bash deployment-scripts/setup-swap.sh"
+        exit 1
+    }
 fi
 
 # Build applications
 echo "🔨 Building admin panel..."
-nx build kickzone-admins --configuration=production
+yarn nx build kickzone-admins --configuration=production
 
 echo "🔨 Building seller panel..."
-nx build kickzone-sellers --configuration=production
+yarn nx build kickzone-sellers --configuration=production
 
 echo "🔨 Building customer panel..."
-nx build kickzone-customers --configuration=production
+yarn nx build kickzone-customers --configuration=production
 
 # Verify builds
 if [ ! -d "dist/apps/client/admins" ] || [ ! -d "dist/apps/client/sellers" ] || [ ! -d "dist/apps/client/customers" ]; then

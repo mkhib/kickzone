@@ -1,13 +1,18 @@
 # Complete Deployment Guide: Build, Database, API, and Apps
 
-This guide walks you through the complete deployment process step by step.
+This guide walks you through the complete deployment process for Master's Key step by step.
+
+**Quick Start:** See `DEPLOYMENT_README.md` for a condensed version.
 
 ## Prerequisites
 
-- Linux server with `deployuser` (with sudo access)
+- Linux server (Ubuntu/Debian recommended)
+- Root or sudo access
 - Domain names configured with DNS
-- nginx installed and configured (already done)
-- SSL certificates obtained (already done)
+- GitHub repository (private repo requires SSH key setup)
+- Basic knowledge of Linux command line
+
+**Note:** If starting from scratch, run `deployment-scripts/setup-server.sh` first to install all required software.
 
 ## Step 1: Install Required Software
 
@@ -60,10 +65,10 @@ sudo apt install -g build-essential python3
 sudo -u postgres psql
 
 # In PostgreSQL prompt, run:
-CREATE DATABASE kickzone_db;
-CREATE USER kickzone_user WITH PASSWORD 'YOUR_SECURE_PASSWORD_HERE';
-GRANT ALL PRIVILEGES ON DATABASE kickzone_db TO kickzone_user;
-ALTER USER kickzone_user CREATEDB;
+CREATE DATABASE masterskey_db;
+CREATE USER masterskey_user WITH PASSWORD 'YOUR_SECURE_PASSWORD_HERE';
+GRANT ALL PRIVILEGES ON DATABASE masterskey_db TO masterskey_user;
+ALTER USER masterskey_user CREATEDB;
 \q
 ```
 
@@ -73,22 +78,77 @@ ALTER USER kickzone_user CREATEDB;
 
 ```bash
 # Test connection
-sudo -u postgres psql -d kickzone_db -c "SELECT version();"
+sudo -u postgres psql -d masterskey_db -c "SELECT version();"
 ```
 
-## Step 3: Clone and Prepare Repository
+## Step 3: Set Up Git and Clone Repository
 
-### 3.1 Clone Repository
+### 3.1 Install Git
 
 ```bash
-# As deployuser, clone to /opt
-cd /opt
-sudo git clone YOUR_REPO_URL kickzone
-sudo chown -R deployuser:deployuser /opt/kickzone
-cd /opt/kickzone
+# Install Git if not already installed
+sudo apt update
+sudo apt install -y git
+
+# Verify installation
+git --version
 ```
 
-### 3.2 Install Dependencies
+### 3.2 Set Up SSH Key for GitHub Private Repository
+
+For private GitHub repositories, you need to set up SSH authentication:
+
+```bash
+# As deployuser, generate SSH key (if you don't have one)
+ssh-keygen -t ed25519 -C "deployuser@your-server" -f ~/.ssh/id_ed25519
+
+# Display the public key
+cat ~/.ssh/id_ed25519.pub
+```
+
+**Add SSH Key to GitHub:**
+
+1. Copy the public key output from above
+2. Go to GitHub → Settings → SSH and GPG keys → New SSH key
+3. Paste the public key and save
+
+**Test SSH Connection:**
+
+```bash
+# Test GitHub SSH connection
+ssh -T git@github.com
+
+# Should see: "Hi username! You've successfully authenticated..."
+```
+
+### 3.3 Configure Git (if needed)
+
+```bash
+# Set Git user info (optional, for commits)
+git config --global user.name "Deploy User"
+git config --global user.email "deployuser@yourdomain.com"
+```
+
+### 3.4 Clone Private Repository
+
+```bash
+# As deployuser, clone to /opt using SSH URL
+cd /opt
+sudo git clone git@github.com/mkhib/kickzone.git masterskey
+
+# If you prefer HTTPS with token (alternative method):
+# git clone https://YOUR_GITHUB_TOKEN@github.com/mkhib/kickzone.git masterskey
+
+# Set ownership
+sudo chown -R deployuser:deployuser /opt/masterskey
+cd /opt/masterskey
+
+# Verify you're on the correct branch
+git branch -a
+git checkout master  # or main, depending on your default branch
+```
+
+### 3.5 Install Dependencies
 
 ```bash
 # Install all dependencies
@@ -97,13 +157,29 @@ yarn install
 # This may take several minutes
 ```
 
+### 3.6 Set Up Git Pull Script (for easy updates)
+
+```bash
+# Create a script to pull latest changes
+cat > /opt/masterskey/pull-updates.sh << 'EOF'
+#!/bin/bash
+set -e
+cd /opt/masterskey
+git pull origin master  # or main
+yarn install
+echo "✅ Code updated successfully"
+EOF
+
+chmod +x /opt/masterskey/pull-updates.sh
+```
+
 ## Step 4: Configure Environment Variables
 
 ### 4.1 Create .env File
 
 ```bash
 # Create .env file in project root
-nano /opt/kickzone/.env
+nano /opt/masterskey/.env
 ```
 
 Add the following content:
@@ -116,9 +192,9 @@ NODE_ENV=production
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=kickzone_user
+DB_USERNAME=masterskey_user
 DB_PASSWORD=YOUR_SECURE_PASSWORD_HERE
-DB_NAME=kickzone_db
+DB_NAME=masterskey_db
 
 # JWT Secret (generate a random string)
 JWT_SECRET=YOUR_JWT_SECRET_HERE
@@ -132,6 +208,7 @@ JWT_SECRET=YOUR_JWT_SECRET_HERE
 ```
 
 **Generate JWT Secret:**
+
 ```bash
 # Generate a secure random string for JWT_SECRET
 openssl rand -base64 32
@@ -143,7 +220,7 @@ Copy the output and use it as `JWT_SECRET` in your `.env` file.
 
 ```bash
 # Make .env readable only by owner
-chmod 600 /opt/kickzone/.env
+chmod 600 /opt/masterskey/.env
 ```
 
 ## Step 5: Build the API Server
@@ -151,7 +228,7 @@ chmod 600 /opt/kickzone/.env
 ### 5.1 Build API
 
 ```bash
-cd /opt/kickzone
+cd /opt/masterskey
 
 # Build the API
 nx build kickzone-api --configuration=production
@@ -166,9 +243,9 @@ The built API will be in `apps/kickzone-api/dist/`.
 
 ```bash
 # Create directory for file uploads
-mkdir -p /opt/kickzone/uploads
-sudo chown -R deployuser:www-data /opt/kickzone/uploads
-chmod -R 755 /opt/kickzone/uploads
+mkdir -p /opt/masterskey/uploads
+sudo chown -R deployuser:www-data /opt/masterskey/uploads
+chmod -R 755 /opt/masterskey/uploads
 ```
 
 ## Step 6: Set Up API as Systemd Service
@@ -177,24 +254,24 @@ chmod -R 755 /opt/kickzone/uploads
 
 ```bash
 # Create systemd service
-sudo nano /etc/systemd/system/kickzone-api.service
+sudo nano /etc/systemd/system/masterskey-api.service
 ```
 
 Add the following content:
 
 ```ini
 [Unit]
-Description=Kickzone API Server
+Description=Master's Key API Server
 After=network.target postgresql.service
 
 [Service]
 Type=simple
 User=www-data
 Group=www-data
-WorkingDirectory=/opt/kickzone
-EnvironmentFile=/opt/kickzone/.env
+WorkingDirectory=/opt/masterskey
+EnvironmentFile=/opt/masterskey/.env
 Environment=NODE_ENV=production
-ExecStart=/usr/bin/node /opt/kickzone/apps/kickzone-api/dist/main.js
+ExecStart=/usr/bin/node /opt/masterskey/apps/kickzone-api/dist/main.js
 Restart=always
 RestartSec=10
 StandardOutput=journal
@@ -212,12 +289,12 @@ WantedBy=multi-user.target
 
 ```bash
 # Make sure www-data can access the project
-sudo chown -R www-data:www-data /opt/kickzone/apps/kickzone-api/dist
-sudo chown -R www-data:www-data /opt/kickzone/uploads
+sudo chown -R www-data:www-data /opt/masterskey/apps/kickzone-api/dist
+sudo chown -R www-data:www-data /opt/masterskey/uploads
 
 # Set permissions
-sudo chmod 755 /opt/kickzone
-sudo chmod 600 /opt/kickzone/.env
+sudo chmod 755 /opt/masterskey
+sudo chmod 600 /opt/masterskey/.env
 ```
 
 ### 6.3 Enable and Start Service
@@ -227,16 +304,16 @@ sudo chmod 600 /opt/kickzone/.env
 sudo systemctl daemon-reload
 
 # Enable service (start on boot)
-sudo systemctl enable kickzone-api
+sudo systemctl enable masterskey-api
 
 # Start the service
-sudo systemctl start kickzone-api
+sudo systemctl start masterskey-api
 
 # Check status
-sudo systemctl status kickzone-api
+sudo systemctl status masterskey-api
 
 # View logs
-sudo journalctl -u kickzone-api -f
+sudo journalctl -u masterskey-api -f
 ```
 
 ### 6.4 Verify API is Running
@@ -256,7 +333,7 @@ curl http://localhost:4000/api
 ### 7.1 Build All Three Apps
 
 ```bash
-cd /opt/kickzone
+cd /opt/masterskey
 
 # Build admin panel
 nx build kickzone-admins --configuration=production
@@ -289,7 +366,7 @@ ls -la dist/apps/client/
 sudo mkdir -p /var/www/masterskey/dist/apps/client
 
 # Copy built apps
-sudo cp -r /opt/kickzone/dist/apps/client/* /var/www/masterskey/dist/apps/client/
+sudo cp -r /opt/masterskey/dist/apps/client/* /var/www/masterskey/dist/apps/client/
 
 # Set ownership
 sudo chown -R www-data:www-data /var/www/masterskey
@@ -326,7 +403,7 @@ sudo systemctl reload nginx
 ```bash
 # Check all services
 sudo systemctl status nginx
-sudo systemctl status kickzone-api
+sudo systemctl status masterskey-api
 sudo systemctl status postgresql
 sudo systemctl status x-ui  # Your 3x-ui panel
 ```
@@ -363,7 +440,7 @@ curl https://masterskey.store/graphql
 
 ```bash
 # API logs
-sudo journalctl -u kickzone-api -n 50
+sudo journalctl -u masterskey-api -n 50
 
 # nginx logs
 sudo tail -f /var/log/nginx/access.log
@@ -381,14 +458,14 @@ The API will automatically create tables when it starts (because `synchronize: t
 
 ```bash
 # Check API logs to see if database was initialized
-sudo journalctl -u kickzone-api -n 100 | grep -i "database\|typeorm\|connected"
+sudo journalctl -u masterskey-api -n 100 | grep -i "database\|typeorm\|connected"
 ```
 
 ### 11.2 Verify Database Tables
 
 ```bash
 # Connect to database
-sudo -u postgres psql -d kickzone_db
+sudo -u postgres psql -d masterskey_db
 
 # List tables
 \dt
@@ -405,7 +482,7 @@ If your API has a seed script or admin creation endpoint:
 
 ```bash
 # Check if there's a seed script
-ls -la /opt/kickzone/apps/kickzone-api/src/ | grep -i seed
+ls -la /opt/masterskey/apps/kickzone-api/src/ | grep -i seed
 
 # Or use GraphQL mutation to create admin user
 # Access GraphQL playground at: https://admins.masterskey.store/graphql
@@ -415,7 +492,7 @@ ls -la /opt/kickzone/apps/kickzone-api/src/ | grep -i seed
 ## Step 13: Final Verification Checklist
 
 - [ ] PostgreSQL is running
-- [ ] Database `kickzone_db` exists
+- [ ] Database `masterskey_db` exists
 - [ ] API service is running on port 4000
 - [ ] API can connect to database
 - [ ] All three React apps are built
@@ -432,7 +509,7 @@ ls -la /opt/kickzone/apps/kickzone-api/src/ | grep -i seed
 
 ```bash
 # Create monitoring script
-sudo nano /usr/local/bin/check-kickzone-services.sh
+sudo nano /usr/local/bin/check-masterskey-services.sh
 ```
 
 Add:
@@ -441,7 +518,7 @@ Add:
 #!/bin/bash
 echo "=== Service Status ==="
 systemctl is-active --quiet nginx && echo "✅ nginx: RUNNING" || echo "❌ nginx: FAILED"
-systemctl is-active --quiet kickzone-api && echo "✅ API: RUNNING" || echo "❌ API: FAILED"
+systemctl is-active --quiet masterskey-api && echo "✅ API: RUNNING" || echo "❌ API: FAILED"
 systemctl is-active --quiet postgresql && echo "✅ PostgreSQL: RUNNING" || echo "❌ PostgreSQL: FAILED"
 systemctl is-active --quiet x-ui && echo "✅ 3x-ui: RUNNING" || echo "❌ 3x-ui: FAILED"
 
@@ -452,23 +529,23 @@ netstat -tlnp | grep -E ':(80|443|4000|5432|2053)' | awk '{print $4, $7}'
 
 ```bash
 # Make executable
-sudo chmod +x /usr/local/bin/check-kickzone-services.sh
+sudo chmod +x /usr/local/bin/check-masterskey-services.sh
 
 # Test it
-sudo /usr/local/bin/check-kickzone-services.sh
+sudo /usr/local/bin/check-masterskey-services.sh
 ```
 
 ### 14.2 Set Up Log Rotation
 
 ```bash
 # Configure log rotation for API
-sudo nano /etc/logrotate.d/kickzone-api
+sudo nano /etc/logrotate.d/masterskey-api
 ```
 
 Add:
 
 ```
-/var/log/kickzone-api/*.log {
+/var/log/masterskey-api/*.log {
     daily
     rotate 7
     compress
@@ -485,7 +562,7 @@ Add:
 
 ```bash
 # Check logs
-sudo journalctl -u kickzone-api -n 100
+sudo journalctl -u masterskey-api -n 100
 
 # Common issues:
 # - Database connection failed → Check DB credentials in .env
@@ -497,7 +574,7 @@ sudo journalctl -u kickzone-api -n 100
 
 ```bash
 # Test database connection
-sudo -u postgres psql -d kickzone_db -U kickzone_user
+sudo -u postgres psql -d masterskey_db -U kickzone_user
 
 # If connection fails, check:
 # - PostgreSQL is running
@@ -522,11 +599,11 @@ sudo chown -R www-data:www-data /var/www/masterskey
 
 ```bash
 # API is not running or not accessible
-sudo systemctl status kickzone-api
+sudo systemctl status masterskey-api
 sudo netstat -tlnp | grep 4000
 
 # Restart API
-sudo systemctl restart kickzone-api
+sudo systemctl restart masterskey-api
 ```
 
 ## Quick Reference Commands
@@ -534,27 +611,127 @@ sudo systemctl restart kickzone-api
 ```bash
 # Restart all services
 sudo systemctl restart nginx
-sudo systemctl restart kickzone-api
+sudo systemctl restart masterskey-api
 sudo systemctl restart postgresql
 
 # View logs
-sudo journalctl -u kickzone-api -f
+sudo journalctl -u masterskey-api -f
 sudo tail -f /var/log/nginx/error.log
 
-# Rebuild and redeploy apps
-cd /opt/kickzone
+# Pull latest code from GitHub
+cd /opt/masterskey
+git pull origin master  # or main
+yarn install
+
+# Rebuild and redeploy React apps
+cd /opt/masterskey
 nx build kickzone-admins --configuration=production
 nx build kickzone-sellers --configuration=production
 nx build kickzone-customers --configuration=production
 sudo cp -r dist/apps/client/* /var/www/masterskey/dist/apps/client/
+sudo chown -R www-data:www-data /var/www/masterskey
 sudo systemctl reload nginx
 
-# Update API
-cd /opt/kickzone
-git pull
+# Update and rebuild API
+cd /opt/masterskey
+git pull origin master  # or main
 yarn install
 nx build kickzone-api --configuration=production
-sudo systemctl restart kickzone-api
+sudo systemctl restart masterskey-api
+
+# Full update (code + rebuild everything)
+cd /opt/masterskey
+git pull origin master  # or main
+yarn install
+nx build kickzone-api --configuration=production
+nx build kickzone-admins --configuration=production
+nx build kickzone-sellers --configuration=production
+nx build kickzone-customers --configuration=production
+sudo cp -r dist/apps/client/* /var/www/masterskey/dist/apps/client/
+sudo chown -R www-data:www-data /var/www/masterskey
+sudo systemctl restart masterskey-api
+sudo systemctl reload nginx
+```
+
+## Step 15: Setting Up Auto-Deploy from GitHub (Optional but Recommended)
+
+### 15.1 Option A: GitHub Actions CI/CD (Recommended)
+
+See `.github/workflows/deploy.yml` for automated deployment workflow. This will:
+
+- Build the API and React apps on push to master/main
+- Optionally deploy to your server via SSH
+
+**Setup:**
+
+1. Add GitHub Secrets:
+
+   - `SERVER_HOST`: Your server IP or domain
+   - `SERVER_USER`: deployuser
+   - `SSH_PRIVATE_KEY`: Your server's SSH private key
+   - `SERVER_DEPLOY_PATH`: /opt/masterskey
+
+2. The workflow will automatically build on push
+
+### 15.2 Option B: Webhook-Based Auto-Deploy
+
+Set up a webhook on your server to automatically pull and rebuild when code is pushed:
+
+```bash
+# Install webhook handler (example using webhook.sh)
+sudo apt install -y webhook
+
+# Create webhook script
+sudo nano /opt/masterskey/webhook-deploy.sh
+```
+
+Add:
+
+```bash
+#!/bin/bash
+cd /opt/masterskey
+git pull origin master
+yarn install
+nx build kickzone-api --configuration=production
+nx build kickzone-admins --configuration=production
+nx build kickzone-sellers --configuration=production
+nx build kickzone-customers --configuration=production
+sudo cp -r dist/apps/client/* /var/www/masterskey/dist/apps/client/
+sudo chown -R www-data:www-data /var/www/masterskey
+sudo systemctl restart masterskey-api
+sudo systemctl reload nginx
+```
+
+### 15.3 Manual Update Process
+
+If not using auto-deploy, update manually:
+
+```bash
+# SSH into server
+ssh deployuser@your-server
+
+# Pull latest code
+cd /opt/masterskey
+git pull origin master  # or main
+
+# Install any new dependencies
+yarn install
+
+# Rebuild API
+nx build kickzone-api --configuration=production
+
+# Rebuild React apps
+nx build kickzone-admins --configuration=production
+nx build kickzone-sellers --configuration=production
+nx build kickzone-customers --configuration=production
+
+# Deploy React apps
+sudo cp -r dist/apps/client/* /var/www/masterskey/dist/apps/client/
+sudo chown -R www-data:www-data /var/www/masterskey
+
+# Restart services
+sudo systemctl restart masterskey-api
+sudo systemctl reload nginx
 ```
 
 ## Next Steps
@@ -563,8 +740,6 @@ sudo systemctl restart kickzone-api
 2. **Configure email service** (if needed)
 3. **Set up backups** for database
 4. **Configure monitoring** (optional)
-5. **Set up CI/CD** for automatic deployments (optional)
+5. **Set up CI/CD** using GitHub Actions (see Step 15)
 
 Your deployment is complete! All services should be running and accessible via their respective subdomains.
-
-

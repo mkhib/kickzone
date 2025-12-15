@@ -4,7 +4,7 @@
 set -e
 
 echo "=========================================="
-echo "Kickzone Complete Deployment Script"
+echo "Master's Key Complete Deployment Script"
 echo "=========================================="
 echo ""
 
@@ -13,7 +13,7 @@ if [ "$EUID" -eq 0 ] && [ "$SUDO_USER" != "deployuser" ]; then
     echo "⚠️  Warning: Not running as deployuser. Some steps may need adjustment."
 fi
 
-PROJECT_DIR="/opt/kickzone"
+PROJECT_DIR="/opt/masterskey"
 
 # Step 1: Install Node.js and Yarn
 echo "Step 1: Installing Node.js and Yarn..."
@@ -55,11 +55,21 @@ echo "Step 4: Checking repository..."
 if [ ! -d "$PROJECT_DIR" ]; then
     echo "Repository not found. Please clone it first:"
     echo "  cd /opt"
-    echo "  sudo git clone YOUR_REPO_URL kickzone"
-    echo "  sudo chown -R deployuser:deployuser /opt/kickzone"
+    echo "  sudo git clone git@github.com/mkhib/kickzone.git masterskey"
+    echo "  sudo chown -R deployuser:deployuser /opt/masterskey"
+    echo ""
+    echo "Or if you haven't set up SSH keys yet:"
+    echo "  1. Generate SSH key: ssh-keygen -t ed25519"
+    echo "  2. Add to GitHub: cat ~/.ssh/id_ed25519.pub"
+    echo "  3. Then clone with SSH URL above"
     exit 1
 else
     echo "✅ Repository found"
+    # Pull latest code if repository exists
+    echo "📥 Pulling latest code..."
+    cd "$PROJECT_DIR"
+    CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD 2>/dev/null || echo "master")
+    git pull origin "$CURRENT_BRANCH" || echo "⚠️  Git pull failed, continuing with existing code..."
 fi
 
 # Step 5: Install dependencies
@@ -67,7 +77,35 @@ echo ""
 echo "Step 5: Installing dependencies..."
 cd "$PROJECT_DIR"
 if [ ! -d "node_modules" ]; then
-    yarn install
+    echo "⚠️  Installing dependencies (this may take a while and use significant memory)..."
+    echo "   If this fails with 'Killed', you may need to set up swap space:"
+    echo "   sudo bash deployment-scripts/setup-swap.sh"
+    echo ""
+    
+    # Try with memory limits to prevent OOM
+    # Use NODE_OPTIONS to limit memory usage
+    export NODE_OPTIONS="--max-old-space-size=2048"
+    
+    # Try yarn install with network concurrency limit
+    yarn install --network-concurrency 1 || {
+        echo ""
+        echo "❌ yarn install failed. This is often due to low memory."
+        echo ""
+        echo "Solutions:"
+        echo "1. Set up swap space: sudo bash deployment-scripts/setup-swap.sh"
+        echo "2. Or try installing with npm instead: npm install"
+        echo "3. Or increase server RAM"
+        echo ""
+        read -p "Would you like to set up swap space now? (y/n) " -n 1 -r
+        echo
+        if [[ $REPLY =~ ^[Yy]$ ]]; then
+            sudo bash "$PROJECT_DIR/deployment-scripts/setup-swap.sh"
+            echo "Retrying yarn install..."
+            yarn install --network-concurrency 1
+        else
+            exit 1
+        fi
+    }
 else
     echo "✅ Dependencies already installed"
 fi
@@ -85,9 +123,9 @@ NODE_ENV=production
 # Database Configuration
 DB_HOST=localhost
 DB_PORT=5432
-DB_USERNAME=kickzone_user
-DB_PASSWORD=CHANGE_ME
-DB_NAME=kickzone_db
+DB_USERNAME=masterskey_user
+DB_PASSWORD=M1k1h1i1b1
+DB_NAME=masterskey_db
 
 # JWT Secret (generate with: openssl rand -base64 32)
 JWT_SECRET=CHANGE_ME
@@ -102,7 +140,7 @@ fi
 # Step 7: Build API
 echo ""
 echo "Step 7: Building API..."
-nx build kickzone-api --configuration=production
+yarn nx build kickzone-api --configuration=production
 echo "✅ API built"
 
 # Step 8: Set up API service
@@ -113,9 +151,9 @@ sudo bash deployment-scripts/setup-api-service.sh
 # Step 9: Start API
 echo ""
 echo "Step 9: Starting API service..."
-sudo systemctl start kickzone-api
+sudo systemctl start masterskey-api
 sleep 3
-sudo systemctl status kickzone-api --no-pager
+sudo systemctl status masterskey-api --no-pager
 
 # Step 10: Build and deploy apps
 echo ""
@@ -129,7 +167,7 @@ echo "=========================================="
 echo ""
 echo "Services status:"
 sudo systemctl status nginx --no-pager -l | head -3
-sudo systemctl status kickzone-api --no-pager -l | head -3
+sudo systemctl status masterskey-api --no-pager -l | head -3
 sudo systemctl status postgresql --no-pager -l | head -3
 echo ""
 echo "Test your applications:"

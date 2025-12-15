@@ -1,9 +1,9 @@
 #!/bin/bash
-# Script to set up PostgreSQL database for Kickzone
+# Script to set up PostgreSQL database for Master's Key
 
 set -e
 
-echo "Setting up PostgreSQL database for Kickzone..."
+echo "Setting up PostgreSQL database for Master's Key..."
 
 # Check if running as root or with sudo
 if [ "$EUID" -ne 0 ]; then 
@@ -23,11 +23,11 @@ systemctl start postgresql
 systemctl enable postgresql
 
 # Get database credentials
-read -p "Enter database name [kickzone_db]: " DB_NAME
-DB_NAME=${DB_NAME:-kickzone_db}
+read -p "Enter database name [masterskey_db]: " DB_NAME
+DB_NAME=${DB_NAME:-masterskey_db}
 
-read -p "Enter database user [kickzone_user]: " DB_USER
-DB_USER=${DB_USER:-kickzone_user}
+read -p "Enter database user [masterskey_user]: " DB_USER
+DB_USER=${DB_USER:-masterskey_user}
 
 read -sp "Enter database password: " DB_PASSWORD
 echo ""
