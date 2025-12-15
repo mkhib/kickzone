@@ -115,7 +115,7 @@ export function AdminsHeaderbar() {
               color: '#000',
             }}
           >
-            {LL.appNames.siteName()} Admin Panel
+            {LL.appNames.siteName()} {LL.navigation.adminPanel()}
           </Typography>
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>

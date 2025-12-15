@@ -129,7 +129,6 @@ export function CustomerForgotPassword() {
                   autoFocus
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
                 />
                 <Button
                   type="submit"

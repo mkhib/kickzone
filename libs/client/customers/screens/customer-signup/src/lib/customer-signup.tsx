@@ -128,7 +128,6 @@ export function CustomerSignup() {
               onChange={handleChange('name')}
               error={!!errors.name}
               helperText={errors.name}
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <TextField
               margin="normal"
@@ -142,7 +141,6 @@ export function CustomerSignup() {
               onChange={handleChange('email')}
               error={!!errors.email}
               helperText={errors.email}
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <TextField
               margin="normal"
@@ -157,7 +155,6 @@ export function CustomerSignup() {
               onChange={handleChange('password')}
               error={!!errors.password}
               helperText={errors.password}
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <TextField
               margin="normal"
@@ -172,7 +169,6 @@ export function CustomerSignup() {
               onChange={handleChange('confirmPassword')}
               error={!!errors.confirmPassword}
               helperText={errors.confirmPassword}
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <Button
               type="submit"

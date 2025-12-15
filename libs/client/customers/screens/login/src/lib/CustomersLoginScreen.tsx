@@ -93,7 +93,6 @@ export function CustomersLogin() {
               autoFocus
               value={formData.email}
               onChange={handleChange('email')}
-              sx={{ borderRadius: 1 }}
             />
             <TextField
               margin="normal"
@@ -106,7 +105,6 @@ export function CustomersLogin() {
               autoComplete="current-password"
               value={formData.password}
               onChange={handleChange('password')}
-              sx={{ borderRadius: 1 }}
             />
             <Grid container justifyContent="space-between" sx={{ mb: 2 }}>
               <Grid component="div">

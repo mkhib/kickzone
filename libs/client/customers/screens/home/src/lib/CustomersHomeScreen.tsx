@@ -149,7 +149,7 @@ export function CustomersHome() {
                     mb: 1,
                     fontSize: { xs: '2.5rem', md: '3.5rem' },
                     background:
-                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
@@ -168,7 +168,7 @@ export function CustomersHome() {
                     mb: 1,
                     fontSize: { xs: '1.25rem', md: '1.75rem' },
                     background:
-                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
@@ -185,7 +185,7 @@ export function CustomersHome() {
                     mb: 1,
                     fontWeight: 400,
                     fontSize: { xs: '0.875rem', md: '1rem' },
-                    color: 'rgba(102, 126, 234, 0.8)',
+                    color: 'rgba(157, 78, 221, 0.8)',
                     position: 'relative',
                     zIndex: 1,
                   }}
@@ -215,104 +215,102 @@ export function CustomersHome() {
           }}
         >
           {/* Search and Filter Bar */}
-          <Stack
-            direction={{ xs: 'column', sm: 'row' }}
-            spacing={2}
+          <Box
             sx={{
-              alignItems: 'center',
-              justifyContent: 'center',
               position: 'relative',
               zIndex: 1,
               p: { xs: 1.5, md: 2 },
               pb: { xs: 2, md: 3 },
             }}
           >
-            <TextField
-              variant="outlined"
-              placeholder={LL.form.searchProducts()}
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyPress={handleKeyPress}
-              sx={{
-                flex: 1,
-                minWidth: { xs: '100%', sm: 280 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 4,
-                },
-              }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ color: '#667eea' }} />
-                  </InputAdornment>
-                ),
-              }}
-            />
-            <Button
-              variant="contained"
-              onClick={handleSearch}
-              sx={{
-                borderRadius: 4,
-                px: 4,
-                py: 1.5,
-                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                boxShadow: '0 4px 15px 0 rgba(102, 126, 234, 0.4)',
-                '&:hover': {
-                  background:
-                    'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
-                  boxShadow: '0 6px 20px 0 rgba(102, 126, 234, 0.6)',
-                },
-              }}
-            >
-              {LL.button.search()}
-            </Button>
-            <FormControl
-              sx={{
-                minWidth: { xs: '100%', sm: 240 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 4,
-                },
-              }}
-            >
-              <InputLabel>{LL.form.sortBy()}</InputLabel>
-              <Select
-                value={sort}
-                label={LL.form.sortBy()}
-                onChange={(e) => setSort(e.target.value)}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <TrendingUpIcon sx={{ color: '#667eea', ml: 1 }} />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="price">{LL.table.price()}</MenuItem>
-                <MenuItem value="discount">{LL.form.discount()}</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl
-              sx={{
-                minWidth: { xs: '100%', sm: 180 },
-                '& .MuiOutlinedInput-root': {
-                  borderRadius: 4,
-                },
-              }}
-            >
-              <InputLabel>{LL.form.order()}</InputLabel>
-              <Select
-                value={sortOrder}
-                label={LL.form.order()}
-                onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
-                startAdornment={
-                  <InputAdornment position="start">
-                    <LocalOfferIcon sx={{ color: '#667eea', ml: 1 }} />
-                  </InputAdornment>
-                }
-              >
-                <MenuItem value="asc">{LL.products.ascending()}</MenuItem>
-                <MenuItem value="desc">{LL.products.descending()}</MenuItem>
-              </Select>
-            </FormControl>
-          </Stack>
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, sm: 12, md: 5 }}>
+                <TextField
+                  variant="outlined"
+                  placeholder={LL.form.searchProducts()}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
+                  onKeyPress={handleKeyPress}
+                  fullWidth
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: 4,
+                    },
+                  }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon sx={{ color: '#9d4edd' }} />
+                      </InputAdornment>
+                    ),
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 12, md: 2 }}>
+                <Button
+                  variant="contained"
+                  onClick={handleSearch}
+                  fullWidth
+                  sx={{
+                    borderRadius: 4,
+                    px: 4,
+                    py: 1.5,
+                    background: 'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
+                    boxShadow: '0 4px 15px 0 rgba(157, 78, 221, 0.4)',
+                    '&:hover': {
+                      background:
+                        'linear-gradient(135deg, #7b2cbf 0%, #9d4edd 100%)',
+                      boxShadow: '0 6px 20px 0 rgba(157, 78, 221, 0.6)',
+                    },
+                  }}
+                >
+                  {LL.button.search()}
+                </Button>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+                <FormControl fullWidth>
+                  <InputLabel>{LL.form.sortBy()}</InputLabel>
+                  <Select
+                    value={sort}
+                    label={LL.form.sortBy()}
+                    onChange={(e) => setSort(e.target.value)}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <TrendingUpIcon sx={{ color: '#9d4edd', ml: 1 }} />
+                      </InputAdornment>
+                    }
+                    sx={{
+                      borderRadius: 4,
+                    }}
+                  >
+                    <MenuItem value="price">{LL.table.price()}</MenuItem>
+                    <MenuItem value="discount">{LL.form.discount()}</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+                <FormControl fullWidth>
+                  <InputLabel>{LL.form.order()}</InputLabel>
+                  <Select
+                    value={sortOrder}
+                    label={LL.form.order()}
+                    onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                    startAdornment={
+                      <InputAdornment position="start">
+                        <LocalOfferIcon sx={{ color: '#9d4edd', ml: 1 }} />
+                      </InputAdornment>
+                    }
+                    sx={{
+                      borderRadius: 4,
+                    }}
+                  >
+                    <MenuItem value="asc">{LL.products.ascending()}</MenuItem>
+                    <MenuItem value="desc">{LL.products.descending()}</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
+          </Box>
           {loading ? (
             <Box
               sx={{
@@ -340,7 +338,7 @@ export function CustomersHome() {
                     width: 60,
                     height: 60,
                     borderRadius: '50%',
-                    border: '4px solid #667eea',
+                    border: '4px solid #9d4edd',
                     borderTopColor: 'transparent',
                     animation: 'spin 1s linear infinite',
                     mb: 2,
@@ -354,10 +352,10 @@ export function CustomersHome() {
                 <Typography
                   variant="h6"
                   sx={{
-                    color: '#667eea',
+                    color: '#9d4edd',
                     fontWeight: 600,
                     background:
-                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
@@ -395,7 +393,7 @@ export function CustomersHome() {
                     fontWeight: 600,
                     mb: 2,
                     background:
-                      'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
                     backgroundClip: 'text',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
@@ -406,7 +404,7 @@ export function CustomersHome() {
                 <Typography
                   variant="body1"
                   sx={{
-                    color: 'rgba(102, 126, 234, 0.7)',
+                    color: 'rgba(157, 78, 221, 0.7)',
                     fontWeight: 400,
                   }}
                 >

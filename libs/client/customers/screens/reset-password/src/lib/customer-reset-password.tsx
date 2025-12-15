@@ -123,7 +123,6 @@ export function CustomerResetPassword() {
               autoFocus
               value={formData.password}
               onChange={handleChange('password')}
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <TextField
               margin="normal"
@@ -139,7 +138,6 @@ export function CustomerResetPassword() {
               error={
                 !!error && error === LL.authorization.passwordsDoNotMatch()
               }
-              sx={{ backgroundColor: colors.accent1, borderRadius: 1 }}
             />
             <Button
               type="submit"
