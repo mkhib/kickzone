@@ -27,47 +27,31 @@ const csrfLink = new ApolloLink((operation, forward) => {
 // Get GraphQL endpoint:
 // - Prefer VITE_GRAPHQL_ENDPOINT (set at build time, see windows-deploy-client.bat)
 // - Otherwise, on non-localhost hosts use relative /graphql (nginx will proxy it)
-// - Fallback to https://localhost:4000/graphql for local development
+// - Fallback to http://localhost:4000/graphql for local development
 const getGraphQLEndpoint = () => {
-  try {
-    const hostname =
-      typeof window !== 'undefined' ? window.location.hostname : 'no-window';
+  const hostname =
+    typeof window !== 'undefined' ? window.location.hostname : 'no-window';
 
-    // Read Vite env in a typed way to avoid any casts leaking around the codebase
-    type ViteEnv = { VITE_GRAPHQL_ENDPOINT?: string };
-    const viteEnv =
-      (import.meta as unknown as { env?: ViteEnv }).env || ({} as ViteEnv);
-    const fromEnv = viteEnv.VITE_GRAPHQL_ENDPOINT;
+  // Read Vite env in a typed way to avoid any casts leaking around the codebase
+  type ViteEnv = { VITE_GRAPHQL_ENDPOINT?: string };
+  const viteEnv =
+    (import.meta as unknown as { env?: ViteEnv }).env || ({} as ViteEnv);
+  const fromEnv = viteEnv.VITE_GRAPHQL_ENDPOINT;
 
-    let resolved: string;
+  let resolved: string;
 
-    if (fromEnv) {
-      resolved = fromEnv;
-    } else if (typeof window !== 'undefined' && hostname !== 'localhost') {
-      resolved = '/graphql';
-    } else {
-      resolved = 'https://localhost:4000/graphql';
-    }
-
-    console.log('[Apollo][admins] GraphQL endpoint resolved', {
-      hostname,
-      fromEnv,
-      resolved,
-    });
-
-    return resolved;
-  } catch (error) {
-    console.error(
-      '[Apollo][admins] Failed to resolve GraphQL endpoint, using /graphql fallback',
-      error
-    );
-    return '/graphql';
+  if (fromEnv) {
+    resolved = fromEnv;
+  } else if (typeof window !== 'undefined' && hostname !== 'localhost') {
+    resolved = '/graphql';
+  } else {
+    resolved = 'http://localhost:4000/graphql';
   }
+
+  return resolved;
 };
 
 const graphqlUri = getGraphQLEndpoint();
-
-console.log('[Apollo][admins] Creating HttpLink', { graphqlUri });
 
 const httpLink = new HttpLink({
   uri: graphqlUri,
@@ -76,20 +60,24 @@ const httpLink = new HttpLink({
 
 export const createAdminsApolloClient = (onAuthError: () => void) => {
   const authErrorLink = onError((errorContext: any) => {
-    const { graphQLErrors, networkError, error, result } = errorContext;
+    const { graphQLErrors, networkError, error, result, operation } =
+      errorContext;
 
-    console.log('[Apollo][admins] onError triggered', {
-      hasGraphQLErrors: !!graphQLErrors?.length,
-      hasNetworkError: !!networkError,
-      errorMessage: error?.message,
-    });
+    const operationName = operation?.operationName;
+
+    // Never treat login failures as "global auth errors" that trigger a full reload.
+    // The login screen should show a validation error instead of redirecting.
+    const isLoginOperation =
+      typeof operationName === 'string' &&
+      operationName.toLowerCase() === 'login';
 
     // Check the main error object
     if (error && error.message) {
       if (
-        error.message.toLowerCase().includes('not authenticated') ||
-        error.message.toLowerCase().includes('unauthorized') ||
-        error.message.toLowerCase().includes('forbidden')
+        !isLoginOperation &&
+        (error.message.toLowerCase().includes('not authenticated') ||
+          error.message.toLowerCase().includes('unauthorized') ||
+          error.message.toLowerCase().includes('forbidden'))
       ) {
         onAuthError();
         return;
@@ -97,7 +85,7 @@ export const createAdminsApolloClient = (onAuthError: () => void) => {
     }
 
     // Check result.errors array
-    if (result && result.errors) {
+    if (!isLoginOperation && result && result.errors) {
       result.errors.forEach((err: { message?: string }) => {
         if (
           err.message?.toLowerCase().includes('not authenticated') ||
@@ -110,7 +98,7 @@ export const createAdminsApolloClient = (onAuthError: () => void) => {
       });
     }
 
-    if (graphQLErrors) {
+    if (!isLoginOperation && graphQLErrors) {
       graphQLErrors.forEach(
         ({
           message,
@@ -126,7 +114,8 @@ export const createAdminsApolloClient = (onAuthError: () => void) => {
           if (
             message.toLowerCase().includes('not authenticated') ||
             message.toLowerCase().includes('unauthorized') ||
-            message.toLowerCase().includes('forbidden') ||
+            (message.toLowerCase().includes('forbidden') &&
+              !isLoginOperation) ||
             extensions?.code === 'UNAUTHENTICATED' ||
             extensions?.code === 'FORBIDDEN'
           ) {
@@ -136,7 +125,7 @@ export const createAdminsApolloClient = (onAuthError: () => void) => {
       );
     }
 
-    if (networkError) {
+    if (!isLoginOperation && networkError) {
       console.warn('[Apollo][admins] Network error', networkError);
       if (
         networkError.message?.toLowerCase().includes('not authenticated') ||

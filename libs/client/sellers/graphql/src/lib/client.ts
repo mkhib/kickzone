@@ -5,13 +5,14 @@ import {
   HttpLink,
 } from '@apollo/client';
 import { relayStylePagination } from '@apollo/client/utilities';
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { onError } from '@apollo/client/link/error';
 
 const csrfLink = new ApolloLink((operation, forward) => {
   // Get current locale from localStorage (used by LanguageContext)
   const currentLocale =
-    localStorage.getItem('kickzone-language-preference') || 'en';
+    typeof window !== 'undefined'
+      ? localStorage.getItem('kickzone-language-preference') || 'en'
+      : 'en';
 
   operation.setContext(({ headers = {} }) => ({
     headers: {
@@ -23,38 +24,53 @@ const csrfLink = new ApolloLink((operation, forward) => {
   return forward(operation);
 });
 
-// Get GraphQL endpoint from environment variable or use default
-// In production, nginx proxies /graphql to the API, so we use a relative path.
-// In local development (when running on localhost), we use the full localhost URL.
+// Get GraphQL endpoint:
+// - Prefer VITE_GRAPHQL_ENDPOINT (set at build time, see deployment scripts)
+// - Otherwise, on non-localhost hosts use relative /graphql (nginx will proxy it)
+// - Fallback to http://localhost:4000/graphql for local development
 const getGraphQLEndpoint = () => {
-  // Prefer explicit env override (avoid `any` by using a local typed helper)
+  const hostname =
+    typeof window !== 'undefined' ? window.location.hostname : 'no-window';
+
   type ViteEnv = { VITE_GRAPHQL_ENDPOINT?: string };
-  const viteEnv = (import.meta as unknown as { env?: ViteEnv }).env;
-  if (viteEnv?.VITE_GRAPHQL_ENDPOINT) {
-    return viteEnv.VITE_GRAPHQL_ENDPOINT;
+  const viteEnv =
+    (import.meta as unknown as { env?: ViteEnv }).env || ({} as ViteEnv);
+  const fromEnv = viteEnv.VITE_GRAPHQL_ENDPOINT;
+
+  let resolved: string;
+
+  if (fromEnv) {
+    resolved = fromEnv;
+  } else if (typeof window !== 'undefined' && hostname !== 'localhost') {
+    resolved = '/graphql';
+  } else {
+    resolved = 'http://localhost:4000/graphql';
   }
 
-  // If we're NOT on localhost, always use relative path
-  if (
-    typeof window !== 'undefined' &&
-    window.location.hostname !== 'localhost'
-  ) {
-    return '/graphql';
-  }
-
-  // Fallback: local development on localhost
-  return 'https://localhost:4000/graphql';
+  return resolved;
 };
 
+const graphqlUri = getGraphQLEndpoint();
+
 const httpLink = new HttpLink({
-  uri: getGraphQLEndpoint(),
+  uri: graphqlUri,
   credentials: 'include',
 });
 
 export const createSellersApolloClient = (onAuthError: () => void) => {
   const authErrorLink = onError((errorContext: any) => {
-    const { graphQLErrors, networkError, operation, forward, error, result } =
+    const { graphQLErrors, networkError, operation, error, result } =
       errorContext;
+
+    const operationName = operation?.operationName;
+    const isLoginOperation =
+      typeof operationName === 'string' &&
+      operationName.toLowerCase() === 'login';
+
+    // Never treat login failures as global auth errors; let the login screen show the message.
+    if (isLoginOperation) {
+      return;
+    }
 
     // Check the main error object
     if (error && error.message) {
@@ -69,7 +85,7 @@ export const createSellersApolloClient = (onAuthError: () => void) => {
 
     // Check result.errors array
     if (result && result.errors) {
-      result.errors.forEach((err: any) => {
+      result.errors.forEach((err: { message?: string }) => {
         if (
           err.message?.toLowerCase().includes('not authenticated') ||
           err.message?.toLowerCase().includes('unauthorized')
@@ -81,26 +97,38 @@ export const createSellersApolloClient = (onAuthError: () => void) => {
     }
 
     if (graphQLErrors) {
-      graphQLErrors.forEach(({ message, extensions }: any) => {
-        // Check if this is an authentication error
-        if (
-          message.toLowerCase().includes('not authenticated') ||
-          message.toLowerCase().includes('unauthorized') ||
-          extensions?.code === 'UNAUTHENTICATED' ||
-          extensions?.code === 'FORBIDDEN'
-        ) {
-          onAuthError();
+      graphQLErrors.forEach(
+        ({
+          message,
+          extensions,
+        }: {
+          message: string;
+          extensions?: { code?: string } | null;
+        }) => {
+          console.warn('[Apollo][sellers] GraphQL error', {
+            message,
+            extensions,
+          });
+
+          if (
+            message.toLowerCase().includes('not authenticated') ||
+            message.toLowerCase().includes('unauthorized') ||
+            extensions?.code === 'UNAUTHENTICATED' ||
+            extensions?.code === 'FORBIDDEN'
+          ) {
+            onAuthError();
+          }
         }
-      });
+      );
     }
 
     if (networkError) {
-      // Check for authentication-related network errors
+      console.warn('[Apollo][sellers] Network error', networkError);
       if (
         networkError.message?.toLowerCase().includes('not authenticated') ||
         networkError.message?.toLowerCase().includes('unauthorized') ||
-        networkError?.statusCode === 401 ||
-        networkError?.statusCode === 403
+        (networkError as { statusCode?: number }).statusCode === 401 ||
+        (networkError as { statusCode?: number }).statusCode === 403
       ) {
         onAuthError();
       }
