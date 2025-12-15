@@ -4,19 +4,15 @@ import { NestExpressApplication } from '@nestjs/platform-express';
 import { join } from 'path';
 
 import { AppModule } from './app/app.module';
-import { readFileSync } from 'fs';
 import cookieParser from 'cookie-parser';
 import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 
 declare const module: any;
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
-    httpsOptions: {
-      key: readFileSync('./localhost-key.pem'),
-      cert: readFileSync('./localhost.pem'),
-    },
-  });
+  // In production we run behind nginx and terminate TLS there,
+  // so the NestJS app should use plain HTTP.
+  const app = await NestFactory.create<NestExpressApplication>(AppModule);
 
   console.log('this is module', module);
 
