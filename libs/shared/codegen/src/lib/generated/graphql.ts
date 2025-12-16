@@ -220,6 +220,7 @@ export type ExchangeRate = {
 export type Mutation = {
   __typename?: 'Mutation';
   addToCart: Cart;
+  adminCreateUser: User;
   archiveProduct: Product;
   bulkTranslateEntities: Scalars['Boolean']['output'];
   clearCart: Cart;
@@ -269,6 +270,11 @@ export type Mutation = {
 
 export type MutationAddToCartArgs = {
   addToCartInput: AddToCartInput;
+};
+
+
+export type MutationAdminCreateUserArgs = {
+  createUserInput: CreateUserInput;
 };
 
 

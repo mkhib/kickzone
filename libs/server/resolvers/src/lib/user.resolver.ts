@@ -32,11 +32,30 @@ export class UserResolver {
   async createUser(
     @Args('createUserInput') createUserInput: CreateUserInput
   ): Promise<User> {
-    // Use the register method which handles password hashing
-    return this.authService.register(
-      createUserInput.name,
-      createUserInput.email,
-      createUserInput.password
-    );
+    // Public user creation: always create a CUSTOMER, but use all provided fields
+    return this.authService.adminCreateUser({
+      name: createUserInput.name,
+      lastName: createUserInput.lastName,
+      username: createUserInput.username,
+      email: createUserInput.email,
+      password: createUserInput.password,
+      role: UserRole.CUSTOMER,
+    });
+  }
+
+  @Mutation(() => User)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async adminCreateUser(
+    @Args('createUserInput') createUserInput: CreateUserInput
+  ): Promise<User> {
+    return this.authService.adminCreateUser({
+      name: createUserInput.name,
+      lastName: createUserInput.lastName,
+      username: createUserInput.username,
+      email: createUserInput.email,
+      password: createUserInput.password,
+      role: createUserInput.role,
+    });
   }
 }

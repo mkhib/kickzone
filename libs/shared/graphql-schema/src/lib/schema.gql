@@ -377,6 +377,7 @@ input SellerShippingInfoInput {
 
 type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
+  adminCreateUser(createUserInput: CreateUserInput!): User!
   login(email: String!, password: String!): User!
   logout: Boolean!
   initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!

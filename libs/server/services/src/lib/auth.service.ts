@@ -10,6 +10,15 @@ import {
   getPasswordResetEmailTemplate,
 } from '@kickzone-workspace/utils';
 
+interface AdminCreateUserParams {
+  name: string;
+  lastName: string;
+  username: string;
+  email: string;
+  password: string;
+  role: UserRole;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
@@ -100,6 +109,22 @@ export class AuthService {
       email,
       password: hashedPassword,
       role: UserRole.CUSTOMER,
+    });
+
+    return user;
+  }
+
+  async adminCreateUser(params: AdminCreateUserParams): Promise<User> {
+    const existingUser = await this.userService.findByEmail(params.email);
+    if (existingUser) {
+      throw new Error('Email already exists');
+    }
+
+    const hashedPassword = await bcrypt.hash(params.password, 10);
+
+    const user = await this.userService.createUser({
+      ...params,
+      password: hashedPassword,
     });
 
     return user;

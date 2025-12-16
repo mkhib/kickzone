@@ -54,18 +54,16 @@ After a successful build, you will have:
 
 ### 2.2 Copy API build to the server (using `pscp` and PuTTY session `fat2`)
 
-From your Windows PC, use PuTTY’s `pscp` with your saved session **`fat2`** to copy the **built** files from `dist\apps\kickzone-api` into the app folder on the server:
+From your Windows PC, use PuTTY's `pscp` with your saved session **`fat2`** to copy the **entire built folder** from `dist\apps\kickzone-api` to the server:
 
 ```bash
 cd /e/kickzone
 
-# Copy main.js and source map
-pscp dist\apps\kickzone-api\main.js fat2:/opt/masterskey/apps/kickzone-api/
-pscp dist\apps\kickzone-api\main.js.map fat2:/opt/masterskey/apps/kickzone-api/
-
-# If there is an assets folder:
-pscp -r dist\apps\kickzone-api\assets fat2:/opt/masterskey/apps/kickzone-api/
+# Copy entire API build folder (includes main.js, main.js.map, assets, etc.)
+pscp -r dist\apps\kickzone-api\* fat2:/opt/masterskey/apps/kickzone-api/
 ```
+
+This copies all build artifacts (main.js, source maps, assets folder, etc.) in one command.
 
 ### 2.3 Fix permissions on the server
 
@@ -179,6 +177,13 @@ Now your panels should be available at:
 
 ## 4. Creating / Updating an Admin User
 
+> **Important:** If you change any **user / admin logic in the code** (for example, the
+> GraphQL mutations or role handling), you **must rebuild and redeploy the API and
+> React panels** first so the changes take effect.
+>
+> - For the API, follow **Section 2 – Updating the API (Backend)**.
+> - For the React apps, follow **Section 3 – Updating the React Apps**.
+
 The system uses **bcrypt** to hash passwords. Never insert a plain-text password directly into the database.
 
 There are two safe ways:
@@ -219,7 +224,7 @@ Then in `psql`:
 
 UPDATE "user"
 SET role = 'ADMIN'
-WHERE email = 'admin@masterskey.store';
+WHERE email = 'mkhib@ymail.com';
 
 -- Optional: verify
 SELECT id, email, role FROM "user" WHERE email = 'admin@masterskey.store';

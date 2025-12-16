@@ -116,7 +116,7 @@ nx build kickzone-sellers --configuration=production
 nx build kickzone-customers --configuration=production
 sudo cp -r dist/apps/client/* /var/www/masterskey/dist/apps/client/
 sudo chown -R www-data:www-data /var/www/masterskey
-sudo systemctl restart kickzone-api
+sudo systemctl restart masterskey-api
 sudo systemctl reload nginx
 ```
 

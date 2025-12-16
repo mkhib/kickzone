@@ -33,7 +33,7 @@ echo.
 
 REM 2) Install dependencies (if not already installed)
 echo [1/3] Installing dependencies (yarn install)...
-yarn install
+call yarn install
 IF ERRORLEVEL 1 (
   echo.
   echo ERROR: yarn install failed.
@@ -46,7 +46,7 @@ echo.
 echo [2/3] Building React apps...
 
 echo - Building admins...
-yarn nx build kickzone-admins --configuration=production
+call yarn nx build kickzone-admins --configuration=production
 IF ERRORLEVEL 1 (
   echo.
   echo ERROR: Build failed for kickzone-admins.
@@ -54,7 +54,7 @@ IF ERRORLEVEL 1 (
 )
 
 echo - Building sellers...
-yarn nx build kickzone-sellers --configuration=production
+call yarn nx build kickzone-sellers --configuration=production
 IF ERRORLEVEL 1 (
   echo.
   echo ERROR: Build failed for kickzone-sellers.
@@ -62,7 +62,7 @@ IF ERRORLEVEL 1 (
 )
 
 echo - Building customers...
-yarn nx build kickzone-customers --configuration=production
+call yarn nx build kickzone-customers --configuration=production
 IF ERRORLEVEL 1 (
   echo.
   echo ERROR: Build failed for kickzone-customers.
