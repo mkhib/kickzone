@@ -256,6 +256,7 @@ const fa = {
     orderNumber: 'سفارش',
     noOrdersFound: 'سفارشی یافت نشد',
     errorLoadingOrders: 'خطا در بارگذاری سفارشات',
+    onlyForCustomers: 'این صفحه فقط برای مشتریان در دسترس است. فروشندگان باید از پنل فروشنده برای مشاهده سفارشات خود استفاده کنند.',
     customerInformation: 'اطلاعات مشتری',
     orderManagement: 'مدیریت سفارش',
     orderItems: 'اقلام سفارش',

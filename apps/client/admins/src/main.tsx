@@ -30,7 +30,16 @@ window.addEventListener('error', (event) => {
 });
 
 // Use localStorage detector first, then fallback to navigator
-const detectedLocale = detectLocale(localStorageDetector, navigatorDetector);
+// If no stored preference exists, default to 'fa' instead of baseLocale 'en'
+const LANGUAGE_STORAGE_KEY = 'kickzone-language-preference';
+const storedLanguage = typeof window !== 'undefined' 
+  ? localStorage.getItem(LANGUAGE_STORAGE_KEY) 
+  : null;
+let detectedLocale = detectLocale(localStorageDetector, navigatorDetector);
+// If no stored preference and detected locale is 'en' (baseLocale fallback), use 'fa' as default
+if (!storedLanguage && detectedLocale === 'en') {
+  detectedLocale = 'fa';
+}
 
 loadLocaleAsync(detectedLocale).then(() => {
   root.render(

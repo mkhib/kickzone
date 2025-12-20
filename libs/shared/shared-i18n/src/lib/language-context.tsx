@@ -51,7 +51,7 @@ interface LanguageProviderProps {
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
-  const [currentLocale, setCurrentLocale] = useState<Locales>('en'); // Default to English
+  const [currentLocale, setCurrentLocale] = useState<Locales>('fa'); // Default to Farsi
   const [isLoading, setIsLoading] = useState(true);
   const i18nContext = useContext(I18nContext);
 
@@ -72,11 +72,11 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         ) {
           localeToUse = storedLanguage;
         } else {
-          // Detect browser language, fallback to English if not supported
+          // Detect browser language, fallback to Farsi if not supported
           const detectedLocale = detectLocale(navigatorDetector);
           localeToUse = AVAILABLE_LOCALES.some((l) => l.code === detectedLocale)
             ? detectedLocale
-            : 'en'; // Default to English
+            : 'fa'; // Default to Farsi
         }
 
         // Load the locale
@@ -89,8 +89,8 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
         }
       } catch (error) {
         console.error('Failed to initialize language:', error);
-        // Fallback to English
-        setCurrentLocale('en');
+        // Fallback to Farsi
+        setCurrentLocale('fa');
       } finally {
         setIsLoading(false);
       }

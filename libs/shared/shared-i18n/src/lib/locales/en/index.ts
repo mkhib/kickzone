@@ -255,6 +255,7 @@ const en = {
     orderNumber: 'Order',
     noOrdersFound: 'No orders found',
     errorLoadingOrders: 'Error loading orders',
+    onlyForCustomers: 'This page is only available for customers. Sellers should use the seller panel to view their orders.',
     customerInformation: 'Customer Information',
     orderManagement: 'Order Management',
     orderItems: 'Order Items',

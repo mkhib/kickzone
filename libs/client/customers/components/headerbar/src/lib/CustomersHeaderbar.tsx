@@ -9,7 +9,6 @@ import {
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
-import LanguageIcon from '@mui/icons-material/Language';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AppBar from '@mui/material/AppBar';
@@ -230,18 +229,6 @@ export function Headerbar() {
             <CustomListItemText primary={LL.orders.myOrders()} />
           </ListItemButton>
         )}
-
-        <ListItemButton
-          to={CUSTOMER_ROUTES.LANGUAGE_SETTINGS}
-          component={RouterLink}
-          selected={location.pathname === CUSTOMER_ROUTES.LANGUAGE_SETTINGS}
-          onClick={handleDrawerToggle}
-        >
-          <ListItemIcon>
-            <LanguageIcon />
-          </ListItemIcon>
-          <CustomListItemText primary={LL.navigation.languageSettings()} />
-        </ListItemButton>
       </StyledDrawer>
     </>
   );

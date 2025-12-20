@@ -930,6 +930,10 @@ type RootTranslation = {
 		 */
 		errorLoadingOrders: string
 		/**
+		 * T​h​i​s​ ​p​a​g​e​ ​i​s​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​c​u​s​t​o​m​e​r​s​.​ ​S​e​l​l​e​r​s​ ​s​h​o​u​l​d​ ​u​s​e​ ​t​h​e​ ​s​e​l​l​e​r​ ​p​a​n​e​l​ ​t​o​ ​v​i​e​w​ ​t​h​e​i​r​ ​o​r​d​e​r​s​.
+		 */
+		onlyForCustomers: string
+		/**
 		 * C​u​s​t​o​m​e​r​ ​I​n​f​o​r​m​a​t​i​o​n
 		 */
 		customerInformation: string
@@ -3282,6 +3286,10 @@ export type TranslationFunctions = {
 		 * Error loading orders
 		 */
 		errorLoadingOrders: () => LocalizedString
+		/**
+		 * This page is only available for customers. Sellers should use the seller panel to view their orders.
+		 */
+		onlyForCustomers: () => LocalizedString
 		/**
 		 * Customer Information
 		 */

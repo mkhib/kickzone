@@ -29,6 +29,8 @@ import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 interface OrderItem {
   id: string;
@@ -71,6 +73,7 @@ interface OrdersData {
 export function CustomerOrders() {
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
+  const { user } = useCustomersAuth();
   const [expandedOrder, setExpandedOrder] = useState<string | false>(false);
 
   const formatDate = (dateString: string) => {
@@ -83,6 +86,9 @@ export function CustomerOrders() {
     });
   };
 
+  // Only fetch orders if user is a customer
+  const isCustomer = user?.role === KickzoneGraphqlTypes.UserRole.Customer;
+
   const {
     data: ordersData,
     loading: ordersLoading,
@@ -90,6 +96,7 @@ export function CustomerOrders() {
   } = useQuery<OrdersData>(GET_MY_ORDERS_QUERY, {
     variables: { first: 50 },
     fetchPolicy: 'cache-and-network',
+    skip: !isCustomer, // Skip query if user is not a customer
   });
 
   const handleExpandOrder = (orderId: string) => {
@@ -111,12 +118,32 @@ export function CustomerOrders() {
     );
   }
 
-  if (ordersError) {
+  // Check if user is not a customer
+  if (user && !isCustomer) {
     return (
       <CustomersLayout>
-        <Alert severity="error">
-          {LL.orders.errorLoadingOrders()}: {ordersError.message}
-        </Alert>
+        <GlassmorphismContainer fullHeight>
+          <Alert severity="error">{LL.orders.onlyForCustomers()}</Alert>
+        </GlassmorphismContainer>
+      </CustomersLayout>
+    );
+  }
+
+  if (ordersError) {
+    // Check for the specific seller error message
+    const isSellerError = ordersError.message.includes(
+      'Sellers should use mySellerOrders query instead'
+    );
+
+    return (
+      <CustomersLayout>
+        <GlassmorphismContainer fullHeight>
+          <Alert severity="error">
+            {isSellerError
+              ? LL.orders.onlyForCustomers()
+              : `${LL.orders.errorLoadingOrders()}: ${ordersError.message}`}
+          </Alert>
+        </GlassmorphismContainer>
       </CustomersLayout>
     );
   }
