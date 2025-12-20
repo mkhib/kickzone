@@ -121,6 +121,7 @@ const en = {
     reviewCart: 'Review Cart',
     shippingInformation: 'Shipping Information',
     orderSummary: 'Order Summary',
+    payment: 'Payment',
     demoCheckout: 'We will contact you soon for the payment info.',
     orderProcessed:
       'Your order will be processed and you will receive a confirmation email.',

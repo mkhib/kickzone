@@ -78,9 +78,16 @@ export function CustomerShoppingCart() {
     LL.checkout.reviewCart(),
     LL.checkout.shippingInformation(),
     LL.checkout.orderSummary(),
+    LL.checkout.payment(),
   ];
 
   const [activeStep, setActiveStep] = useState(0);
+  const [createdOrder, setCreatedOrder] = useState<{
+    id: string;
+    orderNumber: string;
+  } | null>(null);
+  const [paymentAuthority, setPaymentAuthority] = useState<string | null>(null);
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [shippingInfo, setShippingInfo] = useState<
     Partial<ShippingInfoFormData>
   >({
@@ -204,12 +211,11 @@ export function CustomerShoppingCart() {
     });
 
   // Payment hook
-  const { requestPayment, redirectToGateway, isRequesting } =
-    useZarinPalPayment({
-      onError: (error) => {
-        showSnackbar(`خطا در پرداخت: ${error}`, { severity: 'error' });
-      },
-    });
+  const { requestPayment, redirectToGateway } = useZarinPalPayment({
+    onError: (error) => {
+      showSnackbar(`خطا در پرداخت: ${error}`, { severity: 'error' });
+    },
+  });
 
   // Use snackbar for notifications
   const { showSnackbar } = useSnackbar();
@@ -389,7 +395,7 @@ export function CustomerShoppingCart() {
     }
   };
 
-  const handleNext = () => {
+  const handleNext = async () => {
     // If moving from step 1 (shipping info) to step 2 (order summary), validate the form
     if (activeStep === 1) {
       // Validate shipping information using Zod
@@ -407,28 +413,29 @@ export function CustomerShoppingCart() {
       setValidationErrors({});
     }
 
+    // If moving from step 2 (order summary) to step 3 (payment), create order and initiate payment
+    if (activeStep === 2) {
+      await handleCreateOrderAndInitiatePayment();
+      return;
+    }
+
     setActiveStep((prev) => prev + 1);
   };
 
-  const handleBack = () => {
-    setActiveStep((prev) => prev - 1);
-  };
-
-  const handlePlaceOrder = async () => {
+  const handleCreateOrderAndInitiatePayment = async () => {
     try {
-      // Validate shipping information using Zod
-      const validation = validateShippingInfo(shippingInfo, LL);
+      setIsCreatingOrder(true);
 
+      // Validate shipping information
+      const validation = validateShippingInfo(shippingInfo, LL);
       if (!validation.isValid) {
         setValidationErrors(validation.errors);
         showSnackbar(LL.errors.missingShippingInfo(), {
           severity: 'error',
         });
+        setIsCreatingOrder(false);
         return;
       }
-
-      // Clear any previous validation errors
-      setValidationErrors({});
 
       // Validate cart items have valid sellerProductId (UUID format)
       const invalidItems = cartItems.filter(
@@ -443,6 +450,7 @@ export function CustomerShoppingCart() {
         showSnackbar(LL.errors.outdatedCartItems(), {
           severity: 'error',
         });
+        setIsCreatingOrder(false);
         return;
       }
 
@@ -493,7 +501,7 @@ export function CustomerShoppingCart() {
             // Map cart items to order items
             items: items.map((item) => ({
               productId: item.productId,
-              sellerProductId: item.sellerProductId, // UUID for stock management
+              sellerProductId: item.sellerProductId,
               productName: item.productName,
               productImage: item.productImage,
               quantity: item.quantity,
@@ -507,11 +515,16 @@ export function CustomerShoppingCart() {
 
       const orderResults = await Promise.all(orderPromises);
 
-      // Get the first order for payment (if multiple orders, we'll handle payment for the first one)
+      // Get the first order for payment
       const firstOrder = orderResults[0];
       if (!firstOrder) {
         throw new Error('No order was created');
       }
+
+      setCreatedOrder({
+        id: firstOrder.id,
+        orderNumber: firstOrder.orderNumber,
+      });
 
       // Wait for currency conversion if still loading
       if (conversionLoading) {
@@ -519,8 +532,6 @@ export function CustomerShoppingCart() {
       }
 
       // Calculate total amount in Toman (IRT) - ZarinPal expects Toman
-      // Note: IRR is stored as Toman in the system (1 Toman = 10 Rial)
-      // ZarinPal API expects amount in Toman, so we use IRT currency
       const amountInToman = Math.round(totalInToman);
 
       // Build callback URL with order ID
@@ -541,16 +552,12 @@ export function CustomerShoppingCart() {
 
       if (!authority) {
         // Error already handled by hook
+        setIsCreatingOrder(false);
         return;
       }
 
-      // Clear cart after successful payment request
-      await clearCartMutation();
-      clearCartAction();
-      setCheckoutDialogOpen(false);
-      setActiveStep(0);
+      setPaymentAuthority(authority);
 
-      // Redirect to ZarinPal payment gateway
       // Store order data in sessionStorage for callback
       sessionStorage.setItem(
         `order_${firstOrder.id}`,
@@ -561,12 +568,22 @@ export function CustomerShoppingCart() {
         })
       );
 
-      redirectToGateway(authority);
+      // Clear cart after successful payment request
+      await clearCartMutation();
+      clearCartAction();
+
+      // Move to payment step
+      setActiveStep(3);
+      setIsCreatingOrder(false);
+
+      // Auto-redirect to payment gateway after a short delay
+      setTimeout(() => {
+        redirectToGateway(authority);
+      }, 1500);
     } catch (error) {
-      console.error('Error placing order:', error);
+      console.error('Error creating order:', error);
       const errorMessage = (error as Error).message;
 
-      // Check if it's a product not found error
       if (errorMessage.includes('not found')) {
         showSnackbar(LL.errors.productsNotAvailable(), {
           severity: 'error',
@@ -580,7 +597,12 @@ export function CustomerShoppingCart() {
           severity: 'error',
         });
       }
+      setIsCreatingOrder(false);
     }
+  };
+
+  const handleBack = () => {
+    setActiveStep((prev) => prev - 1);
   };
 
   if (cartLoading) {
@@ -1175,28 +1197,170 @@ export function CustomerShoppingCart() {
                 <Typography variant="h6" gutterBottom>
                   {LL.checkout.reviewCart()}
                 </Typography>
-                {cartItems.map((item: CartItem) => (
-                  <Box
-                    key={item.id}
+                <Box sx={{ mb: 3 }}>
+                  {cartItems.map((item: CartItem) => (
+                    <Box
+                      key={item.id}
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'flex-start',
+                        py: 2,
+                        borderBottom: '1px solid #e0e0e0',
+                        '&:last-child': {
+                          borderBottom: 'none',
+                        },
+                      }}
+                    >
+                      <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
+                        {item.productImage && (
+                          <Box
+                            component="img"
+                            src={item.productImage}
+                            alt={item.productName}
+                            sx={{
+                              width: 60,
+                              height: 60,
+                              objectFit: 'cover',
+                              borderRadius: 2,
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                              flexShrink: 0,
+                            }}
+                          />
+                        )}
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography
+                            variant="body1"
+                            fontWeight={500}
+                            sx={{
+                              mb: 0.5,
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              display: '-webkit-box',
+                              WebkitLineClamp: 2,
+                              WebkitBoxOrient: 'vertical',
+                            }}
+                          >
+                            {item.productName}
+                          </Typography>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1.5,
+                              flexWrap: 'wrap',
+                              mt: 0.5,
+                            }}
+                          >
+                            {item.color && (
+                              <Box
+                                sx={{
+                                  width: 20,
+                                  height: 20,
+                                  backgroundColor: item.color,
+                                  borderRadius: '50%',
+                                  border: '2px solid white',
+                                  boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                  flexShrink: 0,
+                                }}
+                              />
+                            )}
+                            {item.size && (
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                sx={{
+                                  fontWeight: 500,
+                                  px: 1,
+                                  py: 0.25,
+                                  borderRadius: 1,
+                                  backgroundColor: 'rgba(0,0,0,0.04)',
+                                }}
+                              >
+                                {LL.products.size()}:{' '}
+                                {formatNumber(item.size, currentLocale)}
+                              </Typography>
+                            )}
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {LL.table.quantity()}:{' '}
+                              {formatNumber(item.quantity, currentLocale)}
+                            </Typography>
+                          </Box>
+                        </Box>
+                      </Box>
+                      <Box sx={{ textAlign: 'right', ml: 2, flexShrink: 0 }}>
+                        <PriceDisplay
+                          priceInUSD={item.totalPrice}
+                          showSymbol={true}
+                          showOriginal={false}
+                        />
+                      </Box>
+                    </Box>
+                  ))}
+                </Box>
+                <Divider sx={{ my: 2 }} />
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    mb: 1,
+                    gap: { xs: 0.5, lg: 1 },
+                  }}
+                >
+                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {LL.checkout.subtotal()}:
+                  </Typography>
+                  <Typography
                     sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      py: 1,
+                      textAlign: { xs: 'left', lg: 'right' },
+                      minWidth: 0,
+                      flex: { xs: 'none', lg: '1 1 auto' },
                     }}
                   >
-                    <Typography>
-                      {item.productName} x {item.quantity}
-                    </Typography>
-                    <Typography>
-                      <PriceDisplay
-                        priceInUSD={item.totalPrice}
-                        showSymbol={true}
-                        showOriginal={false}
-                      />
-                    </Typography>
-                  </Box>
-                ))}
+                    <PriceDisplay
+                      priceInUSD={cartTotal}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  </Typography>
+                </Box>
+
+                {/* Shipping fee */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    mb: 1,
+                    gap: { xs: 0.5, lg: 1 },
+                  }}
+                >
+                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {LL.checkout.shipping()}:
+                  </Typography>
+                  <Typography
+                    sx={{
+                      textAlign: { xs: 'left', lg: 'right' },
+                      minWidth: 0,
+                      flex: { xs: 'none', lg: '1 1 auto' },
+                    }}
+                  >
+                    <PriceDisplay
+                      priceInUSD={totalShippingCost}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  </Typography>
+                </Box>
+
                 <Divider sx={{ my: 2 }} />
+
                 <Box
                   sx={{
                     display: 'flex',
@@ -1221,7 +1385,7 @@ export function CustomerShoppingCart() {
                     }}
                   >
                     <PriceDisplay
-                      priceInUSD={cartTotal}
+                      priceInUSD={grandTotal}
                       showSymbol={true}
                       showOriginal={false}
                     />
@@ -1426,9 +1590,6 @@ export function CustomerShoppingCart() {
                 <Typography variant="h6" gutterBottom>
                   {LL.checkout.orderSummary()}
                 </Typography>
-                <Alert severity="info" sx={{ mb: 2 }}>
-                  {LL.checkout.demoCheckout()}
-                </Alert>
 
                 {/* Display cart items */}
                 <Box sx={{ mb: 3 }}>
@@ -1555,6 +1716,42 @@ export function CustomerShoppingCart() {
                     />
                   </Typography>
                 </Box>
+
+                {/* Shipping fee */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    mb: 1,
+                    gap: { xs: 0.5, lg: 1 },
+                  }}
+                >
+                  <Typography
+                    variant="body1"
+                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    {LL.checkout.shipping()}:
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      textAlign: { xs: 'left', lg: 'right' },
+                      minWidth: 0,
+                      flex: { xs: 'none', lg: '1 1 auto' },
+                    }}
+                  >
+                    <PriceDisplay
+                      priceInUSD={totalShippingCost}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
                 <Box
                   sx={{
                     display: 'flex',
@@ -1581,16 +1778,83 @@ export function CustomerShoppingCart() {
                     }}
                   >
                     <PriceDisplay
-                      priceInUSD={cartTotal}
+                      priceInUSD={grandTotal}
                       showSymbol={true}
                       showOriginal={false}
                     />
                   </Typography>
                 </Box>
+              </Box>
+            )}
 
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  {LL.checkout.orderProcessed()}
+            {activeStep === 3 && (
+              <Box>
+                <Typography variant="h6" gutterBottom>
+                  {LL.checkout.payment()}
                 </Typography>
+                {isCreatingOrder ? (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      py: 4,
+                    }}
+                  >
+                    <CircularProgress sx={{ mb: 2 }} />
+                    <Typography variant="body1" color="text.secondary">
+                      Processing your order...
+                    </Typography>
+                  </Box>
+                ) : paymentAuthority ? (
+                  <Box>
+                    <Alert severity="success" sx={{ mb: 2 }}>
+                      Your order has been created successfully. Redirecting to
+                      payment gateway...
+                    </Alert>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        gap: 2,
+                        py: 2,
+                      }}
+                    >
+                      <Typography variant="body1" color="text.secondary">
+                        Order Number: {createdOrder?.orderNumber}
+                      </Typography>
+                      <Typography variant="body1" fontWeight={500}>
+                        Total Amount:{' '}
+                        <PriceDisplay
+                          priceInUSD={grandTotal}
+                          showSymbol={true}
+                          showOriginal={false}
+                        />
+                      </Typography>
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        size="large"
+                        onClick={() => redirectToGateway(paymentAuthority)}
+                        sx={{
+                          mt: 2,
+                          px: 4,
+                          py: 1.5,
+                          fontSize: '1rem',
+                          fontWeight: 600,
+                        }}
+                      >
+                        Continue to Payment Gateway
+                      </Button>
+                    </Box>
+                  </Box>
+                ) : (
+                  <Alert severity="error">
+                    Failed to initialize payment. Please try again.
+                  </Alert>
+                )}
               </Box>
             )}
           </DialogContent>
@@ -1598,10 +1862,10 @@ export function CustomerShoppingCart() {
             <Button onClick={() => setCheckoutDialogOpen(false)}>
               {LL.button.cancel()}
             </Button>
-            {activeStep > 0 && (
+            {activeStep > 0 && activeStep < 3 && (
               <Button onClick={handleBack}>{LL.button.back()}</Button>
             )}
-            {activeStep < steps.length - 1 ? (
+            {activeStep < 2 ? (
               <Button
                 variant="contained"
                 onClick={handleNext}
@@ -1615,10 +1879,11 @@ export function CustomerShoppingCart() {
               >
                 {LL.button.next()}
               </Button>
-            ) : (
+            ) : activeStep === 2 ? (
               <Button
                 variant="contained"
-                onClick={handlePlaceOrder}
+                onClick={handleNext}
+                disabled={isCreatingOrder}
                 sx={{
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
@@ -1627,9 +1892,9 @@ export function CustomerShoppingCart() {
                   },
                 }}
               >
-                {LL.button.placeOrder()}
+                {isCreatingOrder ? 'Processing...' : 'Proceed to Payment'}
               </Button>
-            )}
+            ) : null}
           </DialogActions>
         </Dialog>
 

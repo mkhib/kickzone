@@ -428,6 +428,10 @@ type RootTranslation = {
 		 */
 		orderSummary: string
 		/**
+		 * P​a​y​m​e​n​t
+		 */
+		payment: string
+		/**
 		 * W​e​ ​w​i​l​l​ ​c​o​n​t​a​c​t​ ​y​o​u​ ​s​o​o​n​ ​f​o​r​ ​t​h​e​ ​p​a​y​m​e​n​t​ ​i​n​f​o​.
 		 */
 		demoCheckout: string
@@ -2888,6 +2892,10 @@ export type TranslationFunctions = {
 		 * Order Summary
 		 */
 		orderSummary: () => LocalizedString
+		/**
+		 * Payment
+		 */
+		payment: () => LocalizedString
 		/**
 		 * We will contact you soon for the payment info.
 		 */

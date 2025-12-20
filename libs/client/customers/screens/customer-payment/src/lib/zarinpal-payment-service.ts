@@ -55,6 +55,7 @@ export interface ZarinPalVerificationResponse {
 
 const ZARINPAL_API_BASE_URL = 'https://payment.zarinpal.com/pg/v4/payment';
 const ZARINPAL_GATEWAY_URL = 'https://payment.zarinpal.com/pg/StartPay';
+const ZARINPAL_SANDBOX_GATEWAY_URL = 'https://sandbox.zarinpal.com/pg/StartPay';
 
 /**
  * Get merchant ID from environment variable
@@ -180,9 +181,12 @@ export async function verifyZarinPalPayment(
 /**
  * Get payment gateway URL for redirect
  * @param authority Authority code from payment request
- * @returns Gateway URL
+ * @returns Gateway URL (sandbox or production)
  */
 export function getZarinPalGatewayUrl(authority: string): string {
+  if (isZarinPalSandbox()) {
+    return `${ZARINPAL_SANDBOX_GATEWAY_URL}/${authority}`;
+  }
   return `${ZARINPAL_GATEWAY_URL}/${authority}`;
 }
 
