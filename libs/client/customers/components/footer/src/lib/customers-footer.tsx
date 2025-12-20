@@ -1,7 +1,5 @@
 import React from 'react';
-import {
-  useI18nContext,
-} from '@kickzone-workspace/shared-i18n';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
@@ -22,7 +20,7 @@ export function CustomersFooter() {
       }}
     >
       <Typography variant="body2" color="text.secondary">
-        © 2024 {LL.appNames.siteName()}
+        © 2025 {LL.appNames.siteName()}
       </Typography>
     </Box>
   );

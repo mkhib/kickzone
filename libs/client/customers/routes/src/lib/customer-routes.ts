@@ -11,6 +11,7 @@ export const CUSTOMER_ROUTES = {
   LANGUAGE_SETTINGS: '/language-settings',
   UNAUTHORIZED: '/unauthorized',
   ORDER_CONFIRMATION: '/order-confirmation',
+  PAYMENT_CALLBACK: '/payment-callback',
 } as const;
 
 export type CustomerRouteKey = keyof typeof CUSTOMER_ROUTES;

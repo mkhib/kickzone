@@ -36,7 +36,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 export const SellersProducts = () => {
   const navigate = useNavigate();
@@ -72,6 +72,79 @@ export const SellersProducts = () => {
     archivedStatus: status,
   });
 
+  // Log product variants for debugging
+  useEffect(() => {
+    if (sellersProducts && sellersProducts.length > 0) {
+      console.log('[SellersPanel] Products with variants:', {
+        totalProducts: sellersProducts.length,
+        products: sellersProducts.map((product) => {
+          // Expand products into variants - each variant is a combination of productInfo + sellerProduct
+          const variants: Array<{
+            productInfo: KickzoneGraphqlTypes.ProductInfo;
+            sellerProduct: KickzoneGraphqlTypes.SellerProduct;
+            variantKey: string;
+          }> = [];
+
+          product.productInfos?.forEach((productInfo) => {
+            // Match by productInfoId OR by productInfo relation (fallback for old data)
+            const sellerProduct = product.sellerProducts?.find(
+              (sp) =>
+                sp.productInfoId === productInfo.id ||
+                sp.productInfo?.id === productInfo.id
+            );
+            if (sellerProduct) {
+              variants.push({
+                productInfo,
+                sellerProduct,
+                variantKey: `${product.id}-${productInfo.id}`,
+              });
+            }
+          });
+
+          return {
+            id: product.id,
+            name: product.name,
+            productInfosCount: product.productInfos?.length || 0,
+            sellerProductsCount: product.sellerProducts?.length || 0,
+            variantsCount: variants.length,
+            variants: variants.map((v) => ({
+              variantKey: v.variantKey,
+              productInfo: {
+                id: v.productInfo.id,
+                size: v.productInfo.size,
+                color: v.productInfo.color?.name,
+                weight: v.productInfo.weight,
+              },
+              sellerProduct: {
+                id: v.sellerProduct.id,
+                productInfoId: v.sellerProduct.productInfoId,
+                price: v.sellerProduct.price,
+                discount: v.sellerProduct.discount,
+                stockQuantity: v.sellerProduct.stockQuantity,
+              },
+            })),
+            unmatchedProductInfos:
+              product.productInfos?.filter(
+                (pi) =>
+                  !product.sellerProducts?.some(
+                    (sp) =>
+                      sp.productInfoId === pi.id || sp.productInfo?.id === pi.id
+                  )
+              ).length || 0,
+            unmatchedSellerProducts:
+              product.sellerProducts?.filter(
+                (sp) =>
+                  !product.productInfos?.some(
+                    (pi) =>
+                      pi.id === sp.productInfoId || pi.id === sp.productInfo?.id
+                  )
+              ).length || 0,
+          };
+        }),
+      });
+    }
+  }, [sellersProducts]);
+
   const handleAddProduct = () => {
     navigate(SELLER_ROUTES.MANAGE_PRODUCT);
   };
@@ -89,6 +162,93 @@ export const SellersProducts = () => {
   const handleViewProduct = (productId: number) => {
     const product = sellersProducts.find((p) => p.id === productId);
     if (product) {
+      // Log detailed variants for the selected product
+      const variants: Array<{
+        productInfo: KickzoneGraphqlTypes.ProductInfo;
+        sellerProduct: KickzoneGraphqlTypes.SellerProduct;
+        variantKey: string;
+      }> = [];
+
+      product.productInfos?.forEach((productInfo) => {
+        // Match by productInfoId OR by productInfo relation (fallback for old data)
+        const sellerProduct = product.sellerProducts?.find(
+          (sp) =>
+            sp.productInfoId === productInfo.id ||
+            sp.productInfo?.id === productInfo.id
+        );
+        if (sellerProduct) {
+          variants.push({
+            productInfo,
+            sellerProduct,
+            variantKey: `${product.id}-${productInfo.id}`,
+          });
+        }
+      });
+
+      console.log(
+        `[SellersPanel] Product "${product.name}" (ID: ${product.id}) variants:`,
+        {
+          productId: product.id,
+          productName: product.name,
+          productInfosCount: product.productInfos?.length || 0,
+          sellerProductsCount: product.sellerProducts?.length || 0,
+          variantsCount: variants.length,
+          variants: variants.map((v) => ({
+            variantKey: v.variantKey,
+            productInfo: {
+              id: v.productInfo.id,
+              size: v.productInfo.size,
+              color: v.productInfo.color
+                ? {
+                    id: v.productInfo.color.id,
+                    name: v.productInfo.color.name,
+                    hexCode: v.productInfo.color.hexCode,
+                  }
+                : null,
+              weight: v.productInfo.weight,
+              images: v.productInfo.images,
+            },
+            sellerProduct: {
+              id: v.sellerProduct.id,
+              productInfoId: v.sellerProduct.productInfoId,
+              price: v.sellerProduct.price,
+              costPrice: v.sellerProduct.costPrice,
+              discount: v.sellerProduct.discount,
+              stockQuantity: v.sellerProduct.stockQuantity,
+              sellerId: v.sellerProduct.seller?.id,
+            },
+          })),
+          unmatchedProductInfos: product.productInfos
+            ?.filter(
+              (pi) =>
+                !product.sellerProducts?.some(
+                  (sp) =>
+                    sp.productInfoId === pi.id || sp.productInfo?.id === pi.id
+                )
+            )
+            .map((pi) => ({
+              id: pi.id,
+              size: pi.size,
+              color: pi.color?.name,
+            })),
+          unmatchedSellerProducts: product.sellerProducts
+            ?.filter(
+              (sp) =>
+                !product.productInfos?.some(
+                  (pi) =>
+                    pi.id === sp.productInfoId || pi.id === sp.productInfo?.id
+                )
+            )
+            .map((sp) => ({
+              id: sp.id,
+              productInfoId: sp.productInfoId,
+              productInfoRelationId: sp.productInfo?.id,
+              price: sp.price,
+              stockQuantity: sp.stockQuantity,
+            })),
+        }
+      );
+
       setSelectedProductForView(product);
       setViewModalOpen(true);
     }

@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useState, useMemo } from 'react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useI18nContext,
@@ -11,6 +11,15 @@ import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Chip from '@mui/material/Chip';
+import Dialog from '@mui/material/Dialog';
+import DialogTitle from '@mui/material/DialogTitle';
+import DialogContent from '@mui/material/DialogContent';
+import DialogActions from '@mui/material/DialogActions';
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
@@ -35,50 +44,156 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 }) => {
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
+  const [variantDialogOpen, setVariantDialogOpen] = useState(false);
+  const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
+    null
+  );
+
   const firstInfo = product.productInfos?.[0];
   const image = firstInfo?.images?.[0] || PRODUCT_IMAGE_PLACEHOLDER;
 
-  // Get pricing info for the first product info
-  const getPricingInfo = () => {
-    if (!product.sellerProducts || product.sellerProducts.length === 0) {
+  // Get all available variants with their pricing
+  // For each ProductInfo, find the cheapest available sellerProduct
+  const availableVariants = useMemo(() => {
+    if (!product.productInfos || !product.sellerProducts) {
+      return [];
+    }
+
+    return product.productInfos
+      .map((productInfo) => {
+        // Find ALL sellerProducts for this ProductInfo (multiple sellers can offer the same variant)
+        const allSellerProducts =
+          product.sellerProducts?.filter(
+            (sp) =>
+              (sp.productInfoId === productInfo.id ||
+                sp.productInfo?.id === productInfo.id) &&
+              sp.seller &&
+              sp.stockQuantity > 0
+          ) || [];
+
+        if (allSellerProducts.length === 0) {
+          return null;
+        }
+
+        // Calculate final price (after discount) for each sellerProduct
+        const sellerProductsWithPrice = allSellerProducts.map((sp) => {
+          const originalPrice = sp.price;
+          const discount = sp.discount || 0;
+          const finalPrice =
+            discount > 0
+              ? originalPrice - (originalPrice * discount) / 100
+              : originalPrice;
+
+          return {
+            sellerProduct: sp,
+            originalPrice,
+            finalPrice,
+            discount,
+            stockQuantity: sp.stockQuantity,
+          };
+        });
+
+        // Sort by final price (cheapest first), then by stock quantity (more stock first as tiebreaker)
+        sellerProductsWithPrice.sort((a, b) => {
+          if (a.finalPrice !== b.finalPrice) {
+            return a.finalPrice - b.finalPrice;
+          }
+          // If prices are equal, prefer seller with more stock
+          return b.stockQuantity - a.stockQuantity;
+        });
+
+        // Select the cheapest available sellerProduct
+        const bestSellerProduct = sellerProductsWithPrice[0];
+        const allPrices = sellerProductsWithPrice.map((sp) => sp.finalPrice);
+        const minPrice = Math.min(...allPrices);
+        const maxPrice = Math.max(...allPrices);
+        const hasMultipleSellers = sellerProductsWithPrice.length > 1;
+        const hasPriceVariation = minPrice !== maxPrice;
+
+        return {
+          productInfo,
+          sellerProduct: bestSellerProduct.sellerProduct,
+          originalPrice: bestSellerProduct.originalPrice,
+          finalPrice: bestSellerProduct.finalPrice,
+          discount: bestSellerProduct.discount,
+          stockQuantity: bestSellerProduct.stockQuantity,
+          // Additional info for display
+          hasMultipleSellers,
+          hasPriceVariation,
+          priceRange: hasPriceVariation
+            ? { min: minPrice, max: maxPrice }
+            : null,
+          totalSellers: sellerProductsWithPrice.length,
+        };
+      })
+      .filter((v): v is NonNullable<typeof v> => v !== null);
+  }, [product]);
+
+  // Get best pricing info (lowest price) for display
+  const getBestPricingInfo = useMemo(() => {
+    if (availableVariants.length === 0) {
       return null;
     }
 
-    // Find the sellerProduct that matches the first productInfo
-    const sellerProduct = product.sellerProducts.find(
-      (sp) => sp.productInfoId === firstInfo?.id
+    // Find the variant with the lowest final price
+    const bestVariant = availableVariants.reduce((best, current) =>
+      current.finalPrice < best.finalPrice ? current : best
     );
 
-    if (!sellerProduct) {
-      return null;
-    }
-
-    const originalPrice = sellerProduct.price;
-    const discount = sellerProduct.discount;
-    const finalPrice =
-      discount > 0
-        ? originalPrice - (originalPrice * discount) / 100
-        : originalPrice;
-
-    const pricingInfo = {
-      originalPrice,
-      finalPrice,
-      discount,
-      stockQuantity: sellerProduct.stockQuantity,
+    return {
+      originalPrice: bestVariant.originalPrice,
+      finalPrice: bestVariant.finalPrice,
+      discount: bestVariant.discount,
+      stockQuantity: bestVariant.stockQuantity,
+      hasMultipleVariants: availableVariants.length > 1,
+      priceRange:
+        availableVariants.length > 1
+          ? {
+              min: Math.min(...availableVariants.map((v) => v.finalPrice)),
+              max: Math.max(...availableVariants.map((v) => v.finalPrice)),
+            }
+          : null,
     };
+  }, [availableVariants]);
 
-    return pricingInfo;
-  };
-
-  const pricingInfo = getPricingInfo();
+  const pricingInfo = getBestPricingInfo;
   const hasNoSellers = Boolean(
     !product.sellerProducts || product.sellerProducts.length === 0
   );
   const isOutOfStock = pricingInfo ? pricingInfo.stockQuantity <= 0 : false;
+  const hasMultipleVariants = pricingInfo?.hasMultipleVariants || false;
 
   const handleAddToCartClick = useCallback(() => {
-    onAddToCart(product);
-  }, [onAddToCart, product]);
+    if (hasMultipleVariants) {
+      // If multiple variants, open dialog to select
+      setSelectedVariantId(
+        availableVariants[0]?.productInfo.id.toString() || null
+      );
+      setVariantDialogOpen(true);
+    } else {
+      // Single variant, add directly
+      onAddToCart(product);
+    }
+  }, [onAddToCart, product, hasMultipleVariants, availableVariants]);
+
+  const handleVariantConfirm = useCallback(() => {
+    if (!selectedVariantId) return;
+
+    const selectedVariant = availableVariants.find(
+      (v) => v.productInfo.id.toString() === selectedVariantId
+    );
+
+    if (selectedVariant) {
+      // Create a modified product object with only the selected variant
+      const productWithSelectedVariant: KickzoneGraphqlTypes.Product = {
+        ...product,
+        productInfos: [selectedVariant.productInfo],
+        sellerProducts: [selectedVariant.sellerProduct],
+      };
+      onAddToCart(productWithSelectedVariant);
+      setVariantDialogOpen(false);
+    }
+  }, [selectedVariantId, availableVariants, product, onAddToCart]);
 
   return (
     <Card
@@ -268,25 +383,57 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   />
                 </Typography>
               )}
-              <Typography
-                variant="h5"
-                sx={{
-                  fontWeight: 800,
-                  background:
-                    pricingInfo.discount > 0
-                      ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
-                      : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text',
-                }}
-              >
-                <PriceDisplay
-                  priceInUSD={pricingInfo.finalPrice}
-                  showSymbol={true}
-                  showOriginal={false}
-                />
-              </Typography>
+              <Box>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 800,
+                    background:
+                      pricingInfo.discount > 0
+                        ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
+                        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text',
+                  }}
+                >
+                  {pricingInfo.priceRange ? (
+                    <>
+                      <PriceDisplay
+                        priceInUSD={pricingInfo.priceRange.min}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
+                      {' - '}
+                      <PriceDisplay
+                        priceInUSD={pricingInfo.priceRange.max}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
+                    </>
+                  ) : (
+                    <PriceDisplay
+                      priceInUSD={pricingInfo.finalPrice}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  )}
+                </Typography>
+                {pricingInfo.priceRange && (
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: '#666',
+                      fontSize: '0.75rem',
+                      mt: 0.5,
+                      display: 'block',
+                    }}
+                  >
+                    {LL.products.multipleVariants() ||
+                      'Multiple variants available'}
+                  </Typography>
+                )}
+              </Box>
             </Box>
           </Box>
         ) : (
@@ -422,6 +569,155 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             : LL.products.addToCart()}
         </Button>
       </Box>
+
+      {/* Variant Selection Dialog */}
+      <Dialog
+        open={variantDialogOpen}
+        onClose={() => setVariantDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>
+          {LL.products.selectVariant() || 'Select Variant'}
+        </DialogTitle>
+        <DialogContent>
+          <FormControl component="fieldset" fullWidth>
+            <FormLabel component="legend" sx={{ mb: 2 }}>
+              {product.name}
+            </FormLabel>
+            <RadioGroup
+              value={selectedVariantId || ''}
+              onChange={(e) => setSelectedVariantId(e.target.value)}
+            >
+              {availableVariants.map((variant) => {
+                const variantKey = variant.productInfo.id.toString();
+                return (
+                  <FormControlLabel
+                    key={variantKey}
+                    value={variantKey}
+                    control={<Radio />}
+                    label={
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: 2,
+                          width: '100%',
+                        }}
+                      >
+                        <Box sx={{ flex: 1 }}>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                              mb: 0.5,
+                            }}
+                          >
+                            {variant.productInfo.color && (
+                              <>
+                                <Box
+                                  sx={{
+                                    width: 20,
+                                    height: 20,
+                                    backgroundColor:
+                                      variant.productInfo.color.hexCode,
+                                    borderRadius: '50%',
+                                    border: '1px solid #ccc',
+                                  }}
+                                />
+                                <Typography variant="body2">
+                                  {variant.productInfo.color.name}
+                                </Typography>
+                              </>
+                            )}
+                            {variant.productInfo.size && (
+                              <Typography
+                                variant="body2"
+                                sx={{ ml: variant.productInfo.color ? 1 : 0 }}
+                              >
+                                Size: {variant.productInfo.size}
+                              </Typography>
+                            )}
+                          </Box>
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1,
+                            }}
+                          >
+                            {variant.discount > 0 && (
+                              <Typography
+                                variant="body2"
+                                sx={{
+                                  textDecoration: 'line-through',
+                                  color: '#999',
+                                  mr: 1,
+                                }}
+                              >
+                                <PriceDisplay
+                                  priceInUSD={variant.originalPrice}
+                                  showSymbol={true}
+                                  showOriginal={false}
+                                />
+                              </Typography>
+                            )}
+                            <Typography
+                              variant="h6"
+                              sx={{
+                                fontWeight: 700,
+                                color:
+                                  variant.discount > 0 ? '#f5576c' : '#667eea',
+                              }}
+                            >
+                              <PriceDisplay
+                                priceInUSD={variant.finalPrice}
+                                showSymbol={true}
+                                showOriginal={false}
+                              />
+                            </Typography>
+                          </Box>
+                          <Typography
+                            variant="caption"
+                            sx={{ color: '#666', display: 'block', mt: 0.5 }}
+                          >
+                            Stock: {variant.stockQuantity}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    }
+                    sx={{
+                      border: '1px solid #e0e0e0',
+                      borderRadius: 2,
+                      p: 1.5,
+                      mb: 1,
+                      '&:hover': {
+                        backgroundColor: '#f5f5f5',
+                      },
+                    }}
+                  />
+                );
+              })}
+            </RadioGroup>
+          </FormControl>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setVariantDialogOpen(false)}>
+            {LL.button.cancel()}
+          </Button>
+          <Button
+            onClick={handleVariantConfirm}
+            variant="contained"
+            disabled={!selectedVariantId}
+            sx={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            }}
+          >
+            {LL.products.addToCart()}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   );
 };

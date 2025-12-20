@@ -6,6 +6,7 @@ import {
   ProductInfo,
   Category,
   Color,
+  SellerProduct,
 } from '@kickzone-workspace/entities';
 import {
   CreateProductInput,
@@ -28,6 +29,8 @@ export class ProductService {
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Color)
     private readonly colorRepository: Repository<Color>,
+    @InjectRepository(SellerProduct)
+    private readonly sellerProductRepository: Repository<SellerProduct>,
     private readonly translationService: TranslationService
   ) {}
 
@@ -38,35 +41,58 @@ export class ProductService {
       .leftJoinAndSelect('productInfo.color', 'color')
       .leftJoinAndSelect('product.categories', 'category');
 
-    // Use INNER JOIN for sellerProducts when filtering by sellers or stock
-    if (filter?.onlyWithSellers === true || filter?.onlyInStock === true) {
-      query
-        .innerJoinAndSelect('product.sellerProducts', 'sellerProduct')
-        .addSelect('sellerProduct.productInfoId')
-        .innerJoinAndSelect('sellerProduct.seller', 'seller')
-        .innerJoinAndSelect('seller.user', 'sellerUser')
-        .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
-        .leftJoinAndSelect('sellerProductInfo.color', 'sellerProductColor');
-    } else {
-      query
-        .leftJoinAndSelect('product.sellerProducts', 'sellerProduct')
-        .addSelect('sellerProduct.productInfoId')
-        .leftJoinAndSelect('sellerProduct.seller', 'seller')
-        .leftJoinAndSelect('seller.user', 'sellerUser')
-        .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
-        .leftJoinAndSelect('sellerProductInfo.color', 'sellerProductColor');
-    }
+    // Always use LEFT JOIN for sellerProducts to get all productInfos
+    // We'll filter sellerProducts in the WHERE clause instead
+    query
+      .leftJoinAndSelect('product.sellerProducts', 'sellerProduct')
+      .addSelect('sellerProduct.productInfoId')
+      .leftJoinAndSelect('sellerProduct.seller', 'seller')
+      .leftJoinAndSelect('seller.user', 'sellerUser')
+      .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
+      .leftJoinAndSelect('sellerProductInfo.color', 'sellerProductColor');
 
     query.orderBy('productInfo.id', 'ASC');
 
-    // Filter by seller availability
+    // Filter by seller availability - use EXISTS subquery to avoid filtering out products
+    // Don't filter sellerProducts in WHERE clause - we'll filter in memory to preserve all productInfos
+    // Use TypeORM's metadata to get correct foreign key column names
     if (filter?.onlyWithSellers === true) {
-      query.andWhere('sellerProduct.id IS NOT NULL');
+      const productRelation =
+        this.sellerProductRepository.metadata.findRelationWithPropertyPath(
+          'product'
+        );
+      const sellerRelation =
+        this.sellerProductRepository.metadata.findRelationWithPropertyPath(
+          'seller'
+        );
+      const productColumn =
+        productRelation?.joinColumns?.[0]?.databaseName || 'productId';
+      const sellerColumn =
+        sellerRelation?.joinColumns?.[0]?.databaseName || 'sellerId';
+
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM seller_product sp WHERE sp."${productColumn}" = product.id AND sp."${sellerColumn}" IS NOT NULL)`
+      );
     }
 
-    // Filter by stock availability
+    // Filter by stock availability - use EXISTS subquery to avoid filtering out products
+    // Don't filter sellerProducts in WHERE clause - we'll filter in memory to preserve all productInfos
+    // Use TypeORM's metadata to get correct column names
     if (filter?.onlyInStock === true) {
-      query.andWhere('sellerProduct.stockQuantity > 0');
+      const productRelation =
+        this.sellerProductRepository.metadata.findRelationWithPropertyPath(
+          'product'
+        );
+      const stockColumn =
+        this.sellerProductRepository.metadata.findColumnWithPropertyName(
+          'stockQuantity'
+        )?.databaseName || 'stockQuantity';
+      const productColumn =
+        productRelation?.joinColumns?.[0]?.databaseName || 'productId';
+
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM seller_product sp WHERE sp."${productColumn}" = product.id AND sp."${stockColumn}" > 0)`
+      );
     }
 
     // Partitioning hint: The 'archived' column should be used for table partitioning at the DB level.
@@ -143,9 +169,84 @@ export class ProductService {
       query.skip(parseInt(filter.after, 10));
     }
 
+    // TypeORM's getMany() should handle deduplication automatically
+    // but with multiple one-to-many joins, we need to be careful
     const products = await query.getMany();
 
-    return [products, totalCount];
+    console.log('[ProductService] Raw products from TypeORM:', {
+      count: products.length,
+      products: products.map((p) => ({
+        id: p.id,
+        name: p.name,
+        productInfosCount: p.productInfos?.length || 0,
+        sellerProductsCount: p.sellerProducts?.length || 0,
+        productInfos: p.productInfos?.map((pi) => ({
+          id: pi.id,
+          size: pi.size,
+          color: pi.color?.name,
+        })),
+        sellerProducts: p.sellerProducts?.map((sp) => ({
+          id: sp.id,
+          productInfoId: sp.productInfoId,
+          price: sp.price,
+          stockQuantity: sp.stockQuantity,
+          sellerId: sp.seller?.id,
+        })),
+      })),
+    });
+
+    // Post-process products to filter sellerProducts based on filters
+    // This ensures all productInfos are returned, but only matching sellerProducts
+    const processedProducts = products.map((product) => {
+      // Filter sellerProducts based on filters
+      let filteredSellerProducts = product.sellerProducts || [];
+
+      if (filter?.onlyWithSellers === true) {
+        filteredSellerProducts = filteredSellerProducts.filter(
+          (sp) => sp.seller != null
+        );
+      }
+
+      if (filter?.onlyInStock === true) {
+        filteredSellerProducts = filteredSellerProducts.filter(
+          (sp) => sp.stockQuantity > 0
+        );
+      }
+
+      return {
+        ...product,
+        sellerProducts: filteredSellerProducts,
+      };
+    });
+
+    // Debug: Log products to see variant counts
+    console.log('[ProductService] Returning products:', {
+      totalProducts: processedProducts.length,
+      products: processedProducts.map((p) => ({
+        id: p.id,
+        name: p.name,
+        productInfosCount: p.productInfos?.length || 0,
+        sellerProductsCount: p.sellerProducts?.length || 0,
+        productInfos: p.productInfos?.map((pi) => ({
+          id: pi.id,
+          size: pi.size,
+          color: pi.color?.name,
+        })),
+        sellerProducts: p.sellerProducts?.map((sp) => ({
+          id: sp.id,
+          productInfoId: sp.productInfoId,
+          price: sp.price,
+          stockQuantity: sp.stockQuantity,
+          sellerId: sp.seller?.id,
+        })),
+      })),
+      filter: {
+        onlyWithSellers: filter?.onlyWithSellers,
+        onlyInStock: filter?.onlyInStock,
+      },
+    });
+
+    return [processedProducts, totalCount];
   }
 
   async createProduct(input: CreateProductInput) {

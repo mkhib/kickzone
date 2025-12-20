@@ -8,6 +8,7 @@ import { CustomerForgotPassword } from '@kickzone-workspace/customer-forgot-pass
 import { CustomerResetPassword } from '@kickzone-workspace/customer-reset-password';
 import { CustomerOrders } from '@kickzone-workspace/customer-orders';
 import { CustomerOrderConfirmation } from '@kickzone-workspace/customer-order-confirmation';
+import { CustomerPaymentCallback } from '@kickzone-workspace/customer-payment';
 import { LanguageComponents } from '@kickzone-workspace/language-components';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
@@ -33,6 +34,10 @@ export function CustomersRouter() {
         <Route
           path={CUSTOMER_ROUTES.ORDER_CONFIRMATION}
           element={<CustomerOrderConfirmation />}
+        />
+        <Route
+          path={CUSTOMER_ROUTES.PAYMENT_CALLBACK}
+          element={<CustomerPaymentCallback />}
         />
         <Route
           path={CUSTOMER_ROUTES.LANGUAGE_SETTINGS}

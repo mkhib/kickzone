@@ -25,8 +25,8 @@ const csrfLink = new ApolloLink((operation, forward) => {
 });
 
 // Get GraphQL endpoint:
-// - Prefer VITE_GRAPHQL_ENDPOINT (set at build time, see deployment scripts)
-// - Otherwise, on non-localhost hosts use relative /graphql (nginx will proxy it)
+// - For localhost: always use http://localhost:4000/graphql (ignore relative paths in env)
+// - For production: use VITE_GRAPHQL_ENDPOINT if set, otherwise /graphql (nginx proxy)
 // - Fallback to http://localhost:4000/graphql for local development
 const getGraphQLEndpoint = () => {
   const hostname =
@@ -39,7 +39,19 @@ const getGraphQLEndpoint = () => {
 
   let resolved: string;
 
-  if (fromEnv) {
+  // For localhost, ALWAYS use absolute URL to API server (ignore relative paths)
+  if (typeof window !== 'undefined' && hostname === 'localhost') {
+    // Only use env var if it's an absolute URL (http:// or https://)
+    if (
+      fromEnv &&
+      (fromEnv.startsWith('http://') || fromEnv.startsWith('https://'))
+    ) {
+      resolved = fromEnv;
+    } else {
+      // Force absolute URL for localhost
+      resolved = 'http://localhost:4000/graphql';
+    }
+  } else if (fromEnv) {
     resolved = fromEnv;
   } else if (typeof window !== 'undefined' && hostname !== 'localhost') {
     resolved = '/graphql';

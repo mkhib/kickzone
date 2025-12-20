@@ -12,6 +12,7 @@ export const SELLER_PRODUCT_FRAGMENT = gql`
     costPrice
     discount
     stockQuantity
+    productInfoId
     productInfo {
       ...ProductInfoFields
     }
@@ -29,11 +30,15 @@ export const SELLER_PRODUCT_PRODUCT_FRAGMENT = gql`
     categories {
       ...CategoryFields
     }
+    productInfos {
+      ...ProductInfoFields
+    }
     sellerProducts {
       ...SellerProductFields
     }
   }
   ${CATEGORY_FRAGMENT}
+  ${PRODUCT_INFO_FRAGMENT}
   ${SELLER_PRODUCT_FRAGMENT}
 `;
 

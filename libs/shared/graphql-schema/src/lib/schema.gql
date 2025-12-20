@@ -94,8 +94,8 @@ type SellerProduct {
   id: String!
   seller: SellerInfo
   product: Product!
-  productInfo: ProductInfo
-  productInfoId: Int
+  productInfo: ProductInfo!
+  productInfoId: Int!
   price: Float!
   costPrice: Float
   discount: Float!
@@ -365,6 +365,7 @@ enum ProductArchivedStatus {
 input SellerFilterInput {
   searchTerm: String
   isActive: Boolean
+  ids: [Int!]
   first: Int
   after: String
 }
@@ -399,7 +400,7 @@ type Mutation {
   bulkTranslateEntities(input: BulkTranslationInput!): Boolean!
   deleteEntityTranslations(entityType: String!, entityId: Int!): Boolean!
   createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
-  updateSeller(id: Int!, updateSellerInput: UpdateSellerInput!): SellerInfo!
+  updateSeller(updateSellerInput: UpdateSellerInput!): SellerInfo!
   toggleSellerActive(id: Int!): SellerInfo!
   createSellerProduct(sellerId: Int!, input: CreateSellerProductInput!): SellerProduct!
   updateSellerProduct(sellerId: Int!, input: UpdateSellerProductInput!): SellerProduct!

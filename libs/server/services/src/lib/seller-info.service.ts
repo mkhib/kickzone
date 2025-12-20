@@ -95,6 +95,10 @@ export class SellerService {
       });
     }
 
+    if (filter?.ids && filter.ids.length > 0) {
+      query.andWhere('seller.id IN (:...ids)', { ids: filter.ids });
+    }
+
     const totalCount = await query.getCount();
 
     if (filter?.first) {
@@ -124,10 +128,9 @@ export class SellerService {
   }
 
   async update(
-    id: number,
     updateSellerInput: UpdateSellerInput
   ): Promise<SellerInfo | null> {
-    const seller = await this.findOne(id);
+    const seller = await this.findOne(updateSellerInput.id);
     if (!seller) {
       throw new Error('Seller not found');
     }
@@ -173,30 +176,76 @@ export class SellerService {
     sellerId: number,
     input: CreateSellerProductInput
   ): Promise<SellerProduct> {
+    // Load productInfo with product relation
     const productInfo = await this.productInfoRepository.findOne({
       where: { id: input.productInfoId },
       relations: ['product'],
     });
-    if (!productInfo) throw new Error('Product variant not found');
-    if (!productInfo.product)
+    if (!productInfo) {
+      throw new Error('Product variant not found');
+    }
+    if (!productInfo.product) {
       throw new Error('Product not found for this variant');
+    }
 
+    // Load seller
     const seller = await this.sellerRepository.findOneBy({ id: sellerId });
-    if (!seller) throw new Error('Seller not found');
+    if (!seller) {
+      throw new Error('Seller not found');
+    }
 
+    // Check if seller already has a SellerProduct for this ProductInfo (unique constraint)
+    const existingSellerProduct = await this.sellerProductRepository.findOne({
+      where: {
+        seller: { id: sellerId },
+        productInfoId: productInfo.id,
+      },
+    });
+
+    if (existingSellerProduct) {
+      throw new Error(
+        `You already have a listing for this product variant (${
+          productInfo.size
+        } - ${
+          productInfo.color?.name || 'No color'
+        }). Please update the existing listing instead.`
+      );
+    }
+
+    // Create new SellerProduct
     const sellerProduct = this.sellerProductRepository.create({
       seller,
       product: productInfo.product,
       productInfo,
-      productInfoId: input.productInfoId,
+      productInfoId: productInfo.id, // Always use the actual productInfo.id
       price: input.price,
       costPrice: input.costPrice,
       discount: input.discount,
       stockQuantity: input.stockQuantity,
     });
 
-    const saved = await this.sellerProductRepository.save(sellerProduct);
-    return saved;
+    console.log(
+      `[SellerService] Creating sellerProduct: sellerId=${sellerId}, productId=${productInfo.product.id}, productInfoId=${productInfo.id}`
+    );
+
+    try {
+      const saved = await this.sellerProductRepository.save(sellerProduct);
+      console.log(
+        `[SellerService] ✓ SellerProduct ${saved.id} created with productInfoId=${saved.productInfoId}`
+      );
+      return saved;
+    } catch (error: unknown) {
+      // Handle unique constraint violation
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      const errorCode = (error as { code?: string })?.code;
+      if (errorCode === '23505' || errorMessage.includes('unique')) {
+        throw new Error(
+          `You already have a listing for this product variant. Please update the existing listing instead.`
+        );
+      }
+      throw error;
+    }
   }
 
   async updateSellerProduct(
@@ -209,7 +258,38 @@ export class SellerService {
     });
     if (!sellerProduct) throw new Error('Seller product not found');
     if (sellerProduct.seller.id !== sellerId) throw new Error('Unauthorized');
-    Object.assign(sellerProduct, input);
+
+    // If productInfoId is being updated, load the productInfo relation
+    if (
+      input.productInfoId !== undefined &&
+      input.productInfoId !== sellerProduct.productInfoId
+    ) {
+      const productInfo = await this.productInfoRepository.findOne({
+        where: { id: input.productInfoId },
+        relations: ['product'],
+      });
+      if (!productInfo) throw new Error('Product variant not found');
+      if (!productInfo.product)
+        throw new Error('Product not found for this variant');
+
+      console.log(
+        `[SellerService] Updating sellerProduct ${sellerProduct.id}: productInfoId ${sellerProduct.productInfoId} -> ${input.productInfoId}`
+      );
+
+      // Update both the relation and the ID
+      sellerProduct.productInfo = productInfo;
+      sellerProduct.productInfoId = productInfo.id; // Use actual productInfo.id to ensure consistency
+      sellerProduct.product = productInfo.product; // Ensure product is also updated
+    }
+
+    // Update other fields
+    if (input.price !== undefined) sellerProduct.price = input.price;
+    if (input.costPrice !== undefined)
+      sellerProduct.costPrice = input.costPrice;
+    if (input.discount !== undefined) sellerProduct.discount = input.discount;
+    if (input.stockQuantity !== undefined)
+      sellerProduct.stockQuantity = input.stockQuantity;
+
     return this.sellerProductRepository.save(sellerProduct);
   }
 

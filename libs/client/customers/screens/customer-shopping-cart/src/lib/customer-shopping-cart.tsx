@@ -7,6 +7,7 @@ import {
   useRemoveItem,
   useUpdateItemQuantity,
 } from '@kickzone-workspace/customer-cart-store';
+import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { useCustomersCartMutations } from '@kickzone-workspace/customers-cart-hook';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
@@ -53,6 +54,8 @@ import Typography from '@mui/material/Typography';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
+import { useZarinPalPayment } from '@kickzone-workspace/customer-payment';
+import { useConvertPrice } from '@kickzone-workspace/currency-hook';
 
 // Import types from cart store
 import type { CartItem } from '@kickzone-workspace/customer-cart-store';
@@ -63,6 +66,10 @@ const formatNumber = (num: number | string, locale: string): string => {
 };
 
 export function CustomerShoppingCart() {
+  // Initialize cart service to sync server cart with local store
+  // This ensures shipping fees are fetched and synced when user is logged in
+  useCustomersCartService();
+
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
   const steps = [
@@ -105,8 +112,10 @@ export function CustomerShoppingCart() {
     const sellerMap = new Map<string, { fee: number }>();
     cartItems.forEach((item) => {
       if (!sellerMap.has(item.sellerId)) {
+        // Use ?? instead of || to handle 0 values correctly
+        const fee = item.sellerShippingFee ?? 0;
         sellerMap.set(item.sellerId, {
-          fee: item.sellerShippingFee || 0,
+          fee,
         });
       }
     });
@@ -149,14 +158,20 @@ export function CustomerShoppingCart() {
 
   // Get calculated shipping costs
   const totalShippingCost = useMemo(() => {
-    if (shippingData?.calculateShippingCost) {
-      return shippingData.calculateShippingCost.totalShippingCost || 0;
-    }
-    // Fallback: sum all shipping fees (old behavior)
-    return sellerShippingFees.reduce(
+    const fallbackTotal = sellerShippingFees.reduce(
       (sum, seller) => sum + seller.shippingFee,
       0
     );
+
+    if (shippingData?.calculateShippingCost) {
+      const queryTotal =
+        shippingData.calculateShippingCost.totalShippingCost ?? 0;
+      // Use query result if it's valid (> 0), otherwise use fallback
+      return queryTotal > 0 ? queryTotal : fallbackTotal;
+    }
+
+    // Fallback: sum all shipping fees (old behavior)
+    return fallbackTotal;
   }, [shippingData, sellerShippingFees]);
 
   // Create a map of sellerId -> calculated shipping cost for order creation
@@ -177,6 +192,22 @@ export function CustomerShoppingCart() {
   }, [shippingData, sellerShippingFees]);
 
   const grandTotal = cartTotal + totalShippingCost;
+
+  // Convert total to Toman (IRT) for ZarinPal payment
+  const { convertedAmount: totalInToman, loading: conversionLoading } =
+    useConvertPrice({
+      amount: grandTotal,
+      fromCurrency: 'USD',
+      toCurrency: 'IRR', // ZarinPal uses Toman (IRT), but we store as IRR
+    });
+
+  // Payment hook
+  const { requestPayment, redirectToGateway, isRequesting } =
+    useZarinPalPayment({
+      onError: (error) => {
+        showSnackbar(`خطا در پرداخت: ${error}`, { severity: 'error' });
+      },
+    });
 
   // Use snackbar for notifications
   const { showSnackbar } = useSnackbar();
@@ -473,21 +504,62 @@ export function CustomerShoppingCart() {
       );
 
       const orderResults = await Promise.all(orderPromises);
+
+      // Get the first order for payment (if multiple orders, we'll handle payment for the first one)
+      const firstOrder = orderResults[0];
+      if (!firstOrder) {
+        throw new Error('No order was created');
+      }
+
+      // Wait for currency conversion if still loading
+      if (conversionLoading) {
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+
+      // Calculate total amount in Toman (IRT) - ZarinPal expects Toman
+      // Note: IRR is stored as Toman in the system (1 Toman = 10 Rial)
+      // ZarinPal API expects amount in Toman, so we use IRT currency
+      const amountInToman = Math.round(totalInToman);
+
+      // Build callback URL with order ID
+      const callbackUrl = `${window.location.origin}${CUSTOMER_ROUTES.PAYMENT_CALLBACK}?orderId=${firstOrder.id}`;
+
+      // Request payment from ZarinPal
+      const authority = await requestPayment({
+        amount: amountInToman,
+        callback_url: callbackUrl,
+        description: `پرداخت سفارش ${firstOrder.orderNumber}`,
+        currency: 'IRT', // Toman
+        metadata: {
+          mobile: shippingInfo.customerPhone || undefined,
+          email: shippingInfo.customerEmail || undefined,
+          order_id: firstOrder.id,
+        },
+      });
+
+      if (!authority) {
+        // Error already handled by hook
+        return;
+      }
+
+      // Clear cart after successful payment request
       await clearCartMutation();
       clearCartAction();
       setCheckoutDialogOpen(false);
       setActiveStep(0);
 
-      // Navigate to order confirmation screen with first order data
-      // (If multiple orders were created, we show the first one's details)
-      const firstOrder = orderResults[0];
-      if (firstOrder) {
-        navigate(CUSTOMER_ROUTES.ORDER_CONFIRMATION, {
-          state: {
-            orderData: firstOrder,
-          },
-        });
-      }
+      // Redirect to ZarinPal payment gateway
+      // Store order data in sessionStorage for callback
+      sessionStorage.setItem(
+        `order_${firstOrder.id}`,
+        JSON.stringify({
+          orderId: firstOrder.id,
+          orderNumber: firstOrder.orderNumber,
+          amount: amountInToman,
+        })
+      );
+
+      redirectToGateway(authority);
     } catch (error) {
       console.error('Error placing order:', error);
       const errorMessage = (error as Error).message;
@@ -925,12 +997,23 @@ export function CustomerShoppingCart() {
                   <Box
                     sx={{
                       display: 'flex',
-                      justifyContent: 'space-between',
+                      flexDirection: { xs: 'column', lg: 'row' },
+                      justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                      alignItems: { xs: 'flex-start', lg: 'center' },
                       mb: 1,
+                      gap: { xs: 0.5, lg: 1 },
                     }}
                   >
-                    <Typography>{LL.checkout.subtotal()}:</Typography>
-                    <Typography>
+                    <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                      {LL.checkout.subtotal()}:
+                    </Typography>
+                    <Typography
+                      sx={{
+                        textAlign: { xs: 'left', lg: 'right' },
+                        minWidth: 0,
+                        flex: { xs: 'none', lg: '1 1 auto' },
+                      }}
+                    >
                       <PriceDisplay
                         priceInUSD={cartTotal}
                         showSymbol={true}
@@ -939,56 +1022,33 @@ export function CustomerShoppingCart() {
                     </Typography>
                   </Box>
 
-                  {/* Shipping costs breakdown by seller */}
-                  <Box sx={{ mb: 2 }}>
-                    <Typography sx={{ fontWeight: 600, mb: 1 }}>
+                  {/* Shipping fee */}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: { xs: 'column', lg: 'row' },
+                      justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                      alignItems: { xs: 'flex-start', lg: 'center' },
+                      mb: 1,
+                      gap: { xs: 0.5, lg: 1 },
+                    }}
+                  >
+                    <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
                       {LL.checkout.shipping()}:
                     </Typography>
-                    {Object.entries(shippingCostsBySeller).map(
-                      ([sellerId, fee]) => (
-                        <Box
-                          key={sellerId}
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            mb: 0.5,
-                            pl: 2,
-                          }}
-                        >
-                          <Typography variant="body2" color="text.secondary">
-                            {LL.checkout.shipping()}:
-                          </Typography>
-                          <Typography variant="body2">
-                            <PriceDisplay
-                              priceInUSD={fee}
-                              showSymbol={true}
-                              showOriginal={false}
-                            />
-                          </Typography>
-                        </Box>
-                      )
-                    )}
-                    <Box
+                    <Typography
                       sx={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        mt: 1,
-                        pt: 1,
-                        borderTop: '1px solid',
-                        borderColor: 'divider',
+                        textAlign: { xs: 'left', lg: 'right' },
+                        minWidth: 0,
+                        flex: { xs: 'none', lg: '1 1 auto' },
                       }}
                     >
-                      <Typography sx={{ fontWeight: 600 }}>
-                        Total Shipping:
-                      </Typography>
-                      <Typography sx={{ fontWeight: 600 }}>
-                        <PriceDisplay
-                          priceInUSD={totalShippingCost}
-                          showSymbol={true}
-                          showOriginal={false}
-                        />
-                      </Typography>
-                    </Box>
+                      <PriceDisplay
+                        priceInUSD={totalShippingCost}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
+                    </Typography>
                   </Box>
 
                   <Divider sx={{ my: 2 }} />
@@ -996,8 +1056,9 @@ export function CustomerShoppingCart() {
                   <Box
                     sx={{
                       display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
+                      flexDirection: { xs: 'column', lg: 'row' },
+                      justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                      alignItems: { xs: 'flex-start', lg: 'center' },
                       mb: 3,
                       p: 2,
                       borderRadius: 3,
@@ -1005,17 +1066,29 @@ export function CustomerShoppingCart() {
                         'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                       color: '#ffffff',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      gap: { xs: 0.5, lg: 1 },
                     }}
                   >
                     <Typography
                       variant="h6"
-                      sx={{ fontWeight: 700, color: '#ffffff' }}
+                      sx={{
+                        fontWeight: 700,
+                        color: '#ffffff',
+                        whiteSpace: 'nowrap',
+                        flexShrink: 0,
+                      }}
                     >
                       {LL.checkout.total()}:
                     </Typography>
                     <Typography
                       variant="h5"
-                      sx={{ fontWeight: 800, color: '#ffffff' }}
+                      sx={{
+                        fontWeight: 800,
+                        color: '#ffffff',
+                        textAlign: { xs: 'left', lg: 'right' },
+                        minWidth: 0,
+                        flex: { xs: 'none', lg: '1 1 auto' },
+                      }}
                     >
                       <PriceDisplay
                         priceInUSD={grandTotal}
@@ -1124,9 +1197,29 @@ export function CustomerShoppingCart() {
                   </Box>
                 ))}
                 <Divider sx={{ my: 2 }} />
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                  <Typography variant="h6">{LL.checkout.total()}:</Typography>
-                  <Typography variant="h6">
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    gap: { xs: 0.5, lg: 1 },
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    {LL.checkout.total()}:
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      textAlign: { xs: 'left', lg: 'right' },
+                      minWidth: 0,
+                      flex: { xs: 'none', lg: '1 1 auto' },
+                    }}
+                  >
                     <PriceDisplay
                       priceInUSD={cartTotal}
                       showSymbol={true}
@@ -1434,14 +1527,27 @@ export function CustomerShoppingCart() {
                 <Box
                   sx={{
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                    alignItems: { xs: 'flex-start', lg: 'center' },
                     mb: 1,
+                    gap: { xs: 0.5, lg: 1 },
                   }}
                 >
-                  <Typography variant="body1">
+                  <Typography
+                    variant="body1"
+                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
                     {LL.checkout.subtotal()}:
                   </Typography>
-                  <Typography variant="body1">
+                  <Typography
+                    variant="body1"
+                    sx={{
+                      textAlign: { xs: 'left', lg: 'right' },
+                      minWidth: 0,
+                      flex: { xs: 'none', lg: '1 1 auto' },
+                    }}
+                  >
                     <PriceDisplay
                       priceInUSD={cartTotal}
                       showSymbol={true}
@@ -1452,12 +1558,28 @@ export function CustomerShoppingCart() {
                 <Box
                   sx={{
                     display: 'flex',
-                    justifyContent: 'space-between',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                    alignItems: { xs: 'flex-start', lg: 'center' },
                     mb: 2,
+                    gap: { xs: 0.5, lg: 1 },
                   }}
                 >
-                  <Typography variant="h6">{LL.checkout.total()}:</Typography>
-                  <Typography variant="h6" color="primary">
+                  <Typography
+                    variant="h6"
+                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                  >
+                    {LL.checkout.total()}:
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    color="primary"
+                    sx={{
+                      textAlign: { xs: 'left', lg: 'right' },
+                      minWidth: 0,
+                      flex: { xs: 'none', lg: '1 1 auto' },
+                    }}
+                  >
                     <PriceDisplay
                       priceInUSD={cartTotal}
                       showSymbol={true}

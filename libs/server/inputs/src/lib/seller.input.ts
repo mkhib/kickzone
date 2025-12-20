@@ -5,6 +5,7 @@ import {
   IsOptional,
   IsString,
   IsNumber,
+  IsPositive,
 } from 'class-validator';
 
 @InputType()
@@ -111,6 +112,7 @@ export class CreateSellerProductInput {
   @Field(() => Int)
   @IsNotEmpty()
   @IsNumber()
+  @IsPositive()
   productInfoId: number;
 
   @Field(() => Float)
@@ -143,6 +145,7 @@ export class UpdateSellerProductInput {
   @Field(() => Int, { nullable: true })
   @IsOptional()
   @IsNumber()
+  @IsPositive()
   productInfoId?: number;
 
   @Field(() => Float, { nullable: true })
@@ -173,6 +176,9 @@ export class SellerFilterInput {
 
   @Field({ nullable: true })
   isActive?: boolean;
+
+  @Field(() => [Int], { nullable: true })
+  ids?: number[];
 
   @Field(() => Int, { nullable: true })
   first?: number;

@@ -516,7 +516,7 @@ type RootTranslation = {
 		 */
 		subtotal: string
 		/**
-		 * S​h​i​p​p​i​n​g
+		 * S​h​i​p​p​i​n​g​ ​F​e​e
 		 */
 		shipping: string
 		/**
@@ -853,6 +853,10 @@ type RootTranslation = {
 		 * A​v​a​i​l​a​b​l​e​ ​V​a​r​i​a​n​t​s
 		 */
 		availableVariants: string
+		/**
+		 * M​u​l​t​i​p​l​e​ ​v​a​r​i​a​n​t​s​ ​a​v​a​i​l​a​b​l​e
+		 */
+		multipleVariants: string
 		/**
 		 * m​o​r​e
 		 */
@@ -2875,7 +2879,7 @@ export type TranslationFunctions = {
 		 */
 		subtotal: () => LocalizedString
 		/**
-		 * Shipping
+		 * Shipping Fee
 		 */
 		shipping: () => LocalizedString
 		/**
@@ -3212,6 +3216,10 @@ export type TranslationFunctions = {
 		 * Available Variants
 		 */
 		availableVariants: () => LocalizedString
+		/**
+		 * Multiple variants available
+		 */
+		multipleVariants: () => LocalizedString
 		/**
 		 * more
 		 */

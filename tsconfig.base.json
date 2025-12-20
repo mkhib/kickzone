@@ -110,6 +110,9 @@
       "@kickzone-workspace/customer-orders": [
         "libs/client/customers/screens/customer-orders/src/index.ts"
       ],
+      "@kickzone-workspace/customer-payment": [
+        "libs/client/customers/screens/customer-payment/src/index.ts"
+      ],
       "@kickzone-workspace/customer-products": [
         "libs/client/customers/screens/customer-products/src/index.ts"
       ],

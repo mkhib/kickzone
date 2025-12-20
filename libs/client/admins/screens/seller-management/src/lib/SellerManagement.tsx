@@ -327,7 +327,10 @@ export const SellerManagement = () => {
         variables: {
           createSellerInput: {
             ...formData,
-            shippingFee: formData.shippingFee !== undefined ? Number(formData.shippingFee) : 0,
+            shippingFee:
+              formData.shippingFee !== undefined
+                ? Number(formData.shippingFee)
+                : 0,
             password: 'defaultPassword123',
           } as CreateSellerInput,
         },
@@ -348,7 +351,6 @@ export const SellerManagement = () => {
     try {
       await updateSeller({
         variables: {
-          id: selectedSeller.id,
           updateSellerInput: {
             id: selectedSeller.id,
             name: formData.name || undefined,
@@ -358,7 +360,10 @@ export const SellerManagement = () => {
             storeName: formData.storeName || undefined,
             phone: formData.phone || undefined,
             address: formData.address || undefined,
-            shippingFee: formData.shippingFee !== undefined ? Number(formData.shippingFee) : undefined,
+            shippingFee:
+              formData.shippingFee !== undefined
+                ? Number(formData.shippingFee)
+                : undefined,
           },
         },
       });

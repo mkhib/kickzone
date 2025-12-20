@@ -7,6 +7,7 @@ import {
   Relation,
   BeforeInsert,
   BeforeUpdate,
+  Index,
 } from 'typeorm';
 import { SellerInfo } from './seller-info.entity';
 import { Product } from './product.entity';
@@ -15,6 +16,7 @@ import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
 
 @ObjectType()
 @Entity()
+@Index(['seller', 'productInfoId'], { unique: true })
 export class SellerProduct {
   @Field(() => String)
   @PrimaryGeneratedColumn('uuid')
@@ -28,13 +30,13 @@ export class SellerProduct {
   @ManyToOne(() => Product, (product) => product.sellerProducts)
   product: Relation<Product>;
 
-  @Field(() => ProductInfo, { nullable: true })
-  @ManyToOne(() => ProductInfo)
+  @Field(() => ProductInfo)
+  @ManyToOne(() => ProductInfo, { nullable: false })
   productInfo: ProductInfo;
 
-  @Field(() => Int, { nullable: true })
-  @Column({ nullable: true })
-  productInfoId?: number;
+  @Field(() => Int)
+  @Column({ nullable: false })
+  productInfoId: number;
 
   @Field(() => Float)
   @Column('decimal', { precision: 10, scale: 2 })
@@ -55,6 +57,7 @@ export class SellerProduct {
   @BeforeInsert()
   @BeforeUpdate()
   setProductInfoId() {
+    // If productInfo relation is set but productInfoId is not, set it from the relation
     if (this.productInfo && !this.productInfoId) {
       this.productInfoId = this.productInfo.id;
       console.log(
@@ -64,5 +67,6 @@ export class SellerProduct {
         this.productInfo.id
       );
     }
+    // If productInfoId is set but productInfo relation is not, this is handled in the service layer
   }
 }

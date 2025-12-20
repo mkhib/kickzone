@@ -491,7 +491,6 @@ export type MutationUpdateProductArgs = {
 
 
 export type MutationUpdateSellerArgs = {
-  id: Scalars['Int']['input'];
   updateSellerInput: UpdateSellerInput;
 };
 
@@ -830,6 +829,7 @@ export type SellerEdge = {
 export type SellerFilterInput = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
+  ids?: InputMaybe<Array<Scalars['Int']['input']>>;
   isActive?: InputMaybe<Scalars['Boolean']['input']>;
   searchTerm?: InputMaybe<Scalars['String']['input']>;
 };

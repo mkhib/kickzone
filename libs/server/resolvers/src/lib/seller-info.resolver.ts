@@ -49,10 +49,27 @@ export class SellerResolver {
 
   @Query(() => SellerConnection)
   @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
+  @SetMetadata('roles', [UserRole.ADMIN, UserRole.CUSTOMER])
   async sellers(
+    @Context() context: { req: { user?: User } },
     @Args('filter', { nullable: true }) filter?: SellerFilterInput
   ) {
+    // For customers, only allow querying by IDs
+    const user = context.req.user;
+    if (user?.role === UserRole.CUSTOMER) {
+      if (!filter?.ids || filter.ids.length === 0) {
+        // Customers can only query by IDs
+        return {
+          edges: [],
+          pageInfo: {
+            endCursor: null,
+            hasNextPage: false,
+          },
+          totalCount: 0,
+        };
+      }
+    }
+
     const [sellers, totalCount] = await this.sellerService.findAll(filter);
     // Build edges and pageInfo for SellerConnection
     const edges = sellers.map((seller) => ({
@@ -81,10 +98,9 @@ export class SellerResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   updateSeller(
-    @Args('id', { type: () => Int }) id: number,
     @Args('updateSellerInput') updateSellerInput: UpdateSellerInput
   ) {
-    return this.sellerService.update(id, updateSellerInput);
+    return this.sellerService.update(updateSellerInput);
   }
 
   @Mutation(() => SellerInfo)

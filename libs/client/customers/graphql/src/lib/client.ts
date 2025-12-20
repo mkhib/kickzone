@@ -6,6 +6,7 @@ import {
 } from '@apollo/client';
 import { relayStylePagination } from '@apollo/client/utilities';
 import { onError } from '@apollo/client/link/error';
+import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 
 const csrfLink = new ApolloLink((operation, forward) => {
   // Get current locale from localStorage (used by LanguageContext)
@@ -25,8 +26,8 @@ const csrfLink = new ApolloLink((operation, forward) => {
 });
 
 // Get GraphQL endpoint:
-// - Prefer VITE_GRAPHQL_ENDPOINT (set at build time, see deployment scripts)
-// - Otherwise, on non-localhost hosts use relative /graphql (nginx will proxy it)
+// - For localhost: always use http://localhost:4000/graphql (ignore relative paths in env)
+// - For production: use VITE_GRAPHQL_ENDPOINT if set, otherwise /graphql (nginx proxy)
 // - Fallback to http://localhost:4000/graphql for local development
 const getGraphQLEndpoint = () => {
   const hostname =
@@ -39,7 +40,19 @@ const getGraphQLEndpoint = () => {
 
   let resolved: string;
 
-  if (fromEnv) {
+  // For localhost, ALWAYS use absolute URL to API server (ignore relative paths)
+  if (typeof window !== 'undefined' && hostname === 'localhost') {
+    // Only use env var if it's an absolute URL (http:// or https://)
+    if (
+      fromEnv &&
+      (fromEnv.startsWith('http://') || fromEnv.startsWith('https://'))
+    ) {
+      resolved = fromEnv;
+    } else {
+      // Force absolute URL for localhost
+      resolved = 'http://localhost:4000/graphql';
+    }
+  } else if (fromEnv) {
     resolved = fromEnv;
   } else if (typeof window !== 'undefined' && hostname !== 'localhost') {
     resolved = '/graphql';
@@ -70,6 +83,18 @@ export const createCustomersApolloClient = (onAuthError: () => void) => {
     // Never treat login failures as global auth errors; the login page shows the message.
     if (isLoginOperation) {
       return;
+    }
+
+    // Don't redirect on auth errors for cart route - cart should be accessible to unauthenticated users
+    if (typeof window !== 'undefined') {
+      const currentPath = window.location.pathname;
+      if (
+        currentPath === CUSTOMER_ROUTES.CART ||
+        currentPath.startsWith(`${CUSTOMER_ROUTES.CART}/`)
+      ) {
+        // Allow cart page to handle auth errors gracefully without redirecting
+        return;
+      }
     }
 
     // Check the main error object

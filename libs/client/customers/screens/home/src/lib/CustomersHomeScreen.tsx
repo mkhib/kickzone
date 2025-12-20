@@ -15,12 +15,11 @@ import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
-import Stack from '@mui/material/Stack';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Fade from '@mui/material/Fade';
 import Paper from '@mui/material/Paper';
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useMemo } from 'react';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 import Button from '@mui/material/Button';
@@ -43,6 +42,78 @@ export function CustomersHome() {
 
   const { addItem } = useCustomersCartService();
 
+  // Expand products into variants - each variant becomes a separate display item
+  const productVariants = useMemo(() => {
+    const variants: Array<{
+      product: KickzoneGraphqlTypes.Product;
+      productInfo: KickzoneGraphqlTypes.ProductInfo;
+      sellerProduct: KickzoneGraphqlTypes.SellerProduct;
+      variantKey: string; // Unique key for this variant
+    }> = [];
+
+    products.forEach((product) => {
+      if (!product.productInfos || !product.sellerProducts) {
+        return;
+      }
+
+      product.productInfos.forEach((productInfo) => {
+        // Find ALL sellerProducts for this ProductInfo (multiple sellers can offer the same variant)
+        const allSellerProducts =
+          product.sellerProducts?.filter(
+            (sp) =>
+              (sp.productInfoId === productInfo.id ||
+                sp.productInfo?.id === productInfo.id) &&
+              sp.seller &&
+              sp.stockQuantity > 0
+          ) || [];
+
+        // Calculate final price (after discount) for each sellerProduct
+        const sellerProductsWithPrice = allSellerProducts.map((sp) => {
+          const originalPrice = sp.price;
+          const discount = sp.discount || 0;
+          const finalPrice =
+            discount > 0
+              ? originalPrice - (originalPrice * discount) / 100
+              : originalPrice;
+
+          return {
+            sellerProduct: sp,
+            originalPrice,
+            finalPrice,
+            discount,
+          };
+        });
+
+        // Sort by final price (cheapest first), then by stock quantity (more stock first as tiebreaker)
+        sellerProductsWithPrice.sort((a, b) => {
+          if (a.finalPrice !== b.finalPrice) {
+            return a.finalPrice - b.finalPrice;
+          }
+          // If prices are equal, prefer seller with more stock
+          return (
+            (b.sellerProduct.stockQuantity || 0) -
+            (a.sellerProduct.stockQuantity || 0)
+          );
+        });
+
+        // Select the cheapest available sellerProduct
+        const bestSellerProduct = sellerProductsWithPrice[0];
+
+        // Only include variants that have at least one seller with stock
+        if (bestSellerProduct) {
+          variants.push({
+            product,
+            productInfo,
+            sellerProduct: bestSellerProduct.sellerProduct,
+            variantKey: `${product.id}-${productInfo.id}`, // Unique key for React
+          });
+        }
+      });
+    });
+
+    return variants;
+  }, [products]);
+
   // Handle search submission (Enter key or button click)
   const handleSearch = useCallback(() => {
     setSearch(searchInput);
@@ -58,49 +129,43 @@ export function CustomersHome() {
     [handleSearch]
   );
 
-  // Add to cart logic
+  // Add to cart logic - now receives a variant directly (product + productInfo + sellerProduct)
   const handleAddToCart = useCallback(
-    (product: KickzoneGraphqlTypes.Product) => {
-      if (product.productInfos && product.productInfos.length > 0) {
-        const productInfo = product.productInfos[0];
+    (variant: {
+      product: KickzoneGraphqlTypes.Product;
+      productInfo: KickzoneGraphqlTypes.ProductInfo;
+      sellerProduct: KickzoneGraphqlTypes.SellerProduct;
+    }) => {
+      const { product, productInfo, sellerProduct } = variant;
 
-        // Find the sellerProduct that matches this productInfo
-        const sellerProduct = product.sellerProducts?.find(
-          (sp) => sp.productInfoId === productInfo.id
-        );
-
-        if (!sellerProduct || !sellerProduct.seller) {
-          return;
-        }
-
-        // Check stock availability
-        if (sellerProduct.stockQuantity <= 0) {
-          return;
-        }
-
-        // Calculate final price after discount
-        const finalPrice =
-          sellerProduct.discount > 0
-            ? sellerProduct.price -
-              (sellerProduct.price * sellerProduct.discount) / 100
-            : sellerProduct.price;
-
-        addItem({
-          productId: product.id.toString(),
-          productName: product.name,
-          productImage: productInfo.images?.[0] || null,
-          quantity: 1,
-          unitPrice: finalPrice,
-          color: productInfo.color?.name || null,
-          size: productInfo.size || null,
-          sellerId: sellerProduct.seller.id.toString(),
-          sellerName: '', // Not displayed to customers
-          sellerShippingFee: sellerProduct.seller.shippingFee || 0,
-          productInfoId: productInfo.id.toString(),
-          sellerProductId: sellerProduct.id.toString(),
-          availableStock: sellerProduct.stockQuantity,
-        });
+      // Validate seller exists
+      if (!sellerProduct.seller) {
+        return;
       }
+
+      // Calculate final price after discount
+      const originalPrice = sellerProduct.price;
+      const discount = sellerProduct.discount;
+      const finalPrice =
+        discount > 0
+          ? originalPrice - (originalPrice * discount) / 100
+          : originalPrice;
+
+      addItem({
+        productId: product.id.toString(),
+        productName: product.name,
+        productImage: productInfo.images?.[0] || null,
+        quantity: 1,
+        unitPrice: finalPrice,
+        color: productInfo.color?.name || null,
+        size: productInfo.size || null,
+        sellerId: sellerProduct.seller.id.toString(),
+        sellerName: '', // Not displayed to customers
+        sellerShippingFee: sellerProduct.seller.shippingFee || 0,
+        productInfoId: productInfo.id.toString(),
+        sellerProductId: sellerProduct.id.toString(),
+        availableStock: sellerProduct.stockQuantity,
+      });
     },
     [addItem]
   );
@@ -255,7 +320,8 @@ export function CustomersHome() {
                     borderRadius: 4,
                     px: 4,
                     py: 1.5,
-                    background: 'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
+                    background:
+                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
                     boxShadow: '0 4px 15px 0 rgba(157, 78, 221, 0.4)',
                     '&:hover': {
                       background:
@@ -294,7 +360,9 @@ export function CustomersHome() {
                   <Select
                     value={sortOrder}
                     label={LL.form.order()}
-                    onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc')}
+                    onChange={(e) =>
+                      setSortOrder(e.target.value as 'asc' | 'desc')
+                    }
                     startAdornment={
                       <InputAdornment position="start">
                         <LocalOfferIcon sx={{ color: '#9d4edd', ml: 1 }} />
@@ -365,7 +433,7 @@ export function CustomersHome() {
                 </Typography>
               </Paper>
             </Box>
-          ) : products.length === 0 ? (
+          ) : productVariants.length === 0 ? (
             <Box
               sx={{
                 display: 'flex',
@@ -418,41 +486,52 @@ export function CustomersHome() {
                 container
                 spacing={{ xs: 2, sm: 3, md: 4 }}
                 sx={{
-                  ...(products.length === 1
+                  ...(productVariants.length === 1
                     ? { justifyContent: 'center' }
                     : {}),
                   px: { xs: 1.5, md: 2 },
                   pb: { xs: 1.5, md: 2 },
                 }}
               >
-                {products.map((product, index) => (
-                  <Grid
-                    key={product.id}
-                    size={
-                      products.length === 1
-                        ? { xs: 12, sm: 8, md: 6, lg: 4, xl: 4 }
-                        : { xs: 12, sm: 6, md: 4, lg: 3 }
-                    }
-                    sx={{
-                      animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
-                      '@keyframes fadeInUp': {
-                        '0%': {
-                          opacity: 0,
-                          transform: 'translateY(30px)',
+                {productVariants.map((variant, index) => {
+                  // Create a variant-specific product object for the card
+                  const variantProduct: KickzoneGraphqlTypes.Product = {
+                    ...variant.product,
+                    productInfos: [variant.productInfo],
+                    sellerProducts: [variant.sellerProduct],
+                  };
+
+                  return (
+                    <Grid
+                      key={variant.variantKey}
+                      size={
+                        productVariants.length === 1
+                          ? { xs: 12, sm: 8, md: 6, lg: 4, xl: 4 }
+                          : { xs: 12, sm: 6, md: 4, lg: 3 }
+                      }
+                      sx={{
+                        animation: `fadeInUp 0.6s ease-out ${
+                          index * 0.1
+                        }s both`,
+                        '@keyframes fadeInUp': {
+                          '0%': {
+                            opacity: 0,
+                            transform: 'translateY(30px)',
+                          },
+                          '100%': {
+                            opacity: 1,
+                            transform: 'translateY(0)',
+                          },
                         },
-                        '100%': {
-                          opacity: 1,
-                          transform: 'translateY(0)',
-                        },
-                      },
-                    }}
-                  >
-                    <CustomersProductCard
-                      product={product}
-                      onAddToCart={handleAddToCart}
-                    />
-                  </Grid>
-                ))}
+                      }}
+                    >
+                      <CustomersProductCard
+                        product={variantProduct}
+                        onAddToCart={() => handleAddToCart(variant)}
+                      />
+                    </Grid>
+                  );
+                })}
               </Grid>
             </Fade>
           )}

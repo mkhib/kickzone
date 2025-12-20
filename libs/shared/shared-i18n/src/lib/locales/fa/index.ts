@@ -233,6 +233,7 @@ const fa = {
     addToCart: 'افزودن به سبد خرید',
     noSellers: 'فروشنده‌ای وجود ندارد',
     availableVariants: 'انواع موجود',
+    multipleVariants: 'انواع مختلف موجود است',
     more: 'بیشتر',
     by: 'توسط',
     left: 'باقی مانده',
@@ -256,7 +257,8 @@ const fa = {
     orderNumber: 'سفارش',
     noOrdersFound: 'سفارشی یافت نشد',
     errorLoadingOrders: 'خطا در بارگذاری سفارشات',
-    onlyForCustomers: 'این صفحه فقط برای مشتریان در دسترس است. فروشندگان باید از پنل فروشنده برای مشاهده سفارشات خود استفاده کنند.',
+    onlyForCustomers:
+      'این صفحه فقط برای مشتریان در دسترس است. فروشندگان باید از پنل فروشنده برای مشاهده سفارشات خود استفاده کنند.',
     customerInformation: 'اطلاعات مشتری',
     orderManagement: 'مدیریت سفارش',
     orderItems: 'اقلام سفارش',

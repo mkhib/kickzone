@@ -29,6 +29,19 @@ export const GET_CART_QUERY = gql`
   }
 `;
 
+export const GET_SELLERS_BY_IDS_QUERY = gql`
+  query GetSellersByIds($filter: SellerFilterInput) {
+    sellers(filter: $filter) {
+      edges {
+        node {
+          id
+          shippingFee
+        }
+      }
+    }
+  }
+`;
+
 // Alias for backward compatibility with existing code
 export const GET_MY_CART_QUERY = GET_CART_QUERY;
 
