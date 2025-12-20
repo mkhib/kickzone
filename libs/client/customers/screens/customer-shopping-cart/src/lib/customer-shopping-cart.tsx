@@ -964,9 +964,7 @@ export function CustomerShoppingCart() {
                   }}
                 >
                   {formatNumber(cartItems.length, currentLocale)}{' '}
-                  {cartItems.length === 1
-                    ? LL.table.product()
-                    : LL.navigation.products()}
+                  {LL.table.product()}
                 </Typography>
               </Box>
             </Grid>
