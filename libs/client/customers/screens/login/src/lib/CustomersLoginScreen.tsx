@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersLogin } from '@kickzone-workspace/customers-auth-hooks';
@@ -21,6 +21,7 @@ import { colors } from '@kickzone-workspace/colors';
 
 export function CustomersLogin() {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.login());
   const navigate = useNavigate();
   const location = useLocation();
   const { showSnackbar } = useSnackbar();

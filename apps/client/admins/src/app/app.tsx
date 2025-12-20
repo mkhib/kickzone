@@ -1,8 +1,9 @@
 import { AdminsRouter } from '@kickzone-workspace/admins-router';
-import { usePageTitle } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 
 export function App() {
-  usePageTitle('Admin Panel');
+  const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.adminPanel());
   return <AdminsRouter />;
 }
 

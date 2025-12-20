@@ -1,6 +1,6 @@
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { colors } from '@kickzone-workspace/colors';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -18,6 +18,7 @@ export function AdminsLogin() {
   const [password, setPassword] = useState('');
   const { loginAdmin, adminsLoginLoading, adminsLoginError } = useAdminLogin();
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.adminLogin());
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

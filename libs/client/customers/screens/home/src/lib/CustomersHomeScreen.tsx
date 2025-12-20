@@ -2,7 +2,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CustomersProductCard } from '@kickzone-workspace/customers-product-card';
 import { useProductsQuery } from '@kickzone-workspace/products-hook';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import SearchIcon from '@mui/icons-material/Search';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
@@ -30,6 +30,7 @@ export function CustomersHome() {
   const [sort, setSort] = useState('price');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.home());
 
   const { products, loading } = useProductsQuery({
     search,

@@ -21,6 +21,7 @@ import { PriceDisplay } from '@kickzone-workspace/price-display';
 import {
   useI18nContext,
   useLanguageContext,
+  usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
@@ -71,6 +72,7 @@ export function CustomerShoppingCart() {
   useCustomersCartService();
 
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.shoppingCart());
   const { currentLocale } = useLanguageContext();
   const steps = [
     LL.checkout.reviewCart(),

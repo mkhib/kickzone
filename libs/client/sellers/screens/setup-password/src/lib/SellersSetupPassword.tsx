@@ -2,7 +2,7 @@ import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { useSetupPassword } from '@kickzone-workspace/sellers-auth-hooks';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
@@ -20,6 +20,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 export const SellersSetupPassword = () => {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.sellerSetupPassword());
   const { token } = useParams();
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');

@@ -5,7 +5,7 @@ import {
   useProductsQuery,
   useProducts,
 } from '@kickzone-workspace/products-hook';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -35,6 +35,7 @@ import { ProductImageManagementModal } from './ProductImageManagementModal';
 export function AdminProducts() {
   const navigate = useNavigate();
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.adminProducts());
   const [search, setSearch] = useState<string>('');
   const [category, setCategory] = useState<string>('');
   const [sort, setSort] = useState<string>('');

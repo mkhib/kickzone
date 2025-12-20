@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersResetPassword } from '@kickzone-workspace/customers-auth-hooks';
@@ -20,6 +20,7 @@ import { colors } from '@kickzone-workspace/colors';
 
 export function CustomerResetPassword() {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.resetPassword());
   const navigate = useNavigate();
   const { token } = useParams<{ token: string }>();
   const { showSnackbar } = useSnackbar();

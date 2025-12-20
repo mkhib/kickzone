@@ -1579,6 +1579,104 @@ type RootTranslation = {
 		 */
 		sellersPortal: string
 	}
+	pageTitles: {
+		/**
+		 * H​o​m​e
+		 */
+		home: string
+		/**
+		 * P​r​o​d​u​c​t​s
+		 */
+		products: string
+		/**
+		 * S​h​o​p​p​i​n​g​ ​C​a​r​t
+		 */
+		shoppingCart: string
+		/**
+		 * M​y​ ​O​r​d​e​r​s
+		 */
+		orders: string
+		/**
+		 * O​r​d​e​r​ ​C​o​n​f​i​r​m​a​t​i​o​n
+		 */
+		orderConfirmation: string
+		/**
+		 * S​i​g​n​ ​I​n
+		 */
+		login: string
+		/**
+		 * S​i​g​n​ ​U​p
+		 */
+		signup: string
+		/**
+		 * F​o​r​g​o​t​ ​P​a​s​s​w​o​r​d
+		 */
+		forgotPassword: string
+		/**
+		 * R​e​s​e​t​ ​P​a​s​s​w​o​r​d
+		 */
+		resetPassword: string
+		/**
+		 * L​a​n​g​u​a​g​e​ ​S​e​t​t​i​n​g​s
+		 */
+		languageSettings: string
+		/**
+		 * U​n​a​u​t​h​o​r​i​z​e​d
+		 */
+		unauthorized: string
+		/**
+		 * M​y​ ​P​r​o​d​u​c​t​s
+		 */
+		sellerProducts: string
+		/**
+		 * M​a​n​a​g​e​ ​P​r​o​d​u​c​t
+		 */
+		sellerManageProduct: string
+		/**
+		 * M​y​ ​O​r​d​e​r​s
+		 */
+		sellerOrders: string
+		/**
+		 * S​e​l​l​e​r​ ​L​o​g​i​n
+		 */
+		sellerLogin: string
+		/**
+		 * S​e​t​u​p​ ​P​a​s​s​w​o​r​d
+		 */
+		sellerSetupPassword: string
+		/**
+		 * A​d​m​i​n​ ​P​a​n​e​l
+		 */
+		adminPanel: string
+		/**
+		 * P​r​o​d​u​c​t​s
+		 */
+		adminProducts: string
+		/**
+		 * P​r​o​d​u​c​t​ ​E​d​i​t​o​r
+		 */
+		adminProductEditor: string
+		/**
+		 * S​e​l​l​e​r​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		adminSellers: string
+		/**
+		 * O​r​d​e​r​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		adminOrders: string
+		/**
+		 * C​u​r​r​e​n​c​y​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		adminCurrency: string
+		/**
+		 * T​r​a​n​s​l​a​t​i​o​n​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		adminTranslations: string
+		/**
+		 * A​d​m​i​n​ ​L​o​g​i​n
+		 */
+		adminLogin: string
+	}
 	/**
 	 * H​e​l​l​o
 	 */
@@ -3934,6 +4032,104 @@ export type TranslationFunctions = {
 		 * Sellers Portal
 		 */
 		sellersPortal: () => LocalizedString
+	}
+	pageTitles: {
+		/**
+		 * Home
+		 */
+		home: () => LocalizedString
+		/**
+		 * Products
+		 */
+		products: () => LocalizedString
+		/**
+		 * Shopping Cart
+		 */
+		shoppingCart: () => LocalizedString
+		/**
+		 * My Orders
+		 */
+		orders: () => LocalizedString
+		/**
+		 * Order Confirmation
+		 */
+		orderConfirmation: () => LocalizedString
+		/**
+		 * Sign In
+		 */
+		login: () => LocalizedString
+		/**
+		 * Sign Up
+		 */
+		signup: () => LocalizedString
+		/**
+		 * Forgot Password
+		 */
+		forgotPassword: () => LocalizedString
+		/**
+		 * Reset Password
+		 */
+		resetPassword: () => LocalizedString
+		/**
+		 * Language Settings
+		 */
+		languageSettings: () => LocalizedString
+		/**
+		 * Unauthorized
+		 */
+		unauthorized: () => LocalizedString
+		/**
+		 * My Products
+		 */
+		sellerProducts: () => LocalizedString
+		/**
+		 * Manage Product
+		 */
+		sellerManageProduct: () => LocalizedString
+		/**
+		 * My Orders
+		 */
+		sellerOrders: () => LocalizedString
+		/**
+		 * Seller Login
+		 */
+		sellerLogin: () => LocalizedString
+		/**
+		 * Setup Password
+		 */
+		sellerSetupPassword: () => LocalizedString
+		/**
+		 * Admin Panel
+		 */
+		adminPanel: () => LocalizedString
+		/**
+		 * Products
+		 */
+		adminProducts: () => LocalizedString
+		/**
+		 * Product Editor
+		 */
+		adminProductEditor: () => LocalizedString
+		/**
+		 * Seller Management
+		 */
+		adminSellers: () => LocalizedString
+		/**
+		 * Order Management
+		 */
+		adminOrders: () => LocalizedString
+		/**
+		 * Currency Management
+		 */
+		adminCurrency: () => LocalizedString
+		/**
+		 * Translation Management
+		 */
+		adminTranslations: () => LocalizedString
+		/**
+		 * Admin Login
+		 */
+		adminLogin: () => LocalizedString
 	}
 	/**
 	 * Hello

@@ -19,7 +19,7 @@ import LocalShipping from '@mui/icons-material/LocalShipping';
 import ShoppingBag from '@mui/icons-material/ShoppingBag';
 import Receipt from '@mui/icons-material/Receipt';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
@@ -57,6 +57,7 @@ interface OrderData {
 
 export function CustomerOrderConfirmation() {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.orderConfirmation());
   const navigate = useNavigate();
   const location = useLocation();
   const orderData = location.state?.orderData as OrderData | undefined;

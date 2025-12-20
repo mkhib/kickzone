@@ -7,7 +7,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { colors } from '@kickzone-workspace/colors';
 import { useProducts, useProductById } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import AddIcon from '@mui/icons-material/Add';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
@@ -624,6 +624,7 @@ const DeleteColorModal = ({
 
 export function AdminProductEditor() {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.adminProductEditor());
   const { id } = useParams<{ id?: string }>();
   const productIdNum = id ? Number(id) : undefined;
   const { product: loadedProduct } = useProductById(productIdNum);

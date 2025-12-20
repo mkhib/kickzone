@@ -31,7 +31,7 @@ import {
   useTranslationsManagement,
   useEntityTranslations,
 } from '@kickzone-workspace/translations-management-hook';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { TranslateToOtherLanguagesButton } from './TranslateToOtherLanguagesButton';
 
 // GraphQL queries
@@ -253,6 +253,7 @@ function TranslationsModal({
 
 export function AdminTranslationManagement() {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.adminTranslations());
   const { showSnackbar } = useSnackbarContext();
   const { bulkTranslate } = useTranslationsManagement();
   const [tabValue, setTabValue] = useState(0);

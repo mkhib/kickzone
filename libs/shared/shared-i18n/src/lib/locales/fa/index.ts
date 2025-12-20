@@ -495,6 +495,36 @@ const fa = {
     sellersPortal: 'پورتال فروشندگان',
   },
 
+  // Page titles
+  pageTitles: {
+    home: 'خانه',
+    products: 'محصولات',
+    shoppingCart: 'سبد خرید',
+    orders: 'سفارشات من',
+    orderConfirmation: 'تایید سفارش',
+    login: 'ورود',
+    signup: 'ثبت نام',
+    forgotPassword: 'فراموشی رمز عبور',
+    resetPassword: 'بازیابی رمز عبور',
+    languageSettings: 'تنظیمات زبان',
+    unauthorized: 'غیرمجاز',
+    // Seller pages
+    sellerProducts: 'محصولات من',
+    sellerManageProduct: 'مدیریت محصول',
+    sellerOrders: 'سفارشات من',
+    sellerLogin: 'ورود فروشنده',
+    sellerSetupPassword: 'تنظیم رمز عبور',
+    // Admin pages
+    adminPanel: 'پنل مدیریت',
+    adminProducts: 'محصولات',
+    adminProductEditor: 'ویرایشگر محصول',
+    adminSellers: 'مدیریت فروشندگان',
+    adminOrders: 'مدیریت سفارشات',
+    adminCurrency: 'مدیریت ارز',
+    adminTranslations: 'مدیریت ترجمه',
+    adminLogin: 'ورود مدیر',
+  },
+
   // Common greetings and text
   greeting: 'سلام',
   welcome: 'خوش آمدید',

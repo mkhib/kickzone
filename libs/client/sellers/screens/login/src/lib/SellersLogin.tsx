@@ -1,6 +1,6 @@
 import { colors } from '@kickzone-workspace/colors';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { getErrorMessage } from '@kickzone-workspace/translations';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import Box from '@mui/material/Box';
@@ -19,6 +19,7 @@ export function SellersLogin() {
   const { loginSeller, sellersLoginLoading, sellersLoginError } =
     useSellerLogin();
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.sellerLogin());
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();

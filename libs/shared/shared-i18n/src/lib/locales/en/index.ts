@@ -491,6 +491,36 @@ const en = {
     sellersPortal: 'Sellers Portal',
   },
 
+  // Page titles
+  pageTitles: {
+    home: 'Home',
+    products: 'Products',
+    shoppingCart: 'Shopping Cart',
+    orders: 'My Orders',
+    orderConfirmation: 'Order Confirmation',
+    login: 'Sign In',
+    signup: 'Sign Up',
+    forgotPassword: 'Forgot Password',
+    resetPassword: 'Reset Password',
+    languageSettings: 'Language Settings',
+    unauthorized: 'Unauthorized',
+    // Seller pages
+    sellerProducts: 'My Products',
+    sellerManageProduct: 'Manage Product',
+    sellerOrders: 'My Orders',
+    sellerLogin: 'Seller Login',
+    sellerSetupPassword: 'Setup Password',
+    // Admin pages
+    adminPanel: 'Admin Panel',
+    adminProducts: 'Products',
+    adminProductEditor: 'Product Editor',
+    adminSellers: 'Seller Management',
+    adminOrders: 'Order Management',
+    adminCurrency: 'Currency Management',
+    adminTranslations: 'Translation Management',
+    adminLogin: 'Admin Login',
+  },
+
   // Common greetings and text
   greeting: 'Hello',
   welcome: 'Welcome',

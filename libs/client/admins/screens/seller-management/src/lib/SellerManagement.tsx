@@ -9,6 +9,7 @@ import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-contai
 import {
   useI18nContext,
   useLanguageContext,
+  usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import {
   useTableAlignment,
@@ -49,6 +50,7 @@ type SellerFilterInput = KickzoneGraphqlTypes.SellerFilterInput;
 
 export const SellerManagement = () => {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.adminSellers());
   const { isRTL } = useLanguageContext();
   const { alignment, isFarsi, currentLocale } = useTableAlignment();
 

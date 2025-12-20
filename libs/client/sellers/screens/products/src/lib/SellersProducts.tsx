@@ -6,6 +6,7 @@ import { useSellersProductsStore } from '@kickzone-workspace/sellers-products-st
 import {
   useI18nContext,
   useLanguageContext,
+  usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
@@ -41,6 +42,7 @@ import { useState, useEffect } from 'react';
 export const SellersProducts = () => {
   const navigate = useNavigate();
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.sellerProducts());
   const { formatNumber } = useLanguageContext();
   const [viewModalOpen, setViewModalOpen] = useState(false);
   const [selectedProductForView, setSelectedProductForView] =

@@ -22,6 +22,7 @@ import { useSearchParams } from 'react-router-dom';
 import {
   useI18nContext,
   useLanguageContext,
+  usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 
 const initialFormData: KickzoneGraphqlTypes.CreateSellerProductInput = {
@@ -37,6 +38,7 @@ export function SellersManageProductScreen() {
   const [searchParams] = useSearchParams();
   const { showSnackbar } = useSnackbar();
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.sellerManageProduct());
   const { formatNumber, currentLocale } = useLanguageContext();
   const [formData, setFormData] =
     useState<KickzoneGraphqlTypes.CreateSellerProductInput>(initialFormData);

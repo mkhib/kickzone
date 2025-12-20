@@ -32,6 +32,7 @@ import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 import {
   useI18nContext,
   useLanguageContext,
+  usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import { DataTable } from '@kickzone-workspace/material-data-table';
 import { type MRT_ColumnDef } from 'material-react-table';
@@ -51,6 +52,7 @@ const formatDate = (dateString: string) => {
 
 export function AdminSellerOrders() {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.adminOrders());
   const { isRTL, currentLocale } = useLanguageContext();
   const [selectedStatus, setSelectedStatus] = useState<
     KickzoneGraphqlTypes.OrderStatus | undefined

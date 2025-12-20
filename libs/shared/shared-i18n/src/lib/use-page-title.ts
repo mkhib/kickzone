@@ -3,12 +3,16 @@ import { useI18nContext } from '../lib/locales/i18n-react';
 
 /**
  * Hook to set the page title with the site name from i18n.
+ * @param titleGetter - A function that returns the translated page title (without site name)
  */
-export function usePageTitle(suffix = '') {
+export function usePageTitle(titleGetter?: () => string) {
   const { LL } = useI18nContext();
 
   useEffect(() => {
-    const title = `${LL.appNames.siteName()}${suffix ? ` ${suffix}` : ''}`;
+    const pageTitle = titleGetter ? titleGetter() : '';
+    const title = pageTitle
+      ? `${LL.appNames.siteName()} - ${pageTitle}`
+      : LL.appNames.siteName();
     document.title = title;
-  }, [LL, suffix]);
+  }, [LL, titleGetter]);
 }

@@ -24,6 +24,7 @@ import { GET_MY_ORDERS_QUERY } from '@kickzone-workspace/customers-graphql';
 import {
   useI18nContext,
   useLanguageContext,
+  usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
@@ -72,6 +73,7 @@ interface OrdersData {
 
 export function CustomerOrders() {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.orders());
   const { currentLocale } = useLanguageContext();
   const { user } = useCustomersAuth();
   const [expandedOrder, setExpandedOrder] = useState<string | false>(false);

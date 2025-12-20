@@ -11,7 +11,7 @@ import {
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import {
   Box,
@@ -34,6 +34,7 @@ import {
 export function CurrencyManagement() {
   const { showSnackbar } = useSnackbar();
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.adminCurrency());
   const [selectedFromCurrency, setSelectedFromCurrency] = useState('USD');
   const [selectedToCurrency, setSelectedToCurrency] = useState('IRR');
   const [newRate, setNewRate] = useState('');

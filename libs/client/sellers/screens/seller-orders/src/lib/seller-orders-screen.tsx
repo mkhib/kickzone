@@ -32,12 +32,14 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useI18nContext,
   useLanguageContext,
+  usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 
 export function SellerOrdersScreen() {
   const { LL } = useI18nContext();
+  usePageTitle(() => LL.pageTitles.sellerOrders());
   const { currentLocale, formatNumber, isRTL } = useLanguageContext();
 
   const [expandedOrder, setExpandedOrder] = useState<string | false>(false);

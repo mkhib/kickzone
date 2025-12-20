@@ -1,8 +1,9 @@
 import { SellersRouter } from '@kickzone-workspace/sellers-router';
-import { usePageTitle } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 
 export function App() {
-  usePageTitle('Sellers Portal');
+  const { LL } = useI18nContext();
+  usePageTitle(() => LL.appNames.sellersPortal());
   return <SellersRouter />;
 }
 
