@@ -45,9 +45,24 @@ export class EmailService {
           raw: encodedMessage,
         },
       });
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error sending email:', error);
-      throw new Error('Failed to send email');
+      
+      // Check for OAuth errors
+      if (error?.response?.data?.error === 'invalid_grant') {
+        throw new Error(
+          'Gmail OAuth refresh token is invalid or expired. Please regenerate the refresh token. See EMAIL_OAUTH_SETUP.md for instructions.'
+        );
+      }
+      
+      // Check for other OAuth errors
+      if (error?.code === 401 || error?.status === 401) {
+        throw new Error(
+          'Gmail OAuth authentication failed. Please check your OAuth credentials and refresh token.'
+        );
+      }
+      
+      throw new Error(`Failed to send email: ${error?.message || 'Unknown error'}`);
     }
   }
 }
