@@ -9,9 +9,10 @@ import CheckCircle from '@mui/icons-material/CheckCircle';
 import ErrorOutline from '@mui/icons-material/ErrorOutline';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
-import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { useZarinPalPayment } from './use-zarinpal-payment';
+import { useCustomersCartMutations } from '@kickzone-workspace/customers-cart-hook';
+import { useCartStore } from '@kickzone-workspace/customer-cart-store';
 
 /**
  * Payment Callback Screen
@@ -19,7 +20,6 @@ import { useZarinPalPayment } from './use-zarinpal-payment';
  * Verifies the payment and redirects accordingly
  */
 export function CustomerPaymentCallback() {
-  const { LL } = useI18nContext();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const [verificationStatus, setVerificationStatus] = useState<
@@ -58,15 +58,34 @@ export function CustomerPaymentCallback() {
 
   // Track if verification has already been attempted to prevent multiple calls
   const verificationAttemptedRef = useRef(false);
+  const cartClearedRef = useRef(false);
 
-  const { verifyPayment, isVerifying } = useZarinPalPayment({
-    onSuccess: (refId) => {
+  // Get cart mutations to clear cart after successful payment
+  const { clearCart } = useCustomersCartMutations();
+  const clearCartAction = useCartStore((state) => state.clearCart);
+
+  const { verifyPayment } = useZarinPalPayment({
+    onSuccess: async (refId) => {
       setRefId(refId);
       setVerificationStatus('success');
+
+      // Clear cart only once after successful payment verification
+      // This ensures items are removed only after payment is confirmed
+      if (!cartClearedRef.current) {
+        cartClearedRef.current = true;
+        try {
+          await clearCart();
+          clearCartAction();
+        } catch (error) {
+          // Log error but don't fail - payment was successful
+          console.error('Failed to clear cart after payment:', error);
+        }
+      }
     },
     onError: (error) => {
       setErrorMessage(error);
       setVerificationStatus('error');
+      // Cart is NOT cleared on error - user can retry payment with same items
     },
   });
 
@@ -105,6 +124,7 @@ export function CustomerPaymentCallback() {
         const result = await verifyPayment({
           authority,
           amount: orderData.amount,
+          order_id: orderData.orderId, // Pass order_id to confirm order and decrease stock
         });
 
         if (!result) {

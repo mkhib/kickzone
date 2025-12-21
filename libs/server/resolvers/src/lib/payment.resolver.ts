@@ -1,6 +1,6 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
-import { PaymentService } from '@kickzone-workspace/services';
+import { PaymentService, OrderService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
 import { ObjectType, Field, Int, InputType } from '@nestjs/graphql';
@@ -78,6 +78,9 @@ export class ZarinPalVerificationRequestInput {
 
   @Field()
   authority: string;
+
+  @Field({ nullable: true })
+  order_id?: string; // Optional: if provided, order status will be updated
 }
 
 @ObjectType()
@@ -88,12 +91,15 @@ export class GatewayUrlResponse {
 
 @Resolver()
 export class PaymentResolver {
-  constructor(private readonly paymentService: PaymentService) {}
+  constructor(
+    private readonly paymentService: PaymentService,
+    private readonly orderService: OrderService
+  ) {}
 
   @Mutation(() => ZarinPalPaymentResponse)
   @UseGuards(GraphqlAuthGuard)
   async requestZarinPalPayment(
-    @CurrentUser() user: any,
+    @CurrentUser() _user: { id: string },
     @Args('input') input: ZarinPalPaymentRequestInput
   ) {
     const response = await this.paymentService.requestPayment({
@@ -120,13 +126,50 @@ export class PaymentResolver {
   @Mutation(() => ZarinPalVerificationResponse)
   @UseGuards(GraphqlAuthGuard)
   async verifyZarinPalPayment(
-    @CurrentUser() user: any,
+    @CurrentUser() _user: { id: string },
     @Args('input') input: ZarinPalVerificationRequestInput
   ) {
     const response = await this.paymentService.verifyPayment({
       amount: input.amount,
       authority: input.authority,
     });
+
+    // If payment verification was successful (code 100) and order_id is provided, confirm the order
+    // This will decrease stock and update order status to CONFIRMED
+    if (
+      (response.data.code === 100 || response.data.code === 101) &&
+      input.order_id
+    ) {
+      try {
+        await this.orderService.confirmOrderPayment(input.order_id);
+      } catch (error) {
+        // Log error but don't fail payment verification - payment was successful
+        // The order confirmation can be retried manually if needed
+        console.error(
+          `Failed to confirm order ${input.order_id} after payment verification:`,
+          error
+        );
+        // Still return success response since payment was verified
+      }
+    }
+
+    // If payment verification failed and order_id is provided, cancel the order
+    // This prevents orders from staying in PENDING status forever
+    if (
+      response.data.code !== 100 &&
+      response.data.code !== 101 &&
+      input.order_id
+    ) {
+      try {
+        await this.orderService.cancelPendingOrder(input.order_id);
+      } catch (error) {
+        // Log error but don't fail - payment verification response is what matters
+        console.error(
+          `Failed to cancel order ${input.order_id} after payment failure:`,
+          error
+        );
+      }
+    }
 
     return {
       code: response.data.code,
@@ -142,7 +185,7 @@ export class PaymentResolver {
   @Mutation(() => GatewayUrlResponse)
   @UseGuards(GraphqlAuthGuard)
   async getZarinPalGatewayUrl(
-    @CurrentUser() user: any,
+    @CurrentUser() _user: { id: string },
     @Args('authority') authority: string
   ) {
     return {

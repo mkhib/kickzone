@@ -568,9 +568,9 @@ export function CustomerShoppingCart() {
         })
       );
 
-      // Clear cart after successful payment request
-      await clearCartMutation();
-      clearCartAction();
+      // NOTE: Cart is NOT cleared here - it will be cleared only after successful payment verification
+      // This prevents items from disappearing if payment fails
+      // Cart clearing happens in the payment callback after successful verification
 
       // Move to payment step
       setActiveStep(3);

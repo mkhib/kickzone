@@ -25,7 +25,9 @@ export interface UseZarinPalPaymentReturn {
     request: Omit<ZarinPalPaymentRequest, 'merchant_id'>
   ) => Promise<string | null>; // Returns authority or null on error
   verifyPayment: (
-    request: Omit<ZarinPalVerificationRequest, 'merchant_id'>
+    request: Omit<ZarinPalVerificationRequest, 'merchant_id'> & {
+      order_id?: string;
+    }
   ) => Promise<number | null>; // Returns refId or null on error
   redirectToGateway: (authority: string) => void;
   clearError: () => void;
@@ -101,7 +103,9 @@ export function useZarinPalPayment(
 
   const verifyPayment = useCallback(
     async (
-      request: Omit<ZarinPalVerificationRequest, 'merchant_id'>
+      request: Omit<ZarinPalVerificationRequest, 'merchant_id'> & {
+        order_id?: string;
+      }
     ): Promise<number | null> => {
       setError(null);
 
@@ -111,6 +115,10 @@ export function useZarinPalPayment(
             input: {
               amount: Math.round(request.amount), // Ensure integer for GraphQL Int type
               authority: request.authority,
+              // order_id is optional and will be in schema after server restart regenerates GraphQL schema
+              ...(request.order_id ? { order_id: request.order_id } : {}),
+            } as KickzoneGraphqlTypes.ZarinPalVerificationRequestInput & {
+              order_id?: string;
             },
           },
         });

@@ -96,8 +96,9 @@ export class OrderService {
       })
     );
 
-    // Decrease stock for each ordered item
-    await this.decreaseStock(order.items);
+    // NOTE: Stock is NOT decreased here to prevent stock loss if payment fails
+    // Stock will be decreased only when payment is verified (order status changes to CONFIRMED)
+    // See confirmOrderPayment() method
 
     const savedOrder = await this.orderRepository.save(order);
 
@@ -372,14 +373,67 @@ export class OrderService {
   }
 
   /**
+   * Confirm order payment - decreases stock and updates order status to CONFIRMED
+   * This should be called ONLY after payment is successfully verified
+   */
+  async confirmOrderPayment(orderId: string): Promise<Order> {
+    const order = await this.findOne(orderId);
+
+    // Prevent double confirmation
+    if (order.status === OrderStatus.CONFIRMED) {
+      return order; // Already confirmed
+    }
+
+    // Can only confirm PENDING orders
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException(
+        `Cannot confirm order with status ${order.status}. Only PENDING orders can be confirmed.`
+      );
+    }
+
+    // Convert OrderItems to format expected by decreaseStock
+    const itemsToDecrease = order.items.map((item) => ({
+      productId: item.productId,
+      productName: item.productName,
+      quantity: item.quantity,
+      sellerProductId: item.sellerProductId || item.productId,
+    }));
+
+    // Decrease stock when payment is confirmed
+    await this.decreaseStock(itemsToDecrease);
+
+    // Update order status to CONFIRMED
+    order.status = OrderStatus.CONFIRMED;
+    return this.orderRepository.save(order);
+  }
+
+  /**
+   * Cancel pending order - restores stock if order was already confirmed
+   * Should be called when payment fails or user cancels
+   */
+  async cancelPendingOrder(orderId: string): Promise<Order> {
+    const order = await this.findOne(orderId);
+
+    // If order was already confirmed, restore stock
+    if (order.status === OrderStatus.CONFIRMED) {
+      await this.restoreStock(order.items);
+    }
+
+    // Update order status to CANCELLED
+    order.status = OrderStatus.CANCELLED;
+    return this.orderRepository.save(order);
+  }
+
+  /**
    * Restore stock quantity for cancelled/rejected orders
    * Best practice: Return items to inventory when orders are cancelled
    */
   private async restoreStock(items: OrderItem[]): Promise<void> {
     for (const item of items) {
-      // productId in OrderItem is the SellerProduct ID (UUID) for stock management
+      // Use sellerProductId if available, otherwise use productId
+      const sellerProductId = item.sellerProductId || item.productId;
       const sellerProduct = await this.sellerProductRepository.findOne({
-        where: { id: item.productId },
+        where: { id: sellerProductId },
       });
 
       if (sellerProduct) {
