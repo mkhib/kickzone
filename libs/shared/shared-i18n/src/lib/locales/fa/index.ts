@@ -149,6 +149,9 @@ const fa = {
     shipping: 'هزینه ارسال',
     total: 'مجموع',
     proceedToCheckout: 'ادامه به پرداخت',
+    proceedToPayment: 'ادامه به پرداخت',
+    continueToPaymentGateway: 'ادامه به درگاه پرداخت',
+    processing: 'در حال پردازش...',
   },
 
   // Product management

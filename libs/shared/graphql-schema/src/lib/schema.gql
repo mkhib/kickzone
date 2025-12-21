@@ -298,6 +298,28 @@ type SellerShippingBreakdown {
   appliedFee: Float!
 }
 
+type ZarinPalPaymentResponse {
+  code: Int!
+  message: String!
+  authority: String!
+  fee_type: String
+  fee: Int
+}
+
+type ZarinPalVerificationResponse {
+  code: Int!
+  message: String!
+  ref_id: Int
+  card_pan: String
+  card_hash: String
+  fee_type: String
+  fee: Int
+}
+
+type GatewayUrlResponse {
+  url: String!
+}
+
 type Query {
   users(first: Int, after: String, searchTerm: String): UserConnection!
   me: User
@@ -423,6 +445,9 @@ type Mutation {
   setCurrencyPreference(locale: String!, currencyCode: String!): CurrencyPreference!
   deleteCurrencyPreference(id: Int!): Boolean!
   updateMyProfile(input: UpdateCustomerProfileInput!): CustomerProfile!
+  requestZarinPalPayment(input: ZarinPalPaymentRequestInput!): ZarinPalPaymentResponse!
+  verifyZarinPalPayment(input: ZarinPalVerificationRequestInput!): ZarinPalVerificationResponse!
+  getZarinPalGatewayUrl(authority: String!): GatewayUrlResponse!
 }
 
 input CreateUserInput {
@@ -642,4 +667,19 @@ input UpdateCustomerProfileInput {
   state: String
   zipCode: String
   country: String
+}
+
+input ZarinPalPaymentRequestInput {
+  amount: Int!
+  callback_url: String!
+  description: String!
+  currency: String
+  mobile: String
+  email: String
+  order_id: String
+}
+
+input ZarinPalVerificationRequestInput {
+  amount: Int!
+  authority: String!
 }

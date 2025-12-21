@@ -1,6 +1,6 @@
 /**
  * ZarinPal Payment Gateway Service
- * Handles payment request and verification with ZarinPal API
+ * Handles payment request and verification with ZarinPal API via GraphQL
  */
 
 export interface ZarinPalPaymentRequest {
@@ -53,9 +53,9 @@ export interface ZarinPalVerificationResponse {
   }>;
 }
 
-const ZARINPAL_API_BASE_URL = 'https://payment.zarinpal.com/pg/v4/payment';
-const ZARINPAL_GATEWAY_URL = 'https://payment.zarinpal.com/pg/StartPay';
-const ZARINPAL_SANDBOX_GATEWAY_URL = 'https://sandbox.zarinpal.com/pg/StartPay';
+export const ZARINPAL_GATEWAY_URL = 'https://payment.zarinpal.com/pg/StartPay';
+export const ZARINPAL_SANDBOX_GATEWAY_URL =
+  'https://sandbox.zarinpal.com/pg/StartPay';
 
 /**
  * Get merchant ID from environment variable
@@ -72,123 +72,19 @@ export function getZarinPalMerchantId(): string {
 
 /**
  * Check if we're using sandbox mode
+ * Defaults to sandbox mode for development/testing
  */
 export function isZarinPalSandbox(): boolean {
-  return import.meta.env.VITE_ZARINPAL_SANDBOX === 'true';
-}
-
-/**
- * Get the appropriate API URL (sandbox or production)
- */
-function getApiUrl(endpoint: string): string {
-  if (isZarinPalSandbox()) {
-    return `https://sandbox.zarinpal.com/pg/v4/payment${endpoint}`;
+  const sandboxEnv = import.meta.env.VITE_ZARINPAL_SANDBOX;
+  // Default to sandbox mode unless explicitly set to 'false'
+  if (sandboxEnv === undefined || sandboxEnv === '') {
+    return true; // Default to sandbox for now
   }
-  return `${ZARINPAL_API_BASE_URL}${endpoint}`;
+  return sandboxEnv === 'true';
 }
 
-/**
- * Request payment from ZarinPal
- * @param request Payment request parameters
- * @returns Payment response with authority code
- */
-export async function requestZarinPalPayment(
-  request: Omit<ZarinPalPaymentRequest, 'merchant_id'>
-): Promise<ZarinPalPaymentResponse> {
-  const merchantId = getZarinPalMerchantId();
-
-  const payload: ZarinPalPaymentRequest = {
-    ...request,
-    merchant_id: merchantId,
-    currency: request.currency || 'IRT', // Default to Toman
-  };
-
-  try {
-    const response = await fetch(getApiUrl('/request.json'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: ZarinPalPaymentResponse = await response.json();
-
-    if (data.errors && data.errors.length > 0) {
-      const errorMessages = data.errors.map((e) => e.message).join(', ');
-      throw new Error(`ZarinPal API error: ${errorMessages}`);
-    }
-
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('Failed to request payment from ZarinPal');
-  }
-}
-
-/**
- * Verify payment with ZarinPal
- * @param request Verification request parameters
- * @returns Verification response with transaction details
- */
-export async function verifyZarinPalPayment(
-  request: Omit<ZarinPalVerificationRequest, 'merchant_id'>
-): Promise<ZarinPalVerificationResponse> {
-  const merchantId = getZarinPalMerchantId();
-
-  const payload: ZarinPalVerificationRequest = {
-    ...request,
-    merchant_id: merchantId,
-  };
-
-  try {
-    const response = await fetch(getApiUrl('/verify.json'), {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json',
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data: ZarinPalVerificationResponse = await response.json();
-
-    if (data.errors && data.errors.length > 0) {
-      const errorMessages = data.errors.map((e) => e.message).join(', ');
-      throw new Error(`ZarinPal API error: ${errorMessages}`);
-    }
-
-    return data;
-  } catch (error) {
-    if (error instanceof Error) {
-      throw error;
-    }
-    throw new Error('Failed to verify payment with ZarinPal');
-  }
-}
-
-/**
- * Get payment gateway URL for redirect
- * @param authority Authority code from payment request
- * @returns Gateway URL (sandbox or production)
- */
-export function getZarinPalGatewayUrl(authority: string): string {
-  if (isZarinPalSandbox()) {
-    return `${ZARINPAL_SANDBOX_GATEWAY_URL}/${authority}`;
-  }
-  return `${ZARINPAL_GATEWAY_URL}/${authority}`;
-}
+// Payment functions are now implemented via GraphQL mutations in use-zarinpal-payment.tsx
+// These types and helper functions are kept for backward compatibility
 
 /**
  * Get error message for ZarinPal error codes

@@ -149,6 +149,9 @@ const en = {
     shipping: 'Shipping Fee',
     total: 'Total',
     proceedToCheckout: 'Proceed to Checkout',
+    proceedToPayment: 'Proceed to Payment',
+    continueToPaymentGateway: 'Continue to Payment Gateway',
+    processing: 'Processing...',
   },
 
   // Product management

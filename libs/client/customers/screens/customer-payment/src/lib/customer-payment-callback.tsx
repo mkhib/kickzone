@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
@@ -32,7 +32,7 @@ export function CustomerPaymentCallback() {
   const authority = searchParams.get('Authority');
   const status = searchParams.get('Status');
   const orderIdFromUrl = searchParams.get('orderId');
-  
+
   // Get order data from sessionStorage
   const [orderData, setOrderData] = useState<{
     orderId: string;
@@ -56,6 +56,9 @@ export function CustomerPaymentCallback() {
     }
   }, [orderIdFromUrl]);
 
+  // Track if verification has already been attempted to prevent multiple calls
+  const verificationAttemptedRef = useRef(false);
+
   const { verifyPayment, isVerifying } = useZarinPalPayment({
     onSuccess: (refId) => {
       setRefId(refId);
@@ -68,9 +71,15 @@ export function CustomerPaymentCallback() {
   });
 
   useEffect(() => {
+    // Prevent multiple verification attempts
+    if (verificationAttemptedRef.current) {
+      return;
+    }
+
     // Check if payment was cancelled
     if (status === 'NOK') {
       setVerificationStatus('cancelled');
+      verificationAttemptedRef.current = true;
       return;
     }
 
@@ -78,6 +87,7 @@ export function CustomerPaymentCallback() {
     if (!authority || status !== 'OK') {
       setErrorMessage('پارامترهای پرداخت نامعتبر است');
       setVerificationStatus('error');
+      verificationAttemptedRef.current = true;
       return;
     }
 
@@ -86,20 +96,28 @@ export function CustomerPaymentCallback() {
       return;
     }
 
+    // Mark verification as attempted immediately to prevent race conditions
+    verificationAttemptedRef.current = true;
+
     // Verify payment
     const verify = async () => {
-      const result = await verifyPayment({
-        authority,
-        amount: orderData.amount,
-      });
+      try {
+        const result = await verifyPayment({
+          authority,
+          amount: orderData.amount,
+        });
 
-      if (!result) {
-        // Error already handled by hook
-        return;
+        if (!result) {
+          // Error already handled by hook
+          return;
+        }
+
+        // Payment verified successfully
+        // The onSuccess callback will be called by the hook
+      } catch (err) {
+        // Error already handled by hook's onError callback
+        console.error('Payment verification error:', err);
       }
-
-      // Payment verified successfully
-      // The onSuccess callback will be called by the hook
     };
 
     verify();
@@ -237,4 +255,3 @@ export function CustomerPaymentCallback() {
 }
 
 export default CustomerPaymentCallback;
-

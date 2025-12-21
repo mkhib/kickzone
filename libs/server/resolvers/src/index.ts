@@ -11,6 +11,7 @@ export * from './lib/translation.resolver';
 export * from './lib/translation.input';
 export * from './lib/currency.resolver';
 export * from './lib/shipping.resolver';
+export * from './lib/payment.resolver';
 // Export input types for GraphQL schema generation
 export {
   SellerShippingInfoInput,

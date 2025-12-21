@@ -35,6 +35,7 @@ import {
   CurrencyModule,
   CustomerProfileModule,
   PlatformSettingsModule,
+  PaymentModule,
 } from '@kickzone-workspace/modules';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -123,6 +124,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
     CurrencyModule,
     CustomerProfileModule,
     PlatformSettingsModule,
+    PaymentModule,
   ],
 })
 export class AppModule {}

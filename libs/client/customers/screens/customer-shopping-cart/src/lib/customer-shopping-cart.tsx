@@ -1846,7 +1846,7 @@ export function CustomerShoppingCart() {
                           fontWeight: 600,
                         }}
                       >
-                        Continue to Payment Gateway
+                        {LL.checkout.continueToPaymentGateway()}
                       </Button>
                     </Box>
                   </Box>
@@ -1892,7 +1892,9 @@ export function CustomerShoppingCart() {
                   },
                 }}
               >
-                {isCreatingOrder ? 'Processing...' : 'Proceed to Payment'}
+                {isCreatingOrder
+                  ? LL.checkout.processing()
+                  : LL.checkout.proceedToPayment()}
               </Button>
             ) : null}
           </DialogActions>

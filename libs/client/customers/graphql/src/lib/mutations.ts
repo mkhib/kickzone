@@ -180,3 +180,37 @@ export const RESET_PASSWORD_MUTATION = gql`
     }
   }
 `;
+
+export const REQUEST_ZARINPAL_PAYMENT_MUTATION = gql`
+  mutation RequestZarinPalPayment($input: ZarinPalPaymentRequestInput!) {
+    requestZarinPalPayment(input: $input) {
+      code
+      message
+      authority
+      fee_type
+      fee
+    }
+  }
+`;
+
+export const VERIFY_ZARINPAL_PAYMENT_MUTATION = gql`
+  mutation VerifyZarinPalPayment($input: ZarinPalVerificationRequestInput!) {
+    verifyZarinPalPayment(input: $input) {
+      code
+      message
+      ref_id
+      card_pan
+      card_hash
+      fee_type
+      fee
+    }
+  }
+`;
+
+export const GET_ZARINPAL_GATEWAY_URL_MUTATION = gql`
+  mutation GetZarinPalGatewayUrl($authority: String!) {
+    getZarinPalGatewayUrl(authority: $authority) {
+      url
+    }
+  }
+`;

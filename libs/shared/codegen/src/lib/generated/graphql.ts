@@ -217,6 +217,11 @@ export type ExchangeRate = {
   toCurrency: Currency;
 };
 
+export type GatewayUrlResponse = {
+  __typename?: 'GatewayUrlResponse';
+  url: Scalars['String']['output'];
+};
+
 export type Mutation = {
   __typename?: 'Mutation';
   addToCart: Cart;
@@ -240,12 +245,14 @@ export type Mutation = {
   deleteEntityTranslations: Scalars['Boolean']['output'];
   deleteOrder: Scalars['Boolean']['output'];
   forgotPassword: Scalars['Boolean']['output'];
+  getZarinPalGatewayUrl: GatewayUrlResponse;
   initiatePasswordSetup: Scalars['Boolean']['output'];
   login: User;
   logout: Scalars['Boolean']['output'];
   register: User;
   removeFromCart: Cart;
   removeProductInfoImage: Scalars['Boolean']['output'];
+  requestZarinPalPayment: ZarinPalPaymentResponse;
   resetPassword: User;
   setCurrencyPreference: CurrencyPreference;
   setExchangeRate: ExchangeRate;
@@ -265,6 +272,7 @@ export type Mutation = {
   updateSeller: SellerInfo;
   updateSellerProduct: SellerProduct;
   uploadProductInfoImages: Array<Scalars['String']['output']>;
+  verifyZarinPalPayment: ZarinPalVerificationResponse;
 };
 
 
@@ -373,6 +381,11 @@ export type MutationForgotPasswordArgs = {
 };
 
 
+export type MutationGetZarinPalGatewayUrlArgs = {
+  authority: Scalars['String']['input'];
+};
+
+
 export type MutationInitiatePasswordSetupArgs = {
   baseUrl: Scalars['String']['input'];
   email: Scalars['String']['input'];
@@ -400,6 +413,11 @@ export type MutationRemoveFromCartArgs = {
 export type MutationRemoveProductInfoImageArgs = {
   imageName: Scalars['String']['input'];
   productInfoId: Scalars['Int']['input'];
+};
+
+
+export type MutationRequestZarinPalPaymentArgs = {
+  input: ZarinPalPaymentRequestInput;
 };
 
 
@@ -504,6 +522,11 @@ export type MutationUpdateSellerProductArgs = {
 export type MutationUploadProductInfoImagesArgs = {
   files: Array<Scalars['Upload']['input']>;
   productInfoId: Scalars['Int']['input'];
+};
+
+
+export type MutationVerifyZarinPalPaymentArgs = {
+  input: ZarinPalVerificationRequestInput;
 };
 
 export type Order = {
@@ -872,8 +895,8 @@ export type SellerProduct = {
   id: Scalars['String']['output'];
   price: Scalars['Float']['output'];
   product: Product;
-  productInfo?: Maybe<ProductInfo>;
-  productInfoId?: Maybe<Scalars['Int']['output']>;
+  productInfo: ProductInfo;
+  productInfoId: Scalars['Int']['output'];
   seller?: Maybe<SellerInfo>;
   stockQuantity: Scalars['Int']['output'];
 };
@@ -1059,3 +1082,38 @@ export enum UserRole {
   Customer = 'CUSTOMER',
   Seller = 'SELLER'
 }
+
+export type ZarinPalPaymentRequestInput = {
+  amount: Scalars['Int']['input'];
+  callback_url: Scalars['String']['input'];
+  currency?: InputMaybe<Scalars['String']['input']>;
+  description: Scalars['String']['input'];
+  email?: InputMaybe<Scalars['String']['input']>;
+  mobile?: InputMaybe<Scalars['String']['input']>;
+  order_id?: InputMaybe<Scalars['String']['input']>;
+};
+
+export type ZarinPalPaymentResponse = {
+  __typename?: 'ZarinPalPaymentResponse';
+  authority: Scalars['String']['output'];
+  code: Scalars['Int']['output'];
+  fee?: Maybe<Scalars['Int']['output']>;
+  fee_type?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+};
+
+export type ZarinPalVerificationRequestInput = {
+  amount: Scalars['Int']['input'];
+  authority: Scalars['String']['input'];
+};
+
+export type ZarinPalVerificationResponse = {
+  __typename?: 'ZarinPalVerificationResponse';
+  card_hash?: Maybe<Scalars['String']['output']>;
+  card_pan?: Maybe<Scalars['String']['output']>;
+  code: Scalars['Int']['output'];
+  fee?: Maybe<Scalars['Int']['output']>;
+  fee_type?: Maybe<Scalars['String']['output']>;
+  message: Scalars['String']['output'];
+  ref_id?: Maybe<Scalars['Int']['output']>;
+};

@@ -173,28 +173,6 @@ export class ProductService {
     // but with multiple one-to-many joins, we need to be careful
     const products = await query.getMany();
 
-    console.log('[ProductService] Raw products from TypeORM:', {
-      count: products.length,
-      products: products.map((p) => ({
-        id: p.id,
-        name: p.name,
-        productInfosCount: p.productInfos?.length || 0,
-        sellerProductsCount: p.sellerProducts?.length || 0,
-        productInfos: p.productInfos?.map((pi) => ({
-          id: pi.id,
-          size: pi.size,
-          color: pi.color?.name,
-        })),
-        sellerProducts: p.sellerProducts?.map((sp) => ({
-          id: sp.id,
-          productInfoId: sp.productInfoId,
-          price: sp.price,
-          stockQuantity: sp.stockQuantity,
-          sellerId: sp.seller?.id,
-        })),
-      })),
-    });
-
     // Post-process products to filter sellerProducts based on filters
     // This ensures all productInfos are returned, but only matching sellerProducts
     const processedProducts = products.map((product) => {

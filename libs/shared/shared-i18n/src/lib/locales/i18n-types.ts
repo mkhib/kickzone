@@ -531,6 +531,18 @@ type RootTranslation = {
 		 * P​r​o​c​e​e​d​ ​t​o​ ​C​h​e​c​k​o​u​t
 		 */
 		proceedToCheckout: string
+		/**
+		 * P​r​o​c​e​e​d​ ​t​o​ ​P​a​y​m​e​n​t
+		 */
+		proceedToPayment: string
+		/**
+		 * C​o​n​t​i​n​u​e​ ​t​o​ ​P​a​y​m​e​n​t​ ​G​a​t​e​w​a​y
+		 */
+		continueToPaymentGateway: string
+		/**
+		 * P​r​o​c​e​s​s​i​n​g​.​.​.
+		 */
+		processing: string
 	}
 	products: {
 		/**
@@ -2996,6 +3008,18 @@ export type TranslationFunctions = {
 		 * Proceed to Checkout
 		 */
 		proceedToCheckout: () => LocalizedString
+		/**
+		 * Proceed to Payment
+		 */
+		proceedToPayment: () => LocalizedString
+		/**
+		 * Continue to Payment Gateway
+		 */
+		continueToPaymentGateway: () => LocalizedString
+		/**
+		 * Processing...
+		 */
+		processing: () => LocalizedString
 	}
 	products: {
 		/**
