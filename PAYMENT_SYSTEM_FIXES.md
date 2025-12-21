@@ -235,11 +235,16 @@ This document outlines all critical bugs that were identified and fixed in the p
 - `libs/client/customers/screens/customer-payment/src/lib/customer-payment-callback.tsx`
 - `libs/client/customers/screens/customer-payment/src/lib/use-zarinpal-payment.tsx`
 
+### Tests:
+
+- `libs/server/services/src/lib/order.service.spec.ts` - Comprehensive unit tests (37 tests)
+- `libs/server/resolvers/src/lib/payment.resolver.integration.spec.ts` - Integration tests (11 tests)
+
 ## Next Steps
 
 1. ✅ All critical bugs fixed
-2. ⏳ **TODO**: Add comprehensive unit tests for order service
-3. ⏳ **TODO**: Add integration tests for payment flow
+2. ✅ **DONE**: Add comprehensive unit tests for order service
+3. ✅ **DONE**: Add integration tests for payment flow
 4. ⏳ **TODO**: Add end-to-end tests for checkout process
 5. ⏳ **TODO**: Monitor production for any edge cases
 
