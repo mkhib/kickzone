@@ -23,6 +23,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useProducts } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
+import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 
 interface ProductImageManagementModalProps {
   open: boolean;
@@ -67,33 +68,36 @@ const DeleteImageModal = ({
   onConfirm,
   imageName,
   isLoading = false,
-}: DeleteImageModalProps) => (
-  <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-    <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-      <WarningIcon color="warning" />
-      Delete Image
-    </DialogTitle>
-    <DialogContent>
-      <Typography>
-        Are you sure you want to delete the image "{imageName}"? This action
-        cannot be undone.
-      </Typography>
-    </DialogContent>
-    <DialogActions>
-      <Button onClick={onClose} disabled={isLoading}>
-        Cancel
-      </Button>
-      <Button
-        onClick={onConfirm}
-        variant="contained"
-        color="error"
-        disabled={isLoading}
-      >
-        {isLoading ? 'Deleting...' : 'Delete'}
-      </Button>
-    </DialogActions>
-  </Dialog>
-);
+}: DeleteImageModalProps) => {
+  const { LL } = useI18nContext();
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <WarningIcon color="warning" />
+        {LL.modal.deleteImage()}
+      </DialogTitle>
+      <DialogContent>
+        <Typography>
+          {LL.products.deleteImageConfirmMessage({ imageName })}
+        </Typography>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={isLoading}>
+          {LL.button.cancel()}
+        </Button>
+        <Button
+          onClick={onConfirm}
+          variant="contained"
+          color="error"
+          disabled={isLoading}
+        >
+          {isLoading ? LL.status.deleting() : LL.button.delete()}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
 
 export function ProductImageManagementModal({
   open,
@@ -121,6 +125,7 @@ export function ProductImageManagementModal({
 
   const { uploadProductInfoImages, removeProductInfoImage } = useProducts();
   const { showSnackbar } = useSnackbarContext();
+  const { LL } = useI18nContext();
 
   // Update store when modal opens/closes
   React.useEffect(() => {
@@ -158,7 +163,7 @@ export function ProductImageManagementModal({
         (file) => !validImageTypes.includes(file.type)
       );
       if (invalidFiles.length > 0) {
-        showSnackbar('Only image files (JPEG, PNG, GIF, WEBP) are allowed', {
+        showSnackbar(LL.products.onlyImageFilesAllowed(), {
           severity: 'error',
         });
         return;
@@ -168,7 +173,7 @@ export function ProductImageManagementModal({
       const maxSize = 5 * 1024 * 1024; // 5MB
       const oversizedFiles = newFiles.filter((file) => file.size > maxSize);
       if (oversizedFiles.length > 0) {
-        showSnackbar('Some files exceed the maximum size of 5MB', {
+        showSnackbar(LL.products.filesExceedMaxSize(), {
           severity: 'error',
         });
         return;
@@ -176,7 +181,7 @@ export function ProductImageManagementModal({
 
       addSelectedFiles(productInfoId, newFiles);
     },
-    [addSelectedFiles, showSnackbar]
+    [addSelectedFiles, showSnackbar, LL]
   );
 
   const handleUploadImages = useCallback(
@@ -199,7 +204,9 @@ export function ProductImageManagementModal({
         }
 
         clearSelectedFiles(productInfoId);
-        showSnackbar('Images uploaded successfully', { severity: 'success' });
+        showSnackbar(LL.products.imagesUploadedSuccessfully(), {
+          severity: 'success',
+        });
         onProductUpdated?.();
       } catch (error) {
         showSnackbar((error as Error).message, { severity: 'error' });
@@ -216,6 +223,7 @@ export function ProductImageManagementModal({
       onProductUpdated,
       currentProduct,
       updateProductImages,
+      LL,
     ]
   );
 
@@ -264,7 +272,9 @@ export function ProductImageManagementModal({
         }
       }
 
-      showSnackbar('Image removed successfully', { severity: 'success' });
+      showSnackbar(LL.products.imageRemovedSuccessfully(), {
+        severity: 'success',
+      });
       onProductUpdated?.();
     } catch (error) {
       showSnackbar((error as Error).message, { severity: 'error' });
@@ -282,6 +292,7 @@ export function ProductImageManagementModal({
     onProductUpdated,
     currentProduct,
     updateProductImages,
+    LL,
   ]);
 
   if (!currentProduct) {
@@ -296,7 +307,9 @@ export function ProductImageManagementModal({
         maxWidth="md"
         fullWidth
       >
-        <DialogTitle>Manage Images - {currentProduct.name}</DialogTitle>
+        <DialogTitle>
+          {LL.products.manageImages()} - {currentProduct.name}
+        </DialogTitle>
         <DialogContent>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={imageModal.selectedTab} onChange={handleTabChange}>
@@ -321,12 +334,14 @@ export function ProductImageManagementModal({
             >
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  Variant: {productInfo.size}
+                  {LL.products.variant()}: {productInfo.size}
                   {productInfo.color && ` - ${productInfo.color.name}`}
                 </Typography>
                 {/* Current Images */}
                 <Typography variant="subtitle1" gutterBottom>
-                  Current Images ({productInfo.images?.length || 0})
+                  {LL.products.currentImages({
+                    count: productInfo.images?.length || 0,
+                  })}
                 </Typography>
                 {productInfo.images && productInfo.images.length > 0 ? (
                   <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -361,12 +376,12 @@ export function ProductImageManagementModal({
                   </Grid>
                 ) : (
                   <Alert severity="info" sx={{ mb: 3 }}>
-                    No images uploaded for this variant yet.
+                    {LL.products.noImagesUploaded()}
                   </Alert>
                 )}
                 {/* Add New Images */}
                 <Typography variant="subtitle1" gutterBottom>
-                  Add New Images
+                  {LL.products.addNewImages()}
                 </Typography>
                 <Box sx={{ mb: 2 }}>
                   <input
@@ -384,7 +399,7 @@ export function ProductImageManagementModal({
                       startIcon={<AddPhotoIcon />}
                       sx={{ mr: 2 }}
                     >
-                      Select Images
+                      {LL.products.selectImages()}
                     </Button>
                   </label>
                   {imageModal.selectedFiles[productInfo.id] &&
@@ -396,8 +411,8 @@ export function ProductImageManagementModal({
                         disabled={imageModal.uploading[productInfo.id]}
                       >
                         {imageModal.uploading[productInfo.id]
-                          ? 'Uploading...'
-                          : 'Upload Images'}
+                          ? LL.status.uploading()
+                          : LL.products.uploadImages()}
                       </Button>
                     )}
                 </Box>
@@ -407,9 +422,11 @@ export function ProductImageManagementModal({
                     0 && (
                     <Box>
                       <Typography variant="body2" gutterBottom>
-                        Selected files (
-                        {imageModal.selectedFilePreviews[productInfo.id].length}
-                        ):
+                        {LL.products.selectedFiles({
+                          count:
+                            imageModal.selectedFilePreviews[productInfo.id]
+                              .length,
+                        })}
                       </Typography>
                       <Box
                         sx={{
@@ -434,7 +451,7 @@ export function ProductImageManagementModal({
                       </Box>
                       {/* Image Thumbnails */}
                       <Typography variant="body2" gutterBottom>
-                        Image Previews:
+                        {LL.products.imagePreviews()}
                       </Typography>
                       <Grid container spacing={2} sx={{ mb: 2 }}>
                         {imageModal.selectedFilePreviews[productInfo.id].map(
@@ -477,7 +494,7 @@ export function ProductImageManagementModal({
           ))}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Close</Button>
+          <Button onClick={handleClose}>{LL.products.close()}</Button>
         </DialogActions>
       </Dialog>
       <DeleteImageModal

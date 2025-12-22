@@ -927,6 +927,53 @@ type RootTranslation = {
 		 * S​a​v​i​n​g​s
 		 */
 		savings: string
+		/**
+		 * M​a​n​a​g​e​ ​I​m​a​g​e​s
+		 */
+		manageImages: string
+		/**
+		 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​t​h​e​ ​i​m​a​g​e​ ​"​{​i​m​a​g​e​N​a​m​e​}​"​?​ ​T​h​i​s​ ​a​c​t​i​o​n​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+		 * @param {unknown} imageName
+		 */
+		deleteImageConfirmMessage: RequiredParams<'imageName'>
+		/**
+		 * C​u​r​r​e​n​t​ ​I​m​a​g​e​s​ ​(​{​c​o​u​n​t​}​)
+		 * @param {unknown} count
+		 */
+		currentImages: RequiredParams<'count'>
+		/**
+		 * N​o​ ​i​m​a​g​e​s​ ​u​p​l​o​a​d​e​d​ ​f​o​r​ ​t​h​i​s​ ​v​a​r​i​a​n​t​ ​y​e​t​.
+		 */
+		noImagesUploaded: string
+		/**
+		 * A​d​d​ ​N​e​w​ ​I​m​a​g​e​s
+		 */
+		addNewImages: string
+		/**
+		 * S​e​l​e​c​t​e​d​ ​f​i​l​e​s​ ​(​{​c​o​u​n​t​}​)​:
+		 * @param {unknown} count
+		 */
+		selectedFiles: RequiredParams<'count'>
+		/**
+		 * I​m​a​g​e​ ​P​r​e​v​i​e​w​s​:
+		 */
+		imagePreviews: string
+		/**
+		 * I​m​a​g​e​s​ ​u​p​l​o​a​d​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		imagesUploadedSuccessfully: string
+		/**
+		 * I​m​a​g​e​ ​r​e​m​o​v​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		imageRemovedSuccessfully: string
+		/**
+		 * O​n​l​y​ ​i​m​a​g​e​ ​f​i​l​e​s​ ​(​J​P​E​G​,​ ​P​N​G​,​ ​G​I​F​,​ ​W​E​B​P​)​ ​a​r​e​ ​a​l​l​o​w​e​d
+		 */
+		onlyImageFilesAllowed: string
+		/**
+		 * S​o​m​e​ ​f​i​l​e​s​ ​e​x​c​e​e​d​ ​t​h​e​ ​m​a​x​i​m​u​m​ ​s​i​z​e​ ​o​f​ ​5​M​B
+		 */
+		filesExceedMaxSize: string
 	}
 	orders: {
 		/**
@@ -3402,6 +3449,50 @@ export type TranslationFunctions = {
 		 * Savings
 		 */
 		savings: () => LocalizedString
+		/**
+		 * Manage Images
+		 */
+		manageImages: () => LocalizedString
+		/**
+		 * Are you sure you want to delete the image "{imageName}"? This action cannot be undone.
+		 */
+		deleteImageConfirmMessage: (arg: { imageName: unknown }) => LocalizedString
+		/**
+		 * Current Images ({count})
+		 */
+		currentImages: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * No images uploaded for this variant yet.
+		 */
+		noImagesUploaded: () => LocalizedString
+		/**
+		 * Add New Images
+		 */
+		addNewImages: () => LocalizedString
+		/**
+		 * Selected files ({count}):
+		 */
+		selectedFiles: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * Image Previews:
+		 */
+		imagePreviews: () => LocalizedString
+		/**
+		 * Images uploaded successfully
+		 */
+		imagesUploadedSuccessfully: () => LocalizedString
+		/**
+		 * Image removed successfully
+		 */
+		imageRemovedSuccessfully: () => LocalizedString
+		/**
+		 * Only image files (JPEG, PNG, GIF, WEBP) are allowed
+		 */
+		onlyImageFilesAllowed: () => LocalizedString
+		/**
+		 * Some files exceed the maximum size of 5MB
+		 */
+		filesExceedMaxSize: () => LocalizedString
 	}
 	orders: {
 		/**

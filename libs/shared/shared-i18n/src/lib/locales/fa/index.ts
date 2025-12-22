@@ -252,6 +252,19 @@ const fa = {
     showingProducts: 'نمایش {count} از {total} محصول',
     errorLoadingProducts: 'خطا در بارگذاری محصولات',
     savings: 'صرفه‌جویی',
+    manageImages: 'مدیریت تصاویر',
+    deleteImageConfirmMessage:
+      'آیا مطمئن هستید که می‌خواهید تصویر "{imageName}" را حذف کنید؟ این عمل قابل بازگشت نیست.',
+    currentImages: 'تصاویر فعلی ({count})',
+    noImagesUploaded: 'هنوز تصویری برای این نوع بارگذاری نشده است.',
+    addNewImages: 'افزودن تصاویر جدید',
+    selectedFiles: 'فایل‌های انتخاب شده ({count}):',
+    imagePreviews: 'پیش‌نمایش تصاویر:',
+    imagesUploadedSuccessfully: 'تصاویر با موفقیت بارگذاری شد',
+    imageRemovedSuccessfully: 'تصویر با موفقیت حذف شد',
+    onlyImageFilesAllowed:
+      'فقط فایل‌های تصویری (JPEG, PNG, GIF, WEBP) مجاز هستند',
+    filesExceedMaxSize: 'برخی فایل‌ها از حداکثر اندازه ۵ مگابایت تجاوز می‌کنند',
   },
 
   // Orders

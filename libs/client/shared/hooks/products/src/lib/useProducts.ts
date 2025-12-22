@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from '@apollo/client/react';
+import { useMutation, useQuery, useApolloClient } from '@apollo/client/react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCallback } from 'react';
 import {
@@ -101,6 +101,8 @@ export function useProductsQuery({
 }
 
 export const useProducts = () => {
+  const client = useApolloClient();
+
   const [createProductMutation, { loading: isCreatingProduct }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'createProduct'>,
     KickzoneGraphqlTypes.MutationCreateProductArgs
@@ -175,12 +177,18 @@ export const useProducts = () => {
           }
         }
       }
+
+      // Evict and refetch all products queries to ensure the new product appears in the list
+      // This handles all possible filter combinations
+      client.cache.evict({ fieldName: 'products' });
+      client.cache.gc();
+
       return {
         product: productData.createProduct,
         productInfos: createdProductInfos,
       };
     },
-    [createProductMutation, createProductInfoMutation]
+    [createProductMutation, createProductInfoMutation, client]
   );
 
   const uploadProductInfoImages = useCallback(

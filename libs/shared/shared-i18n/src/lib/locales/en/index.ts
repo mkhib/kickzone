@@ -251,6 +251,19 @@ const en = {
     showingProducts: 'Showing {count} of {total} products',
     errorLoadingProducts: 'Error loading products',
     savings: 'Savings',
+    manageImages: 'Manage Images',
+    deleteImageConfirmMessage:
+      'Are you sure you want to delete the image "{imageName}"? This action cannot be undone.',
+    currentImages: 'Current Images ({count})',
+    noImagesUploaded: 'No images uploaded for this variant yet.',
+    addNewImages: 'Add New Images',
+    selectedFiles: 'Selected files ({count}):',
+    imagePreviews: 'Image Previews:',
+    imagesUploadedSuccessfully: 'Images uploaded successfully',
+    imageRemovedSuccessfully: 'Image removed successfully',
+    onlyImageFilesAllowed:
+      'Only image files (JPEG, PNG, GIF, WEBP) are allowed',
+    filesExceedMaxSize: 'Some files exceed the maximum size of 5MB',
   },
 
   // Orders

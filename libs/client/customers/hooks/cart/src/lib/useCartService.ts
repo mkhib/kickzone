@@ -143,10 +143,35 @@ export function useCustomersCartService() {
         return;
       }
 
+      // Get current local items to preserve shipping fees if seller data hasn't loaded yet
+      const currentLocalItems = useCartStore.getState().items;
+      const localItemsMap = new Map<string, CartItem>();
+      currentLocalItems.forEach((item) => {
+        // Use sellerProductId as key since it's unique per seller-product combination
+        const key = `${item.sellerId}-${item.sellerProductId}`;
+        localItemsMap.set(key, item);
+      });
+
       const localItems: CartItem[] = serverCart.items.map(
         (item: KickzoneGraphqlTypes.CartItem) => {
           const sellerIdNum = parseInt(item.sellerId, 10);
-          const shippingFee = sellerShippingFeeMap.get(sellerIdNum) ?? 0;
+
+          // Try to get shipping fee from sellerShippingFeeMap first (authoritative source)
+          let shippingFee = sellerShippingFeeMap.get(sellerIdNum);
+
+          // If map doesn't have this seller yet (undefined), preserve from existing local item
+          // This handles the case where seller data hasn't loaded yet
+          if (shippingFee === undefined) {
+            const key = `${item.sellerId}-${item.sellerProductId}`;
+            const existingItem = localItemsMap.get(key);
+            if (existingItem && existingItem.sellerShippingFee !== undefined) {
+              shippingFee = existingItem.sellerShippingFee;
+            } else {
+              // No data available, default to 0
+              shippingFee = 0;
+            }
+          }
+          // If shippingFee is 0 from map, use it (seller explicitly has no fee)
 
           const cartItem: CartItem = {
             id: item.id,
@@ -178,15 +203,19 @@ export function useCustomersCartService() {
 
   // Sync server cart to local store when data changes or seller shipping fees are loaded
   useEffect(() => {
-    if (serverCartData?.myCart && !sellersLoading) {
-      // Only sync when sellers data has finished loading (or if there are no sellers to load)
-      syncServerCartToLocal(serverCartData.myCart);
+    if (serverCartData?.myCart) {
+      // If we have seller IDs but sellers are still loading, wait for them
+      // Otherwise, sync immediately (for empty carts or when seller data is ready)
+      if (sellerIds.length === 0 || !sellersLoading) {
+        syncServerCartToLocal(serverCartData.myCart);
+      }
     }
   }, [
     serverCartData,
     syncServerCartToLocal,
     sellerShippingFeeMap,
     sellersLoading,
+    sellerIds.length,
   ]);
 
   // Add item to cart (both local and server)
