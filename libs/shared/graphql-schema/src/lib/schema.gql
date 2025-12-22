@@ -682,4 +682,5 @@ input ZarinPalPaymentRequestInput {
 input ZarinPalVerificationRequestInput {
   amount: Int!
   authority: String!
+  order_id: String
 }

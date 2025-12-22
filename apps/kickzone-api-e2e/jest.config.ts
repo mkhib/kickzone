@@ -5,6 +5,8 @@ export default {
   globalTeardown: '<rootDir>/src/support/global-teardown.ts',
   setupFiles: ['<rootDir>/src/support/test-setup.ts'],
   testEnvironment: 'node',
+  testMatch: ['**/*.e2e-spec.ts'],
+  testTimeout: 30000, // 30 seconds for e2e tests
   transform: {
     '^.+\\.[tj]s$': [
       'ts-jest',

@@ -239,13 +239,14 @@ This document outlines all critical bugs that were identified and fixed in the p
 
 - `libs/server/services/src/lib/order.service.spec.ts` - Comprehensive unit tests (37 tests)
 - `libs/server/resolvers/src/lib/payment.resolver.integration.spec.ts` - Integration tests (11 tests)
+- `apps/kickzone-api-e2e/src/checkout.e2e-spec.ts` - End-to-end tests for checkout process (14 tests)
 
 ## Next Steps
 
 1. ✅ All critical bugs fixed
 2. ✅ **DONE**: Add comprehensive unit tests for order service
 3. ✅ **DONE**: Add integration tests for payment flow
-4. ⏳ **TODO**: Add end-to-end tests for checkout process
+4. ✅ **DONE**: Add end-to-end tests for checkout process
 5. ⏳ **TODO**: Monitor production for any edge cases
 
 ## Notes
