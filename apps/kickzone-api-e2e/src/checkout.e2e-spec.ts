@@ -58,7 +58,7 @@ describe('Checkout Process E2E Tests', () => {
   let testSellerProduct: SellerProduct;
   let testCategory: Category;
   let testProductInfo: ProductInfo;
-  let testOrderIds: string[] = [];
+  let testColor: Color;
 
   const createTestData = async () => {
     // Create test user
@@ -93,6 +93,14 @@ describe('Checkout Process E2E Tests', () => {
       name: `Test Category ${uniqueSuffix}`, // Virtual field for GraphQL, but we need slug for DB
     });
 
+    // Create test color
+    const colorRepo = app.get(getRepositoryToken(Color));
+    testColor = await colorRepo.save({
+      hexCode: `#${uniqueSuffix.slice(-6)}`, // Use unique suffix for hex code to avoid conflicts
+      sortOrder: 0,
+      isActive: true,
+    });
+
     // Create test product first
     const productRepo = app.get(getRepositoryToken(Product));
     testProduct = await productRepo.save({
@@ -100,12 +108,13 @@ describe('Checkout Process E2E Tests', () => {
       description: 'Test Description',
     });
 
-    // Create test product info
+    // Create test product info with size and color
     const productInfoRepo = app.get(getRepositoryToken(ProductInfo));
     testProductInfo = await productInfoRepo.save({
       size: 'M',
       weight: 100,
       product: testProduct,
+      color: testColor,
     });
 
     // Create test seller product with stock
@@ -131,11 +140,19 @@ describe('Checkout Process E2E Tests', () => {
       const productRepo = app.get(getRepositoryToken(Product));
       const categoryRepo = app.get(getRepositoryToken(Category));
 
-      // Delete orders and order items (created during tests)
-      if (testOrderIds.length > 0) {
-        for (const orderId of testOrderIds) {
-          await orderItemRepo.delete({ orderId });
-          await orderRepo.delete({ id: orderId });
+      // Delete orders created by test user (by email pattern) or referencing test seller
+      if (testUser?.email || testSeller?.id) {
+        // Delete order items first (foreign key constraint)
+        const ordersToDelete = await orderRepo.find({
+          where: testSeller?.id
+            ? { sellerId: testSeller.id }
+            : testUser?.email
+            ? { customerEmail: testUser.email }
+            : {},
+        });
+        for (const order of ordersToDelete) {
+          await orderItemRepo.delete({ orderId: order.id });
+          await orderRepo.delete({ id: order.id });
         }
       }
 
@@ -157,6 +174,12 @@ describe('Checkout Process E2E Tests', () => {
       // Delete test category
       if (testCategory?.id) {
         await categoryRepo.delete({ id: testCategory.id });
+      }
+
+      // Delete test color
+      if (testColor?.id) {
+        const colorRepo = app.get(getRepositoryToken(Color));
+        await colorRepo.delete({ id: testColor.id });
       }
 
       // Delete test seller
@@ -231,6 +254,8 @@ describe('Checkout Process E2E Tests', () => {
   });
 
   afterAll(async () => {
+    // Clean up all test data before closing app
+    await cleanupTestData();
     if (app) {
       await app.close();
     }
