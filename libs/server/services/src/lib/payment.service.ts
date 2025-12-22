@@ -1,5 +1,6 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { PaymentLogger } from './payment-logger.service';
 
 export interface ZarinPalPaymentRequest {
   amount: number; // Amount in Toman (IRT)
@@ -50,12 +51,14 @@ export interface ZarinPalVerificationResponse {
 
 @Injectable()
 export class PaymentService {
-  private readonly logger = new Logger(PaymentService.name);
   private readonly merchantId: string;
   private readonly isSandbox: boolean;
   private readonly apiBaseUrl: string;
 
-  constructor(private configService: ConfigService) {
+  constructor(
+    private readonly configService: ConfigService,
+    private readonly paymentLogger: PaymentLogger
+  ) {
     this.merchantId =
       this.configService.get<string>('ZARINPAL_MERCHANT_ID') ||
       '00000000-0000-0000-0000-000000000000';
@@ -82,6 +85,12 @@ export class PaymentService {
     };
 
     try {
+      this.paymentLogger.logPaymentInitiated({
+        orderId: request.metadata?.order_id,
+        amount: request.amount,
+        currency: request.currency || 'IRT',
+        gateway: 'zarinpal',
+      });
       const response = await fetch(`${this.apiBaseUrl}/request.json`, {
         method: 'POST',
         headers: {
@@ -97,15 +106,31 @@ export class PaymentService {
 
       const data: ZarinPalPaymentResponse = await response.json();
 
+      this.paymentLogger.logGatewayResponse({
+        orderId: request.metadata?.order_id,
+        authority: data.data.authority,
+        code: data.data.code,
+        message: data.data.message,
+        gateway: 'zarinpal',
+      });
+
       if (data.errors && data.errors.length > 0) {
         const errorMessages = data.errors.map((e) => e.message).join(', ');
-        this.logger.error(`ZarinPal API error: ${errorMessages}`);
         throw new Error(`ZarinPal API error: ${errorMessages}`);
       }
 
       return data;
     } catch (error) {
-      this.logger.error('Failed to request payment from ZarinPal', error);
+      this.paymentLogger.logGatewayResponse({
+        orderId: request.metadata?.order_id,
+        authority: undefined,
+        code: -1,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to request payment from ZarinPal',
+        gateway: 'zarinpal',
+      });
       if (error instanceof Error) {
         throw error;
       }
@@ -143,13 +168,31 @@ export class PaymentService {
 
       if (data.errors && data.errors.length > 0) {
         const errorMessages = data.errors.map((e) => e.message).join(', ');
-        this.logger.error(`ZarinPal API error: ${errorMessages}`);
         throw new Error(`ZarinPal API error: ${errorMessages}`);
       }
 
+      this.paymentLogger.logVerificationResult({
+        orderId: undefined,
+        authority: request.authority,
+        amount: request.amount,
+        code: data.data.code,
+        message: data.data.message,
+        refId: data.data.ref_id,
+      });
+
       return data;
     } catch (error) {
-      this.logger.error('Failed to verify payment with ZarinPal', error);
+      this.paymentLogger.logVerificationResult({
+        orderId: undefined,
+        authority: request.authority,
+        amount: request.amount,
+        code: -1,
+        message:
+          error instanceof Error
+            ? error.message
+            : 'Failed to verify payment with ZarinPal',
+        refId: undefined,
+      });
       if (error instanceof Error) {
         throw error;
       }

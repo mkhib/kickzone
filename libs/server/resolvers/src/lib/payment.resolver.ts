@@ -99,7 +99,7 @@ export class PaymentResolver {
   @Mutation(() => ZarinPalPaymentResponse)
   @UseGuards(GraphqlAuthGuard)
   async requestZarinPalPayment(
-    @CurrentUser() _user: { id: string },
+    @CurrentUser() user: { id: string },
     @Args('input') input: ZarinPalPaymentRequestInput
   ) {
     const response = await this.paymentService.requestPayment({

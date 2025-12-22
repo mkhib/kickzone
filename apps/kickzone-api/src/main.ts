@@ -1,6 +1,7 @@
 import { Logger } from '@nestjs/common';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
+import { Logger as PinoLogger } from 'nestjs-pino';
 import { join } from 'path';
 
 import { AppModule } from './app/app.module';
@@ -12,7 +13,10 @@ declare const module: any;
 async function bootstrap() {
   // In production we run behind nginx and terminate TLS there,
   // so the NestJS app should use plain HTTP.
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    bufferLogs: true,
+  });
+  app.useLogger(app.get(PinoLogger));
 
   console.log('this is module', module);
 

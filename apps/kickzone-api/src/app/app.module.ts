@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { LoggerModule } from 'nestjs-pino';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
@@ -45,6 +46,23 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
 
 @Module({
   imports: [
+    LoggerModule.forRoot({
+      pinoHttp: {
+        level: process.env.NODE_ENV === 'production' ? 'info' : 'debug',
+        transport:
+          process.env.NODE_ENV === 'production'
+            ? undefined
+            : {
+                target: 'pino-pretty',
+                options: {
+                  colorize: true,
+                  translateTime: 'SYS:standard',
+                  singleLine: true,
+                },
+              },
+        redact: ['req.headers.authorization', 'req.headers.cookie'],
+      },
+    }),
     ConfigModule.forRoot({
       isGlobal: true,
     }),

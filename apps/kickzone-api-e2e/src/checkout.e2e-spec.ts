@@ -56,6 +56,9 @@ describe('Checkout Process E2E Tests', () => {
   let testSeller: SellerInfo;
   let testProduct: Product;
   let testSellerProduct: SellerProduct;
+  let testCategory: Category;
+  let testProductInfo: ProductInfo;
+  let testOrderIds: string[] = [];
 
   const createTestData = async () => {
     // Create test user
@@ -83,7 +86,7 @@ describe('Checkout Process E2E Tests', () => {
 
     // Create test category
     const categoryRepo = app.get(getRepositoryToken(Category));
-    await categoryRepo.save({
+    testCategory = await categoryRepo.save({
       slug: `test-category-${uniqueSuffix}`,
       sortOrder: 0,
       isActive: true,
@@ -99,7 +102,7 @@ describe('Checkout Process E2E Tests', () => {
 
     // Create test product info
     const productInfoRepo = app.get(getRepositoryToken(ProductInfo));
-    const productInfo = await productInfoRepo.save({
+    testProductInfo = await productInfoRepo.save({
       size: 'M',
       weight: 100,
       product: testProduct,
@@ -109,14 +112,66 @@ describe('Checkout Process E2E Tests', () => {
     testSellerProduct = sellerProductRepository.create({
       seller: testSeller,
       product: testProduct,
-      productInfo: productInfo,
-      productInfoId: productInfo.id,
+      productInfo: testProductInfo,
+      productInfoId: testProductInfo.id,
       price: 50,
       stockQuantity: 100,
       discount: 0,
       costPrice: 30,
     });
     testSellerProduct = await sellerProductRepository.save(testSellerProduct);
+  };
+
+  const cleanupTestData = async () => {
+    try {
+      // Get repositories
+      const orderRepo = app.get(getRepositoryToken(Order));
+      const orderItemRepo = app.get(getRepositoryToken(OrderItem));
+      const productInfoRepo = app.get(getRepositoryToken(ProductInfo));
+      const productRepo = app.get(getRepositoryToken(Product));
+      const categoryRepo = app.get(getRepositoryToken(Category));
+
+      // Delete orders and order items (created during tests)
+      if (testOrderIds.length > 0) {
+        for (const orderId of testOrderIds) {
+          await orderItemRepo.delete({ orderId });
+          await orderRepo.delete({ id: orderId });
+        }
+      }
+
+      // Delete test seller product
+      if (testSellerProduct?.id) {
+        await sellerProductRepository.delete({ id: testSellerProduct.id });
+      }
+
+      // Delete test product info
+      if (testProductInfo?.id) {
+        await productInfoRepo.delete({ id: testProductInfo.id });
+      }
+
+      // Delete test product
+      if (testProduct?.id) {
+        await productRepo.delete({ id: testProduct.id });
+      }
+
+      // Delete test category
+      if (testCategory?.id) {
+        await categoryRepo.delete({ id: testCategory.id });
+      }
+
+      // Delete test seller
+      if (testSeller?.id) {
+        await sellerInfoRepository.delete({ id: testSeller.id });
+      }
+
+      // Delete test user (last, as it may be referenced by seller)
+      if (testUser?.id) {
+        await userRepository.delete({ id: testUser.id });
+      }
+    } catch (error) {
+      console.error('Error cleaning up test data:', error);
+      // Don't throw - cleanup failures shouldn't fail tests
+    }
   };
 
   beforeAll(async () => {
