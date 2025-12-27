@@ -43,13 +43,13 @@ export function CustomerProducts() {
 
   const { addItem } = useCustomersCartService();
 
-  // Helper function to get pricing info for a product
+  const resetPage = () => setCurrentPage(1);
+
   const getPricingInfo = (product: KickzoneGraphqlTypes.Product) => {
     if (!product.sellerProducts || product.sellerProducts.length === 0) {
       return null;
     }
 
-    // Get the first available seller product
     const sellerProduct = product.sellerProducts[0];
 
     const originalPrice = sellerProduct.price;
@@ -69,25 +69,41 @@ export function CustomerProducts() {
     return pricingInfo;
   };
 
-  const productInfoFilter:
-    | KickzoneGraphqlTypes.ProductInfoFilterInput
-    | undefined =
-    selectedColor || selectedSizes.length
-      ? {
-          ...(selectedColor ? { colorId: [parseInt(selectedColor, 10)] } : {}),
-          ...(selectedSizes.length ? { size: selectedSizes } : {}),
-        }
-      : undefined;
+  const productInfoFilter = useMemo<
+    KickzoneGraphqlTypes.ProductInfoFilterInput | undefined
+  >(
+    () =>
+      selectedColor || selectedSizes.length
+        ? {
+            ...(selectedColor
+              ? { colorId: [parseInt(selectedColor, 10)] }
+              : {}),
+            ...(selectedSizes.length ? { size: selectedSizes } : {}),
+          }
+        : undefined,
+    [selectedColor, selectedSizes]
+  );
 
-  const filter: KickzoneGraphqlTypes.ProductFilterInput = {
-    searchTerm: searchTerm || undefined,
-    categoryIds: selectedCategories.length
-      ? selectedCategories.map((category) => category.id)
-      : undefined,
-    productInfoFilter,
-    onlyWithSellers: true, // Only show products that have sellers
-    onlyInStock: true, // Only show products that are in stock
-  };
+  const filter = useMemo<KickzoneGraphqlTypes.ProductFilterInput>(
+    () => ({
+      searchTerm: searchTerm || undefined,
+      categoryIds: selectedCategories.length
+        ? selectedCategories.map((category) => category.id)
+        : undefined,
+      productInfoFilter,
+      onlyWithSellers: true, // Only show products that have sellers
+      onlyInStock: true, // Only show products that are in stock
+    }),
+    [productInfoFilter, searchTerm, selectedCategories]
+  );
+
+  const afterCursor = useMemo(
+    () =>
+      currentPage > 1
+        ? btoa(`cursor:${(currentPage - 1) * itemsPerPage}`)
+        : undefined,
+    [currentPage, itemsPerPage]
+  );
 
   const {
     products,
@@ -96,10 +112,7 @@ export function CustomerProducts() {
     error: productsError,
   } = useCustomersProducts({
     first: itemsPerPage,
-    after:
-      currentPage > 1
-        ? btoa(`cursor:${(currentPage - 1) * itemsPerPage}`)
-        : undefined,
+    after: afterCursor,
     filter,
   });
 
@@ -129,7 +142,7 @@ export function CustomerProducts() {
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
-    setCurrentPage(1);
+    resetPage();
   };
 
   const handleCategoryChange = (
@@ -137,17 +150,17 @@ export function CustomerProducts() {
     value: KickzoneGraphqlTypes.Category[]
   ) => {
     setSelectedCategories(value);
-    setCurrentPage(1);
+    resetPage();
   };
 
   const handleSizeChange = (_event: React.SyntheticEvent, value: string[]) => {
     setSelectedSizes(value);
-    setCurrentPage(1);
+    resetPage();
   };
 
   const handleColorChange = (event: SelectChangeEvent) => {
     setSelectedColor(event.target.value as string);
-    setCurrentPage(1);
+    resetPage();
   };
 
   const handlePageChange = (
@@ -329,6 +342,10 @@ export function CustomerProducts() {
             const isOutOfStock = pricingInfo
               ? pricingInfo.stockQuantity <= 0
               : false;
+            const primaryInfo = product.productInfos[0];
+            const canAddToCart = Boolean(
+              primaryInfo && !hasNoSellers && !isOutOfStock
+            );
 
             return (
               <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={product.id}>
@@ -340,11 +357,11 @@ export function CustomerProducts() {
                     opacity: isOutOfStock ? 0.6 : 1,
                   }}
                 >
-                  {product.productInfos[0]?.images?.[0] && (
+                  {primaryInfo?.images?.[0] && (
                     <CardMedia
                       component="img"
                       height="200"
-                      image={product.productInfos[0]?.images?.[0]}
+                      image={primaryInfo.images?.[0]}
                       alt={product.name}
                       sx={{ objectFit: 'cover' }}
                     />
@@ -512,9 +529,9 @@ export function CustomerProducts() {
                       variant="contained"
                       startIcon={<ShoppingCart />}
                       onClick={() =>
-                        handleAddToCart(product, product.productInfos[0])
+                        primaryInfo && handleAddToCart(product, primaryInfo)
                       }
-                      disabled={hasNoSellers || isOutOfStock}
+                      disabled={!canAddToCart}
                       fullWidth
                       sx={{
                         backgroundColor:
