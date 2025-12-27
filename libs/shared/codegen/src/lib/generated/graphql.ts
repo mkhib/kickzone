@@ -541,6 +541,9 @@ export type Order = {
   items: Array<OrderItem>;
   notes?: Maybe<Scalars['String']['output']>;
   orderNumber: Scalars['String']['output'];
+  paymentAmount?: Maybe<Scalars['Float']['output']>;
+  paymentAuthority?: Maybe<Scalars['String']['output']>;
+  paymentCurrency?: Maybe<Scalars['String']['output']>;
   sellerAddress?: Maybe<Scalars['String']['output']>;
   sellerId: Scalars['Int']['output'];
   sellerPhone?: Maybe<Scalars['String']['output']>;
@@ -1105,6 +1108,7 @@ export type ZarinPalPaymentResponse = {
 export type ZarinPalVerificationRequestInput = {
   amount: Scalars['Int']['input'];
   authority: Scalars['String']['input'];
+  order_id?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type ZarinPalVerificationResponse = {

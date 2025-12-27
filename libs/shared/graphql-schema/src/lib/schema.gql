@@ -139,6 +139,9 @@ type Order {
   subtotal: Float!
   shippingCost: Float!
   total: Float!
+  paymentAmount: Float
+  paymentCurrency: String
+  paymentAuthority: String
   sellerStoreName: String
   sellerPhone: String
   sellerAddress: String

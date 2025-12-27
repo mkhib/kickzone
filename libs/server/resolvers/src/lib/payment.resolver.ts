@@ -1,5 +1,6 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
+import { UseGuards, BadRequestException } from '@nestjs/common';
+import { OrderStatus } from '@kickzone-workspace/entities';
 import { PaymentService, OrderService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
@@ -102,30 +103,45 @@ export class PaymentResolver {
     @CurrentUser() user: { id: string },
     @Args('input') input: ZarinPalPaymentRequestInput
   ) {
-    try {
-      const response = await this.paymentService.requestPayment({
-        amount: input.amount,
-        callback_url: input.callback_url,
-        description: input.description,
-        currency: (input.currency as 'IRR' | 'IRT') || 'IRT',
-        metadata: {
-          mobile: input.mobile,
-          email: input.email,
-          order_id: input.order_id,
-        },
-      });
-
-      return {
-        code: response.data.code,
-        message: response.data.message,
-        authority: response.data.authority,
-        fee_type: response.data.fee_type,
-        fee: response.data.fee,
-      };
-    } catch (error) {
-      // Re-throw the error so GraphQL can handle it properly
-      throw error;
+    if (!input.order_id) {
+      throw new BadRequestException('order_id is required to request payment');
     }
+
+    // Ensure the order exists and is still pending before requesting payment
+    const order = await this.orderService.findOne(input.order_id);
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException(
+        `Order ${input.order_id} is not pending and cannot be paid`
+      );
+    }
+
+    const response = await this.paymentService.requestPayment({
+      amount: input.amount,
+      callback_url: input.callback_url,
+      description: input.description,
+      currency: (input.currency as 'IRR' | 'IRT') || 'IRT',
+      metadata: {
+        mobile: input.mobile,
+        email: input.email,
+        order_id: input.order_id,
+      },
+    });
+
+    // Bind authority and expected amount to the order to prevent tampering on verify
+    await this.orderService.setPaymentIntent({
+      orderId: input.order_id,
+      authority: response.data.authority,
+      amount: input.amount,
+      currency: input.currency || 'IRT',
+    });
+
+    return {
+      code: response.data.code,
+      message: response.data.message,
+      authority: response.data.authority,
+      fee_type: response.data.fee_type,
+      fee: response.data.fee,
+    };
   }
 
   @Mutation(() => ZarinPalVerificationResponse)
@@ -134,8 +150,40 @@ export class PaymentResolver {
     @CurrentUser() _user: { id: string },
     @Args('input') input: ZarinPalVerificationRequestInput
   ) {
+    if (!input.order_id) {
+      throw new BadRequestException('order_id is required to verify payment');
+    }
+
+    const order = await this.orderService.findOne(input.order_id);
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException(
+        `Order ${input.order_id} is not pending and cannot be verified`
+      );
+    }
+
+    if (!order.paymentAuthority) {
+      throw new BadRequestException(
+        'Payment authority not recorded for this order. Please initiate payment again.'
+      );
+    }
+
+    if (order.paymentAuthority !== input.authority) {
+      throw new BadRequestException(
+        'Payment authority does not match the order payment intent'
+      );
+    }
+
+    if (order.paymentAmount === null || order.paymentAmount === undefined) {
+      throw new BadRequestException(
+        'Payment amount not recorded for this order. Please initiate payment again.'
+      );
+    }
+
+    const amountToVerify = order.paymentAmount;
+
     const response = await this.paymentService.verifyPayment({
-      amount: input.amount,
+      amount: amountToVerify,
       authority: input.authority,
     });
 
@@ -146,8 +194,20 @@ export class PaymentResolver {
       input.order_id
     ) {
       try {
+        // Persist authority/amount before confirming to prevent tampering/replay
+        await this.orderService.setPaymentIntent({
+          orderId: input.order_id,
+          authority: input.authority,
+          amount: amountToVerify,
+          currency: order.paymentCurrency || 'IRT',
+        });
+
         await this.orderService.confirmOrderPayment(input.order_id);
       } catch (error) {
+        console.error(
+          `Failed to finalize order ${input.order_id} after successful payment:`,
+          error
+        );
         // Log error but don't fail payment verification - payment was successful
         // The order confirmation can be retried manually if needed
         // Still return success response since payment was verified

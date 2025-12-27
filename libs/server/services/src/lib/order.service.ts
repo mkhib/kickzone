@@ -408,6 +408,31 @@ export class OrderService {
   }
 
   /**
+   * Persist payment intent metadata on the order to bind gateway authority and expected amount
+   * This prevents clients from later verifying with a different amount/authority.
+   */
+  async setPaymentIntent(params: {
+    orderId: string;
+    authority: string;
+    amount: number;
+    currency?: string;
+  }): Promise<Order> {
+    const order = await this.findOne(params.orderId);
+
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException(
+        `Cannot create payment intent for order with status ${order.status}`
+      );
+    }
+
+    order.paymentAuthority = params.authority;
+    order.paymentAmount = params.amount;
+    order.paymentCurrency = params.currency || 'IRT';
+
+    return this.orderRepository.save(order);
+  }
+
+  /**
    * Cancel pending order - restores stock if order was already confirmed
    * Should be called when payment fails or user cancels
    */

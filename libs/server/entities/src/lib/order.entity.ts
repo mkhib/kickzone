@@ -96,6 +96,19 @@ export class Order {
   @Column('decimal', { precision: 10, scale: 2 })
   total: number;
 
+// Payment metadata for verification
+@Field(() => Float, { nullable: true })
+@Column('decimal', { precision: 12, scale: 2, nullable: true })
+paymentAmount?: number | null;
+
+@Field(() => String, { nullable: true })
+@Column({ nullable: true })
+paymentCurrency?: string | null;
+
+@Field(() => String, { nullable: true })
+@Column({ nullable: true })
+paymentAuthority?: string | null;
+
   // Seller snapshot fields - preserve seller info at order time
   @Field(() => String, { nullable: true })
   @Column({ nullable: true })
