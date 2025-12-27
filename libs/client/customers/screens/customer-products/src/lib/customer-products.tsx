@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import Grid from '@mui/material/Grid';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
@@ -12,6 +12,7 @@ import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
 import Select, { SelectChangeEvent } from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
+import Autocomplete from '@mui/material/Autocomplete';
 import Pagination from '@mui/material/Pagination';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
@@ -32,8 +33,11 @@ import { PriceDisplay } from '@kickzone-workspace/price-display';
 export function CustomerProducts() {
   const { LL } = useI18nContext();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategories, setSelectedCategories] = useState<
+    KickzoneGraphqlTypes.Category[]
+  >([]);
   const [selectedColor, setSelectedColor] = useState('');
+  const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
@@ -65,12 +69,22 @@ export function CustomerProducts() {
     return pricingInfo;
   };
 
+  const productInfoFilter:
+    | KickzoneGraphqlTypes.ProductInfoFilterInput
+    | undefined =
+    selectedColor || selectedSizes.length
+      ? {
+          ...(selectedColor ? { colorId: [parseInt(selectedColor, 10)] } : {}),
+          ...(selectedSizes.length ? { size: selectedSizes } : {}),
+        }
+      : undefined;
+
   const filter: KickzoneGraphqlTypes.ProductFilterInput = {
     searchTerm: searchTerm || undefined,
-    categoryId: selectedCategory ? parseInt(selectedCategory) : undefined,
-    productInfoFilter: selectedColor
-      ? { colorId: [parseInt(selectedColor)] }
+    categoryIds: selectedCategories.length
+      ? selectedCategories.map((category) => category.id)
       : undefined,
+    productInfoFilter,
     onlyWithSellers: true, // Only show products that have sellers
     onlyInStock: true, // Only show products that are in stock
   };
@@ -91,14 +105,43 @@ export function CustomerProducts() {
 
   const { categories } = useCustomersCategories();
   const { colors } = useCustomersColors();
+  const safeColors: KickzoneGraphqlTypes.Color[] = (colors ?? []).filter(
+    (color): color is KickzoneGraphqlTypes.Color =>
+      Boolean(
+        color &&
+          typeof color.id === 'number' &&
+          typeof color.hexCode === 'string' &&
+          typeof color.name === 'string'
+      )
+  );
+
+  const availableSizes = useMemo(() => {
+    const sizeSet = new Set<string>();
+    products.forEach((product) => {
+      product.productInfos?.forEach((info) => {
+        if (info.size) {
+          sizeSet.add(info.size);
+        }
+      });
+    });
+    return Array.from(sizeSet).sort();
+  }, [products]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
     setCurrentPage(1);
   };
 
-  const handleCategoryChange = (event: SelectChangeEvent) => {
-    setSelectedCategory(event.target.value as string);
+  const handleCategoryChange = (
+    _event: React.SyntheticEvent,
+    value: KickzoneGraphqlTypes.Category[]
+  ) => {
+    setSelectedCategories(value);
+    setCurrentPage(1);
+  };
+
+  const handleSizeChange = (_event: React.SyntheticEvent, value: string[]) => {
+    setSelectedSizes(value);
     setCurrentPage(1);
   };
 
@@ -140,7 +183,6 @@ export function CustomerProducts() {
         ? sellerProduct.price -
           (sellerProduct.price * sellerProduct.discount) / 100
         : sellerProduct.price;
-
 
     addItem({
       productId: product.id.toString(),
@@ -217,21 +259,37 @@ export function CustomerProducts() {
             sx={{ minWidth: 200 }}
           />
 
-          <FormControl sx={{ minWidth: 150 }}>
-            <InputLabel>{LL.form.category()}</InputLabel>
-            <Select
-              value={selectedCategory}
-              onChange={handleCategoryChange}
-              label={LL.form.category()}
-            >
-              <MenuItem value="">{LL.products.allCategories()}</MenuItem>
-              {categories.map((category) => (
-                <MenuItem key={category.id} value={category.id.toString()}>
-                  {category.name}
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
+          <Autocomplete
+            multiple
+            options={categories}
+            value={selectedCategories}
+            onChange={handleCategoryChange}
+            getOptionLabel={(option) => option.name}
+            isOptionEqualToValue={(option, value) => option.id === value.id}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={LL.form.category()}
+                placeholder={LL.products.allCategories()}
+              />
+            )}
+            sx={{ minWidth: 220 }}
+          />
+
+          <Autocomplete
+            multiple
+            options={availableSizes}
+            value={selectedSizes}
+            onChange={handleSizeChange}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label={LL.products.size()}
+                placeholder={LL.products.size()}
+              />
+            )}
+            sx={{ minWidth: 180 }}
+          />
 
           <FormControl sx={{ minWidth: 150 }}>
             <InputLabel>{LL.form.color()}</InputLabel>
@@ -241,7 +299,7 @@ export function CustomerProducts() {
               label={LL.form.color()}
             >
               <MenuItem value="">{LL.products.allCategories()}</MenuItem>
-              {colors.map((color) => (
+              {safeColors.map((color) => (
                 <MenuItem key={color.id} value={color.id.toString()}>
                   <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                     <Box

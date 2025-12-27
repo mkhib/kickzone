@@ -70,6 +70,9 @@ export class ProductFilterInput {
   @Field(() => ProductInfoFilterInput, { nullable: true })
   productInfoFilter?: ProductInfoFilterInput;
 
+  @Field(() => [Int], { nullable: true })
+  categoryIds?: number[];
+
   @Field({ nullable: true })
   first?: number;
 

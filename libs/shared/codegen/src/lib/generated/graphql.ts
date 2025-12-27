@@ -635,6 +635,7 @@ export type ProductFilterInput = {
   archivedStatus?: InputMaybe<ProductArchivedStatus>;
   category?: InputMaybe<Scalars['String']['input']>;
   categoryId?: InputMaybe<Scalars['Int']['input']>;
+  categoryIds?: InputMaybe<Array<Scalars['Int']['input']>>;
   first?: InputMaybe<Scalars['Int']['input']>;
   onlyInStock?: InputMaybe<Scalars['Boolean']['input']>;
   onlyWithSellers?: InputMaybe<Scalars['Boolean']['input']>;

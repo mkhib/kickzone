@@ -102,7 +102,11 @@ export class ProductService {
       });
     }
 
-    if (filter?.categoryId) {
+    if (filter?.categoryIds?.length) {
+      query.andWhere('category.id IN (:...categoryIds)', {
+        categoryIds: filter.categoryIds,
+      });
+    } else if (filter?.categoryId) {
       query.andWhere('category.id = :categoryId', {
         categoryId: filter.categoryId,
       });
@@ -456,7 +460,11 @@ export class ProductService {
       });
     }
 
-    if (filter?.categoryId) {
+    if (filter?.categoryIds?.length) {
+      query.andWhere('category.id IN (:...categoryIds)', {
+        categoryIds: filter.categoryIds,
+      });
+    } else if (filter?.categoryId) {
       query.andWhere('category.id = :categoryId', {
         categoryId: filter.categoryId,
       });

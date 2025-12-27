@@ -360,6 +360,7 @@ input ProductFilterInput {
   category: String
   searchTerm: String
   productInfoFilter: ProductInfoFilterInput
+  categoryIds: [Int!]
   first: Int
   after: String
   categoryId: Int
