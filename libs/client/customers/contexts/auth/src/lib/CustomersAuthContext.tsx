@@ -61,16 +61,22 @@ export const CustomersAuthProvider = ({
   const [logoutMutation] =
     useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'logout'>>(LOGOUT_MUTATION);
 
-  // Update user when query returns
+  // Update user when query returns - only for CUSTOMER role users
   useEffect(() => {
-    if (data?.me) {
+    if (data?.me && data.me.role === KickzoneGraphqlTypes.UserRole.Customer) {
       setUser(data.me);
+    } else {
+      // Clear user if not a customer or not authenticated
+      setUser(null);
     }
   }, [data]);
 
   const login = (user: CustomerUser) => {
-    setUser(user);
-    // Cart will be loaded automatically by useCartService when user logs in
+    // Only allow login for CUSTOMER role users
+    if (user.role === KickzoneGraphqlTypes.UserRole.Customer) {
+      setUser(user);
+      // Cart will be loaded automatically by useCartService when user logs in
+    }
   };
 
   const logout = async () => {

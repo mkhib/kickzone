@@ -27,6 +27,7 @@ export const PRODUCT_FRAGMENT = gql`
       seller {
         id
         storeName
+        shippingFee
         user {
           id
           name

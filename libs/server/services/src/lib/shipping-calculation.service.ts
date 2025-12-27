@@ -27,8 +27,8 @@ export interface ShippingCalculationResult {
 @Injectable()
 export class ShippingCalculationService {
   private defaultSettings: Partial<PlatformSettings> = {
-    freeShippingThreshold: 50.0,
-    freeShippingEnabled: true,
+    freeShippingThreshold: 500.0, // Temporarily increased to test shipping fees
+    freeShippingEnabled: false, // Temporarily disabled to test shipping fees
     shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
     additionalSellerDiscount: 0.5, // 50% discount
     additionalSellerFixedFee: undefined,

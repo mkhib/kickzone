@@ -102,25 +102,30 @@ export class PaymentResolver {
     @CurrentUser() user: { id: string },
     @Args('input') input: ZarinPalPaymentRequestInput
   ) {
-    const response = await this.paymentService.requestPayment({
-      amount: input.amount,
-      callback_url: input.callback_url,
-      description: input.description,
-      currency: (input.currency as 'IRR' | 'IRT') || 'IRT',
-      metadata: {
-        mobile: input.mobile,
-        email: input.email,
-        order_id: input.order_id,
-      },
-    });
+    try {
+      const response = await this.paymentService.requestPayment({
+        amount: input.amount,
+        callback_url: input.callback_url,
+        description: input.description,
+        currency: (input.currency as 'IRR' | 'IRT') || 'IRT',
+        metadata: {
+          mobile: input.mobile,
+          email: input.email,
+          order_id: input.order_id,
+        },
+      });
 
-    return {
-      code: response.data.code,
-      message: response.data.message,
-      authority: response.data.authority,
-      fee_type: response.data.fee_type,
-      fee: response.data.fee,
-    };
+      return {
+        code: response.data.code,
+        message: response.data.message,
+        authority: response.data.authority,
+        fee_type: response.data.fee_type,
+        fee: response.data.fee,
+      };
+    } catch (error) {
+      // Re-throw the error so GraphQL can handle it properly
+      throw error;
+    }
   }
 
   @Mutation(() => ZarinPalVerificationResponse)
@@ -145,10 +150,6 @@ export class PaymentResolver {
       } catch (error) {
         // Log error but don't fail payment verification - payment was successful
         // The order confirmation can be retried manually if needed
-        console.error(
-          `Failed to confirm order ${input.order_id} after payment verification:`,
-          error
-        );
         // Still return success response since payment was verified
       }
     }

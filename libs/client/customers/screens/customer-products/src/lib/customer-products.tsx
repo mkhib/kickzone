@@ -141,6 +141,7 @@ export function CustomerProducts() {
           (sellerProduct.price * sellerProduct.discount) / 100
         : sellerProduct.price;
 
+
     addItem({
       productId: product.id.toString(),
       productName: product.name,

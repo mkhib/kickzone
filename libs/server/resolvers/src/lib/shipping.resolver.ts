@@ -6,12 +6,10 @@ import {
   InputType,
   Field,
 } from '@nestjs/graphql';
-import { UseGuards } from '@nestjs/common';
 import {
   ShippingCalculationService,
   SellerShippingInfo,
 } from '@kickzone-workspace/services';
-import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { ObjectType } from '@nestjs/graphql';
 
 @InputType()
@@ -65,9 +63,9 @@ export class ShippingResolver {
   /**
    * Calculate shipping cost for a cart
    * Used by frontend to display accurate shipping costs
+   * No auth required since it only uses provided data
    */
   @Query(() => ShippingCalculationResult)
-  @UseGuards(GraphqlAuthGuard)
   async calculateShippingCost(
     @Args('cartSubtotal', { type: () => Float }) cartSubtotal: number,
     @Args('sellerShippingFees', { type: () => [SellerShippingInfoInput] })

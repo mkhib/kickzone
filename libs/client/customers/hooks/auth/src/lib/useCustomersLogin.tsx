@@ -32,7 +32,7 @@ export function useCustomersLogin() {
   const handleLogin = async (email: string, password: string) => {
     const { data } = await login({ variables: { email, password } });
 
-    if (data?.login) {
+    if (data?.login && data.login.role === KickzoneGraphqlTypes.UserRole.Customer) {
       // Set the authenticated user
       setAuthUser(data.login);
 
@@ -54,6 +54,8 @@ export function useCustomersLogin() {
           // Don't throw error here - allow login to succeed even if cart sync fails
         }
       }
+    } else if (data?.login && data.login.role !== KickzoneGraphqlTypes.UserRole.Customer) {
+      throw new Error('Login failed: This account is not a customer account');
     } else {
       throw new Error('Login failed: No user data returned');
     }

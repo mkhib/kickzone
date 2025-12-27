@@ -37,12 +37,12 @@ export const AdminsAuthProvider = ({ children }: { children: ReactNode }) => {
   const [logoutMutation] =
     useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'logout'>>(LOGOUT_MUTATION);
 
-  // Handle data changes
+  // Handle data changes - only for ADMIN role users
   useEffect(() => {
-    if (data?.me) {
+    if (data?.me && data.me.role === KickzoneGraphqlTypes.UserRole.Admin) {
       setAdmin(data.me);
       localStorage.setItem('admin_user', JSON.stringify(data.me));
-    } else if (error) {
+    } else if (error || (data?.me && data.me.role !== KickzoneGraphqlTypes.UserRole.Admin)) {
       setAdmin(null);
       localStorage.removeItem('admin_user');
     }

@@ -125,6 +125,11 @@ const en = {
     demoCheckout: 'We will contact you soon for the payment info.',
     orderProcessed:
       'Your order will be processed and you will receive a confirmation email.',
+    processingOrder: 'Processing your order...',
+    orderCreatedRedirecting:
+      'Your order has been created successfully. Redirecting to payment gateway...',
+    orderNumberLabel: 'Order Number',
+    totalAmountLabel: 'Total Amount',
     itemRemoved: 'Item removed',
     itemRemovedMessage: 'Item has been removed from your cart',
     quantityUpdated: 'Quantity updated',
@@ -152,6 +157,8 @@ const en = {
     proceedToPayment: 'Proceed to Payment',
     continueToPaymentGateway: 'Continue to Payment Gateway',
     processing: 'Processing...',
+    paymentInitializationFailed:
+      'Failed to initialize payment. Please try again.',
   },
 
   // Product management

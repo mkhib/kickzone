@@ -34,20 +34,23 @@ export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
   const [logoutMutation] =
     useMutation<Pick<KickzoneGraphqlTypes.Mutation, 'logout'>>(LOGOUT_MUTATION);
 
-  // Handle data changes
+  // Handle data changes - only for SELLER role users
   useEffect(() => {
-    if (data?.me) {
+    if (data?.me && data.me.role === KickzoneGraphqlTypes.UserRole.Seller) {
       setUser(data.me);
       localStorage.setItem('seller_user', JSON.stringify(data.me));
-    } else if (error) {
+    } else if (error || (data?.me && data.me.role !== KickzoneGraphqlTypes.UserRole.Seller)) {
       setUser(null);
       localStorage.removeItem('seller_user');
     }
   }, [data, error]);
 
   const login = (user: KickzoneGraphqlTypes.User) => {
-    setUser(user);
-    localStorage.setItem('seller_user', JSON.stringify(user));
+    // Only allow login for SELLER role users
+    if (user.role === KickzoneGraphqlTypes.UserRole.Seller) {
+      setUser(user);
+      localStorage.setItem('seller_user', JSON.stringify(user));
+    }
   };
 
   const logout = async () => {

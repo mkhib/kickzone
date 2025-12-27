@@ -62,6 +62,13 @@ export function useZarinPalPayment(
     ): Promise<string | null> => {
       setError(null);
 
+      console.log('[PaymentHook] 🚀 Requesting payment:', {
+        amount: request.amount,
+        currency: request.currency,
+        callbackUrl: request.callback_url,
+        orderId: request.metadata?.order_id,
+      });
+
       try {
         const { data } = await requestPaymentMutation({
           variables: {
@@ -83,16 +90,70 @@ export function useZarinPalPayment(
         }
 
         if (response.code === 100 && response.authority) {
+          console.log(
+            `[PaymentHook] ✅ Payment request successful: authority=${response.authority.substring(
+              0,
+              20
+            )}...`
+          );
           return response.authority;
         } else {
           const errorMessage = getZarinPalErrorMessage(response.code);
+          console.error(
+            `[PaymentHook] ❌ Payment request failed: code=${response.code}, message=${response.message}`
+          );
           setError(errorMessage);
           options?.onError?.(errorMessage);
           return null;
         }
       } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : 'خطا در درخواست پرداخت';
+        // Extract detailed error message from GraphQL error
+        let errorMessage = 'خطا در درخواست پرداخت';
+
+        if (err instanceof Error) {
+          errorMessage = err.message;
+
+          // Check for GraphQL errors with more details
+          if (
+            'graphQLErrors' in err &&
+            (err as any).graphQLErrors?.length > 0
+          ) {
+            const graphQLError = (err as any).graphQLErrors[0];
+            const detailedMessage =
+              graphQLError.message ||
+              graphQLError.extensions?.message ||
+              err.message;
+            errorMessage = detailedMessage;
+
+            console.error('[PaymentHook] ❌ GraphQL error details:', {
+              message: graphQLError.message,
+              extensions: graphQLError.extensions,
+              path: graphQLError.path,
+            });
+          }
+
+          // Check for network errors
+          if ('networkError' in err && (err as any).networkError) {
+            const networkError = (err as any).networkError;
+            console.error('[PaymentHook] ❌ Network error details:', {
+              statusCode: networkError.statusCode,
+              statusText: networkError.statusText,
+              message: networkError.message,
+            });
+
+            if (networkError.statusCode === 403) {
+              errorMessage =
+                'Payment gateway access denied (403). Please check your payment configuration.';
+            }
+          }
+        }
+
+        console.error('[PaymentHook] ❌ Payment request error:', {
+          error: err,
+          errorMessage,
+          errorType: err instanceof Error ? err.constructor.name : typeof err,
+        });
+
         setError(errorMessage);
         options?.onError?.(errorMessage);
         return null;

@@ -440,6 +440,22 @@ type RootTranslation = {
 		 */
 		orderProcessed: string
 		/**
+		 * P​r​o​c​e​s​s​i​n​g​ ​y​o​u​r​ ​o​r​d​e​r​.​.​.
+		 */
+		processingOrder: string
+		/**
+		 * Y​o​u​r​ ​o​r​d​e​r​ ​h​a​s​ ​b​e​e​n​ ​c​r​e​a​t​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y​.​ ​R​e​d​i​r​e​c​t​i​n​g​ ​t​o​ ​p​a​y​m​e​n​t​ ​g​a​t​e​w​a​y​.​.​.
+		 */
+		orderCreatedRedirecting: string
+		/**
+		 * O​r​d​e​r​ ​N​u​m​b​e​r
+		 */
+		orderNumberLabel: string
+		/**
+		 * T​o​t​a​l​ ​A​m​o​u​n​t
+		 */
+		totalAmountLabel: string
+		/**
 		 * I​t​e​m​ ​r​e​m​o​v​e​d
 		 */
 		itemRemoved: string
@@ -543,6 +559,10 @@ type RootTranslation = {
 		 * P​r​o​c​e​s​s​i​n​g​.​.​.
 		 */
 		processing: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​i​n​i​t​i​a​l​i​z​e​ ​p​a​y​m​e​n​t​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
+		 */
+		paymentInitializationFailed: string
 	}
 	products: {
 		/**
@@ -2964,6 +2984,22 @@ export type TranslationFunctions = {
 		 */
 		orderProcessed: () => LocalizedString
 		/**
+		 * Processing your order...
+		 */
+		processingOrder: () => LocalizedString
+		/**
+		 * Your order has been created successfully. Redirecting to payment gateway...
+		 */
+		orderCreatedRedirecting: () => LocalizedString
+		/**
+		 * Order Number
+		 */
+		orderNumberLabel: () => LocalizedString
+		/**
+		 * Total Amount
+		 */
+		totalAmountLabel: () => LocalizedString
+		/**
 		 * Item removed
 		 */
 		itemRemoved: () => LocalizedString
@@ -3067,6 +3103,10 @@ export type TranslationFunctions = {
 		 * Processing...
 		 */
 		processing: () => LocalizedString
+		/**
+		 * Failed to initialize payment. Please try again.
+		 */
+		paymentInitializationFailed: () => LocalizedString
 	}
 	products: {
 		/**

@@ -2,6 +2,7 @@ import {
   Category,
   Product,
   ProductConnection,
+  SellerInfo,
   SellerProduct,
   User,
   UserRole,
@@ -258,5 +259,10 @@ export class SellerProductResolver {
       return null;
     }
     return sellerProduct.costPrice;
+  }
+
+  @ResolveField(() => SellerInfo, { nullable: true })
+  seller(@Parent() sellerProduct: SellerProduct) {
+    return sellerProduct.seller;
   }
 }

@@ -125,6 +125,11 @@ const fa = {
     demoCheckout: 'به زودی برای اطلاعات پرداخت با شما تماس خواهیم گرفت.',
     orderProcessed:
       'سفارش شما پردازش خواهد شد و ایمیل تایید دریافت خواهید کرد.',
+    processingOrder: 'در حال پردازش سفارش شما...',
+    orderCreatedRedirecting:
+      'سفارش شما با موفقیت ایجاد شد. در حال انتقال به درگاه پرداخت...',
+    orderNumberLabel: 'شماره سفارش',
+    totalAmountLabel: 'مبلغ کل',
     itemRemoved: 'آیتم حذف شد',
     itemRemovedMessage: 'آیتم از سبد خرید شما حذف شد',
     quantityUpdated: 'تعداد به‌روزرسانی شد',
@@ -152,6 +157,7 @@ const fa = {
     proceedToPayment: 'ادامه به پرداخت',
     continueToPaymentGateway: 'ادامه به درگاه پرداخت',
     processing: 'در حال پردازش...',
+    paymentInitializationFailed: 'راه‌اندازی پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.',
   },
 
   // Product management

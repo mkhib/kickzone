@@ -162,6 +162,19 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   );
   const isOutOfStock = pricingInfo ? pricingInfo.stockQuantity <= 0 : false;
   const hasMultipleVariants = pricingInfo?.hasMultipleVariants || false;
+  const tagBaseSx = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 0.5,
+    borderRadius: 3,
+    px: 2,
+    py: 1,
+    fontWeight: 700,
+    fontSize: '0.85rem',
+    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+    flexShrink: 0,
+    maxWidth: 'calc(50% - 8px)',
+  } as const;
 
   const handleAddToCartClick = useCallback(() => {
     if (hasMultipleVariants) {
@@ -238,56 +251,57 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             transition: 'transform 0.4s ease',
           }}
         />
-        {pricingInfo && pricingInfo.discount > 0 && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 16,
-              right: 16,
-              background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-              color: 'white',
-              borderRadius: 3,
-              px: 2,
-              py: 1,
-              fontWeight: 700,
-              fontSize: '0.9rem',
-              boxShadow: '0 4px 15px rgba(245, 87, 108, 0.4)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: 0.5,
-            }}
-          >
-            <LocalOfferIcon sx={{ fontSize: 18 }} />
-            {formatNumber(pricingInfo.discount, currentLocale)}%{' '}
-            {LL.products.discount()}
-          </Box>
-        )}
-        {pricingInfo &&
-          pricingInfo.stockQuantity < 10 &&
-          pricingInfo.stockQuantity > 0 && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 16,
+            left: 16,
+            right: 16,
+            display: 'flex',
+            flexWrap: 'wrap',
+            alignItems: 'flex-start',
+            justifyContent: 'space-between',
+            gap: 1,
+            pointerEvents: 'none',
+          }}
+        >
+          {pricingInfo &&
+            pricingInfo.stockQuantity < 10 &&
+            pricingInfo.stockQuantity > 0 && (
+              <Box
+                sx={{
+                  ...tagBaseSx,
+                  background:
+                    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
+                  color: '#000',
+                  boxShadow: '0 4px 15px rgba(250, 112, 154, 0.4)',
+                  order: 1,
+                  pointerEvents: 'auto',
+                }}
+              >
+                <InventoryIcon sx={{ fontSize: 18 }} />
+                {formatNumber(pricingInfo.stockQuantity, currentLocale)}{' '}
+                {LL.products.left()}
+              </Box>
+            )}
+          {pricingInfo && pricingInfo.discount > 0 && (
             <Box
               sx={{
-                position: 'absolute',
-                top: 16,
-                left: 16,
-                background: 'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                color: '#000',
-                borderRadius: 3,
-                px: 2,
-                py: 1,
-                fontWeight: 700,
-                fontSize: '0.85rem',
-                boxShadow: '0 4px 15px rgba(250, 112, 154, 0.4)',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.5,
+                ...tagBaseSx,
+                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
+                color: 'white',
+                boxShadow: '0 4px 15px rgba(245, 87, 108, 0.4)',
+                order: 2,
+                ml: 'auto',
+                pointerEvents: 'auto',
               }}
             >
-              <InventoryIcon sx={{ fontSize: 18 }} />
-              {formatNumber(pricingInfo.stockQuantity, currentLocale)}{' '}
-              {LL.products.left()}
+              <LocalOfferIcon sx={{ fontSize: 18 }} />
+              {formatNumber(pricingInfo.discount, currentLocale)}%{' '}
+              {LL.products.discount()}
             </Box>
           )}
+        </Box>
       </Box>
 
       <CardContent

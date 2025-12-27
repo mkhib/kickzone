@@ -1,6 +1,5 @@
 import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
-import { PaymentLogger } from './payment-logger.service';
 
 export interface ZarinPalPaymentRequest {
   amount: number; // Amount in Toman (IRT)
@@ -55,18 +54,42 @@ export class PaymentService {
   private readonly isSandbox: boolean;
   private readonly apiBaseUrl: string;
 
-  constructor(
-    private readonly configService: ConfigService,
-    private readonly paymentLogger: PaymentLogger
-  ) {
+  constructor(private readonly configService: ConfigService) {
+    // Use a random UUID for sandbox if not configured (sandbox accepts any UUID)
+    // Generate a random UUID: xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx
+    const generateRandomUUID = () => {
+      return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+        const r = (Math.random() * 16) | 0;
+        const v = c === 'x' ? r : (r & 0x3) | 0x8;
+        return v.toString(16);
+      });
+    };
+
     this.merchantId =
       this.configService.get<string>('ZARINPAL_MERCHANT_ID') ||
-      '00000000-0000-0000-0000-000000000000';
+      generateRandomUUID();
+
+    // Check sandbox mode - default to true in development
+    const nodeEnv = this.configService.get<string>('NODE_ENV', 'development');
+    const sandboxEnv = this.configService.get<string>('ZARINPAL_SANDBOX');
+
+    // Default to sandbox in development, require explicit false for production
     this.isSandbox =
-      this.configService.get<string>('ZARINPAL_SANDBOX', 'true') !== 'false';
+      sandboxEnv === undefined ? nodeEnv !== 'production' : sandboxEnv !== 'false';
+
     this.apiBaseUrl = this.isSandbox
       ? 'https://sandbox.zarinpal.com/pg/v4/payment'
       : 'https://payment.zarinpal.com/pg/v4/payment';
+
+    // Warn if using default merchant ID
+    if (this.merchantId === '00000000-0000-0000-0000-000000000000') {
+      if (!this.isSandbox) {
+        console.error(
+          '❌ ZarinPal PRODUCTION: Merchant ID not configured! ' +
+            'Payment requests will fail. Set ZARINPAL_MERCHANT_ID environment variable.'
+        );
+      }
+    }
   }
 
   /**
@@ -85,12 +108,6 @@ export class PaymentService {
     };
 
     try {
-      this.paymentLogger.logPaymentInitiated({
-        orderId: request.metadata?.order_id,
-        amount: request.amount,
-        currency: request.currency || 'IRT',
-        gateway: 'zarinpal',
-      });
       const response = await fetch(`${this.apiBaseUrl}/request.json`, {
         method: 'POST',
         headers: {
@@ -101,18 +118,88 @@ export class PaymentService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Clone the response so we can read it multiple times
+        const responseClone = response.clone();
+
+        // Try to get error details from response body
+        let errorDetails = '';
+        let fullErrorBody: any = null;
+        let responseText = '';
+
+        try {
+          // First try to get as text to see what we're dealing with
+          responseText = await responseClone.text();
+          console.error(
+            `[PaymentService] ❌ ZarinPal API raw error response:`,
+            responseText.substring(0, 1000) // First 1000 chars
+          );
+
+          // Try to parse as JSON
+          try {
+            fullErrorBody = JSON.parse(responseText);
+            console.error(
+              `[PaymentService] ❌ ZarinPal API error response body (JSON):`,
+              JSON.stringify(fullErrorBody, null, 2)
+            );
+
+            if (fullErrorBody.errors && fullErrorBody.errors.length > 0) {
+              errorDetails = fullErrorBody.errors
+                .map(
+                  (e: { message?: string; code?: number }) =>
+                    e.message || `Code: ${e.code}`
+                )
+                .join(', ');
+            } else if (fullErrorBody.message) {
+              errorDetails = fullErrorBody.message;
+            } else if (fullErrorBody.data && fullErrorBody.data.message) {
+              errorDetails = fullErrorBody.data.message;
+            } else {
+              errorDetails = JSON.stringify(fullErrorBody);
+            }
+          } catch (jsonError) {
+            // Not JSON, use text as error details
+            errorDetails = responseText || response.statusText;
+            console.error(
+              `[PaymentService] ❌ ZarinPal API error (non-JSON response):`,
+              responseText.substring(0, 500)
+            );
+          }
+        } catch (textError) {
+          // Can't even read as text
+          errorDetails = response.statusText;
+          console.error(
+            `[PaymentService] ❌ Could not read response body:`,
+            textError
+          );
+        }
+
+        const errorMessage = errorDetails
+          ? `ZarinPal API error (${response.status}): ${errorDetails}`
+          : `ZarinPal API error: HTTP ${response.status} ${response.statusText}`;
+
+        console.error(`[PaymentService] ❌ Payment request failed:`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorDetails,
+          fullResponse: fullErrorBody,
+          orderId: request.metadata?.order_id,
+          amount: request.amount,
+          currency: request.currency || 'IRT',
+          merchantId: this.merchantId,
+          isSandbox: this.isSandbox,
+          apiUrl: this.apiBaseUrl,
+          payload: {
+            merchant_id: this.merchantId.substring(0, 8) + '...',
+            amount: request.amount,
+            currency: request.currency || 'IRT',
+            callback_url: request.callback_url,
+          },
+        });
+
+        throw new Error(errorMessage);
       }
 
       const data: ZarinPalPaymentResponse = await response.json();
-
-      this.paymentLogger.logGatewayResponse({
-        orderId: request.metadata?.order_id,
-        authority: data.data.authority,
-        code: data.data.code,
-        message: data.data.message,
-        gateway: 'zarinpal',
-      });
 
       if (data.errors && data.errors.length > 0) {
         const errorMessages = data.errors.map((e) => e.message).join(', ');
@@ -121,16 +208,6 @@ export class PaymentService {
 
       return data;
     } catch (error) {
-      this.paymentLogger.logGatewayResponse({
-        orderId: request.metadata?.order_id,
-        authority: undefined,
-        code: -1,
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to request payment from ZarinPal',
-        gateway: 'zarinpal',
-      });
       if (error instanceof Error) {
         throw error;
       }
@@ -161,7 +238,38 @@ export class PaymentService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        // Try to get error details from response body
+        let errorDetails = '';
+        try {
+          const errorBody = await response.json();
+          if (errorBody.errors && errorBody.errors.length > 0) {
+            errorDetails = errorBody.errors
+              .map(
+                (e: { message?: string; code?: number }) =>
+                  e.message || `Code: ${e.code}`
+              )
+              .join(', ');
+          }
+        } catch {
+          // If parsing fails, use status text
+          errorDetails = response.statusText;
+        }
+
+        const errorMessage = errorDetails
+          ? `ZarinPal API error (${response.status}): ${errorDetails}`
+          : `ZarinPal API error: HTTP ${response.status} ${response.statusText}`;
+
+        console.error(`[PaymentService] ❌ Payment verification failed:`, {
+          status: response.status,
+          statusText: response.statusText,
+          errorDetails,
+          authority: request.authority,
+          amount: request.amount,
+          merchantId: this.merchantId.substring(0, 8) + '...',
+          isSandbox: this.isSandbox,
+        });
+
+        throw new Error(errorMessage);
       }
 
       const data: ZarinPalVerificationResponse = await response.json();
@@ -171,28 +279,8 @@ export class PaymentService {
         throw new Error(`ZarinPal API error: ${errorMessages}`);
       }
 
-      this.paymentLogger.logVerificationResult({
-        orderId: undefined,
-        authority: request.authority,
-        amount: request.amount,
-        code: data.data.code,
-        message: data.data.message,
-        refId: data.data.ref_id,
-      });
-
       return data;
     } catch (error) {
-      this.paymentLogger.logVerificationResult({
-        orderId: undefined,
-        authority: request.authority,
-        amount: request.amount,
-        code: -1,
-        message:
-          error instanceof Error
-            ? error.message
-            : 'Failed to verify payment with ZarinPal',
-        refId: undefined,
-      });
       if (error instanceof Error) {
         throw error;
       }

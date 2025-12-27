@@ -197,33 +197,6 @@ export class ProductService {
       };
     });
 
-    // Debug: Log products to see variant counts
-    console.log('[ProductService] Returning products:', {
-      totalProducts: processedProducts.length,
-      products: processedProducts.map((p) => ({
-        id: p.id,
-        name: p.name,
-        productInfosCount: p.productInfos?.length || 0,
-        sellerProductsCount: p.sellerProducts?.length || 0,
-        productInfos: p.productInfos?.map((pi) => ({
-          id: pi.id,
-          size: pi.size,
-          color: pi.color?.name,
-        })),
-        sellerProducts: p.sellerProducts?.map((sp) => ({
-          id: sp.id,
-          productInfoId: sp.productInfoId,
-          price: sp.price,
-          stockQuantity: sp.stockQuantity,
-          sellerId: sp.seller?.id,
-        })),
-      })),
-      filter: {
-        onlyWithSellers: filter?.onlyWithSellers,
-        onlyInStock: filter?.onlyInStock,
-      },
-    });
-
     return [processedProducts, totalCount];
   }
 

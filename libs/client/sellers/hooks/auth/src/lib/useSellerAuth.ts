@@ -30,10 +30,12 @@ export const useSellerLogin = () => {
       const result = await loginMutation({
         variables: { email: input.email, password: input.password },
       });
-      if (result.data?.login) {
+      if (result.data?.login && result.data.login.role === KickzoneGraphqlTypes.UserRole.Seller) {
         login(result.data.login);
         localStorage.setItem('seller_user', JSON.stringify(result.data.login));
         navigate('/products');
+      } else if (result.data?.login && result.data.login.role !== KickzoneGraphqlTypes.UserRole.Seller) {
+        console.error('Login failed: User does not have seller privileges');
       }
     } catch (error) {
       console.error('Login failed:', error);

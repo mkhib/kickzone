@@ -1,10 +1,8 @@
 import { useQuery } from '@apollo/client/react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import {
-  GET_PRODUCTS_QUERY,
-  GET_CATEGORIES_QUERY,
-  GET_COLORS_QUERY,
-} from '@kickzone-workspace/customers-graphql';
+import { GET_PRODUCTS_QUERY } from '@kickzone-workspace/customers-graphql';
+import { useCategoriesQuery } from '@kickzone-workspace/categories-hook';
+import { useColors } from '@kickzone-workspace/colors-hook';
 
 export function useCustomersProducts({
   first = 12,
@@ -48,27 +46,28 @@ export function useCustomersProducts({
 }
 
 export function useCustomersCategories() {
-  const { data, loading, error, refetch } =
-    useQuery<Pick<KickzoneGraphqlTypes.Query, 'categories'>>(
-      GET_CATEGORIES_QUERY
-    );
+  const {
+    categories,
+    getCategoriesLoading,
+    getCategoriesError,
+    refetchCategories,
+  } = useCategoriesQuery();
 
   return {
-    categories: data?.categories || [],
-    loading,
-    error,
-    refetch,
+    categories,
+    loading: getCategoriesLoading,
+    error: getCategoriesError,
+    refetch: refetchCategories,
   };
 }
 
 export function useCustomersColors() {
-  const { data, loading, error, refetch } =
-    useQuery<Pick<KickzoneGraphqlTypes.Query, 'colors'>>(GET_COLORS_QUERY);
+  const { colors, loading, error, refetchColors } = useColors();
 
   return {
-    colors: data?.colors || [],
+    colors,
     loading,
     error,
-    refetch,
+    refetch: refetchColors,
   };
 }

@@ -424,6 +424,7 @@ export function CustomerShoppingCart() {
 
   const handleCreateOrderAndInitiatePayment = async () => {
     try {
+      console.log('[Checkout] 🛒 Starting order creation and payment process');
       setIsCreatingOrder(true);
 
       // Validate shipping information
@@ -483,9 +484,18 @@ export function CustomerShoppingCart() {
       );
 
       // Create orders for each seller with calculated shipping costs
+      console.log(
+        `[Checkout] 📦 Creating ${
+          Object.keys(itemsBySeller).length
+        } order(s) for ${cartItems.length} item(s)`
+      );
+
       const orderPromises = Object.entries(itemsBySeller || {}).map(
-        ([sellerId, items]) =>
-          createOrderMutation({
+        ([sellerId, items]) => {
+          console.log(
+            `[Checkout] 📝 Creating order for seller ${sellerId} with ${items.length} item(s)`
+          );
+          return createOrderMutation({
             customerName: shippingInfo.customerName || '',
             customerEmail: shippingInfo.customerEmail || '',
             customerPhone: shippingInfo.customerPhone || '',
@@ -510,7 +520,8 @@ export function CustomerShoppingCart() {
               color: item.color,
               size: item.size,
             })),
-          })
+          });
+        }
       );
 
       const orderResults = await Promise.all(orderPromises);
@@ -520,6 +531,12 @@ export function CustomerShoppingCart() {
       if (!firstOrder) {
         throw new Error('No order was created');
       }
+
+      console.log(`[Checkout] ✅ Order created successfully:`, {
+        orderId: firstOrder.id,
+        orderNumber: firstOrder.orderNumber,
+        totalOrders: orderResults.length,
+      });
 
       setCreatedOrder({
         id: firstOrder.id,
@@ -532,10 +549,42 @@ export function CustomerShoppingCart() {
       }
 
       // Calculate total amount in Toman (IRT) - ZarinPal expects Toman
-      const amountInToman = Math.round(totalInToman);
+      // Note: totalInToman is actually in Rials (IRR) from the conversion
+      // ZarinPal expects Toman (IRT), where 1 Toman = 10 Rials
+      // So we need to divide by 10 to convert Rials to Toman
+      const amountInToman = Math.round(totalInToman / 10);
+
+      console.log(`[Checkout] 💱 Currency conversion:`, {
+        amountInUSD: grandTotal,
+        amountInRials: totalInToman,
+        amountInToman, // Final amount for ZarinPal
+        conversionRate: totalInToman / grandTotal,
+      });
+
+      // Validate amount is reasonable (not too large or too small)
+      if (amountInToman <= 0) {
+        throw new Error(
+          'Invalid payment amount: amount must be greater than 0'
+        );
+      }
+
+      if (amountInToman > 100000000) {
+        // 100 million Toman = ~$2000 USD (at 50k rate)
+        console.warn(
+          `[Checkout] ⚠️  Very large payment amount: ${amountInToman} Toman (${grandTotal} USD)`
+        );
+      }
 
       // Build callback URL with order ID
       const callbackUrl = `${window.location.origin}${CUSTOMER_ROUTES.PAYMENT_CALLBACK}?orderId=${firstOrder.id}`;
+
+      console.log(`[Checkout] 💳 Requesting payment from ZarinPal:`, {
+        orderId: firstOrder.id,
+        orderNumber: firstOrder.orderNumber,
+        amountInToman,
+        amountInUSD: grandTotal,
+        callbackUrl,
+      });
 
       // Request payment from ZarinPal
       const authority = await requestPayment({
@@ -551,10 +600,20 @@ export function CustomerShoppingCart() {
       });
 
       if (!authority) {
+        console.error(
+          '[Checkout] ❌ Payment request failed - no authority returned'
+        );
         // Error already handled by hook
         setIsCreatingOrder(false);
         return;
       }
+
+      console.log(
+        `[Checkout] ✅ Payment authority received: ${authority.substring(
+          0,
+          20
+        )}...`
+      );
 
       setPaymentAuthority(authority);
 
@@ -577,13 +636,55 @@ export function CustomerShoppingCart() {
       setIsCreatingOrder(false);
 
       // Auto-redirect to payment gateway after a short delay
+      console.log('[Checkout] 🔄 Redirecting to payment gateway in 1.5s...');
       setTimeout(() => {
+        console.log(
+          `[Checkout] 🌐 Redirecting to ZarinPal gateway with authority: ${authority}`
+        );
         redirectToGateway(authority);
       }, 1500);
     } catch (error) {
       console.error('Error creating order:', error);
       const errorMessage = (error as Error).message;
 
+      // Check for authentication errors
+      if (
+        errorMessage.includes('not authenticated') ||
+        errorMessage.includes('unauthorized') ||
+        errorMessage.includes('User not authenticated') ||
+        (error as any).graphQLErrors?.some(
+          (err: any) =>
+            err.message?.toLowerCase().includes('not authenticated') ||
+            err.message?.toLowerCase().includes('unauthorized')
+        )
+      ) {
+        showSnackbar(
+          LL.errors.unauthorized?.() || 'Please log in to proceed with payment',
+          {
+            severity: 'error',
+          }
+        );
+        setAuthDialogOpen(true);
+        setIsCreatingOrder(false);
+        return;
+      }
+
+      // Check for payment gateway errors (403 from ZarinPal)
+      if (
+        errorMessage.includes('HTTP error! status: 403') ||
+        errorMessage.includes('403')
+      ) {
+        showSnackbar(
+          'Payment gateway error: Please check your payment configuration or try again later',
+          {
+            severity: 'error',
+          }
+        );
+        setIsCreatingOrder(false);
+        return;
+      }
+
+      // Check for other specific errors
       if (errorMessage.includes('not found')) {
         showSnackbar(LL.errors.productsNotAvailable(), {
           severity: 'error',
@@ -593,9 +694,12 @@ export function CustomerShoppingCart() {
           severity: 'error',
         });
       } else {
-        showSnackbar(LL.errors.orderFailed(), {
-          severity: 'error',
-        });
+        showSnackbar(
+          errorMessage || LL.errors.orderFailed?.() || 'Failed to create order',
+          {
+            severity: 'error',
+          }
+        );
       }
       setIsCreatingOrder(false);
     }
@@ -1804,14 +1908,13 @@ export function CustomerShoppingCart() {
                   >
                     <CircularProgress sx={{ mb: 2 }} />
                     <Typography variant="body1" color="text.secondary">
-                      Processing your order...
+                      {LL.checkout.processingOrder()}
                     </Typography>
                   </Box>
                 ) : paymentAuthority ? (
                   <Box>
                     <Alert severity="success" sx={{ mb: 2 }}>
-                      Your order has been created successfully. Redirecting to
-                      payment gateway...
+                      {LL.checkout.orderCreatedRedirecting()}
                     </Alert>
                     <Box
                       sx={{
@@ -1823,10 +1926,11 @@ export function CustomerShoppingCart() {
                       }}
                     >
                       <Typography variant="body1" color="text.secondary">
-                        Order Number: {createdOrder?.orderNumber}
+                        {LL.checkout.orderNumberLabel()}:{' '}
+                        {createdOrder?.orderNumber}
                       </Typography>
                       <Typography variant="body1" fontWeight={500}>
-                        Total Amount:{' '}
+                        {LL.checkout.totalAmountLabel()}:{' '}
                         <PriceDisplay
                           priceInUSD={grandTotal}
                           showSymbol={true}
@@ -1852,7 +1956,7 @@ export function CustomerShoppingCart() {
                   </Box>
                 ) : (
                   <Alert severity="error">
-                    Failed to initialize payment. Please try again.
+                    {LL.checkout.paymentInitializationFailed()}
                   </Alert>
                 )}
               </Box>

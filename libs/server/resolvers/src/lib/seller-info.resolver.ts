@@ -1,15 +1,13 @@
 import {
-  Product,
   ProductConnection,
+  SellerConnection,
   SellerInfo,
   SellerProduct,
   User,
   UserRole,
-  SellerConnection,
 } from '@kickzone-workspace/entities';
 import { RolesGuard } from '@kickzone-workspace/guards';
 import {
-  CreateProductInfoInput,
   CreateSellerInput,
   CreateSellerProductInput,
   ProductFilterInput,
@@ -22,13 +20,13 @@ import { createConnection } from '@kickzone-workspace/utils';
 import { SetMetadata, UseGuards } from '@nestjs/common';
 import {
   Args,
+  Context,
   Int,
   Mutation,
   Parent,
   Query,
   ResolveField,
   Resolver,
-  Context,
 } from '@nestjs/graphql';
 
 @Resolver(() => SellerInfo)
@@ -215,5 +213,10 @@ export class SellerResolver {
   @ResolveField(() => [SellerProduct])
   sellerProducts(@Parent() seller: SellerInfo) {
     return seller.sellerProducts;
+  }
+
+  @ResolveField(() => Number)
+  shippingFee(@Parent() seller: SellerInfo) {
+    return seller.shippingFee;
   }
 }

@@ -27,10 +27,12 @@ export const useAdminLogin = () => {
       const result = await login({
         variables: { email: input.email, password: input.password },
       });
-      if (result.data?.login) {
+      if (result.data?.login && result.data.login.role === KickzoneGraphqlTypes.UserRole.Admin) {
         setAdmin(result.data.login);
         localStorage.setItem('admin_user', JSON.stringify(result.data.login));
         navigate('/products');
+      } else if (result.data?.login && result.data.login.role !== KickzoneGraphqlTypes.UserRole.Admin) {
+        console.error('Login failed: User does not have admin privileges');
       }
     } catch (error) {
       console.error('Login failed:', error);
