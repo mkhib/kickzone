@@ -23,7 +23,7 @@ import FormLabel from '@mui/material/FormLabel';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
-import RecommendIcon from '@mui/icons-material/Recommend';
+import VerifiedIcon from '@mui/icons-material/Verified';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
@@ -61,10 +61,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   discountOverride,
   lowStockOverride,
   lowStockThreshold = 10,
-  isRecommended = false,
+  isRecommended = true,
 }) => {
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
+  const isRTL = currentLocale === 'fa';
   const [variantDialogOpen, setVariantDialogOpen] = useState(false);
   const [selectedVariantId, setSelectedVariantId] = useState<string | null>(
     null
@@ -199,15 +200,15 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     display: 'flex',
     alignItems: 'center',
     gap: 0.75,
-    borderRadius: 999,
-    px: 1.75,
-    py: 0.75,
+    borderRadius: 2,
+    px: 2.4,
+    py: 1,
     fontWeight: 800,
-    fontSize: '0.7rem',
-    letterSpacing: 1,
+    fontSize: '0.78rem',
+    letterSpacing: 1.1,
     textTransform: 'uppercase',
-    border: '1px solid rgba(255,255,255,0.1)',
-    backgroundColor: 'rgba(255,255,255,0.04)',
+    border: '1px solid rgba(0,0,0,0.12)',
+    backgroundColor: 'rgba(0,0,0,0.04)',
     color: '#f3f4f6',
     flexShrink: 0,
   } as const;
@@ -312,21 +313,36 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             <Box
               sx={{
                 ...tagBaseSx,
-                background:
-                  'linear-gradient(135deg, #d9c68b 0%, #b9a05e 50%, #d9c68b 100%)',
-                border: '1px solid rgba(217,198,139,0.9)',
-                color: '#1b1b1b',
-                boxShadow: '0 10px 28px rgba(0,0,0,0.45)',
+                background: 'linear-gradient(180deg, #2f2f2f 0%, #262626 100%)',
+                border: '1px solid #c6a555',
+                color: '#f1f1f1',
+                boxShadow: '0 6px 16px rgba(0,0,0,0.25)',
                 order: 0,
                 pointerEvents: 'auto',
-                px: 2.5,
-                py: 1,
-                fontSize: '0.78rem',
-                letterSpacing: 2,
+                px: 2.4,
+                py: 1.1,
+                borderRadius: 2,
+                letterSpacing: 1.3,
+                justifyContent: 'center',
+                flexDirection: isRTL ? 'row-reverse' : 'row',
+                width: '100%',
+                marginLeft: 0,
+                marginRight: 0,
+                paddingLeft: 1,
+                paddingRight: 1,
+                flexWrap: 'nowrap',
+                whiteSpace: 'nowrap',
+                gap: 0.75,
               }}
             >
-              <RecommendIcon
-                sx={{ fontSize: 18, color: '#4a3b13', opacity: 0.9 }}
+              <VerifiedIcon
+                sx={{
+                  fontSize: 19,
+                  color: '#d7c48f',
+                  opacity: 0.95,
+                  mr: isRTL ? 0 : 0,
+                  ml: isRTL ? 0 : 0,
+                }}
               />
               {"Master's Pick"}
             </Box>
@@ -335,9 +351,9 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             <Box
               sx={{
                 ...tagBaseSx,
-                background: 'rgba(255, 197, 143, 0.12)',
-                border: '1px solid rgba(255, 197, 143, 0.45)',
-                color: '#ffd7a0',
+                background: '#ffc58f',
+                border: '1px solid #e3a96d',
+                color: '#3d2a12',
                 order: 2,
                 pointerEvents: 'auto',
                 boxShadow: '0 8px 18px rgba(0,0,0,0.25)',
@@ -363,9 +379,8 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 pointerEvents: 'auto',
               }}
             >
-              <LocalOfferIcon sx={{ fontSize: 18 }} />
-              {formatNumber(displayDiscount, currentLocale)}%{' '}
-              {LL.products.discount()}
+              <LocalOfferIcon sx={{ fontSize: 18 }} />-
+              {formatNumber(displayDiscount, currentLocale)}%
             </Box>
           )}
         </Box>
@@ -473,7 +488,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   variant="h5"
                   sx={{
                     fontWeight: 900,
-                    color: '#0f1015',
+                    color: isRecommended ? '#c8b37a' : '#0f1015',
                     letterSpacing: 0.2,
                   }}
                 >
