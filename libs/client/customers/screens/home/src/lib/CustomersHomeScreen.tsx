@@ -42,6 +42,9 @@ export function CustomersHome() {
   });
 
   const { addItem } = useCustomersCartService();
+  const heroDescription =
+    LL?.messages?.homeDescription?.() ||
+    'We curate the most original, unique sneakers and apparel.';
 
   // Expand products into variants - each variant becomes a separate display item
   const productVariants = useMemo(() => {
@@ -176,89 +179,81 @@ export function CustomersHome() {
       <CssBaseline />
 
       {/* Hero Section */}
-      <Box
-        sx={{
-          position: 'relative',
-          pt: { xs: 2, md: 3 },
-          pb: { xs: 2, md: 3 },
-          overflow: 'hidden',
-        }}
-      >
-        <Container maxWidth="lg" sx={{ px: { xs: 1, md: 2 } }}>
-          <Fade in timeout={1000}>
-            <Box sx={{ position: 'relative', zIndex: 1, textAlign: 'center' }}>
-              {/* Hero Title with Glassmorphic Background */}
-              <GlassmorphismContainer
-                wrapperSx={{ mb: 0.5, p: 0, mx: { xs: -1, md: -2 } }}
-                containerSx={{
+      <Box sx={{ pt: { xs: 2, md: 3 }, pb: { xs: 2.5, md: 3.5 } }}>
+        <Container maxWidth="xl" sx={{ px: { xs: 1, md: 2 } }}>
+          <Fade in timeout={900}>
+            <Box
+              sx={{
+                position: 'relative',
+                borderRadius: 6,
+                overflow: 'hidden',
+                minHeight: { xs: 320, md: 420 },
+                boxShadow: '0 24px 48px rgba(0,0,0,0.18)',
+                backgroundColor: '#0f0f0f',
+              }}
+            >
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  backgroundImage: 'url(/banner-image.png)',
+                  backgroundSize: 'cover',
+                  backgroundPosition: 'center',
+                  filter: 'brightness(0.9)',
+                  transform: 'scale(1.02)',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  inset: 0,
+                  background:
+                    'linear-gradient(90deg, rgba(0,0,0,0.46) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.05) 100%)',
+                }}
+              />
+              <Container
+                maxWidth="lg"
+                sx={{
                   position: 'relative',
-                  overflow: 'hidden',
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  '&::before': {
-                    content: '""',
-                    position: 'absolute',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0,
-                    background:
-                      'linear-gradient(45deg, transparent 30%, rgba(255, 255, 255, 0.1) 50%, transparent 70%)',
-                    animation: 'shimmer 3s ease-in-out infinite',
-                  },
+                  zIndex: 1,
+                  height: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  px: { xs: 2, md: 4 },
+                  py: { xs: 4, md: 6 },
                 }}
               >
-                <Typography
-                  component="h1"
-                  variant="h2"
-                  sx={{
-                    fontWeight: 900,
-                    mb: 1,
-                    fontSize: { xs: '2.5rem', md: '3.5rem' },
-                    background:
-                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    letterSpacing: '-0.02em',
-                    position: 'relative',
-                    zIndex: 1,
-                  }}
-                >
-                  {LL.messages.welcome()}
-                </Typography>
-                <Typography
-                  variant="h5"
-                  component="h2"
-                  sx={{
-                    fontWeight: 600,
-                    mb: 1,
-                    fontSize: { xs: '1.25rem', md: '1.75rem' },
-                    background:
-                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    letterSpacing: '0.02em',
-                    position: 'relative',
-                    zIndex: 1,
-                  }}
-                >
-                  Unlock Your Icon
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    mb: 1,
-                    fontWeight: 400,
-                    fontSize: { xs: '0.875rem', md: '1rem' },
-                    color: 'rgba(157, 78, 221, 0.8)',
-                    position: 'relative',
-                    zIndex: 1,
-                  }}
-                >
-                  {LL.messages.homeDescription()}
-                </Typography>
-              </GlassmorphismContainer>
+                <Box sx={{ maxWidth: { xs: '100%', md: '48%' } }}>
+                  <Typography
+                    component="h2"
+                    variant="h3"
+                    sx={{
+                      fontWeight: 900,
+                      fontSize: { xs: '2.2rem', md: '3rem' },
+                      letterSpacing: '-0.02em',
+                      color: '#f7f7f7',
+                      mb: 1,
+                      lineHeight: 1.1,
+                    }}
+                  >
+                    <Box component="span" sx={{ color: '#c6a555' }}>
+                      Unlock
+                    </Box>{' '}
+                    Your Icon
+                  </Typography>
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 600,
+                      fontSize: { xs: '1rem', md: '1.15rem' },
+                      color: 'rgba(255,255,255,0.88)',
+                      maxWidth: 520,
+                    }}
+                  >
+                    {heroDescription}
+                  </Typography>
+                </Box>
+              </Container>
             </Box>
           </Fade>
         </Container>
