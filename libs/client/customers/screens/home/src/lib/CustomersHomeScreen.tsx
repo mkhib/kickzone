@@ -186,13 +186,7 @@ export function CustomersHome() {
 
       {/* Hero Section */}
       <Box sx={{ pt: { xs: 2, md: 3 }, pb: { xs: 2.5, md: 3.5 } }}>
-        <Container
-          maxWidth="xl"
-          sx={{
-            px: { xs: 0, md: 0 },
-            mx: { xs: -2, md: -4 },
-          }}
-        >
+        <Container maxWidth={false} disableGutters sx={{ px: 0 }}>
           <Fade in timeout={900}>
             <Box
               sx={{
