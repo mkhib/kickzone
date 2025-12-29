@@ -23,6 +23,7 @@ import FormLabel from '@mui/material/FormLabel';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import InventoryIcon from '@mui/icons-material/Inventory';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import RecommendIcon from '@mui/icons-material/Recommend';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
@@ -36,11 +37,31 @@ const formatNumber = (num: number | string, locale: string): string => {
 interface ProductCardProps {
   product: KickzoneGraphqlTypes.Product;
   onAddToCart: (product: KickzoneGraphqlTypes.Product) => void;
+  /**
+   * Force show a discount badge (percentage). Falls back to product discount.
+   */
+  discountOverride?: number;
+  /**
+   * Force low-stock state. Falls back to stock quantity threshold.
+   */
+  lowStockOverride?: boolean;
+  /**
+   * Threshold for low stock when using product data. Default: 10.
+   */
+  lowStockThreshold?: number;
+  /**
+   * Show a recommended badge.
+   */
+  isRecommended?: boolean;
 }
 
 export const CustomersProductCard: React.FC<ProductCardProps> = ({
   product,
   onAddToCart,
+  discountOverride,
+  lowStockOverride,
+  lowStockThreshold = 10,
+  isRecommended = false,
 }) => {
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
@@ -162,18 +183,33 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   );
   const isOutOfStock = pricingInfo ? pricingInfo.stockQuantity <= 0 : false;
   const hasMultipleVariants = pricingInfo?.hasMultipleVariants || false;
+  const displayDiscount =
+    discountOverride !== undefined
+      ? discountOverride
+      : pricingInfo?.discount || 0;
+  const displayLowStock =
+    typeof lowStockOverride === 'boolean'
+      ? lowStockOverride
+      : Boolean(
+          pricingInfo &&
+            pricingInfo.stockQuantity > 0 &&
+            pricingInfo.stockQuantity <= lowStockThreshold
+        );
   const tagBaseSx = {
     display: 'flex',
     alignItems: 'center',
-    gap: 0.5,
-    borderRadius: 3,
-    px: 2,
-    py: 1,
-    fontWeight: 700,
-    fontSize: '0.85rem',
-    boxShadow: '0 4px 15px rgba(0,0,0,0.1)',
+    gap: 0.75,
+    borderRadius: 999,
+    px: 1.75,
+    py: 0.75,
+    fontWeight: 800,
+    fontSize: '0.7rem',
+    letterSpacing: 1,
+    textTransform: 'uppercase',
+    border: '1px solid rgba(255,255,255,0.1)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+    color: '#f3f4f6',
     flexShrink: 0,
-    maxWidth: 'calc(50% - 8px)',
   } as const;
 
   const handleAddToCartClick = useCallback(() => {
@@ -213,20 +249,20 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       sx={{
         width: '100%',
         height: '100%',
-        borderRadius: 5,
+        borderRadius: 6,
         overflow: 'hidden',
         position: 'relative',
-        boxShadow: '0 10px 40px rgba(0,0,0,0.08)',
-        transition: 'all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-        background: 'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
+        boxShadow: '0 18px 48px rgba(0,0,0,0.16)',
+        transition: 'all 0.4s cubic-bezier(0.19, 1, 0.22, 1)',
+        background: 'linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%)',
         border: '1px solid rgba(0,0,0,0.04)',
         display: 'flex',
         flexDirection: 'column',
         '&:hover': {
-          transform: 'translateY(-12px) scale(1.02)',
-          boxShadow: '0 20px 60px rgba(0,0,0,0.12)',
+          transform: 'translateY(-8px)',
+          boxShadow: '0 22px 62px rgba(0,0,0,0.22)',
           '& .product-image': {
-            transform: 'scale(1.1)',
+            transform: 'scale(1.04)',
           },
         },
       }}
@@ -234,9 +270,9 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       <Box
         sx={{
           position: 'relative',
-          height: 280,
+          height: 300,
           overflow: 'hidden',
-          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+          background: 'linear-gradient(160deg, #eceff6 0%, #dfe3ee 100%)',
         }}
       >
         <CardMedia
@@ -254,50 +290,81 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         <Box
           sx={{
             position: 'absolute',
-            top: 16,
-            left: 16,
-            right: 16,
+            inset: 0,
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0.45) 100%)',
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            top: 18,
+            left: 18,
+            right: 18,
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'flex-start',
-            justifyContent: 'space-between',
             gap: 1,
             pointerEvents: 'none',
           }}
         >
-          {pricingInfo &&
-            pricingInfo.stockQuantity < 10 &&
-            pricingInfo.stockQuantity > 0 && (
-              <Box
-                sx={{
-                  ...tagBaseSx,
-                  background:
-                    'linear-gradient(135deg, #fa709a 0%, #fee140 100%)',
-                  color: '#000',
-                  boxShadow: '0 4px 15px rgba(250, 112, 154, 0.4)',
-                  order: 1,
-                  pointerEvents: 'auto',
-                }}
-              >
-                <InventoryIcon sx={{ fontSize: 18 }} />
-                {formatNumber(pricingInfo.stockQuantity, currentLocale)}{' '}
-                {LL.products.left()}
-              </Box>
-            )}
-          {pricingInfo && pricingInfo.discount > 0 && (
+          {isRecommended && (
             <Box
               sx={{
                 ...tagBaseSx,
-                background: 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(245, 87, 108, 0.4)',
+                background:
+                  'linear-gradient(135deg, #d9c68b 0%, #b9a05e 50%, #d9c68b 100%)',
+                border: '1px solid rgba(217,198,139,0.9)',
+                color: '#1b1b1b',
+                boxShadow: '0 10px 28px rgba(0,0,0,0.45)',
+                order: 0,
+                pointerEvents: 'auto',
+                px: 2.5,
+                py: 1,
+                fontSize: '0.78rem',
+                letterSpacing: 2,
+              }}
+            >
+              <RecommendIcon
+                sx={{ fontSize: 18, color: '#4a3b13', opacity: 0.9 }}
+              />
+              {"Master's Pick"}
+            </Box>
+          )}
+          {displayLowStock && (
+            <Box
+              sx={{
+                ...tagBaseSx,
+                background: 'rgba(255, 197, 143, 0.12)',
+                border: '1px solid rgba(255, 197, 143, 0.45)',
+                color: '#ffd7a0',
                 order: 2,
-                ml: 'auto',
+                pointerEvents: 'auto',
+                boxShadow: '0 8px 18px rgba(0,0,0,0.25)',
+              }}
+            >
+              <InventoryIcon sx={{ fontSize: 18 }} />
+              {formatNumber(
+                pricingInfo?.stockQuantity || 0,
+                currentLocale
+              )}{' '}
+              {LL.products.left()}
+            </Box>
+          )}
+          {displayDiscount > 0 && (
+            <Box
+              sx={{
+                ...tagBaseSx,
+                background: '#f5e6c9',
+                border: '1px solid #e3cfa3',
+                color: '#2c2414',
+                boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+                order: 1,
                 pointerEvents: 'auto',
               }}
             >
               <LocalOfferIcon sx={{ fontSize: 18 }} />
-              {formatNumber(pricingInfo.discount, currentLocale)}%{' '}
+              {formatNumber(displayDiscount, currentLocale)}%{' '}
               {LL.products.discount()}
             </Box>
           )}
@@ -311,18 +378,20 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           flexDirection: 'column',
           p: 3,
           pb: 2,
+          background:
+            'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(246,247,251,1) 100%)',
         }}
       >
         <Typography
           variant="h6"
           component="div"
           sx={{
-            fontWeight: 700,
-            color: '#1a1a1a',
-            mb: 1.5,
-            fontSize: { xs: '1.1rem', md: '1.25rem' },
-            lineHeight: 1.3,
-            minHeight: 60,
+            fontWeight: 800,
+            color: '#0f1015',
+            mb: 1,
+            fontSize: { xs: '1.15rem', md: '1.28rem' },
+            lineHeight: 1.25,
+            minHeight: 52,
           }}
         >
           {product.name}
@@ -336,13 +405,14 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 label={cat.name}
                 size="small"
                 sx={{
-                  background:
-                    'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                  color: 'white',
-                  fontWeight: 600,
-                  fontSize: '0.75rem',
+                  background: 'rgba(0,0,0,0.04)',
+                  border: '1px solid rgba(0,0,0,0.06)',
+                  color: '#111827',
+                  fontWeight: 700,
+                  fontSize: '0.72rem',
                   height: 24,
-                  '& .MuiChip-label': { px: 1.5 },
+                  letterSpacing: 0.4,
+                  '& .MuiChip-label': { px: 1.25 },
                 }}
               />
             ))}
@@ -356,14 +426,15 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               mb: 2,
               p: 2,
               borderRadius: 3,
-              background: 'linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%)',
+              background: 'rgba(255, 86, 86, 0.08)',
+              border: '1px solid rgba(255, 86, 86, 0.15)',
             }}
           >
             <Typography
               variant="body2"
               sx={{
-                fontWeight: 600,
-                color: '#2d3436',
+                fontWeight: 700,
+                color: '#b43a3a',
                 textAlign: 'center',
               }}
             >
@@ -386,7 +457,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   variant="body2"
                   sx={{
                     textDecoration: 'line-through',
-                    color: '#999',
+                    color: '#7a7f8b',
                     fontSize: '0.95rem',
                   }}
                 >
@@ -401,14 +472,9 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 <Typography
                   variant="h5"
                   sx={{
-                    fontWeight: 800,
-                    background:
-                      pricingInfo.discount > 0
-                        ? 'linear-gradient(135deg, #f093fb 0%, #f5576c 100%)'
-                        : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text',
+                    fontWeight: 900,
+                    color: '#0f1015',
+                    letterSpacing: 0.2,
                   }}
                 >
                   {pricingInfo.priceRange ? (
@@ -437,8 +503,8 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   <Typography
                     variant="caption"
                     sx={{
-                      color: '#666',
-                      fontSize: '0.75rem',
+                      color: '#6b7280',
+                      fontSize: '0.78rem',
                       mt: 0.5,
                       display: 'block',
                     }}
@@ -456,14 +522,15 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               mb: 2,
               p: 2,
               borderRadius: 3,
-              background: 'linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%)',
+              background: 'rgba(255, 199, 102, 0.08)',
+              border: '1px solid rgba(255, 199, 102, 0.18)',
             }}
           >
             <Typography
               variant="body2"
               sx={{
-                fontWeight: 600,
-                color: '#2d3436',
+                fontWeight: 700,
+                color: '#9c7a26',
                 textAlign: 'center',
               }}
             >
@@ -488,10 +555,10 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 <Typography
                   variant="caption"
                   sx={{
-                    color: '#666',
-                    fontWeight: 600,
+                    color: '#374151',
+                    fontWeight: 700,
                     textTransform: 'uppercase',
-                    fontSize: '0.7rem',
+                    fontSize: '0.72rem',
                   }}
                 >
                   {LL.products.color()}
@@ -513,10 +580,10 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 <Typography
                   variant="caption"
                   sx={{
-                    color: '#666',
-                    fontWeight: 600,
+                    color: '#374151',
+                    fontWeight: 700,
                     textTransform: 'uppercase',
-                    fontSize: '0.7rem',
+                    fontSize: '0.72rem',
                   }}
                 >
                   {LL.products.size()}
@@ -524,8 +591,8 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 <Typography
                   variant="body2"
                   sx={{
-                    fontWeight: 700,
-                    color: '#1a1a1a',
+                    fontWeight: 800,
+                    color: '#0f1015',
                   }}
                 >
                   {formatNumber(firstInfo.size, currentLocale)}
@@ -544,19 +611,25 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           disabled={hasNoSellers || isOutOfStock}
           onClick={handleAddToCartClick}
           sx={{
-            borderRadius: 4,
-            py: 1.5,
-            fontWeight: 700,
-            fontSize: '1rem',
-            textTransform: 'none',
+            borderRadius: 14,
+            py: 1.4,
+            fontWeight: 900,
+            fontSize: '0.95rem',
+            letterSpacing: 1,
+            textTransform: 'uppercase',
             boxShadow:
               hasNoSellers || isOutOfStock
                 ? 'none'
-                : '0 8px 25px rgba(102, 126, 234, 0.35)',
+                : '0 14px 32px rgba(233, 200, 132, 0.35)',
             background:
               hasNoSellers || isOutOfStock
-                ? 'linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%)'
-                : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                ? 'linear-gradient(135deg, #2b2d33 0%, #23242a 100%)'
+                : 'linear-gradient(135deg, #e6d6a8 0%, #cdb87d 50%, #e6d6a8 100%)',
+            color: hasNoSellers || isOutOfStock ? '#9ca3af' : '#1b1b1b',
+            border:
+              hasNoSellers || isOutOfStock
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid #c2aa6b',
             transition: 'all 0.3s ease',
             '&:hover': {
               transform:
@@ -564,15 +637,15 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               boxShadow:
                 hasNoSellers || isOutOfStock
                   ? 'none'
-                  : '0 12px 35px rgba(102, 126, 234, 0.45)',
+                  : '0 18px 38px rgba(233, 200, 132, 0.45)',
               background:
                 hasNoSellers || isOutOfStock
-                  ? 'linear-gradient(135deg, #bdc3c7 0%, #95a5a6 100%)'
-                  : 'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                  ? 'linear-gradient(135deg, #2b2d33 0%, #23242a 100%)'
+                  : 'linear-gradient(135deg, #f0e3b9 0%, #d6c285 60%, #f0e3b9 100%)',
             },
             '&:disabled': {
-              color: 'white',
-              opacity: 0.7,
+              color: '#9ca3af',
+              opacity: 0.85,
             },
           }}
         >
