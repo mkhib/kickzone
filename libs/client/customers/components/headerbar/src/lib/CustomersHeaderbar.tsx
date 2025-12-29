@@ -12,6 +12,7 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
 import Badge from '@mui/material/Badge';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
@@ -87,7 +88,12 @@ export function Headerbar() {
           transition: 'all 0.3s ease-in-out',
         }}
       >
-        <Toolbar>
+        <Toolbar
+          sx={{
+            gap: 1.5,
+            px: { xs: 2, md: 3 },
+          }}
+        >
           <IconButton
             edge="start"
             color="inherit"
@@ -103,7 +109,8 @@ export function Headerbar() {
             component={RouterLink}
             to={CUSTOMER_ROUTES.PRODUCTS}
             sx={{
-              flexGrow: 1,
+              flexShrink: 0,
+              textAlign: 'left',
               textDecoration: 'none',
               color: 'inherit',
               '&:hover': {
@@ -113,6 +120,27 @@ export function Headerbar() {
           >
             {LL.appNames.siteName()}
           </Typography>
+
+          <Button
+            color="inherit"
+            component={RouterLink}
+            to={CUSTOMER_ROUTES.PRODUCTS}
+            startIcon={<HomeIcon />}
+            sx={{
+              textTransform: 'none',
+              ml: 1,
+              mr: 0,
+              flex: '0 0 auto',
+              px: 1.5,
+              '&:hover': {
+                backgroundColor: 'rgba(0,0,0,0.04)',
+              },
+            }}
+          >
+            {LL.navigation.home()}
+          </Button>
+
+          <Box sx={{ flexGrow: 1 }} />
 
           {/* Cart Button */}
           <IconButton
