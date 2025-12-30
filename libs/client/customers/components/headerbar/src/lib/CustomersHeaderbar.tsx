@@ -11,6 +11,8 @@ import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Badge from '@mui/material/Badge';
@@ -25,6 +27,7 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import { useUIStore } from '@kickzone-workspace/shared-ui-store';
 
 export function Headerbar() {
   const { user, logout } = useCustomersAuth();
@@ -35,6 +38,8 @@ export function Headerbar() {
   const navigate = useNavigate();
   const totalItems = useCartItemCount();
   const { LL } = useI18nContext();
+  const themeMode = useUIStore((s) => s.theme.mode);
+  const toggleTheme = useUIStore((s) => s.toggleTheme);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -72,19 +77,41 @@ export function Headerbar() {
       <AppBar
         position="fixed"
         sx={{
-          background: isScrolled
-            ? 'rgba(255, 255, 255, 0.95)'
-            : 'rgba(255, 255, 255, 0.1)',
+          background: (theme) => {
+            const isDark = theme.palette.mode === 'dark';
+            return isScrolled
+              ? isDark
+                ? 'rgba(14, 14, 18, 0.9)'
+                : 'rgba(255, 255, 255, 0.95)'
+              : isDark
+                ? 'rgba(14, 14, 18, 0.7)'
+                : 'rgba(255, 255, 255, 0.1)';
+          },
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: isScrolled
-            ? '1px solid rgba(0, 0, 0, 0.1)'
-            : '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: isScrolled
-            ? '0 2px 8px rgba(0, 0, 0, 0.1)'
-            : '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+          borderBottom: (theme) => {
+            const isDark = theme.palette.mode === 'dark';
+            return isScrolled
+              ? isDark
+                ? '1px solid rgba(255, 255, 255, 0.08)'
+                : '1px solid rgba(0, 0, 0, 0.1)'
+              : isDark
+                ? '1px solid rgba(255, 255, 255, 0.08)'
+                : '1px solid rgba(255, 255, 255, 0.2)';
+          },
+          boxShadow: (theme) => {
+            const isDark = theme.palette.mode === 'dark';
+            return isScrolled
+              ? isDark
+                ? '0 6px 18px rgba(0,0,0,0.55)'
+                : '0 2px 8px rgba(0, 0, 0, 0.1)'
+              : isDark
+                ? '0 10px 28px rgba(0,0,0,0.55)'
+                : '0 8px 32px 0 rgba(31, 38, 135, 0.15)';
+          },
           zIndex: (theme) => theme.zIndex.appBar + 1,
-          color: '#000',
+          color: (theme) =>
+            theme.palette.mode === 'dark' ? '#f5f5f5' : '#000',
           transition: 'all 0.3s ease-in-out',
         }}
       >
@@ -102,6 +129,15 @@ export function Headerbar() {
             sx={{ mr: 2 }}
           >
             <MenuIcon />
+          </IconButton>
+
+          <IconButton
+            color="inherit"
+            aria-label="toggle theme"
+            onClick={toggleTheme}
+            sx={{ mr: 1 }}
+          >
+            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
 
           <Typography

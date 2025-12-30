@@ -247,25 +247,37 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <Card
-      sx={{
-        width: '100%',
-        height: '100%',
-        borderRadius: 6,
-        overflow: 'hidden',
-        position: 'relative',
-        boxShadow: '0 18px 48px rgba(0,0,0,0.16)',
-        transition: 'all 0.4s cubic-bezier(0.19, 1, 0.22, 1)',
-        background: 'linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%)',
-        border: '1px solid rgba(0,0,0,0.04)',
-        display: 'flex',
-        flexDirection: 'column',
-        '&:hover': {
-          transform: 'translateY(-8px)',
-          boxShadow: '0 22px 62px rgba(0,0,0,0.22)',
-          '& .product-image': {
-            transform: 'scale(1.04)',
+      sx={(theme) => {
+        const isDark = theme.palette.mode === 'dark';
+        return {
+          width: '100%',
+          height: '100%',
+          borderRadius: 6,
+          overflow: 'hidden',
+          position: 'relative',
+          boxShadow: isDark
+            ? '0 16px 48px rgba(0,0,0,0.45)'
+            : '0 18px 48px rgba(0,0,0,0.16)',
+          transition: 'all 0.4s cubic-bezier(0.19, 1, 0.22, 1)',
+          background: isDark
+            ? 'linear-gradient(180deg, rgba(18,18,24,0.96) 0%, rgba(24,24,32,0.9) 100%)'
+            : 'linear-gradient(180deg, #ffffff 0%, #f6f7fb 100%)',
+          border: isDark
+            ? '1px solid rgba(255,255,255,0.08)'
+            : '1px solid rgba(0,0,0,0.04)',
+          color: isDark ? '#f3f3f3' : '#111',
+          display: 'flex',
+          flexDirection: 'column',
+          '&:hover': {
+            transform: 'translateY(-8px)',
+            boxShadow: isDark
+              ? '0 22px 62px rgba(0,0,0,0.55)'
+              : '0 22px 62px rgba(0,0,0,0.22)',
+            '& .product-image': {
+              transform: 'scale(1.04)',
+            },
           },
-        },
+        };
       }}
     >
       <Box
@@ -273,7 +285,10 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           position: 'relative',
           height: 300,
           overflow: 'hidden',
-          background: 'linear-gradient(160deg, #eceff6 0%, #dfe3ee 100%)',
+          background: (theme) =>
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(160deg, rgba(20,20,28,0.9) 0%, rgba(12,12,18,0.92) 100%)'
+              : 'linear-gradient(160deg, #eceff6 0%, #dfe3ee 100%)',
         }}
       >
         <CardMedia
@@ -292,8 +307,10 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           sx={{
             position: 'absolute',
             inset: 0,
-            background:
-              'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0.45) 100%)',
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 65%, rgba(0,0,0,0.55) 100%)'
+                : 'linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 65%, rgba(0,0,0,0.45) 100%)',
           }}
         />
         <Box
@@ -387,27 +404,29 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       </Box>
 
       <CardContent
-        sx={{
+        sx={(theme) => ({
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
           p: 3,
           pb: 2,
           background:
-            'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(246,247,251,1) 100%)',
-        }}
+            theme.palette.mode === 'dark'
+              ? 'linear-gradient(180deg, rgba(18,18,24,0.9) 0%, rgba(22,22,30,0.92) 100%)'
+              : 'linear-gradient(180deg, rgba(255,255,255,0.6) 0%, rgba(246,247,251,1) 100%)',
+        })}
       >
         <Typography
           variant="h6"
           component="div"
-          sx={{
+          sx={(theme) => ({
             fontWeight: 800,
-            color: '#0f1015',
+            color: theme.palette.mode === 'dark' ? '#f4f4f6' : '#0f1015',
             mb: 1,
             fontSize: { xs: '1.15rem', md: '1.28rem' },
             lineHeight: 1.25,
             minHeight: 52,
-          }}
+          })}
         >
           {product.name}
         </Typography>
@@ -420,9 +439,16 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 label={cat.name}
                 size="small"
                 sx={{
-                  background: 'rgba(0,0,0,0.04)',
-                  border: '1px solid rgba(0,0,0,0.06)',
-                  color: '#111827',
+                  background: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(255,255,255,0.08)'
+                      : 'rgba(0,0,0,0.04)',
+                  border: (theme) =>
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : '1px solid rgba(0,0,0,0.06)',
+                  color: (theme) =>
+                    theme.palette.mode === 'dark' ? '#f2f2f4' : '#111827',
                   fontWeight: 700,
                   fontSize: '0.72rem',
                   height: 24,
@@ -447,11 +473,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           >
             <Typography
               variant="body2"
-              sx={{
+              sx={(theme) => ({
                 fontWeight: 700,
-                color: '#b43a3a',
+                color: theme.palette.mode === 'dark' ? '#ffb3b3' : '#b43a3a',
                 textAlign: 'center',
-              }}
+              })}
             >
               {LL.products.noSellersAvailable()}
             </Typography>

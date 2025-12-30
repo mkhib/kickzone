@@ -22,9 +22,8 @@ import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Fade from '@mui/material/Fade';
-import Paper from '@mui/material/Paper';
+import CircularProgress from '@mui/material/CircularProgress';
 import { useCallback, useState, useMemo } from 'react';
-import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 import Button from '@mui/material/Button';
 
@@ -271,259 +270,171 @@ export function CustomersHome() {
           px: { xs: 1, md: 2 },
         }}
       >
-        <GlassmorphismContainer
-          wrapperSx={{ p: 0, mx: { xs: -1, md: -2 } }}
-          containerSx={{
-            background: 'rgba(255, 255, 255, 0.1)',
-            backdropFilter: 'blur(15px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(15px) saturate(180%)',
+        {/* Search and Filter Bar */}
+        <Box
+          sx={{
+            position: 'relative',
+            zIndex: 1,
+            p: { xs: 1.5, md: 2 },
+            pb: { xs: 2, md: 3 },
           }}
         >
-          {/* Search and Filter Bar */}
+          <Grid container spacing={2} alignItems="center">
+            <Grid size={{ xs: 12, sm: 12, md: 5 }}>
+              <TextField
+                variant="outlined"
+                placeholder={LL.form.searchProducts()}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyPress={handleKeyPress}
+                fullWidth
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    borderRadius: 4,
+                  },
+                }}
+                InputProps={{
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchIcon color="primary" />
+                    </InputAdornment>
+                  ),
+                }}
+              />
+            </Grid>
+            <Grid size={{ xs: 12, sm: 12, md: 2 }}>
+              <Button
+                variant="contained"
+                onClick={handleSearch}
+                fullWidth
+                sx={{ borderRadius: 4, px: 4, py: 1.5 }}
+              >
+                {LL.button.search()}
+              </Button>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+              <FormControl fullWidth>
+                <InputLabel>{LL.form.sortBy()}</InputLabel>
+                <Select
+                  value={sort}
+                  label={LL.form.sortBy()}
+                  onChange={(e) => setSort(e.target.value)}
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <TrendingUpIcon color="primary" sx={{ ml: 1 }} />
+                    </InputAdornment>
+                  }
+                  sx={{
+                    borderRadius: 4,
+                  }}
+                >
+                  <MenuItem value="price">{LL.table.price()}</MenuItem>
+                  <MenuItem value="discount">{LL.form.discount()}</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
+              <FormControl fullWidth>
+                <InputLabel>{LL.form.order()}</InputLabel>
+                <Select
+                  value={sortOrder}
+                  label={LL.form.order()}
+                  onChange={(e) =>
+                    setSortOrder(e.target.value as 'asc' | 'desc')
+                  }
+                  startAdornment={
+                    <InputAdornment position="start">
+                      <LocalOfferIcon color="primary" sx={{ ml: 1 }} />
+                    </InputAdornment>
+                  }
+                  sx={{
+                    borderRadius: 4,
+                  }}
+                >
+                  <MenuItem value="asc">{LL.products.ascending()}</MenuItem>
+                  <MenuItem value="desc">{LL.products.descending()}</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+          </Grid>
+        </Box>
+        {loading ? (
           <Box
             sx={{
-              position: 'relative',
-              zIndex: 1,
-              p: { xs: 1.5, md: 2 },
-              pb: { xs: 2, md: 3 },
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: 400,
             }}
           >
-            <Grid container spacing={2} alignItems="center">
-              <Grid size={{ xs: 12, sm: 12, md: 5 }}>
-                <TextField
-                  variant="outlined"
-                  placeholder={LL.form.searchProducts()}
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyPress={handleKeyPress}
-                  fullWidth
-                  sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: 4,
-                    },
-                  }}
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon color="primary" />
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Grid>
-              <Grid size={{ xs: 12, sm: 12, md: 2 }}>
-                <Button
-                  variant="contained"
-                  onClick={handleSearch}
-                  fullWidth
-                  sx={{ borderRadius: 4, px: 4, py: 1.5 }}
-                >
-                  {LL.button.search()}
-                </Button>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-                <FormControl fullWidth>
-                  <InputLabel>{LL.form.sortBy()}</InputLabel>
-                  <Select
-                    value={sort}
-                    label={LL.form.sortBy()}
-                    onChange={(e) => setSort(e.target.value)}
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <TrendingUpIcon color="primary" sx={{ ml: 1 }} />
-                      </InputAdornment>
-                    }
-                    sx={{
-                      borderRadius: 4,
-                    }}
-                  >
-                    <MenuItem value="price">{LL.table.price()}</MenuItem>
-                    <MenuItem value="discount">{LL.form.discount()}</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-                <FormControl fullWidth>
-                  <InputLabel>{LL.form.order()}</InputLabel>
-                  <Select
-                    value={sortOrder}
-                    label={LL.form.order()}
-                    onChange={(e) =>
-                      setSortOrder(e.target.value as 'asc' | 'desc')
-                    }
-                    startAdornment={
-                      <InputAdornment position="start">
-                        <LocalOfferIcon color="primary" sx={{ ml: 1 }} />
-                      </InputAdornment>
-                    }
-                    sx={{
-                      borderRadius: 4,
-                    }}
-                  >
-                    <MenuItem value="asc">{LL.products.ascending()}</MenuItem>
-                    <MenuItem value="desc">{LL.products.descending()}</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-            </Grid>
+            <CircularProgress />
           </Box>
-          {loading ? (
-            <Box
+        ) : productVariants.length === 0 ? (
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
+              alignItems: 'center',
+              minHeight: 400,
+            }}
+          >
+            <Typography variant="h5">
+              {LL.products.noProductsFound()}
+            </Typography>
+          </Box>
+        ) : (
+          <Fade in timeout={800}>
+            <Grid
+              container
+              spacing={{ xs: 2, sm: 3, md: 4 }}
               sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: 400,
+                ...(productVariants.length === 1
+                  ? { justifyContent: 'center' }
+                  : {}),
+                px: { xs: 1.5, md: 2 },
+                pb: { xs: 1.5, md: 2 },
               }}
             >
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 6,
-                  borderRadius: 6,
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
-                  textAlign: 'center',
-                }}
-              >
-                <Box
-                  sx={{
-                    width: 60,
-                    height: 60,
-                    borderRadius: '50%',
-                    border: '4px solid #9d4edd',
-                    borderTopColor: 'transparent',
-                    animation: 'spin 1s linear infinite',
-                    mb: 2,
-                    mx: 'auto',
-                    '@keyframes spin': {
-                      '0%': { transform: 'rotate(0deg)' },
-                      '100%': { transform: 'rotate(360deg)' },
-                    },
-                  }}
-                />
-                <Typography
-                  variant="h6"
-                  sx={{
-                    color: '#9d4edd',
-                    fontWeight: 600,
-                    background:
-                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  {LL.status.loading()}
-                </Typography>
-              </Paper>
-            </Box>
-          ) : productVariants.length === 0 ? (
-            <Box
-              sx={{
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                minHeight: 400,
-              }}
-            >
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 6,
-                  borderRadius: 6,
-                  background: 'rgba(255, 255, 255, 0.15)',
-                  backdropFilter: 'blur(20px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-                  border: '1px solid rgba(255, 255, 255, 0.2)',
-                  boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
-                  textAlign: 'center',
-                }}
-              >
-                <Typography
-                  variant="h5"
-                  sx={{
-                    fontWeight: 600,
-                    mb: 2,
-                    background:
-                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
-                    backgroundClip: 'text',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                  }}
-                >
-                  {LL.products.noProductsFound()}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  sx={{
-                    color: 'rgba(157, 78, 221, 0.7)',
-                    fontWeight: 400,
-                  }}
-                >
-                  Try adjusting your search or filters
-                </Typography>
-              </Paper>
-            </Box>
-          ) : (
-            <Fade in timeout={800}>
-              <Grid
-                container
-                spacing={{ xs: 2, sm: 3, md: 4 }}
-                sx={{
-                  ...(productVariants.length === 1
-                    ? { justifyContent: 'center' }
-                    : {}),
-                  px: { xs: 1.5, md: 2 },
-                  pb: { xs: 1.5, md: 2 },
-                }}
-              >
-                {productVariants.map((variant, index) => {
-                  // Create a variant-specific product object for the card
-                  const variantProduct: KickzoneGraphqlTypes.Product = {
-                    ...variant.product,
-                    productInfos: [variant.productInfo],
-                    sellerProducts: [variant.sellerProduct],
-                  };
+              {productVariants.map((variant, index) => {
+                // Create a variant-specific product object for the card
+                const variantProduct: KickzoneGraphqlTypes.Product = {
+                  ...variant.product,
+                  productInfos: [variant.productInfo],
+                  sellerProducts: [variant.sellerProduct],
+                };
 
-                  return (
-                    <Grid
-                      key={variant.variantKey}
-                      size={
-                        productVariants.length === 1
-                          ? { xs: 12, sm: 8, md: 6, lg: 4, xl: 4 }
-                          : { xs: 12, sm: 6, md: 4, lg: 3 }
-                      }
-                      sx={{
-                        animation: `fadeInUp 0.6s ease-out ${
-                          index * 0.1
-                        }s both`,
-                        '@keyframes fadeInUp': {
-                          '0%': {
-                            opacity: 0,
-                            transform: 'translateY(30px)',
-                          },
-                          '100%': {
-                            opacity: 1,
-                            transform: 'translateY(0)',
-                          },
+                return (
+                  <Grid
+                    key={variant.variantKey}
+                    size={
+                      productVariants.length === 1
+                        ? { xs: 12, sm: 8, md: 6, lg: 4, xl: 4 }
+                        : { xs: 12, sm: 6, md: 4, lg: 3 }
+                    }
+                    sx={{
+                      animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
+                      '@keyframes fadeInUp': {
+                        '0%': {
+                          opacity: 0,
+                          transform: 'translateY(30px)',
                         },
-                      }}
-                    >
-                      <CustomersProductCard
-                        product={variantProduct}
-                        onAddToCart={() => handleAddToCart(variant)}
-                      />
-                    </Grid>
-                  );
-                })}
-              </Grid>
-            </Fade>
-          )}
-        </GlassmorphismContainer>
+                        '100%': {
+                          opacity: 1,
+                          transform: 'translateY(0)',
+                        },
+                      },
+                    }}
+                  >
+                    <CustomersProductCard
+                      product={variantProduct}
+                      onAddToCart={() => handleAddToCart(variant)}
+                    />
+                  </Grid>
+                );
+              })}
+            </Grid>
+          </Fade>
+        )}
       </Container>
     </CustomersLayout>
   );

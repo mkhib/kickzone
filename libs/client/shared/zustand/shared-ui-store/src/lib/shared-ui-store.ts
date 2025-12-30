@@ -89,12 +89,39 @@ export interface UIActions {
 // Define the complete store type
 export type UIStore = UIState & UIActions;
 
-// Default theme configuration
-const defaultTheme: ThemeState = {
-  mode: 'light',
-  primaryColor: '#1976d2',
-  secondaryColor: '#dc004e',
+const THEME_STORAGE_KEY = 'kickzone-theme-mode';
+
+const detectSystemMode = (): 'light' | 'dark' => {
+  if (typeof window === 'undefined' || !window.matchMedia) {
+    return 'light';
+  }
+  return window.matchMedia('(prefers-color-scheme: dark)').matches
+    ? 'dark'
+    : 'light';
 };
+
+const getInitialTheme = (): ThemeState => {
+  if (typeof window === 'undefined') {
+    return {
+      mode: 'light',
+      primaryColor: '#c8b37a',
+      secondaryColor: '#0f0f0f',
+    };
+  }
+  const stored = localStorage.getItem(THEME_STORAGE_KEY) as
+    | 'light'
+    | 'dark'
+    | null;
+  const mode = stored || detectSystemMode();
+  return {
+    mode,
+    primaryColor: '#c8b37a',
+    secondaryColor: '#0f0f0f',
+  };
+};
+
+// Default theme configuration (used for reset)
+const defaultTheme: ThemeState = getInitialTheme();
 
 // Create the UI store
 export const useUIStore = create<UIStore>((set, get) => ({
@@ -105,7 +132,7 @@ export const useUIStore = create<UIStore>((set, get) => ({
   loading: {
     isLoading: false,
   },
-  theme: defaultTheme,
+  theme: getInitialTheme(),
   sidebarOpen: false,
   mobileMenuOpen: false,
   toasts: [],
@@ -141,21 +168,31 @@ export const useUIStore = create<UIStore>((set, get) => ({
 
   // Theme actions
   setTheme: (theme) => {
-    set((state) => ({
-      theme: {
+    set((state) => {
+      const next = {
         ...state.theme,
         ...theme,
-      },
-    }));
+      };
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(THEME_STORAGE_KEY, next.mode);
+      }
+      return { theme: next };
+    });
   },
 
   toggleTheme: () => {
-    set((state) => ({
-      theme: {
-        ...state.theme,
-        mode: state.theme.mode === 'light' ? 'dark' : 'light',
-      },
-    }));
+    set((state) => {
+      const mode = state.theme.mode === 'light' ? 'dark' : 'light';
+      if (typeof window !== 'undefined') {
+        localStorage.setItem(THEME_STORAGE_KEY, mode);
+      }
+      return {
+        theme: {
+          ...state.theme,
+          mode,
+        },
+      };
+    });
   },
 
   // Sidebar actions

@@ -1103,7 +1103,7 @@ export function CustomerShoppingCart() {
                   variant="body2"
                   sx={{
                     fontWeight: 600,
-                    color: '#667eea',
+                    color: GOLD_TEXT,
                     fontSize: '0.95rem',
                   }}
                 >
