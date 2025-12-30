@@ -67,6 +67,11 @@ const formatNumber = (num: number | string, locale: string): string => {
   return Number(num).toLocaleString(locale);
 };
 
+const GOLD_GRADIENT =
+  'linear-gradient(135deg, #e6d9ad 0%, #c8b37a 60%, #b6974f 100%)';
+const PANEL_GRADIENT = 'linear-gradient(135deg, #f8f4ea 0%, #f1e6d1 100%)';
+const GOLD_TEXT = '#c8b37a';
+
 export function CustomerShoppingCart() {
   // Initialize cart service to sync server cart with local store
   // This ensures shipping fees are fetched and synced when user is logged in
@@ -644,20 +649,31 @@ export function CustomerShoppingCart() {
         );
         redirectToGateway(authority);
       }, 1500);
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Error creating order:', error);
       const errorMessage = (error as Error).message;
 
       // Check for authentication errors
+      const graphQLErrors =
+        typeof error === 'object' && error !== null && 'graphQLErrors' in error
+          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (error as any).graphQLErrors
+          : undefined;
+
+      const isAuthGraphQlError =
+        Array.isArray(graphQLErrors) &&
+        graphQLErrors.some((err: { message?: string }) => {
+          const msg = err?.message?.toLowerCase?.() || '';
+          return (
+            msg.includes('not authenticated') || msg.includes('unauthorized')
+          );
+        });
+
       if (
         errorMessage.includes('not authenticated') ||
         errorMessage.includes('unauthorized') ||
         errorMessage.includes('User not authenticated') ||
-        (error as any).graphQLErrors?.some(
-          (err: any) =>
-            err.message?.toLowerCase().includes('not authenticated') ||
-            err.message?.toLowerCase().includes('unauthorized')
-        )
+        isAuthGraphQlError
       ) {
         showSnackbar(
           LL.errors.unauthorized?.() || 'Please log in to proceed with payment',
@@ -818,7 +834,7 @@ export function CustomerShoppingCart() {
                             variant="h6"
                             sx={{
                               fontWeight: 700,
-                              color: '#1a1a1a',
+                              color: '#0f0f0f',
                             }}
                           >
                             {item.productName}
@@ -908,11 +924,7 @@ export function CustomerShoppingCart() {
                               variant="h6"
                               sx={{
                                 fontWeight: 700,
-                                background:
-                                  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                backgroundClip: 'text',
+                                color: GOLD_TEXT,
                               }}
                             >
                               <PriceDisplay
@@ -961,8 +973,7 @@ export function CustomerShoppingCart() {
                               display: 'flex',
                               alignItems: 'center',
                               gap: 1,
-                              background:
-                                'linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%)',
+                              background: PANEL_GRADIENT,
                               borderRadius: 3,
                               p: 0.5,
                             }}
@@ -1033,11 +1044,7 @@ export function CustomerShoppingCart() {
                               variant="h6"
                               sx={{
                                 fontWeight: 800,
-                                background:
-                                  'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                                WebkitBackgroundClip: 'text',
-                                WebkitTextFillColor: 'transparent',
-                                backgroundClip: 'text',
+                                color: GOLD_TEXT,
                               }}
                             >
                               <PriceDisplay
@@ -1050,9 +1057,9 @@ export function CustomerShoppingCart() {
                             <IconButton
                               onClick={() => handleRemoveItem(item.id)}
                               sx={{
-                                color: '#f5576c',
+                                color: '#b45542',
                                 '&:hover': {
-                                  background: 'rgba(245, 87, 108, 0.1)',
+                                  background: 'rgba(180, 85, 66, 0.12)',
                                 },
                               }}
                             >
@@ -1199,9 +1206,8 @@ export function CustomerShoppingCart() {
                       mb: 3,
                       p: 2,
                       borderRadius: 3,
-                      backgroundImage:
-                        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      color: '#ffffff',
+                      backgroundImage: GOLD_GRADIENT,
+                      color: '#0f0f0f',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       gap: { xs: 0.5, lg: 1 },
                     }}
@@ -1210,7 +1216,7 @@ export function CustomerShoppingCart() {
                       variant="h6"
                       sx={{
                         fontWeight: 700,
-                        color: '#ffffff',
+                        color: '#0f0f0f',
                         whiteSpace: 'nowrap',
                         flexShrink: 0,
                       }}
@@ -1221,7 +1227,7 @@ export function CustomerShoppingCart() {
                       variant="h5"
                       sx={{
                         fontWeight: 800,
-                        color: '#ffffff',
+                        color: '#0f0f0f',
                         textAlign: { xs: 'left', lg: 'right' },
                         minWidth: 0,
                         flex: { xs: 'none', lg: '1 1 auto' },
@@ -1248,10 +1254,9 @@ export function CustomerShoppingCart() {
                       fontWeight: 700,
                       fontSize: '1rem',
                       textTransform: 'none',
-                      boxShadow: '0 8px 25px rgba(102, 126, 234, 0.35)',
-                      backgroundImage:
-                        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      color: '#ffffff',
+                      boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)',
+                      backgroundImage: GOLD_GRADIENT,
+                      color: '#0f0f0f',
                       transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                       overflow: 'hidden',
                       zIndex: 1,
@@ -1263,15 +1268,15 @@ export function CustomerShoppingCart() {
                         right: 0,
                         bottom: 0,
                         backgroundImage:
-                          'linear-gradient(135deg, #764ba2 0%, #667eea 100%)',
+                          'linear-gradient(135deg, #f2e7bd 0%, #d6c28c 60%, #c39d55 100%)',
                         opacity: 0,
                         transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                         zIndex: -1,
                       },
                       '&:hover': {
                         transform: 'translateY(-2px)',
-                        boxShadow: '0 12px 35px rgba(102, 126, 234, 0.45)',
-                        color: '#ffffff',
+                        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.22)',
+                        color: '#0f0f0f',
                         '&::before': {
                           opacity: 1,
                         },
