@@ -203,7 +203,7 @@ export function CustomersHome() {
                   backgroundImage: 'url(/banner-image.png)',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
-                  filter: 'brightness(0.9)',
+                  filter: 'brightness(1.5)',
                   transform: isRTL ? 'scale(1.02)' : 'scale(-1.02, 1)',
                 }}
               />

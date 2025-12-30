@@ -36,6 +36,7 @@ import ShoppingCartCheckout from '@mui/icons-material/ShoppingCartCheckout';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import { LottieEmptyCart } from '@kickzone-workspace/lottie-empty-cart';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
@@ -742,14 +743,24 @@ export function CustomerShoppingCart() {
         </Typography>
 
         {!hasItems ? (
-          <Box sx={{ textAlign: 'center', py: 4 }}>
+          <Box
+            sx={{
+              textAlign: 'center',
+              py: 5,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: 2,
+            }}
+          >
+            <LottieEmptyCart width={240} height={240} loop />
             <Typography variant="h6" color="text.secondary">
               {LL.checkout.yourCartIsEmpty()}
             </Typography>
             <Button
               variant="contained"
               sx={{
-                mt: 2,
+                mt: 1,
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                 '&:hover': {
                   transform: 'translateY(-1px)',

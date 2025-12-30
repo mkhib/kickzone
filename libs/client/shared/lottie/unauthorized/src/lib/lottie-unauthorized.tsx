@@ -1,6 +1,5 @@
 import Lottie from 'lottie-react';
 import failedAnimation from './failed.json';
-import styles from './lottie-unauthorized.module.css';
 
 interface LottieUnauthorizedProps {
   width?: number;
@@ -12,7 +11,7 @@ export function LottieUnauthorized({
   height = 300,
 }: LottieUnauthorizedProps) {
   return (
-    <div className={styles['container']}>
+    <div>
       <Lottie
         animationData={failedAnimation}
         loop={true}
