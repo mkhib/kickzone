@@ -48,9 +48,7 @@ export function CustomersHome() {
   });
 
   const { addItem } = useCustomersCartService();
-  const heroDescription =
-    LL?.messages?.homeDescription?.() ||
-    'We curate the most original, unique sneakers and apparel.';
+  const heroDescription = LL.messages.homeDescription();
 
   // Expand products into variants - each variant becomes a separate display item
   const productVariants = useMemo(() => {
