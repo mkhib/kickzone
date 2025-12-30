@@ -68,9 +68,24 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
         : '"Roboto", "Helvetica", "Arial", sans-serif',
     },
     palette: {
+      mode: 'light',
+      primary: {
+        main: '#c8b37a',
+        light: '#e6d9ad',
+        dark: '#8f7845',
+      },
+      secondary: {
+        main: '#0f0f0f',
+        light: '#3a3a3a',
+        dark: '#000000',
+      },
       background: {
-        default: '#f5f7fa',
-        paper: 'rgba(255, 255, 255, 0.7)',
+        default: '#f6f6f8',
+        paper: '#ffffff',
+      },
+      text: {
+        primary: '#0f0f0f',
+        secondary: '#3c3c3c',
       },
     },
     components: {
@@ -188,6 +203,17 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
         styleOverrides: {
           root: {
             textTransform: 'none',
+            borderRadius: 10,
+            fontWeight: 700,
+          },
+          containedPrimary: {
+            background: 'linear-gradient(135deg, #e6d9ad 0%, #c8b37a 60%, #b6974f 100%)',
+            color: '#0f0f0f',
+            boxShadow: '0 8px 18px rgba(0,0,0,0.12)',
+            '&:hover': {
+              background: 'linear-gradient(135deg, #f2e7bd 0%, #d6c28c 60%, #c39d55 100%)',
+              boxShadow: '0 10px 24px rgba(0,0,0,0.16)',
+            },
           },
         },
       },

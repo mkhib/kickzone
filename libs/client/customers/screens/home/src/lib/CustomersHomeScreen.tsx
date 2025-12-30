@@ -305,7 +305,7 @@ export function CustomersHome() {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <SearchIcon sx={{ color: '#9d4edd' }} />
+                        <SearchIcon color="primary" />
                       </InputAdornment>
                     ),
                   }}
@@ -316,19 +316,7 @@ export function CustomersHome() {
                   variant="contained"
                   onClick={handleSearch}
                   fullWidth
-                  sx={{
-                    borderRadius: 4,
-                    px: 4,
-                    py: 1.5,
-                    background:
-                      'linear-gradient(135deg, #9d4edd 0%, #7b2cbf 100%)',
-                    boxShadow: '0 4px 15px 0 rgba(157, 78, 221, 0.4)',
-                    '&:hover': {
-                      background:
-                        'linear-gradient(135deg, #7b2cbf 0%, #9d4edd 100%)',
-                      boxShadow: '0 6px 20px 0 rgba(157, 78, 221, 0.6)',
-                    },
-                  }}
+                  sx={{ borderRadius: 4, px: 4, py: 1.5 }}
                 >
                   {LL.button.search()}
                 </Button>
@@ -342,7 +330,7 @@ export function CustomersHome() {
                     onChange={(e) => setSort(e.target.value)}
                     startAdornment={
                       <InputAdornment position="start">
-                        <TrendingUpIcon sx={{ color: '#9d4edd', ml: 1 }} />
+                        <TrendingUpIcon color="primary" sx={{ ml: 1 }} />
                       </InputAdornment>
                     }
                     sx={{
@@ -365,7 +353,7 @@ export function CustomersHome() {
                     }
                     startAdornment={
                       <InputAdornment position="start">
-                        <LocalOfferIcon sx={{ color: '#9d4edd', ml: 1 }} />
+                        <LocalOfferIcon color="primary" sx={{ ml: 1 }} />
                       </InputAdornment>
                     }
                     sx={{
