@@ -141,12 +141,10 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
               WebkitBackdropFilter: 'blur(20px) saturate(180%)',
               borderBottom:
                 mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.08)'
-                  : '1px solid rgba(255, 255, 255, 0.2)',
-              boxShadow:
-                mode === 'dark'
-                  ? '0 8px 28px 0 rgba(0, 0, 0, 0.45)'
-                  : '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                  ? '1px solid rgba(255, 255, 255, 0.06) !important'
+                  : '1px solid rgba(0, 0, 0, 0.08) !important',
+              borderLeft: 'none !important',
+              boxShadow: 'none !important',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               borderRadius: '0 !important',
             },
@@ -218,10 +216,7 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
                 mode === 'dark'
                   ? '1px solid rgba(255, 255, 255, 0.08)'
                   : '1px solid rgba(255, 255, 255, 0.3)',
-              borderLeft:
-                mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.08)'
-                  : '1px solid rgba(255, 255, 255, 0.3)',
+              borderLeft: 'none',
               boxShadow:
                 mode === 'dark'
                   ? '0 10px 32px 0 rgba(0, 0, 0, 0.45)'

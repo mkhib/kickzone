@@ -595,12 +595,13 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
                   variant="caption"
-                  sx={{
-                    color: '#374151',
+                  sx={(theme) => ({
+                    color:
+                      theme.palette.mode === 'dark' ? '#f3f3f3' : '#374151',
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     fontSize: '0.72rem',
-                  }}
+                  })}
                 >
                   {LL.products.color()}
                 </Typography>
@@ -620,21 +621,23 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
                   variant="caption"
-                  sx={{
-                    color: '#374151',
+                  sx={(theme) => ({
+                    color:
+                      theme.palette.mode === 'dark' ? '#f3f3f3' : '#374151',
                     fontWeight: 700,
                     textTransform: 'uppercase',
                     fontSize: '0.72rem',
-                  }}
+                  })}
                 >
                   {LL.products.size()}
                 </Typography>
                 <Typography
                   variant="body2"
-                  sx={{
+                  sx={(theme) => ({
                     fontWeight: 800,
-                    color: '#0f1015',
-                  }}
+                    color:
+                      theme.palette.mode === 'dark' ? '#ffffff' : '#0f1015',
+                  })}
                 >
                   {formatNumber(firstInfo.size, currentLocale)}
                 </Typography>
@@ -754,7 +757,16 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                                     border: '1px solid #ccc',
                                   }}
                                 />
-                                <Typography variant="body2">
+                                <Typography
+                                  variant="body2"
+                                  sx={(theme) => ({
+                                    color:
+                                      theme.palette.mode === 'dark'
+                                        ? '#f7f7f7'
+                                        : theme.palette.text.primary,
+                                    fontWeight: 600,
+                                  })}
+                                >
                                   {variant.productInfo.color.name}
                                 </Typography>
                               </>
@@ -762,7 +774,14 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                             {variant.productInfo.size && (
                               <Typography
                                 variant="body2"
-                                sx={{ ml: variant.productInfo.color ? 1 : 0 }}
+                                sx={(theme) => ({
+                                  ml: variant.productInfo.color ? 1 : 0,
+                                  color:
+                                    theme.palette.mode === 'dark'
+                                      ? '#f7f7f7'
+                                      : theme.palette.text.primary,
+                                  fontWeight: 700,
+                                })}
                               >
                                 Size: {variant.productInfo.size}
                               </Typography>
@@ -808,7 +827,14 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                           </Box>
                           <Typography
                             variant="caption"
-                            sx={{ color: '#666', display: 'block', mt: 0.5 }}
+                            sx={(theme) => ({
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? '#e6e6e6'
+                                  : '#666',
+                              display: 'block',
+                              mt: 0.5,
+                            })}
                           >
                             Stock: {variant.stockQuantity}
                           </Typography>

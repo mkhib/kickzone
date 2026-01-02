@@ -14,6 +14,7 @@ import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
 import React from 'react';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 
 interface LanguageComponentsProps {
   LayoutComponent: React.ComponentType<{ children: React.ReactNode }>;
@@ -53,38 +54,21 @@ export function LanguageComponents({
 
   return (
     <LayoutComponent>
-      <Box
-        sx={{
-          minHeight: '100vh',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: 2,
-        }}
-      >
-        <Card
-          elevation={0}
-          sx={{
-            maxWidth: 500,
-            width: '100%',
-            backgroundColor: 'rgba(255, 255, 255, 0.85)',
-            backdropFilter: 'blur(20px) saturate(180%)',
-            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-            borderRadius: '24px',
-            border: '1px solid rgba(255, 255, 255, 0.3)',
-            boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-          }}
+      <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', p: 2 }}>
+        <GlassmorphismContainer
+          wrapperSx={{ p: 0, width: '100%', maxWidth: 520 }}
+          containerSx={{ p: 4, borderRadius: 3 }}
         >
-          <CardContent sx={{ padding: 4 }}>
+          <CardContent sx={{ p: 0 }}>
             <Typography
               variant="h4"
               component="h1"
-              sx={{
+              sx={(theme) => ({
                 textAlign: 'center',
                 marginBottom: 3,
-                color: colors.text,
+                color: theme.palette.mode === 'dark' ? '#f5f5f5' : colors.text,
                 fontWeight: 600,
-              }}
+              })}
             >
               {LL.navigation.languageSettings()}
             </Typography>
@@ -111,11 +95,11 @@ export function LanguageComponents({
             <Box sx={{ marginBottom: 3 }}>
               <Typography
                 variant="body1"
-                sx={{
-                  marginBottom: 2,
-                  color: colors.text,
-                  textAlign: 'center',
-                }}
+              sx={(theme) => ({
+                marginBottom: 2,
+                color: theme.palette.mode === 'dark' ? '#f5f5f5' : colors.text,
+                textAlign: 'center',
+              })}
               >
                 {LL.form.currentLanguage()}:{' '}
                 <strong>{currentLanguageInfo?.nativeName}</strong>
@@ -123,7 +107,12 @@ export function LanguageComponents({
             </Box>
 
             <FormControl fullWidth sx={{ marginBottom: 3 }}>
-              <InputLabel id="language-select-label">
+            <InputLabel
+              id="language-select-label"
+              sx={(theme) => ({
+                color: theme.palette.mode === 'dark' ? '#f5f5f5' : undefined,
+              })}
+            >
                 {LL.form.selectLanguage()}
               </InputLabel>
               <Select
@@ -132,14 +121,42 @@ export function LanguageComponents({
                 label={LL.form.selectLanguage()}
                 onChange={handleLanguageChange}
                 disabled={isLoading}
+              sx={(theme) => ({
+                color: theme.palette.mode === 'dark' ? '#f7f7f7' : undefined,
+              })}
               >
                 {availableLocales.map((locale) => (
-                  <MenuItem key={locale.code} value={locale.code}>
+                <MenuItem
+                  key={locale.code}
+                  value={locale.code}
+                  sx={(theme) => ({
+                    color:
+                      theme.palette.mode === 'dark'
+                        ? '#f7f7f7'
+                        : theme.palette.text.primary,
+                  })}
+                >
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Typography variant="body1">
+                    <Typography
+                      variant="body1"
+                      sx={(theme) => ({
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? '#ffffff'
+                            : theme.palette.text.primary,
+                      })}
+                    >
                         {locale.nativeName}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary">
+                    <Typography
+                      variant="body2"
+                      sx={(theme) => ({
+                        color:
+                          theme.palette.mode === 'dark'
+                            ? 'rgba(255,255,255,0.7)'
+                            : theme.palette.text.secondary,
+                      })}
+                    >
                         ({locale.name})
                       </Typography>
                     </Box>
@@ -167,17 +184,17 @@ export function LanguageComponents({
 
             <Typography
               variant="body2"
-              sx={{
+              sx={(theme) => ({
                 textAlign: 'center',
-                color: colors.text,
+                color: theme.palette.mode === 'dark' ? '#f5f5f5' : colors.text,
                 marginTop: 3,
                 fontStyle: 'italic',
-              }}
+              })}
             >
               {LL.messages.languagePreferenceSaved()}
             </Typography>
           </CardContent>
-        </Card>
+        </GlassmorphismContainer>
       </Box>
     </LayoutComponent>
   );

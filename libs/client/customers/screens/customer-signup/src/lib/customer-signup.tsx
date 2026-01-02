@@ -15,9 +15,9 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import CssBaseline from '@mui/material/CssBaseline';
-import Paper from '@mui/material/Paper';
 import CircularProgress from '@mui/material/CircularProgress';
 import { colors } from '@kickzone-workspace/colors';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 
 export function CustomerSignup() {
   const { LL } = useI18nContext();
@@ -95,16 +95,15 @@ export function CustomerSignup() {
     <CustomersLayout>
       <Container component="main" maxWidth="xs">
         <CssBaseline />
-        <Paper
-          elevation={3}
-          sx={{
-            marginTop: 8,
-            marginBottom: 8,
-            padding: 4,
+        <GlassmorphismContainer
+          wrapperSx={{ p: 0, mt: 8, mb: 8 }}
+          containerSx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             borderRadius: 2,
+            p: 4,
+            width: '100%',
           }}
         >
           <PersonAddOutlined sx={{ fontSize: 40, color: colors.main }} />
@@ -204,7 +203,7 @@ export function CustomerSignup() {
               </Grid>
             </Grid>
           </Box>
-        </Paper>
+        </GlassmorphismContainer>
       </Container>
     </CustomersLayout>
   );

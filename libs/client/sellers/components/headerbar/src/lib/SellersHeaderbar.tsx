@@ -89,21 +89,28 @@ export function Headerbar() {
             <MenuIcon />
           </IconButton>
 
-          <Typography
-            variant="h6"
-            component={RouterLink}
-            to={SELLER_ROUTES.PRODUCTS}
-            sx={{
-              flexGrow: 1,
-              textDecoration: 'none',
-              color: 'inherit',
-              '&:hover': {
-                opacity: 0.8,
-              },
-            }}
-          >
-            {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
+            <Box
+              component="img"
+              src="/favicon-32x32.png"
+              alt="Logo"
+              sx={{ width: 28, height: 28, borderRadius: 2 }}
+            />
+            <Typography
+              variant="h6"
+              component={RouterLink}
+              to={SELLER_ROUTES.PRODUCTS}
+              sx={{
+                textDecoration: 'none',
+                color: 'inherit',
+                '&:hover': {
+                  opacity: 0.8,
+                },
+              }}
+            >
+              {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}
+            </Typography>
+          </Box>
 
           {user ? (
             <>

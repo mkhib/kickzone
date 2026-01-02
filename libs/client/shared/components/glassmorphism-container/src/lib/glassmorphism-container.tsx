@@ -45,12 +45,17 @@ export function GlassmorphismContainer({
           elevation={0}
           sx={{
             position: 'relative',
-            backgroundColor: 'transparent',
-            backdropFilter: 'none',
-            WebkitBackdropFilter: 'none',
+            backgroundColor: isDark
+              ? 'rgba(26, 26, 26, 0.9) !important'
+              : 'rgba(255, 255, 255, 0.9) !important',
+            border: isDark
+              ? '1px solid rgba(255, 255, 255, 0.08) !important'
+              : '1px solid rgba(0, 0, 0, 0.04) !important',
+            backdropFilter: isDark ? 'blur(12px)' : 'none',
+            WebkitBackdropFilter: isDark ? 'blur(12px)' : 'none',
             borderRadius: '23px', // Slightly smaller to account for border
             // Multiple layered inner shadows for glassy edge highlights
-            boxShadow: 'none',
+            boxShadow: 'none !important',
             p: { xs: 2, md: 4 },
             ...(fullHeight && { minHeight: '80vh' }),
             ...containerSx,

@@ -23,7 +23,6 @@ import {
   useLanguageContext,
   usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
-import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import {
   validateShippingInfo,
@@ -38,8 +37,8 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import { LottieEmptyCart } from '@kickzone-workspace/lottie-empty-cart';
 import Card from '@mui/material/Card';
-import CardContent from '@mui/material/CardContent';
 import CardMedia from '@mui/material/CardMedia';
+import { useTheme } from '@mui/material/styles';
 import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -69,10 +68,16 @@ const formatNumber = (num: number | string, locale: string): string => {
 
 const GOLD_GRADIENT =
   'linear-gradient(135deg, #e6d9ad 0%, #c8b37a 60%, #b6974f 100%)';
-const PANEL_GRADIENT = 'linear-gradient(135deg, #f8f4ea 0%, #f1e6d1 100%)';
 const GOLD_TEXT = '#c8b37a';
 
+const isItemRecommended = (
+  item: CartItem & { isRecommended?: boolean; recommended?: boolean }
+): boolean => {
+  return Boolean(item.isRecommended ?? item.recommended);
+};
+
 export function CustomerShoppingCart() {
+  const theme = useTheme();
   // Initialize cart service to sync server cart with local store
   // This ensures shipping fees are fetched and synced when user is logged in
   useCustomersCartService();
@@ -753,7 +758,12 @@ export function CustomerShoppingCart() {
 
   return (
     <CustomersLayout>
-      <GlassmorphismContainer fullHeight>
+      <Box
+        sx={{
+          py: 2,
+          px: { xs: 1, md: 2 },
+        }}
+      >
         <Typography variant="h4" gutterBottom>
           {LL.checkout.shoppingCart()}
         </Typography>
@@ -795,17 +805,31 @@ export function CustomerShoppingCart() {
               {cartItems.map((item) => (
                 <Card
                   key={item.id}
-                  sx={{
+                  sx={(theme) => ({
                     mb: 2,
                     borderRadius: 3,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                    boxShadow:
+                      theme.palette.mode === 'dark'
+                        ? '0 8px 20px rgba(0,0,0,0.45)'
+                        : '0 4px 12px rgba(0,0,0,0.08)',
+                    background:
+                      theme.palette.mode === 'dark'
+                        ? 'linear-gradient(180deg, #0e0e12 0%, #14141a 100%)'
+                        : 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
+                    border:
+                      theme.palette.mode === 'dark'
+                        ? '1px solid rgba(255,255,255,0.08)'
+                        : '1px solid rgba(0,0,0,0.04)',
                     transition: 'all 0.3s ease',
                     '&:hover': {
-                      boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                      boxShadow:
+                        theme.palette.mode === 'dark'
+                          ? '0 10px 26px rgba(0,0,0,0.55)'
+                          : '0 6px 20px rgba(0,0,0,0.12)',
                     },
-                  }}
+                  })}
                 >
-                  <CardContent sx={{ p: 3 }}>
+                  <Box sx={{ p: 3 }}>
                     <Grid container spacing={3} alignItems="center">
                       <Grid size={{ xs: 12, sm: 3, md: 2 }}>
                         {item.productImage && (
@@ -834,7 +858,10 @@ export function CustomerShoppingCart() {
                             variant="h6"
                             sx={{
                               fontWeight: 700,
-                              color: '#0f0f0f',
+                              color:
+                                theme.palette.mode === 'dark'
+                                  ? '#ffffff'
+                                  : '#0f0f0f',
                             }}
                           >
                             {item.productName}
@@ -860,7 +887,10 @@ export function CustomerShoppingCart() {
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color: '#666',
+                                      color:
+                                        theme.palette.mode === 'dark'
+                                          ? '#b8b8b8'
+                                          : '#666',
                                       fontWeight: 600,
                                       textTransform: 'uppercase',
                                       fontSize: '0.75rem',
@@ -891,7 +921,10 @@ export function CustomerShoppingCart() {
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color: '#666',
+                                      color:
+                                        theme.palette.mode === 'dark'
+                                          ? '#b8b8b8'
+                                          : '#666',
                                       fontWeight: 600,
                                       textTransform: 'uppercase',
                                       fontSize: '0.75rem',
@@ -903,7 +936,10 @@ export function CustomerShoppingCart() {
                                     variant="body2"
                                     sx={{
                                       fontWeight: 700,
-                                      color: '#1a1a1a',
+                                      color:
+                                        theme.palette.mode === 'dark'
+                                          ? '#ffffff'
+                                          : '#1a1a1a',
                                     }}
                                   >
                                     {formatNumber(item.size, currentLocale)}
@@ -924,7 +960,11 @@ export function CustomerShoppingCart() {
                               variant="h6"
                               sx={{
                                 fontWeight: 700,
-                                color: GOLD_TEXT,
+                                color: isItemRecommended(item)
+                                  ? GOLD_TEXT
+                                  : theme.palette.mode === 'dark'
+                                  ? '#ffffff'
+                                  : '#0f0f0f',
                               }}
                             >
                               <PriceDisplay
@@ -973,9 +1013,16 @@ export function CustomerShoppingCart() {
                               display: 'flex',
                               alignItems: 'center',
                               gap: 1,
-                              background: PANEL_GRADIENT,
+                              background:
+                                theme.palette.mode === 'dark'
+                                  ? '#111114'
+                                  : '#111114',
                               borderRadius: 3,
                               p: 0.5,
+                              border:
+                                theme.palette.mode === 'dark'
+                                  ? '1px solid rgba(255,255,255,0.12)'
+                                  : '1px solid rgba(255,255,255,0.08)',
                             }}
                           >
                             <IconButton
@@ -988,10 +1035,11 @@ export function CustomerShoppingCart() {
                                 )
                               }
                               sx={{
-                                background: 'white',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                background: 'transparent',
+                                color: '#ffffff',
+                                boxShadow: 'none',
                                 '&:hover': {
-                                  background: '#f8f9fa',
+                                  background: 'rgba(255,255,255,0.08)',
                                 },
                               }}
                             >
@@ -1003,6 +1051,7 @@ export function CustomerShoppingCart() {
                                 textAlign: 'center',
                                 fontWeight: 700,
                                 fontSize: '1.1rem',
+                                color: '#ffffff',
                               }}
                             >
                               {formatNumber(item.quantity, currentLocale)}
@@ -1018,14 +1067,15 @@ export function CustomerShoppingCart() {
                               }
                               disabled={item.quantity >= item.availableStock}
                               sx={{
-                                background: 'white',
-                                boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                                background: 'transparent',
+                                color: '#ffffff',
+                                boxShadow: 'none',
                                 '&:hover': {
-                                  background: '#f8f9fa',
+                                  background: 'rgba(255,255,255,0.08)',
                                 },
                                 '&.Mui-disabled': {
-                                  background: '#f0f0f0',
-                                  opacity: 0.5,
+                                  background: 'rgba(255,255,255,0.05)',
+                                  opacity: 0.4,
                                 },
                               }}
                             >
@@ -1044,7 +1094,11 @@ export function CustomerShoppingCart() {
                               variant="h6"
                               sx={{
                                 fontWeight: 800,
-                                color: GOLD_TEXT,
+                                color: isItemRecommended(item)
+                                  ? GOLD_TEXT
+                                  : theme.palette.mode === 'dark'
+                                  ? '#ffffff'
+                                  : '#0f0f0f',
                               }}
                             >
                               <PriceDisplay
@@ -1069,7 +1123,7 @@ export function CustomerShoppingCart() {
                         </Box>
                       </Grid>
                     </Grid>
-                  </CardContent>
+                  </Box>
                 </Card>
               ))}
 
@@ -1115,182 +1169,184 @@ export function CustomerShoppingCart() {
 
             {/* Order Summary */}
             <Grid size={{ xs: 12, md: 4 }}>
-              <Card
+              <Box
                 sx={{
-                  borderRadius: 4,
-                  boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
-                  background:
-                    'linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)',
                   position: 'sticky',
                   top: 20,
+                  p: 3,
+                  borderRadius: 3,
+                  border:
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(255,255,255,0.12)'
+                      : '1px solid rgba(0,0,0,0.08)',
+                  background: 'transparent',
+                  boxShadow: 'none',
+                  backdropFilter: 'none',
                 }}
               >
-                <CardContent sx={{ p: 3 }}>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 800,
+                    mb: 3,
+                  }}
+                >
+                  {LL.checkout.orderSummary()}
+                </Typography>
+                <Divider sx={{ my: 2 }} />
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    mb: 1,
+                    gap: { xs: 0.5, lg: 1 },
+                  }}
+                >
+                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {LL.checkout.subtotal()}:
+                  </Typography>
+                  <Typography
+                    sx={{
+                      textAlign: { xs: 'left', lg: 'right' },
+                      minWidth: 0,
+                      flex: { xs: 'none', lg: '1 1 auto' },
+                    }}
+                  >
+                    <PriceDisplay
+                      priceInUSD={cartTotal}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  </Typography>
+                </Box>
+
+                {/* Shipping fee */}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    mb: 1,
+                    gap: { xs: 0.5, lg: 1 },
+                  }}
+                >
+                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                    {LL.checkout.shipping()}:
+                  </Typography>
+                  <Typography
+                    sx={{
+                      textAlign: { xs: 'left', lg: 'right' },
+                      minWidth: 0,
+                      flex: { xs: 'none', lg: '1 1 auto' },
+                    }}
+                  >
+                    <PriceDisplay
+                      priceInUSD={totalShippingCost}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  </Typography>
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: { xs: 'column', lg: 'row' },
+                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
+                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    mb: 3,
+                    p: 2,
+                    borderRadius: 3,
+                    backgroundImage: GOLD_GRADIENT,
+                    color: '#0f0f0f',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    gap: { xs: 0.5, lg: 1 },
+                  }}
+                >
+                  <Typography
+                    variant="h6"
+                    sx={{
+                      fontWeight: 700,
+                      color: '#0f0f0f',
+                      whiteSpace: 'nowrap',
+                      flexShrink: 0,
+                    }}
+                  >
+                    {LL.checkout.total()}:
+                  </Typography>
                   <Typography
                     variant="h5"
                     sx={{
                       fontWeight: 800,
-                      mb: 3,
-                      color: '#1a1a1a',
+                      color: '#0f0f0f',
+                      textAlign: { xs: 'left', lg: 'right' },
+                      minWidth: 0,
+                      flex: { xs: 'none', lg: '1 1 auto' },
                     }}
                   >
-                    {LL.checkout.orderSummary()}
+                    <PriceDisplay
+                      priceInUSD={grandTotal}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
                   </Typography>
-                  <Divider sx={{ my: 2 }} />
+                </Box>
 
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: { xs: 'column', lg: 'row' },
-                      justifyContent: { xs: 'flex-start', lg: 'space-between' },
-                      alignItems: { xs: 'flex-start', lg: 'center' },
-                      mb: 1,
-                      gap: { xs: 0.5, lg: 1 },
-                    }}
-                  >
-                    <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {LL.checkout.subtotal()}:
-                    </Typography>
-                    <Typography
-                      sx={{
-                        textAlign: { xs: 'left', lg: 'right' },
-                        minWidth: 0,
-                        flex: { xs: 'none', lg: '1 1 auto' },
-                      }}
-                    >
-                      <PriceDisplay
-                        priceInUSD={cartTotal}
-                        showSymbol={true}
-                        showOriginal={false}
-                      />
-                    </Typography>
-                  </Box>
-
-                  {/* Shipping fee */}
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: { xs: 'column', lg: 'row' },
-                      justifyContent: { xs: 'flex-start', lg: 'space-between' },
-                      alignItems: { xs: 'flex-start', lg: 'center' },
-                      mb: 1,
-                      gap: { xs: 0.5, lg: 1 },
-                    }}
-                  >
-                    <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
-                      {LL.checkout.shipping()}:
-                    </Typography>
-                    <Typography
-                      sx={{
-                        textAlign: { xs: 'left', lg: 'right' },
-                        minWidth: 0,
-                        flex: { xs: 'none', lg: '1 1 auto' },
-                      }}
-                    >
-                      <PriceDisplay
-                        priceInUSD={totalShippingCost}
-                        showSymbol={true}
-                        showOriginal={false}
-                      />
-                    </Typography>
-                  </Box>
-
-                  <Divider sx={{ my: 2 }} />
-
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      flexDirection: { xs: 'column', lg: 'row' },
-                      justifyContent: { xs: 'flex-start', lg: 'space-between' },
-                      alignItems: { xs: 'flex-start', lg: 'center' },
-                      mb: 3,
-                      p: 2,
-                      borderRadius: 3,
-                      backgroundImage: GOLD_GRADIENT,
+                <Button
+                  variant="contained"
+                  fullWidth
+                  size="large"
+                  startIcon={<ShoppingCartCheckout />}
+                  onClick={handleCheckout}
+                  sx={{
+                    position: 'relative',
+                    borderRadius: 3,
+                    py: 1.5,
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    textTransform: 'none',
+                    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)',
+                    backgroundImage: GOLD_GRADIENT,
+                    color: '#0f0f0f',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    overflow: 'hidden',
+                    zIndex: 1,
+                    '&::before': {
+                      content: '""',
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      backgroundImage:
+                        'linear-gradient(135deg, #f2e7bd 0%, #d6c28c 60%, #c39d55 100%)',
+                      opacity: 0,
+                      transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      zIndex: -1,
+                    },
+                    '&:hover': {
+                      transform: 'translateY(-2px)',
+                      boxShadow: '0 12px 32px rgba(0, 0, 0, 0.22)',
                       color: '#0f0f0f',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      gap: { xs: 0.5, lg: 1 },
-                    }}
-                  >
-                    <Typography
-                      variant="h6"
-                      sx={{
-                        fontWeight: 700,
-                        color: '#0f0f0f',
-                        whiteSpace: 'nowrap',
-                        flexShrink: 0,
-                      }}
-                    >
-                      {LL.checkout.total()}:
-                    </Typography>
-                    <Typography
-                      variant="h5"
-                      sx={{
-                        fontWeight: 800,
-                        color: '#0f0f0f',
-                        textAlign: { xs: 'left', lg: 'right' },
-                        minWidth: 0,
-                        flex: { xs: 'none', lg: '1 1 auto' },
-                      }}
-                    >
-                      <PriceDisplay
-                        priceInUSD={grandTotal}
-                        showSymbol={true}
-                        showOriginal={false}
-                      />
-                    </Typography>
-                  </Box>
-
-                  <Button
-                    variant="contained"
-                    fullWidth
-                    size="large"
-                    startIcon={<ShoppingCartCheckout />}
-                    onClick={handleCheckout}
-                    sx={{
-                      position: 'relative',
-                      borderRadius: 3,
-                      py: 1.5,
-                      fontWeight: 700,
-                      fontSize: '1rem',
-                      textTransform: 'none',
-                      boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)',
-                      backgroundImage: GOLD_GRADIENT,
-                      color: '#0f0f0f',
-                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      overflow: 'hidden',
-                      zIndex: 1,
                       '&::before': {
-                        content: '""',
-                        position: 'absolute',
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        backgroundImage:
-                          'linear-gradient(135deg, #f2e7bd 0%, #d6c28c 60%, #c39d55 100%)',
-                        opacity: 0,
-                        transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                        zIndex: -1,
+                        opacity: 1,
                       },
-                      '&:hover': {
-                        transform: 'translateY(-2px)',
-                        boxShadow: '0 12px 32px rgba(0, 0, 0, 0.22)',
-                        color: '#0f0f0f',
-                        '&::before': {
-                          opacity: 1,
-                        },
-                      },
-                      '& .MuiButton-startIcon': {
-                        position: 'relative',
-                        zIndex: 1,
-                      },
-                    }}
-                  >
-                    {LL.checkout.proceedToCheckout()}
-                  </Button>
-                </CardContent>
-              </Card>
+                    },
+                    '& .MuiButton-startIcon': {
+                      position: 'relative',
+                      zIndex: 1,
+                    },
+                  }}
+                >
+                  {LL.checkout.proceedToCheckout()}
+                </Button>
+              </Box>
             </Grid>
           </Grid>
         )}
@@ -1794,11 +1850,22 @@ export function CustomerShoppingCart() {
                         </Typography>
                       </Box>
                       <Box sx={{ textAlign: 'right' }}>
-                        <PriceDisplay
-                          priceInUSD={item.totalPrice}
-                          showSymbol={true}
-                          showOriginal={false}
-                        />
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            color: isItemRecommended(item)
+                              ? GOLD_TEXT
+                              : theme.palette.mode === 'dark'
+                              ? '#ffffff'
+                              : '#0f0f0f',
+                          }}
+                        >
+                          <PriceDisplay
+                            priceInUSD={item.totalPrice}
+                            showSymbol={true}
+                            showOriginal={false}
+                          />
+                        </Typography>
                       </Box>
                     </Box>
                   ))}
@@ -2057,7 +2124,7 @@ export function CustomerShoppingCart() {
             </Button>
           </DialogActions>
         </Dialog>
-      </GlassmorphismContainer>
+      </Box>
     </CustomersLayout>
   );
 }

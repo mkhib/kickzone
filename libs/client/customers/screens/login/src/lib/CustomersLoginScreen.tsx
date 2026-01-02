@@ -15,9 +15,9 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import CssBaseline from '@mui/material/CssBaseline';
-import Paper from '@mui/material/Paper';
 import CircularProgress from '@mui/material/CircularProgress';
 import { colors } from '@kickzone-workspace/colors';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 
 export function CustomersLogin() {
   const { LL } = useI18nContext();
@@ -63,22 +63,26 @@ export function CustomersLogin() {
     <CustomersLayout>
       <Container component="main" maxWidth="xs">
         <CssBaseline />
-        <Paper
-          elevation={3}
-          sx={{
-            marginTop: 8,
-            padding: 4,
+        <GlassmorphismContainer
+          wrapperSx={{ p: 0, mt: 8, mb: 8 }}
+          containerSx={{
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
             borderRadius: 2,
+            p: 4,
+            width: '100%',
           }}
         >
           <LockOutlined sx={{ fontSize: 40, color: colors.main }} />
           <Typography
             component="h1"
             variant="h5"
-            sx={{ mt: 2, color: colors.text }}
+            sx={{
+              mt: 2,
+              color: (theme) =>
+                theme.palette.mode === 'dark' ? '#ffffff' : colors.text,
+            }}
           >
             {LL.authorization.signIn()}
           </Typography>
@@ -113,7 +117,12 @@ export function CustomersLogin() {
                   component={RouterLink}
                   to={CUSTOMER_ROUTES.FORGOT_PASSWORD}
                   variant="body2"
-                  sx={{ color: colors.main, textDecoration: 'none' }}
+                  sx={{
+                    color: 'primary.main',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    '&:hover': { color: 'primary.dark' },
+                  }}
                 >
                   {LL.authorization.forgotPassword()}
                 </Link>
@@ -144,7 +153,12 @@ export function CustomersLogin() {
                   to={CUSTOMER_ROUTES.SIGNUP}
                   state={location.state}
                   variant="body2"
-                  sx={{ color: colors.main, textDecoration: 'none' }}
+                  sx={{
+                    color: 'primary.main',
+                    textDecoration: 'none',
+                    fontWeight: 600,
+                    '&:hover': { color: 'primary.dark' },
+                  }}
                 >
                   {LL.authorization.dontHaveAccount()}{' '}
                   {LL.authorization.signUp()}
@@ -152,7 +166,7 @@ export function CustomersLogin() {
               </Grid>
             </Grid>
           </Box>
-        </Paper>
+        </GlassmorphismContainer>
       </Container>
     </CustomersLayout>
   );

@@ -84,31 +84,19 @@ export function Headerbar() {
                 ? 'rgba(14, 14, 18, 0.9)'
                 : 'rgba(255, 255, 255, 0.95)'
               : isDark
-                ? 'rgba(14, 14, 18, 0.7)'
-                : 'rgba(255, 255, 255, 0.1)';
+              ? 'rgba(14, 14, 18, 0.7)'
+              : 'rgba(255, 255, 255, 0.1)';
           },
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
           borderBottom: (theme) => {
             const isDark = theme.palette.mode === 'dark';
-            return isScrolled
-              ? isDark
-                ? '1px solid rgba(255, 255, 255, 0.08)'
-                : '1px solid rgba(0, 0, 0, 0.1)'
-              : isDark
-                ? '1px solid rgba(255, 255, 255, 0.08)'
-                : '1px solid rgba(255, 255, 255, 0.2)';
+            return isDark
+              ? '1px solid rgba(255,255,255,0.06)'
+              : '1px solid rgba(0,0,0,0.08)';
           },
-          boxShadow: (theme) => {
-            const isDark = theme.palette.mode === 'dark';
-            return isScrolled
-              ? isDark
-                ? '0 6px 18px rgba(0,0,0,0.55)'
-                : '0 2px 8px rgba(0, 0, 0, 0.1)'
-              : isDark
-                ? '0 10px 28px rgba(0,0,0,0.55)'
-                : '0 8px 32px 0 rgba(31, 38, 135, 0.15)';
-          },
+          borderLeft: 'none',
+          boxShadow: 'none !important',
           zIndex: (theme) => theme.zIndex.appBar + 1,
           color: (theme) =>
             theme.palette.mode === 'dark' ? '#f5f5f5' : '#000',
@@ -140,22 +128,30 @@ export function Headerbar() {
             {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
 
-          <Typography
-            variant="h6"
-            component={RouterLink}
-            to={CUSTOMER_ROUTES.PRODUCTS}
-            sx={{
-              flexShrink: 0,
-              textAlign: 'left',
-              textDecoration: 'none',
-              color: 'inherit',
-              '&:hover': {
-                opacity: 0.8,
-              },
-            }}
-          >
-            {LL.appNames.siteName()}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Box
+              component="img"
+              src="/favicon-32x32.png"
+              alt="Logo"
+              sx={{ width: 28, height: 28, borderRadius: 2 }}
+            />
+            <Typography
+              variant="h6"
+              component={RouterLink}
+              to={CUSTOMER_ROUTES.PRODUCTS}
+              sx={{
+                flexShrink: 0,
+                textAlign: 'left',
+                textDecoration: 'none',
+                color: 'inherit',
+                '&:hover': {
+                  opacity: 0.8,
+                },
+              }}
+            >
+              {LL.appNames.siteName()}
+            </Typography>
+          </Box>
 
           <Button
             color="inherit"

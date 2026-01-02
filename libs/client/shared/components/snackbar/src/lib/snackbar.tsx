@@ -15,6 +15,11 @@ export interface SnackbarProps {
 
 const StyledAlert = styled(Alert)(({ theme }) => ({
   width: '100%',
+  color: theme.palette.mode === 'dark' ? '#ffffff' : undefined,
+  backgroundColor:
+    theme.palette.mode === 'dark'
+      ? 'rgba(20, 20, 24, 0.92)'
+      : theme.palette.background.paper,
   '& .MuiAlert-message': {
     width: '100%',
   },

@@ -105,18 +105,25 @@ export function AdminsHeaderbar() {
               <MenuIcon />
             </IconButton>
           )}
-          <Typography
-            variant={isMobile ? 'subtitle1' : 'h6'}
-            sx={{
-              flexGrow: 1,
-              fontWeight: 700,
-              letterSpacing: 1,
-              userSelect: 'none',
-              color: '#000',
-            }}
-          >
-            {LL.appNames.siteName()} {LL.navigation.adminPanel()}
-          </Typography>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
+            <Box
+              component="img"
+              src="/favicon-32x32.png"
+              alt="Logo"
+              sx={{ width: 28, height: 28, borderRadius: 2 }}
+            />
+            <Typography
+              variant={isMobile ? 'subtitle1' : 'h6'}
+              sx={{
+                fontWeight: 700,
+                letterSpacing: 1,
+                userSelect: 'none',
+                color: '#000',
+              }}
+            >
+              {LL.appNames.siteName()} {LL.navigation.adminPanel()}
+            </Typography>
+          </Box>
           {user && (
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Button

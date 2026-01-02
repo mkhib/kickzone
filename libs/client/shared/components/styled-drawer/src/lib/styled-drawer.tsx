@@ -10,23 +10,32 @@ import Divider from '@mui/material/Divider';
 import { styled } from '@mui/material/styles';
 import { ReactNode } from 'react';
 
-const BaseStyledDrawer = styled(Drawer)(({ theme }) => ({
-  width: DRAWER_WIDTH,
-  flexShrink: 0,
-  '& .MuiDrawer-paper': {
+const BaseStyledDrawer = styled(Drawer)(({ theme }) => {
+  const isDark = theme.palette.mode === 'dark';
+  return {
     width: DRAWER_WIDTH,
-    boxSizing: 'border-box',
-    marginTop: HEIGHTS.header,
-    height: HEIGHTS.drawer,
-    backgroundColor: 'rgba(255, 255, 255, 0.85)',
-    backdropFilter: 'blur(20px) saturate(180%)',
-    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-    boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-  },
-}));
+    flexShrink: 0,
+    '& .MuiDrawer-paper': {
+      width: DRAWER_WIDTH,
+      boxSizing: 'border-box',
+      marginTop: HEIGHTS.header,
+      height: HEIGHTS.drawer,
+      backgroundColor: isDark
+        ? 'rgba(18, 18, 22, 0.92)'
+        : 'rgba(255, 255, 255, 0.9)',
+      color: isDark ? '#ffffff' : '#000000',
+      backdropFilter: 'blur(20px) saturate(180%)',
+      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+      boxShadow: isDark
+        ? '0 10px 28px rgba(0,0,0,0.5)'
+        : '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+    },
+  };
+});
 
 export const CustomListItemText = styled(ListItemText)(({ theme }) => ({
-  color: '#000000',
+  color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+  fontWeight: 600,
 }));
 
 interface StyledDrawerProps {
@@ -59,6 +68,8 @@ export function StyledDrawer({
             direction === 'rtl' ? 'none' : '1px solid rgba(255, 255, 255, 0.3)',
           borderLeft:
             direction === 'rtl' ? '1px solid rgba(255, 255, 255, 0.3)' : 'none',
+          color: (theme) =>
+            theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
         },
       }}
     >
