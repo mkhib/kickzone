@@ -95,17 +95,15 @@ export function AdminsHeaderbar() {
             position: 'relative',
           }}
         >
-          {user && (
-            <IconButton
-              edge="start"
-              color="inherit"
-              aria-label="menu"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
-          )}
+          <IconButton
+            edge="start"
+            color="inherit"
+            aria-label="menu"
+            onClick={handleDrawerToggle}
+            sx={{ mr: 2 }}
+          >
+            <MenuIcon />
+          </IconButton>
           <Typography
             variant="subtitle1"
             component={RouterLink}
@@ -218,13 +216,13 @@ export function AdminsHeaderbar() {
           )}
         </Toolbar>
       </AppBar>
-      {user && (
-        <StyledDrawer
-          open={drawerOpen}
-          onClose={handleDrawerToggle}
-          variant={isMobile ? 'temporary' : 'persistent'}
-          keepMounted={true}
-        >
+      <StyledDrawer
+        open={drawerOpen}
+        onClose={handleDrawerToggle}
+        variant={isMobile ? 'temporary' : 'persistent'}
+        keepMounted={true}
+      >
+        {user && (
           <ListItemButton
             to={ADMIN_ROUTES.PRODUCTS_NEW}
             component={RouterLink}
@@ -301,8 +299,27 @@ export function AdminsHeaderbar() {
             </ListItemIcon>
             <CustomListItemText primary={LL.navigation.languageSettings()} />
           </ListItemButton>
-        </StyledDrawer>
-      )}
+        {user ? (
+          <ListItemButton onClick={handleOnLogoutClick}>
+            <ListItemIcon>
+              <AccountCircleIcon />
+            </ListItemIcon>
+            <CustomListItemText primary={LL.button.logout()} />
+          </ListItemButton>
+        ) : (
+          <ListItemButton
+            to={ADMIN_ROUTES.LOGIN}
+            component={RouterLink}
+            selected={location.pathname === ADMIN_ROUTES.LOGIN}
+            onClick={handleDrawerToggle}
+          >
+            <ListItemIcon>
+              <AccountCircleIcon />
+            </ListItemIcon>
+            <CustomListItemText primary={LL.button.login()} />
+          </ListItemButton>
+        )}
+      </StyledDrawer>
     </>
   );
 }

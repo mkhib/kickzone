@@ -224,6 +224,27 @@ export function Headerbar() {
           </ListItemIcon>
           <CustomListItemText primary={LL.navigation.languageSettings()} />
         </ListItemButton>
+
+        {user ? (
+          <ListItemButton onClick={handleLogout}>
+            <ListItemIcon>
+              <AccountCircleIcon />
+            </ListItemIcon>
+            <CustomListItemText primary={LL.button.logout()} />
+          </ListItemButton>
+        ) : (
+          <ListItemButton
+            to={SELLER_ROUTES.LOGIN}
+            component={RouterLink}
+            selected={location.pathname === SELLER_ROUTES.LOGIN}
+            onClick={handleDrawerToggle}
+          >
+            <ListItemIcon>
+              <AccountCircleIcon />
+            </ListItemIcon>
+            <CustomListItemText primary={LL.button.login()} />
+          </ListItemButton>
+        )}
       </StyledDrawer>
     </>
   );
