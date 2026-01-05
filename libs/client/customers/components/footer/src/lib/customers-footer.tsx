@@ -8,18 +8,29 @@ export function CustomersFooter() {
 
   return (
     <Box
-      sx={{
-        backgroundColor: '#f5f5f5',
-        borderTop: '1px solid #e0e0e0',
-        padding: 2,
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        flexWrap: 'wrap',
-        gap: 2,
+      sx={(theme) => {
+        const isDark = theme.palette.mode === 'dark';
+        return {
+          backgroundColor: isDark ? '#0b0b0f' : '#f5f5f5',
+          borderTop: isDark
+            ? '1px solid rgba(255, 255, 255, 0.12)'
+            : '1px solid #e0e0e0',
+          color: isDark ? '#f5f5f5' : 'inherit',
+          padding: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: 2,
+        };
       }}
     >
-      <Typography variant="body2" color="text.secondary">
+      <Typography
+        variant="body2"
+        sx={(theme) => ({
+          color: theme.palette.mode === 'dark' ? '#f5f5f5' : 'text.secondary',
+        })}
+      >
         © 2025 {LL.appNames.siteName()}
       </Typography>
     </Box>
