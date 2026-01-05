@@ -5,6 +5,7 @@ import {
   CREATE_SELLER,
   UPDATE_SELLER,
   TOGGLE_SELLER_ACTIVE,
+  INITIATE_SELLER_PASSWORD_SETUP,
 } from './adminsSellers.graphql';
 
 export const useAdminsSellersQuery = (
@@ -72,9 +73,15 @@ export const useAdminsSellers = (
     ],
   });
 
+  const [initiateSellerPasswordSetup] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'initiatePasswordSetup'>,
+    KickzoneGraphqlTypes.MutationInitiatePasswordSetupArgs
+  >(INITIATE_SELLER_PASSWORD_SETUP);
+
   return {
     createSeller,
     updateSeller,
     toggleSellerActive,
+    initiateSellerPasswordSetup,
   };
 };

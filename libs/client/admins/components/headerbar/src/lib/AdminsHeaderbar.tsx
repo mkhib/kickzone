@@ -105,27 +105,28 @@ export function AdminsHeaderbar() {
               <MenuIcon />
             </IconButton>
           )}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
+          <Typography
+            variant={isMobile ? 'subtitle1' : 'h6'}
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              fontWeight: 700,
+              letterSpacing: 1,
+              userSelect: 'none',
+              color: '#000',
+              flexGrow: 1,
+            }}
+          >
+            {LL.appNames.siteName()} {LL.navigation.adminPanel()}
+          </Typography>
+          {user && (
             <Box
-              component="img"
-              src="/favicon-32x32.png"
-              alt="Logo"
-              sx={{ width: 28, height: 28, borderRadius: 2 }}
-            />
-            <Typography
-              variant={isMobile ? 'subtitle1' : 'h6'}
               sx={{
-                fontWeight: 700,
-                letterSpacing: 1,
-                userSelect: 'none',
-                color: '#000',
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+                flexShrink: 0,
               }}
             >
-              {LL.appNames.siteName()} {LL.navigation.adminPanel()}
-            </Typography>
-          </Box>
-          {user && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
               <Button
                 color="inherit"
                 component={RouterLink}
@@ -153,6 +154,7 @@ export function AdminsHeaderbar() {
                 onClick={handleUserMenuOpen}
                 startIcon={<AccountCircleIcon />}
                 sx={{
+                  display: { xs: 'none', sm: 'inline-flex' },
                   textTransform: 'none',
                   ml: 2,
                   '&:hover': {

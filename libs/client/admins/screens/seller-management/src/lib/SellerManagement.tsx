@@ -25,6 +25,7 @@ import type { MRT_Localization } from 'material-react-table';
 import AddIcon from '@mui/icons-material/Add';
 import EditIcon from '@mui/icons-material/Edit';
 import GroupAddIcon from '@mui/icons-material/GroupAdd';
+import MarkEmailReadIcon from '@mui/icons-material/MarkEmailRead';
 import PersonOffIcon from '@mui/icons-material/PersonOff';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -96,8 +97,30 @@ export const SellerManagement = () => {
     isActive: true,
   });
 
-  const { createSeller, updateSeller, toggleSellerActive } =
-    useAdminsSellers(filter);
+  const {
+    createSeller,
+    updateSeller,
+    toggleSellerActive,
+    initiateSellerPasswordSetup,
+  } = useAdminsSellers(filter);
+
+  const env = (
+    import.meta as unknown as {
+      env: {
+        VITE_SELLERS_BASE_URL?: string;
+        VITE_SELLERS_FRONTEND_URL?: string;
+      };
+    }
+  ).env;
+
+  const sellersPortalBaseUrl =
+    env.VITE_SELLERS_BASE_URL ||
+    env.VITE_SELLERS_FRONTEND_URL ||
+    'https://seller.masterskey.store'; // default to prod host to avoid localhost links in prod builds
+
+  const [resendingSellerId, setResendingSellerId] = useState<number | null>(
+    null
+  );
 
   const { sellers, isLoadingSellers, sellersError, refetchSellers } =
     useAdminsSellersQuery(filter);
@@ -219,6 +242,34 @@ export const SellerManagement = () => {
               <EditIcon />
             </IconButton>
           </Tooltip>
+          <Tooltip title="Resend password email">
+            <span>
+              <IconButton
+                disabled={resendingSellerId === row.original.id}
+                onClick={async () => {
+                  setResendingSellerId(row.original.id);
+                  try {
+                    await initiateSellerPasswordSetup({
+                      variables: {
+                        email: row.original.user.email,
+                        baseUrl: sellersPortalBaseUrl,
+                      },
+                    });
+                    showSnackbar('Password setup email sent', {
+                      severity: 'success',
+                    });
+                  } catch (error) {
+                    const err = error as Error;
+                    showSnackbar(err.message, { severity: 'error' });
+                  } finally {
+                    setResendingSellerId(null);
+                  }
+                }}
+              >
+                <MarkEmailReadIcon />
+              </IconButton>
+            </span>
+          </Tooltip>
           <Tooltip title={row.original.isActive ? 'Deactivate' : 'Activate'}>
             <IconButton
               onClick={() => {
@@ -239,7 +290,15 @@ export const SellerManagement = () => {
     // For RTL languages, put actions column last (right side)
     // For LTR languages, put actions column last (right side) as well
     return [...dataColumns, actionsColumn];
-  }, [LL, isRTL, alignment]);
+  }, [
+    LL,
+    isRTL,
+    alignment,
+    initiateSellerPasswordSetup,
+    resendingSellerId,
+    sellersPortalBaseUrl,
+    showSnackbar,
+  ]);
 
   const handleDeleteConfirm = async () => {
     if (!selectedSeller) return;

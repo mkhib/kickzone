@@ -73,6 +73,12 @@ echo ==========================================
 echo  API update complete
 echo ==========================================
 echo.
+echo Uploaded: API build
+echo Service: masterskey-api restarted and status checked
+echo nginx reloaded after config test
+echo.
+echo Press any key to close this window...
+pause >nul
 
 ENDLOCAL
 exit /b 0

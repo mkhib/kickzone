@@ -63,3 +63,9 @@ export const TOGGLE_SELLER_ACTIVE = gql`
     }
   }
 `;
+
+export const INITIATE_SELLER_PASSWORD_SETUP = gql`
+  mutation InitiateSellerPasswordSetup($email: String!, $baseUrl: String!) {
+    initiatePasswordSetup(email: $email, baseUrl: $baseUrl)
+  }
+`;

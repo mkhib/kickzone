@@ -102,6 +102,11 @@ echo ==========================================
 echo  Frontend update complete
 echo ==========================================
 echo.
+echo Builds uploaded: admins, sellers, customers
+echo nginx reloaded after config test
+echo.
+echo Press any key to close this window...
+pause >nul
 
 ENDLOCAL
 exit /b 0

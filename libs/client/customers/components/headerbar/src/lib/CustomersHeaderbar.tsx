@@ -123,35 +123,28 @@ export function Headerbar() {
             color="inherit"
             aria-label="toggle theme"
             onClick={toggleTheme}
-            sx={{ mr: 1 }}
+            sx={{ mr: 1, display: { xs: 'none', sm: 'inline-flex' } }}
           >
             {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <Box
-              component="img"
-              src="/favicon-32x32.png"
-              alt="Logo"
-              sx={{ width: 28, height: 28, borderRadius: 2 }}
-            />
-            <Typography
-              variant="h6"
-              component={RouterLink}
-              to={CUSTOMER_ROUTES.PRODUCTS}
-              sx={{
-                flexShrink: 0,
-                textAlign: 'left',
-                textDecoration: 'none',
-                color: 'inherit',
-                '&:hover': {
-                  opacity: 0.8,
-                },
-              }}
-            >
-              {LL.appNames.siteName()}
-            </Typography>
-          </Box>
+          <Typography
+            variant="h6"
+            component={RouterLink}
+            to={CUSTOMER_ROUTES.PRODUCTS}
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              flexShrink: 0,
+              textAlign: 'left',
+              textDecoration: 'none',
+              color: 'inherit',
+              '&:hover': {
+                opacity: 0.8,
+              },
+            }}
+          >
+            {LL.appNames.siteName()}
+          </Typography>
 
           <Button
             color="inherit"
@@ -159,6 +152,7 @@ export function Headerbar() {
             to={CUSTOMER_ROUTES.PRODUCTS}
             startIcon={<HomeIcon />}
             sx={{
+              display: { xs: 'none', sm: 'inline-flex' },
               textTransform: 'none',
               ml: 1,
               mr: 0,
@@ -180,6 +174,7 @@ export function Headerbar() {
             component={RouterLink}
             to={CUSTOMER_ROUTES.CART}
             sx={{
+              display: { xs: 'none', sm: 'inline-flex' },
               mx: 1,
               '&:hover': {
                 backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -199,6 +194,7 @@ export function Headerbar() {
                 onClick={handleUserMenuOpen}
                 startIcon={<AccountCircleIcon />}
                 sx={{
+                  display: { xs: 'none', sm: 'inline-flex' },
                   textTransform: 'none',
                   '&:hover': {
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -236,6 +232,7 @@ export function Headerbar() {
               component={RouterLink}
               to={CUSTOMER_ROUTES.LOGIN}
               sx={{
+                display: { xs: 'none', sm: 'inline-flex' },
                 textTransform: 'none',
                 '&:hover': {
                   backgroundColor: 'rgba(255, 255, 255, 0.1)',

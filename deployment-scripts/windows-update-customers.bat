@@ -73,6 +73,11 @@ echo ==========================================
 echo  Customer panel update complete
 echo ==========================================
 echo.
+echo Uploaded: customers build
+echo nginx reloaded after config test
+echo.
+echo Press any key to close this window...
+pause >nul
 
 ENDLOCAL
 exit /b 0

@@ -89,28 +89,22 @@ export function Headerbar() {
             <MenuIcon />
           </IconButton>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
-            <Box
-              component="img"
-              src="/favicon-32x32.png"
-              alt="Logo"
-              sx={{ width: 28, height: 28, borderRadius: 2 }}
-            />
-            <Typography
-              variant="h6"
-              component={RouterLink}
-              to={SELLER_ROUTES.PRODUCTS}
-              sx={{
-                textDecoration: 'none',
-                color: 'inherit',
-                '&:hover': {
-                  opacity: 0.8,
-                },
-              }}
-            >
-              {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}
-            </Typography>
-          </Box>
+          <Typography
+            variant="h6"
+            component={RouterLink}
+            to={SELLER_ROUTES.PRODUCTS}
+            sx={{
+              display: { xs: 'none', sm: 'block' },
+              textDecoration: 'none',
+              color: 'inherit',
+              '&:hover': {
+                opacity: 0.8,
+              },
+              flexGrow: 1,
+            }}
+          >
+            {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}
+          </Typography>
 
           {user ? (
             <>
@@ -119,6 +113,7 @@ export function Headerbar() {
                 onClick={handleUserMenuOpen}
                 startIcon={<AccountCircleIcon />}
                 sx={{
+                  display: { xs: 'none', sm: 'inline-flex' },
                   textTransform: 'none',
                   '&:hover': {
                     backgroundColor: 'rgba(255, 255, 255, 0.1)',
@@ -149,6 +144,7 @@ export function Headerbar() {
               component={RouterLink}
               to={SELLER_ROUTES.LOGIN}
               sx={{
+                display: { xs: 'none', sm: 'inline-flex' },
                 textTransform: 'none',
                 '&:hover': {
                   backgroundColor: 'rgba(255, 255, 255, 0.1)',
