@@ -427,6 +427,10 @@ const fa = {
     confirmAction: 'برای تایید این عمل، لطفاً نام کاربری فروشنده را تایپ کنید:',
     enterUsername: 'نام کاربری را وارد کنید',
     usernameMismatch: 'نام کاربری مطابقت ندارد',
+    resendPasswordEmail: 'ارسال دوباره ایمیل رمز عبور',
+    passwordEmailSent: 'ایمیل رمز عبور ارسال شد',
+    deactivateSeller: 'غیرفعال کردن فروشنده',
+    activateSeller: 'فعال کردن فروشنده',
   },
 
   // Validation messages

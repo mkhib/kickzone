@@ -1451,6 +1451,22 @@ type RootTranslation = {
 		 * U​s​e​r​n​a​m​e​ ​d​o​e​s​ ​n​o​t​ ​m​a​t​c​h
 		 */
 		usernameMismatch: string
+		/**
+		 * R​e​s​e​n​d​ ​p​a​s​s​w​o​r​d​ ​e​m​a​i​l
+		 */
+		resendPasswordEmail: string
+		/**
+		 * P​a​s​s​w​o​r​d​ ​e​m​a​i​l​ ​s​e​n​t
+		 */
+		passwordEmailSent: string
+		/**
+		 * D​e​a​c​t​i​v​a​t​e​ ​s​e​l​l​e​r
+		 */
+		deactivateSeller: string
+		/**
+		 * A​c​t​i​v​a​t​e​ ​s​e​l​l​e​r
+		 */
+		activateSeller: string
 	}
 	validation: {
 		name: {
@@ -3985,6 +4001,22 @@ export type TranslationFunctions = {
 		 * Username does not match
 		 */
 		usernameMismatch: () => LocalizedString
+		/**
+		 * Resend password email
+		 */
+		resendPasswordEmail: () => LocalizedString
+		/**
+		 * Password email sent
+		 */
+		passwordEmailSent: () => LocalizedString
+		/**
+		 * Deactivate seller
+		 */
+		deactivateSeller: () => LocalizedString
+		/**
+		 * Activate seller
+		 */
+		activateSeller: () => LocalizedString
 	}
 	validation: {
 		name: {

@@ -242,7 +242,7 @@ export const SellerManagement = () => {
               <EditIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title="Resend password email">
+          <Tooltip title={LL.authorization.resendPasswordEmail()}>
             <span>
               <IconButton
                 disabled={resendingSellerId === row.original.id}
@@ -255,7 +255,7 @@ export const SellerManagement = () => {
                         baseUrl: sellersPortalBaseUrl,
                       },
                     });
-                    showSnackbar('Password setup email sent', {
+                    showSnackbar(LL.authorization.passwordEmailSent(), {
                       severity: 'success',
                     });
                   } catch (error) {
@@ -270,7 +270,13 @@ export const SellerManagement = () => {
               </IconButton>
             </span>
           </Tooltip>
-          <Tooltip title={row.original.isActive ? 'Deactivate' : 'Activate'}>
+          <Tooltip
+            title={
+              row.original.isActive
+                ? LL.authorization.deactivateSeller()
+                : LL.authorization.activateSeller()
+            }
+          >
             <IconButton
               onClick={() => {
                 setSelectedSeller(row.original);

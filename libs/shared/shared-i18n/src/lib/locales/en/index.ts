@@ -425,6 +425,10 @@ const en = {
     confirmAction: "To confirm this action, please type the seller's username:",
     enterUsername: 'Enter username',
     usernameMismatch: 'Username does not match',
+    resendPasswordEmail: 'Resend password email',
+    passwordEmailSent: 'Password email sent',
+    deactivateSeller: 'Deactivate seller',
+    activateSeller: 'Activate seller',
   },
 
   // Validation messages
