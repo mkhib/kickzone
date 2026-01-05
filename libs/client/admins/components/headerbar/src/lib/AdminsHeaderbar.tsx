@@ -92,6 +92,7 @@ export function AdminsHeaderbar() {
             flexDirection: 'row',
             alignItems: 'center',
             px: { xs: 1, sm: 2 },
+            position: 'relative',
           }}
         >
           {user && (
@@ -105,6 +106,24 @@ export function AdminsHeaderbar() {
               <MenuIcon />
             </IconButton>
           )}
+          <Typography
+            variant="subtitle1"
+            component={RouterLink}
+            to={ADMIN_ROUTES.HOME}
+            sx={{
+              display: { xs: 'block', sm: 'none' },
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              textAlign: 'center',
+              textDecoration: 'none',
+              color: 'inherit',
+              fontWeight: 700,
+              pointerEvents: 'auto',
+            }}
+          >
+            {LL.appNames.siteName()}
+          </Typography>
           <Typography
             variant={isMobile ? 'subtitle1' : 'h6'}
             sx={{

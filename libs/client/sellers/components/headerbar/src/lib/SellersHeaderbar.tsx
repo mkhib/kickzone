@@ -78,7 +78,7 @@ export function Headerbar() {
           transition: 'all 0.3s ease-in-out',
         }}
       >
-        <Toolbar>
+        <Toolbar sx={{ position: 'relative' }}>
           <IconButton
             edge="start"
             color="inherit"
@@ -88,6 +88,25 @@ export function Headerbar() {
           >
             <MenuIcon />
           </IconButton>
+
+          <Typography
+            variant="subtitle1"
+            component={RouterLink}
+            to={SELLER_ROUTES.PRODUCTS}
+            sx={{
+              display: { xs: 'block', sm: 'none' },
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              textAlign: 'center',
+              textDecoration: 'none',
+              color: 'inherit',
+              fontWeight: 700,
+              pointerEvents: 'auto',
+            }}
+          >
+            {LL.appNames.siteName()}
+          </Typography>
 
           <Typography
             variant="h6"

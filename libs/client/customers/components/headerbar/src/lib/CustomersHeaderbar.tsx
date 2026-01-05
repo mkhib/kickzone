@@ -105,6 +105,7 @@ export function Headerbar() {
       >
         <Toolbar
           sx={{
+            position: 'relative',
             gap: 1.5,
             px: { xs: 2, md: 3 },
           }}
@@ -118,6 +119,25 @@ export function Headerbar() {
           >
             <MenuIcon />
           </IconButton>
+
+          <Typography
+            variant="subtitle1"
+            component={RouterLink}
+            to={CUSTOMER_ROUTES.PRODUCTS}
+            sx={{
+              display: { xs: 'block', sm: 'none' },
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              textAlign: 'center',
+              textDecoration: 'none',
+              color: 'inherit',
+              fontWeight: 700,
+              pointerEvents: 'auto',
+            }}
+          >
+            {LL.appNames.siteName()}
+          </Typography>
 
           <IconButton
             color="inherit"
