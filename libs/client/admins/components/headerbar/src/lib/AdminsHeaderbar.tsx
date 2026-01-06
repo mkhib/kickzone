@@ -117,14 +117,6 @@ export function AdminsHeaderbar() {
           >
             <MenuIcon />
           </IconButton>
-          <IconButton
-            color="inherit"
-            aria-label="toggle theme"
-            onClick={toggleTheme}
-            sx={{ display: { xs: 'inline-flex', sm: 'none' }, ml: 0.5 }}
-          >
-            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
           <Typography
             variant="subtitle1"
             component={RouterLink}
@@ -160,7 +152,7 @@ export function AdminsHeaderbar() {
             color="inherit"
             aria-label="toggle theme"
             onClick={toggleTheme}
-            sx={{ display: { xs: 'none', sm: 'inline-flex' }, ml: 1 }}
+            sx={{ ml: 1 }}
           >
             {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>

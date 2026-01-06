@@ -139,15 +139,6 @@ export function Headerbar() {
             {LL.appNames.siteName()}
           </Typography>
 
-          <IconButton
-            color="inherit"
-            aria-label="toggle theme"
-            onClick={toggleTheme}
-            sx={{ mr: 1 }}
-          >
-            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
-
           <Typography
             variant="h6"
             component={RouterLink}
@@ -187,6 +178,15 @@ export function Headerbar() {
           </Button>
 
           <Box sx={{ flexGrow: 1 }} />
+
+          <IconButton
+            color="inherit"
+            aria-label="toggle theme"
+            onClick={toggleTheme}
+            sx={{ mx: 1 }}
+          >
+            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
 
           {/* Cart Button */}
           <IconButton
