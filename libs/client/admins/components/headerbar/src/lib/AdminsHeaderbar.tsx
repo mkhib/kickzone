@@ -117,6 +117,14 @@ export function AdminsHeaderbar() {
           >
             <MenuIcon />
           </IconButton>
+          <IconButton
+            color="inherit"
+            aria-label="toggle theme"
+            onClick={toggleTheme}
+            sx={{ ml: 0.5 }}
+          >
+            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
           <Typography
             variant="subtitle1"
             component={RouterLink}
@@ -148,14 +156,7 @@ export function AdminsHeaderbar() {
           >
             {LL.appNames.siteName()} {LL.navigation.adminPanel()}
           </Typography>
-          <IconButton
-            color="inherit"
-            aria-label="toggle theme"
-            onClick={toggleTheme}
-            sx={{ ml: 1 }}
-          >
-            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
+          <Box sx={{ flexGrow: 1 }} />
           {user && (
             <Box
               sx={{

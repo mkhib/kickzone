@@ -120,6 +120,15 @@ export function Headerbar() {
             <MenuIcon />
           </IconButton>
 
+          <IconButton
+            color="inherit"
+            aria-label="toggle theme"
+            onClick={toggleTheme}
+            sx={{ mr: 1 }}
+          >
+            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
+
           <Typography
             variant="subtitle1"
             component={RouterLink}
@@ -157,6 +166,9 @@ export function Headerbar() {
             {LL.appNames.siteName()}
           </Typography>
 
+          <Box sx={{ flexGrow: 1 }} />
+
+          {/* Screen buttons */}
           <Button
             color="inherit"
             component={RouterLink}
@@ -165,7 +177,6 @@ export function Headerbar() {
             sx={{
               display: { xs: 'none', sm: 'inline-flex' },
               textTransform: 'none',
-              ml: 1,
               mr: 0,
               flex: '0 0 auto',
               px: 1.5,
@@ -176,17 +187,6 @@ export function Headerbar() {
           >
             {LL.navigation.home()}
           </Button>
-
-          <Box sx={{ flexGrow: 1 }} />
-
-          <IconButton
-            color="inherit"
-            aria-label="toggle theme"
-            onClick={toggleTheme}
-            sx={{ mx: 1 }}
-          >
-            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
 
           {/* Cart Button */}
           <IconButton
