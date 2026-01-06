@@ -28,6 +28,22 @@ import { PriceDisplay } from '@kickzone-workspace/price-display';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   'https://image-cdn.hypb.st/https%3A%2F%2Fhypebeast.com%2Fimage%2F2021%2F10%2Fair-jordan-1-high-og-rebellionaire-closer-look-release-info-555088-036-000.jpg?w=960&cbr=1&q=90&fit=max';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '';
+const resolveImageUrl = (img?: string | null) => {
+  if (!img) return null;
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  if (img.startsWith('//')) return `https:${img}`;
+  if (img.startsWith('/')) {
+    const base =
+      API_BASE_URL && API_BASE_URL.startsWith('http')
+        ? API_BASE_URL
+        : typeof window !== 'undefined'
+        ? window.location.origin
+        : '';
+    return `${base}${img}`;
+  }
+  return img;
+};
 
 // Utility to convert numbers to locale format (supports Farsi digits)
 const formatNumber = (num: number | string, locale: string): string => {
@@ -72,7 +88,14 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   );
 
   const firstInfo = product.productInfos?.[0];
-  const image = firstInfo?.images?.[0] || PRODUCT_IMAGE_PLACEHOLDER;
+  const sellerImage = product.sellerProducts?.find(
+    (sp) => sp.productInfo?.images?.[0]
+  )?.productInfo?.images?.[0];
+  const rawImage =
+    firstInfo?.images?.[0] ||
+    sellerImage ||
+    product.productInfos?.find((pi) => pi.images?.[0])?.images?.[0];
+  const image = resolveImageUrl(rawImage) || PRODUCT_IMAGE_PLACEHOLDER;
 
   // Get all available variants with their pricing
   // For each ProductInfo, find the cheapest available sellerProduct
