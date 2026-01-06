@@ -1,4 +1,3 @@
-import { useThemeContext } from '@kickzone-workspace/shared-i18n';
 import { DRAWER_WIDTH, HEIGHTS } from '@kickzone-workspace/sizes';
 import CloseIcon from '@mui/icons-material/Close';
 import Box from '@mui/material/Box';
@@ -20,6 +19,8 @@ const BaseStyledDrawer = styled(Drawer)(({ theme }) => {
       boxSizing: 'border-box',
       marginTop: HEIGHTS.header,
       height: HEIGHTS.drawer,
+      borderTopLeftRadius: '0 !important',
+      borderBottomLeftRadius: '0 !important',
       backgroundColor: isDark
         ? 'rgba(18, 18, 22, 0.92)'
         : 'rgba(255, 255, 255, 0.9)',
@@ -53,25 +54,15 @@ export function StyledDrawer({
   variant = 'temporary',
   keepMounted = false,
 }: StyledDrawerProps) {
-  const { direction } = useThemeContext();
+  const anchor: 'left' | 'right' | 'top' | 'bottom' = 'left';
 
   return (
     <BaseStyledDrawer
-      anchor={direction === 'rtl' ? 'right' : 'left'}
+      anchor={anchor}
       open={open}
       onClose={onClose}
       variant={variant}
       ModalProps={{ keepMounted }}
-      sx={{
-        '& .MuiDrawer-paper': {
-          borderRight:
-            direction === 'rtl' ? 'none' : '1px solid rgba(255, 255, 255, 0.3)',
-          borderLeft:
-            direction === 'rtl' ? '1px solid rgba(255, 255, 255, 0.3)' : 'none',
-          color: (theme) =>
-            theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
-        },
-      }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
         <IconButton onClick={onClose}>
