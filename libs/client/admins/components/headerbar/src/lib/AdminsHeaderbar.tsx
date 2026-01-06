@@ -1,6 +1,7 @@
 import { useAdminsAuthContext } from '@kickzone-workspace/admins-contexts';
 import { ADMIN_ROUTES } from '@kickzone-workspace/admins-routes';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { useUIStore } from '@kickzone-workspace/shared-ui-store';
 import {
   StyledDrawer,
   CustomListItemText,
@@ -22,6 +23,8 @@ import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { useCallback, useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import TranslateIcon from '@mui/icons-material/Translate';
@@ -37,6 +40,8 @@ export function AdminsHeaderbar() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { LL } = useI18nContext();
+  const themeMode = useUIStore((s) => s.theme.mode);
+  const toggleTheme = useUIStore((s) => s.toggleTheme);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -104,6 +109,14 @@ export function AdminsHeaderbar() {
           >
             <MenuIcon />
           </IconButton>
+          <IconButton
+            color="inherit"
+            aria-label="toggle theme"
+            onClick={toggleTheme}
+            sx={{ display: { xs: 'inline-flex', sm: 'none' }, ml: 0.5 }}
+          >
+            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
           <Typography
             variant="subtitle1"
             component={RouterLink}
@@ -135,6 +148,14 @@ export function AdminsHeaderbar() {
           >
             {LL.appNames.siteName()} {LL.navigation.adminPanel()}
           </Typography>
+          <IconButton
+            color="inherit"
+            aria-label="toggle theme"
+            onClick={toggleTheme}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' }, ml: 1 }}
+          >
+            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
           {user && (
             <Box
               sx={{
@@ -223,82 +244,85 @@ export function AdminsHeaderbar() {
         keepMounted={true}
       >
         {user && (
-          <ListItemButton
-            to={ADMIN_ROUTES.PRODUCTS_NEW}
-            component={RouterLink}
-            selected={location.pathname === ADMIN_ROUTES.PRODUCTS_NEW}
-          >
-            <ListItemIcon>
-              <HomeIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.button.addNewProduct()} />
-          </ListItemButton>
+          <>
+            <ListItemButton
+              to={ADMIN_ROUTES.PRODUCTS_NEW}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.PRODUCTS_NEW}
+            >
+              <ListItemIcon>
+                <HomeIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.button.addNewProduct()} />
+            </ListItemButton>
 
-          <ListItemButton
-            to={ADMIN_ROUTES.PRODUCTS}
-            component={RouterLink}
-            selected={location.pathname === ADMIN_ROUTES.PRODUCTS}
-          >
-            <ListItemIcon>
-              <ShoppingCartIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.products()} />
-          </ListItemButton>
+            <ListItemButton
+              to={ADMIN_ROUTES.PRODUCTS}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.PRODUCTS}
+            >
+              <ListItemIcon>
+                <ShoppingCartIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.products()} />
+            </ListItemButton>
 
-          <ListItemButton
-            to={ADMIN_ROUTES.ORDERS}
-            component={RouterLink}
-            selected={location.pathname === ADMIN_ROUTES.ORDERS}
-          >
-            <ListItemIcon>
-              <ShoppingCartIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.orders.allSellerOrders()} />
-          </ListItemButton>
+            <ListItemButton
+              to={ADMIN_ROUTES.ORDERS}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.ORDERS}
+            >
+              <ListItemIcon>
+                <ShoppingCartIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.orders.allSellerOrders()} />
+            </ListItemButton>
 
-          <ListItemButton
-            to={ADMIN_ROUTES.SELLERS}
-            component={RouterLink}
-            selected={location.pathname === ADMIN_ROUTES.SELLERS}
-          >
-            <ListItemIcon>
-              <StorefrontIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.sellers()} />
-          </ListItemButton>
+            <ListItemButton
+              to={ADMIN_ROUTES.SELLERS}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.SELLERS}
+            >
+              <ListItemIcon>
+                <StorefrontIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.sellers()} />
+            </ListItemButton>
 
-          <ListItemButton
-            to={ADMIN_ROUTES.CURRENCY}
-            component={RouterLink}
-            selected={location.pathname === ADMIN_ROUTES.CURRENCY}
-          >
-            <ListItemIcon>
-              <AttachMoneyIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.currency.title()} />
-          </ListItemButton>
+            <ListItemButton
+              to={ADMIN_ROUTES.CURRENCY}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.CURRENCY}
+            >
+              <ListItemIcon>
+                <AttachMoneyIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.currency.title()} />
+            </ListItemButton>
 
-          <ListItemButton
-            to={ADMIN_ROUTES.TRANSLATIONS}
-            component={RouterLink}
-            selected={location.pathname === ADMIN_ROUTES.TRANSLATIONS}
-          >
-            <ListItemIcon>
-              <TranslateIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.translations()} />
-          </ListItemButton>
+            <ListItemButton
+              to={ADMIN_ROUTES.TRANSLATIONS}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.TRANSLATIONS}
+            >
+              <ListItemIcon>
+                <TranslateIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.translations()} />
+            </ListItemButton>
 
-          <ListItemButton
-            to={ADMIN_ROUTES.LANGUAGE_SETTINGS}
-            component={RouterLink}
-            selected={location.pathname === ADMIN_ROUTES.LANGUAGE_SETTINGS}
-          >
-            <ListItemIcon>
-              <LanguageIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.languageSettings()} />
-          </ListItemButton>
+            <ListItemButton
+              to={ADMIN_ROUTES.LANGUAGE_SETTINGS}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.LANGUAGE_SETTINGS}
+            >
+              <ListItemIcon>
+                <LanguageIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.languageSettings()} />
+            </ListItemButton>
+          </>
+        )}
         {user ? (
           <ListItemButton onClick={handleOnLogoutClick}>
             <ListItemIcon>

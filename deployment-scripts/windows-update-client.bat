@@ -35,7 +35,7 @@ call yarn install
 IF ERRORLEVEL 1 (
   echo.
   echo ERROR: yarn install failed.
-  goto :EOF
+  goto :ERROR_EXIT
 )
 
 REM 3) Build React apps
@@ -46,35 +46,35 @@ echo - Building admins...
 call yarn nx build kickzone-admins --configuration=production
 IF ERRORLEVEL 1 (
   echo ERROR: Build failed for kickzone-admins.
-  goto :EOF
+  goto :ERROR_EXIT
 )
 
 echo - Building sellers...
 call yarn nx build kickzone-sellers --configuration=production
 IF ERRORLEVEL 1 (
   echo ERROR: Build failed for kickzone-sellers.
-  goto :EOF
+  goto :ERROR_EXIT
 )
 
 echo - Building customers...
 call yarn nx build kickzone-customers --configuration=production
 IF ERRORLEVEL 1 (
   echo ERROR: Build failed for kickzone-customers.
-  goto :EOF
+  goto :ERROR_EXIT
 )
 
 REM 4) Verify outputs
 IF NOT EXIST "dist\apps\client\admins" (
   echo ERROR: dist\apps\client\admins not found.
-  goto :EOF
+  goto :ERROR_EXIT
 )
 IF NOT EXIST "dist\apps\client\sellers" (
   echo ERROR: dist\apps\client\sellers not found.
-  goto :EOF
+  goto :ERROR_EXIT
 )
 IF NOT EXIST "dist\apps\client\customers" (
   echo ERROR: dist\apps\client\customers not found.
-  goto :EOF
+  goto :ERROR_EXIT
 )
 
 REM 5) Upload to server via pscp (PuTTY session: fat2)
@@ -84,7 +84,7 @@ echo   pscp -batch -r dist\apps\client\* fat2:/var/www/masterskey/dist/apps/clie
 pscp -batch -r dist\apps\client\* fat2:/var/www/masterskey/dist/apps/client/
 IF ERRORLEVEL 1 (
   echo ERROR: pscp upload failed.
-  goto :EOF
+  goto :ERROR_EXIT
 )
 
 REM 6) Post-upload server steps (permissions + nginx reload) as deployuser
@@ -94,7 +94,7 @@ plink -batch -load fat2 ^
   "sudo chown -R www-data:www-data /var/www/masterskey && sudo chmod -R 755 /var/www/masterskey && sudo nginx -t && sudo systemctl reload nginx"
 IF ERRORLEVEL 1 (
   echo ERROR: Remote post-upload steps failed.
-  goto :EOF
+  goto :ERROR_EXIT
 )
 
 echo.
@@ -110,4 +110,15 @@ pause >nul
 
 ENDLOCAL
 exit /b 0
+
+:ERROR_EXIT
+echo.
+echo ==========================================
+echo  Update failed
+echo ==========================================
+echo.
+echo Check the error above. Press any key to close this window...
+pause >nul
+ENDLOCAL
+exit /b 1
 

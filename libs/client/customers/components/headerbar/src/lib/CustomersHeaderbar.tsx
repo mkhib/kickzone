@@ -143,7 +143,7 @@ export function Headerbar() {
             color="inherit"
             aria-label="toggle theme"
             onClick={toggleTheme}
-            sx={{ mr: 1, display: { xs: 'none', sm: 'inline-flex' } }}
+            sx={{ mr: 1 }}
           >
             {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>

@@ -22,6 +22,9 @@ import Toolbar from '@mui/material/Toolbar';
 import { useState, useEffect } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import Typography from '@mui/material/Typography';
+import LightModeIcon from '@mui/icons-material/LightMode';
+import DarkModeIcon from '@mui/icons-material/DarkMode';
+import { useUIStore } from '@kickzone-workspace/shared-ui-store';
 
 export function Headerbar() {
   const { user, logout } = useSellersAuthContext();
@@ -30,6 +33,8 @@ export function Headerbar() {
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
   const { LL } = useI18nContext();
+  const themeMode = useUIStore((s) => s.theme.mode);
+  const toggleTheme = useUIStore((s) => s.toggleTheme);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -88,6 +93,14 @@ export function Headerbar() {
           >
             <MenuIcon />
           </IconButton>
+          <IconButton
+            color="inherit"
+            aria-label="toggle theme"
+            onClick={toggleTheme}
+            sx={{ display: { xs: 'inline-flex', sm: 'none' }, ml: 0.5 }}
+          >
+            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
 
           <Typography
             variant="subtitle1"
@@ -114,6 +127,14 @@ export function Headerbar() {
             to={SELLER_ROUTES.PRODUCTS}
             sx={{
               display: { xs: 'none', sm: 'block' },
+          <IconButton
+            color="inherit"
+            aria-label="toggle theme"
+            onClick={toggleTheme}
+            sx={{ display: { xs: 'none', sm: 'inline-flex' }, ml: 1 }}
+          >
+            {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+          </IconButton>
               textDecoration: 'none',
               color: 'inherit',
               '&:hover': {
