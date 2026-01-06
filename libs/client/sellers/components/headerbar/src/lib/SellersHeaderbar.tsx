@@ -25,6 +25,8 @@ import Typography from '@mui/material/Typography';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 export function Headerbar() {
   const { user, logout } = useSellersAuthContext();
@@ -35,6 +37,9 @@ export function Headerbar() {
   const { LL } = useI18nContext();
   const themeMode = useUIStore((s) => s.theme.mode);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
 
   useEffect(() => {
     const handleScroll = () => {
@@ -67,19 +72,26 @@ export function Headerbar() {
       <AppBar
         position="fixed"
         sx={{
-          background: isScrolled
-            ? 'rgba(255, 255, 255, 0.95)'
+          backgroundColor: isScrolled
+            ? isDark
+              ? 'rgba(12, 12, 16, 0.92)'
+              : 'rgba(255, 255, 255, 0.9)'
+            : isDark
+            ? 'rgba(14, 14, 18, 0.7)'
             : 'rgba(255, 255, 255, 0.1)',
+          color: theme.palette.text.primary,
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
           borderBottom: isScrolled
-            ? '1px solid rgba(0, 0, 0, 0.1)'
-            : '1px solid rgba(255, 255, 255, 0.2)',
-          boxShadow: isScrolled
-            ? '0 2px 8px rgba(0, 0, 0, 0.1)'
-            : '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-          zIndex: (theme) => theme.zIndex.appBar + 1,
-          color: '#000',
+            ? isDark
+              ? '1px solid rgba(255, 255, 255, 0.08)'
+              : '1px solid rgba(0, 0, 0, 0.08)'
+            : isDark
+            ? '1px solid rgba(255, 255, 255, 0.06)'
+            : '1px solid rgba(0, 0, 0, 0.08)',
+          borderLeft: 'none',
+          boxShadow: 'none',
+          zIndex: (themeArg) => themeArg.zIndex.appBar + 1,
           transition: 'all 0.3s ease-in-out',
         }}
       >
@@ -122,11 +134,23 @@ export function Headerbar() {
           </Typography>
 
           <Typography
-            variant="h6"
+            variant={isMobile ? 'subtitle1' : 'h6'}
             component={RouterLink}
             to={SELLER_ROUTES.PRODUCTS}
             sx={{
               display: { xs: 'none', sm: 'block' },
+              textDecoration: 'none',
+              color: theme.palette.text.primary,
+              '&:hover': {
+                opacity: 0.8,
+              },
+              flexGrow: 1,
+              fontWeight: 700,
+              letterSpacing: 1,
+            }}
+          >
+            {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}
+          </Typography>
           <IconButton
             color="inherit"
             aria-label="toggle theme"
@@ -135,16 +159,6 @@ export function Headerbar() {
           >
             {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
           </IconButton>
-              textDecoration: 'none',
-              color: 'inherit',
-              '&:hover': {
-                opacity: 0.8,
-              },
-              flexGrow: 1,
-            }}
-          >
-            {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}
-          </Typography>
 
           {user ? (
             <>
@@ -156,7 +170,9 @@ export function Headerbar() {
                   display: { xs: 'none', sm: 'inline-flex' },
                   textTransform: 'none',
                   '&:hover': {
-                    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                    backgroundColor: isDark
+                      ? 'rgba(255, 255, 255, 0.08)'
+                      : 'rgba(0, 0, 0, 0.04)',
                   },
                 }}
               >
@@ -187,7 +203,9 @@ export function Headerbar() {
                 display: { xs: 'none', sm: 'inline-flex' },
                 textTransform: 'none',
                 '&:hover': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backgroundColor: isDark
+                    ? 'rgba(255, 255, 255, 0.08)'
+                    : 'rgba(0, 0, 0, 0.04)',
                 },
               }}
             >

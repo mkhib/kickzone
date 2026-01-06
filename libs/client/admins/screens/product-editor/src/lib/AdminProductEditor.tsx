@@ -721,6 +721,21 @@ export function AdminProductEditor() {
     loading: colorMutationsLoading,
   } = useColors();
 
+  const slugify = useCallback(
+    (name: string) => name.toLowerCase().trim().replace(/\s+/g, '-'),
+    []
+  );
+
+  const resetDeleteImageModal = useCallback(() => {
+    setDeleteImageModal({
+      open: false,
+      infoIdx: null,
+      imageIdx: null,
+      imageType: null,
+      isLoading: false,
+    });
+  }, []);
+
   // Fetch product if editing
   useEffect(() => {
     if (productIdNum && loadedProduct) {
@@ -959,13 +974,7 @@ export function AdminProductEditor() {
       deleteImageModal.imageIdx === null ||
       !deleteImageModal.imageType
     ) {
-      setDeleteImageModal({
-        open: false,
-        infoIdx: null,
-        imageIdx: null,
-        imageType: null,
-        isLoading: false,
-      });
+      resetDeleteImageModal();
       return;
     }
 
@@ -988,26 +997,14 @@ export function AdminProductEditor() {
       // Remove uploaded image from server
       const info = productInfos[infoIdx];
       if (!info.createdId || !info.uploadedImageUrls[imageIdx]) {
-        setDeleteImageModal({
-          open: false,
-          infoIdx: null,
-          imageIdx: null,
-          imageType: null,
-          isLoading: false,
-        });
+        resetDeleteImageModal();
         return;
       }
 
       const imageUrl = info.uploadedImageUrls[imageIdx];
       const imageName = imageUrl.split('/').pop();
       if (!imageName) {
-        setDeleteImageModal({
-          open: false,
-          infoIdx: null,
-          imageIdx: null,
-          imageType: null,
-          isLoading: false,
-        });
+        resetDeleteImageModal();
         return;
       }
 
@@ -1025,13 +1022,7 @@ export function AdminProductEditor() {
       } catch (error) {
         showSnackbar((error as Error).message, { severity: 'error' });
       } finally {
-        setDeleteImageModal({
-          open: false,
-          infoIdx: null,
-          imageIdx: null,
-          imageType: null,
-          isLoading: false,
-        });
+        resetDeleteImageModal();
       }
     }
   }, [
@@ -1040,17 +1031,12 @@ export function AdminProductEditor() {
     removeProductInfoImage,
     productInfos,
     showSnackbar,
+    resetDeleteImageModal,
   ]);
 
   const handleCloseDeleteImageModal = useCallback(() => {
-    setDeleteImageModal({
-      open: false,
-      infoIdx: null,
-      imageIdx: null,
-      imageType: null,
-      isLoading: false,
-    });
-  }, []);
+    resetDeleteImageModal();
+  }, [resetDeleteImageModal]);
 
   const handleOpenEditColorModal = useCallback(
     (color: KickzoneGraphqlTypes.Color) => {
@@ -1111,69 +1097,42 @@ export function AdminProductEditor() {
 
   const handleUploadSelectedImages = useCallback(
     async (infoIdx: number) => {
-      console.log(
-        '🚀 handleUploadSelectedImages called with infoIdx:',
-        infoIdx
-      );
-      console.log('🔍 Function called from:', new Error().stack);
       const info = productInfos[infoIdx];
-      console.log('📋 Current info state:', info);
-      console.log('📁 New images count:', info.newImages.length);
-      console.log('🆔 Created ID:', info.createdId);
 
       if (!info.newImages.length || !info.createdId) {
-        console.log('❌ Early return - no images or no createdId');
         return;
       }
 
-      console.log('⏳ Setting uploading state to true');
       setProductInfos((prev) => {
         const updated = [...prev];
         updated[infoIdx].isUploading = true;
-        console.log('📝 Updated state - isUploading set to true');
         return updated;
       });
 
       try {
-        console.log('📤 Calling uploadProductInfoImages with:', {
-          productInfoId: info.createdId,
-          filesCount: info.newImages.length,
-          fileNames: info.newImages.map((f) => f.name),
-        });
-
         const uploadedImages = await uploadProductInfoImages(
           info.createdId,
           info.newImages
         );
-        console.log('✅ Upload successful, received images:', uploadedImages);
 
         // Update local state immediately with the uploaded images
-        console.log('🔄 Updating local state with uploaded images');
         setProductInfos((prev) => {
-          console.log('📊 Previous state before update:', prev[infoIdx]);
           const updated = [...prev];
           updated[infoIdx].newImages = [];
           updated[infoIdx].newImagePreviews = [];
           updated[infoIdx].isUploading = false;
           // Add the newly uploaded images to the uploadedImageUrls array
           if (uploadedImages && uploadedImages.length > 0) {
-            console.log(
-              '➕ Adding uploaded images to uploadedImageUrls:',
-              uploadedImages
-            );
             updated[infoIdx].uploadedImageUrls = [
               ...updated[infoIdx].uploadedImageUrls,
               ...uploadedImages,
             ];
           }
-          console.log('📊 Updated state after change:', updated[infoIdx]);
           return updated;
         });
 
-        console.log('✅ Upload complete - showing success message');
         showSnackbar('Images uploaded successfully', { severity: 'success' });
       } catch (error) {
-        console.error('❌ Upload failed:', error);
         setProductInfos((prev) => {
           const updated = [...prev];
           updated[infoIdx].isUploading = false;
@@ -1188,7 +1147,10 @@ export function AdminProductEditor() {
   return (
     <AdminsLayout>
       <GlassmorphismContainer>
-        <Typography variant="h5" sx={{ mb: 3, color: colors.text }}>
+        <Typography
+          variant="h5"
+          sx={{ mb: 3, color: theme.palette.text.primary }}
+        >
           {productIdNum ? LL.products.editProduct() : LL.products.addProduct()}
         </Typography>
         <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
@@ -1479,8 +1441,7 @@ export function AdminProductEditor() {
         onClose={() => setIsNewCategoryModalOpen(false)}
         onSubmit={async (name) => {
           try {
-            // Convert name to slug (lowercase, replace spaces with hyphens)
-            const slug = name.toLowerCase().replace(/\s+/g, '-');
+            const slug = slugify(name);
             await createCategory(slug, 0, name);
             setIsNewCategoryModalOpen(false);
             showSnackbar('Category created successfully', {
@@ -1508,8 +1469,7 @@ export function AdminProductEditor() {
         onSubmit={async (name) => {
           try {
             if (selectedCategory) {
-              // Convert name to slug (lowercase, replace spaces with hyphens)
-              const slug = name.toLowerCase().replace(/\s+/g, '-');
+              const slug = slugify(name);
               await updateCategory(selectedCategory.id, slug);
             }
             setIsEditCategoryModalOpen(false);

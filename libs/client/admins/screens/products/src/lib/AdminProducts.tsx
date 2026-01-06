@@ -341,7 +341,11 @@ export function AdminProducts() {
                                 boxShadow: '0 0 4px rgba(0,0,0,0.2)',
                               }}
                             />
-                            <Typography variant="caption" fontWeight={600}>
+                            <Typography
+                              variant="caption"
+                              fontWeight={600}
+                              sx={{ color: '#000' }}
+                            >
                               {info.color.name}
                             </Typography>
                           </Box>
