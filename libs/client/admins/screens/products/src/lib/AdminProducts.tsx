@@ -31,6 +31,7 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { ProductImageManagementModal } from './ProductImageManagementModal';
+import { useTheme } from '@mui/material/styles';
 
 export function AdminProducts() {
   const navigate = useNavigate();
@@ -69,6 +70,9 @@ export function AdminProducts() {
   const { categories } = useCategoriesQuery();
   const { archiveProduct } = useProducts();
   const loaderRef = useRef<HTMLDivElement | null>(null);
+  const theme = useTheme();
+  const API_BASE_URL =
+    import.meta.env.VITE_API_BASE_URL ?? 'https://localhost:4000';
 
   // Infinite scroll: observe the loader div
   useEffect(() => {
@@ -227,7 +231,7 @@ export function AdminProducts() {
                 const info = product.productInfos[0];
                 const firstImage = info?.images?.[0];
                 const imageUrl = firstImage?.startsWith('/uploads/')
-                  ? `https://localhost:4000${firstImage}`
+                  ? `${API_BASE_URL}${firstImage}`
                   : firstImage;
 
                 return (
@@ -385,8 +389,14 @@ export function AdminProducts() {
                               <Box
                                 key={cat.id}
                                 sx={{
-                                  backgroundColor: 'primary.50',
-                                  color: 'primary.main',
+                                  backgroundColor:
+                                    theme.palette.mode === 'dark'
+                                      ? 'rgba(255,255,255,0.08)'
+                                      : 'primary.50',
+                                  color:
+                                    theme.palette.mode === 'dark'
+                                      ? theme.palette.text.primary
+                                      : 'primary.main',
                                   px: 1,
                                   py: 0.25,
                                   borderRadius: 0.5,
@@ -400,8 +410,11 @@ export function AdminProducts() {
                           {product.categories.length > 2 && (
                             <Box
                               sx={{
-                                backgroundColor: 'grey.200',
-                                color: 'text.secondary',
+                                backgroundColor:
+                                  theme.palette.mode === 'dark'
+                                    ? 'rgba(255,255,255,0.08)'
+                                    : 'grey.200',
+                                color: theme.palette.text.secondary,
                                 px: 1,
                                 py: 0.25,
                                 borderRadius: 0.5,

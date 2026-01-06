@@ -325,12 +325,19 @@ const ProductInfoCard = React.memo(
           mb: 2,
           p: 2,
           position: 'relative',
-          backgroundColor: 'transparent !important',
-          backdropFilter: 'none !important',
-          WebkitBackdropFilter: 'none !important',
-          border: '2px solid rgba(255, 255, 255, 0.4) !important',
-          borderRadius: '16px !important',
-          boxShadow: 'none !important',
+          backgroundColor:
+            theme.palette.mode === 'dark'
+              ? 'rgba(18, 18, 22, 0.88)'
+              : 'rgba(255, 255, 255, 0.96)',
+          border:
+            theme.palette.mode === 'dark'
+              ? '1px solid rgba(255, 255, 255, 0.08)'
+              : '1px solid rgba(0, 0, 0, 0.08)',
+          borderRadius: '16px',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 10px 30px rgba(0,0,0,0.4)'
+              : '0 10px 30px rgba(0,0,0,0.12)',
         }}
       >
         <Box
@@ -497,7 +504,8 @@ const ProductInfoCard = React.memo(
   }
 );
 
-const BACKEND_BASE_URL = 'https://localhost:4000';
+const BACKEND_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL ?? 'https://localhost:4000';
 
 interface ColorModalProps {
   open: boolean;

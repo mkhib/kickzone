@@ -170,6 +170,7 @@ See [`deployment-scripts/README.md`](deployment-scripts/README.md) for the full 
 ## 4. Environment, Structure, and Services
 
 - **Environment variables**: see [`ENV_VARIABLES.md`](ENV_VARIABLES.md) for all options and recommended `.env` values.
+- **Vite client envs**: frontends embed `VITE_*` keys at build time. Add `VITE_API_BASE_URL` (e.g., `https://masterskey.store`) and `VITE_GRAPHQL_ENDPOINT` (e.g., `https://masterskey.store/graphql`) to `.env.production` (and `.env.development` for local). Keep `.env` for shared defaults; override per-environment files or CI env vars during builds.
 - **Server paths (production)**:
   - Project root: `/opt/masterskey`
   - API build (NestJS): `/opt/masterskey/apps/kickzone-api/dist/main.js` (or `/opt/masterskey/apps/kickzone-api/main.js` when copied from Windows)

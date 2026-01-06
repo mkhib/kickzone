@@ -7,8 +7,16 @@ import { join } from 'path';
 import { AppModule } from './app/app.module';
 import cookieParser from 'cookie-parser';
 import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
+import helmet from 'helmet';
 
-declare const module: any;
+type HotModule = {
+  hot?: {
+    accept: () => void;
+    dispose: (callback: () => void) => void;
+  };
+};
+
+declare const module: HotModule;
 
 async function bootstrap() {
   // In production we run behind nginx and terminate TLS there,
@@ -52,6 +60,23 @@ async function bootstrap() {
     // allowedHeaders: 'Content-Type,Authorization',
   });
   app.use(cookieParser());
+  // Security headers (tuned for API behind nginx)
+  app.use(
+    helmet({
+      contentSecurityPolicy: false, // APIs don’t need CSP; disable to avoid misconfig
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+      hsts: process.env.NODE_ENV === 'production' ? undefined : false,
+    })
+  );
+  if (process.env.NODE_ENV === 'production') {
+    app.use(
+      helmet.hsts({
+        maxAge: 15552000, // 180 days
+        includeSubDomains: true,
+        preload: false,
+      })
+    );
+  }
 
   // Add graphql-upload middleware
   app.use(
