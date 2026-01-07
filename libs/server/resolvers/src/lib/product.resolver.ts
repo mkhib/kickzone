@@ -215,6 +215,15 @@ export class ProductResolver {
     return this.productService.getProductById(id);
   }
 
+  @Query(() => [SellerProduct])
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async sellerProductsByProduct(
+    @Args('productId', { type: () => Int }) productId: number
+  ): Promise<SellerProduct[]> {
+    return this.productService.getSellerProductsByProduct(productId);
+  }
+
   @Mutation(() => Product)
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])

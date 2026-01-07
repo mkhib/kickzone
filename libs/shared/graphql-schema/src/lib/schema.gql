@@ -331,6 +331,7 @@ type Query {
   sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
   categories: [Category!]!
   product(id: Int!): Product
+  sellerProductsByProduct(productId: Int!): [SellerProduct!]!
   getTranslation(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String): String!
   getEntityTranslations(entityType: String!, entityId: Int!): [Translation!]!
   getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!

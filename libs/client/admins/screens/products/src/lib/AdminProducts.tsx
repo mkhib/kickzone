@@ -21,36 +21,63 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import EditIcon from '@mui/icons-material/Edit';
 import ImageIcon from '@mui/icons-material/Image';
+import StorefrontIcon from '@mui/icons-material/Storefront';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { ProductImageManagementModal } from './ProductImageManagementModal';
 import { useTheme } from '@mui/material/styles';
+import Switch from '@mui/material/Switch';
+import Stack from '@mui/material/Stack';
+import {
+  useSellerListingsByProduct,
+  AdminSellerListing,
+} from './adminProducts.hooks';
+import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
 
 export function AdminProducts() {
   const navigate = useNavigate();
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.adminProducts());
-  const [search, setSearch] = useState<string>('');
-  const [category, setCategory] = useState<string>('');
-  const [sort, setSort] = useState<string>('');
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [status, setStatus] =
-    useState<KickzoneGraphqlTypes.ProductArchivedStatus>(
-      KickzoneGraphqlTypes.ProductArchivedStatus.Active
-    );
-  const [archiveDialogOpen, setArchiveDialogOpen] = useState(false);
-  const [productToArchive, setProductToArchive] =
-    useState<KickzoneGraphqlTypes.Product | null>(null);
-  const [imageModalOpen, setImageModalOpen] = useState(false);
-  const [selectedProductForImages, setSelectedProductForImages] =
-    useState<KickzoneGraphqlTypes.Product | null>(null);
+  const {
+    search,
+    setSearch,
+    category,
+    setCategory,
+    sort,
+    setSort,
+    sortOrder,
+    setSortOrder,
+    status,
+    setStatus,
+    archiveDialogOpen,
+    productToArchive,
+    openArchiveDialog,
+    closeArchiveDialog,
+    listingsProduct,
+    setListingsProduct,
+    openImageModal,
+    closeImageModal,
+    currentProduct,
+  } = useAdminsProductsStore();
+  const imageModalOpen = Boolean(currentProduct);
+  const {
+    fetchSellerListings,
+    listingsResult: {
+      data: listingsData,
+      loading: listingsLoading,
+      refetch: refetchListings,
+    },
+    mutateSellerProduct,
+  } = useSellerListingsByProduct();
+  const sellerListings: AdminSellerListing[] =
+    listingsData?.sellerProductsByProduct || [];
   const categoryIdValue = category ? Number(category) : undefined;
   const {
     products,
@@ -93,31 +120,48 @@ export function AdminProducts() {
   const filteredProducts = products;
 
   const handleArchiveClick = (product: KickzoneGraphqlTypes.Product) => {
-    setProductToArchive(product);
-    setArchiveDialogOpen(true);
+    openArchiveDialog(product);
   };
 
   const handleArchiveConfirm = async () => {
     if (productToArchive) {
       await archiveProduct(productToArchive.id);
-      setArchiveDialogOpen(false);
-      setProductToArchive(null);
+      closeArchiveDialog();
       refetch();
     }
   };
 
   const handleArchiveCancel = () => {
-    setArchiveDialogOpen(false);
-    setProductToArchive(null);
+    closeArchiveDialog();
   };
 
   const handleOpenImageModal = (product: KickzoneGraphqlTypes.Product) => {
-    setSelectedProductForImages(product);
-    setImageModalOpen(true);
+    openImageModal(product, true);
   };
   const handleCloseImageModal = () => {
-    setImageModalOpen(false);
-    setSelectedProductForImages(null);
+    closeImageModal();
+  };
+
+  const handleOpenListings = (product: KickzoneGraphqlTypes.Product) => {
+    setListingsProduct(product);
+    fetchSellerListings({ variables: { productId: Number(product.id) } });
+  };
+
+  const handleToggleRecommended = async (
+    sellerProductId: string,
+    sellerId: number | undefined,
+    recommended: boolean
+  ) => {
+    if (sellerId === undefined || sellerId === null) return;
+    await mutateSellerProduct({
+      variables: {
+        sellerId,
+        input: { id: sellerProductId, recommended },
+      },
+    });
+    if (listingsProduct && refetchListings) {
+      refetchListings({ productId: Number(listingsProduct.id) });
+    }
   };
 
   return (
@@ -478,6 +522,21 @@ export function AdminProducts() {
                           </IconButton>
                         </Tooltip>
 
+                        <Tooltip title={LL.navigation.sellers()}>
+                          <IconButton
+                            size="medium"
+                            onClick={() => handleOpenListings(product)}
+                            sx={{
+                              color: 'secondary.main',
+                              '&:hover': {
+                                backgroundColor: 'secondary.50',
+                              },
+                            }}
+                          >
+                            <StorefrontIcon />
+                          </IconButton>
+                        </Tooltip>
+
                         {!product.archived && (
                           <Tooltip title={LL.products.archiveProduct()}>
                             <IconButton
@@ -530,20 +589,17 @@ export function AdminProducts() {
             <ProductImageManagementModal
               open={imageModalOpen}
               onClose={handleCloseImageModal}
-              product={selectedProductForImages}
+              product={currentProduct || null}
               onProductUpdated={() => {
                 refetch()
                   .then((result) => {
                     // Update the selected product with the latest data
-                    if (
-                      selectedProductForImages &&
-                      result.data?.products?.edges
-                    ) {
+                    if (currentProduct && result.data?.products?.edges) {
                       const updatedProduct = result.data.products.edges.find(
-                        (edge) => edge.node.id === selectedProductForImages.id
+                        (edge) => edge.node.id === currentProduct.id
                       )?.node;
                       if (updatedProduct) {
-                        setSelectedProductForImages(updatedProduct);
+                        openImageModal(updatedProduct, false);
                       }
                     }
                   })
@@ -552,6 +608,79 @@ export function AdminProducts() {
                   });
               }}
             />
+            <Dialog
+              open={Boolean(listingsProduct)}
+              onClose={() => setListingsProduct(null)}
+              maxWidth="md"
+              fullWidth
+            >
+              <DialogTitle>
+                Seller listings — {listingsProduct?.name}
+              </DialogTitle>
+              <DialogContent dividers>
+                {listingsLoading && (
+                  <Typography>{LL.status.loading()}</Typography>
+                )}
+                {!listingsLoading &&
+                  listingsData?.sellerProductsByProduct?.length === 0 && (
+                    <Typography>{LL.products.noSellersAvailable()}</Typography>
+                  )}
+                {!listingsLoading && sellerListings.length > 0 && (
+                  <Stack spacing={1.5}>
+                    {sellerListings.map((sp, idx) => (
+                      <Box
+                        key={sp.id}
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: '1.5fr 1fr 1fr 0.8fr 0.8fr',
+                          gap: 1,
+                          alignItems: 'center',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                          borderRadius: 1,
+                          p: 1,
+                          backgroundColor:
+                            idx % 2 === 0
+                              ? 'background.default'
+                              : 'action.hover',
+                        }}
+                      >
+                        <Typography sx={{ fontWeight: 700 }}>
+                          {sp.seller?.user?.name || 'Seller'}
+                        </Typography>
+                        <Typography>
+                          {LL.products.price()}: {sp.price}
+                        </Typography>
+                        <Typography>
+                          {LL.products.discount()}: {sp.discount}%
+                        </Typography>
+                        <Typography>
+                          {LL.products.stock()}: {sp.stockQuantity}
+                        </Typography>
+                        <Stack direction="row" alignItems="center" spacing={1}>
+                          <Typography variant="body2">Recommended</Typography>
+                          <Switch
+                            checked={sp.recommended}
+                            onChange={(e) =>
+                              handleToggleRecommended(
+                                sp.id,
+                                sp.seller?.id,
+                                e.target.checked
+                              )
+                            }
+                          />
+                        </Stack>
+                      </Box>
+                    ))}
+                  </Stack>
+                )}
+              </DialogContent>
+              <DialogActions>
+                <Button onClick={() => setListingsProduct(null)}>
+                  {LL.button.close()}
+                </Button>
+              </DialogActions>
+            </Dialog>
           </>
         )}
       </GlassmorphismContainer>

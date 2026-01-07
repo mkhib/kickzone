@@ -19,6 +19,28 @@ interface DeleteModalState {
 }
 
 interface AdminsProductsStore {
+  // List view state
+  search: string;
+  category: string;
+  sort: string;
+  sortOrder: 'asc' | 'desc';
+  status: KickzoneGraphqlTypes.ProductArchivedStatus;
+  setSearch: (value: string) => void;
+  setCategory: (value: string) => void;
+  setSort: (value: string) => void;
+  setSortOrder: (value: 'asc' | 'desc') => void;
+  setStatus: (value: KickzoneGraphqlTypes.ProductArchivedStatus) => void;
+
+  // Archive dialog
+  archiveDialogOpen: boolean;
+  productToArchive: KickzoneGraphqlTypes.Product | null;
+  openArchiveDialog: (product: KickzoneGraphqlTypes.Product) => void;
+  closeArchiveDialog: () => void;
+
+  // Seller listings dialog
+  listingsProduct: KickzoneGraphqlTypes.Product | null;
+  setListingsProduct: (product: KickzoneGraphqlTypes.Product | null) => void;
+
   // Current product being managed
   currentProduct: KickzoneGraphqlTypes.Product | null;
 
@@ -56,6 +78,17 @@ interface AdminsProductsStore {
 export const useAdminsProductsStore = create<AdminsProductsStore>(
   (set, get) => ({
     // Initial state
+    search: '',
+    category: '',
+    sort: '',
+    sortOrder: 'asc',
+    status: KickzoneGraphqlTypes.ProductArchivedStatus.Active,
+
+    archiveDialogOpen: false,
+    productToArchive: null,
+
+    listingsProduct: null,
+
     currentProduct: null,
 
     imageModal: {
@@ -73,6 +106,19 @@ export const useAdminsProductsStore = create<AdminsProductsStore>(
       imageName: null,
       isLoading: false,
     },
+
+    setSearch: (value) => set(() => ({ search: value })),
+    setCategory: (value) => set(() => ({ category: value })),
+    setSort: (value) => set(() => ({ sort: value })),
+    setSortOrder: (value) => set(() => ({ sortOrder: value })),
+    setStatus: (value) => set(() => ({ status: value })),
+
+    openArchiveDialog: (product) =>
+      set(() => ({ archiveDialogOpen: true, productToArchive: product })),
+    closeArchiveDialog: () =>
+      set(() => ({ archiveDialogOpen: false, productToArchive: null })),
+
+    setListingsProduct: (product) => set(() => ({ listingsProduct: product })),
 
     // Actions
     openImageModal: (product, resetTab = true) => {

@@ -534,4 +534,17 @@ export class ProductService {
     const products = await query.getMany();
     return [products, totalCount];
   }
+
+  async getSellerProductsByProduct(
+    productId: number
+  ): Promise<SellerProduct[]> {
+    return this.sellerProductRepository.find({
+      where: { product: { id: productId } },
+      relations: ['seller', 'seller.user', 'productInfo', 'productInfo.color'],
+      order: {
+        price: 'ASC',
+        discount: 'DESC',
+      },
+    });
+  }
 }

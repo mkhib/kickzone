@@ -696,6 +696,7 @@ export type Query = {
   orders: Array<Order>;
   product?: Maybe<Product>;
   products: ProductConnection;
+  sellerProductsByProduct: Array<SellerProduct>;
   sellerProductsForMe: ProductConnection;
   sellers: SellerConnection;
   users: UserConnection;
@@ -822,6 +823,11 @@ export type QueryProductArgs = {
 
 export type QueryProductsArgs = {
   filter?: InputMaybe<ProductFilterInput>;
+};
+
+
+export type QuerySellerProductsByProductArgs = {
+  productId: Scalars['Int']['input'];
 };
 
 
