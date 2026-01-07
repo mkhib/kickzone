@@ -55,6 +55,7 @@ export function CustomersHome() {
       product: KickzoneGraphqlTypes.Product;
       productInfo: KickzoneGraphqlTypes.ProductInfo;
       sellerProduct: KickzoneGraphqlTypes.SellerProduct;
+      isRecommended?: boolean;
       variantKey: string; // Unique key for this variant
     }> = [];
 
@@ -108,10 +109,18 @@ export function CustomersHome() {
 
         // Only include variants that have at least one seller with stock
         if (bestSellerProduct) {
+          const isRecommended = Boolean(
+            (
+              bestSellerProduct.sellerProduct as unknown as {
+                recommended?: boolean;
+              }
+            )?.recommended
+          );
           variants.push({
             product,
             productInfo,
             sellerProduct: bestSellerProduct.sellerProduct,
+            isRecommended,
             variantKey: `${product.id}-${productInfo.id}`, // Unique key for React
           });
         }
@@ -427,6 +436,7 @@ export function CustomersHome() {
                   >
                     <CustomersProductCard
                       product={variantProduct}
+                      isRecommended={variant.isRecommended ?? false}
                       onAddToCart={() => handleAddToCart(variant)}
                     />
                   </Grid>

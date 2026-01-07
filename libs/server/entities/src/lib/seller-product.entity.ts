@@ -54,6 +54,10 @@ export class SellerProduct {
   @Column()
   stockQuantity: number;
 
+  @Field(() => Boolean, { defaultValue: false })
+  @Column({ type: 'boolean', default: false })
+  recommended: boolean;
+
   @BeforeInsert()
   @BeforeUpdate()
   setProductInfoId() {

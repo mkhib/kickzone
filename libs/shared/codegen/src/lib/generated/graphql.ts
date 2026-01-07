@@ -158,6 +158,7 @@ export type CreateSellerProductInput = {
   discount: Scalars['Float']['input'];
   price: Scalars['Float']['input'];
   productInfoId: Scalars['Int']['input'];
+  recommended?: InputMaybe<Scalars['Boolean']['input']>;
   stockQuantity: Scalars['Int']['input'];
 };
 
@@ -901,6 +902,7 @@ export type SellerProduct = {
   product: Product;
   productInfo: ProductInfo;
   productInfoId: Scalars['Int']['output'];
+  recommended: Scalars['Boolean']['output'];
   seller?: Maybe<SellerInfo>;
   stockQuantity: Scalars['Int']['output'];
 };
@@ -1054,6 +1056,7 @@ export type UpdateSellerProductInput = {
   id: Scalars['String']['input'];
   price?: InputMaybe<Scalars['Float']['input']>;
   productInfoId?: InputMaybe<Scalars['Int']['input']>;
+  recommended?: InputMaybe<Scalars['Boolean']['input']>;
   stockQuantity?: InputMaybe<Scalars['Int']['input']>;
 };
 

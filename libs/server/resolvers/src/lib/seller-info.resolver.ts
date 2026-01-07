@@ -115,7 +115,7 @@ export class SellerResolver {
     @Args('sellerId', { type: () => Int }) sellerId: number,
     @Args('input') input: CreateSellerProductInput
   ) {
-    return this.sellerService.createSellerProduct(sellerId, input);
+    return this.sellerService.createSellerProduct(sellerId, input, true);
   }
 
   @Mutation(() => SellerProduct)
@@ -125,7 +125,7 @@ export class SellerResolver {
     @Args('sellerId', { type: () => Int }) sellerId: number,
     @Args('input') input: UpdateSellerProductInput
   ) {
-    return this.sellerService.updateSellerProduct(sellerId, input);
+    return this.sellerService.updateSellerProduct(sellerId, input, true);
   }
 
   // Seller-specific mutations for creating and updating their own products
@@ -143,7 +143,7 @@ export class SellerResolver {
     const seller = await this.sellerService.findOneByUserId(user.id);
     if (!seller) throw new Error('Seller info not found');
 
-    return this.sellerService.createSellerProduct(seller.id, input);
+    return this.sellerService.createSellerProduct(seller.id, input, false);
   }
 
   @Mutation(() => SellerProduct)
@@ -160,7 +160,7 @@ export class SellerResolver {
     const seller = await this.sellerService.findOneByUserId(user.id);
     if (!seller) throw new Error('Seller info not found');
 
-    return this.sellerService.updateSellerProduct(seller.id, input);
+    return this.sellerService.updateSellerProduct(seller.id, input, false);
   }
 
   // Relay-style sellerProducts for the current seller (for sellers themselves)

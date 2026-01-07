@@ -174,7 +174,8 @@ export class SellerService {
 
   async createSellerProduct(
     sellerId: number,
-    input: CreateSellerProductInput
+    input: CreateSellerProductInput,
+    allowRecommended = false
   ): Promise<SellerProduct> {
     // Load productInfo with product relation
     const productInfo = await this.productInfoRepository.findOne({
@@ -222,6 +223,7 @@ export class SellerService {
       costPrice: input.costPrice,
       discount: input.discount,
       stockQuantity: input.stockQuantity,
+      recommended: allowRecommended ? input.recommended ?? false : false,
     });
 
     console.log(
@@ -250,7 +252,8 @@ export class SellerService {
 
   async updateSellerProduct(
     sellerId: number,
-    input: UpdateSellerProductInput
+    input: UpdateSellerProductInput,
+    allowRecommended = false
   ): Promise<SellerProduct> {
     const sellerProduct = await this.sellerProductRepository.findOne({
       where: { id: input.id },
@@ -289,6 +292,9 @@ export class SellerService {
     if (input.discount !== undefined) sellerProduct.discount = input.discount;
     if (input.stockQuantity !== undefined)
       sellerProduct.stockQuantity = input.stockQuantity;
+    if (allowRecommended && input.recommended !== undefined) {
+      sellerProduct.recommended = input.recommended;
+    }
 
     return this.sellerProductRepository.save(sellerProduct);
   }

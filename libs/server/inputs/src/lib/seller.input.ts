@@ -134,6 +134,10 @@ export class CreateSellerProductInput {
   @IsNotEmpty()
   @IsNumber()
   stockQuantity: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  recommended?: boolean;
 }
 
 @InputType()
@@ -167,6 +171,10 @@ export class UpdateSellerProductInput {
   @IsOptional()
   @IsNumber()
   stockQuantity?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  recommended?: boolean;
 }
 
 @InputType()

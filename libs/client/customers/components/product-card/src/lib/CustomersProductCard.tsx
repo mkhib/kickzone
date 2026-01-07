@@ -77,7 +77,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   discountOverride,
   lowStockOverride,
   lowStockThreshold = 10,
-  isRecommended = true,
+  isRecommended = false,
 }) => {
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();

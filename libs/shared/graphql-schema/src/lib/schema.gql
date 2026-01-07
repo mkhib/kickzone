@@ -100,6 +100,7 @@ type SellerProduct {
   costPrice: Float
   discount: Float!
   stockQuantity: Int!
+  recommended: Boolean!
 }
 
 type SellerInfo {
@@ -546,6 +547,7 @@ input CreateSellerProductInput {
   costPrice: Float!
   discount: Float!
   stockQuantity: Int!
+  recommended: Boolean
 }
 
 input UpdateSellerProductInput {
@@ -555,6 +557,7 @@ input UpdateSellerProductInput {
   costPrice: Float
   discount: Float
   stockQuantity: Int
+  recommended: Boolean
 }
 
 input CreateColorInput {
