@@ -48,9 +48,9 @@ IF NOT EXIST "dist\apps\kickzone-api" (
   goto :EOF
 )
 
-REM 3) Upload to server via pscp (PuTTY session: fat2)
+REM 3) Upload dist + package manifests to server via pscp (PuTTY session: fat2)
 echo.
-echo [3/3] Uploading API build to server via pscp (session: fat2)...
+echo [3/4] Uploading API build to server via pscp (session: fat2)...
 echo   pscp -batch -r dist\apps\kickzone-api\* fat2:/opt/masterskey/apps/kickzone-api/
 pscp -batch -r dist\apps\kickzone-api\* fat2:/opt/masterskey/apps/kickzone-api/
 IF ERRORLEVEL 1 (
@@ -58,11 +58,19 @@ IF ERRORLEVEL 1 (
   goto :EOF
 )
 
-REM 4) Post-upload server steps (permissions + service restart) as deployuser
+REM Upload package.json / yarn.lock so server installs new deps
+echo   pscp -batch package.json yarn.lock fat2:/opt/masterskey/
+pscp -batch package.json yarn.lock fat2:/opt/masterskey/
+IF ERRORLEVEL 1 (
+  echo ERROR: pscp upload of package.json/yarn.lock failed.
+  goto :EOF
+)
+
+REM 4) Post-upload server steps (install deps + perms + service restart) as deployuser
 echo.
 echo Running post-upload commands via plink (session: fat2)...
 plink -batch -load fat2 ^
-  "sudo chown -R www-data:www-data /opt/masterskey/apps/kickzone-api && sudo chmod -R 755 /opt/masterskey/apps/kickzone-api && sudo systemctl restart masterskey-api && sudo systemctl status --no-pager masterskey-api && sudo nginx -t && sudo systemctl reload nginx"
+  "cd /opt/masterskey && sudo -u deployuser yarn install --production --ignore-scripts && sudo chown -R www-data:www-data /opt/masterskey/apps/kickzone-api && sudo chmod -R 755 /opt/masterskey/apps/kickzone-api && sudo systemctl restart masterskey-api && sudo systemctl status --no-pager masterskey-api && sudo nginx -t && sudo systemctl reload nginx"
 IF ERRORLEVEL 1 (
   echo ERROR: Remote post-upload steps failed.
   goto :EOF
@@ -73,7 +81,7 @@ echo ==========================================
 echo  API update complete
 echo ==========================================
 echo.
-echo Uploaded: API build
+echo Uploaded: API build + package.json/yarn.lock
 echo Service: masterskey-api restarted and status checked
 echo nginx reloaded after config test
 echo.
