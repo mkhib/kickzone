@@ -19,6 +19,7 @@ import {
 import {
   CreateOrderInput,
   OrdersConnection,
+  SellerOrdersConnection,
   UpdateOrderInput,
   UpdateOrderStatusInput,
 } from '@kickzone-workspace/inputs';
@@ -99,7 +100,7 @@ export class OrderResolver {
    * Seller orders query - returns SellerOrder type WITHOUT customer PII
    * Sellers should NOT see customer name, email, phone, or address
    */
-  @Query(() => [SellerOrder])
+  @Query(() => SellerOrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async mySellerOrders(
     @CurrentUser() user: User,
@@ -124,8 +125,15 @@ export class OrderResolver {
       after
     );
 
-    // Convert to SellerOrder (removes customer PII)
-    return result.edges.map((edge) => toSellerOrder(edge.node));
+    // Convert to SellerOrder connection (removes customer PII)
+    return {
+      edges: result.edges.map((edge) => ({
+        cursor: edge.cursor,
+        node: toSellerOrder(edge.node),
+      })),
+      pageInfo: result.pageInfo,
+      totalCount: result.totalCount,
+    };
   }
 
   @Query(() => OrdersConnection)

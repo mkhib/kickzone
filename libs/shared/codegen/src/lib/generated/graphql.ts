@@ -697,7 +697,7 @@ export type Query = {
   myCart: Cart;
   myOrders: Array<Order>;
   myProfile: CustomerProfile;
-  mySellerOrders: Array<SellerOrder>;
+  mySellerOrders: SellerOrdersConnection;
   mySellerProductById?: Maybe<SellerProduct>;
   order: Order;
   orders: Array<Order>;
@@ -904,6 +904,19 @@ export type SellerOrder = {
   total: Scalars['Float']['output'];
   trackingNumber?: Maybe<Scalars['String']['output']>;
   updatedAt: Scalars['DateTime']['output'];
+};
+
+export type SellerOrderEdge = {
+  __typename?: 'SellerOrderEdge';
+  cursor: Scalars['String']['output'];
+  node: SellerOrder;
+};
+
+export type SellerOrdersConnection = {
+  __typename?: 'SellerOrdersConnection';
+  edges: Array<SellerOrderEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
 };
 
 export type SellerProduct = {

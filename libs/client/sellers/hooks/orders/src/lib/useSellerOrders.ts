@@ -16,27 +16,33 @@ export function useSellerOrders({
   after?: string;
   status?: KickzoneGraphqlTypes.OrderStatus;
 } = {}) {
-  // Note: Types will be auto-generated when server starts and schema regenerates
-  // Using any temporarily to avoid type errors until schema regeneration
-  const { data, loading, error, refetch, fetchMore } = useQuery<any, any>(
-    GET_MY_ORDERS_QUERY,
-    {
-      variables: { first, after },
-      notifyOnNetworkStatusChange: true,
-      fetchPolicy: 'cache-and-network',
-    }
-  );
+  const { data, loading, error, refetch, fetchMore } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'mySellerOrders'>,
+    KickzoneGraphqlTypes.QueryMySellerOrdersArgs
+  >(GET_MY_ORDERS_QUERY, {
+    variables: { first, after },
+    notifyOnNetworkStatusChange: true,
+    fetchPolicy: 'cache-and-network',
+  });
 
-  const orders = data?.mySellerOrders || [];
+  type SellerOrder = KickzoneGraphqlTypes.SellerOrder;
+
+  const orders: SellerOrder[] =
+    data?.mySellerOrders?.edges
+      ?.map((edge) => edge?.node as SellerOrder | undefined)
+      .filter((node): node is SellerOrder => Boolean(node)) || [];
 
   const [updateOrderStatusMutation, { loading: updateStatusLoading }] =
-    useMutation<any, any>(UPDATE_ORDER_STATUS_MUTATION, {
+    useMutation<
+      Pick<KickzoneGraphqlTypes.Mutation, 'updateOrderStatus'>,
+      KickzoneGraphqlTypes.MutationUpdateOrderStatusArgs
+    >(UPDATE_ORDER_STATUS_MUTATION, {
       refetchQueries: [{ query: GET_MY_ORDERS_QUERY, variables: { first } }],
     });
 
   const [updateOrderMutation, { loading: updateOrderLoading }] = useMutation<
-    any,
-    any
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateOrder'>,
+    KickzoneGraphqlTypes.MutationUpdateOrderArgs
   >(UPDATE_ORDER_MUTATION, {
     refetchQueries: [{ query: GET_MY_ORDERS_QUERY, variables: { first } }],
   });
@@ -71,29 +77,19 @@ export function useSellerOrders({
     return response.data?.updateOrder;
   };
 
-  const toCursor = (isoDate?: string | null) => {
-    if (!isoDate) return undefined;
-    return typeof window !== 'undefined' && typeof window.btoa === 'function'
-      ? window.btoa(isoDate)
-      : Buffer.from(isoDate).toString('base64');
-  };
-
   const loadMore = () => {
-    if (orders && orders.length > 0) {
-      const lastOrder = orders[orders.length - 1];
-      const cursor = toCursor(lastOrder?.createdAt);
-      if (!cursor) return;
-      return fetchMore({
-        variables: {
-          after: cursor,
-        },
-      });
-    }
+    const endCursor = data?.mySellerOrders?.pageInfo?.endCursor;
+    if (!endCursor) return;
+    return fetchMore({
+      variables: {
+        after: endCursor,
+      },
+    });
   };
 
   // Filter orders by status on the client side if status filter is provided
   const filteredOrders = status
-    ? orders.filter((order: any) => order.status === status)
+    ? orders.filter((order: SellerOrder) => order.status === status)
     : orders;
 
   return {

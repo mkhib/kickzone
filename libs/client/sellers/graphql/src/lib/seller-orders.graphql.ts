@@ -7,44 +7,47 @@ import { gql } from '@apollo/client';
 export const GET_MY_ORDERS_QUERY = gql`
   query GetMySellerOrders($first: Int = 10, $after: String) {
     mySellerOrders(first: $first, after: $after) {
-      id
-      orderNumber
-      # Customer PII REMOVED for security:
-      # customerEmail - REMOVED
-      # customerPhone - REMOVED
-      # customerName - REMOVED
-      # shippingAddress - REMOVED
-      # city - REMOVED
-      # state - REMOVED
-      # zipCode - REMOVED
-      # country - REMOVED
-      status
-      subtotal
-      shippingCost
-      total
-      notes
-      trackingNumber
-      createdAt
-      updatedAt
-      sellerId
-      sellerStoreName
-      sellerPhone
-      sellerAddress
-      items {
-        id
-        productId
-        productName
-        productImage
-        quantity
-        unitPrice
-        totalPrice
-        color
-        size
-        originalPrice
-        discountPercentage
-        productInfoId
-        sellerProductId
+      edges {
+        cursor
+        node {
+          id
+          orderNumber
+          # Customer PII REMOVED for security:
+          status
+          subtotal
+          shippingCost
+          total
+          notes
+          trackingNumber
+          createdAt
+          updatedAt
+          sellerId
+          sellerStoreName
+          sellerPhone
+          sellerAddress
+          items {
+            id
+            productId
+            productName
+            productImage
+            quantity
+            unitPrice
+            totalPrice
+            color
+            size
+            originalPrice
+            discountPercentage
+            productInfoId
+            sellerProductId
+          }
+        }
       }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+      }
+      totalCount
     }
   }
 `;
@@ -60,43 +63,54 @@ export const GET_SELLER_ORDERS_QUERY = gql`
     $status: OrderStatus
   ) {
     allSellerOrders(first: $first, after: $after, status: $status) {
-      id
-      orderNumber
-      customerEmail
-      customerPhone
-      customerName
-      shippingAddress
-      city
-      state
-      zipCode
-      country
-      status
-      subtotal
-      shippingCost
-      total
-      notes
-      trackingNumber
-      createdAt
-      updatedAt
-      sellerId
-      sellerStoreName
-      sellerPhone
-      sellerAddress
-      items {
-        id
-        productId
-        productName
-        productImage
-        quantity
-        unitPrice
-        totalPrice
-        color
-        size
-        originalPrice
-        discountPercentage
-        productInfoId
-        sellerProductId
+      edges {
+        cursor
+        node {
+          id
+          orderNumber
+          customerEmail
+          customerPhone
+          customerName
+          shippingAddress
+          city
+          state
+          zipCode
+          country
+          status
+          subtotal
+          shippingCost
+          total
+          notes
+          trackingNumber
+          createdAt
+          updatedAt
+          sellerId
+          sellerStoreName
+          sellerPhone
+          sellerAddress
+          items {
+            id
+            productId
+            productName
+            productImage
+            quantity
+            unitPrice
+            totalPrice
+            color
+            size
+            originalPrice
+            discountPercentage
+            productInfoId
+            sellerProductId
+          }
+        }
       }
+      pageInfo {
+        endCursor
+        hasNextPage
+        hasPreviousPage
+      }
+      totalCount
     }
   }
 `;
