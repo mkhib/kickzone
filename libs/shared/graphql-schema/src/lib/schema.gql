@@ -108,6 +108,11 @@ type SellerInfo {
   storeName: String!
   phone: String
   address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  businessName: String
   isActive: Boolean!
   shippingFee: Float!
   user: User!
@@ -352,12 +357,12 @@ type Query {
   getTranslation(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String): String!
   getEntityTranslations(entityType: String!, entityId: Int!): [Translation!]!
   getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
-  sellers(filter: SellerFilterInput): SellerConnection!
+  sellers(filter: SellerFilterInput, first: Int! = 100, after: String): SellerConnection!
   findOne(id: Int!): SellerInfo
   mySellerProductById(id: String!): SellerProduct
   colors: [Color!]!
   color(id: Int!): Color
-  orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): [Order!]!
+  orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): OrdersConnection!
   order(id: String!): Order!
   myOrders(first: Int! = 10, after: String): [Order!]!
   mySellerOrders(first: Int! = 10, after: String): SellerOrdersConnection!

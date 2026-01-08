@@ -31,6 +31,26 @@ export class SellerInfo {
   @Column({ nullable: true })
   address?: string;
 
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  city?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  state?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  zipCode?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  country?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  businessName?: string;
+
   @Field({ defaultValue: true })
   @Column({ default: true })
   isActive: boolean;

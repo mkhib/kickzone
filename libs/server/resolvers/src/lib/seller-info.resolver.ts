@@ -50,7 +50,9 @@ export class SellerResolver {
   @SetMetadata('roles', [UserRole.ADMIN, UserRole.CUSTOMER])
   async sellers(
     @Context() context: { req: { user?: User } },
-    @Args('filter', { nullable: true }) filter?: SellerFilterInput
+    @Args('filter', { nullable: true }) filter?: SellerFilterInput,
+    @Args('first', { type: () => Int, defaultValue: 100 }) first = 100,
+    @Args('after', { type: () => String, nullable: true }) after?: string
   ) {
     // For customers, only allow querying by IDs
     const user = context.req.user;
@@ -68,7 +70,11 @@ export class SellerResolver {
       }
     }
 
-    const [sellers, totalCount] = await this.sellerService.findAll(filter);
+    const [sellers, totalCount] = await this.sellerService.findAll({
+      ...filter,
+      first,
+      after,
+    });
     // Build edges and pageInfo for SellerConnection
     const edges = sellers.map((seller) => ({
       node: seller,

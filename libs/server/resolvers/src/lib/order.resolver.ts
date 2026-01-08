@@ -13,7 +13,6 @@ import {
   OrderStatus,
   User,
   UserRole,
-  SellerOrder,
   toSellerOrder,
 } from '@kickzone-workspace/entities';
 import {
@@ -34,7 +33,7 @@ export class OrderResolver {
     private readonly sellerService: SellerService
   ) {}
 
-  @Query(() => [Order])
+  @Query(() => OrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async orders(
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
@@ -43,13 +42,7 @@ export class OrderResolver {
     @Args('status', { type: () => OrderStatus, nullable: true })
     status?: OrderStatus
   ) {
-    const result = await this.orderService.findAll(
-      first,
-      after,
-      sellerId,
-      status
-    );
-    return result.edges.map((edge) => edge.node);
+    return this.orderService.findAll(first, after, sellerId, status);
   }
 
   @Query(() => Order)

@@ -700,7 +700,7 @@ export type Query = {
   mySellerOrders: SellerOrdersConnection;
   mySellerProductById?: Maybe<SellerProduct>;
   order: Order;
-  orders: Array<Order>;
+  orders: OrdersConnection;
   product?: Maybe<Product>;
   products: ProductConnection;
   sellerProductsByProduct: Array<SellerProduct>;
@@ -844,7 +844,9 @@ export type QuerySellerProductsForMeArgs = {
 
 
 export type QuerySellersArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
   filter?: InputMaybe<SellerFilterInput>;
+  first?: Scalars['Int']['input'];
 };
 
 
@@ -878,13 +880,18 @@ export type SellerFilterInput = {
 export type SellerInfo = {
   __typename?: 'SellerInfo';
   address?: Maybe<Scalars['String']['output']>;
+  businessName?: Maybe<Scalars['String']['output']>;
+  city?: Maybe<Scalars['String']['output']>;
+  country?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
   isActive: Scalars['Boolean']['output'];
   phone?: Maybe<Scalars['String']['output']>;
   sellerProducts: Array<SellerProduct>;
   shippingFee: Scalars['Float']['output'];
+  state?: Maybe<Scalars['String']['output']>;
   storeName: Scalars['String']['output'];
   user: User;
+  zipCode?: Maybe<Scalars['String']['output']>;
 };
 
 export type SellerOrder = {
