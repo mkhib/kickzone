@@ -50,20 +50,22 @@ export function useAdminsOrders({
   };
 
   const loadMore = () => {
-    if (data?.allSellerOrders && data.allSellerOrders.length > 0) {
-      const lastOrder = data.allSellerOrders[data.allSellerOrders.length - 1];
-      if (lastOrder) {
-        return fetchMore({
-          variables: {
-            after: lastOrder.id,
-          },
-        });
-      }
+    const endCursor = data?.allSellerOrders?.pageInfo?.endCursor;
+    if (endCursor) {
+      return fetchMore({
+        variables: {
+          after: endCursor,
+        },
+      });
     }
   };
 
+  const orders =
+    data?.allSellerOrders?.edges?.map((edge) => edge?.node).filter(Boolean) ||
+    [];
+
   return {
-    orders: data?.allSellerOrders || [],
+    orders,
     loading,
     error,
     refetch,

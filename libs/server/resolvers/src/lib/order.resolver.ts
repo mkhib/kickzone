@@ -18,6 +18,7 @@ import {
 } from '@kickzone-workspace/entities';
 import {
   CreateOrderInput,
+  OrdersConnection,
   UpdateOrderInput,
   UpdateOrderStatusInput,
 } from '@kickzone-workspace/inputs';
@@ -127,7 +128,7 @@ export class OrderResolver {
     return result.edges.map((edge) => toSellerOrder(edge.node));
   }
 
-  @Query(() => [Order])
+  @Query(() => OrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async adminSellerOrders(
     @CurrentUser() _user: User,
@@ -138,16 +139,10 @@ export class OrderResolver {
     status?: OrderStatus
   ) {
     // Admin can view any seller's orders
-    const result = await this.orderService.findAll(
-      first,
-      after,
-      sellerId,
-      status
-    );
-    return result.edges.map((edge) => edge.node);
+    return this.orderService.findAll(first, after, sellerId, status);
   }
 
-  @Query(() => [Order])
+  @Query(() => OrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async allSellerOrders(
     @CurrentUser() _user: User,
@@ -157,13 +152,7 @@ export class OrderResolver {
     status?: OrderStatus
   ) {
     // Admin can view all orders from all sellers
-    const result = await this.orderService.findAll(
-      first,
-      after,
-      undefined,
-      status
-    );
-    return result.edges.map((edge) => edge.node);
+    return this.orderService.findAll(first, after, undefined, status);
   }
 
   @Mutation(() => Order)

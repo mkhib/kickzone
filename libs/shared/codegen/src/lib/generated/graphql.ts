@@ -594,6 +594,13 @@ export enum OrderStatus {
   Shipped = 'SHIPPED'
 }
 
+export type OrdersConnection = {
+  __typename?: 'OrdersConnection';
+  edges: Array<OrderEdge>;
+  pageInfo: PageInfo;
+  totalCount: Scalars['Int']['output'];
+};
+
 export type PageInfo = {
   __typename?: 'PageInfo';
   endCursor?: Maybe<Scalars['String']['output']>;
@@ -669,8 +676,8 @@ export type ProductInfoFilterInput = {
 
 export type Query = {
   __typename?: 'Query';
-  adminSellerOrders: Array<Order>;
-  allSellerOrders: Array<Order>;
+  adminSellerOrders: OrdersConnection;
+  allSellerOrders: OrdersConnection;
   calculateShippingCost: ShippingCalculationResult;
   categories: Array<Category>;
   color?: Maybe<Color>;

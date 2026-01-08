@@ -1,141 +1,61 @@
-import { useState } from 'react';
-import { useMutation, useQuery } from '@apollo/client/react';
-import {
-  GET_CURRENCIES,
-  GET_CURRENT_EXCHANGE_RATE,
-  GET_EXCHANGE_RATE_HISTORY,
-  SET_EXCHANGE_RATE,
-  GET_CURRENCY_PREFERENCES,
-  SET_CURRENCY_PREFERENCE,
-} from '@kickzone-workspace/client-shared-graphql';
-import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
-import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  TextField,
-  Button,
-  MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Alert,
-  Stack,
-} from '@mui/material';
+import Box from '@mui/material/Box';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Typography from '@mui/material/Typography';
+import TextField from '@mui/material/TextField';
+import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
+import Stack from '@mui/material/Stack';
+import { useTheme } from '@mui/material/styles';
+import { useAdminsCurrencyManagement } from '@kickzone-workspace/admins-currency-management-hooks';
 
 export function CurrencyManagement() {
-  const { showSnackbar } = useSnackbar();
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.adminCurrency());
-  const [selectedFromCurrency, setSelectedFromCurrency] = useState('USD');
-  const [selectedToCurrency, setSelectedToCurrency] = useState('IRR');
-  const [newRate, setNewRate] = useState('');
-  const [notes, setNotes] = useState('');
-  const [locale, setLocale] = useState('fa');
-  const [currencyCode, setCurrencyCode] = useState('IRR');
-
-  // Queries
-  const { data: currenciesData } =
-    useQuery<Pick<KickzoneGraphqlTypes.Query, 'currencies'>>(GET_CURRENCIES);
-
-  const { data: exchangeRateData, refetch: refetchExchangeRate } = useQuery<
-    Pick<KickzoneGraphqlTypes.Query, 'currentExchangeRate'>,
-    KickzoneGraphqlTypes.QueryCurrentExchangeRateArgs
-  >(GET_CURRENT_EXCHANGE_RATE, {
-    variables: {
-      fromCurrencyCode: selectedFromCurrency,
-      toCurrencyCode: selectedToCurrency,
-    },
-  });
-
-  const { data: historyData, refetch: refetchHistory } = useQuery<
-    Pick<KickzoneGraphqlTypes.Query, 'exchangeRateHistory'>,
-    KickzoneGraphqlTypes.QueryExchangeRateHistoryArgs
-  >(GET_EXCHANGE_RATE_HISTORY, {
-    variables: {
-      fromCurrencyCode: selectedFromCurrency,
-      toCurrencyCode: selectedToCurrency,
-      limit: 10,
-    },
-  });
-
-  const { data: preferencesData, refetch: refetchPreferences } = useQuery<
-    Pick<KickzoneGraphqlTypes.Query, 'currencyPreferences'>
-  >(GET_CURRENCY_PREFERENCES);
-
-  // Mutations
-  const [setExchangeRate, { loading: settingRate }] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'setExchangeRate'>,
-    KickzoneGraphqlTypes.MutationSetExchangeRateArgs
-  >(SET_EXCHANGE_RATE, {
-    onCompleted: () => {
-      refetchExchangeRate();
-      refetchHistory();
-      setNewRate('');
-      setNotes('');
-      showSnackbar('Exchange rate updated successfully!', {
-        severity: 'success',
-      });
-    },
-    onError: (error) => {
-      showSnackbar(`Error: ${error.message}`, { severity: 'error' });
-    },
-  });
-
-  const [setCurrencyPreference, { loading: settingPreference }] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'setCurrencyPreference'>,
-    KickzoneGraphqlTypes.MutationSetCurrencyPreferenceArgs
-  >(SET_CURRENCY_PREFERENCE, {
-    onCompleted: () => {
-      refetchPreferences();
-      showSnackbar('Currency preference set successfully!', {
-        severity: 'success',
-      });
-    },
-    onError: (error) => {
-      showSnackbar(`Error: ${error.message}`, { severity: 'error' });
-    },
-  });
-
-  const handleSetExchangeRate = () => {
-    if (!newRate || isNaN(Number(newRate))) {
-      showSnackbar('Please enter a valid exchange rate', { severity: 'error' });
-      return;
-    }
-
-    setExchangeRate({
-      variables: {
-        input: {
-          fromCurrencyCode: selectedFromCurrency,
-          toCurrencyCode: selectedToCurrency,
-          rate: parseFloat(newRate),
-          notes: notes || null,
-        },
-      },
-    });
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const cardSx = {
+    mb: 3,
+    backgroundColor: isDark
+      ? 'rgba(20, 20, 24, 0.9)'
+      : 'rgba(255, 255, 255, 0.92)',
+    border: `1px solid ${
+      isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)'
+    }`,
+    boxShadow: isDark ? '0 8px 24px rgba(0,0,0,0.45)' : undefined,
   };
 
-  const handleSetCurrencyPreference = () => {
-    setCurrencyPreference({
-      variables: {
-        locale,
-        currencyCode,
-      },
-    });
-  };
-
-  const currencies = currenciesData?.currencies || [];
-  const currentRate = exchangeRateData?.currentExchangeRate;
-  const history = historyData?.exchangeRateHistory || [];
-  const preferences = preferencesData?.currencyPreferences || [];
+  const {
+    selectedFromCurrency,
+    setSelectedFromCurrency,
+    selectedToCurrency,
+    setSelectedToCurrency,
+    newRate,
+    setNewRate,
+    notes,
+    setNotes,
+    locale,
+    setLocale,
+    currencyCode,
+    setCurrencyCode,
+    currencies,
+    currentRate,
+    history,
+    preferences,
+    settingRate,
+    settingPreference,
+    handleSetExchangeRate,
+    handleSetCurrencyPreference,
+  } = useAdminsCurrencyManagement();
 
   return (
     <AdminsLayout>
@@ -152,67 +72,64 @@ export function CurrencyManagement() {
         </Typography>
 
         {/* Current Exchange Rates */}
-        <Card sx={{ mb: 3 }}>
-          <CardContent>
-            <Typography
-              variant="h6"
-              gutterBottom
-              sx={{ fontWeight: 600, mb: 2 }}
+        <Box sx={{ mb: 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ fontWeight: 600, mb: 2 }}>
+            {LL.currency.currentExchangeRate()}
+          </Typography>
+          <Stack direction="row" spacing={2} alignItems="center" sx={{ mb: 2 }}>
+            <TextField
+              select
+              value={selectedFromCurrency}
+              onChange={(e) => setSelectedFromCurrency(e.target.value)}
+              size="small"
+              sx={{ minWidth: 200 }}
             >
-              {LL.currency.currentExchangeRate()}
-            </Typography>
-            <Stack
-              direction="row"
-              spacing={2}
-              alignItems="center"
-              sx={{ mb: 2 }}
+              {currencies.map((currency) => (
+                <MenuItem key={currency.code} value={currency.code}>
+                  {currency.code} - {currency.name}
+                </MenuItem>
+              ))}
+            </TextField>
+            <Typography>→</Typography>
+            <TextField
+              select
+              value={selectedToCurrency}
+              onChange={(e) => setSelectedToCurrency(e.target.value)}
+              size="small"
+              sx={{ minWidth: 200 }}
             >
-              <TextField
-                select
-                value={selectedFromCurrency}
-                onChange={(e) => setSelectedFromCurrency(e.target.value)}
-                size="small"
-                sx={{ minWidth: 200 }}
-              >
-                {currencies.map((currency) => (
-                  <MenuItem key={currency.code} value={currency.code}>
-                    {currency.code} - {currency.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <Typography>→</Typography>
-              <TextField
-                select
-                value={selectedToCurrency}
-                onChange={(e) => setSelectedToCurrency(e.target.value)}
-                size="small"
-                sx={{ minWidth: 200 }}
-              >
-                {currencies.map((currency) => (
-                  <MenuItem key={currency.code} value={currency.code}>
-                    {currency.code} - {currency.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-            </Stack>
+              {currencies.map((currency) => (
+                <MenuItem key={currency.code} value={currency.code}>
+                  {currency.code} - {currency.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          </Stack>
 
-            {currentRate && (
-              <Alert severity="success" sx={{ mt: 2 }}>
-                <Typography variant="body1" sx={{ fontWeight: 500 }}>
-                  {LL.currency.currentRate()}: 1 {selectedFromCurrency} ={' '}
-                  {currentRate.rate} {selectedToCurrency}
-                </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  {LL.currency.lastUpdated()}:{' '}
-                  {new Date(currentRate.effectiveDate).toLocaleString()}
-                </Typography>
-              </Alert>
-            )}
-          </CardContent>
-        </Card>
+          {currentRate && (
+            <Stack spacing={0.5} sx={{ mt: 2 }}>
+              <Typography
+                variant="body1"
+                sx={{ fontWeight: 600, color: 'text.primary' }}
+              >
+                {LL.currency.currentRate()}: 1 {selectedFromCurrency} ={' '}
+                {currentRate.rate} {selectedToCurrency}
+              </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  color: isDark ? 'rgba(255,255,255,0.65)' : 'text.secondary',
+                }}
+              >
+                {LL.currency.lastUpdated()}:{' '}
+                {new Date(currentRate.effectiveDate).toLocaleString()}
+              </Typography>
+            </Stack>
+          )}
+        </Box>
 
         {/* Set New Exchange Rate */}
-        <Card sx={{ mb: 3 }}>
+        <Card sx={cardSx}>
           <CardContent>
             <Typography
               variant="h6"

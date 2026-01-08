@@ -595,6 +595,8 @@ const en = {
     rate: 'Rate',
     currency: 'Currency',
     lastUpdated: 'Last updated',
+    rateUpdateSuccess: 'Exchange rate updated successfully!',
+    preferenceUpdateSuccess: 'Currency preference set successfully!',
   },
   tableMenu: {
     filter: 'Filter',

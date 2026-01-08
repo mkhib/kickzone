@@ -71,12 +71,21 @@ export function useSellerOrders({
     return response.data?.updateOrder;
   };
 
+  const toCursor = (isoDate?: string | null) => {
+    if (!isoDate) return undefined;
+    return typeof window !== 'undefined' && typeof window.btoa === 'function'
+      ? window.btoa(isoDate)
+      : Buffer.from(isoDate).toString('base64');
+  };
+
   const loadMore = () => {
     if (orders && orders.length > 0) {
       const lastOrder = orders[orders.length - 1];
+      const cursor = toCursor(lastOrder?.createdAt);
+      if (!cursor) return;
       return fetchMore({
         variables: {
-          after: lastOrder.id,
+          after: cursor,
         },
       });
     }

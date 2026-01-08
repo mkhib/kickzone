@@ -598,6 +598,8 @@ const fa = {
     rate: 'نرخ',
     currency: 'ارز',
     lastUpdated: 'آخرین به‌روزرسانی',
+    rateUpdateSuccess: 'نرخ تبدیل با موفقیت به‌روزرسانی شد!',
+    preferenceUpdateSuccess: 'تنظیمات ارز با موفقیت ذخیره شد!',
   },
   tableMenu: {
     filter: 'فیلتر',

@@ -35,10 +35,7 @@ import { ProductImageManagementModal } from './ProductImageManagementModal';
 import { useTheme } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
 import Stack from '@mui/material/Stack';
-import {
-  useSellerListingsByProduct,
-  AdminSellerListing,
-} from './adminProducts.hooks';
+import { useSellerListingsByProduct } from './adminProducts.hooks';
 import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
 
 export function AdminProducts() {
@@ -76,7 +73,7 @@ export function AdminProducts() {
     },
     mutateSellerProduct,
   } = useSellerListingsByProduct();
-  const sellerListings: AdminSellerListing[] =
+  const sellerListings: KickzoneGraphqlTypes.SellerProduct[] =
     listingsData?.sellerProductsByProduct || [];
   const categoryIdValue = category ? Number(category) : undefined;
   const {

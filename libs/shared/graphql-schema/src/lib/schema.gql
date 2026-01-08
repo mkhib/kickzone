@@ -288,6 +288,12 @@ type OrderEdge {
   cursor: String!
 }
 
+type OrdersConnection {
+  edges: [OrderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
 type ShippingCalculationResult {
   totalShippingCost: Float!
   freeShippingApplied: Boolean!
@@ -344,8 +350,8 @@ type Query {
   order(id: String!): Order!
   myOrders(first: Int! = 10, after: String): [Order!]!
   mySellerOrders(first: Int! = 10, after: String): [SellerOrder!]!
-  adminSellerOrders(sellerId: String!, first: Int! = 10, after: String, status: OrderStatus): [Order!]!
-  allSellerOrders(first: Int! = 10, after: String, status: OrderStatus): [Order!]!
+  adminSellerOrders(sellerId: String!, first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
+  allSellerOrders(first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
   myCart: Cart!
   calculateShippingCost(cartSubtotal: Float!, sellerShippingFees: [SellerShippingInfoInput!]!): ShippingCalculationResult!
   currencies: [Currency!]!

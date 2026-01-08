@@ -1945,6 +1945,14 @@ type RootTranslation = {
 		 * L​a​s​t​ ​u​p​d​a​t​e​d
 		 */
 		lastUpdated: string
+		/**
+		 * E​x​c​h​a​n​g​e​ ​r​a​t​e​ ​u​p​d​a​t​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y​!
+		 */
+		rateUpdateSuccess: string
+		/**
+		 * C​u​r​r​e​n​c​y​ ​p​r​e​f​e​r​e​n​c​e​ ​s​e​t​ ​s​u​c​c​e​s​s​f​u​l​l​y​!
+		 */
+		preferenceUpdateSuccess: string
 	}
 	tableMenu: {
 		/**
@@ -4495,6 +4503,14 @@ export type TranslationFunctions = {
 		 * Last updated
 		 */
 		lastUpdated: () => LocalizedString
+		/**
+		 * Exchange rate updated successfully!
+		 */
+		rateUpdateSuccess: () => LocalizedString
+		/**
+		 * Currency preference set successfully!
+		 */
+		preferenceUpdateSuccess: () => LocalizedString
 	}
 	tableMenu: {
 		/**

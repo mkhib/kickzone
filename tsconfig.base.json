@@ -34,6 +34,9 @@
       "@kickzone-workspace/admins-contexts": [
         "libs/client/admins/contexts/src/index.ts"
       ],
+      "@kickzone-workspace/admins-currency-management-hooks": [
+        "libs/client/admins/hooks/currency-management/src/index.ts"
+      ],
       "@kickzone-workspace/admins-footer": [
         "libs/client/admins/components/footer/src/index.ts"
       ],
