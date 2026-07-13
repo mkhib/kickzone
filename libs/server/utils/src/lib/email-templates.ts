@@ -2,8 +2,8 @@
 // which would pull in React dependencies and cause webpack TSX compilation errors
 // TODO: Keep this in sync with libs/shared/shared-i18n/src/lib/site-name.ts
 const SITE_NAME = {
-  en: "Master's Key",
-  fa: 'مسترز کی',
+  en: 'SAINTBALA',
+  fa: 'SAINTBALA',
 } as const;
 
 type Locale = 'en' | 'fa';
