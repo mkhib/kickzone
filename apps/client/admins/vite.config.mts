@@ -9,14 +9,14 @@ export default defineConfig({
   cacheDir: '../../../node_modules/.vite/apps/client/admins',
   server: {
     port: 4300,
-    host: 'localhost',
+    host: '127.0.0.1',
     https: {
       key: '../../../localhost-key.pem',
       cert: '../../../localhost.pem',
     },
     // proxy: {
     //   '/graphql': {
-    //     target: 'https://localhost:4000',
+    //     target: 'http://127.0.0.1:4000',
     //     changeOrigin: true,
     //     secure: false,
     //   },
@@ -24,7 +24,7 @@ export default defineConfig({
   },
   preview: {
     port: 4300,
-    host: 'localhost',
+    host: '127.0.0.1',
   },
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   // Uncomment this if you are using workers.

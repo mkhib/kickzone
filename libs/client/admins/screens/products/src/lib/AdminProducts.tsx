@@ -96,7 +96,7 @@ export function AdminProducts() {
   const loaderRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
   const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL ?? 'https://localhost:4000';
+    import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:4000';
 
   // Infinite scroll: observe the loader div
   useEffect(() => {

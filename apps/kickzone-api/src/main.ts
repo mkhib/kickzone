@@ -37,9 +37,9 @@ async function bootstrap() {
   // CORS configuration - supports both development and production subdomains
   const allowedOrigins = [
     // Development origins
-    'https://localhost:4300',
-    'https://localhost:4400',
-    'https://localhost:4500',
+    'https://127.0.0.1:4300',
+    'https://127.0.0.1:4400',
+    'https://127.0.0.1:4500',
     'https://studio.apollographql.com',
     // Production origins
     'https://masterskey.store',
@@ -93,9 +93,9 @@ async function bootstrap() {
   const globalPrefix = 'api';
   app.setGlobalPrefix(globalPrefix);
   const port = process.env.API_PORT || 3000;
-  await app.listen(port);
+  await app.listen(port, '127.0.0.1');
   Logger.log(
-    `🚀 Application is running on: http://localhost:${port}/${globalPrefix}`
+    `🚀 Application is running on: http://127.0.0.1:${port}/${globalPrefix}`
   );
 }
 

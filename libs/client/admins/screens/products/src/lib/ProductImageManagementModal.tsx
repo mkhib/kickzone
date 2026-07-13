@@ -353,7 +353,7 @@ export function ProductImageManagementModal({
                             height="140"
                             image={
                               imageUrl.startsWith('/uploads/')
-                                ? `https://localhost:4000${imageUrl}`
+                                ? `http://127.0.0.1:4000${imageUrl}`
                                 : imageUrl
                             }
                             alt={`Product image ${imageIndex + 1}`}

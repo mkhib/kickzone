@@ -25,9 +25,9 @@ const csrfLink = new ApolloLink((operation, forward) => {
 });
 
 // Get GraphQL endpoint:
-// - For localhost: always use http://localhost:4000/graphql (ignore relative paths in env)
+// - For local dev (127.0.0.1): always use http://127.0.0.1:4000/graphql (ignore relative paths in env)
 // - For production: use VITE_GRAPHQL_ENDPOINT if set, otherwise /graphql (nginx proxy)
-// - Fallback to http://localhost:4000/graphql for local development
+// - Fallback to http://127.0.0.1:4000/graphql for local development
 const getGraphQLEndpoint = () => {
   const hostname =
     typeof window !== 'undefined' ? window.location.hostname : 'no-window';
@@ -40,8 +40,8 @@ const getGraphQLEndpoint = () => {
 
   let resolved: string;
 
-  // For localhost, ALWAYS use absolute URL to API server (ignore relative paths)
-  if (typeof window !== 'undefined' && hostname === 'localhost') {
+  // For local dev, ALWAYS use absolute URL to API server (ignore relative paths)
+  if (typeof window !== 'undefined' && hostname === '127.0.0.1') {
     // Only use env var if it's an absolute URL (http:// or https://)
     if (
       fromEnv &&
@@ -49,15 +49,15 @@ const getGraphQLEndpoint = () => {
     ) {
       resolved = fromEnv;
     } else {
-      // Force absolute URL for localhost
-      resolved = 'http://localhost:4000/graphql';
+      // Force absolute URL for local dev
+      resolved = 'http://127.0.0.1:4000/graphql';
     }
   } else if (fromEnv) {
     resolved = fromEnv;
-  } else if (typeof window !== 'undefined' && hostname !== 'localhost') {
+  } else if (typeof window !== 'undefined' && hostname !== '127.0.0.1') {
     resolved = '/graphql';
   } else {
-    resolved = 'http://localhost:4000/graphql';
+    resolved = 'http://127.0.0.1:4000/graphql';
   }
 
   return resolved;

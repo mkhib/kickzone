@@ -65,7 +65,7 @@ export class SellerService {
     // Initiate password setup
     try {
       const baseUrl =
-        process.env['SELLERS_FRONTEND_URL'] || 'https://localhost:4500';
+        process.env['SELLERS_FRONTEND_URL'] || 'https://127.0.0.1:4500';
       await this.authService.initiatePasswordSetup(user.email, baseUrl);
     } catch (error) {
       console.error(
