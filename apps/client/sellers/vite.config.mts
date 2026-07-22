@@ -14,6 +14,18 @@ export default defineConfig({
       key: '../../../localhost-key.pem',
       cert: '../../../localhost.pem',
     },
+    proxy: {
+      '/graphql': {
+        target: 'http://127.0.0.1:4000',
+        changeOrigin: true,
+        secure: false,
+      },
+      '/uploads': {
+        target: 'http://127.0.0.1:4000',
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
   preview: {
     port: 4300,

@@ -36,10 +36,13 @@ async function bootstrap() {
 
   // CORS configuration - supports both development and production subdomains
   const allowedOrigins = [
-    // Development origins
+    // Development origins (127.0.0.1 preferred; localhost kept for browser redirects)
     'https://127.0.0.1:4300',
     'https://127.0.0.1:4400',
     'https://127.0.0.1:4500',
+    'https://localhost:4300',
+    'https://localhost:4400',
+    'https://localhost:4500',
     'https://studio.apollographql.com',
     // Production origins
     'https://masterskey.store',
