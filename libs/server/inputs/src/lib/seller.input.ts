@@ -138,6 +138,10 @@ export class CreateSellerProductInput {
   @Field({ nullable: true })
   @IsOptional()
   recommended?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  boxLess?: boolean;
 }
 
 @InputType()
@@ -175,6 +179,10 @@ export class UpdateSellerProductInput {
   @Field({ nullable: true })
   @IsOptional()
   recommended?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  boxLess?: boolean;
 }
 
 @InputType()

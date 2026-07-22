@@ -88,6 +88,7 @@ export function useSellersProductManagement() {
         costPrice: formData.costPrice,
         discount: formData.discount,
         stockQuantity: formData.stockQuantity,
+        boxLess: formData.boxLess ?? false,
       },
     };
 
@@ -123,6 +124,7 @@ export function useSellersProductManagement() {
         costPrice: formData.costPrice,
         discount: formData.discount,
         stockQuantity: formData.stockQuantity,
+        boxLess: formData.boxLess,
       },
     };
 

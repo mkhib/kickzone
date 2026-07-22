@@ -994,6 +994,14 @@ type RootTranslation = {
 		 * S​o​m​e​ ​f​i​l​e​s​ ​e​x​c​e​e​d​ ​t​h​e​ ​m​a​x​i​m​u​m​ ​s​i​z​e​ ​o​f​ ​5​M​B
 		 */
 		filesExceedMaxSize: string
+		/**
+		 * W​i​t​h​o​u​t​ ​b​o​x
+		 */
+		boxLess: string
+		/**
+		 * E​n​a​b​l​e​ ​i​f​ ​t​h​i​s​ ​i​t​e​m​ ​i​s​ ​s​o​l​d​ ​w​i​t​h​o​u​t​ ​i​t​s​ ​o​r​i​g​i​n​a​l​ ​p​a​c​k​a​g​i​n​g​ ​b​o​x
+		 */
+		boxLessHelper: string
 	}
 	orders: {
 		/**
@@ -1244,9 +1252,17 @@ type RootTranslation = {
 	}
 	messages: {
 		/**
-		 * W​e​l​c​o​m​e​ ​t​o​ ​M​a​s​t​e​r​'​s​ ​K​e​y
+		 * W​e​l​c​o​m​e​ ​t​o​ ​S​A​I​N​T​B​A​L​A
 		 */
 		welcome: string
+		/**
+		 * U​n​l​o​c​k
+		 */
+		homeTitleAccent: string
+		/**
+		 * Y​o​u​r​ ​I​c​o​n
+		 */
+		homeTitle: string
 		/**
 		 * D​i​s​c​o​v​e​r​ ​p​r​e​m​i​u​m​ ​c​l​o​t​h​e​s​ ​f​r​o​m​ ​t​o​p​ ​b​r​a​n​d​s​ ​a​n​d​ ​e​x​p​r​e​s​s​ ​y​o​u​r​ ​u​n​i​q​u​e​ ​s​t​y​l​e
 		 */
@@ -1400,7 +1416,7 @@ type RootTranslation = {
 		 */
 		passwordsDoNotMatch: string
 		/**
-		 * R​e​g​i​s​t​r​a​t​i​o​n​ ​s​u​c​c​e​s​s​f​u​l​!​ ​W​e​l​c​o​m​e​ ​t​o​ ​M​a​s​t​e​r​'​s​ ​K​e​y​.
+		 * R​e​g​i​s​t​r​a​t​i​o​n​ ​s​u​c​c​e​s​s​f​u​l​!​ ​W​e​l​c​o​m​e​ ​t​o​ ​S​A​I​N​T​B​A​L​A​.
 		 */
 		registrationSuccess: string
 		/**
@@ -1416,7 +1432,7 @@ type RootTranslation = {
 		 */
 		setupPasswordTitle: string
 		/**
-		 * W​e​l​c​o​m​e​ ​t​o​ ​M​a​s​t​e​r​'​s​ ​K​e​y​!​ ​P​l​e​a​s​e​ ​s​e​t​ ​u​p​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​s​e​c​u​r​e​ ​y​o​u​r​ ​s​e​l​l​e​r​ ​a​c​c​o​u​n​t​.
+		 * W​e​l​c​o​m​e​ ​t​o​ ​S​A​I​N​T​B​A​L​A​!​ ​P​l​e​a​s​e​ ​s​e​t​ ​u​p​ ​y​o​u​r​ ​p​a​s​s​w​o​r​d​ ​t​o​ ​s​e​c​u​r​e​ ​y​o​u​r​ ​s​e​l​l​e​r​ ​a​c​c​o​u​n​t​.
 		 */
 		setupPasswordDescription: string
 		/**
@@ -1670,7 +1686,7 @@ type RootTranslation = {
 	}
 	appNames: {
 		/**
-		 * M​a​s​t​e​r​'​s​ ​K​e​y
+		 * S​A​I​N​T​B​A​L​A
 		 */
 		siteName: string
 		/**
@@ -3557,6 +3573,14 @@ export type TranslationFunctions = {
 		 * Some files exceed the maximum size of 5MB
 		 */
 		filesExceedMaxSize: () => LocalizedString
+		/**
+		 * Without box
+		 */
+		boxLess: () => LocalizedString
+		/**
+		 * Enable if this item is sold without its original packaging box
+		 */
+		boxLessHelper: () => LocalizedString
 	}
 	orders: {
 		/**
@@ -3804,9 +3828,17 @@ export type TranslationFunctions = {
 	}
 	messages: {
 		/**
-		 * Welcome to Master's Key
+		 * Welcome to SAINTBALA
 		 */
 		welcome: () => LocalizedString
+		/**
+		 * Unlock
+		 */
+		homeTitleAccent: () => LocalizedString
+		/**
+		 * Your Icon
+		 */
+		homeTitle: () => LocalizedString
 		/**
 		 * Discover premium clothes from top brands and express your unique style
 		 */
@@ -3958,7 +3990,7 @@ export type TranslationFunctions = {
 		 */
 		passwordsDoNotMatch: () => LocalizedString
 		/**
-		 * Registration successful! Welcome to Master's Key.
+		 * Registration successful! Welcome to SAINTBALA.
 		 */
 		registrationSuccess: () => LocalizedString
 		/**
@@ -3974,7 +4006,7 @@ export type TranslationFunctions = {
 		 */
 		setupPasswordTitle: () => LocalizedString
 		/**
-		 * Welcome to Master's Key! Please set up your password to secure your seller account.
+		 * Welcome to SAINTBALA! Please set up your password to secure your seller account.
 		 */
 		setupPasswordDescription: () => LocalizedString
 		/**
@@ -4228,7 +4260,7 @@ export type TranslationFunctions = {
 	}
 	appNames: {
 		/**
-		 * Master's Key
+		 * SAINTBALA
 		 */
 		siteName: () => LocalizedString
 		/**

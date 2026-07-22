@@ -271,6 +271,9 @@ const fa = {
     onlyImageFilesAllowed:
       'فقط فایل‌های تصویری (JPEG, PNG, GIF, WEBP) مجاز هستند',
     filesExceedMaxSize: 'برخی فایل‌ها از حداکثر اندازه ۵ مگابایت تجاوز می‌کنند',
+    boxLess: 'بدون جعبه',
+    boxLessHelper:
+      'اگر این محصول بدون جعبه اصلی فروخته می‌شود، این گزینه را فعال کنید',
   },
 
   // Orders
@@ -365,6 +368,8 @@ const fa = {
   // Messages and notifications
   messages: {
     welcome: `به ${SITE_NAME.fa} خوش آمدید`,
+    homeTitleAccent: 'آزاد کن',
+    homeTitle: 'آیکون خودت رو',
     homeDescription:
       'لباس‌های پریمیوم از برندهای با کیفیت رو کشف کن و سبک منحصر به فرد خودت رو نشون بده',
     itemAdded: 'آیتم به سبد خرید اضافه شد',

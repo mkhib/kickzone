@@ -25,6 +25,7 @@ export const CREATE_SELLER_PRODUCT_MUTATION = gql`
       costPrice
       discount
       stockQuantity
+      boxLess
       productInfo {
         id
         size
@@ -47,6 +48,7 @@ export const UPDATE_SELLER_PRODUCT_MUTATION = gql`
       costPrice
       discount
       stockQuantity
+      boxLess
       productInfo {
         id
         size

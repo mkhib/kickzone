@@ -101,6 +101,7 @@ type SellerProduct {
   discount: Float!
   stockQuantity: Int!
   recommended: Boolean!
+  boxLess: Boolean!
 }
 
 type SellerInfo {
@@ -571,6 +572,7 @@ input CreateSellerProductInput {
   discount: Float!
   stockQuantity: Int!
   recommended: Boolean
+  boxLess: Boolean
 }
 
 input UpdateSellerProductInput {
@@ -581,6 +583,7 @@ input UpdateSellerProductInput {
   discount: Float
   stockQuantity: Int
   recommended: Boolean
+  boxLess: Boolean
 }
 
 input CreateColorInput {

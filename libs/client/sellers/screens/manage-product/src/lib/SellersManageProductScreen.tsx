@@ -17,6 +17,8 @@ import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import {
@@ -31,6 +33,7 @@ const initialFormData: KickzoneGraphqlTypes.CreateSellerProductInput = {
   costPrice: 0,
   discount: 0,
   stockQuantity: 0,
+  boxLess: false,
 };
 
 export function SellersManageProductScreen() {
@@ -94,6 +97,7 @@ export function SellersManageProductScreen() {
         costPrice: sellerProduct.costPrice || 0,
         discount: sellerProduct.discount || 0,
         stockQuantity: sellerProduct.stockQuantity || 0,
+        boxLess: sellerProduct.boxLess ?? false,
       };
       setFormData(newFormData);
     }
@@ -130,11 +134,12 @@ export function SellersManageProductScreen() {
 
   const handleInputChange = (
     field: keyof KickzoneGraphqlTypes.CreateSellerProductInput,
-    value: string | number
+    value: string | number | boolean
   ) => {
     setFormData((prev) => ({
       ...prev,
-      [field]: typeof value === 'string' ? parseFloat(value) || 0 : value,
+      [field]:
+        typeof value === 'string' ? parseFloat(value) || 0 : value,
     }));
   };
 
@@ -161,6 +166,7 @@ export function SellersManageProductScreen() {
             costPrice: formData.costPrice,
             discount: formData.discount,
             stockQuantity: formData.stockQuantity,
+            boxLess: formData.boxLess ?? false,
           },
           editingProductId
         );
@@ -648,6 +654,25 @@ export function SellersManageProductScreen() {
                       },
                     }}
                   />
+                </Grid>
+
+                <Grid size={{ xs: 12 }}>
+                  <FormControlLabel
+                    control={
+                      <Switch
+                        checked={formData.boxLess ?? false}
+                        onChange={(e) =>
+                          handleInputChange('boxLess', e.target.checked)
+                        }
+                        disabled={isLoading}
+                        color="primary"
+                      />
+                    }
+                    label={LL.products.boxLess()}
+                  />
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    {LL.products.boxLessHelper()}
+                  </Typography>
                 </Grid>
 
                 {/* Final Price Display */}

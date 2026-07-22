@@ -154,6 +154,7 @@ export type CreateSellerInput = {
 };
 
 export type CreateSellerProductInput = {
+  boxLess?: InputMaybe<Scalars['Boolean']['input']>;
   costPrice: Scalars['Float']['input'];
   discount: Scalars['Float']['input'];
   price: Scalars['Float']['input'];
@@ -928,6 +929,7 @@ export type SellerOrdersConnection = {
 
 export type SellerProduct = {
   __typename?: 'SellerProduct';
+  boxLess: Scalars['Boolean']['output'];
   costPrice?: Maybe<Scalars['Float']['output']>;
   discount: Scalars['Float']['output'];
   id: Scalars['String']['output'];
@@ -1084,6 +1086,7 @@ export type UpdateSellerInput = {
 };
 
 export type UpdateSellerProductInput = {
+  boxLess?: InputMaybe<Scalars['Boolean']['input']>;
   costPrice?: InputMaybe<Scalars['Float']['input']>;
   discount?: InputMaybe<Scalars['Float']['input']>;
   id: Scalars['String']['input'];

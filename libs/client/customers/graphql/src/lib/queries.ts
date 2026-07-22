@@ -78,6 +78,7 @@ export const GET_PRODUCTS_QUERY = gql`
             discount
             stockQuantity
             productInfoId
+            boxLess
             seller {
               id
               shippingFee

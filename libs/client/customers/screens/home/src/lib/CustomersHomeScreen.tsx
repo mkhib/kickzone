@@ -8,24 +8,38 @@ import {
   usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import SearchIcon from '@mui/icons-material/Search';
-import TrendingUpIcon from '@mui/icons-material/TrendingUp';
+import SortIcon from '@mui/icons-material/Sort';
+import ArrowUpwardIcon from '@mui/icons-material/ArrowUpward';
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
+import ClearIcon from '@mui/icons-material/Clear';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
+import SellIcon from '@mui/icons-material/Sell';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import FormControl from '@mui/material/FormControl';
 import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Fade from '@mui/material/Fade';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useCallback, useState, useMemo } from 'react';
+import { useCallback, useState, useMemo, useEffect } from 'react';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
-import Button from '@mui/material/Button';
+
+const SEARCH_DEBOUNCE_MS = 400;
+
+const filterFieldSx = {
+  '& .MuiOutlinedInput-root': {
+    borderRadius: 3,
+    minHeight: { xs: 44, md: 48 },
+  },
+} as const;
 
 export function CustomersHome() {
   const [searchInput, setSearchInput] = useState('');
@@ -42,21 +56,29 @@ export function CustomersHome() {
     sort,
     sortOrder,
     pageSize: 12,
-    onlyWithSellers: true, // Only show products with sellers
-    onlyInStock: true, // Only show products in stock
+    onlyWithSellers: true,
+    onlyInStock: true,
   });
 
   const { addItem } = useCustomersCartService();
   const heroDescription = LL.messages.homeDescription();
 
-  // Expand products into variants - each variant becomes a separate display item
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setSearch(searchInput.trim());
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [searchInput]);
+
   const productVariants = useMemo(() => {
     const variants: Array<{
       product: KickzoneGraphqlTypes.Product;
       productInfo: KickzoneGraphqlTypes.ProductInfo;
       sellerProduct: KickzoneGraphqlTypes.SellerProduct;
       isRecommended?: boolean;
-      variantKey: string; // Unique key for this variant
+      isBoxLess?: boolean;
+      variantKey: string;
     }> = [];
 
     products.forEach((product) => {
@@ -65,7 +87,6 @@ export function CustomersHome() {
       }
 
       product.productInfos.forEach((productInfo) => {
-        // Find ALL sellerProducts for this ProductInfo (multiple sellers can offer the same variant)
         const allSellerProducts =
           product.sellerProducts?.filter(
             (sp) =>
@@ -75,7 +96,6 @@ export function CustomersHome() {
               sp.stockQuantity > 0
           ) || [];
 
-        // Calculate final price (after discount) for each sellerProduct
         const sellerProductsWithPrice = allSellerProducts.map((sp) => {
           const originalPrice = sp.price;
           const discount = sp.discount || 0;
@@ -92,22 +112,18 @@ export function CustomersHome() {
           };
         });
 
-        // Sort by final price (cheapest first), then by stock quantity (more stock first as tiebreaker)
         sellerProductsWithPrice.sort((a, b) => {
           if (a.finalPrice !== b.finalPrice) {
             return a.finalPrice - b.finalPrice;
           }
-          // If prices are equal, prefer seller with more stock
           return (
             (b.sellerProduct.stockQuantity || 0) -
             (a.sellerProduct.stockQuantity || 0)
           );
         });
 
-        // Select the cheapest available sellerProduct
         const bestSellerProduct = sellerProductsWithPrice[0];
 
-        // Only include variants that have at least one seller with stock
         if (bestSellerProduct) {
           const isRecommended = Boolean(
             (
@@ -116,12 +132,20 @@ export function CustomersHome() {
               }
             )?.recommended
           );
+          const isBoxLess = Boolean(
+            (
+              bestSellerProduct.sellerProduct as unknown as {
+                boxLess?: boolean;
+              }
+            )?.boxLess
+          );
           variants.push({
             product,
             productInfo,
             sellerProduct: bestSellerProduct.sellerProduct,
             isRecommended,
-            variantKey: `${product.id}-${productInfo.id}`, // Unique key for React
+            isBoxLess,
+            variantKey: `${product.id}-${productInfo.id}`,
           });
         }
       });
@@ -130,22 +154,25 @@ export function CustomersHome() {
     return variants;
   }, [products]);
 
-  // Handle search submission (Enter key or button click)
-  const handleSearch = useCallback(() => {
-    setSearch(searchInput);
+  const applySearchNow = useCallback(() => {
+    setSearch(searchInput.trim());
   }, [searchInput]);
 
-  // Handle Enter key in search input
-  const handleKeyPress = useCallback(
+  const handleClearSearch = useCallback(() => {
+    setSearchInput('');
+    setSearch('');
+  }, []);
+
+  const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLInputElement>) => {
       if (e.key === 'Enter') {
-        handleSearch();
+        e.preventDefault();
+        applySearchNow();
       }
     },
-    [handleSearch]
+    [applySearchNow]
   );
 
-  // Add to cart logic - now receives a variant directly (product + productInfo + sellerProduct)
   const handleAddToCart = useCallback(
     (variant: {
       product: KickzoneGraphqlTypes.Product;
@@ -154,12 +181,10 @@ export function CustomersHome() {
     }) => {
       const { product, productInfo, sellerProduct } = variant;
 
-      // Validate seller exists
       if (!sellerProduct.seller) {
         return;
       }
 
-      // Calculate final price after discount
       const originalPrice = sellerProduct.price;
       const discount = sellerProduct.discount;
       const finalPrice =
@@ -176,7 +201,7 @@ export function CustomersHome() {
         color: productInfo.color?.name || null,
         size: productInfo.size || null,
         sellerId: sellerProduct.seller.id.toString(),
-        sellerName: '', // Not displayed to customers
+        sellerName: '',
         sellerShippingFee: sellerProduct.seller.shippingFee || 0,
         productInfoId: productInfo.id.toString(),
         sellerProductId: sellerProduct.id.toString(),
@@ -186,20 +211,27 @@ export function CustomersHome() {
     [addItem]
   );
 
+  const OrderIcon = sortOrder === 'asc' ? ArrowUpwardIcon : ArrowDownwardIcon;
+
   return (
     <CustomersLayout>
       <CssBaseline />
 
-      {/* Hero Section */}
-      <Box sx={{ pt: { xs: 2, md: 3 }, pb: { xs: 2.5, md: 3.5 } }}>
-        <Container maxWidth={false} disableGutters sx={{ px: 0 }}>
+      <Box
+        sx={{
+          pt: { xs: 2, md: 3 },
+          pb: { xs: 2.5, md: 3.5 },
+          px: { xs: 1.5, sm: 2, md: 0 },
+        }}
+      >
+        <Container maxWidth={false} disableGutters>
           <Fade in timeout={900}>
             <Box
               sx={{
                 position: 'relative',
-                borderRadius: 6,
+                borderRadius: { xs: 4, md: 6 },
                 overflow: 'hidden',
-                minHeight: { xs: 320, md: 420 },
+                minHeight: { xs: 240, sm: 300, md: 420 },
                 boxShadow: '0 24px 48px rgba(0,0,0,0.18)',
                 backgroundColor: '#0f0f0f',
               }}
@@ -219,8 +251,9 @@ export function CustomersHome() {
                 sx={{
                   position: 'absolute',
                   inset: 0,
-                  background:
-                    'linear-gradient(90deg, rgba(0,0,0,0.46) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.05) 100%)',
+                  background: isRTL
+                    ? 'linear-gradient(270deg, rgba(0,0,0,0.46) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.05) 100%)'
+                    : 'linear-gradient(90deg, rgba(0,0,0,0.46) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.05) 100%)',
                 }}
               />
               <Container
@@ -231,35 +264,36 @@ export function CustomersHome() {
                   height: '100%',
                   display: 'flex',
                   alignItems: 'center',
-                  px: { xs: 2, md: 4 },
-                  py: { xs: 4, md: 6 },
+                  px: { xs: 2.5, sm: 3, md: 4 },
+                  py: { xs: 3.5, sm: 4, md: 6 },
                 }}
               >
-                <Box sx={{ maxWidth: { xs: '100%', md: '48%' } }}>
+                <Box sx={{ maxWidth: { xs: '100%', md: '52%' } }}>
                   <Typography
                     component="h2"
                     variant="h3"
                     sx={{
                       fontWeight: 900,
-                      fontSize: { xs: '2.2rem', md: '3rem' },
+                      fontSize: { xs: '1.75rem', sm: '2.2rem', md: '3rem' },
                       letterSpacing: '-0.02em',
                       color: '#f7f7f7',
                       mb: 1,
-                      lineHeight: 1.1,
+                      lineHeight: 1.15,
                     }}
                   >
                     <Box component="span" sx={{ color: '#c6a555' }}>
-                      Unlock
+                      {LL.messages.homeTitleAccent()}
                     </Box>{' '}
-                    Your Icon
+                    {LL.messages.homeTitle()}
                   </Typography>
                   <Typography
                     variant="h6"
                     sx={{
                       fontWeight: 600,
-                      fontSize: { xs: '1rem', md: '1.15rem' },
+                      fontSize: { xs: '0.95rem', sm: '1rem', md: '1.15rem' },
                       color: 'rgba(255,255,255,0.88)',
                       maxWidth: 520,
+                      lineHeight: 1.5,
                     }}
                   >
                     {heroDescription}
@@ -271,109 +305,152 @@ export function CustomersHome() {
         </Container>
       </Box>
 
-      {/* Products Section */}
       <Container
         maxWidth="xl"
         sx={{
           py: { xs: 1, md: 2 },
-          px: { xs: 1, md: 2 },
+          px: { xs: 1.5, sm: 2, md: 2 },
         }}
       >
-        {/* Search and Filter Bar */}
-        <Box
+        <Paper
+          elevation={0}
           sx={{
-            position: 'relative',
-            zIndex: 1,
-            p: { xs: 1.5, md: 2 },
-            pb: { xs: 2, md: 3 },
+            p: { xs: 1.5, sm: 2 },
+            mb: { xs: 2, md: 3 },
+            borderRadius: 3,
+            border: (theme) =>
+              theme.palette.mode === 'dark'
+                ? '1px solid rgba(255,255,255,0.08)'
+                : '1px solid rgba(0,0,0,0.08)',
+            background: (theme) =>
+              theme.palette.mode === 'dark'
+                ? 'rgba(255,255,255,0.03)'
+                : 'rgba(0,0,0,0.02)',
           }}
         >
-          <Grid container spacing={2} alignItems="center">
-            <Grid size={{ xs: 12, sm: 12, md: 5 }}>
+          <Grid container spacing={{ xs: 1.5, sm: 2 }} alignItems="stretch">
+            <Grid size={{ xs: 12, lg: 6 }}>
               <TextField
                 variant="outlined"
-                placeholder={LL.form.searchProducts()}
+                placeholder={LL.products.searchProductsPlaceholder()}
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                onKeyPress={handleKeyPress}
+                onKeyDown={handleKeyDown}
                 fullWidth
-                sx={{
-                  '& .MuiOutlinedInput-root': {
-                    borderRadius: 4,
+                size="small"
+                sx={filterFieldSx}
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon color="primary" fontSize="small" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: (
+                      <InputAdornment position="end" sx={{ gap: 0.25 }}>
+                        {searchInput.length > 0 && (
+                          <IconButton
+                            size="small"
+                            aria-label="clear search"
+                            onClick={handleClearSearch}
+                            edge="end"
+                          >
+                            <ClearIcon fontSize="small" />
+                          </IconButton>
+                        )}
+                        <IconButton
+                          size="small"
+                          aria-label={LL.button.search()}
+                          onClick={applySearchNow}
+                          edge="end"
+                          color="primary"
+                        >
+                          <SearchIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ),
                   },
-                }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon color="primary" />
-                    </InputAdornment>
-                  ),
                 }}
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 12, md: 2 }}>
-              <Button
-                variant="contained"
-                onClick={handleSearch}
-                fullWidth
-                sx={{ borderRadius: 4, px: 4, py: 1.5 }}
-              >
-                {LL.button.search()}
-              </Button>
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-              <FormControl fullWidth>
-                <InputLabel>{LL.form.sortBy()}</InputLabel>
+            <Grid size={{ xs: 6, lg: 3 }}>
+              <FormControl fullWidth size="small" sx={filterFieldSx}>
+                <InputLabel id="home-sort-label">{LL.form.sortBy()}</InputLabel>
                 <Select
+                  labelId="home-sort-label"
                   value={sort}
                   label={LL.form.sortBy()}
                   onChange={(e) => setSort(e.target.value)}
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <TrendingUpIcon color="primary" sx={{ ml: 1 }} />
-                    </InputAdornment>
-                  }
-                  sx={{
-                    borderRadius: 4,
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <SortIcon color="primary" fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 >
-                  <MenuItem value="price">{LL.table.price()}</MenuItem>
-                  <MenuItem value="discount">{LL.form.discount()}</MenuItem>
+                  <MenuItem value="price">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <SellIcon fontSize="small" />
+                      {LL.table.price()}
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="discount">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <LocalOfferIcon fontSize="small" />
+                      {LL.form.discount()}
+                    </Box>
+                  </MenuItem>
                 </Select>
               </FormControl>
             </Grid>
-            <Grid size={{ xs: 12, sm: 6, md: 2.5 }}>
-              <FormControl fullWidth>
-                <InputLabel>{LL.form.order()}</InputLabel>
+            <Grid size={{ xs: 6, lg: 3 }}>
+              <FormControl fullWidth size="small" sx={filterFieldSx}>
+                <InputLabel id="home-order-label">{LL.form.order()}</InputLabel>
                 <Select
+                  labelId="home-order-label"
                   value={sortOrder}
                   label={LL.form.order()}
                   onChange={(e) =>
                     setSortOrder(e.target.value as 'asc' | 'desc')
                   }
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <LocalOfferIcon color="primary" sx={{ ml: 1 }} />
-                    </InputAdornment>
-                  }
-                  sx={{
-                    borderRadius: 4,
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <OrderIcon color="primary" fontSize="small" />
+                        </InputAdornment>
+                      ),
+                    },
                   }}
                 >
-                  <MenuItem value="asc">{LL.products.ascending()}</MenuItem>
-                  <MenuItem value="desc">{LL.products.descending()}</MenuItem>
+                  <MenuItem value="asc">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ArrowUpwardIcon fontSize="small" />
+                      {LL.products.ascending()}
+                    </Box>
+                  </MenuItem>
+                  <MenuItem value="desc">
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <ArrowDownwardIcon fontSize="small" />
+                      {LL.products.descending()}
+                    </Box>
+                  </MenuItem>
                 </Select>
               </FormControl>
             </Grid>
           </Grid>
-        </Box>
+        </Paper>
+
         {loading ? (
           <Box
             sx={{
               display: 'flex',
               justifyContent: 'center',
               alignItems: 'center',
-              minHeight: 400,
+              minHeight: { xs: 280, md: 400 },
             }}
           >
             <CircularProgress />
@@ -382,30 +459,38 @@ export function CustomersHome() {
           <Box
             sx={{
               display: 'flex',
+              flexDirection: 'column',
               justifyContent: 'center',
               alignItems: 'center',
-              minHeight: 400,
+              gap: 1,
+              minHeight: { xs: 280, md: 400 },
+              px: 2,
+              textAlign: 'center',
             }}
           >
-            <Typography variant="h5">
+            <SearchIcon sx={{ fontSize: 48, opacity: 0.25, mb: 1 }} />
+            <Typography variant="h5" sx={{ fontWeight: 700 }}>
               {LL.products.noProductsFound()}
             </Typography>
+            {search && (
+              <Typography variant="body2" color="text.secondary">
+                {LL.products.searchProducts()}: "{search}"
+              </Typography>
+            )}
           </Box>
         ) : (
           <Fade in timeout={800}>
             <Grid
               container
-              spacing={{ xs: 2, sm: 3, md: 4 }}
+              spacing={{ xs: 2, sm: 2.5, md: 3 }}
               sx={{
                 ...(productVariants.length === 1
                   ? { justifyContent: 'center' }
                   : {}),
-                px: { xs: 1.5, md: 2 },
-                pb: { xs: 1.5, md: 2 },
+                pb: { xs: 2, md: 3 },
               }}
             >
               {productVariants.map((variant, index) => {
-                // Create a variant-specific product object for the card
                 const variantProduct: KickzoneGraphqlTypes.Product = {
                   ...variant.product,
                   productInfos: [variant.productInfo],
@@ -417,8 +502,8 @@ export function CustomersHome() {
                     key={variant.variantKey}
                     size={
                       productVariants.length === 1
-                        ? { xs: 12, sm: 8, md: 6, lg: 4, xl: 4 }
-                        : { xs: 12, sm: 6, md: 4, lg: 3 }
+                        ? { xs: 12, sm: 8, md: 6, lg: 4 }
+                        : { xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }
                     }
                     sx={{
                       animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
@@ -437,6 +522,7 @@ export function CustomersHome() {
                     <CustomersProductCard
                       product={variantProduct}
                       isRecommended={variant.isRecommended ?? false}
+                      isBoxLess={variant.isBoxLess ?? false}
                       onAddToCart={() => handleAddToCart(variant)}
                     />
                   </Grid>

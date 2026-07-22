@@ -702,6 +702,14 @@ export const SellersProducts = () => {
                                   }
                                   variant="outlined"
                                 />
+                                {firstSellerProduct.boxLess && (
+                                  <Chip
+                                    label={LL.products.boxLess()}
+                                    size="small"
+                                    color="info"
+                                    variant="outlined"
+                                  />
+                                )}
                               </Box>
                             </>
                           ) : (
@@ -1075,6 +1083,14 @@ export const SellersProducts = () => {
                                     {formatNumber(sellerProduct.stockQuantity)}{' '}
                                     {LL.products.units()}
                                   </Typography>
+                                  {sellerProduct.boxLess && (
+                                    <Chip
+                                      label={LL.products.boxLess()}
+                                      size="small"
+                                      color="info"
+                                      variant="outlined"
+                                    />
+                                  )}
                                   {sellerProduct.productInfo.images &&
                                     sellerProduct.productInfo.images.length >
                                       0 && (

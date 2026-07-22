@@ -58,6 +58,10 @@ export class SellerProduct {
   @Column({ type: 'boolean', default: false })
   recommended: boolean;
 
+  @Field(() => Boolean, { defaultValue: false })
+  @Column({ type: 'boolean', default: false })
+  boxLess: boolean;
+
   @BeforeInsert()
   @BeforeUpdate()
   setProductInfoId() {

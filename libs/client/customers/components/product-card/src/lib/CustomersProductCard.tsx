@@ -69,6 +69,10 @@ interface ProductCardProps {
    * Show a recommended badge.
    */
   isRecommended?: boolean;
+  /**
+   * Show a without-box badge.
+   */
+  isBoxLess?: boolean;
 }
 
 export const CustomersProductCard: React.FC<ProductCardProps> = ({
@@ -78,6 +82,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   lowStockOverride,
   lowStockThreshold = 10,
   isRecommended = false,
+  isBoxLess = false,
 }) => {
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
@@ -224,11 +229,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     alignItems: 'center',
     gap: 0.75,
     borderRadius: 2,
-    px: 2.4,
-    py: 1,
+    px: { xs: 1.5, sm: 2.4 },
+    py: { xs: 0.65, sm: 1 },
     fontWeight: 800,
-    fontSize: '0.78rem',
-    letterSpacing: 1.1,
+    fontSize: { xs: '0.68rem', sm: '0.78rem' },
+    letterSpacing: { xs: 0.8, sm: 1.1 },
     textTransform: 'uppercase',
     border: '1px solid rgba(0,0,0,0.12)',
     backgroundColor: 'rgba(0,0,0,0.04)',
@@ -306,7 +311,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       <Box
         sx={{
           position: 'relative',
-          height: 300,
+          height: { xs: 220, sm: 260, md: 300 },
           overflow: 'hidden',
           background: (theme) =>
             theme.palette.mode === 'dark'
@@ -339,13 +344,13 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         <Box
           sx={{
             position: 'absolute',
-            top: 18,
-            left: 18,
-            right: 18,
+            top: { xs: 12, sm: 18 },
+            left: { xs: 12, sm: 18 },
+            right: { xs: 12, sm: 18 },
             display: 'flex',
             flexWrap: 'wrap',
             alignItems: 'flex-start',
-            gap: 1,
+            gap: { xs: 0.75, sm: 1 },
             pointerEvents: 'none',
           }}
         >
@@ -359,52 +364,21 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 boxShadow: '0 6px 16px rgba(0,0,0,0.25)',
                 order: 0,
                 pointerEvents: 'auto',
-                px: 2.4,
-                py: 1.1,
-                borderRadius: 2,
-                letterSpacing: 1.3,
                 justifyContent: 'center',
                 flexDirection: isRTL ? 'row-reverse' : 'row',
-                width: '100%',
-                marginLeft: 0,
-                marginRight: 0,
-                paddingLeft: 1,
-                paddingRight: 1,
-                flexWrap: 'nowrap',
+                width: { xs: 'auto', sm: '100%' },
+                flex: { xs: '0 1 auto', sm: '1 1 100%' },
                 whiteSpace: 'nowrap',
-                gap: 0.75,
               }}
             >
               <VerifiedIcon
                 sx={{
-                  fontSize: 19,
+                  fontSize: { xs: 16, sm: 19 },
                   color: '#d7c48f',
                   opacity: 0.95,
-                  mr: isRTL ? 0 : 0,
-                  ml: isRTL ? 0 : 0,
                 }}
               />
               {"Master's Pick"}
-            </Box>
-          )}
-          {displayLowStock && (
-            <Box
-              sx={{
-                ...tagBaseSx,
-                background: '#ffc58f',
-                border: '1px solid #e3a96d',
-                color: '#3d2a12',
-                order: 2,
-                pointerEvents: 'auto',
-                boxShadow: '0 8px 18px rgba(0,0,0,0.25)',
-              }}
-            >
-              <InventoryIcon sx={{ fontSize: 18 }} />
-              {formatNumber(
-                pricingInfo?.stockQuantity || 0,
-                currentLocale
-              )}{' '}
-              {LL.products.left()}
             </Box>
           )}
           {displayDiscount > 0 && (
@@ -419,8 +393,44 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 pointerEvents: 'auto',
               }}
             >
-              <LocalOfferIcon sx={{ fontSize: 18 }} />-
+              <LocalOfferIcon sx={{ fontSize: { xs: 15, sm: 18 } }} />-
               {formatNumber(displayDiscount, currentLocale)}%
+            </Box>
+          )}
+          {displayLowStock && (
+            <Box
+              sx={{
+                ...tagBaseSx,
+                background: '#ffc58f',
+                border: '1px solid #e3a96d',
+                color: '#3d2a12',
+                order: 2,
+                pointerEvents: 'auto',
+                boxShadow: '0 8px 18px rgba(0,0,0,0.25)',
+              }}
+            >
+              <InventoryIcon sx={{ fontSize: { xs: 15, sm: 18 } }} />
+              {formatNumber(
+                pricingInfo?.stockQuantity || 0,
+                currentLocale
+              )}{' '}
+              {LL.products.left()}
+            </Box>
+          )}
+          {isBoxLess && (
+            <Box
+              sx={{
+                ...tagBaseSx,
+                background: '#e8eef5',
+                border: '1px solid #b8c5d6',
+                color: '#1a2a3a',
+                order: 3,
+                pointerEvents: 'auto',
+                boxShadow: '0 6px 16px rgba(0,0,0,0.15)',
+              }}
+            >
+              <InventoryIcon sx={{ fontSize: { xs: 15, sm: 18 } }} />
+              {LL.products.boxLess()}
             </Box>
           )}
         </Box>
@@ -431,8 +441,8 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           flexGrow: 1,
           display: 'flex',
           flexDirection: 'column',
-          p: 3,
-          pb: 2,
+          p: { xs: 2, sm: 2.5, md: 3 },
+          pb: { xs: 1.5, md: 2 },
           background:
             theme.palette.mode === 'dark'
               ? 'linear-gradient(180deg, rgba(18,18,24,0.9) 0%, rgba(22,22,30,0.92) 100%)'
@@ -446,9 +456,9 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             fontWeight: 800,
             color: theme.palette.mode === 'dark' ? '#f4f4f6' : '#0f1015',
             mb: 1,
-            fontSize: { xs: '1.15rem', md: '1.28rem' },
+            fontSize: { xs: '1.05rem', sm: '1.15rem', md: '1.28rem' },
             lineHeight: 1.25,
-            minHeight: 52,
+            minHeight: { xs: 44, md: 52 },
           })}
         >
           {product.name}
@@ -670,7 +680,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         )}
       </CardContent>
 
-      <Box sx={{ p: 3, pt: 0 }}>
+      <Box sx={{ p: { xs: 2, sm: 2.5, md: 3 }, pt: 0 }}>
         <Button
           variant="contained"
           fullWidth
@@ -679,9 +689,9 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           onClick={handleAddToCartClick}
           sx={{
             borderRadius: 14,
-            py: 1.4,
+            py: { xs: 1.1, md: 1.4 },
             fontWeight: 900,
-            fontSize: '0.95rem',
+            fontSize: { xs: '0.85rem', sm: '0.95rem' },
             letterSpacing: 1,
             textTransform: 'uppercase',
             boxShadow:

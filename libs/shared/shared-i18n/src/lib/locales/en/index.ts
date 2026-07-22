@@ -271,6 +271,9 @@ const en = {
     onlyImageFilesAllowed:
       'Only image files (JPEG, PNG, GIF, WEBP) are allowed',
     filesExceedMaxSize: 'Some files exceed the maximum size of 5MB',
+    boxLess: 'Without box',
+    boxLessHelper:
+      'Enable if this item is sold without its original packaging box',
   },
 
   // Orders
@@ -364,6 +367,8 @@ const en = {
   // Messages and notifications
   messages: {
     welcome: `Welcome to ${SITE_NAME.en}`,
+    homeTitleAccent: 'Unlock',
+    homeTitle: 'Your Icon',
     homeDescription:
       'Discover premium clothes from top brands and express your unique style',
     itemAdded: 'Item added to cart',

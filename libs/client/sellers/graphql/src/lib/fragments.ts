@@ -13,6 +13,7 @@ export const SELLER_PRODUCT_FRAGMENT = gql`
     discount
     stockQuantity
     productInfoId
+    boxLess
     productInfo {
       ...ProductInfoFields
     }

@@ -224,6 +224,7 @@ export class SellerService {
       discount: input.discount,
       stockQuantity: input.stockQuantity,
       recommended: allowRecommended ? input.recommended ?? false : false,
+      boxLess: input.boxLess ?? false,
     });
 
     console.log(
@@ -294,6 +295,9 @@ export class SellerService {
       sellerProduct.stockQuantity = input.stockQuantity;
     if (allowRecommended && input.recommended !== undefined) {
       sellerProduct.recommended = input.recommended;
+    }
+    if (input.boxLess !== undefined) {
+      sellerProduct.boxLess = input.boxLess;
     }
 
     return this.sellerProductRepository.save(sellerProduct);

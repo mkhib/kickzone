@@ -24,6 +24,7 @@ export const PRODUCT_FRAGMENT = gql`
       price
       discount
       stockQuantity
+      boxLess
       seller {
         id
         storeName
