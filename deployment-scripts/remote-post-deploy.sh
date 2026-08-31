@@ -20,12 +20,12 @@ if [ -f "$API_DIR/package.json" ]; then
   sudo -u deployuser yarn install --production --ignore-scripts || true
 fi
 
-# NestJS serves GraphQL at /api/graphql; fix legacy nginx proxy paths if present.
+# NestJS GraphQL is at /graphql (global /api prefix does not apply); fix nginx if misconfigured.
 for nginx_conf in /etc/nginx/sites-available/saintbala.com /etc/nginx/sites-enabled/saintbala.com; do
   if [ -f "$nginx_conf" ]; then
     sudo sed -i \
-      -e 's|http://127.0.0.1:4000/graphql|http://127.0.0.1:4000/api/graphql|g' \
-      -e 's|http://localhost:4000/graphql|http://localhost:4000/api/graphql|g' \
+      -e 's|http://127.0.0.1:4000/api/graphql|http://127.0.0.1:4000/graphql|g' \
+      -e 's|http://localhost:4000/api/graphql|http://localhost:4000/graphql|g' \
       "$nginx_conf"
   fi
 done
