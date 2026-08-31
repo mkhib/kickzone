@@ -31,7 +31,7 @@ export function CustomersFooter() {
           color: theme.palette.mode === 'dark' ? '#f5f5f5' : 'text.secondary',
         })}
       >
-        © 2025 {LL.appNames.siteName()}
+        © {new Date().getFullYear()} {LL.appNames.siteName()}
       </Typography>
     </Box>
   );

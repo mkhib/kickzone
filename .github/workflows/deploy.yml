@@ -93,4 +93,21 @@ jobs:
           username: ${{ secrets.SERVER_USER }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            bash /opt/masterskey/deployment-scripts/remote-post-deploy.sh
+            set -euo pipefail
+            PROJECT_DIR="/opt/masterskey"
+            API_DIR="/opt/masterskey/apps/kickzone-api"
+            API_SERVICE="masterskey-api"
+
+            if [ -f "$PROJECT_DIR/deployment-scripts/remote-post-deploy.sh" ]; then
+              bash "$PROJECT_DIR/deployment-scripts/remote-post-deploy.sh"
+            else
+              sudo chown -R www-data:www-data "$API_DIR" /var/www/masterskey
+              sudo chmod -R 755 "$API_DIR" /var/www/masterskey
+              if [ -f "$PROJECT_DIR/package.json" ] && [ -f "$PROJECT_DIR/yarn.lock" ]; then
+                cd "$PROJECT_DIR"
+                sudo -u deployuser yarn install --production --ignore-scripts || true
+              fi
+              sudo systemctl restart "$API_SERVICE"
+              sudo nginx -t
+              sudo systemctl reload nginx
+            fi

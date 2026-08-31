@@ -50,7 +50,7 @@ const fa = {
     sellers: 'فروشندگان',
     adminPanel: 'پنل مدیریت',
     sellersPortal: 'پورتال فروشندگان',
-    languageSettings: 'تنظیمات زبان',
+    languageSettings: 'تنظیمات زبان/Language Settings',
     translations: 'مدیریت ترجمه‌ها',
   },
 
@@ -537,7 +537,7 @@ const fa = {
     signup: 'ثبت نام',
     forgotPassword: 'فراموشی رمز عبور',
     resetPassword: 'بازیابی رمز عبور',
-    languageSettings: 'تنظیمات زبان',
+    languageSettings: 'تنظیمات زبان/Language Settings',
     unauthorized: 'غیرمجاز',
     // Seller pages
     sellerProducts: 'محصولات من',

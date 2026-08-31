@@ -6,10 +6,13 @@ import React, {
   ReactNode,
 } from 'react';
 import { loadLocaleAsync } from './locales/i18n-util.async';
-import { detectLocale } from './locales/i18n-util';
-import { navigatorDetector } from './locales/navigator-detector';
 import type { Locales } from './locales/i18n-types';
 import { I18nContext } from './locales/i18n-react';
+import {
+  DEFAULT_LOCALE,
+  getInitialLocale,
+  LANGUAGE_STORAGE_KEY,
+} from './language-detector';
 
 interface LanguageContextType {
   currentLocale: Locales;
@@ -23,8 +26,6 @@ interface LanguageContextType {
 const LanguageContext = createContext<LanguageContextType | undefined>(
   undefined
 );
-
-const LANGUAGE_STORAGE_KEY = 'kickzone-language-preference';
 
 // Available languages with their display names
 const AVAILABLE_LOCALES = [
@@ -51,7 +52,7 @@ interface LanguageProviderProps {
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
-  const [currentLocale, setCurrentLocale] = useState<Locales>('fa'); // Default to Farsi
+  const [currentLocale, setCurrentLocale] = useState<Locales>(DEFAULT_LOCALE);
   const [isLoading, setIsLoading] = useState(true);
   const i18nContext = useContext(I18nContext);
 
@@ -59,38 +60,19 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
   useEffect(() => {
     const initializeLanguage = async () => {
       try {
-        // Check localStorage first
-        const storedLanguage = localStorage.getItem(
-          LANGUAGE_STORAGE_KEY
-        ) as Locales;
+        const localeToUse = getInitialLocale();
+        const storedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
 
-        let localeToUse: Locales;
-
-        if (
-          storedLanguage &&
-          AVAILABLE_LOCALES.some((l) => l.code === storedLanguage)
-        ) {
-          localeToUse = storedLanguage;
-        } else {
-          // Detect browser language, fallback to Farsi if not supported
-          const detectedLocale = detectLocale(navigatorDetector);
-          localeToUse = AVAILABLE_LOCALES.some((l) => l.code === detectedLocale)
-            ? detectedLocale
-            : 'fa'; // Default to Farsi
-        }
-
-        // Load the locale
         await loadLocaleAsync(localeToUse);
         setCurrentLocale(localeToUse);
 
-        // Store in localStorage if not already stored
         if (!storedLanguage) {
           localStorage.setItem(LANGUAGE_STORAGE_KEY, localeToUse);
         }
       } catch (error) {
         console.error('Failed to initialize language:', error);
         // Fallback to Farsi
-        setCurrentLocale('fa');
+        setCurrentLocale(DEFAULT_LOCALE);
       } finally {
         setIsLoading(false);
       }

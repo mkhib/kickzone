@@ -47,7 +47,8 @@ export function AdminsFooter() {
           color: theme.palette.mode === 'dark' ? '#f5f5f5' : 'text.secondary',
         })}
       >
-        © 2024 {LL.appNames.siteName()} {LL.navigation.adminPanel()}
+        © {new Date().getFullYear()} {LL.appNames.siteName()}{' '}
+        {LL.navigation.adminPanel()}
       </Typography>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

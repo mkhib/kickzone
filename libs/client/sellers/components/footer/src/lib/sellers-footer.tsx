@@ -48,7 +48,8 @@ export function SellersFooter() {
           color: theme.palette.mode === 'dark' ? '#f5f5f5' : 'text.secondary',
         })}
       >
-        © 2024 {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}
+        © {new Date().getFullYear()} {LL.appNames.siteName()} -{' '}
+        {LL.navigation.sellersPortal()}
       </Typography>
 
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>

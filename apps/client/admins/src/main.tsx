@@ -5,10 +5,8 @@ import { AdminsAuthProvider } from '@kickzone-workspace/admins-contexts';
 import { AdminsGraphQLProvider } from '@kickzone-workspace/admins-graphql';
 import { SnackbarProvider } from '@kickzone-workspace/snackbar-hook';
 import {
-  detectLocale,
+  getInitialLocale,
   loadLocaleAsync,
-  navigatorDetector,
-  localStorageDetector,
   LanguageProvider,
   RTLThemeProvider,
 } from '@kickzone-workspace/shared-i18n';
@@ -18,10 +16,8 @@ const root = ReactDOM.createRoot(
   document.getElementById('root') as HTMLElement
 );
 
-// Add global error handlers to prevent unhandled promise rejections
 window.addEventListener('unhandledrejection', (event) => {
   console.error('Unhandled promise rejection:', event.reason);
-  // Prevent the default browser behavior of logging to console
   event.preventDefault();
 });
 
@@ -29,22 +25,12 @@ window.addEventListener('error', (event) => {
   console.error('Global error:', event.error);
 });
 
-// Use localStorage detector first, then fallback to navigator
-// If no stored preference exists, default to 'fa' instead of baseLocale 'en'
-const LANGUAGE_STORAGE_KEY = 'kickzone-language-preference';
-const storedLanguage = typeof window !== 'undefined' 
-  ? localStorage.getItem(LANGUAGE_STORAGE_KEY) 
-  : null;
-let detectedLocale = detectLocale(localStorageDetector, navigatorDetector);
-// If no stored preference and detected locale is 'en' (baseLocale fallback), use 'fa' as default
-if (!storedLanguage && detectedLocale === 'en') {
-  detectedLocale = 'fa';
-}
+const initialLocale = getInitialLocale();
 
-loadLocaleAsync(detectedLocale).then(() => {
+loadLocaleAsync(initialLocale).then(() => {
   root.render(
     <StrictMode>
-      <TypesafeI18n locale={detectedLocale}>
+      <TypesafeI18n locale={initialLocale}>
         <LanguageProvider>
           <RTLThemeProvider>
             <AdminsGraphQLProvider>
