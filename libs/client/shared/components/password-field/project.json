@@ -1,0 +1,8 @@
+{
+  "name": "password-field",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/shared/components/password-field/src",
+  "projectType": "library",
+  "tags": [],
+  "targets": {}
+}

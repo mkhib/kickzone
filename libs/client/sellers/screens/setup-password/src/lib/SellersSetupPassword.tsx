@@ -3,19 +3,15 @@ import { useParams } from 'react-router-dom';
 import { useState } from 'react';
 import { useSetupPassword } from '@kickzone-workspace/sellers-auth-hooks';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
+import { PasswordTextField } from '@kickzone-workspace/password-field';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Container from '@mui/material/Container';
-import InputAdornment from '@mui/material/InputAdornment';
-import IconButton from '@mui/material/IconButton';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 export const SellersSetupPassword = () => {
@@ -25,8 +21,6 @@ export const SellersSetupPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const { setupPassword, setupPasswordLoading, setupPasswordError } =
     useSetupPassword();
 
@@ -48,10 +42,6 @@ export const SellersSetupPassword = () => {
       setupPassword(token, password);
     }
   };
-
-  const handleClickShowPassword = () => setShowPassword(!showPassword);
-  const handleClickShowConfirmPassword = () =>
-    setShowConfirmPassword(!showConfirmPassword);
 
   return (
     <SellersLayout>
@@ -114,53 +104,21 @@ export const SellersSetupPassword = () => {
             >
               <Grid container spacing={2}>
                 <Grid size={12}>
-                  <TextField
+                  <PasswordTextField
                     required
                     fullWidth
                     label={LL.authorization.newPassword()}
-                    type={showPassword ? 'text' : 'password'}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle password visibility"
-                            onClick={handleClickShowPassword}
-                            edge="end"
-                          >
-                            {showPassword ? <VisibilityOff /> : <Visibility />}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
                   />
                 </Grid>
                 <Grid size={12}>
-                  <TextField
+                  <PasswordTextField
                     required
                     fullWidth
                     label={LL.authorization.confirmNewPassword()}
-                    type={showConfirmPassword ? 'text' : 'password'}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton
-                            aria-label="toggle confirm password visibility"
-                            onClick={handleClickShowConfirmPassword}
-                            edge="end"
-                          >
-                            {showConfirmPassword ? (
-                              <VisibilityOff />
-                            ) : (
-                              <Visibility />
-                            )}
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
                   />
                 </Grid>
               </Grid>

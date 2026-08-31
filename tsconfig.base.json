@@ -214,6 +214,9 @@
       "@kickzone-workspace/order-status-chip": [
         "libs/client/shared/components/order-status-chip/src/index.ts"
       ],
+      "@kickzone-workspace/password-field": [
+        "libs/client/shared/components/password-field/src/index.ts"
+      ],
       "@kickzone-workspace/orders-hook": [
         "libs/client/sellers/hooks/orders/src/index.ts"
       ],

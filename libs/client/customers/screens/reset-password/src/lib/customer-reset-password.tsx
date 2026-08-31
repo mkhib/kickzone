@@ -9,7 +9,7 @@ import { getErrorMessage } from '@kickzone-workspace/translations';
 import LockResetOutlined from '@mui/icons-material/LockResetOutlined';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import TextField from '@mui/material/TextField';
+import { PasswordTextField } from '@kickzone-workspace/password-field';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -112,26 +112,24 @@ export function CustomerResetPassword() {
             onSubmit={handleSubmit}
             sx={{ mt: 1, width: '100%' }}
           >
-            <TextField
+            <PasswordTextField
               margin="normal"
               required
               fullWidth
               name="password"
               label={LL.form.password()}
-              type="password"
               id="password"
               autoComplete="new-password"
               autoFocus
               value={formData.password}
               onChange={handleChange('password')}
             />
-            <TextField
+            <PasswordTextField
               margin="normal"
               required
               fullWidth
               name="confirmPassword"
               label={LL.authorization.confirmPassword()}
-              type="password"
               id="confirmPassword"
               autoComplete="new-password"
               value={formData.confirmPassword}

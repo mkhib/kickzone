@@ -10,6 +10,7 @@ import LockOutlined from '@mui/icons-material/LockOutlined';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import { PasswordTextField } from '@kickzone-workspace/password-field';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
@@ -99,13 +100,12 @@ export function CustomersLogin() {
               value={formData.email}
               onChange={handleChange('email')}
             />
-            <TextField
+            <PasswordTextField
               margin="normal"
               required
               fullWidth
               name="password"
               label={LL.form.password()}
-              type="password"
               id="password"
               autoComplete="current-password"
               value={formData.password}

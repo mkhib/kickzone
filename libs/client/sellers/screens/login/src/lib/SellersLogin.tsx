@@ -9,6 +9,7 @@ import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
+import { PasswordTextField } from '@kickzone-workspace/password-field';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useSellerLogin } from '@kickzone-workspace/sellers-auth-hooks';
@@ -71,13 +72,12 @@ export function SellersLogin() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
-            <TextField
+            <PasswordTextField
               margin="normal"
               required
               fullWidth
               name="password"
               label={LL.form.password()}
-              type="password"
               id="password"
               autoComplete="current-password"
               value={password}

@@ -10,6 +10,7 @@ import PersonAddOutlined from '@mui/icons-material/PersonAddOutlined';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
+import { PasswordTextField } from '@kickzone-workspace/password-field';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
@@ -142,13 +143,12 @@ export function CustomerSignup() {
               error={!!errors.email}
               helperText={errors.email}
             />
-            <TextField
+            <PasswordTextField
               margin="normal"
               required
               fullWidth
               name="password"
               label={LL.form.password()}
-              type="password"
               id="password"
               autoComplete="new-password"
               value={formData.password}
@@ -156,13 +156,12 @@ export function CustomerSignup() {
               error={!!errors.password}
               helperText={errors.password}
             />
-            <TextField
+            <PasswordTextField
               margin="normal"
               required
               fullWidth
               name="confirmPassword"
               label={LL.authorization.confirmPassword()}
-              type="password"
               id="confirmPassword"
               autoComplete="new-password"
               value={formData.confirmPassword}
