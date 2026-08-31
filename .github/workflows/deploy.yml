@@ -64,6 +64,21 @@ jobs:
           name: build-artifacts
           path: dist/apps
 
+      - name: Prepare deploy directories on server
+        uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.SERVER_HOST }}
+          username: ${{ secrets.SERVER_USER }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            set -euo pipefail
+            sudo mkdir -p /opt/masterskey/apps/kickzone-api
+            sudo mkdir -p /var/www/masterskey/dist/apps/client
+            # Post-deploy sets www-data ownership for the running service.
+            # Grant deployuser write access before SCP uploads.
+            sudo chown -R deployuser:deployuser /opt/masterskey/apps/kickzone-api
+            sudo chown -R deployuser:deployuser /var/www/masterskey/dist/apps/client
+
       - name: Deploy API to server
         uses: appleboy/scp-action@v0.1.7
         with:

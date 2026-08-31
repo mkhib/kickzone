@@ -1,6 +1,9 @@
 #!/bin/bash
 # Post-deploy steps on the Linux server after CI uploads build artifacts.
 # Run via GitHub Actions SSH step or manually after copying dist/ to the server.
+#
+# Note: CI runs a prepare step before SCP that chowns deploy targets to deployuser,
+# because this script sets www-data ownership for the API service and nginx.
 
 set -euo pipefail
 
