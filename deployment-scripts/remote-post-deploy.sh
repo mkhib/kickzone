@@ -14,6 +14,22 @@ API_SERVICE="${API_SERVICE:-masterskey-api}"
 
 echo "Post-deploy: fixing permissions and restarting services..."
 
+if [ -f "$API_DIR/package.json" ]; then
+  echo "Installing production API dependencies..."
+  cd "$API_DIR"
+  sudo -u deployuser yarn install --production --ignore-scripts || true
+fi
+
+# NestJS serves GraphQL at /api/graphql; fix legacy nginx proxy paths if present.
+for nginx_conf in /etc/nginx/sites-available/saintbala.com /etc/nginx/sites-enabled/saintbala.com; do
+  if [ -f "$nginx_conf" ]; then
+    sudo sed -i \
+      -e 's|http://127.0.0.1:4000/graphql|http://127.0.0.1:4000/api/graphql|g' \
+      -e 's|http://localhost:4000/graphql|http://localhost:4000/api/graphql|g' \
+      "$nginx_conf"
+  fi
+done
+
 sudo chown -R www-data:www-data "$API_DIR"
 sudo chmod -R 755 "$API_DIR"
 sudo chown -R www-data:www-data /var/www/masterskey

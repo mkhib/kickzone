@@ -116,6 +116,19 @@ jobs:
             if [ -f "$PROJECT_DIR/deployment-scripts/remote-post-deploy.sh" ]; then
               bash "$PROJECT_DIR/deployment-scripts/remote-post-deploy.sh"
             else
+              API_DIR="/opt/masterskey/apps/kickzone-api"
+              if [ -f "$API_DIR/package.json" ]; then
+                cd "$API_DIR"
+                sudo -u deployuser yarn install --production --ignore-scripts || true
+              fi
+              for nginx_conf in /etc/nginx/sites-available/saintbala.com /etc/nginx/sites-enabled/saintbala.com; do
+                if [ -f "$nginx_conf" ]; then
+                  sudo sed -i \
+                    -e 's|http://127.0.0.1:4000/graphql|http://127.0.0.1:4000/api/graphql|g' \
+                    -e 's|http://localhost:4000/graphql|http://localhost:4000/api/graphql|g' \
+                    "$nginx_conf"
+                fi
+              done
               sudo chown -R www-data:www-data "$API_DIR" /var/www/masterskey
               sudo chmod -R 755 "$API_DIR" /var/www/masterskey
               if [ -f "$PROJECT_DIR/package.json" ] && [ -f "$PROJECT_DIR/yarn.lock" ]; then

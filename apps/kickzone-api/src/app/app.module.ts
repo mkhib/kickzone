@@ -101,11 +101,14 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
       inject: [AuthService],
       useFactory: (authService: AuthService) => {
         const isProd = process.env.NODE_ENV === 'production';
+        const schemaPath = isProd
+          ? join(__dirname, 'schema.gql')
+          : join(
+              process.cwd(),
+              'libs/shared/graphql-schema/src/lib/schema.gql'
+            );
         return {
-          autoSchemaFile: join(
-            process.cwd(),
-            'libs/shared/graphql-schema/src/lib/schema.gql'
-          ),
+          autoSchemaFile: schemaPath,
           playground: !isProd,
           introspection: !isProd,
           buildSchemaOptions: {

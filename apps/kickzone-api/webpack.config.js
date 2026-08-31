@@ -11,7 +11,14 @@ module.exports = {
       compiler: 'tsc',
       main: './src/main.ts',
       tsConfig: './tsconfig.app.json',
-      assets: ['./src/assets'],
+      assets: [
+        './src/assets',
+        {
+          input: '../../libs/shared/graphql-schema/src/lib',
+          glob: 'schema.gql',
+          output: '.',
+        },
+      ],
       optimization: false,
       outputHashing: 'none',
       generatePackageJson: true,
