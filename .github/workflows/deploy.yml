@@ -72,7 +72,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "dist/apps/kickzone-api/*"
           target: "/opt/masterskey/apps/kickzone-api/"
-          strip_components: 0
+          strip_components: 3
           overwrite: true
 
       - name: Deploy frontends to server
@@ -83,7 +83,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           source: "dist/apps/client/*"
           target: "/var/www/masterskey/dist/apps/client/"
-          strip_components: 0
+          strip_components: 3
           overwrite: true
 
       - name: Restart services on server

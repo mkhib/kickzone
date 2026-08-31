@@ -57,6 +57,17 @@ cat /home/deployuser/.ssh/github-actions.pub >> /home/deployuser/.ssh/authorized
 chmod 600 /home/deployuser/.ssh/authorized_keys
 chown deployuser:deployuser /home/deployuser/.ssh/authorized_keys
 
+SSHD_CFG="/etc/ssh/sshd_config"
+if grep -q '^AllowUsers ' "$SSHD_CFG"; then
+  if ! grep '^AllowUsers ' "$SSHD_CFG" | grep -qw deployuser; then
+    sed -i 's/^AllowUsers \(.*\)$/AllowUsers \1 deployuser/' "$SSHD_CFG"
+  fi
+else
+  echo 'AllowUsers root deployuser' >> "$SSHD_CFG"
+fi
+sshd -t
+systemctl reload sshd
+
 mkdir -p "$PROJECT_DIR/apps/kickzone-api" "$PROJECT_DIR/uploads" \
   "$WEB_DIR/admins" "$WEB_DIR/sellers" "$WEB_DIR/customers"
 chown -R deployuser:deployuser "$PROJECT_DIR"
