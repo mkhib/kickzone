@@ -1,10 +1,7 @@
-// SITE_NAME constant - duplicated here to avoid importing from shared-i18n
-// which would pull in React dependencies and cause webpack TSX compilation errors
-// TODO: Keep this in sync with libs/shared/shared-i18n/src/lib/site-name.ts
-const SITE_NAME = {
-  en: 'SAINTBALA',
-  fa: 'SAINTBALA',
-} as const;
+// Canonical brand name — always SAINTBALA, never translated for Farsi.
+// Duplicated here to avoid importing from shared-i18n (React) in the server bundle.
+// Keep in sync with libs/shared/shared-i18n/src/lib/site-name.ts
+const SITE_NAME = 'SAINTBALA' as const;
 
 type Locale = 'en' | 'fa';
 
@@ -13,25 +10,21 @@ interface EmailTemplateContent {
   html: string;
 }
 
-// Email translations using a central site name variable for easy future change
-// Imported from @kickzone-workspace/shared-i18n to ensure consistency across the app
-const SITE_NAMES = SITE_NAME;
-
 const emailTranslations = {
   en: {
     passwordSetup: {
-      subject: `Welcome to ${SITE_NAMES.en} - Set Up Your Password`,
-      title: `Welcome to ${SITE_NAMES.en}!`,
-      message: `Thank you for joining ${SITE_NAMES.en} as a seller. To get started, you'll need to set up your password.`,
+      subject: `Welcome to ${SITE_NAME} - Set Up Your Password`,
+      title: `Welcome to ${SITE_NAME}!`,
+      message: `Thank you for joining ${SITE_NAME} as a seller. To get started, you'll need to set up your password.`,
       instruction: 'Click the button below to set up your password:',
       button: 'Set Up Password',
       footer:
         "This link is valid for 24 hours and can only be used once. If you didn't request this email, please ignore it.",
     },
     passwordReset: {
-      subject: `${SITE_NAMES.en} - Password Reset Request`,
+      subject: `${SITE_NAME} - Password Reset Request`,
       title: 'Password Reset Request',
-      message: `We received a request to reset your password for your ${SITE_NAMES.en} account.`,
+      message: `We received a request to reset your password for your ${SITE_NAME} account.`,
       instruction: 'Click the button below to reset your password:',
       button: 'Reset Password',
       footer:
@@ -40,18 +33,18 @@ const emailTranslations = {
   },
   fa: {
     passwordSetup: {
-      subject: `خوش آمدید به ${SITE_NAMES.fa} - تنظیم رمز عبور`,
-      title: `به ${SITE_NAMES.fa} خوش آمدید!`,
-      message: `از پیوستن شما به ${SITE_NAMES.fa} به عنوان فروشنده سپاسگزاریم. برای شروع، باید رمز عبور خود را تنظیم کنید.`,
+      subject: `خوش آمدید به ${SITE_NAME} - تنظیم رمز عبور`,
+      title: `به ${SITE_NAME} خوش آمدید!`,
+      message: `از پیوستن شما به ${SITE_NAME} به عنوان فروشنده سپاسگزاریم. برای شروع، باید رمز عبور خود را تنظیم کنید.`,
       instruction: 'برای تنظیم رمز عبور، روی دکمه زیر کلیک کنید:',
       button: 'تنظیم رمز عبور',
       footer:
         'این لینک برای ۲۴ ساعت معتبر است و فقط یک بار قابل استفاده است. اگر این ایمیل را درخواست نکرده‌اید، لطفاً آن را نادیده بگیرید.',
     },
     passwordReset: {
-      subject: `${SITE_NAMES.fa} - درخواست بازیابی رمز عبور`,
+      subject: `${SITE_NAME} - درخواست بازیابی رمز عبور`,
       title: 'درخواست بازیابی رمز عبور',
-      message: `درخواستی برای بازیابی رمز عبور حساب ${SITE_NAMES.fa} شما دریافت کردیم.`,
+      message: `درخواستی برای بازیابی رمز عبور حساب ${SITE_NAME} شما دریافت کردیم.`,
       instruction: 'برای بازیابی رمز عبور، روی دکمه زیر کلیک کنید:',
       button: 'بازیابی رمز عبور',
       footer:
@@ -152,7 +145,7 @@ export const getPasswordSetupEmailTemplate = (
               <tr>
                 <td align="center" style="padding-top: 30px;">
                   <p style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 12px; text-align: center;">© ${new Date().getFullYear()} ${
-      SITE_NAMES[locale]
+      SITE_NAME
     }. All rights reserved.</p>
                 </td>
               </tr>
@@ -254,7 +247,7 @@ export const getPasswordResetEmailTemplate = (
               <tr>
                 <td align="center" style="padding-top: 30px;">
                   <p style="margin: 0; color: rgba(255, 255, 255, 0.7); font-size: 12px; text-align: center;">© ${new Date().getFullYear()} ${
-      SITE_NAMES[locale]
+      SITE_NAME
     }. All rights reserved.</p>
                 </td>
               </tr>

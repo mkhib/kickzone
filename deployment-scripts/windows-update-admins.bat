@@ -13,6 +13,8 @@ REM - Saved PuTTY session named "fat2" that uses deployuser
 REM - /var/www/masterskey/dist/apps/client/admins writable by deployuser (or via sudo)
 REM ==========================================================
 
+if not defined PUTTY_SESSION set "PUTTY_SESSION=saintbala"
+
 SETLOCAL ENABLEDELAYEDEXPANSION
 
 REM Change to repo root (this script lives in deployment-scripts\)
@@ -50,9 +52,13 @@ IF NOT EXIST "dist\apps\client\admins" (
 
 REM 3) Upload to server via pscp (PuTTY session: fat2)
 echo.
-echo [3/3] Uploading admin build to server via pscp (session: fat2)...
-echo   pscp -batch -r dist\apps\client\admins fat2:/var/www/masterskey/dist/apps/client/
-pscp -batch -r dist\apps\client\admins fat2:/var/www/masterskey/dist/apps/client/
+plink -batch -load %PUTTY_SESSION% "echo connected" >nul 2>&1
+IF ERRORLEVEL 1 (
+  echo ERROR: Cannot connect with PuTTY session "%PUTTY_SESSION%". Open PuTTY, connect once, Save, retry.
+  goto :EOF
+)
+echo [3/3] Uploading admin build via pscp (session: %PUTTY_SESSION%)...
+pscp -batch -load %PUTTY_SESSION% -r dist\apps\client\admins :/var/www/masterskey/dist/apps/client/
 IF ERRORLEVEL 1 (
   echo ERROR: pscp upload failed.
   goto :EOF
@@ -61,7 +67,7 @@ IF ERRORLEVEL 1 (
 REM 4) Post-upload server steps (permissions + nginx reload) as deployuser
 echo.
 echo Running post-upload commands via plink (session: fat2)...
-plink -batch -load fat2 ^
+plink -batch -load %PUTTY_SESSION% ^
   "sudo chown -R www-data:www-data /var/www/masterskey && sudo chmod -R 755 /var/www/masterskey && sudo nginx -t && sudo systemctl reload nginx"
 IF ERRORLEVEL 1 (
   echo ERROR: Remote post-upload steps failed.

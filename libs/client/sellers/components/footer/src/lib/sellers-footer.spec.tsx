@@ -12,7 +12,7 @@ vi.mock('@kickzone-workspace/shared-i18n', async () => {
     useI18nContext: () => ({
       LL: {
         appNames: {
-          siteName: () => actual.SITE_NAME.en,
+          siteName: () => actual.SITE_NAME,
         },
       navigation: {
         sellersPortal: () => 'Sellers Portal',

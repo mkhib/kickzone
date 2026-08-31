@@ -45,6 +45,10 @@ async function bootstrap() {
     'https://localhost:4500',
     'https://studio.apollographql.com',
     // Production origins
+    'https://saintbala.com',
+    'https://www.saintbala.com',
+    'https://admins.saintbala.com',
+    'https://seller.saintbala.com',
     'https://masterskey.store',
     'https://www.masterskey.store',
     'https://admins.masterskey.store',

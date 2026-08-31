@@ -367,7 +367,7 @@ const fa = {
 
   // Messages and notifications
   messages: {
-    welcome: `به ${SITE_NAME.fa} خوش آمدید`,
+    welcome: `به ${SITE_NAME} خوش آمدید`,
     homeTitleAccent: 'آزاد کن',
     homeTitle: 'آیکون خودت رو',
     homeDescription:
@@ -418,11 +418,11 @@ const fa = {
       'رمز عبور با موفقیت بازیابی شد! اکنون می‌توانید وارد شوید.',
     invalidToken: 'لینک بازیابی نامعتبر یا منقضی شده است',
     passwordsDoNotMatch: 'رمزهای عبور مطابقت ندارند',
-    registrationSuccess: `ثبت نام با موفقیت انجام شد! به ${SITE_NAME.fa} خوش آمدید.`,
+    registrationSuccess: `ثبت نام با موفقیت انجام شد! به ${SITE_NAME} خوش آمدید.`,
     registrationFailed: 'ثبت نام ناموفق بود. لطفاً دوباره تلاش کنید.',
     setupPassword: 'تنظیم رمز عبور شما',
     setupPasswordTitle: 'تنظیم رمز عبور شما',
-    setupPasswordDescription: `به ${SITE_NAME.fa} خوش آمدید! لطفاً رمز عبور خود را برای امنیت حساب فروشنده‌تان تنظیم کنید.`,
+    setupPasswordDescription: `به ${SITE_NAME} خوش آمدید! لطفاً رمز عبور خود را برای امنیت حساب فروشنده‌تان تنظیم کنید.`,
     newPassword: 'رمز عبور جدید',
     confirmNewPassword: 'تایید رمز عبور',
     setPassword: 'تنظیم رمز عبور',
@@ -520,10 +520,9 @@ const fa = {
     missingShippingInfo: 'لطفاً تمام اطلاعات ارسال مورد نیاز را وارد کنید',
   },
 
-  // App names
-  // Note: siteName should match SITE_NAME.fa from '../../site-name.ts' for consistency
+  // App names — brand stays SAINTBALA in Farsi (never translated)
   appNames: {
-    siteName: SITE_NAME.fa,
+    siteName: SITE_NAME,
     sellersPortal: 'پورتال فروشندگان',
   },
 

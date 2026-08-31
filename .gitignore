@@ -41,6 +41,15 @@ Thumbs.db
 .nx/cache
 .nx/workspace-data
 
+# Secrets — never commit
+.env
+.env.local
+.env.*.local
+GITHUB_ACTIONS_PRIVATE_KEY
+*.pem
+id_ed25519
+id_ed25519.pub
+
 vite.config.*.timestamp*
 vitest.config.*.timestamp*
 .cursor\rules\nx-rules.mdc

@@ -25,7 +25,7 @@ export class EmailService {
     const message = [
       'Content-Type: text/html; charset=utf-8',
       'MIME-Version: 1.0',
-      `From: ${from}`,
+      `From: SAINTBALA <${from}>`,
       `To: ${to}`,
       `Subject: ${subject}`,
       '',

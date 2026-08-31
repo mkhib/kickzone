@@ -54,7 +54,7 @@ describe('AdminsHeaderbar', () => {
 
   it('should render successfully', () => {
     renderWithProviders(<AdminsHeaderbar />);
-    expect(screen.getByText('Kickzone Admin Panel')).toBeInTheDocument();
+    expect(screen.getByText('SAINTBALA Admin Panel')).toBeInTheDocument();
   });
 
   it('should display admin name when logged in', () => {
@@ -155,7 +155,7 @@ describe('AdminsHeaderbar', () => {
     renderWithProviders(<AdminsHeaderbar />);
 
     // Should still render successfully on mobile
-    expect(screen.getByText('Kickzone Admin Panel')).toBeInTheDocument();
+    expect(screen.getByText('SAINTBALA Admin Panel')).toBeInTheDocument();
   });
 
   it('should handle desktop viewport behavior', () => {
@@ -172,6 +172,6 @@ describe('AdminsHeaderbar', () => {
     renderWithProviders(<AdminsHeaderbar />);
 
     // Should render successfully on desktop
-    expect(screen.getByText('Kickzone Admin Panel')).toBeInTheDocument();
+    expect(screen.getByText('SAINTBALA Admin Panel')).toBeInTheDocument();
   });
 });

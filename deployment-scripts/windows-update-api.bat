@@ -9,9 +9,11 @@ REM
 REM Requirements:
 REM - yarn, node, nx available on PATH
 REM - PuTTY installed (pscp.exe / plink.exe in PATH)
-REM - Saved PuTTY session named "fat2" that uses deployuser
+REM - Saved PuTTY session (default: fat2) — set PUTTY_SESSION or edit below
 REM - /opt/masterskey/apps/kickzone-api writable by deployuser (or via sudo)
 REM ==========================================================
+
+if not defined PUTTY_SESSION set "PUTTY_SESSION=saintbala"
 
 SETLOCAL ENABLEDELAYEDEXPANSION
 
@@ -48,19 +50,28 @@ IF NOT EXIST "dist\apps\kickzone-api" (
   goto :EOF
 )
 
-REM 3) Upload dist + package manifests to server via pscp (PuTTY session: fat2)
+REM 3) Upload dist + package manifests to server via pscp (PuTTY saved session)
 echo.
-echo [3/4] Uploading API build to server via pscp (session: fat2)...
-echo   pscp -batch -r dist\apps\kickzone-api\* fat2:/opt/masterskey/apps/kickzone-api/
-pscp -batch -r dist\apps\kickzone-api\* fat2:/opt/masterskey/apps/kickzone-api/
+echo [3/4] Testing PuTTY session "%PUTTY_SESSION%"...
+plink -batch -load %PUTTY_SESSION% "echo connected" >nul 2>&1
+IF ERRORLEVEL 1 (
+  echo.
+  echo ERROR: Cannot connect with PuTTY session "%PUTTY_SESSION%".
+  echo Open PuTTY, load that session, connect once, accept the host key, Save, then retry.
+  goto :EOF
+)
+
+echo [3/4] Uploading API build to server via pscp (session: %PUTTY_SESSION%)...
+echo   pscp -batch -load %PUTTY_SESSION% -r dist\apps\kickzone-api\* :/opt/masterskey/apps/kickzone-api/
+pscp -batch -load %PUTTY_SESSION% -r dist\apps\kickzone-api\* :/opt/masterskey/apps/kickzone-api/
 IF ERRORLEVEL 1 (
   echo ERROR: pscp upload failed.
   goto :EOF
 )
 
 REM Upload package.json / yarn.lock so server installs new deps
-echo   pscp -batch package.json yarn.lock fat2:/opt/masterskey/
-pscp -batch package.json yarn.lock fat2:/opt/masterskey/
+echo   pscp -batch -load %PUTTY_SESSION% package.json yarn.lock :/opt/masterskey/
+pscp -batch -load %PUTTY_SESSION% package.json yarn.lock :/opt/masterskey/
 IF ERRORLEVEL 1 (
   echo ERROR: pscp upload of package.json/yarn.lock failed.
   goto :EOF
@@ -68,8 +79,8 @@ IF ERRORLEVEL 1 (
 
 REM 4) Post-upload server steps (install deps + perms + service restart) as deployuser
 echo.
-echo Running post-upload commands via plink (session: fat2)...
-plink -batch -load fat2 ^
+echo Running post-upload commands via plink (session: %PUTTY_SESSION%)...
+plink -batch -load %PUTTY_SESSION% ^
   "cd /opt/masterskey && sudo -u deployuser yarn install --production --ignore-scripts && sudo chown -R www-data:www-data /opt/masterskey/apps/kickzone-api && sudo chmod -R 755 /opt/masterskey/apps/kickzone-api && sudo systemctl restart masterskey-api && sudo systemctl status --no-pager masterskey-api && sudo nginx -t && sudo systemctl reload nginx"
 IF ERRORLEVEL 1 (
   echo ERROR: Remote post-upload steps failed.

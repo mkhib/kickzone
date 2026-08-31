@@ -9,9 +9,12 @@ REM
 REM Requirements:
 REM - yarn, node, nx available on PATH
 REM - PuTTY installed (pscp.exe / plink.exe in PATH)
-REM - Saved PuTTY session named "fat2" that uses deployuser
+REM - Saved PuTTY session (default: fat2) — set PUTTY_SESSION or edit below
 REM - /var/www/masterskey/dist/apps/client writable by deployuser (or via sudo)
 REM ==========================================================
+
+REM Configure your server PuTTY saved session name here (or set PUTTY_SESSION env var)
+if not defined PUTTY_SESSION set "PUTTY_SESSION=saintbala"
 
 SETLOCAL ENABLEDELAYEDEXPANSION
 
@@ -77,11 +80,20 @@ IF NOT EXIST "dist\apps\client\customers" (
   goto :ERROR_EXIT
 )
 
-REM 5) Upload to server via pscp (PuTTY session: fat2)
+REM 5) Upload to server via pscp (PuTTY saved session)
 echo.
-echo [3/3] Uploading builds to server via pscp (session: fat2)...
-echo   pscp -batch -r dist\apps\client\* fat2:/var/www/masterskey/dist/apps/client/
-pscp -batch -r dist\apps\client\* fat2:/var/www/masterskey/dist/apps/client/
+echo [3/3] Testing PuTTY session "%PUTTY_SESSION%"...
+plink -batch -load %PUTTY_SESSION% "echo connected" >nul 2>&1
+IF ERRORLEVEL 1 (
+  echo.
+  echo ERROR: Cannot connect with PuTTY session "%PUTTY_SESSION%".
+  echo Open PuTTY, load that session, connect once, accept the host key, Save, then retry.
+  goto :ERROR_EXIT
+)
+
+echo [3/3] Uploading builds to server via pscp (session: %PUTTY_SESSION%)...
+echo   pscp -batch -load %PUTTY_SESSION% -r dist\apps\client\* :/var/www/masterskey/dist/apps/client/
+pscp -batch -load %PUTTY_SESSION% -r dist\apps\client\* :/var/www/masterskey/dist/apps/client/
 IF ERRORLEVEL 1 (
   echo ERROR: pscp upload failed.
   goto :ERROR_EXIT
@@ -89,8 +101,8 @@ IF ERRORLEVEL 1 (
 
 REM 6) Post-upload server steps (permissions + nginx reload) as deployuser
 echo.
-echo Running post-upload commands via plink (session: fat2)...
-plink -batch -load fat2 ^
+echo Running post-upload commands via plink (session: %PUTTY_SESSION%)...
+plink -batch -load %PUTTY_SESSION% ^
   "sudo chown -R www-data:www-data /var/www/masterskey && sudo chmod -R 755 /var/www/masterskey && sudo nginx -t && sudo systemctl reload nginx"
 IF ERRORLEVEL 1 (
   echo ERROR: Remote post-upload steps failed.

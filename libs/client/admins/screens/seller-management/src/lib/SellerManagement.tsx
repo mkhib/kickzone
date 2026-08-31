@@ -116,7 +116,7 @@ export const SellerManagement = () => {
   const sellersPortalBaseUrl =
     env.VITE_SELLERS_BASE_URL ||
     env.VITE_SELLERS_FRONTEND_URL ||
-    'https://seller.masterskey.store'; // default to prod host to avoid localhost links in prod builds
+    'https://seller.saintbala.com'; // default to prod host to avoid localhost links in prod builds
 
   const [resendingSellerId, setResendingSellerId] = useState<number | null>(
     null

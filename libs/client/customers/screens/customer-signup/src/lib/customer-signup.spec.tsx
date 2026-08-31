@@ -52,7 +52,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         confirmPassword: () => 'Confirm Password',
         passwordsDoNotMatch: () => 'Passwords do not match',
         registrationSuccess: () =>
-          'Registration successful! Welcome to Kickzone.',
+          'Registration successful! Welcome to SAINTBALA.',
         registrationFailed: () => 'Registration failed. Please try again.',
       },
       form: {
@@ -238,7 +238,7 @@ describe('CustomerSignup', () => {
       expect(mockAddToast).toHaveBeenCalledWith({
         type: 'success',
         title: 'Sign Up',
-        message: 'Registration successful! Welcome to Kickzone.',
+        message: 'Registration successful! Welcome to SAINTBALA.',
       });
       expect(mockNavigate).toHaveBeenCalledWith('/home');
     });
