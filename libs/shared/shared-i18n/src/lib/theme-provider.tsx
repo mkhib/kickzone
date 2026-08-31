@@ -153,13 +153,21 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
         MuiPaper: {
           styleOverrides: {
             root: {
-              // Glassmorphism effect for all paper components
-              backgroundColor: 'rgba(255, 255, 255, 0.7) !important',
+              backgroundColor:
+                mode === 'dark'
+                  ? 'rgba(20, 20, 26, 0.75) !important'
+                  : 'rgba(255, 255, 255, 0.7) !important',
               backdropFilter: 'blur(10px) saturate(180%) !important',
               WebkitBackdropFilter: 'blur(10px) saturate(180%) !important',
               borderRadius: '16px !important',
-              border: '1px solid rgba(255, 255, 255, 0.3) !important',
-              boxShadow: '0 8px 32px 0 rgba(31, 38, 135, 0.1) !important',
+              border:
+                mode === 'dark'
+                  ? '1px solid rgba(255, 255, 255, 0.08) !important'
+                  : '1px solid rgba(255, 255, 255, 0.3) !important',
+              boxShadow:
+                mode === 'dark'
+                  ? '0 8px 32px 0 rgba(0, 0, 0, 0.35) !important'
+                  : '0 8px 32px 0 rgba(31, 38, 135, 0.1) !important',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             },
             elevation1: {
