@@ -98,6 +98,16 @@ export class SellerResolver {
     return this.sellerService.findOne(id);
   }
 
+  @Query(() => SellerInfo, { nullable: true })
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.SELLER])
+  async mySellerInfo(@Context() context: { req: { user: User } }) {
+    const user = context.req.user;
+    if (!user) throw new Error('Not authenticated');
+    if (user.role !== UserRole.SELLER) throw new Error('Not a seller');
+    return this.sellerService.findOneByUserId(user.id);
+  }
+
   @Mutation(() => SellerInfo)
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])

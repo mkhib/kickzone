@@ -52,6 +52,7 @@ const fa = {
     sellersPortal: 'پورتال فروشندگان',
     languageSettings: 'تنظیمات زبان/Language Settings',
     translations: 'مدیریت ترجمه‌ها',
+    catalogManagement: 'مدیریت کاتالوگ',
   },
 
   // Form labels and placeholders

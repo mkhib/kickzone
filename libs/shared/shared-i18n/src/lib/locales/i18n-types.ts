@@ -193,6 +193,10 @@ type RootTranslation = {
 		 * T​r​a​n​s​l​a​t​i​o​n​ ​M​a​n​a​g​e​m​e​n​t
 		 */
 		translations: string
+		/**
+		 * C​a​t​a​l​o​g​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		catalogManagement: string
 	}
 	form: {
 		/**
@@ -2777,6 +2781,10 @@ export type TranslationFunctions = {
 		 * Translation Management
 		 */
 		translations: () => LocalizedString
+		/**
+		 * Catalog Management
+		 */
+		catalogManagement: () => LocalizedString
 	}
 	form: {
 		/**

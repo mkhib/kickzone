@@ -36,6 +36,8 @@ import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Switch from '@mui/material/Switch';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import {
@@ -48,6 +50,7 @@ import { ChangeEvent, useMemo, useState, useEffect } from 'react';
 type Seller = NonNullable<KickzoneGraphqlTypes.SellerInfo>;
 type CreateSellerInput = KickzoneGraphqlTypes.CreateSellerInput;
 type SellerFilterInput = KickzoneGraphqlTypes.SellerFilterInput;
+type SellerFormData = Partial<CreateSellerInput> & { canManageCatalog?: boolean };
 
 export const SellerManagement = () => {
   const { LL } = useI18nContext();
@@ -133,7 +136,7 @@ export const SellerManagement = () => {
   const [editModalOpen, setEditModalOpen] = useState(false);
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
-  const [formData, setFormData] = useState<Partial<CreateSellerInput>>({});
+  const [formData, setFormData] = useState<SellerFormData>({});
   const [usernameConfirmation, setUsernameConfirmation] = useState('');
   const [needsReconfirmation, setNeedsReconfirmation] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -207,6 +210,12 @@ export const SellerManagement = () => {
           );
         },
       },
+      {
+        accessorKey: 'canManageCatalog',
+        header: 'Catalog Manager',
+        ...getRTLColumnProps(alignment),
+        Cell: ({ row }) => (row.original.canManageCatalog ? 'Yes' : 'No'),
+      },
     ];
 
     const actionsColumn: MRT_ColumnDef<Seller> = {
@@ -235,6 +244,7 @@ export const SellerManagement = () => {
                   phone: row.original.phone,
                   address: row.original.address,
                   shippingFee: row.original.shippingFee,
+                  canManageCatalog: row.original.canManageCatalog,
                 });
                 setEditModalOpen(true);
               }}
@@ -398,6 +408,7 @@ export const SellerManagement = () => {
               formData.shippingFee !== undefined
                 ? Number(formData.shippingFee)
                 : 0,
+            canManageCatalog: formData.canManageCatalog ?? false,
             password: 'defaultPassword123',
           } as CreateSellerInput,
         },
@@ -431,6 +442,7 @@ export const SellerManagement = () => {
               formData.shippingFee !== undefined
                 ? Number(formData.shippingFee)
                 : undefined,
+            canManageCatalog: formData.canManageCatalog,
           },
         },
       });
@@ -447,10 +459,10 @@ export const SellerManagement = () => {
   };
 
   const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev: Partial<CreateSellerInput>) => ({
+    const { name, value, type, checked } = e.target;
+    setFormData((prev: SellerFormData) => ({
       ...prev,
-      [name]: value,
+      [name]: type === 'checkbox' ? checked : value,
     }));
   };
 
@@ -532,6 +544,17 @@ export const SellerManagement = () => {
           step: '0.01',
           min: '0',
         }}
+      />
+      <FormControlLabel
+        control={
+          <Switch
+            checked={formData.canManageCatalog ?? false}
+            onChange={handleInputChange}
+            name="canManageCatalog"
+          />
+        }
+        label="Can manage catalog (define products)"
+        sx={{ mb: 2 }}
       />
     </>
   );

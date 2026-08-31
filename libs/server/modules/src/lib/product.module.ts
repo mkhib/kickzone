@@ -22,6 +22,7 @@ import {
 } from '@kickzone-workspace/services';
 import { TokenModule } from './token.module';
 import { TranslationModule } from './translation.module';
+import { CatalogGuardModule } from './catalog-guard.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
@@ -44,6 +45,7 @@ import { ConfigService } from '@nestjs/config';
     }),
     TokenModule,
     TranslationModule,
+    CatalogGuardModule,
   ],
   providers: [
     ProductService,

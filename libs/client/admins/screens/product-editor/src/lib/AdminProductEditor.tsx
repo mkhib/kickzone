@@ -630,7 +630,15 @@ const DeleteColorModal = ({
   );
 };
 
-export function AdminProductEditor() {
+type LayoutComponentType = React.ComponentType<{ children: React.ReactNode }>;
+
+export interface AdminProductEditorProps {
+  LayoutComponent?: LayoutComponentType;
+}
+
+export function AdminProductEditor({
+  LayoutComponent = AdminsLayout,
+}: AdminProductEditorProps = {}) {
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.adminProductEditor());
   const { id } = useParams<{ id?: string }>();
@@ -1153,7 +1161,7 @@ export function AdminProductEditor() {
   );
 
   return (
-    <AdminsLayout>
+    <LayoutComponent>
       <GlassmorphismContainer>
         <Typography
           variant="h5"
@@ -1538,7 +1546,7 @@ export function AdminProductEditor() {
         isLoading={colorMutationsLoading}
         LL={LL}
       />
-    </AdminsLayout>
+    </LayoutComponent>
   );
 }
 

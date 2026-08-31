@@ -7,7 +7,9 @@ import {
   Args,
   Int,
 } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
 import { Category } from '@kickzone-workspace/entities';
+import { CatalogGuard } from '@kickzone-workspace/guards';
 import {
   TranslationService,
   ProductService,
@@ -25,6 +27,7 @@ export class CategoryResolver {
   ) {}
 
   @Mutation(() => Category)
+  @UseGuards(CatalogGuard)
   async createCategory(
     @Args('input') input: CreateCategoryInput,
     @Args('name', { nullable: true }) name?: string
@@ -33,6 +36,7 @@ export class CategoryResolver {
   }
 
   @Mutation(() => Category)
+  @UseGuards(CatalogGuard)
   async updateCategory(
     @Args('input') input: UpdateCategoryInput
   ): Promise<Category> {
@@ -40,6 +44,7 @@ export class CategoryResolver {
   }
 
   @Mutation(() => Boolean)
+  @UseGuards(CatalogGuard)
   async deleteCategory(
     @Args('id', { type: () => Int }) id: number
   ): Promise<boolean> {

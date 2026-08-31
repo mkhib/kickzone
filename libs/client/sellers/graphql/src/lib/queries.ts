@@ -16,6 +16,17 @@ export const ME_QUERY = gql`
   }
 `;
 
+export const MY_SELLER_INFO_QUERY = gql`
+  query MySellerInfo {
+    mySellerInfo {
+      id
+      storeName
+      canManageCatalog
+      isActive
+    }
+  }
+`;
+
 export const GET_PRODUCTS_QUERY = gql`
   query GetProducts($filter: ProductFilterInput) {
     products(filter: $filter) {

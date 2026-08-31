@@ -58,6 +58,7 @@ export class SellerService {
       storeName: createSellerInput.storeName,
       phone: createSellerInput.phone,
       address: createSellerInput.address,
+      canManageCatalog: createSellerInput.canManageCatalog ?? false,
       user,
     });
     const savedSeller = await this.sellerRepository.save(newSeller);
@@ -158,6 +159,8 @@ export class SellerService {
       seller.shippingFee = updateSellerInput.shippingFee;
     if (updateSellerInput.isActive !== undefined)
       seller.isActive = updateSellerInput.isActive;
+    if (updateSellerInput.canManageCatalog !== undefined)
+      seller.canManageCatalog = updateSellerInput.canManageCatalog;
 
     return this.sellerRepository.save(seller);
   }

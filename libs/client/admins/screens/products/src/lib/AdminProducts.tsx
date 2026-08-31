@@ -21,7 +21,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
-import { useEffect, useRef } from 'react';
+import { ReactNode, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import EditIcon from '@mui/icons-material/Edit';
@@ -38,7 +38,19 @@ import Stack from '@mui/material/Stack';
 import { useSellerListingsByProduct } from './adminProducts.hooks';
 import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
 
-export function AdminProducts() {
+type LayoutComponentType = React.ComponentType<{ children: ReactNode }>;
+
+export interface AdminProductsProps {
+  LayoutComponent?: LayoutComponentType;
+  productsNewPath?: string;
+  productsEditPath?: (id: number) => string;
+}
+
+export function AdminProducts({
+  LayoutComponent = AdminsLayout,
+  productsNewPath = '/products/new',
+  productsEditPath = (id: number) => `/products/edit/${id}`,
+}: AdminProductsProps = {}) {
   const navigate = useNavigate();
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.adminProducts());
@@ -162,7 +174,7 @@ export function AdminProducts() {
   };
 
   return (
-    <AdminsLayout>
+    <LayoutComponent>
       <GlassmorphismContainer fullHeight>
         <Box
           sx={{
@@ -180,7 +192,7 @@ export function AdminProducts() {
           <Button
             variant="contained"
             color="primary"
-            onClick={() => navigate('/products/new')}
+            onClick={() => navigate(productsNewPath)}
           >
             {LL.products.addProduct()}
           </Button>
@@ -491,7 +503,7 @@ export function AdminProducts() {
                           <IconButton
                             size="medium"
                             onClick={() =>
-                              navigate(`/products/edit/${product.id}`)
+                              navigate(productsEditPath(product.id))
                             }
                             sx={{
                               color: 'primary.main',
@@ -681,7 +693,7 @@ export function AdminProducts() {
           </>
         )}
       </GlassmorphismContainer>
-    </AdminsLayout>
+    </LayoutComponent>
   );
 }
 

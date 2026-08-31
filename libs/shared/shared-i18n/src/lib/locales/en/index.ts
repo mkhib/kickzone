@@ -52,6 +52,7 @@ const en = {
     sellersPortal: 'Sellers Portal',
     languageSettings: 'Language Settings',
     translations: 'Translation Management',
+    catalogManagement: 'Catalog Management',
   },
 
   // Form labels and placeholders

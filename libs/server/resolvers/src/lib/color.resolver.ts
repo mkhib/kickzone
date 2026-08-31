@@ -8,7 +8,9 @@ import {
   Args,
   Int,
 } from '@nestjs/graphql';
+import { UseGuards } from '@nestjs/common';
 import { Color } from '@kickzone-workspace/entities';
+import { CatalogGuard } from '@kickzone-workspace/guards';
 import { TranslationService, ColorService } from '@kickzone-workspace/services';
 import { CreateColorInput, UpdateColorInput } from '@kickzone-workspace/inputs';
 
@@ -34,6 +36,7 @@ export class ColorResolver {
 
   // Mutations
   @Mutation(() => Color)
+  @UseGuards(CatalogGuard)
   async createColor(
     @Args('input') input: CreateColorInput,
     @Args('name', { nullable: true }) name?: string
@@ -42,6 +45,7 @@ export class ColorResolver {
   }
 
   @Mutation(() => Color)
+  @UseGuards(CatalogGuard)
   async updateColor(
     @Args('id', { type: () => Int }) id: number,
     @Args('input') input: UpdateColorInput
@@ -50,6 +54,7 @@ export class ColorResolver {
   }
 
   @Mutation(() => Boolean)
+  @UseGuards(CatalogGuard)
   async deleteColor(
     @Args('id', { type: () => Int }) id: number
   ): Promise<boolean> {

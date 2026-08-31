@@ -1,5 +1,10 @@
 import { SellersProducts } from '@kickzone-workspace/sellers-products-screen';
 import { SellersManageProductScreen } from '@kickzone-workspace/sellers-manage-product-screen';
+import {
+  SellersCatalogRoute,
+  SellersCatalogProducts,
+  SellersCatalogEditor,
+} from '@kickzone-workspace/sellers-catalog-screen';
 import { SellerOrdersScreen } from '@kickzone-workspace/seller-orders-screen';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { SellersLogin } from '@kickzone-workspace/sellers-login-screen';
@@ -27,6 +32,20 @@ export function SellersRouter() {
             element={<SellersManageProductScreen />}
           />
           <Route path={SELLER_ROUTES.ORDERS} element={<SellerOrdersScreen />} />
+          <Route element={<SellersCatalogRoute />}>
+            <Route
+              path={SELLER_ROUTES.CATALOG}
+              element={<SellersCatalogProducts />}
+            />
+            <Route
+              path={SELLER_ROUTES.CATALOG_NEW}
+              element={<SellersCatalogEditor />}
+            />
+            <Route
+              path={SELLER_ROUTES.CATALOG_EDIT}
+              element={<SellersCatalogEditor />}
+            />
+          </Route>
         </Route>
         <Route path={SELLER_ROUTES.LOGIN} element={<SellersLogin />} />
         <Route

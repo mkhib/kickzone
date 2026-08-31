@@ -7,7 +7,7 @@ import {
   User,
   UserRole,
 } from '@kickzone-workspace/entities';
-import { RolesGuard } from '@kickzone-workspace/guards';
+import { RolesGuard, CatalogGuard } from '@kickzone-workspace/guards';
 import {
   CreateProductInfoInput,
   CreateProductInput,
@@ -89,8 +89,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
+  @UseGuards(CatalogGuard)
   async createProduct(
     @Args('input') input: CreateProductInput
   ): Promise<Product> {
@@ -102,6 +101,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product)
+  @UseGuards(CatalogGuard)
   async createProductInfo(
     @Args('input') input: CreateProductInfoInput
   ): Promise<Product> {
@@ -114,8 +114,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => [String])
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
+  @UseGuards(CatalogGuard)
   async uploadProductInfoImages(
     @Args('productInfoId') productInfoId: number,
     @Args({ name: 'files', type: () => [GraphQLUpload] })
@@ -181,8 +180,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Boolean)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
+  @UseGuards(CatalogGuard)
   async removeProductInfoImage(
     @Args('productInfoId') productInfoId: number,
     @Args('imageName') imageName: string
@@ -225,8 +223,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
+  @UseGuards(CatalogGuard)
   async archiveProduct(
     @Args('id', { type: () => Int }) id: number
   ): Promise<Product> {
@@ -234,8 +231,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
+  @UseGuards(CatalogGuard)
   async unarchiveProduct(
     @Args('id', { type: () => Int }) id: number
   ): Promise<Product> {
@@ -243,8 +239,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Product)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
+  @UseGuards(CatalogGuard)
   async updateProduct(
     @Args('input') input: UpdateProductInput
   ): Promise<Product> {

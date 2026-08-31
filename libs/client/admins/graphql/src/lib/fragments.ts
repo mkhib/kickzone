@@ -13,6 +13,7 @@ export const SELLER_INFO_FRAGMENT = gql`
     phone
     address
     isActive
+    canManageCatalog
     user {
       ...UserFields
     }

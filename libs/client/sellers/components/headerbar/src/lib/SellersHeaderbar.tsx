@@ -5,6 +5,7 @@ import {
   StyledDrawer,
   CustomListItemText,
 } from '@kickzone-workspace/styled-drawer';
+import InventoryIcon from '@mui/icons-material/Inventory';
 import HomeIcon from '@mui/icons-material/Home';
 import MenuIcon from '@mui/icons-material/Menu';
 import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
@@ -30,7 +31,7 @@ import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
 export function Headerbar() {
-  const { user, logout } = useSellersAuthContext();
+  const { user, logout, canManageCatalog } = useSellersAuthContext();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
@@ -232,6 +233,20 @@ export function Headerbar() {
           </ListItemIcon>
           <CustomListItemText primary={LL.navigation.products()} />
         </ListItemButton>
+
+        {canManageCatalog && (
+          <ListItemButton
+            to={SELLER_ROUTES.CATALOG}
+            component={RouterLink}
+            selected={location.pathname.startsWith(SELLER_ROUTES.CATALOG)}
+            onClick={handleDrawerToggle}
+          >
+            <ListItemIcon>
+              <InventoryIcon />
+            </ListItemIcon>
+            <CustomListItemText primary={LL.navigation.catalogManagement()} />
+          </ListItemButton>
+        )}
 
         <ListItemButton
           to={SELLER_ROUTES.ORDERS}

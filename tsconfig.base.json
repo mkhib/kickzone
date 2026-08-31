@@ -260,6 +260,9 @@
       "@kickzone-workspace/sellers-manage-product-screen": [
         "libs/client/sellers/screens/manage-product/src/index.ts"
       ],
+      "@kickzone-workspace/sellers-catalog-screen": [
+        "libs/client/sellers/screens/catalog/src/index.ts"
+      ],
       "@kickzone-workspace/sellers-products-hooks": [
         "libs/client/sellers/hooks/products/src/index.ts"
       ],

@@ -115,6 +115,7 @@ type SellerInfo {
   country: String
   businessName: String
   isActive: Boolean!
+  canManageCatalog: Boolean!
   shippingFee: Float!
   user: User!
   sellerProducts: [SellerProduct!]!
@@ -360,6 +361,7 @@ type Query {
   getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
   sellers(filter: SellerFilterInput, first: Int! = 100, after: String): SellerConnection!
   findOne(id: Int!): SellerInfo
+  mySellerInfo: SellerInfo
   mySellerProductById(id: String!): SellerProduct
   colors: [Color!]!
   color(id: Int!): Color
@@ -550,6 +552,7 @@ input CreateSellerInput {
   phone: String
   address: String
   shippingFee: Float
+  canManageCatalog: Boolean
 }
 
 input UpdateSellerInput {
@@ -563,6 +566,7 @@ input UpdateSellerInput {
   address: String
   shippingFee: Float
   isActive: Boolean
+  canManageCatalog: Boolean
 }
 
 input CreateSellerProductInput {

@@ -7,6 +7,7 @@ export const SELLER_FIELDS = gql`
     phone
     address
     isActive
+    canManageCatalog
     shippingFee
     user {
       id

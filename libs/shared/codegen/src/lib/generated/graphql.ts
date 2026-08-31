@@ -143,6 +143,7 @@ export type CreateProductInput = {
 
 export type CreateSellerInput = {
   address?: InputMaybe<Scalars['String']['input']>;
+  canManageCatalog?: InputMaybe<Scalars['Boolean']['input']>;
   email: Scalars['String']['input'];
   lastName: Scalars['String']['input'];
   name: Scalars['String']['input'];
@@ -698,6 +699,7 @@ export type Query = {
   myCart: Cart;
   myOrders: Array<Order>;
   myProfile: CustomerProfile;
+  mySellerInfo?: Maybe<SellerInfo>;
   mySellerOrders: SellerOrdersConnection;
   mySellerProductById?: Maybe<SellerProduct>;
   order: Order;
@@ -882,6 +884,7 @@ export type SellerInfo = {
   __typename?: 'SellerInfo';
   address?: Maybe<Scalars['String']['output']>;
   businessName?: Maybe<Scalars['String']['output']>;
+  canManageCatalog: Scalars['Boolean']['output'];
   city?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['String']['output']>;
   id: Scalars['Int']['output'];
@@ -1074,6 +1077,7 @@ export type UpdateProductInput = {
 
 export type UpdateSellerInput = {
   address?: InputMaybe<Scalars['String']['input']>;
+  canManageCatalog?: InputMaybe<Scalars['Boolean']['input']>;
   email?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['Int']['input'];
   isActive?: InputMaybe<Scalars['Boolean']['input']>;

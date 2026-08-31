@@ -1,3 +1,4 @@
+import { CatalogGuardModule } from './catalog-guard.module';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Color } from '@kickzone-workspace/entities';
@@ -6,7 +7,7 @@ import { ColorResolver } from '@kickzone-workspace/resolvers';
 import { TranslationModule } from './translation.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([Color]), TranslationModule],
+  imports: [TypeOrmModule.forFeature([Color]), TranslationModule, CatalogGuardModule],
   providers: [ColorService, ColorResolver],
   exports: [ColorService, TypeOrmModule.forFeature([Color])],
 })

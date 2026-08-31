@@ -54,6 +54,10 @@ export class CreateSellerInput {
   @IsOptional()
   @IsNumber()
   shippingFee?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  canManageCatalog?: boolean;
 }
 
 @InputType()
@@ -105,6 +109,10 @@ export class UpdateSellerInput {
   @Field({ nullable: true })
   @IsOptional()
   isActive?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  canManageCatalog?: boolean;
 }
 
 @InputType()
