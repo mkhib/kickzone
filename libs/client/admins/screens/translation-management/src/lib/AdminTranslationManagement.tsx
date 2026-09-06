@@ -17,7 +17,6 @@ import IconButton from '@mui/material/IconButton';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -27,6 +26,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import { DialogFormContent } from '@kickzone-workspace/language-components';
 import {
   useTranslationsManagement,
   useEntityTranslations,
@@ -109,6 +109,7 @@ function TranslationsModal({
   );
   const [editingLocale, setEditingLocale] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
+  const [isSavingTranslation, setIsSavingTranslation] = useState(false);
 
   // Expose refetch function to parent component
   React.useEffect(() => {
@@ -131,6 +132,7 @@ function TranslationsModal({
 
   const handleSave = async () => {
     if (!editingLocale) return;
+    setIsSavingTranslation(true);
     try {
       await setTranslation(
         entityType,
@@ -156,6 +158,8 @@ function TranslationsModal({
       showSnackbar(LL.admin.translationManagement.failedToSaveTranslation(), {
         severity: 'error',
       });
+    } finally {
+      setIsSavingTranslation(false);
     }
   };
 
@@ -167,7 +171,7 @@ function TranslationsModal({
           entityName,
         })}
       </DialogTitle>
-      <DialogContent>
+      <DialogFormContent>
         {loading ? (
           <Box sx={{ display: 'flex', justifyContent: 'center', p: 3 }}>
             <CircularProgress />
@@ -218,12 +222,14 @@ function TranslationsModal({
                             size="small"
                             onClick={handleSave}
                             variant="contained"
+                            loading={isSavingTranslation}
                           >
                             {LL.button.save()}
                           </Button>
                           <Button
                             size="small"
                             onClick={() => setEditingLocale(null)}
+                            disabled={isSavingTranslation}
                           >
                             {LL.button.cancel()}
                           </Button>
@@ -243,7 +249,7 @@ function TranslationsModal({
             </TableBody>
           </Table>
         )}
-      </DialogContent>
+      </DialogFormContent>
       <DialogActions>
         <Button onClick={onClose}>{LL.button.close()}</Button>
       </DialogActions>

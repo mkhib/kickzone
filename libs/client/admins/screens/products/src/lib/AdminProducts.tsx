@@ -104,7 +104,7 @@ export function AdminProducts({
     archivedStatus: status,
   });
   const { categories } = useCategoriesQuery();
-  const { archiveProduct } = useProducts();
+  const { archiveProduct, isArchivingProduct } = useProducts();
   const loaderRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
   const API_BASE_URL =
@@ -579,17 +579,21 @@ export function AdminProducts({
             </Box>
             <Dialog open={archiveDialogOpen} onClose={handleArchiveCancel}>
               <DialogTitle>{LL.products.archiveProduct()}</DialogTitle>
-              <DialogContent>
+              <DialogContent dividers sx={{ pt: 2 }}>
                 {LL.products.archiveProductConfirm()}
               </DialogContent>
               <DialogActions>
-                <Button onClick={handleArchiveCancel}>
+                <Button
+                  onClick={handleArchiveCancel}
+                  disabled={isArchivingProduct}
+                >
                   {LL.button.cancel()}
                 </Button>
                 <Button
                   onClick={handleArchiveConfirm}
                   color="secondary"
                   variant="contained"
+                  loading={isArchivingProduct}
                 >
                   {LL.products.archiveProduct()}
                 </Button>

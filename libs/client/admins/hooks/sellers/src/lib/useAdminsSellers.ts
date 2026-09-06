@@ -37,7 +37,7 @@ export const useAdminsSellersQuery = (
 export const useAdminsSellers = (
   filter: KickzoneGraphqlTypes.SellerFilterInput = { isActive: true }
 ) => {
-  const [createSeller] = useMutation<
+  const [createSeller, { loading: isCreatingSeller }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'createSeller'>,
     KickzoneGraphqlTypes.MutationCreateSellerArgs
   >(CREATE_SELLER, {
@@ -49,7 +49,7 @@ export const useAdminsSellers = (
     ],
   });
 
-  const [updateSeller] = useMutation<
+  const [updateSeller, { loading: isUpdatingSeller }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateSeller'>,
     KickzoneGraphqlTypes.MutationUpdateSellerArgs
   >(UPDATE_SELLER, {
@@ -61,7 +61,7 @@ export const useAdminsSellers = (
     ],
   });
 
-  const [toggleSellerActive] = useMutation<
+  const [toggleSellerActive, { loading: isTogglingSellerActive }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'toggleSellerActive'>,
     KickzoneGraphqlTypes.MutationToggleSellerActiveArgs
   >(TOGGLE_SELLER_ACTIVE, {
@@ -73,15 +73,20 @@ export const useAdminsSellers = (
     ],
   });
 
-  const [initiateSellerPasswordSetup] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'initiatePasswordSetup'>,
-    KickzoneGraphqlTypes.MutationInitiatePasswordSetupArgs
-  >(INITIATE_SELLER_PASSWORD_SETUP);
+  const [initiateSellerPasswordSetup, { loading: isInitiatingPasswordSetup }] =
+    useMutation<
+      Pick<KickzoneGraphqlTypes.Mutation, 'initiatePasswordSetup'>,
+      KickzoneGraphqlTypes.MutationInitiatePasswordSetupArgs
+    >(INITIATE_SELLER_PASSWORD_SETUP);
 
   return {
     createSeller,
     updateSeller,
     toggleSellerActive,
     initiateSellerPasswordSetup,
+    isCreatingSeller,
+    isUpdatingSeller,
+    isTogglingSellerActive,
+    isInitiatingPasswordSetup,
   };
 };

@@ -16,7 +16,11 @@ vi.mock('./adminsSellers.graphql', () => ({
   CREATE_SELLER: 'CREATE_SELLER',
   UPDATE_SELLER: 'UPDATE_SELLER',
   TOGGLE_SELLER_ACTIVE: 'TOGGLE_SELLER_ACTIVE',
+  INITIATE_SELLER_PASSWORD_SETUP: 'INITIATE_SELLER_PASSWORD_SETUP',
 }));
+
+const mockMutationResult = (fn: unknown) =>
+  [fn, { loading: false }] as unknown as ReturnType<typeof useMutation>;
 
 describe('useAdminsSellersQuery', () => {
   beforeEach(() => {
@@ -122,40 +126,35 @@ describe('useAdminsSellers', () => {
     const mockCreateSeller = vi.fn();
     const mockUpdateSeller = vi.fn();
     const mockToggleSellerActive = vi.fn();
+    const mockInitiatePasswordSetup = vi.fn();
 
     vi.mocked(useMutation)
-      .mockReturnValueOnce([mockCreateSeller] as unknown as ReturnType<
-        typeof useMutation
-      >)
-      .mockReturnValueOnce([mockUpdateSeller] as unknown as ReturnType<
-        typeof useMutation
-      >)
-      .mockReturnValueOnce([mockToggleSellerActive] as unknown as ReturnType<
-        typeof useMutation
-      >);
+      .mockReturnValueOnce(mockMutationResult(mockCreateSeller))
+      .mockReturnValueOnce(mockMutationResult(mockUpdateSeller))
+      .mockReturnValueOnce(mockMutationResult(mockToggleSellerActive))
+      .mockReturnValueOnce(mockMutationResult(mockInitiatePasswordSetup));
 
     const { result } = renderHook(() => useAdminsSellers());
 
     expect(result.current.createSeller).toBe(mockCreateSeller);
     expect(result.current.updateSeller).toBe(mockUpdateSeller);
     expect(result.current.toggleSellerActive).toBe(mockToggleSellerActive);
+    expect(result.current.isCreatingSeller).toBe(false);
+    expect(result.current.isUpdatingSeller).toBe(false);
+    expect(result.current.isTogglingSellerActive).toBe(false);
   });
 
   it('should configure mutations with refetch queries', () => {
     const mockCreateSeller = vi.fn();
     const mockUpdateSeller = vi.fn();
     const mockToggleSellerActive = vi.fn();
+    const mockInitiatePasswordSetup = vi.fn();
 
     vi.mocked(useMutation)
-      .mockReturnValueOnce([mockCreateSeller] as unknown as ReturnType<
-        typeof useMutation
-      >)
-      .mockReturnValueOnce([mockUpdateSeller] as unknown as ReturnType<
-        typeof useMutation
-      >)
-      .mockReturnValueOnce([mockToggleSellerActive] as unknown as ReturnType<
-        typeof useMutation
-      >);
+      .mockReturnValueOnce(mockMutationResult(mockCreateSeller))
+      .mockReturnValueOnce(mockMutationResult(mockUpdateSeller))
+      .mockReturnValueOnce(mockMutationResult(mockToggleSellerActive))
+      .mockReturnValueOnce(mockMutationResult(mockInitiatePasswordSetup));
 
     renderHook(() => useAdminsSellers());
 
@@ -192,17 +191,13 @@ describe('useAdminsSellers', () => {
     const mockCreateSeller = vi.fn();
     const mockUpdateSeller = vi.fn();
     const mockToggleSellerActive = vi.fn();
+    const mockInitiatePasswordSetup = vi.fn();
 
     vi.mocked(useMutation)
-      .mockReturnValueOnce([mockCreateSeller] as unknown as ReturnType<
-        typeof useMutation
-      >)
-      .mockReturnValueOnce([mockUpdateSeller] as unknown as ReturnType<
-        typeof useMutation
-      >)
-      .mockReturnValueOnce([mockToggleSellerActive] as unknown as ReturnType<
-        typeof useMutation
-      >);
+      .mockReturnValueOnce(mockMutationResult(mockCreateSeller))
+      .mockReturnValueOnce(mockMutationResult(mockUpdateSeller))
+      .mockReturnValueOnce(mockMutationResult(mockToggleSellerActive))
+      .mockReturnValueOnce(mockMutationResult(mockInitiatePasswordSetup));
 
     renderHook(() => useAdminsSellers(customFilter));
 

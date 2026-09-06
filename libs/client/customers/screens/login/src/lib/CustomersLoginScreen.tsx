@@ -16,9 +16,9 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import CssBaseline from '@mui/material/CssBaseline';
-import CircularProgress from '@mui/material/CircularProgress';
 import { colors } from '@kickzone-workspace/colors';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 
 export function CustomersLogin() {
   const { LL } = useI18nContext();
@@ -99,6 +99,7 @@ export function CustomersLogin() {
               autoFocus
               value={formData.email}
               onChange={handleChange('email')}
+              {...getLtrTextFieldProps()}
             />
             <PasswordTextField
               margin="normal"
@@ -132,7 +133,7 @@ export function CustomersLogin() {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={loginLoading}
+              loading={loginLoading}
               sx={{
                 mt: 1,
                 mb: 2,
@@ -140,11 +141,7 @@ export function CustomersLogin() {
                 '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
-              {loginLoading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                LL.authorization.signIn()
-              )}
+              {LL.authorization.signIn()}
             </Button>
             <Grid container justifyContent="flex-end" component="div">
               <Grid component="div">

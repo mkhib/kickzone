@@ -1,6 +1,7 @@
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 import Box from '@mui/material/Box';
 import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
@@ -146,7 +147,10 @@ export function CurrencyManagement() {
                 onChange={(e) => setNewRate(e.target.value)}
                 placeholder={LL.currency.enterExchangeRate()}
                 fullWidth
-                inputProps={{ step: 0.000001 }}
+                {...getLtrTextFieldProps()}
+                slotProps={{
+                  htmlInput: { dir: 'ltr', step: 0.000001 },
+                }}
               />
               <TextField
                 label={`${LL.currency.notes()} (${LL.optional()})`}
@@ -160,12 +164,10 @@ export function CurrencyManagement() {
               <Button
                 variant="contained"
                 onClick={handleSetExchangeRate}
-                disabled={settingRate}
+                loading={settingRate}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                {settingRate
-                  ? LL.currency.saving()
-                  : LL.currency.setExchangeRate()}
+                {LL.currency.setExchangeRate()}
               </Button>
             </Stack>
           </CardContent>
@@ -240,6 +242,7 @@ export function CurrencyManagement() {
                 onChange={(e) => setLocale(e.target.value)}
                 placeholder="e.g., fa, en, en-US"
                 fullWidth
+                {...getLtrTextFieldProps()}
               />
               <TextField
                 select
@@ -257,12 +260,10 @@ export function CurrencyManagement() {
               <Button
                 variant="contained"
                 onClick={handleSetCurrencyPreference}
-                disabled={settingPreference}
+                loading={settingPreference}
                 sx={{ alignSelf: 'flex-start' }}
               >
-                {settingPreference
-                  ? LL.currency.saving()
-                  : LL.currency.setPreference()}
+                {LL.currency.setPreference()}
               </Button>
             </Stack>
 

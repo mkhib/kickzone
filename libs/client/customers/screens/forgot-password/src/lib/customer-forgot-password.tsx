@@ -15,9 +15,9 @@ import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
 import Paper from '@mui/material/Paper';
-import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import { colors } from '@kickzone-workspace/colors';
+import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 
 export function CustomerForgotPassword() {
   const { LL } = useI18nContext();
@@ -130,12 +130,13 @@ export function CustomerForgotPassword() {
                   autoFocus
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  {...getLtrTextFieldProps()}
                 />
                 <Button
                   type="submit"
                   fullWidth
                   variant="contained"
-                  disabled={forgotPasswordLoading}
+                  loading={forgotPasswordLoading}
                   sx={{
                     mt: 3,
                     mb: 2,
@@ -143,11 +144,7 @@ export function CustomerForgotPassword() {
                     '&:hover': { backgroundColor: colors.hoverMain },
                   }}
                 >
-                  {forgotPasswordLoading ? (
-                    <CircularProgress size={24} color="inherit" />
-                  ) : (
-                    LL.authorization.sendResetLink()
-                  )}
+                  {LL.authorization.sendResetLink()}
                 </Button>
                 <Button
                   fullWidth

@@ -13,6 +13,7 @@ import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useAdminLogin } from '@kickzone-workspace/admins-auth-hooks';
 import { mapApolloErrorToTranslationKey } from '@kickzone-workspace/translations';
+import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 
 export function AdminsLogin() {
   const [email, setEmail] = useState('');
@@ -61,6 +62,7 @@ export function AdminsLogin() {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              {...getLtrTextFieldProps()}
             />
             <PasswordTextField
               margin="normal"
@@ -77,7 +79,7 @@ export function AdminsLogin() {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={adminsLoginLoading}
+              loading={adminsLoginLoading}
               sx={{
                 mt: 3,
                 mb: 2,
@@ -85,9 +87,7 @@ export function AdminsLogin() {
                 '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
-              {adminsLoginLoading
-                ? LL.button.submit()
-                : LL.authorization.signIn()}
+              {LL.authorization.signIn()}
             </Button>
             {adminsLoginError && (
               <Typography color="error" sx={{ mt: 2 }}>

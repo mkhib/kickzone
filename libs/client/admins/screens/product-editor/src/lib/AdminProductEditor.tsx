@@ -9,6 +9,10 @@ import { useProducts, useProductById } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import {
+  DialogFormContent,
+  getLtrTextFieldProps,
+} from '@kickzone-workspace/language-components';
 import AddIcon from '@mui/icons-material/Add';
 import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -22,7 +26,6 @@ import CardActions from '@mui/material/CardActions';
 import CardMedia from '@mui/material/CardMedia';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
@@ -70,7 +73,7 @@ const CategoryModal = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg">
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+      <DialogFormContent>
         <TextField
           autoFocus
           margin="dense"
@@ -79,7 +82,7 @@ const CategoryModal = ({
           value={categoryName}
           onChange={(e) => setCategoryName(e.target.value)}
         />
-      </DialogContent>
+      </DialogFormContent>
       <DialogActions>
         <Button onClick={onClose}>{LL.button.cancel()}</Button>
         <Button
@@ -118,11 +121,11 @@ const DeleteCategoryModal = ({
         <WarningIcon color="warning" />
         {LL.categories.deleteCategory()}
       </DialogTitle>
-      <DialogContent>
+      <DialogFormContent>
         <Typography>
           {LL.categories.deleteCategoryConfirm({ name: categoryName })}
         </Typography>
-      </DialogContent>
+      </DialogFormContent>
       <DialogActions>
         <Button onClick={onClose}>{LL.button.cancel()}</Button>
         <Button
@@ -159,7 +162,7 @@ const DeleteImageModal = ({
       <WarningIcon color="warning" />
       {LL.modal.deleteImage()}
     </DialogTitle>
-    <DialogContent>
+    <DialogFormContent>
       <Typography>
         {LL.modal.deleteImageConfirm({
           imageType:
@@ -168,7 +171,7 @@ const DeleteImageModal = ({
               : LL.products.uploadedImage(),
         })}
       </Typography>
-    </DialogContent>
+    </DialogFormContent>
     <DialogActions>
       <Button onClick={onClose} disabled={isLoading}>
         {LL.button.cancel()}
@@ -177,9 +180,9 @@ const DeleteImageModal = ({
         onClick={onConfirm}
         variant="contained"
         color="error"
-        disabled={isLoading}
+        loading={isLoading}
       >
-        {isLoading ? LL.status.deleting() : LL.button.delete()}
+        {LL.button.delete()}
       </Button>
     </DialogActions>
   </Dialog>
@@ -382,11 +385,11 @@ const ProductInfoCard = React.memo(
               e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
             ) => onChange(idx, 'weight', e.target.value)}
             required
-            sx={{
+            {...getLtrTextFieldProps({
               flex: 1,
               minWidth: 100,
               width: isMobile ? '100%' : undefined,
-            }}
+            })}
           />
         </Box>
         <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -547,7 +550,7 @@ const ColorModal = ({
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
       <DialogTitle>{title}</DialogTitle>
-      <DialogContent>
+      <DialogFormContent>
         <TextField
           autoFocus
           margin="dense"
@@ -555,7 +558,6 @@ const ColorModal = ({
           fullWidth
           value={colorName}
           onChange={(e) => setColorName(e.target.value)}
-          sx={{ mb: 2 }}
         />
         <TextField
           margin="dense"
@@ -563,7 +565,7 @@ const ColorModal = ({
           fullWidth
           value={hexCode}
           onChange={(e) => setHexCode(e.target.value)}
-          sx={{ mb: 2 }}
+          {...getLtrTextFieldProps()}
         />
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <SketchPicker
@@ -571,12 +573,15 @@ const ColorModal = ({
             onChangeComplete={(color: ColorResult) => setHexCode(color.hex)}
           />
         </Box>
-      </DialogContent>
+      </DialogFormContent>
       <DialogActions>
-        <Button onClick={onClose}>{LL.button.cancel()}</Button>
+        <Button onClick={onClose} disabled={isLoading}>
+          {LL.button.cancel()}
+        </Button>
         <Button
           onClick={handleSubmit}
           disabled={isLoading}
+          loading={isLoading}
           variant="contained"
           color="primary"
         >
@@ -610,11 +615,11 @@ const DeleteColorModal = ({
         <WarningIcon color="warning" />
         {LL.colorManagement.deleteColor()}
       </DialogTitle>
-      <DialogContent>
+      <DialogFormContent>
         <Typography>
           {LL.colorManagement.deleteColorConfirm({ name: colorName })}
         </Typography>
-      </DialogContent>
+      </DialogFormContent>
       <DialogActions>
         <Button onClick={onClose}>{LL.button.cancel()}</Button>
         <Button

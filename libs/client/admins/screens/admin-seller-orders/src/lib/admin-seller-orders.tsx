@@ -1,11 +1,16 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import Alert from '@mui/material/Alert';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import { DialogFormContent } from '@kickzone-workspace/language-components';
+import {
+  useI18nContext,
+  useLanguageContext,
+  usePageTitle,
+} from '@kickzone-workspace/shared-i18n';
+import { DataTable } from '@kickzone-workspace/material-data-table';
+import { type MRT_ColumnDef } from 'material-react-table';
+import { PriceDisplay } from '@kickzone-workspace/price-display';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import FormControl from '@mui/material/FormControl';
 import InputLabel from '@mui/material/InputLabel';
@@ -21,22 +26,17 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import Alert from '@mui/material/Alert';
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
-import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import {
   useAdminsOrders,
   useAdminsSellers,
 } from '@kickzone-workspace/admins-orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
-import {
-  useI18nContext,
-  useLanguageContext,
-  usePageTitle,
-} from '@kickzone-workspace/shared-i18n';
-import { DataTable } from '@kickzone-workspace/material-data-table';
-import { type MRT_ColumnDef } from 'material-react-table';
-import { PriceDisplay } from '@kickzone-workspace/price-display';
 
 type Order = KickzoneGraphqlTypes.Order;
 
@@ -69,6 +69,7 @@ export function AdminSellerOrders() {
     loading: ordersLoading,
     error: ordersError,
     updateOrderStatus,
+    updateStatusLoading,
   } = useAdminsOrders({
     first: 100,
     status: selectedStatus,
@@ -763,8 +764,8 @@ export function AdminSellerOrders() {
           fullWidth
         >
           <DialogTitle>{LL.orders.changeOrderStatus()}</DialogTitle>
-          <DialogContent>
-            <FormControl fullWidth sx={{ mt: 2 }}>
+          <DialogFormContent>
+            <FormControl fullWidth>
               <InputLabel>{LL.form.newStatus()}</InputLabel>
               <Select
                 value={newStatus}
@@ -798,12 +799,19 @@ export function AdminSellerOrders() {
                 </MenuItem>
               </Select>
             </FormControl>
-          </DialogContent>
+          </DialogFormContent>
           <DialogActions>
-            <Button onClick={() => setStatusDialogOpen(false)}>
+            <Button
+              onClick={() => setStatusDialogOpen(false)}
+              disabled={updateStatusLoading}
+            >
               {LL.button.cancel()}
             </Button>
-            <Button variant="contained" onClick={handleUpdateStatus}>
+            <Button
+              variant="contained"
+              onClick={handleUpdateStatus}
+              loading={updateStatusLoading}
+            >
               {LL.button.updateStatus()}
             </Button>
           </DialogActions>

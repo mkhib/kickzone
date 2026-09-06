@@ -882,7 +882,7 @@ export const SellersProducts = () => {
               </IconButton>
             </Box>
           </DialogTitle>
-          <DialogContent>
+          <DialogContent dividers sx={{ pt: 2 }}>
             {selectedProductForView && (
               <Box sx={{ mt: 2 }}>
                 <Grid container spacing={3}>

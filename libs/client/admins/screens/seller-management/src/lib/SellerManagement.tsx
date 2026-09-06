@@ -19,6 +19,10 @@ import {
   RTLStatusCell,
   getRTLColumnProps,
 } from '@kickzone-workspace/rtl-table-utils';
+import {
+  DialogFormContent,
+  getLtrTextFieldProps,
+} from '@kickzone-workspace/language-components';
 import { MRT_Localization_FA } from 'material-react-table/locales/fa';
 import { MRT_Localization_EN } from 'material-react-table/locales/en';
 import type { MRT_Localization } from 'material-react-table';
@@ -32,7 +36,6 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
-import DialogContent from '@mui/material/DialogContent';
 import DialogTitle from '@mui/material/DialogTitle';
 import IconButton from '@mui/material/IconButton';
 import TextField from '@mui/material/TextField';
@@ -105,6 +108,9 @@ export const SellerManagement = () => {
     updateSeller,
     toggleSellerActive,
     initiateSellerPasswordSetup,
+    isCreatingSeller,
+    isUpdatingSeller,
+    isTogglingSellerActive,
   } = useAdminsSellers(filter);
 
   const env = (
@@ -400,14 +406,19 @@ export const SellerManagement = () => {
       ) {
         return;
       }
+      const rawFee = formData.shippingFee as number | string | undefined | null;
+      const shippingFeeValue =
+        rawFee === undefined || rawFee === null || rawFee === ''
+          ? 0
+          : Number(rawFee);
+
       await createSeller({
         variables: {
           createSellerInput: {
             ...formData,
-            shippingFee:
-              formData.shippingFee !== undefined
-                ? Number(formData.shippingFee)
-                : 0,
+            shippingFee: Number.isFinite(shippingFeeValue)
+              ? shippingFeeValue
+              : 0,
             canManageCatalog: formData.canManageCatalog ?? false,
             password: 'defaultPassword123',
           } as CreateSellerInput,
@@ -475,7 +486,6 @@ export const SellerManagement = () => {
         label={LL.table.name()}
         value={formData.name || ''}
         onChange={handleInputChange}
-        sx={{ mb: 2 }}
       />
       <TextField
         fullWidth
@@ -484,7 +494,6 @@ export const SellerManagement = () => {
         label={LL.table.lastName()}
         value={formData.lastName || ''}
         onChange={handleInputChange}
-        sx={{ mb: 2 }}
       />
       <TextField
         fullWidth
@@ -493,7 +502,7 @@ export const SellerManagement = () => {
         label={LL.table.username()}
         value={formData.username || ''}
         onChange={handleInputChange}
-        sx={{ mb: 2 }}
+        {...getLtrTextFieldProps()}
       />
       <TextField
         fullWidth
@@ -503,7 +512,7 @@ export const SellerManagement = () => {
         type="email"
         value={formData.email || ''}
         onChange={handleInputChange}
-        sx={{ mb: 2 }}
+        {...getLtrTextFieldProps()}
       />
       <TextField
         fullWidth
@@ -512,7 +521,6 @@ export const SellerManagement = () => {
         label={LL.table.storeName()}
         value={formData.storeName || ''}
         onChange={handleInputChange}
-        sx={{ mb: 2 }}
       />
       <TextField
         fullWidth
@@ -521,7 +529,7 @@ export const SellerManagement = () => {
         label={LL.table.phone()}
         value={formData.phone || ''}
         onChange={handleInputChange}
-        sx={{ mb: 2 }}
+        {...getLtrTextFieldProps()}
       />
       <TextField
         fullWidth
@@ -530,7 +538,6 @@ export const SellerManagement = () => {
         label={LL.table.address()}
         value={formData.address || ''}
         onChange={handleInputChange}
-        sx={{ mb: 2 }}
       />
       <TextField
         fullWidth
@@ -539,10 +546,13 @@ export const SellerManagement = () => {
         type="number"
         value={formData.shippingFee || ''}
         onChange={handleInputChange}
-        sx={{ mb: 2 }}
-        inputProps={{
-          step: '0.01',
-          min: '0',
+        sx={getLtrTextFieldProps().sx}
+        slotProps={{
+          htmlInput: {
+            dir: 'ltr',
+            step: '0.01',
+            min: '0',
+          },
         }}
       />
       <FormControlLabel
@@ -554,7 +564,6 @@ export const SellerManagement = () => {
           />
         }
         label="Can manage catalog (define products)"
-        sx={{ mb: 2 }}
       />
     </>
   );
@@ -570,18 +579,24 @@ export const SellerManagement = () => {
         {/* Create Modal */}
         <Dialog
           open={createModalOpen}
-          onClose={() => setCreateModalOpen(false)}
+          onClose={() => !isCreatingSeller && setCreateModalOpen(false)}
           maxWidth="sm"
           fullWidth
         >
           <DialogTitle>Create New Seller</DialogTitle>
-          <DialogContent sx={{ pt: 3, pb: 2 }}>{renderForm()}</DialogContent>
+          <DialogFormContent>{renderForm()}</DialogFormContent>
           <DialogActions>
-            <Button onClick={() => setCreateModalOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => setCreateModalOpen(false)}
+              disabled={isCreatingSeller}
+            >
+              Cancel
+            </Button>
             <Button
               onClick={handleCreateSubmit}
               variant="contained"
               color="primary"
+              loading={isCreatingSeller}
             >
               Create
             </Button>
@@ -591,18 +606,24 @@ export const SellerManagement = () => {
         {/* Edit Modal */}
         <Dialog
           open={editModalOpen}
-          onClose={() => setEditModalOpen(false)}
+          onClose={() => !isUpdatingSeller && setEditModalOpen(false)}
           maxWidth="sm"
           fullWidth
         >
           <DialogTitle>Edit Seller</DialogTitle>
-          <DialogContent sx={{ pt: 3, pb: 2 }}>{renderForm()}</DialogContent>
+          <DialogFormContent>{renderForm()}</DialogFormContent>
           <DialogActions>
-            <Button onClick={() => setEditModalOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => setEditModalOpen(false)}
+              disabled={isUpdatingSeller}
+            >
+              Cancel
+            </Button>
             <Button
               onClick={handleEditSubmit}
               variant="contained"
               color="primary"
+              loading={isUpdatingSeller}
             >
               Save
             </Button>
@@ -630,10 +651,9 @@ export const SellerManagement = () => {
                   selectedSeller?.isActive ? 'Deactivation' : 'Activation'
                 }`}
           </DialogTitle>
-          <DialogContent>
+          <DialogFormContent>
             <Alert
               severity={selectedSeller?.isActive ? 'error' : 'success'}
-              sx={{ mb: 2 }}
             >
               <Typography variant="subtitle1" fontWeight="bold">
                 {selectedSeller?.isActive
@@ -647,7 +667,7 @@ export const SellerManagement = () => {
                 <strong>{selectedSeller?.user.username}</strong>.
               </Typography>
             </Alert>
-            <Typography sx={{ mb: 2 }}>
+            <Typography>
               {LL.authorization.confirmAction()}{' '}
               <strong>{selectedSeller?.user.username}</strong>
             </Typography>
@@ -662,8 +682,9 @@ export const SellerManagement = () => {
                   ? LL.authorization.usernameMismatch()
                   : ''
               }
+              {...getLtrTextFieldProps()}
             />
-          </DialogContent>
+          </DialogFormContent>
           <DialogActions>
             <Button
               onClick={() => {
@@ -672,6 +693,7 @@ export const SellerManagement = () => {
                 setUsernameConfirmation('');
                 setNeedsReconfirmation(false);
               }}
+              disabled={isTogglingSellerActive}
             >
               Cancel
             </Button>
@@ -680,6 +702,7 @@ export const SellerManagement = () => {
               variant="contained"
               color={selectedSeller?.isActive ? 'error' : 'success'}
               disabled={!isDeleteEnabled}
+              loading={isTogglingSellerActive}
             >
               {needsReconfirmation
                 ? 'Reconfirm'

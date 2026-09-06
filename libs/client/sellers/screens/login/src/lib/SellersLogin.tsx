@@ -13,6 +13,7 @@ import { PasswordTextField } from '@kickzone-workspace/password-field';
 import Typography from '@mui/material/Typography';
 import React, { useState } from 'react';
 import { useSellerLogin } from '@kickzone-workspace/sellers-auth-hooks';
+import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 
 export function SellersLogin() {
   const [email, setEmail] = useState('');
@@ -71,6 +72,7 @@ export function SellersLogin() {
               autoFocus
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              {...getLtrTextFieldProps()}
             />
             <PasswordTextField
               margin="normal"
@@ -87,7 +89,7 @@ export function SellersLogin() {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={sellersLoginLoading}
+              loading={sellersLoginLoading}
               sx={{
                 mt: 3,
                 mb: 2,
@@ -95,9 +97,7 @@ export function SellersLogin() {
                 '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
-              {sellersLoginLoading
-                ? LL.button.submit()
-                : LL.authorization.signIn()}
+              {LL.authorization.signIn()}
             </Button>
             {sellersLoginError && (
               <Typography color="error" sx={{ mt: 2 }}>

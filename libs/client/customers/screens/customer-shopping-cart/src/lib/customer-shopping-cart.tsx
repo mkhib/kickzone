@@ -52,6 +52,7 @@ import StepLabel from '@mui/material/StepLabel';
 import Stepper from '@mui/material/Stepper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 import { useState, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
@@ -1359,7 +1360,7 @@ export function CustomerShoppingCart() {
           fullWidth
         >
           <DialogTitle>{LL.checkout.orderSummary()}</DialogTitle>
-          <DialogContent>
+          <DialogContent dividers sx={{ pt: 2 }}>
             <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
               {steps.map((label) => (
                 <Step key={label}>
@@ -1617,11 +1618,11 @@ export function CustomerShoppingCart() {
                       }
                       error={!!validationErrors.customerEmail}
                       helperText={validationErrors.customerEmail}
-                      sx={{
+                      {...getLtrTextFieldProps({
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
                         },
-                      }}
+                      })}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -1638,11 +1639,11 @@ export function CustomerShoppingCart() {
                       }
                       error={!!validationErrors.customerPhone}
                       helperText={validationErrors.customerPhone}
-                      sx={{
+                      {...getLtrTextFieldProps({
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
                         },
-                      }}
+                      })}
                     />
                   </Grid>
                   <Grid size={{ xs: 12, sm: 6 }}>
@@ -2070,7 +2071,7 @@ export function CustomerShoppingCart() {
               <Button
                 variant="contained"
                 onClick={handleNext}
-                disabled={isCreatingOrder}
+                loading={isCreatingOrder}
                 sx={{
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
@@ -2079,9 +2080,7 @@ export function CustomerShoppingCart() {
                   },
                 }}
               >
-                {isCreatingOrder
-                  ? LL.checkout.processing()
-                  : LL.checkout.proceedToPayment()}
+                {LL.checkout.proceedToPayment()}
               </Button>
             ) : null}
           </DialogActions>

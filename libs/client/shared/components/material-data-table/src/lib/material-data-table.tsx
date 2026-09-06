@@ -63,21 +63,46 @@ export function DataTable<T extends MRT_RowData = MRT_RowData>({
     enableRowSelection: mergedConfig.enableRowSelection,
     localization: tableLocalization,
     muiTableHeadCellProps: {
+      align: isRTL ? 'right' : 'left',
       sx: {
         textAlign: isRTL ? 'right' : 'left',
+        '& .Mui-TableHeadCell-Content': {
+          justifyContent: isRTL ? 'flex-end' : 'flex-start',
+          width: '100%',
+        },
+        '& .Mui-TableHeadCell-Content-Labels': {
+          justifyContent: isRTL ? 'flex-end' : 'flex-start',
+          width: '100%',
+        },
+        '& .Mui-TableHeadCell-Content-Wrapper': {
+          textAlign: isRTL ? 'right' : 'left',
+          width: '100%',
+        },
+        '& .MuiTableSortLabel-root': {
+          width: '100%',
+          justifyContent: isRTL ? 'flex-end' : 'flex-start',
+          flexDirection: isRTL ? 'row-reverse' : 'row',
+        },
       },
     },
     muiTableBodyCellProps: {
+      align: isRTL ? 'right' : 'left',
       sx: {
         textAlign: isRTL ? 'right' : 'left',
       },
     },
+    enableColumnActions: false,
     muiTableContainerProps: {
       sx: {
         direction: isRTL ? 'rtl' : 'ltr',
       },
     },
     muiTableProps: {
+      sx: {
+        direction: isRTL ? 'rtl' : 'ltr',
+      },
+    },
+    muiTablePaperProps: {
       sx: {
         direction: isRTL ? 'rtl' : 'ltr',
       },

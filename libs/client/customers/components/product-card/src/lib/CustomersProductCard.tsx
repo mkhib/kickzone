@@ -744,7 +744,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         <DialogTitle>
           {LL.products.selectVariant() || 'Select Variant'}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent dividers sx={{ pt: 2 }}>
           <FormControl component="fieldset" fullWidth>
             <FormLabel component="legend" sx={{ mb: 2 }}>
               {product.name}

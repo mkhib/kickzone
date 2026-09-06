@@ -58,6 +58,7 @@ export class SellerService {
       storeName: createSellerInput.storeName,
       phone: createSellerInput.phone,
       address: createSellerInput.address,
+      shippingFee: createSellerInput.shippingFee ?? 0,
       canManageCatalog: createSellerInput.canManageCatalog ?? false,
       user,
     });

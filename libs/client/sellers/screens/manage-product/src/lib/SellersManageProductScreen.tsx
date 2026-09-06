@@ -5,6 +5,7 @@ import { useSellersProductManagement } from '@kickzone-workspace/sellers-product
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 import Alert from '@mui/material/Alert';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -579,13 +580,15 @@ export function SellersManageProductScreen() {
                     onChange={(e) => handleInputChange('price', e.target.value)}
                     required
                     disabled={isLoading}
-                    inputProps={{ min: 0, step: 0.01 }}
-                    sx={{
+                    {...getLtrTextFieldProps({
                       '& .MuiOutlinedInput-root': {
                         '&:hover fieldset': {
                           borderColor: 'primary.main',
                         },
                       },
+                    })}
+                    slotProps={{
+                      htmlInput: { dir: 'ltr', min: 0, step: 0.01 },
                     }}
                   />
                 </Grid>
@@ -601,13 +604,15 @@ export function SellersManageProductScreen() {
                     }
                     required
                     disabled={isLoading}
-                    inputProps={{ min: 0, step: 0.01 }}
-                    sx={{
+                    {...getLtrTextFieldProps({
                       '& .MuiOutlinedInput-root': {
                         '&:hover fieldset': {
                           borderColor: 'primary.main',
                         },
                       },
+                    })}
+                    slotProps={{
+                      htmlInput: { dir: 'ltr', min: 0, step: 0.01 },
                     }}
                   />
                 </Grid>
@@ -622,14 +627,16 @@ export function SellersManageProductScreen() {
                       handleInputChange('discount', e.target.value)
                     }
                     disabled={isLoading}
-                    inputProps={{ min: 0, max: 100, step: 0.01 }}
                     helperText={LL.products.discountHelper()}
-                    sx={{
+                    {...getLtrTextFieldProps({
                       '& .MuiOutlinedInput-root': {
                         '&:hover fieldset': {
                           borderColor: 'primary.main',
                         },
                       },
+                    })}
+                    slotProps={{
+                      htmlInput: { dir: 'ltr', min: 0, max: 100, step: 0.01 },
                     }}
                   />
                 </Grid>
@@ -645,13 +652,15 @@ export function SellersManageProductScreen() {
                     }
                     required
                     disabled={isLoading}
-                    inputProps={{ min: 0 }}
-                    sx={{
+                    {...getLtrTextFieldProps({
                       '& .MuiOutlinedInput-root': {
                         '&:hover fieldset': {
                           borderColor: 'primary.main',
                         },
                       },
+                    })}
+                    slotProps={{
+                      htmlInput: { dir: 'ltr', min: 0 },
                     }}
                   />
                 </Grid>
@@ -826,9 +835,9 @@ export function SellersManageProductScreen() {
                 <Button
                   type="submit"
                   variant="contained"
-                  disabled={!isFormValid() || isLoading}
+                  disabled={!isFormValid()}
+                  loading={isLoading}
                   size="large"
-                  startIcon={isLoading ? <CircularProgress size={20} /> : null}
                   sx={{
                     borderRadius: 2,
                     textTransform: 'none',
@@ -840,11 +849,7 @@ export function SellersManageProductScreen() {
                     },
                   }}
                 >
-                  {isLoading
-                    ? isEditing
-                      ? LL.button.updating()
-                      : LL.button.creating()
-                    : isEditing
+                  {isEditing
                     ? LL.button.updateProduct()
                     : LL.button.addProduct()}
                 </Button>

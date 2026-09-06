@@ -24,6 +24,7 @@ import { useProducts } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { DialogFormContent } from '@kickzone-workspace/language-components';
 
 interface ProductImageManagementModalProps {
   open: boolean;
@@ -77,11 +78,11 @@ const DeleteImageModal = ({
         <WarningIcon color="warning" />
         {LL.modal.deleteImage()}
       </DialogTitle>
-      <DialogContent>
+      <DialogFormContent>
         <Typography>
           {LL.products.deleteImageConfirmMessage({ imageName })}
         </Typography>
-      </DialogContent>
+      </DialogFormContent>
       <DialogActions>
         <Button onClick={onClose} disabled={isLoading}>
           {LL.button.cancel()}
@@ -90,9 +91,9 @@ const DeleteImageModal = ({
           onClick={onConfirm}
           variant="contained"
           color="error"
-          disabled={isLoading}
+          loading={isLoading}
         >
-          {isLoading ? LL.status.deleting() : LL.button.delete()}
+          {LL.button.delete()}
         </Button>
       </DialogActions>
     </Dialog>
@@ -310,7 +311,7 @@ export function ProductImageManagementModal({
         <DialogTitle>
           {LL.products.manageImages()} - {currentProduct.name}
         </DialogTitle>
-        <DialogContent>
+        <DialogContent dividers sx={{ pt: 2 }}>
           <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
             <Tabs value={imageModal.selectedTab} onChange={handleTabChange}>
               {currentProduct.productInfos.map((productInfo, index) => (

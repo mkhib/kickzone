@@ -16,9 +16,9 @@ import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
 import Link from '@mui/material/Link';
 import CssBaseline from '@mui/material/CssBaseline';
-import CircularProgress from '@mui/material/CircularProgress';
 import { colors } from '@kickzone-workspace/colors';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 
 export function CustomerSignup() {
   const { LL } = useI18nContext();
@@ -142,6 +142,7 @@ export function CustomerSignup() {
               onChange={handleChange('email')}
               error={!!errors.email}
               helperText={errors.email}
+              {...getLtrTextFieldProps()}
             />
             <PasswordTextField
               margin="normal"
@@ -173,7 +174,7 @@ export function CustomerSignup() {
               type="submit"
               fullWidth
               variant="contained"
-              disabled={registerLoading}
+              loading={registerLoading}
               sx={{
                 mt: 3,
                 mb: 2,
@@ -181,11 +182,7 @@ export function CustomerSignup() {
                 '&:hover': { backgroundColor: colors.hoverMain },
               }}
             >
-              {registerLoading ? (
-                <CircularProgress size={24} color="inherit" />
-              ) : (
-                LL.authorization.createAccount()
-              )}
+              {LL.authorization.createAccount()}
             </Button>
             <Grid container justifyContent="flex-end" component="div">
               <Grid component="div">

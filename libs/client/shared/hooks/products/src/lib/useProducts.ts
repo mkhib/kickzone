@@ -124,7 +124,7 @@ export const useProducts = () => {
     KickzoneGraphqlTypes.MutationRemoveProductInfoImageArgs
   >(REMOVE_PRODUCT_INFO_IMAGE);
 
-  const [archiveProductMutation] = useMutation<
+  const [archiveProductMutation, { loading: isArchivingProduct }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'archiveProduct'>,
     KickzoneGraphqlTypes.MutationArchiveProductArgs
   >(ARCHIVE_PRODUCT_MUTATION);
@@ -248,6 +248,7 @@ export const useProducts = () => {
     removeProductInfoImage,
     isCreatingProduct: isCreatingProduct || isCreatingProductInfo,
     archiveProduct,
+    isArchivingProduct,
     updateProduct,
   };
 };

@@ -23,7 +23,6 @@ import Select from '@mui/material/Select';
 import MenuItem from '@mui/material/MenuItem';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
@@ -36,6 +35,7 @@ import {
 } from '@kickzone-workspace/shared-i18n';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import { DialogFormContent } from '@kickzone-workspace/language-components';
 
 export function SellerOrdersScreen() {
   const { LL } = useI18nContext();
@@ -68,6 +68,7 @@ export function SellerOrdersScreen() {
     loading: ordersLoading,
     error: ordersError,
     updateOrderStatus,
+    updateStatusLoading,
   } = useSellerOrders({
     first: 50,
     status: selectedStatus,
@@ -512,8 +513,8 @@ export function SellerOrdersScreen() {
           fullWidth
         >
           <DialogTitle>{LL.orders.changeOrderStatus()}</DialogTitle>
-          <DialogContent>
-            <FormControl fullWidth sx={{ mt: 2 }}>
+          <DialogFormContent>
+            <FormControl fullWidth>
               <InputLabel>{LL.form.newStatus()}</InputLabel>
               <Select
                 value={newStatus}
@@ -547,12 +548,19 @@ export function SellerOrdersScreen() {
                 </MenuItem>
               </Select>
             </FormControl>
-          </DialogContent>
+          </DialogFormContent>
           <DialogActions>
-            <Button onClick={() => setStatusDialogOpen(false)}>
+            <Button
+              onClick={() => setStatusDialogOpen(false)}
+              disabled={updateStatusLoading}
+            >
               {LL.button.cancel()}
             </Button>
-            <Button variant="contained" onClick={handleUpdateStatus}>
+            <Button
+              variant="contained"
+              onClick={handleUpdateStatus}
+              loading={updateStatusLoading}
+            >
               {LL.button.updateStatus()}
             </Button>
           </DialogActions>
