@@ -7,7 +7,11 @@ import {
   useEffect,
 } from 'react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import { ME_QUERY, LOGOUT_MUTATION, MY_SELLER_INFO_QUERY } from '@kickzone-workspace/sellers-graphql';
+import {
+  ME_QUERY,
+  LOGOUT_MUTATION,
+  MY_SELLER_INFO_QUERY,
+} from '@kickzone-workspace/sellers-graphql';
 
 interface AuthContextType {
   user: KickzoneGraphqlTypes.User | null;
@@ -16,6 +20,7 @@ interface AuthContextType {
     'id' | 'storeName' | 'canManageCatalog' | 'isActive'
   > | null;
   canManageCatalog: boolean;
+  sellerInfoLoading: boolean;
   login: (user: KickzoneGraphqlTypes.User) => void;
   logout: () => void;
 }
@@ -36,7 +41,7 @@ export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
     fetchPolicy: 'network-only',
   });
 
-  const { data: sellerInfoData } = useQuery<
+  const { data: sellerInfoData, loading: sellerInfoQueryLoading } = useQuery<
     Pick<KickzoneGraphqlTypes.Query, 'mySellerInfo'>
   >(MY_SELLER_INFO_QUERY, {
     skip: !user || user.role !== KickzoneGraphqlTypes.UserRole.Seller,
@@ -44,6 +49,11 @@ export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
   });
 
   const sellerInfo = sellerInfoData?.mySellerInfo ?? null;
+  const sellerInfoLoading =
+    !!user &&
+    user.role === KickzoneGraphqlTypes.UserRole.Seller &&
+    sellerInfoQueryLoading &&
+    !sellerInfo;
   const canManageCatalog = sellerInfo?.canManageCatalog === true;
 
   const [logoutMutation] =
@@ -82,7 +92,14 @@ export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <SellersAuthContext.Provider
-      value={{ user, sellerInfo, canManageCatalog, login, logout }}
+      value={{
+        user,
+        sellerInfo,
+        canManageCatalog,
+        sellerInfoLoading,
+        login,
+        logout,
+      }}
     >
       {children}
     </SellersAuthContext.Provider>

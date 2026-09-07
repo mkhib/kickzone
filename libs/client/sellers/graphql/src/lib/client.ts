@@ -103,8 +103,7 @@ export const createSellersApolloClient = (onAuthError: () => void) => {
           if (
             message.toLowerCase().includes('not authenticated') ||
             message.toLowerCase().includes('unauthorized') ||
-            extensions?.code === 'UNAUTHENTICATED' ||
-            extensions?.code === 'FORBIDDEN'
+            extensions?.code === 'UNAUTHENTICATED'
           ) {
             onAuthError();
           }

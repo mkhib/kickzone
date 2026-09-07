@@ -4,5 +4,16 @@
   "sourceRoot": "libs/client/sellers/screens/catalog/src",
   "projectType": "library",
   "tags": [],
-  "targets": {}
+  "targets": {
+    "test": {
+      "executor": "@nx/vite:test",
+      "outputs": [
+        "{workspaceRoot}/coverage/libs/client/sellers/screens/catalog"
+      ],
+      "options": {
+        "rerunFailedOnly": false,
+        "passWithNoTests": true
+      }
+    }
+  }
 }

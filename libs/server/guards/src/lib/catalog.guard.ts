@@ -1,4 +1,9 @@
-import { Injectable, CanActivate, ExecutionContext } from '@nestjs/common';
+import {
+  Injectable,
+  CanActivate,
+  ExecutionContext,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { GqlExecutionContext } from '@nestjs/graphql';
 import { Repository } from 'typeorm';
@@ -17,7 +22,7 @@ export class CatalogGuard implements CanActivate {
     const user = req.user;
 
     if (!user) {
-      return false;
+      throw new UnauthorizedException('User not authenticated');
     }
 
     if (user.role === UserRole.ADMIN) {

@@ -37,10 +37,12 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
+import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { useState, useEffect } from 'react';
 
 export const SellersProducts = () => {
   const navigate = useNavigate();
+  const { canManageCatalog } = useSellersAuthContext();
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.sellerProducts());
   const { formatNumber } = useLanguageContext();
@@ -298,14 +300,26 @@ export const SellersProducts = () => {
           <Typography variant="h4" component="h1">
             {LL.products.myProducts()}
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddProduct}
-            sx={{ minWidth: 150 }}
-          >
-            {LL.products.addProduct()}
-          </Button>
+          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+            {canManageCatalog && (
+              <Button
+                variant="outlined"
+                startIcon={<AddIcon />}
+                onClick={() => navigate(SELLER_ROUTES.CATALOG_NEW)}
+                sx={{ minWidth: 150 }}
+              >
+                {LL.navigation.catalogManagement()}
+              </Button>
+            )}
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              onClick={handleAddProduct}
+              sx={{ minWidth: 150 }}
+            >
+              {LL.products.addProduct()}
+            </Button>
+          </Stack>
         </Box>
 
         {/* Filters */}
@@ -842,20 +856,44 @@ export const SellersProducts = () => {
             >
               {LL.products.startBySelling()}
             </Typography>
-            <Button
-              variant="contained"
-              size="large"
-              startIcon={<AddIcon />}
-              onClick={handleAddProduct}
-              sx={{
-                textTransform: 'none',
-                px: 4,
-                py: 1.5,
-                fontSize: '1rem',
-              }}
+            <Stack
+              direction="row"
+              spacing={2}
+              justifyContent="center"
+              flexWrap="wrap"
+              useFlexGap
             >
-              {LL.products.addFirstProduct()}
-            </Button>
+              {canManageCatalog && (
+                <Button
+                  variant="outlined"
+                  size="large"
+                  startIcon={<AddIcon />}
+                  onClick={() => navigate(SELLER_ROUTES.CATALOG_NEW)}
+                  sx={{
+                    textTransform: 'none',
+                    px: 4,
+                    py: 1.5,
+                    fontSize: '1rem',
+                  }}
+                >
+                  {LL.navigation.catalogManagement()}
+                </Button>
+              )}
+              <Button
+                variant="contained"
+                size="large"
+                startIcon={<AddIcon />}
+                onClick={handleAddProduct}
+                sx={{
+                  textTransform: 'none',
+                  px: 4,
+                  py: 1.5,
+                  fontSize: '1rem',
+                }}
+              >
+                {LL.products.addFirstProduct()}
+              </Button>
+            </Stack>
           </Box>
         )}
 

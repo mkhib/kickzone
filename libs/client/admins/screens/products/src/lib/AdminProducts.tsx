@@ -44,16 +44,21 @@ export interface AdminProductsProps {
   LayoutComponent?: LayoutComponentType;
   productsNewPath?: string;
   productsEditPath?: (id: number) => string;
+  /** Admin-only: seller listings / recommended toggles. Hidden for catalog sellers. */
+  showSellerListings?: boolean;
+  title?: string;
 }
 
 export function AdminProducts({
   LayoutComponent = AdminsLayout,
   productsNewPath = '/products/new',
   productsEditPath = (id: number) => `/products/edit/${id}`,
+  showSellerListings = true,
+  title,
 }: AdminProductsProps = {}) {
   const navigate = useNavigate();
   const { LL } = useI18nContext();
-  usePageTitle(() => LL.pageTitles.adminProducts());
+  usePageTitle(() => title || LL.pageTitles.adminProducts());
   const {
     search,
     setSearch,
@@ -187,7 +192,7 @@ export function AdminProducts({
           }}
         >
           <Typography variant="h4" sx={{ fontWeight: 600 }}>
-            {LL.navigation.products()}
+            {title || LL.navigation.products()}
           </Typography>
           <Button
             variant="contained"
@@ -531,20 +536,22 @@ export function AdminProducts({
                           </IconButton>
                         </Tooltip>
 
-                        <Tooltip title={LL.navigation.sellers()}>
-                          <IconButton
-                            size="medium"
-                            onClick={() => handleOpenListings(product)}
-                            sx={{
-                              color: 'secondary.main',
-                              '&:hover': {
-                                backgroundColor: 'secondary.50',
-                              },
-                            }}
-                          >
-                            <StorefrontIcon />
-                          </IconButton>
-                        </Tooltip>
+                        {showSellerListings && (
+                          <Tooltip title={LL.navigation.sellers()}>
+                            <IconButton
+                              size="medium"
+                              onClick={() => handleOpenListings(product)}
+                              sx={{
+                                color: 'secondary.main',
+                                '&:hover': {
+                                  backgroundColor: 'secondary.50',
+                                },
+                              }}
+                            >
+                              <StorefrontIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
 
                         {!product.archived && (
                           <Tooltip title={LL.products.archiveProduct()}>
@@ -621,12 +628,13 @@ export function AdminProducts({
                   });
               }}
             />
-            <Dialog
-              open={Boolean(listingsProduct)}
-              onClose={() => setListingsProduct(null)}
-              maxWidth="md"
-              fullWidth
-            >
+            {showSellerListings && (
+              <Dialog
+                open={Boolean(listingsProduct)}
+                onClose={() => setListingsProduct(null)}
+                maxWidth="md"
+                fullWidth
+              >
               <DialogTitle>
                 Seller listings — {listingsProduct?.name}
               </DialogTitle>
@@ -694,6 +702,7 @@ export function AdminProducts({
                 </Button>
               </DialogActions>
             </Dialog>
+            )}
           </>
         )}
       </GlassmorphismContainer>
