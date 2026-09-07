@@ -41,9 +41,13 @@ describe('ADMIN_ROUTES', () => {
       'PRODUCTS_NEW',
       'PRODUCTS_EDIT',
       'SELLERS',
+      'ORDERS',
+      'CURRENCY',
       'LOGIN',
       'UNAUTHORIZED',
       'CONTACT',
+      'TRANSLATIONS',
+      'LANGUAGE_SETTINGS',
     ];
 
     const actualKeys = Object.keys(ADMIN_ROUTES) as AdminRouteKey[];

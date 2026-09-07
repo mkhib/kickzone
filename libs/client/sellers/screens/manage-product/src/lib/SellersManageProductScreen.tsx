@@ -17,6 +17,8 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
 import Grid from '@mui/material/Grid';
 import TextField from '@mui/material/TextField';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
@@ -27,6 +29,7 @@ import {
   useLanguageContext,
   usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
+import { SellersDefineProductFlow } from './SellersDefineProductFlow';
 
 const initialFormData: KickzoneGraphqlTypes.CreateSellerProductInput = {
   productInfoId: 0,
@@ -38,8 +41,8 @@ const initialFormData: KickzoneGraphqlTypes.CreateSellerProductInput = {
 };
 
 export function SellersManageProductScreen() {
-  const { user } = useSellersAuthContext();
-  const [searchParams] = useSearchParams();
+  const { user, canManageCatalog } = useSellersAuthContext();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { showSnackbar } = useSnackbar();
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.sellerManageProduct());
@@ -52,6 +55,9 @@ export function SellersManageProductScreen() {
     useState<KickzoneGraphqlTypes.ProductInfo | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
+  const [mode, setMode] = useState<'existing' | 'define'>(() =>
+    searchParams.get('define') === '1' ? 'define' : 'existing'
+  );
 
   // Use the new hook
   const {
@@ -84,6 +90,25 @@ export function SellersManageProductScreen() {
     }
   }, [searchParams, getSellerProductById]);
 
+  useEffect(() => {
+    if (!canManageCatalog && mode === 'define') {
+      setMode('existing');
+    }
+  }, [canManageCatalog, mode]);
+
+  const handleModeChange = (
+    _: React.MouseEvent<HTMLElement>,
+    nextMode: 'existing' | 'define' | null
+  ) => {
+    if (!nextMode || isEditing) return;
+    setMode(nextMode);
+    if (nextMode === 'define') {
+      setSearchParams({ define: '1' }, { replace: true });
+    } else {
+      setSearchParams({}, { replace: true });
+    }
+  };
+
   // Handle seller product data when it's loaded
   useEffect(() => {
     if (sellerProduct && isEditing && sellerProduct.productInfo) {
@@ -110,6 +135,21 @@ export function SellersManageProductScreen() {
     setSelectedProductInfo(null);
     setIsEditing(false);
     setEditingProductId(null);
+  };
+
+  const handleCreateDefinedListings = async (
+    listings: KickzoneGraphqlTypes.CreateSellerProductInput[]
+  ) => {
+    for (const listing of listings) {
+      await createProduct(listing);
+    }
+    showSnackbar(LL.messages.listingsSaved(), {
+      severity: 'success',
+      duration: 4000,
+    });
+    resetForm();
+    setMode('existing');
+    setSearchParams({}, { replace: true });
   };
 
   const handleProductChange = (
@@ -250,6 +290,32 @@ export function SellersManageProductScreen() {
           {isEditing ? LL.products.editProduct() : LL.button.addNewProduct()}
         </Typography>
 
+        {canManageCatalog && !isEditing && (
+          <Box sx={{ mb: 3 }}>
+            <ToggleButtonGroup
+              exclusive
+              fullWidth
+              value={mode}
+              onChange={handleModeChange}
+              color="primary"
+            >
+              <ToggleButton value="existing" sx={{ textTransform: 'none' }}>
+                {LL.products.sellExistingProduct()}
+              </ToggleButton>
+              <ToggleButton value="define" sx={{ textTransform: 'none' }}>
+                {LL.products.defineNewProduct()}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Box>
+        )}
+
+        {canManageCatalog && !isEditing && mode === 'define' ? (
+          <SellersDefineProductFlow
+            onCreateListings={handleCreateDefinedListings}
+            isSubmitting={isManagementLoading}
+          />
+        ) : (
+          <>
         {(createError ||
           updateError ||
           productsError ||
@@ -857,6 +923,8 @@ export function SellersManageProductScreen() {
             </Grid>
           </Grid>
         </form>
+          </>
+        )}
       </GlassmorphismContainer>
     </SellersLayout>
   );

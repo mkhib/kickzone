@@ -12,6 +12,8 @@ export default defineConfig(() => ({
   //  plugins: [ nxViteTsPaths() ],
   // },
   test: {
+    setupFiles: ['../../../../../setupTests.ts'],
+    passWithNoTests: true,
     name: 'sizes',
     watch: false,
     globals: true,

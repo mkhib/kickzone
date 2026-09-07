@@ -9,6 +9,7 @@ export default defineConfig(() => ({
     '../../../../../../node_modules/.vite/libs/client/admins/components/footer',
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    passWithNoTests: true,
     name: 'admins-footer',
     watch: false,
     globals: true,

@@ -1006,6 +1006,26 @@ type RootTranslation = {
 		 * E​n​a​b​l​e​ ​i​f​ ​t​h​i​s​ ​i​t​e​m​ ​i​s​ ​s​o​l​d​ ​w​i​t​h​o​u​t​ ​i​t​s​ ​o​r​i​g​i​n​a​l​ ​p​a​c​k​a​g​i​n​g​ ​b​o​x
 		 */
 		boxLessHelper: string
+		/**
+		 * D​e​f​i​n​e​ ​a​ ​n​e​w​ ​p​r​o​d​u​c​t
+		 */
+		defineNewProduct: string
+		/**
+		 * S​e​l​l​ ​a​n​ ​e​x​i​s​t​i​n​g​ ​p​r​o​d​u​c​t
+		 */
+		sellExistingProduct: string
+		/**
+		 * S​e​t​ ​y​o​u​r​ ​s​t​o​c​k​ ​a​n​d​ ​p​r​i​c​e​s
+		 */
+		setYourInventory: string
+		/**
+		 * S​e​t​ ​s​t​o​c​k​ ​t​o​ ​0​ ​t​o​ ​s​k​i​p​ ​l​i​s​t​i​n​g​ ​t​h​i​s​ ​v​a​r​i​a​n​t​.
+		 */
+		skipVariantHint: string
+		/**
+		 * D​e​f​i​n​e​ ​t​h​e​ ​i​t​e​m​ ​f​i​r​s​t​,​ ​t​h​e​n​ ​e​n​t​e​r​ ​h​o​w​ ​m​a​n​y​ ​y​o​u​ ​h​a​v​e​ ​o​f​ ​e​a​c​h​ ​v​a​r​i​a​n​t​.
+		 */
+		defineProductThenStock: string
 	}
 	orders: {
 		/**
@@ -1309,6 +1329,10 @@ type RootTranslation = {
 		 * P​r​o​d​u​c​t​ ​u​p​d​a​t​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
 		 */
 		productUpdated: string
+		/**
+		 * P​r​o​d​u​c​t​ ​d​e​f​i​n​e​d​ ​a​n​d​ ​y​o​u​r​ ​s​t​o​c​k​ ​l​i​s​t​i​n​g​s​ ​w​e​r​e​ ​s​a​v​e​d
+		 */
+		listingsSaved: string
 		/**
 		 * C​a​t​e​g​o​r​y​ ​a​d​d​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
 		 */
@@ -3589,6 +3613,26 @@ export type TranslationFunctions = {
 		 * Enable if this item is sold without its original packaging box
 		 */
 		boxLessHelper: () => LocalizedString
+		/**
+		 * Define a new product
+		 */
+		defineNewProduct: () => LocalizedString
+		/**
+		 * Sell an existing product
+		 */
+		sellExistingProduct: () => LocalizedString
+		/**
+		 * Set your stock and prices
+		 */
+		setYourInventory: () => LocalizedString
+		/**
+		 * Set stock to 0 to skip listing this variant.
+		 */
+		skipVariantHint: () => LocalizedString
+		/**
+		 * Define the item first, then enter how many you have of each variant.
+		 */
+		defineProductThenStock: () => LocalizedString
 	}
 	orders: {
 		/**
@@ -3887,6 +3931,10 @@ export type TranslationFunctions = {
 		 * Product updated successfully
 		 */
 		productUpdated: () => LocalizedString
+		/**
+		 * Product defined and your stock listings were saved
+		 */
+		listingsSaved: () => LocalizedString
 		/**
 		 * Category added successfully
 		 */

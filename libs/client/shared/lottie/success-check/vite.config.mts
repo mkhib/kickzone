@@ -13,6 +13,8 @@ export default defineConfig(() => ({
   //  plugins: [ nxViteTsPaths() ],
   // },
   test: {
+    setupFiles: ['../../../../../setupTests.ts'],
+    passWithNoTests: true,
     name: 'lottie-success-check',
     watch: false,
     globals: true,

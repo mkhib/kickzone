@@ -13,6 +13,8 @@ export default defineConfig(() => ({
   //  plugins: [ nxViteTsPaths() ],
   // },
   test: {
+    setupFiles: ['../../../../../setupTests.ts'],
+    passWithNoTests: true,
     name: 'lottie-empty-cart',
     watch: false,
     globals: true,

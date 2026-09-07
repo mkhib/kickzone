@@ -2,18 +2,13 @@ import { describe, it, expect, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { AdminsGraphQLProvider } from './Provider';
-import { ApolloProviderBase } from '@kickzone-workspace/apollo-provider-base';
+import { AdminsApolloProvider } from './AdminsApolloProvider';
 
-// Mock ApolloProviderBase
-vi.mock('@kickzone-workspace/apollo-provider-base', () => ({
-  ApolloProviderBase: vi.fn(({ children }) => (
-    <div data-testid="apollo-provider-base">{children}</div>
+// Mock AdminsApolloProvider
+vi.mock('./AdminsApolloProvider', () => ({
+  AdminsApolloProvider: vi.fn(({ children }) => (
+    <div data-testid="admins-apollo-provider">{children}</div>
   )),
-}));
-
-// Mock apolloClient
-vi.mock('./client', () => ({
-  default: { mock: 'client' },
 }));
 
 describe('AdminsGraphQLProvider', () => {
@@ -27,26 +22,25 @@ describe('AdminsGraphQLProvider', () => {
     expect(getByText('Test Child')).toBeInTheDocument();
   });
 
-  it('should render ApolloProviderBase', () => {
+  it('should render AdminsApolloProvider', () => {
     const { getByTestId } = render(
       <AdminsGraphQLProvider>
         <div>Test Child</div>
       </AdminsGraphQLProvider>
     );
 
-    expect(getByTestId('apollo-provider-base')).toBeInTheDocument();
+    expect(getByTestId('admins-apollo-provider')).toBeInTheDocument();
   });
 
-  it('should pass apolloClient to ApolloProviderBase', () => {
+  it('should pass children to AdminsApolloProvider', () => {
     render(
       <AdminsGraphQLProvider>
         <div>Test Child</div>
       </AdminsGraphQLProvider>
     );
 
-    expect(vi.mocked(ApolloProviderBase)).toHaveBeenCalledWith(
+    expect(vi.mocked(AdminsApolloProvider)).toHaveBeenCalledWith(
       expect.objectContaining({
-        client: { mock: 'client' },
         children: expect.any(Object),
       }),
       undefined
@@ -73,7 +67,7 @@ describe('AdminsGraphQLProvider', () => {
     );
 
     expect(container.firstChild).toBeInTheDocument();
-    expect(vi.mocked(ApolloProviderBase)).toHaveBeenCalled();
+    expect(vi.mocked(AdminsApolloProvider)).toHaveBeenCalled();
   });
 
   it('should handle undefined children', () => {
@@ -82,6 +76,6 @@ describe('AdminsGraphQLProvider', () => {
     );
 
     expect(container.firstChild).toBeInTheDocument();
-    expect(vi.mocked(ApolloProviderBase)).toHaveBeenCalled();
+    expect(vi.mocked(AdminsApolloProvider)).toHaveBeenCalled();
   });
 });

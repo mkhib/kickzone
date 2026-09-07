@@ -1,10 +1,12 @@
 import { describe, it, expect, vi } from 'vitest';
 import React from 'react';
 
-// Mock AdminsLayout to avoid lottie-web canvas issues
-vi.mock('@kickzone-workspace/admins-layout', () => ({
-  AdminsLayout: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid="admins-layout">{children}</div>
+vi.mock('./lib/admin-seller-orders', () => ({
+  AdminSellerOrders: (_props: { children?: React.ReactNode }) => (
+    <div data-testid="admin-seller-orders">Admin Seller Orders</div>
+  ),
+  default: () => (
+    <div data-testid="admin-seller-orders-default">Admin Seller Orders</div>
   ),
 }));
 

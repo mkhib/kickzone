@@ -305,7 +305,9 @@ export const SellersProducts = () => {
               <Button
                 variant="outlined"
                 startIcon={<AddIcon />}
-                onClick={() => navigate(SELLER_ROUTES.CATALOG_NEW)}
+                onClick={() =>
+                  navigate(`${SELLER_ROUTES.MANAGE_PRODUCT}?define=1`)
+                }
                 sx={{ minWidth: 150 }}
               >
                 {LL.navigation.catalogManagement()}
@@ -868,7 +870,9 @@ export const SellersProducts = () => {
                   variant="outlined"
                   size="large"
                   startIcon={<AddIcon />}
-                  onClick={() => navigate(SELLER_ROUTES.CATALOG_NEW)}
+                  onClick={() =>
+                  navigate(`${SELLER_ROUTES.MANAGE_PRODUCT}?define=1`)
+                }
                   sx={{
                     textTransform: 'none',
                     px: 4,

@@ -275,6 +275,12 @@ const fa = {
     boxLess: 'بدون جعبه',
     boxLessHelper:
       'اگر این محصول بدون جعبه اصلی فروخته می‌شود، این گزینه را فعال کنید',
+    defineNewProduct: 'تعریف محصول جدید',
+    sellExistingProduct: 'فروش محصول موجود',
+    setYourInventory: 'موجودی و قیمت خود را وارد کنید',
+    skipVariantHint: 'برای عدم ثبت این نوع، موجودی را ۰ بگذارید.',
+    defineProductThenStock:
+      'ابتدا محصول را تعریف کنید، سپس تعداد موجودی هر نوع را وارد کنید.',
   },
 
   // Orders
@@ -385,6 +391,7 @@ const fa = {
       'سفارشات شما با موفقیت ثبت شد! کدهای پیگیری: {trackingNumbers}',
     productSaved: 'محصول با موفقیت ذخیره شد',
     productUpdated: 'محصول با موفقیت به‌روزرسانی شد',
+    listingsSaved: 'محصول تعریف شد و موجودی شما ذخیره شد',
     categoryAdded: 'دسته‌بندی با موفقیت اضافه شد',
     colorAdded: 'رنگ با موفقیت اضافه شد',
     languagePreferenceSaved:

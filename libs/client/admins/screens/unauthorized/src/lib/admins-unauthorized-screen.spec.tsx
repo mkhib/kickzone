@@ -36,6 +36,30 @@ vi.mock('@kickzone-workspace/unauthorized-path', () => ({
   ),
 }));
 
+const mockUsePageTitle = vi.fn();
+
+vi.mock('@kickzone-workspace/shared-i18n', () => ({
+  useI18nContext: () => ({
+    LL: {
+      pageTitles: {
+        unauthorized: () => 'Unauthorized',
+      },
+    },
+  }),
+  usePageTitle: (...args: unknown[]) => mockUsePageTitle(...args),
+}));
+
+vi.mock('@kickzone-workspace/shared-i18n', () => ({
+  useI18nContext: () => ({
+    LL: {
+      pageTitles: {
+        unauthorized: () => 'Unauthorized',
+      },
+    },
+  }),
+  usePageTitle: vi.fn(),
+}));
+
 describe('AdminsUnauthorizedScreen', () => {
   it('should render successfully', () => {
     render(<AdminsUnauthorizedScreen />);

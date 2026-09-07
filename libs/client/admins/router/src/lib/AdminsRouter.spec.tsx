@@ -31,9 +31,42 @@ vi.mock('@kickzone-workspace/admin-seller-management', () => ({
   ),
 }));
 
+vi.mock('@kickzone-workspace/admin-seller-orders', () => ({
+  AdminSellerOrders: () => (
+    <div data-testid="admin-seller-orders">Admin Seller Orders</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/currency-management', () => ({
+  CurrencyManagement: () => (
+    <div data-testid="currency-management">Currency Management</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/translation-management', () => ({
+  AdminTranslationManagement: () => (
+    <div data-testid="translation-management">Translation Management</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/language-components', () => ({
+  LanguageComponents: () => (
+    <div data-testid="language-components">Language Components</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/admins-layout', () => ({
+  AdminsLayout: ({ children }: { children?: React.ReactNode }) => (
+    <div data-testid="admins-layout">{children}</div>
+  ),
+}));
+
 // Mock the private route component
 vi.mock('@kickzone-workspace/private-route', () => ({
-  createPrivateRoute: (acceptedRoles: string[], user: any) => {
+  createPrivateRoute: (
+    acceptedRoles: string[],
+    user: { role?: string | null } | null | undefined
+  ) => {
     return function MockPrivateRoute() {
       if (!user) {
         return <div data-testid="navigate-to-login">Navigate to Login</div>;
@@ -125,6 +158,14 @@ describe('AdminsRouter', () => {
       renderWithRouter(['/sellers']);
       expect(screen.getByTestId('navigate-to-login')).toBeInTheDocument();
     });
+
+    it('should redirect to login for /orders, /currency, and /translations', () => {
+      ['/orders', '/currency', '/translations'].forEach((route) => {
+        const { unmount } = renderWithRouter([route]);
+        expect(screen.getByTestId('navigate-to-login')).toBeInTheDocument();
+        unmount();
+      });
+    });
   });
 
   describe('when admin is authenticated with ADMIN role', () => {
@@ -177,6 +218,11 @@ describe('AdminsRouter', () => {
     it('should still render unauthorized screen for /unauthorized route even when authenticated', () => {
       renderWithRouter(['/unauthorized']);
       expect(screen.getByTestId('admins-unauthorized')).toBeInTheDocument();
+    });
+
+    it('should render language settings route', () => {
+      renderWithRouter(['/language-settings']);
+      expect(screen.getByTestId('language-components')).toBeInTheDocument();
     });
   });
 

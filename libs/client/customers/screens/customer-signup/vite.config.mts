@@ -10,6 +10,7 @@ export default defineConfig({
   // @ts-expect-error - Vite plugin type mismatch between vite and vitest
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    passWithNoTests: true,
     watch: false,
     globals: true,
     environment: 'jsdom',

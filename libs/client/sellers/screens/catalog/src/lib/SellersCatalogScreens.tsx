@@ -6,7 +6,7 @@ import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
-import { Navigate, Outlet } from 'react-router-dom';
+import { Navigate, Outlet, useParams } from 'react-router-dom';
 
 export function SellersCatalogRoute() {
   const { canManageCatalog, sellerInfoLoading } = useSellersAuthContext();
@@ -39,7 +39,7 @@ export function SellersCatalogProducts() {
   return (
     <AdminProducts
       LayoutComponent={SellersLayout}
-      productsNewPath={SELLER_ROUTES.CATALOG_NEW}
+      productsNewPath={`${SELLER_ROUTES.MANAGE_PRODUCT}?define=1`}
       productsEditPath={(id) =>
         SELLER_ROUTES.CATALOG_EDIT.replace(':id', String(id))
       }
@@ -50,5 +50,13 @@ export function SellersCatalogProducts() {
 }
 
 export function SellersCatalogEditor() {
+  const { id } = useParams<{ id?: string }>();
+
+  if (!id) {
+    return (
+      <Navigate to={`${SELLER_ROUTES.MANAGE_PRODUCT}?define=1`} replace />
+    );
+  }
+
   return <AdminProductEditor LayoutComponent={SellersLayout} />;
 }

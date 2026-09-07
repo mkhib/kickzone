@@ -70,6 +70,9 @@ describe('useAdminsSellersQuery', () => {
 
     expect(useQuery).toHaveBeenCalledWith('GET_SELLERS', {
       variables: { filter: { isActive: true } },
+      fetchPolicy: 'cache-and-network',
+      errorPolicy: 'all',
+      notifyOnNetworkStatusChange: true,
     });
   });
 
@@ -86,6 +89,9 @@ describe('useAdminsSellersQuery', () => {
 
     expect(useQuery).toHaveBeenCalledWith('GET_SELLERS', {
       variables: { filter: customFilter },
+      fetchPolicy: 'cache-and-network',
+      errorPolicy: 'all',
+      notifyOnNetworkStatusChange: true,
     });
   });
 

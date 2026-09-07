@@ -9,6 +9,8 @@ export default defineConfig({
     '../../../../../node_modules/.vite/libs/client/sellers/screens/catalog',
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    setupFiles: ['../../../../../setupTests.ts'],
+    passWithNoTests: true,
     watch: false,
     globals: true,
     environment: 'jsdom',

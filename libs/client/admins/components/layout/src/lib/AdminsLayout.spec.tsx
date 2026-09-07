@@ -3,7 +3,6 @@ import { AdminsLayout } from './AdminsLayout';
 import { vi } from 'vitest';
 import '@testing-library/jest-dom';
 
-// Mock the layout component
 vi.mock('@kickzone-workspace/layout', () => ({
   Layout: ({
     header,
@@ -23,11 +22,14 @@ vi.mock('@kickzone-workspace/layout', () => ({
   ILayoutProps: {},
 }));
 
-// Mock the headerbar component
 vi.mock('@kickzone-workspace/admins-headerbar', () => ({
   AdminsHeaderbar: () => (
     <div data-testid="admins-headerbar">Admin Headerbar</div>
   ),
+}));
+
+vi.mock('@kickzone-workspace/admins-footer', () => ({
+  AdminsFooter: () => <div data-testid="admins-footer">Admins Footer</div>,
 }));
 
 describe('AdminsLayout', () => {
@@ -63,20 +65,15 @@ describe('AdminsLayout', () => {
     expect(screen.getByText('Admin Headerbar')).toBeInTheDocument();
   });
 
-  it('should render footer with correct styling', () => {
+  it('should render AdminsFooter in footer', () => {
     render(
       <AdminsLayout>
         <div>Test Content</div>
       </AdminsLayout>
     );
 
-    const footer = screen.getByTestId('footer');
-    expect(footer).toBeInTheDocument();
-    expect(footer).toHaveTextContent('Footer');
-
-    // Check if the footer div has the red background style
-    const footerDiv = footer.querySelector('div');
-    expect(footerDiv).toHaveStyle('background-color: rgb(255, 0, 0)');
+    expect(screen.getByTestId('admins-footer')).toBeInTheDocument();
+    expect(screen.getByText('Admins Footer')).toBeInTheDocument();
   });
 
   it('should pass all props to Layout component', () => {

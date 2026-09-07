@@ -9,6 +9,7 @@ export default defineConfig(() => ({
     '../../../../../../node_modules/.vite/libs/client/sellers/components/footer',
   plugins: [react(), nxViteTsPaths(), nxCopyAssetsPlugin(['*.md'])],
   test: {
+    passWithNoTests: true,
     name: 'sellers-footer',
     watch: false,
     globals: true,

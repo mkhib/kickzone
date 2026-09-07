@@ -637,15 +637,39 @@ const DeleteColorModal = ({
 
 type LayoutComponentType = React.ComponentType<{ children: React.ReactNode }>;
 
+export type CreatedCatalogProduct = {
+  product: { id: number; name: string };
+  productInfos: Array<{
+    id: number;
+    size: string;
+    weight: number;
+    color?: {
+      id: number;
+      name: string;
+      hexCode: string;
+    } | null;
+  }>;
+};
+
 export interface AdminProductEditorProps {
   LayoutComponent?: LayoutComponentType;
+  /** Render without page chrome so it can be nested in another screen. */
+  embedded?: boolean;
+  /** After a new catalog product is created, call this instead of resetting the form. */
+  onCreated?: (result: CreatedCatalogProduct) => void;
 }
 
 export function AdminProductEditor({
   LayoutComponent = AdminsLayout,
+  embedded = false,
+  onCreated,
 }: AdminProductEditorProps = {}) {
   const { LL } = useI18nContext();
-  usePageTitle(() => LL.pageTitles.adminProductEditor());
+  usePageTitle(() =>
+    embedded
+      ? LL.pageTitles.sellerManageProduct()
+      : LL.pageTitles.adminProductEditor()
+  );
   const { id } = useParams<{ id?: string }>();
   const productIdNum = id ? Number(id) : undefined;
   const { product: loadedProduct } = useProductById(productIdNum);
@@ -909,6 +933,13 @@ export function AdminProductEditor({
             }))
           );
           showSnackbar('Product created successfully', { severity: 'success' });
+          if (onCreated) {
+            onCreated({
+              product: created.product,
+              productInfos: created.productInfos,
+            });
+            return;
+          }
           // Reset form to initial state
           setProduct({
             name: '',
@@ -948,6 +979,7 @@ export function AdminProductEditor({
       updateProduct,
       showSnackbar,
       productIdNum,
+      onCreated,
     ]
   );
 
@@ -1165,16 +1197,17 @@ export function AdminProductEditor({
     [productInfos, uploadProductInfoImages, showSnackbar]
   );
 
-  return (
-    <LayoutComponent>
-      <GlassmorphismContainer>
+  const formAndTitle = (
+    <>
+      {!embedded && (
         <Typography
           variant="h5"
           sx={{ mb: 3, color: theme.palette.text.primary }}
         >
           {productIdNum ? LL.products.editProduct() : LL.products.addProduct()}
         </Typography>
-        <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
+      )}
+      <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
           <Grid container spacing={3} sx={{ height: '100%' }}>
             {/* Left Side - Basic Product Info */}
             <Grid
@@ -1456,7 +1489,11 @@ export function AdminProductEditor({
             </Grid>
           </Grid>
         </form>
-      </GlassmorphismContainer>
+    </>
+  );
+
+  const modals = (
+    <>
       <CategoryModal
         open={isNewCategoryModalOpen}
         onClose={() => setIsNewCategoryModalOpen(false)}
@@ -1551,6 +1588,22 @@ export function AdminProductEditor({
         isLoading={colorMutationsLoading}
         LL={LL}
       />
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <>
+        {formAndTitle}
+        {modals}
+      </>
+    );
+  }
+
+  return (
+    <LayoutComponent>
+      <GlassmorphismContainer>{formAndTitle}</GlassmorphismContainer>
+      {modals}
     </LayoutComponent>
   );
 }

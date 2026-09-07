@@ -32,7 +32,7 @@ const TestComponent = () => {
             id: '2',
             name: 'Jane',
             email: 'jane@test.com',
-            role: 'admin',
+            role: 'ADMIN',
           })
         }
       >
@@ -90,7 +90,7 @@ describe('AdminsAuthContext', () => {
       id: '1',
       name: 'John',
       email: 'john@test.com',
-      role: 'admin',
+      role: 'ADMIN',
     };
     localStorageMock['admin_user'] = JSON.stringify(savedAdmin);
     mockUseQuery.mockReturnValue({ loading: false, data: null, error: null });
@@ -112,7 +112,7 @@ describe('AdminsAuthContext', () => {
       id: '1',
       name: 'Test Admin',
       email: 'admin@test.com',
-      role: 'admin',
+      role: 'ADMIN',
     };
     mockUseQuery.mockReturnValue({
       loading: false,
@@ -144,7 +144,7 @@ describe('AdminsAuthContext', () => {
       id: '1',
       name: 'John',
       email: 'john@test.com',
-      role: 'admin',
+      role: 'ADMIN',
     });
     mockUseQuery.mockReturnValue({
       loading: false,
@@ -168,7 +168,7 @@ describe('AdminsAuthContext', () => {
       id: '1',
       name: 'Test Admin',
       email: 'admin@test.com',
-      role: 'admin',
+      role: 'ADMIN',
     };
     mockUseQuery.mockReturnValue({
       loading: false,
@@ -201,12 +201,12 @@ describe('AdminsAuthContext', () => {
   it('should handle logout errors gracefully', async () => {
     const consoleErrorSpy = vi
       .spyOn(console, 'error')
-      .mockImplementation(() => {});
+      .mockImplementation(() => undefined);
     const adminData = {
       id: '1',
       name: 'Test Admin',
       email: 'admin@test.com',
-      role: 'admin',
+      role: 'ADMIN',
     };
     mockUseQuery.mockReturnValue({
       loading: false,
@@ -242,7 +242,7 @@ describe('AdminsAuthContext', () => {
     // Suppress console.error for this test
     const consoleErrorSpy = vi
       .spyOn(console, 'error')
-      .mockImplementation(() => {});
+      .mockImplementation(() => undefined);
 
     expect(() => {
       render(<TestComponent />);

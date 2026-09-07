@@ -130,9 +130,9 @@ describe('useAdminLogin', () => {
   });
 
   it('should handle login error gracefully', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {
-      // Mock implementation
-    });
+    const consoleSpy = vi
+      .spyOn(console, 'error')
+      .mockImplementation(() => undefined);
     const loginError = new Error('Login failed');
 
     mockLogin.mockRejectedValue(loginError);

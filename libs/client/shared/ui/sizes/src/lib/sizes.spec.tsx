@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import Sizes from './sizes';
+import { Sizes } from './sizes.tsx';
 
 describe('Sizes', () => {
   it('should render successfully', () => {

@@ -1,16 +1,22 @@
 import { render } from '@testing-library/react';
-import { ThemeProvider } from '@kickzone-workspace/shared-i18n';
+import {
+  LanguageProvider,
+  RTLThemeProvider,
+} from '@kickzone-workspace/shared-i18n';
+import { vi } from 'vitest';
 
 import StyledDrawer from './styled-drawer';
 
 describe('StyledDrawer', () => {
   it('should render successfully', () => {
     const { baseElement } = render(
-      <ThemeProvider>
-        <StyledDrawer open={true} onClose={() => {}}>
+      <LanguageProvider>
+        <RTLThemeProvider>
+          <StyledDrawer open={true} onClose={vi.fn()}>
           <div>Test content</div>
-        </StyledDrawer>
-      </ThemeProvider>
+          </StyledDrawer>
+        </RTLThemeProvider>
+      </LanguageProvider>
     );
     expect(baseElement).toBeTruthy();
   });

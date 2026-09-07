@@ -275,6 +275,12 @@ const en = {
     boxLess: 'Without box',
     boxLessHelper:
       'Enable if this item is sold without its original packaging box',
+    defineNewProduct: 'Define a new product',
+    sellExistingProduct: 'Sell an existing product',
+    setYourInventory: 'Set your stock and prices',
+    skipVariantHint: 'Set stock to 0 to skip listing this variant.',
+    defineProductThenStock:
+      'Define the item first, then enter how many you have of each variant.',
   },
 
   // Orders
@@ -384,6 +390,7 @@ const en = {
       'Your orders have been placed successfully! Tracking numbers: {trackingNumbers}',
     productSaved: 'Product saved successfully',
     productUpdated: 'Product updated successfully',
+    listingsSaved: 'Product defined and your stock listings were saved',
     categoryAdded: 'Category added successfully',
     colorAdded: 'Color added successfully',
     languagePreferenceSaved:

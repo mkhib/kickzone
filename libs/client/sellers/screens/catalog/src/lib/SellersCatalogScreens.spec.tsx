@@ -94,14 +94,32 @@ describe('SellersCatalogScreens', () => {
 
     expect(screen.getByTestId('admin-products')).toBeInTheDocument();
     expect(screen.getByText('Catalog Management')).toBeInTheDocument();
-    expect(screen.getByText('/catalog/new')).toBeInTheDocument();
+    expect(screen.getByText('/manage-product?define=1')).toBeInTheDocument();
     expect(screen.getByText('false')).toBeInTheDocument();
   });
 
-  it('reuses the admin product editor', () => {
+  it('sends new catalog products to manage-product define flow', () => {
     render(
-      <MemoryRouter>
-        <SellersCatalogEditor />
+      <MemoryRouter initialEntries={['/catalog/new']}>
+        <Routes>
+          <Route path="/catalog/new" element={<SellersCatalogEditor />} />
+          <Route path="/manage-product" element={<div>manage-product</div>} />
+        </Routes>
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('manage-product')).toBeInTheDocument();
+  });
+
+  it('reuses the admin product editor when editing', () => {
+    render(
+      <MemoryRouter initialEntries={['/catalog/edit/3']}>
+        <Routes>
+          <Route
+            path="/catalog/edit/:id"
+            element={<SellersCatalogEditor />}
+          />
+        </Routes>
       </MemoryRouter>
     );
 

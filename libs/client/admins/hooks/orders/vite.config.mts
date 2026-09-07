@@ -19,6 +19,8 @@ export default mergeConfig(
   }),
   defineVitestConfig({
     test: {
+    setupFiles: ['../../../../../setupTests.ts'],
+    passWithNoTests: true,
       watch: false,
       globals: true,
       environment: 'jsdom',

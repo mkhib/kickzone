@@ -1,6 +1,6 @@
 import { render } from '@testing-library/react';
 
-import ShippingValidation from './shipping-validation';
+import { ShippingValidation } from './shipping-validation.tsx';
 
 describe('ShippingValidation', () => {
   it('should render successfully', () => {

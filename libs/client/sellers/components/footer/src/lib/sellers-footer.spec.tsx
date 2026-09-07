@@ -6,7 +6,9 @@ import { BrowserRouter } from 'react-router-dom';
 
 // Mock the i18n context
 vi.mock('@kickzone-workspace/shared-i18n', async () => {
-  const actual = await vi.importActual<typeof import('@kickzone-workspace/shared-i18n')>('@kickzone-workspace/shared-i18n');
+  const actual = await vi.importActual<
+    typeof import('@kickzone-workspace/shared-i18n')
+  >('@kickzone-workspace/shared-i18n');
   return {
     ...actual,
     useI18nContext: () => ({
@@ -14,20 +16,23 @@ vi.mock('@kickzone-workspace/shared-i18n', async () => {
         appNames: {
           siteName: () => actual.SITE_NAME,
         },
-      navigation: {
-        sellersPortal: () => 'Sellers Portal',
-        languageSettings: () => 'Language Settings',
+        navigation: {
+          sellersPortal: () => 'Sellers Portal',
+          languageSettings: () => 'Language Settings',
+        },
+        form: {
+          currentLanguage: () => 'Current Language',
+        },
       },
-      form: {
-        currentLanguage: () => 'Current Language',
-      },
-    },
-  }),
-  useLanguageContext: () => ({
-    currentLocale: 'en',
-    availableLocales: [{ code: 'en', name: 'English', nativeName: 'English' }],
-  }),
-}));
+    }),
+    useLanguageContext: () => ({
+      currentLocale: 'en',
+      availableLocales: [
+        { code: 'en', name: 'English', nativeName: 'English' },
+      ],
+    }),
+  };
+});
 
 test('renders SellersFooter', () => {
   const { container } = render(
