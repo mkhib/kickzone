@@ -1,5 +1,6 @@
 import React from 'react';
 import { describe, it, expect, vi } from 'vitest';
+import * as exports from './index';
 
 vi.mock('./lib/SellerManagement', () => ({
   SellerManagement: (_props: { children?: React.ReactNode }) => (
@@ -9,8 +10,6 @@ vi.mock('./lib/SellerManagement', () => ({
     <div data-testid="seller-management-default">Seller Management</div>
   ),
 }));
-
-import * as exports from './index';
 
 describe('seller-management exports', () => {
   it('should export SellerManagement', () => {

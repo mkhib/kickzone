@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 import { vi } from 'vitest';
+import { DataTable } from './material-data-table';
 
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
   useLanguageContext: () => ({ isRTL: false, currentLocale: 'en' }),
@@ -18,8 +19,6 @@ vi.mock('material-react-table/locales/fa', () => ({
 vi.mock('material-react-table/locales/en', () => ({
   MRT_Localization_EN: {},
 }));
-
-import { DataTable } from './material-data-table';
 
 describe('DataTable', () => {
   it('should render successfully', () => {

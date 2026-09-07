@@ -20,14 +20,11 @@ vi.mock('@kickzone-workspace/customers-auth-hooks', () => ({
   useCustomersRegister: () => mockUseCustomersRegister(),
 }));
 
-// Mock the UI store
-const mockAddToast = vi.fn();
-type UIStoreState = { addToast: typeof mockAddToast };
-vi.mock('@kickzone-workspace/shared-ui-store', () => ({
-  useUIStore: (selector?: (state: UIStoreState) => unknown) => {
-    const store: UIStoreState = { addToast: mockAddToast };
-    return selector ? selector(store) : store;
-  },
+const mockShowSnackbar = vi.fn();
+vi.mock('@kickzone-workspace/snackbar-hook', () => ({
+  useSnackbar: () => ({
+    showSnackbar: mockShowSnackbar,
+  }),
 }));
 
 // Mock the error message utility
@@ -44,6 +41,9 @@ vi.mock('@kickzone-workspace/translations', () => ({
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
   useI18nContext: () => ({
     LL: {
+      pageTitles: {
+        signup: () => 'Sign Up',
+      },
       authorization: {
         createAccount: () => 'Create Account',
         signIn: () => 'Sign In',
@@ -71,6 +71,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
       },
     },
   }),
+  usePageTitle: vi.fn(),
 }));
 
 // Mock the colors
@@ -235,12 +236,11 @@ describe('CustomerSignup', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddToast).toHaveBeenCalledWith({
-        type: 'success',
-        title: 'Sign Up',
-        message: 'Registration successful! Welcome to SAINTBALA.',
-      });
-      expect(mockNavigate).toHaveBeenCalledWith('/home');
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'Registration successful! Welcome to SAINTBALA.',
+        { severity: 'success' }
+      );
+      expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true });
     });
   });
 
@@ -266,12 +266,10 @@ describe('CustomerSignup', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message:
-          'This email is already registered. Please use a different email or try logging in.',
-      });
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'This email is already registered. Please use a different email or try logging in.',
+        { severity: 'error' }
+      );
     });
   });
 
@@ -297,11 +295,10 @@ describe('CustomerSignup', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'Some unexpected server error',
-      });
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'Some unexpected server error',
+        { severity: 'error' }
+      );
     });
   });
 
@@ -313,9 +310,9 @@ describe('CustomerSignup', () => {
 
     renderComponent();
 
-    const submitButton = screen.getByRole('button');
+    const submitButton = screen.getByRole('button', { name: 'Create Account' });
     expect(submitButton).toBeDisabled();
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Create Account' })).toBeInTheDocument();
   });
 
   it('should have link to login page', () => {

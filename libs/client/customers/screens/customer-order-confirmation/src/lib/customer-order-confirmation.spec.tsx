@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 import { vi } from 'vitest';
+import CustomerOrderConfirmation from './customer-order-confirmation';
 
 vi.mock('@kickzone-workspace/customers-layout', () => ({
   CustomersLayout: ({ children }: { children: React.ReactNode }) => (
@@ -56,8 +57,6 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
   }),
   usePageTitle: vi.fn(),
 }));
-
-import CustomerOrderConfirmation from './customer-order-confirmation';
 
 const orderData = {
   id: '1',

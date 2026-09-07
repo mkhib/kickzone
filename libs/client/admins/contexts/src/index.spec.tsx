@@ -1,3 +1,4 @@
+import * as exports from './index';
 import { describe, it, expect, vi } from 'vitest';
 
 // Mock Apollo Client
@@ -11,8 +12,6 @@ vi.mock('@kickzone-workspace/admins-graphql', () => ({
   ME_QUERY: 'ME_QUERY',
   LOGOUT_MUTATION: 'LOGOUT_MUTATION',
 }));
-
-import * as exports from './index';
 
 describe('admins-contexts exports', () => {
   it('should export AdminsAuthProvider', () => {

@@ -20,14 +20,11 @@ vi.mock('@kickzone-workspace/customers-auth-hooks', () => ({
   useCustomersForgotPassword: () => mockUseCustomersForgotPassword(),
 }));
 
-// Mock the UI store
-const mockAddToast = vi.fn();
-type UIStoreState = { addToast: typeof mockAddToast };
-vi.mock('@kickzone-workspace/shared-ui-store', () => ({
-  useUIStore: (selector?: (state: UIStoreState) => unknown) => {
-    const store: UIStoreState = { addToast: mockAddToast };
-    return selector ? selector(store) : store;
-  },
+const mockShowSnackbar = vi.fn();
+vi.mock('@kickzone-workspace/snackbar-hook', () => ({
+  useSnackbar: () => ({
+    showSnackbar: mockShowSnackbar,
+  }),
 }));
 
 // Mock the error message utility
@@ -44,6 +41,9 @@ vi.mock('@kickzone-workspace/translations', () => ({
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
   useI18nContext: () => ({
     LL: {
+      pageTitles: {
+        forgotPassword: () => 'Forgot Password',
+      },
       authorization: {
         resetYourPassword: () => 'Reset Your Password',
         enterEmailForReset: () =>
@@ -70,6 +70,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
       },
     },
   }),
+  usePageTitle: vi.fn(),
 }));
 
 // Mock the colors
@@ -197,11 +198,10 @@ describe('CustomerForgotPassword', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddToast).toHaveBeenCalledWith({
-        type: 'success',
-        title: 'Forgot Password',
-        message: 'Reset link sent! Check your email.',
-      });
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'Reset link sent! Check your email.',
+        { severity: 'success' }
+      );
     });
   });
 
@@ -238,11 +238,10 @@ describe('CustomerForgotPassword', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'User not found. Please check your email address.',
-      });
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'User not found. Please check your email address.',
+        { severity: 'error' }
+      );
     });
   });
 
@@ -261,11 +260,10 @@ describe('CustomerForgotPassword', () => {
     fireEvent.click(submitButton);
 
     await waitFor(() => {
-      expect(mockAddToast).toHaveBeenCalledWith({
-        type: 'error',
-        title: 'Error',
-        message: 'Some unexpected database error',
-      });
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'Some unexpected database error',
+        { severity: 'error' }
+      );
     });
   });
 
@@ -310,10 +308,9 @@ describe('CustomerForgotPassword', () => {
 
     renderComponent();
 
-    // When loading, button content changes to circular progress
-    const submitButton = screen.getByRole('button', { name: '' });
+    const submitButton = screen.getByRole('button', { name: 'Send Reset Link' });
     expect(submitButton).toBeDisabled();
-    expect(screen.getByRole('progressbar')).toBeInTheDocument();
+    expect(screen.getByRole('progressbar', { name: 'Send Reset Link' })).toBeInTheDocument();
   });
 
   it('should have link to login page', () => {

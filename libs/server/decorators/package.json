@@ -6,6 +6,8 @@
   "main": "./src/index.js",
   "types": "./src/index.d.ts",
   "dependencies": {
+    "@nestjs/common": "^10.0.2",
+    "@nestjs/graphql": "^13.0.2",
     "tslib": "^2.3.0"
   }
 }

@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import * as exports from './index';
 import React from 'react';
 
 vi.mock('./lib/admin-seller-orders', () => ({
@@ -9,8 +10,6 @@ vi.mock('./lib/admin-seller-orders', () => ({
     <div data-testid="admin-seller-orders-default">Admin Seller Orders</div>
   ),
 }));
-
-import * as exports from './index';
 
 describe('admin-seller-orders exports', () => {
   it('should export AdminSellerOrders', () => {

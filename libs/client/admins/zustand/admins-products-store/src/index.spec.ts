@@ -1,10 +1,9 @@
 import { describe, it, expect, vi } from 'vitest';
+import * as exports from './index';
 
 // Mock URL.createObjectURL and revokeObjectURL
 global.URL.createObjectURL = vi.fn(() => 'blob:mock-url');
 global.URL.revokeObjectURL = vi.fn();
-
-import * as exports from './index';
 
 describe('admins-products-store exports', () => {
   it('should export useAdminsProductsStore', () => {

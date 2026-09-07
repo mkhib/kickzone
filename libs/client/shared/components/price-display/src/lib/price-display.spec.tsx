@@ -1,6 +1,7 @@
 import { render } from '@testing-library/react';
 import { LanguageProvider } from '@kickzone-workspace/shared-i18n';
 import { vi } from 'vitest';
+import PriceDisplay from './price-display';
 
 vi.mock('@kickzone-workspace/currency-hook', () => ({
   useCurrencyForLocale: () => ({
@@ -15,8 +16,6 @@ vi.mock('@kickzone-workspace/currency-hook', () => ({
     loading: false,
   }),
 }));
-
-import PriceDisplay from './price-display';
 
 describe('PriceDisplay', () => {
   it('should render successfully', () => {

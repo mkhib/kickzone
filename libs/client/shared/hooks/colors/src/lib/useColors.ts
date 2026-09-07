@@ -53,7 +53,7 @@ export function useColors() {
   const createColor = async (
     name: string,
     hexCode: string,
-    sortOrder: number = 0
+    sortOrder = 0
   ) => {
     const response = await createColorMutation({
       variables: { input: { hexCode, sortOrder }, name },
@@ -100,7 +100,7 @@ export function useColors() {
     locale: string,
     fieldName: string,
     value: string,
-    isAutoTranslated: boolean = false
+    isAutoTranslated = false
   ) =>
     setTranslationMutation({
       variables: {

@@ -1,86 +1,158 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
-import { AdminSellerOrders } from './admin-seller-orders';
-import { vi } from 'vitest';
 import '@testing-library/jest-dom';
+import { render, screen } from '@testing-library/react';
+import { describe, expect, it, vi } from 'vitest';
+import { AdminSellerOrders } from './admin-seller-orders';
 
-// Mock the AdminsLayout component
 vi.mock('@kickzone-workspace/admins-layout', () => ({
-  AdminsLayout: ({ children }: { children: React.ReactNode }) =>
-    React.createElement('div', { 'data-testid': 'admins-layout' }, children),
+  AdminsLayout: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="admins-layout">{children}</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/glassmorphism-container', () => ({
+  GlassmorphismContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="glassmorphism-container">{children}</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/language-components', () => ({
+  DialogFormContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="dialog-form-content">{children}</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/shared-i18n', () => ({
+  useI18nContext: () => ({
+    LL: {
+      pageTitles: {
+        adminOrders: () => 'Seller Orders',
+      },
+      orders: {
+        allSellerOrders: () => 'All Seller Orders',
+        orderNumber: () => 'Order Number',
+        tracking: () => 'Tracking',
+        customer: () => 'Customer',
+        email: () => 'Email',
+        actions: () => 'Actions',
+        changeStatus: () => 'Change Status',
+        errorLoadingOrders: () => 'Error loading orders',
+        orderDetails: () => 'Order Details',
+        customerInformation: () => 'Customer Information',
+        orderSummary: () => 'Order Summary',
+        orderItems: () => 'Order Items',
+        pending: () => 'Pending',
+        confirmed: () => 'Confirmed',
+        processing: () => 'Processing',
+        shipped: () => 'Shipped',
+        delivered: () => 'Delivered',
+        cancelled: () => 'Cancelled',
+        refunded: () => 'Refunded',
+        changeOrderStatus: () => 'Change Order Status',
+        orderDate: () => 'Order Date',
+      },
+      form: {
+        status: () => 'Status',
+        fullName: () => 'Full Name',
+        email: () => 'Email',
+        phone: () => 'Phone',
+        address: () => 'Address',
+        city: () => 'City',
+        country: () => 'Country',
+        notes: () => 'Notes',
+        newStatus: () => 'New Status',
+      },
+      checkout: {
+        total: () => 'Total',
+        subtotal: () => 'Subtotal',
+        shipping: () => 'Shipping',
+      },
+      table: {
+        product: () => 'Product',
+        quantity: () => 'Quantity',
+        unitPrice: () => 'Unit Price',
+        total: () => 'Total',
+      },
+      products: {
+        variant: () => 'Variant',
+      },
+      button: {
+        cancel: () => 'Cancel',
+        updateStatus: () => 'Update Status',
+      },
+    },
+  }),
+  useLanguageContext: () => ({
+    isRTL: false,
+    currentLocale: 'en',
+  }),
+  usePageTitle: vi.fn(),
+}));
+
+vi.mock('@kickzone-workspace/material-data-table', () => ({
+  DataTable: ({ data }: { data: unknown[] }) => (
+    <div data-testid="orders-table">rows:{data.length}</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/price-display', () => ({
+  PriceDisplay: ({ priceInUSD }: { priceInUSD: number }) => (
+    <span>{priceInUSD}</span>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/admins-orders-hook', () => ({
+  useAdminsOrders: () => ({
+    orders: [
+      {
+        id: 'order-1',
+        orderNumber: 'ORD-1',
+        trackingNumber: 'TRK-1',
+        customerName: 'Jane Customer',
+        customerEmail: 'jane@example.com',
+        customerPhone: '123456789',
+        shippingAddress: '123 Test St',
+        city: 'Tehran',
+        state: 'Tehran',
+        zipCode: '12345',
+        country: 'Iran',
+        status: 'Pending',
+        subtotal: 80,
+        shippingCost: 10,
+        total: 90,
+        sellerId: 1,
+        createdAt: '2026-09-08T00:00:00.000Z',
+        notes: '',
+        items: [
+          {
+            productName: 'Test Product',
+            quantity: 1,
+            unitPrice: 80,
+            totalPrice: 80,
+          },
+        ],
+      },
+    ],
+    loading: false,
+    error: undefined,
+    updateOrderStatus: vi.fn(),
+    updateStatusLoading: false,
+  }),
+  useAdminsSellers: () => ({
+    loading: false,
+  }),
+}));
+
+vi.mock('@kickzone-workspace/order-status-chip', () => ({
+  OrderStatusChip: ({ status }: { status: string }) => <span>{status}</span>,
 }));
 
 describe('AdminSellerOrders', () => {
-  it('should render successfully', () => {
+  it('renders a minimal smoke view', () => {
     render(<AdminSellerOrders />);
-    expect(screen.getByText('All Seller Orders')).toBeInTheDocument();
-  });
 
-  it('should render the page title', () => {
-    render(<AdminSellerOrders />);
-    const title = screen.getByText('All Seller Orders');
-    expect(title).toBeInTheDocument();
-    expect(title.tagName).toBe('H4');
-  });
-
-  it('should render the description text', () => {
-    render(<AdminSellerOrders />);
-    const description = screen.getByText(
-      /Admin seller orders screen with filtering capabilities will be implemented here./i
-    );
-    expect(description).toBeInTheDocument();
-  });
-
-  it('should render within AdminsLayout', () => {
-    render(<AdminSellerOrders />);
     expect(screen.getByTestId('admins-layout')).toBeInTheDocument();
-  });
-
-  it('should apply correct padding to the content box', () => {
-    const { container } = render(<AdminSellerOrders />);
-    const contentBox = container.querySelector('[class*="MuiBox"]');
-    expect(contentBox).toBeInTheDocument();
-  });
-
-  it('should render all text content correctly', () => {
-    render(<AdminSellerOrders />);
-
-    // Check main heading
     expect(screen.getByText('All Seller Orders')).toBeInTheDocument();
-
-    // Check description
-    expect(
-      screen.getByText(
-        'Admin seller orders screen with filtering capabilities will be implemented here.'
-      )
-    ).toBeInTheDocument();
-  });
-
-  it('should have correct document structure', () => {
-    const { container } = render(<AdminSellerOrders />);
-
-    // Verify the component renders without errors
-    expect(container.firstChild).toBeTruthy();
-  });
-
-  it('should render Typography components with correct variants', () => {
-    const { container } = render(<AdminSellerOrders />);
-
-    // Check h4 variant for title
-    const h4Element = container.querySelector('h4');
-    expect(h4Element).toHaveTextContent('All Seller Orders');
-
-    // Check body1 variant for description
-    const bodyElement = container.querySelector('p');
-    expect(bodyElement).toHaveTextContent(
-      'Admin seller orders screen with filtering capabilities will be implemented here.'
-    );
-  });
-
-  it('should render content inside a Box component', () => {
-    const { container } = render(<AdminSellerOrders />);
-    const boxElement = container.querySelector('[class*="MuiBox"]');
-    expect(boxElement).toBeInTheDocument();
-    expect(boxElement).toContainElement(screen.getByText('All Seller Orders'));
+    expect(screen.getByTestId('orders-table')).toHaveTextContent('rows:1');
   });
 });
