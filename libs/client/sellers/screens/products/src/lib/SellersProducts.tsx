@@ -822,26 +822,34 @@ export const SellersProducts = () => {
         {/* Empty State */}
         {sellersProducts.length === 0 && !isSellersProductsLoading && (
           <Box
-            sx={{
-              textAlign: 'center',
-              py: 10,
-              px: 3,
-              backgroundColor: '#f9fafb',
-              borderRadius: 3,
-              border: '2px dashed #e0e0e0',
+            sx={(theme) => {
+              const isDark = theme.palette.mode === 'dark';
+              return {
+                textAlign: 'center',
+                py: 10,
+                px: 3,
+                backgroundColor: isDark
+                  ? 'transparent'
+                  : theme.palette.action.hover,
+                borderRadius: 3,
+                border: `2px dashed ${theme.palette.divider}`,
+              };
             }}
           >
             <Box
-              sx={{
+              sx={(theme) => ({
                 width: 120,
                 height: 120,
                 margin: '0 auto 24px',
-                backgroundColor: '#e3f2fd',
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(197, 184, 154, 0.12)'
+                    : 'rgba(143, 132, 104, 0.12)',
                 borderRadius: '50%',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-              }}
+              })}
             >
               <AddIcon sx={{ fontSize: 60, color: 'primary.main' }} />
             </Box>

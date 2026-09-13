@@ -46,11 +46,12 @@ export function GlassmorphismContainer({
           sx={{
             position: 'relative',
             backgroundColor: isDark
-              ? 'rgba(26, 26, 26, 0.9) !important'
-              : 'rgba(255, 255, 255, 0.9) !important',
+              ? 'rgba(24, 24, 22, 0.92) !important'
+              : 'rgba(250, 249, 247, 0.92) !important',
+            backgroundImage: 'none !important',
             border: isDark
-              ? '1px solid rgba(255, 255, 255, 0.08) !important'
-              : '1px solid rgba(0, 0, 0, 0.04) !important',
+              ? '1px solid rgba(240, 239, 235, 0.08) !important'
+              : '1px solid rgba(26, 26, 25, 0.08) !important',
             backdropFilter: isDark ? 'blur(12px)' : 'none',
             WebkitBackdropFilter: isDark ? 'blur(12px)' : 'none',
             borderRadius: '23px', // Slightly smaller to account for border
