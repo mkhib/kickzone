@@ -280,10 +280,10 @@ export function SellersManageProductScreen() {
           variant="h4"
           sx={{
             mb: 4,
-            color: 'primary.main',
-            fontWeight: 700,
-            borderBottom: '3px solid',
-            borderColor: 'primary.main',
+            color: 'text.primary',
+            fontWeight: 600,
+            borderBottom: '1px solid',
+            borderColor: 'divider',
             pb: 2,
           }}
         >
@@ -336,17 +336,17 @@ export function SellersManageProductScreen() {
                 variant="outlined"
                 sx={{
                   borderRadius: 2,
-                  border: '2px solid',
-                  borderColor: 'primary.100',
+                  border: '1px solid',
+                  borderColor: 'divider',
                   '&:hover': {
                     borderColor: 'primary.main',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                    boxShadow: '0 4px 12px rgba(26,26,25,0.08)',
                   },
                   transition: 'all 0.3s',
                 }}
               >
                 <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
+                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
                     {LL.products.selectProduct()}
                   </Typography>
                   <Autocomplete
@@ -901,6 +901,7 @@ export function SellersManageProductScreen() {
                 <Button
                   type="submit"
                   variant="contained"
+                  color="primary"
                   disabled={!isFormValid()}
                   loading={isLoading}
                   size="large"
@@ -909,9 +910,9 @@ export function SellersManageProductScreen() {
                     textTransform: 'none',
                     fontWeight: 600,
                     px: 4,
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+                    boxShadow: 'none',
                     '&:hover': {
-                      boxShadow: '0 6px 16px rgba(0,0,0,0.2)',
+                      boxShadow: 'none',
                     },
                   }}
                 >

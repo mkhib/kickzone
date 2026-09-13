@@ -231,7 +231,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     borderRadius: 2,
     px: { xs: 1.5, sm: 2.4 },
     py: { xs: 0.65, sm: 1 },
-    fontWeight: 800,
+    fontWeight: 600,
     fontSize: { xs: '0.68rem', sm: '0.78rem' },
     letterSpacing: { xs: 0.8, sm: 1.1 },
     textTransform: 'uppercase',
@@ -359,7 +359,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               sx={{
                 ...tagBaseSx,
                 background: 'linear-gradient(180deg, #2f2f2f 0%, #262626 100%)',
-                border: '1px solid #c6a555',
+                border: '1px solid #a89870',
                 color: '#f1f1f1',
                 boxShadow: '0 6px 16px rgba(0,0,0,0.25)',
                 order: 0,
@@ -453,7 +453,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           variant="h6"
           component="div"
           sx={(theme) => ({
-            fontWeight: 800,
+            fontWeight: 600,
             color: theme.palette.mode === 'dark' ? '#f4f4f6' : '#0f1015',
             mb: 1,
             fontSize: { xs: '1.05rem', sm: '1.15rem', md: '1.28rem' },
@@ -482,7 +482,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                       : '1px solid rgba(0,0,0,0.06)',
                   color: (theme) =>
                     theme.palette.mode === 'dark' ? '#f2f2f4' : '#111827',
-                  fontWeight: 700,
+                  fontWeight: 600,
                   fontSize: '0.72rem',
                   height: 24,
                   letterSpacing: 0.4,
@@ -507,7 +507,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             <Typography
               variant="body2"
               sx={(theme) => ({
-                fontWeight: 700,
+                fontWeight: 600,
                 color: theme.palette.mode === 'dark' ? '#ffb3b3' : '#b43a3a',
                 textAlign: 'center',
               })}
@@ -546,8 +546,8 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 <Typography
                   variant="h5"
                   sx={{
-                    fontWeight: 900,
-                    color: isRecommended ? '#c8b37a' : '#0f1015',
+                    fontWeight: 600,
+                    color: isRecommended ? 'primary.main' : 'text.primary',
                     letterSpacing: 0.2,
                   }}
                 >
@@ -603,7 +603,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             <Typography
               variant="body2"
               sx={{
-                fontWeight: 700,
+                fontWeight: 600,
                 color: '#9c7a26',
                 textAlign: 'center',
               }}
@@ -631,7 +631,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   sx={(theme) => ({
                     color:
                       theme.palette.mode === 'dark' ? '#f3f3f3' : '#374151',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textTransform: 'uppercase',
                     fontSize: '0.72rem',
                   })}
@@ -657,7 +657,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   sx={(theme) => ({
                     color:
                       theme.palette.mode === 'dark' ? '#f3f3f3' : '#374151',
-                    fontWeight: 700,
+                    fontWeight: 600,
                     textTransform: 'uppercase',
                     fontSize: '0.72rem',
                   })}
@@ -667,7 +667,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 <Typography
                   variant="body2"
                   sx={(theme) => ({
-                    fontWeight: 800,
+                    fontWeight: 600,
                     color:
                       theme.palette.mode === 'dark' ? '#ffffff' : '#0f1015',
                   })}
@@ -690,7 +690,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           sx={{
             borderRadius: 14,
             py: { xs: 1.1, md: 1.4 },
-            fontWeight: 900,
+            fontWeight: 600,
             fontSize: { xs: '0.85rem', sm: '0.95rem' },
             letterSpacing: 1,
             textTransform: 'uppercase',
@@ -813,7 +813,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                                     theme.palette.mode === 'dark'
                                       ? '#f7f7f7'
                                       : theme.palette.text.primary,
-                                  fontWeight: 700,
+                                  fontWeight: 600,
                                 })}
                               >
                                 Size: {variant.productInfo.size}
@@ -846,7 +846,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                             <Typography
                               variant="h6"
                               sx={{
-                                fontWeight: 700,
+                                fontWeight: 600,
                                 color:
                                   variant.discount > 0 ? '#f5576c' : '#667eea',
                               }}

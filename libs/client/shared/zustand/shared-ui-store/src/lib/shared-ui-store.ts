@@ -104,8 +104,8 @@ const getInitialTheme = (): ThemeState => {
   if (typeof window === 'undefined') {
     return {
       mode: 'light',
-      primaryColor: '#c8b37a',
-      secondaryColor: '#0f0f0f',
+      primaryColor: '#8f8468',
+      secondaryColor: '#1a1a19',
     };
   }
   const stored = localStorage.getItem(THEME_STORAGE_KEY) as
@@ -115,8 +115,8 @@ const getInitialTheme = (): ThemeState => {
   const mode = stored || detectSystemMode();
   return {
     mode,
-    primaryColor: '#c8b37a',
-    secondaryColor: '#0f0f0f',
+    primaryColor: '#8f8468',
+    secondaryColor: '#1a1a19',
   };
 };
 

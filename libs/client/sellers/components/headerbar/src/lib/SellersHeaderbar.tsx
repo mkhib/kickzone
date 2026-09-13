@@ -127,7 +127,8 @@ export function Headerbar() {
               textAlign: 'center',
               textDecoration: 'none',
               color: 'inherit',
-              fontWeight: 700,
+              fontWeight: 600,
+              letterSpacing: '0.12em',
               pointerEvents: 'auto',
             }}
           >
@@ -143,11 +144,11 @@ export function Headerbar() {
               textDecoration: 'none',
               color: theme.palette.text.primary,
               '&:hover': {
-                opacity: 0.8,
+                opacity: 0.75,
               },
               flexGrow: 1,
-              fontWeight: 700,
-              letterSpacing: 1,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
             }}
           >
             {LL.appNames.siteName()} - {LL.navigation.sellersPortal()}

@@ -141,7 +141,8 @@ export function Headerbar() {
               textAlign: 'center',
               textDecoration: 'none',
               color: 'inherit',
-              fontWeight: 700,
+              fontWeight: 600,
+              letterSpacing: '0.14em',
               pointerEvents: 'auto',
             }}
           >
@@ -158,8 +159,10 @@ export function Headerbar() {
               textAlign: 'left',
               textDecoration: 'none',
               color: 'inherit',
+              fontWeight: 600,
+              letterSpacing: '0.14em',
               '&:hover': {
-                opacity: 0.8,
+                opacity: 0.75,
               },
             }}
           >

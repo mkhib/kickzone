@@ -24,16 +24,66 @@ interface RTLThemeProviderProps {
   children: ReactNode;
 }
 
+/**
+ * Quiet-luxury tokens for SAINTBALA.
+ * Warm stone neutrals + muted brass — premium without shouting.
+ * Accent is for highlights only; CTAs use high-contrast charcoal / champagne.
+ */
+export const saintbalaBrand = {
+  light: {
+    background: '#f2f1ef',
+    paper: '#faf9f7',
+    text: '#1a1a19',
+    textSecondary: '#5c5b57',
+    primary: '#8f8468',
+    primaryLight: '#b5ab93',
+    primaryDark: '#6e6550',
+    secondary: '#1a1a19',
+    divider: 'rgba(26, 26, 25, 0.08)',
+    ctaBg: '#1a1a19',
+    ctaFg: '#faf9f7',
+    ctaHover: '#2e2e2c',
+    ctaDisabledBg: 'rgba(26, 26, 25, 0.38)',
+    ctaDisabledFg: 'rgba(250, 249, 247, 0.72)',
+  },
+  dark: {
+    background: '#0f0f0e',
+    paper: '#181816',
+    text: '#f0efeb',
+    textSecondary: '#a8a69f',
+    primary: '#c5b89a',
+    primaryLight: '#ddd4bf',
+    primaryDark: '#9a8d70',
+    secondary: '#f0efeb',
+    divider: 'rgba(240, 239, 235, 0.08)',
+    ctaBg: '#c5b89a',
+    ctaFg: '#121210',
+    ctaHover: '#d4c9b0',
+    ctaDisabledBg: 'rgba(197, 184, 154, 0.42)',
+    ctaDisabledFg: 'rgba(18, 18, 16, 0.72)',
+  },
+  /** Soft brass accent for inline highlights (home, badges) */
+  accent: '#a89870',
+  accentSoft: '#c5b89a',
+} as const;
+
+const FONT_LINK_ID = 'saintbala-fonts';
+const FONT_HREF =
+  'https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700&display=swap';
+
+const latinStack = '"Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif';
+const farsiStack =
+  '"Vazirmatn", "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif';
+
 export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
   const { currentLocale } = useLanguageContext();
   const themeState = useUIStore((s) => s.theme);
   const mode = themeState.mode;
 
-  // Determine if the current locale is RTL
   const isRTL = currentLocale === 'fa';
   const direction = isRTL ? 'rtl' : 'ltr';
+  const fontFamily = isRTL ? farsiStack : latinStack;
 
-  // Create emotion cache for RTL
   const cacheRtl = useMemo(() => {
     if (isRTL) {
       return createCache({
@@ -47,85 +97,154 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
     });
   }, [isRTL]);
 
-  // Update document direction and dir attribute
   useEffect(() => {
     document.documentElement.dir = direction;
     document.documentElement.setAttribute('dir', direction);
 
-    // Load Vazir font for Farsi
-    if (isRTL) {
+    // Load Manrope (EN) + Vazirmatn (FA) together so mixed Latin brand text matches.
+    if (!document.getElementById(FONT_LINK_ID)) {
       const link = document.createElement('link');
-      link.href =
-        'https://fonts.googleapis.com/css2?family=Vazirmatn:wght@100;200;300;400;500;600;700;800;900&display=swap';
+      link.id = FONT_LINK_ID;
+      link.href = FONT_HREF;
       link.rel = 'stylesheet';
       document.head.appendChild(link);
     }
-  }, [direction, isRTL]);
+  }, [direction]);
 
-  // Create theme with RTL support and glassmorphism styles
   const theme = useMemo(() => {
+    const brand = mode === 'dark' ? saintbalaBrand.dark : saintbalaBrand.light;
+
     const palette =
       mode === 'dark'
         ? {
             mode: 'dark' as const,
             primary: {
-              main: '#d8c58a',
-              light: '#e8dbb3',
-              dark: '#9f884f',
+              main: brand.primary,
+              light: brand.primaryLight,
+              dark: brand.primaryDark,
+              contrastText: brand.ctaFg,
             },
             secondary: {
-              main: '#f5f5f5',
+              main: brand.secondary,
               light: '#ffffff',
               dark: '#cfcfcf',
+              contrastText: brand.background,
             },
             background: {
-              default: '#0c0c10',
-              paper: '#14141a',
+              default: brand.background,
+              paper: brand.paper,
             },
             text: {
-              primary: '#f5f5f5',
-              secondary: '#d5d5d5',
+              primary: brand.text,
+              secondary: brand.textSecondary,
+            },
+            divider: brand.divider,
+            action: {
+              disabled: 'rgba(240, 239, 235, 0.38)',
+              disabledBackground: 'rgba(240, 239, 235, 0.08)',
             },
           }
         : {
             mode: 'light' as const,
             primary: {
-              main: '#c8b37a',
-              light: '#e6d9ad',
-              dark: '#8f7845',
+              main: brand.primary,
+              light: brand.primaryLight,
+              dark: brand.primaryDark,
+              contrastText: '#faf9f7',
             },
             secondary: {
-              main: '#0f0f0f',
-              light: '#3a3a3a',
+              main: brand.secondary,
+              light: '#3a3a38',
               dark: '#000000',
+              contrastText: '#faf9f7',
             },
             background: {
-              default: '#f6f6f8',
-              paper: '#ffffff',
+              default: brand.background,
+              paper: brand.paper,
             },
             text: {
-              primary: '#0f0f0f',
-              secondary: '#3c3c3c',
+              primary: brand.text,
+              secondary: brand.textSecondary,
+            },
+            divider: brand.divider,
+            action: {
+              disabled: 'rgba(26, 26, 25, 0.38)',
+              disabledBackground: 'rgba(26, 26, 25, 0.08)',
             },
           };
 
     return createTheme({
       direction,
       typography: {
-        fontFamily: isRTL
-          ? '"Vazirmatn", "Roboto", "Helvetica", "Arial", sans-serif'
-          : '"Roboto", "Helvetica", "Arial", sans-serif',
+        fontFamily,
+        // Optical balance: Manrope at 400–600 matches Vazirmatn better than Roboto 700.
+        fontWeightLight: 300,
+        fontWeightRegular: 400,
+        fontWeightMedium: 500,
+        fontWeightBold: 600,
+        h1: {
+          fontWeight: 600,
+          letterSpacing: isRTL ? 0 : '-0.02em',
+        },
+        h2: {
+          fontWeight: 600,
+          letterSpacing: isRTL ? 0 : '-0.02em',
+        },
+        h3: {
+          fontWeight: 600,
+          letterSpacing: isRTL ? 0 : '-0.015em',
+        },
+        h4: {
+          fontWeight: 600,
+          letterSpacing: isRTL ? 0 : '-0.01em',
+        },
+        h5: {
+          fontWeight: 500,
+          letterSpacing: isRTL ? 0 : '-0.01em',
+        },
+        h6: {
+          fontWeight: 500,
+          letterSpacing: isRTL ? 0 : '-0.005em',
+        },
+        subtitle1: {
+          fontWeight: 500,
+        },
+        subtitle2: {
+          fontWeight: 500,
+        },
+        body1: {
+          fontWeight: 400,
+          letterSpacing: isRTL ? 0 : '0.01em',
+          lineHeight: 1.65,
+        },
+        body2: {
+          fontWeight: 400,
+          letterSpacing: isRTL ? 0 : '0.01em',
+          lineHeight: 1.6,
+        },
+        button: {
+          fontWeight: 600,
+          letterSpacing: isRTL ? 0 : '0.02em',
+        },
+        caption: {
+          fontWeight: 400,
+          letterSpacing: isRTL ? 0 : '0.02em',
+        },
       },
       palette,
+      shape: {
+        borderRadius: 10,
+      },
       components: {
         MuiCssBaseline: {
           styleOverrides: {
             body: {
-              fontFamily: isRTL
-                ? '"Vazirmatn", "Roboto", "Helvetica", "Arial", sans-serif'
-                : '"Roboto", "Helvetica", "Arial", sans-serif',
+              fontFamily,
               backgroundColor: palette.background.default,
               color: palette.text.primary,
+              WebkitFontSmoothing: 'antialiased',
+              MozOsxFontSmoothing: 'grayscale',
+              textRendering: 'optimizeLegibility',
             },
           },
         },
@@ -134,15 +253,12 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
             root: {
               backgroundColor:
                 mode === 'dark'
-                  ? 'rgba(14, 14, 18, 0.7) !important'
-                  : 'rgba(255, 255, 255, 0.1) !important',
-              color: mode === 'dark' ? '#f5f5f5' : undefined,
-              backdropFilter: 'blur(20px) saturate(180%)',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-              borderBottom:
-                mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.06) !important'
-                  : '1px solid rgba(0, 0, 0, 0.08) !important',
+                  ? 'rgba(15, 15, 14, 0.78) !important'
+                  : 'rgba(250, 249, 247, 0.78) !important',
+              color: brand.text,
+              backdropFilter: 'blur(20px) saturate(160%)',
+              WebkitBackdropFilter: 'blur(20px) saturate(160%)',
+              borderBottom: `1px solid ${brand.divider} !important`,
               borderLeft: 'none !important',
               boxShadow: 'none !important',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -155,29 +271,26 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
             root: {
               backgroundColor:
                 mode === 'dark'
-                  ? 'rgba(20, 20, 26, 0.75) !important'
-                  : 'rgba(255, 255, 255, 0.7) !important',
-              backdropFilter: 'blur(10px) saturate(180%) !important',
-              WebkitBackdropFilter: 'blur(10px) saturate(180%) !important',
-              borderRadius: '16px !important',
-              border:
-                mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.08) !important'
-                  : '1px solid rgba(255, 255, 255, 0.3) !important',
+                  ? 'rgba(24, 24, 22, 0.88) !important'
+                  : 'rgba(250, 249, 247, 0.88) !important',
+              backdropFilter: 'blur(12px) saturate(160%) !important',
+              WebkitBackdropFilter: 'blur(12px) saturate(160%) !important',
+              borderRadius: '12px !important',
+              border: `1px solid ${brand.divider} !important`,
               boxShadow:
                 mode === 'dark'
-                  ? '0 8px 32px 0 rgba(0, 0, 0, 0.35) !important'
-                  : '0 8px 32px 0 rgba(31, 38, 135, 0.1) !important',
+                  ? '0 8px 28px 0 rgba(0, 0, 0, 0.4) !important'
+                  : '0 8px 28px 0 rgba(26, 26, 25, 0.06) !important',
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             },
             elevation1: {
-              boxShadow: '0 4px 16px 0 rgba(31, 38, 135, 0.1)',
+              boxShadow: '0 4px 16px 0 rgba(26, 26, 25, 0.06)',
             },
             elevation2: {
-              boxShadow: '0 8px 24px 0 rgba(31, 38, 135, 0.12)',
+              boxShadow: '0 8px 24px 0 rgba(26, 26, 25, 0.08)',
             },
             elevation3: {
-              boxShadow: '0 12px 32px 0 rgba(31, 38, 135, 0.15)',
+              boxShadow: '0 12px 32px 0 rgba(26, 26, 25, 0.1)',
             },
           },
         },
@@ -186,27 +299,24 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
             root: {
               backgroundColor:
                 mode === 'dark'
-                  ? 'rgba(20, 20, 26, 0.75) !important'
-                  : 'rgba(255, 255, 255, 0.75) !important',
-              backdropFilter: 'blur(10px) saturate(180%) !important',
-              WebkitBackdropFilter: 'blur(10px) saturate(180%) !important',
-              borderRadius: '16px !important',
-              border:
-                mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.08) !important'
-                  : '1px solid rgba(255, 255, 255, 0.3) !important',
+                  ? 'rgba(24, 24, 22, 0.88) !important'
+                  : 'rgba(250, 249, 247, 0.9) !important',
+              backdropFilter: 'blur(12px) saturate(160%) !important',
+              WebkitBackdropFilter: 'blur(12px) saturate(160%) !important',
+              borderRadius: '12px !important',
+              border: `1px solid ${brand.divider} !important`,
               boxShadow:
                 mode === 'dark'
-                  ? '0 12px 36px 0 rgba(0, 0, 0, 0.35) !important'
-                  : '0 8px 32px 0 rgba(31, 38, 135, 0.1) !important',
+                  ? '0 12px 32px 0 rgba(0, 0, 0, 0.4) !important'
+                  : '0 8px 28px 0 rgba(26, 26, 25, 0.06) !important',
               transition:
                 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               '&:hover': {
-                transform: 'translateY(-4px)',
+                transform: 'translateY(-3px)',
                 boxShadow:
                   mode === 'dark'
-                    ? '0 16px 46px 0 rgba(0, 0, 0, 0.45)'
-                    : '0 12px 40px 0 rgba(31, 38, 135, 0.2)',
+                    ? '0 16px 40px 0 rgba(0, 0, 0, 0.5)'
+                    : '0 12px 36px 0 rgba(26, 26, 25, 0.1)',
               },
             },
           },
@@ -216,19 +326,16 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
             paper: {
               backgroundColor:
                 mode === 'dark'
-                  ? 'rgba(16, 16, 22, 0.9) !important'
-                  : 'rgba(255, 255, 255, 0.85) !important',
-              backdropFilter: 'blur(20px) saturate(180%) !important',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%) !important',
-              borderRight:
-                mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.08)'
-                  : '1px solid rgba(255, 255, 255, 0.3)',
+                  ? 'rgba(15, 15, 14, 0.94) !important'
+                  : 'rgba(250, 249, 247, 0.94) !important',
+              backdropFilter: 'blur(20px) saturate(160%) !important',
+              WebkitBackdropFilter: 'blur(20px) saturate(160%) !important',
+              borderRight: `1px solid ${brand.divider}`,
               borderLeft: 'none',
               boxShadow:
                 mode === 'dark'
-                  ? '0 10px 32px 0 rgba(0, 0, 0, 0.45)'
-                  : '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
+                  ? '0 10px 32px 0 rgba(0, 0, 0, 0.5)'
+                  : '0 8px 28px 0 rgba(26, 26, 25, 0.08)',
             },
           },
         },
@@ -237,15 +344,12 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
             paper: {
               backgroundColor:
                 mode === 'dark'
-                  ? 'rgba(18, 18, 24, 0.92) !important'
-                  : 'rgba(255, 255, 255, 0.9) !important',
-              backdropFilter: 'blur(20px) saturate(180%) !important',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%) !important',
-              borderRadius: '20px',
-              border:
-                mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.08)'
-                  : '1px solid rgba(255, 255, 255, 0.3)',
+                  ? 'rgba(24, 24, 22, 0.96) !important'
+                  : 'rgba(250, 249, 247, 0.96) !important',
+              backdropFilter: 'blur(20px) saturate(160%) !important',
+              WebkitBackdropFilter: 'blur(20px) saturate(160%) !important',
+              borderRadius: '16px',
+              border: `1px solid ${brand.divider}`,
             },
           },
         },
@@ -254,19 +358,16 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
             paper: {
               backgroundColor:
                 mode === 'dark'
-                  ? 'rgba(20, 20, 26, 0.9) !important'
-                  : 'rgba(255, 255, 255, 0.9) !important',
-              backdropFilter: 'blur(20px) saturate(180%) !important',
-              WebkitBackdropFilter: 'blur(20px) saturate(180%) !important',
-              borderRadius: '12px',
-              border:
-                mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.08)'
-                  : '1px solid rgba(255, 255, 255, 0.3)',
+                  ? 'rgba(24, 24, 22, 0.96) !important'
+                  : 'rgba(250, 249, 247, 0.96) !important',
+              backdropFilter: 'blur(20px) saturate(160%) !important',
+              WebkitBackdropFilter: 'blur(20px) saturate(160%) !important',
+              borderRadius: '10px',
+              border: `1px solid ${brand.divider}`,
               boxShadow:
                 mode === 'dark'
-                  ? '0 10px 30px 0 rgba(0, 0, 0, 0.45)'
-                  : '0 8px 32px 0 rgba(31, 38, 135, 0.2)',
+                  ? '0 10px 28px 0 rgba(0, 0, 0, 0.5)'
+                  : '0 8px 28px 0 rgba(26, 26, 25, 0.1)',
             },
           },
         },
@@ -275,15 +376,12 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
             root: {
               backgroundColor:
                 mode === 'dark'
-                  ? 'rgba(22, 22, 28, 0.8) !important'
-                  : 'rgba(255, 255, 255, 0.7) !important',
-              backdropFilter: 'blur(10px) saturate(180%) !important',
-              WebkitBackdropFilter: 'blur(10px) saturate(180%) !important',
-              borderRadius: '16px',
-              border:
-                mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.08)'
-                  : '1px solid rgba(255, 255, 255, 0.3)',
+                  ? 'rgba(24, 24, 22, 0.88) !important'
+                  : 'rgba(250, 249, 247, 0.88) !important',
+              backdropFilter: 'blur(10px) saturate(160%) !important',
+              WebkitBackdropFilter: 'blur(10px) saturate(160%) !important',
+              borderRadius: '12px',
+              border: `1px solid ${brand.divider}`,
             },
           },
         },
@@ -291,25 +389,76 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
           styleOverrides: {
             root: {
               textTransform: 'none',
-              borderRadius: 10,
-              fontWeight: 700,
+              borderRadius: 8,
+              fontWeight: 600,
+              letterSpacing: isRTL ? 0 : '0.02em',
             },
             containedPrimary: {
-              background:
-                'linear-gradient(135deg, #e6d9ad 0%, #c8b37a 60%, #b6974f 100%)',
-              color: '#0f0f0f',
-              boxShadow: '0 8px 18px rgba(0,0,0,0.12)',
+              backgroundColor: brand.ctaBg,
+              backgroundImage: 'none',
+              color: brand.ctaFg,
+              boxShadow: 'none',
               '&:hover': {
-                background:
-                  'linear-gradient(135deg, #f2e7bd 0%, #d6c28c 60%, #c39d55 100%)',
-                boxShadow: '0 10px 24px rgba(0,0,0,0.16)',
+                backgroundColor: brand.ctaHover,
+                backgroundImage: 'none',
+                boxShadow: 'none',
+              },
+              '&.Mui-disabled': {
+                backgroundColor: brand.ctaDisabledBg,
+                backgroundImage: 'none',
+                color: brand.ctaDisabledFg,
+                opacity: 1,
+              },
+              '&.MuiButton-loading': {
+                color: brand.ctaFg,
+              },
+            },
+            outlinedPrimary: {
+              borderColor:
+                mode === 'dark'
+                  ? 'rgba(197, 184, 154, 0.45)'
+                  : 'rgba(143, 132, 104, 0.45)',
+              color: brand.primary,
+              '&:hover': {
+                borderColor: brand.primary,
+                backgroundColor:
+                  mode === 'dark'
+                    ? 'rgba(197, 184, 154, 0.08)'
+                    : 'rgba(143, 132, 104, 0.06)',
+              },
+            },
+          },
+        },
+        MuiToggleButton: {
+          styleOverrides: {
+            root: {
+              textTransform: 'none',
+              fontWeight: 500,
+              borderColor: brand.divider,
+              color: brand.textSecondary,
+              '&.Mui-selected': {
+                backgroundColor:
+                  mode === 'dark'
+                    ? 'rgba(197, 184, 154, 0.18)'
+                    : 'rgba(26, 26, 25, 0.08)',
+                color: brand.text,
+                borderColor:
+                  mode === 'dark'
+                    ? 'rgba(197, 184, 154, 0.4)'
+                    : 'rgba(26, 26, 25, 0.2)',
+                '&:hover': {
+                  backgroundColor:
+                    mode === 'dark'
+                      ? 'rgba(197, 184, 154, 0.24)'
+                      : 'rgba(26, 26, 25, 0.12)',
+                },
               },
             },
           },
         },
       },
     });
-  }, [direction, isRTL, mode]);
+  }, [direction, isRTL, mode, fontFamily]);
 
   return (
     <ThemeContext.Provider value={{ direction }}>

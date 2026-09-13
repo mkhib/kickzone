@@ -273,15 +273,15 @@ export function CustomersHome() {
                     component="h2"
                     variant="h3"
                     sx={{
-                      fontWeight: 900,
+                      fontWeight: 600,
                       fontSize: { xs: '1.75rem', sm: '2.2rem', md: '3rem' },
                       letterSpacing: '-0.02em',
-                      color: '#f7f7f7',
+                      color: '#f0efeb',
                       mb: 1,
                       lineHeight: 1.15,
                     }}
                   >
-                    <Box component="span" sx={{ color: '#c6a555' }}>
+                    <Box component="span" sx={{ color: '#c5b89a' }}>
                       {LL.messages.homeTitleAccent()}
                     </Box>{' '}
                     {LL.messages.homeTitle()}
@@ -289,11 +289,11 @@ export function CustomersHome() {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontWeight: 600,
+                      fontWeight: 400,
                       fontSize: { xs: '0.95rem', sm: '1rem', md: '1.15rem' },
-                      color: 'rgba(255,255,255,0.88)',
+                      color: 'rgba(240,239,235,0.82)',
                       maxWidth: 520,
-                      lineHeight: 1.5,
+                      lineHeight: 1.55,
                     }}
                   >
                     {heroDescription}

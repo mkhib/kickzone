@@ -67,9 +67,11 @@ const formatNumber = (num: number | string, locale: string): string => {
   return Number(num).toLocaleString(locale);
 };
 
-const GOLD_GRADIENT =
-  'linear-gradient(135deg, #e6d9ad 0%, #c8b37a 60%, #b6974f 100%)';
-const GOLD_TEXT = '#c8b37a';
+const CTA_FILL_LIGHT = '#1a1a19';
+const CTA_TEXT_LIGHT = '#faf9f7';
+const CTA_FILL_DARK = '#c5b89a';
+const CTA_TEXT_DARK = '#121210';
+const ACCENT_TEXT = '#8f8468';
 
 const isItemRecommended = (
   item: CartItem & { isRecommended?: boolean; recommended?: boolean }
@@ -79,6 +81,9 @@ const isItemRecommended = (
 
 export function CustomerShoppingCart() {
   const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+  const ctaFill = isDark ? CTA_FILL_DARK : CTA_FILL_LIGHT;
+  const ctaText = isDark ? CTA_TEXT_DARK : CTA_TEXT_LIGHT;
   // Initialize cart service to sync server cart with local store
   // This ensures shipping fees are fetched and synced when user is logged in
   useCustomersCartService();
@@ -962,7 +967,7 @@ export function CustomerShoppingCart() {
                               sx={{
                                 fontWeight: 700,
                                 color: isItemRecommended(item)
-                                  ? GOLD_TEXT
+                                  ? ACCENT_TEXT
                                   : theme.palette.mode === 'dark'
                                   ? '#ffffff'
                                   : '#0f0f0f',
@@ -1096,7 +1101,7 @@ export function CustomerShoppingCart() {
                               sx={{
                                 fontWeight: 800,
                                 color: isItemRecommended(item)
-                                  ? GOLD_TEXT
+                                  ? ACCENT_TEXT
                                   : theme.palette.mode === 'dark'
                                   ? '#ffffff'
                                   : '#0f0f0f',
@@ -1158,7 +1163,7 @@ export function CustomerShoppingCart() {
                   variant="body2"
                   sx={{
                     fontWeight: 600,
-                    color: GOLD_TEXT,
+                    color: ACCENT_TEXT,
                     fontSize: '0.95rem',
                   }}
                 >
@@ -1263,9 +1268,9 @@ export function CustomerShoppingCart() {
                     alignItems: { xs: 'flex-start', lg: 'center' },
                     mb: 3,
                     p: 2,
-                    borderRadius: 3,
-                    backgroundImage: GOLD_GRADIENT,
-                    color: '#0f0f0f',
+                    borderRadius: 2,
+                    backgroundColor: ctaFill,
+                    color: ctaText,
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     gap: { xs: 0.5, lg: 1 },
                   }}
@@ -1273,8 +1278,8 @@ export function CustomerShoppingCart() {
                   <Typography
                     variant="h6"
                     sx={{
-                      fontWeight: 700,
-                      color: '#0f0f0f',
+                      fontWeight: 600,
+                      color: ctaText,
                       whiteSpace: 'nowrap',
                       flexShrink: 0,
                     }}
@@ -1284,8 +1289,8 @@ export function CustomerShoppingCart() {
                   <Typography
                     variant="h5"
                     sx={{
-                      fontWeight: 800,
-                      color: '#0f0f0f',
+                      fontWeight: 600,
+                      color: ctaText,
                       textAlign: { xs: 'left', lg: 'right' },
                       minWidth: 0,
                       flex: { xs: 'none', lg: '1 1 auto' },
@@ -1306,42 +1311,19 @@ export function CustomerShoppingCart() {
                   startIcon={<ShoppingCartCheckout />}
                   onClick={handleCheckout}
                   sx={{
-                    position: 'relative',
-                    borderRadius: 3,
+                    borderRadius: 2,
                     py: 1.5,
-                    fontWeight: 700,
+                    fontWeight: 600,
                     fontSize: '1rem',
                     textTransform: 'none',
-                    boxShadow: '0 10px 24px rgba(0, 0, 0, 0.18)',
-                    backgroundImage: GOLD_GRADIENT,
-                    color: '#0f0f0f',
+                    boxShadow: 'none',
+                    backgroundColor: ctaFill,
+                    color: ctaText,
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    overflow: 'hidden',
-                    zIndex: 1,
-                    '&::before': {
-                      content: '""',
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      backgroundImage:
-                        'linear-gradient(135deg, #f2e7bd 0%, #d6c28c 60%, #c39d55 100%)',
-                      opacity: 0,
-                      transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                      zIndex: -1,
-                    },
                     '&:hover': {
-                      transform: 'translateY(-2px)',
-                      boxShadow: '0 12px 32px rgba(0, 0, 0, 0.22)',
-                      color: '#0f0f0f',
-                      '&::before': {
-                        opacity: 1,
-                      },
-                    },
-                    '& .MuiButton-startIcon': {
-                      position: 'relative',
-                      zIndex: 1,
+                      backgroundColor: isDark ? '#d4c9b0' : '#2e2e2c',
+                      boxShadow: 'none',
+                      color: ctaText,
                     },
                   }}
                 >
@@ -1855,7 +1837,7 @@ export function CustomerShoppingCart() {
                           sx={{
                             fontWeight: 700,
                             color: isItemRecommended(item)
-                              ? GOLD_TEXT
+                              ? ACCENT_TEXT
                               : theme.palette.mode === 'dark'
                               ? '#ffffff'
                               : '#0f0f0f',

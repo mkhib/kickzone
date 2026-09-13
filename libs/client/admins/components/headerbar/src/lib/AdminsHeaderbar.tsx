@@ -137,7 +137,8 @@ export function AdminsHeaderbar() {
               textAlign: 'center',
               textDecoration: 'none',
               color: 'inherit',
-              fontWeight: 700,
+              fontWeight: 600,
+              letterSpacing: '0.12em',
               pointerEvents: 'auto',
             }}
           >
@@ -147,8 +148,8 @@ export function AdminsHeaderbar() {
             variant={isMobile ? 'subtitle1' : 'h6'}
             sx={{
               display: { xs: 'none', sm: 'block' },
-              fontWeight: 700,
-              letterSpacing: 1,
+              fontWeight: 600,
+              letterSpacing: '0.08em',
               userSelect: 'none',
               color: theme.palette.text.primary,
               flexGrow: 1,
