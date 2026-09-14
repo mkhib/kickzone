@@ -4,7 +4,7 @@ import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Paper from '@mui/material/Paper';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { LottieUnauthorized } from '@kickzone-workspace/lottie-unauthorized';
 import styles from './unauthorized-path.module.css';
 
@@ -24,10 +24,6 @@ export function UnauthorizedPath({
   animationHeight = 300,
 }: UnauthorizedPathProps) {
   const navigate = useNavigate();
-
-  const handleGoToLogin = () => {
-    navigate(loginPath);
-  };
 
   const handleGoBack = () => {
     navigate(-1);
@@ -109,7 +105,8 @@ export function UnauthorizedPath({
             <Button
               variant="contained"
               color="primary"
-              onClick={handleGoToLogin}
+              component={RouterLink}
+              to={loginPath}
               sx={{ flex: 1 }}
             >
               Go to Login

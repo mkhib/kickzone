@@ -26,7 +26,7 @@ import Divider from '@mui/material/Divider';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 import { useState, useEffect } from 'react';
-import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
 
 export function Headerbar() {
@@ -35,7 +35,6 @@ export function Headerbar() {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [isScrolled, setIsScrolled] = useState(false);
   const location = useLocation();
-  const navigate = useNavigate();
   const totalItems = useCartItemCount();
   const { LL } = useI18nContext();
   const themeMode = useUIStore((s) => s.theme.mode);
@@ -65,11 +64,6 @@ export function Headerbar() {
   const handleLogout = () => {
     handleUserMenuClose();
     logout();
-  };
-
-  const handleMyOrders = () => {
-    handleUserMenuClose();
-    navigate(CUSTOMER_ROUTES.ORDERS);
   };
 
   return (
@@ -239,7 +233,11 @@ export function Headerbar() {
                   horizontal: 'right',
                 }}
               >
-                <MenuItem onClick={handleMyOrders}>
+                <MenuItem
+                  component={RouterLink}
+                  to={CUSTOMER_ROUTES.ORDERS}
+                  onClick={handleUserMenuClose}
+                >
                   <ListItemIcon>
                     <ReceiptIcon fontSize="small" />
                   </ListItemIcon>

@@ -6,7 +6,6 @@ import { MemoryRouter } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { AdminProducts } from './AdminProducts';
 
-const mockNavigate = vi.fn();
 const mockLoadMore = vi.fn();
 const mockRefetch = vi.fn();
 const mockArchiveProduct = vi.fn();
@@ -131,16 +130,6 @@ vi.mock('./ProductImageManagementModal', () => ({
     ) : null,
 }));
 
-vi.mock('react-router-dom', async () => {
-  const actual = await vi.importActual<typeof import('react-router-dom')>(
-    'react-router-dom'
-  );
-  return {
-    ...actual,
-    useNavigate: () => mockNavigate,
-  };
-});
-
 global.IntersectionObserver = vi.fn().mockImplementation(() => ({
   observe: vi.fn(),
   disconnect: vi.fn(),
@@ -239,19 +228,20 @@ describe('AdminProducts', () => {
 
     expect(screen.getByTestId('admins-layout')).toBeInTheDocument();
     expect(screen.getByText('Products')).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: 'Add Product' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Add Product' })).toBeInTheDocument();
     expect(screen.getByLabelText('Search by name')).toBeInTheDocument();
     expect(screen.getByText('Test Product 1')).toBeInTheDocument();
     expect(screen.getByText('Test Product 2')).toBeInTheDocument();
     expect(screen.getByText('Showing 2 of 2 products')).toBeInTheDocument();
   });
 
-  it('navigates to the new-product route', () => {
+  it('links to the new-product route', () => {
     renderWithProviders();
 
-    fireEvent.click(screen.getByRole('button', { name: 'Add Product' }));
-
-    expect(mockNavigate).toHaveBeenCalledWith('/products/new');
+    expect(screen.getByRole('link', { name: 'Add Product' })).toHaveAttribute(
+      'href',
+      '/products/new'
+    );
   });
 
   it('updates search through the products store', () => {
@@ -267,12 +257,14 @@ describe('AdminProducts', () => {
   it('wires edit, image, seller-listing, and archive actions', async () => {
     renderWithProviders();
 
-    fireEvent.click(screen.getAllByLabelText('Edit')[0]);
     fireEvent.click(screen.getAllByLabelText('Images')[0]);
     fireEvent.click(screen.getAllByLabelText('Sellers')[0]);
     fireEvent.click(screen.getAllByLabelText('Archive Product')[0]);
 
-    expect(mockNavigate).toHaveBeenCalledWith('/products/edit/1');
+    expect(screen.getAllByLabelText('Edit')[0]).toHaveAttribute(
+      'href',
+      '/products/edit/1'
+    );
     expect(mockOpenImageModal).toHaveBeenCalledWith(products[0], true);
     expect(mockSetListingsProduct).toHaveBeenCalledWith(products[0]);
     expect(mockFetchSellerListings).toHaveBeenCalledWith({

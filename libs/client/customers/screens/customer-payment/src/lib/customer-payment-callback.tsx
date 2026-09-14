@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useSearchParams } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -235,7 +235,8 @@ export function CustomerPaymentCallback() {
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => navigate(CUSTOMER_ROUTES.ORDERS)}
+                component={RouterLink}
+                to={CUSTOMER_ROUTES.ORDERS}
                 sx={{ mt: 2 }}
               >
                 بازگشت به سفارشات
@@ -261,7 +262,8 @@ export function CustomerPaymentCallback() {
               <Button
                 variant="contained"
                 size="large"
-                onClick={() => navigate(CUSTOMER_ROUTES.CART)}
+                component={RouterLink}
+                to={CUSTOMER_ROUTES.CART}
                 sx={{ mt: 2 }}
               >
                 بازگشت به سبد خرید

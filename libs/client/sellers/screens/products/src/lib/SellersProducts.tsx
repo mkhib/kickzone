@@ -1,7 +1,7 @@
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useSellersProducts } from '@kickzone-workspace/sellers-products-hooks';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import { useSellersProductsStore } from '@kickzone-workspace/sellers-products-store';
 import {
   useI18nContext,
@@ -41,7 +41,6 @@ import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context'
 import { useState, useEffect } from 'react';
 
 export const SellersProducts = () => {
-  const navigate = useNavigate();
   const { canManageCatalog } = useSellersAuthContext();
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.sellerProducts());
@@ -149,19 +148,8 @@ export const SellersProducts = () => {
     }
   }, [sellersProducts]);
 
-  const handleAddProduct = () => {
-    navigate(SELLER_ROUTES.MANAGE_PRODUCT);
-  };
-
-  const handleEditSellerProduct = (sellerProductId: string | number) => {
-    console.log(
-      '🔍 handleEditSellerProduct called with sellerProductId:',
-      sellerProductId
-    );
-    navigate(
-      `${SELLER_ROUTES.MANAGE_PRODUCT}?sellerProductId=${sellerProductId}`
-    );
-  };
+  const editSellerProductHref = (sellerProductId: string | number) =>
+    `${SELLER_ROUTES.MANAGE_PRODUCT}?sellerProductId=${sellerProductId}`;
 
   const handleViewProduct = (productId: number) => {
     const product = sellersProducts.find((p) => p.id === productId);
@@ -292,23 +280,33 @@ export const SellersProducts = () => {
         <Box
           sx={{
             display: 'flex',
+            flexDirection: { xs: 'column', sm: 'row' },
             justifyContent: 'space-between',
-            alignItems: 'center',
+            alignItems: { xs: 'stretch', sm: 'center' },
+            gap: 2,
             mb: 3,
           }}
         >
           <Typography variant="h4" component="h1">
             {LL.products.myProducts()}
           </Typography>
-          <Stack direction="row" spacing={1} flexWrap="wrap" useFlexGap>
+          <Stack
+            direction={{ xs: 'column', sm: 'row' }}
+            spacing={1}
+            flexWrap="wrap"
+            useFlexGap
+            sx={{ width: { xs: '100%', sm: 'auto' } }}
+          >
             {canManageCatalog && (
               <Button
                 variant="outlined"
                 startIcon={<AddIcon />}
-                onClick={() =>
-                  navigate(`${SELLER_ROUTES.MANAGE_PRODUCT}?define=1`)
-                }
-                sx={{ minWidth: 150 }}
+                component={RouterLink}
+                to={`${SELLER_ROUTES.MANAGE_PRODUCT}?define=1`}
+                sx={{
+                  minWidth: { sm: 150 },
+                  width: { xs: '100%', sm: 'auto' },
+                }}
               >
                 {LL.navigation.catalogManagement()}
               </Button>
@@ -316,8 +314,12 @@ export const SellersProducts = () => {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              onClick={handleAddProduct}
-              sx={{ minWidth: 150 }}
+              component={RouterLink}
+              to={SELLER_ROUTES.MANAGE_PRODUCT}
+              sx={{
+                minWidth: { sm: 150 },
+                width: { xs: '100%', sm: 'auto' },
+              }}
             >
               {LL.products.addProduct()}
             </Button>
@@ -867,25 +869,27 @@ export const SellersProducts = () => {
               {LL.products.startBySelling()}
             </Typography>
             <Stack
-              direction="row"
+              direction={{ xs: 'column', sm: 'row' }}
               spacing={2}
               justifyContent="center"
+              alignItems="stretch"
               flexWrap="wrap"
               useFlexGap
+              sx={{ width: '100%', maxWidth: 480, mx: 'auto' }}
             >
               {canManageCatalog && (
                 <Button
                   variant="outlined"
                   size="large"
                   startIcon={<AddIcon />}
-                  onClick={() =>
-                  navigate(`${SELLER_ROUTES.MANAGE_PRODUCT}?define=1`)
-                }
+                  component={RouterLink}
+                  to={`${SELLER_ROUTES.MANAGE_PRODUCT}?define=1`}
                   sx={{
                     textTransform: 'none',
                     px: 4,
                     py: 1.5,
                     fontSize: '1rem',
+                    width: { xs: '100%', sm: 'auto' },
                   }}
                 >
                   {LL.navigation.catalogManagement()}
@@ -895,12 +899,14 @@ export const SellersProducts = () => {
                 variant="contained"
                 size="large"
                 startIcon={<AddIcon />}
-                onClick={handleAddProduct}
+                component={RouterLink}
+                to={SELLER_ROUTES.MANAGE_PRODUCT}
                 sx={{
                   textTransform: 'none',
                   px: 4,
                   py: 1.5,
                   fontSize: '1rem',
+                  width: { xs: '100%', sm: 'auto' },
                 }}
               >
                 {LL.products.addFirstProduct()}
@@ -1030,12 +1036,10 @@ export const SellersProducts = () => {
                                     <IconButton
                                       size="small"
                                       color="primary"
-                                      onClick={() => {
-                                        handleEditSellerProduct(
-                                          sellerProduct.id
-                                        );
-                                        handleCloseViewModal();
-                                      }}
+                                      component={RouterLink}
+                                      to={editSellerProductHref(
+                                        sellerProduct.id
+                                      )}
                                     >
                                       <EditIcon />
                                     </IconButton>

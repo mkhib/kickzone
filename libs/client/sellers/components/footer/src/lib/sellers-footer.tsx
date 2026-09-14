@@ -7,21 +7,15 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import LanguageIcon from '@mui/icons-material/Language';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 
 export function SellersFooter() {
   const { LL } = useI18nContext();
   const { currentLocale, availableLocales } = useLanguageContext();
-  const navigate = useNavigate();
-
   const currentLanguage = availableLocales.find(
     (lang) => lang.code === currentLocale
   );
-
-  const handleLanguageSettingsClick = () => {
-    navigate(SELLER_ROUTES.LANGUAGE_SETTINGS);
-  };
 
   return (
     <Box
@@ -67,7 +61,8 @@ export function SellersFooter() {
           variant="outlined"
           size="small"
           startIcon={<LanguageIcon />}
-          onClick={handleLanguageSettingsClick}
+          component={RouterLink}
+          to={SELLER_ROUTES.LANGUAGE_SETTINGS}
           sx={(theme) => ({
             textTransform: 'none',
             fontSize: '0.875rem',

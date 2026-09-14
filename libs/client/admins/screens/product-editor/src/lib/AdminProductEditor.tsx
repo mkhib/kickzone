@@ -4,7 +4,6 @@ import {
   useCategoriesQuery,
 } from '@kickzone-workspace/categories-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import { colors } from '@kickzone-workspace/colors';
 import { useProducts, useProductById } from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
@@ -284,10 +283,6 @@ const ProductInfoCard = React.memo(
         variant="contained"
         startIcon={<AddPhotoAlternateIcon />}
         disabled={isSelectImagesDisabled}
-        sx={{
-          backgroundColor: colors.main,
-          '&:hover': { backgroundColor: colors.hoverMain },
-        }}
       >
         {info.isUploading ? LL.status.uploading() : LL.products.selectImages()}
         <VisuallyHiddenInput
@@ -1475,11 +1470,8 @@ export function AdminProductEditor({
                 <Button
                   type="submit"
                   variant="contained"
-                  sx={{
-                    backgroundColor: colors.main,
-                    '&:hover': { backgroundColor: colors.hoverMain },
-                    textTransform: 'none',
-                  }}
+                  color="primary"
+                  sx={{ textTransform: 'none' }}
                   loading={isCreatingProduct}
                   fullWidth={isMobile}
                 >

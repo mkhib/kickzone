@@ -54,7 +54,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 import { useState, useEffect, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { useZarinPalPayment } from '@kickzone-workspace/customer-payment';
 import { useConvertPrice } from '@kickzone-workspace/currency-hook';
@@ -791,6 +791,8 @@ export function CustomerShoppingCart() {
             </Typography>
             <Button
               variant="contained"
+              component={RouterLink}
+              to={CUSTOMER_ROUTES.PRODUCTS}
               sx={{
                 mt: 1,
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -799,7 +801,6 @@ export function CustomerShoppingCart() {
                   boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
                 },
               }}
-              onClick={() => navigate(CUSTOMER_ROUTES.PRODUCTS)}
             >
               {LL.checkout.continueShopping()}
             </Button>

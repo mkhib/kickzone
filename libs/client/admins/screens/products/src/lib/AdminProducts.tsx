@@ -22,7 +22,7 @@ import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import { ReactNode, useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link as RouterLink } from 'react-router-dom';
 import ArchiveIcon from '@mui/icons-material/Archive';
 import EditIcon from '@mui/icons-material/Edit';
 import ImageIcon from '@mui/icons-material/Image';
@@ -56,7 +56,6 @@ export function AdminProducts({
   showSellerListings = true,
   title,
 }: AdminProductsProps = {}) {
-  const navigate = useNavigate();
   const { LL } = useI18nContext();
   usePageTitle(() => title || LL.pageTitles.adminProducts());
   const {
@@ -197,7 +196,8 @@ export function AdminProducts({
           <Button
             variant="contained"
             color="primary"
-            onClick={() => navigate(productsNewPath)}
+            component={RouterLink}
+            to={productsNewPath}
           >
             {LL.products.addProduct()}
           </Button>
@@ -507,9 +507,8 @@ export function AdminProducts({
                         <Tooltip title={LL.button.edit()}>
                           <IconButton
                             size="medium"
-                            onClick={() =>
-                              navigate(productsEditPath(product.id))
-                            }
+                            component={RouterLink}
+                            to={productsEditPath(product.id)}
                             sx={{
                               color: 'primary.main',
                               '&:hover': {

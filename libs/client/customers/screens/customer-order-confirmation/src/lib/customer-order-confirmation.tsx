@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { Link as RouterLink, useNavigate, useLocation } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
@@ -473,7 +473,8 @@ export function CustomerOrderConfirmation() {
               variant="contained"
               size="large"
               startIcon={<Receipt />}
-              onClick={() => navigate(CUSTOMER_ROUTES.ORDERS)}
+              component={RouterLink}
+              to={CUSTOMER_ROUTES.ORDERS}
               sx={{
                 borderRadius: 3,
                 py: 1.5,
@@ -500,7 +501,8 @@ export function CustomerOrderConfirmation() {
               variant="outlined"
               size="large"
               startIcon={<ShoppingBag />}
-              onClick={() => navigate(CUSTOMER_ROUTES.HOME)}
+              component={RouterLink}
+              to={CUSTOMER_ROUTES.HOME}
               sx={{
                 borderRadius: 3,
                 py: 1.5,
