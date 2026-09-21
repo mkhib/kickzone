@@ -347,7 +347,9 @@ export class ProductService {
   }
 
   async getCategories() {
-    return this.categoryRepository.find();
+    return this.categoryRepository.find({
+      order: { sortOrder: 'ASC', id: 'ASC' },
+    });
   }
 
   async addImagesToProductInfo(productInfoId: number, imageUrls: string[]) {
