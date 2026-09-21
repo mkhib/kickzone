@@ -356,6 +356,8 @@ const en = {
       'Are you sure you want to delete the color "{name}"? This action cannot be undone.',
     colorName: 'Color Name',
     hexCode: 'Hex Code',
+    manageColors: 'Manage Colors',
+    searchColors: 'Search colors...',
   },
 
   // Categories
@@ -365,6 +367,8 @@ const en = {
     deleteCategory: 'Delete Category',
     deleteCategoryConfirm:
       'Are you sure you want to delete the category "{name}"? This action cannot be undone.',
+    manageCategories: 'Manage Categories',
+    searchCategories: 'Search categories...',
   },
 
   // Modal

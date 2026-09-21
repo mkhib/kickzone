@@ -1,7 +1,5 @@
 import { Color, ProductInfoColor } from '@kickzone-workspace/entities';
 
-export const MAX_COLORS_PER_VARIANT = 3;
-
 export function orderedColorsFromLinks(
   colorLinks?: ProductInfoColor[] | null
 ): Color[] {

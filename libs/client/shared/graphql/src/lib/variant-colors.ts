@@ -4,8 +4,6 @@ type ColorLike = Pick<KickzoneGraphqlTypes.Color, 'name' | 'hexCode'> & {
   id?: number;
 };
 
-export const MAX_COLORS_PER_VARIANT = 3;
-
 export function formatVariantColorNames(
   colors?: ColorLike[] | null,
   fallback = ''

@@ -37,7 +37,6 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useColors } from '@kickzone-workspace/colors-hook';
 import { SketchPicker, ColorResult } from 'react-color';
-import { MAX_COLORS_PER_VARIANT } from '@kickzone-workspace/client-shared-graphql';
 
 interface CategoryModalProps {
   open: boolean;
@@ -353,12 +352,7 @@ const ProductInfoCard = React.memo(
             getOptionLabel={(option) => option.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             value={info.colors}
-            onChange={(_e, newValue) => {
-              if (newValue.length > MAX_COLORS_PER_VARIANT) {
-                return;
-              }
-              onColorsChange(idx, newValue);
-            }}
+            onChange={(_e, newValue) => onColorsChange(idx, newValue)}
             renderOption={(props, option) => {
               const { key, ...otherProps } = props;
               return (
@@ -385,12 +379,7 @@ const ProductInfoCard = React.memo(
               );
             }}
             renderInput={(params) => (
-              <TextField
-                {...params}
-                label={LL.form.color()}
-                required
-                helperText={`1–${MAX_COLORS_PER_VARIANT} colors`}
-              />
+              <TextField {...params} label={LL.form.color()} required />
             )}
             sx={{ minWidth: 180, width: '100%', mb: { xs: 2, md: 0 } }}
           />
@@ -667,6 +656,211 @@ const DeleteColorModal = ({
   );
 };
 
+interface ManageColorsModalProps {
+  open: boolean;
+  onClose: () => void;
+  colors: KickzoneGraphqlTypes.Color[];
+  onAdd: () => void;
+  onEdit: (color: KickzoneGraphqlTypes.Color) => void;
+  onDelete: (color: KickzoneGraphqlTypes.Color) => void;
+  isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
+}
+
+const ManageColorsModal = ({
+  open,
+  onClose,
+  colors,
+  onAdd,
+  onEdit,
+  onDelete,
+  isLoading = false,
+  LL,
+}: ManageColorsModalProps) => {
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setSearch('');
+    }
+  }, [open]);
+
+  const filteredColors = colors.filter((color) =>
+    color.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{LL.colorManagement.manageColors()}</DialogTitle>
+      <DialogFormContent>
+        <TextField
+          fullWidth
+          size="small"
+          label={LL.colorManagement.searchColors()}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+        <Button
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={onAdd}
+          sx={{ mb: 2 }}
+          disabled={isLoading}
+          fullWidth
+        >
+          {LL.colorManagement.addNewColor()}
+        </Button>
+        <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
+          {filteredColors.map((color) => (
+            <Box
+              key={color.id}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                p: 1,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    backgroundColor: color.hexCode,
+                    mr: 1,
+                    border: '1px solid #ccc',
+                  }}
+                />
+                <Typography>{color.name}</Typography>
+              </Box>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(color)}
+                  aria-label={LL.colorManagement.editColor()}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => onDelete(color)}
+                  color="error"
+                  aria-label={LL.colorManagement.deleteColor()}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </DialogFormContent>
+      <DialogActions>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+interface ManageCategoriesModalProps {
+  open: boolean;
+  onClose: () => void;
+  categories: Array<{ id: number; name: string }>;
+  onAdd: () => void;
+  onEdit: (category: { id: number; name: string }) => void;
+  onDelete: (category: { id: number; name: string }) => void;
+  isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
+}
+
+const ManageCategoriesModal = ({
+  open,
+  onClose,
+  categories,
+  onAdd,
+  onEdit,
+  onDelete,
+  isLoading = false,
+  LL,
+}: ManageCategoriesModalProps) => {
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setSearch('');
+    }
+  }, [open]);
+
+  const filteredCategories = categories.filter((category) =>
+    category.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{LL.categories.manageCategories()}</DialogTitle>
+      <DialogFormContent>
+        <TextField
+          fullWidth
+          size="small"
+          label={LL.categories.searchCategories()}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+        <Button
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={onAdd}
+          sx={{ mb: 2 }}
+          disabled={isLoading}
+          fullWidth
+        >
+          {LL.categories.addCategory()}
+        </Button>
+        <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
+          {filteredCategories.map((category) => (
+            <Box
+              key={category.id}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                p: 1,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography>{category.name}</Typography>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(category)}
+                  aria-label={LL.categories.editCategory()}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => onDelete(category)}
+                  color="error"
+                  aria-label={LL.categories.deleteCategory()}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </DialogFormContent>
+      <DialogActions>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
 type LayoutComponentType = React.ComponentType<{ children: React.ReactNode }>;
 
 export type CreatedCatalogProduct = {
@@ -730,6 +924,8 @@ export function AdminProductEditor({
 
   const [, setCreatedProductInfoIds] = useState<(number | null)[]>([null]);
 
+  const [isManageCategoriesModalOpen, setIsManageCategoriesModalOpen] =
+    useState(false);
   const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
   const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState<{
@@ -758,6 +954,7 @@ export function AdminProductEditor({
     isLoading: false,
   });
 
+  const [isManageColorsModalOpen, setIsManageColorsModalOpen] = useState(false);
   const [isNewColorModalOpen, setIsNewColorModalOpen] = useState(false);
   const [isEditColorModalOpen, setIsEditColorModalOpen] = useState(false);
   const [selectedColor, setSelectedColor] =
@@ -1295,45 +1492,6 @@ export function AdminProductEditor({
                     }))
                   }
                   loading={getCategoriesLoading}
-                  renderOption={(props, option) => {
-                    const { key, ...otherProps } = props;
-                    return (
-                      <li key={key} {...otherProps}>
-                        <Box
-                          sx={{
-                            display: 'flex',
-                            justifyContent: 'space-between',
-                            width: '100%',
-                            alignItems: 'center',
-                          }}
-                        >
-                          {option.name}
-                          <Box>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSelectedCategory(option);
-                                setIsEditCategoryModalOpen(true);
-                              }}
-                            >
-                              <EditIcon fontSize="small" />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleOpenDeleteCategoryModal(option);
-                              }}
-                              color="error"
-                            >
-                              <DeleteIcon fontSize="small" />
-                            </IconButton>
-                          </Box>
-                        </Box>
-                      </li>
-                    );
-                  }}
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -1342,22 +1500,6 @@ export function AdminProductEditor({
                         input: {
                           ...params.InputProps,
                           'aria-label': 'Category',
-                          endAdornment: (
-                            <>
-                              {params.InputProps?.endAdornment}
-                              <IconButton
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setIsNewCategoryModalOpen(true);
-                                }}
-                                size="small"
-                                sx={{ ml: 1 }}
-                                aria-label="Add new category"
-                              >
-                                <AddIcon />
-                              </IconButton>
-                            </>
-                          ),
                         },
                       }}
                     />
@@ -1368,6 +1510,14 @@ export function AdminProductEditor({
                   filterSelectedOptions
                   openOnFocus
                 />
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsManageCategoriesModalOpen(true)}
+                  sx={{ mt: 1 }}
+                  fullWidth={isMobile}
+                >
+                  {LL.categories.manageCategories()}
+                </Button>
               </Box>
               <Box sx={{ mt: 2 }}>
                 <TextField
@@ -1384,65 +1534,14 @@ export function AdminProductEditor({
                 />
               </Box>
               <Box sx={{ mt: 2 }}>
-                <Typography variant="h6" sx={{ mb: 2 }}>
-                  {LL.products.colors()}
-                </Typography>
                 <Button
                   variant="outlined"
-                  startIcon={<AddIcon />}
-                  onClick={() => setIsNewColorModalOpen(true)}
-                  sx={{ mb: 2 }}
+                  onClick={() => setIsManageColorsModalOpen(true)}
                   disabled={colorMutationsLoading}
+                  fullWidth={isMobile}
                 >
-                  {LL.colorManagement.addNewColor()}
+                  {LL.colorManagement.manageColors()}
                 </Button>
-                <Box>
-                  {(availableColors as KickzoneGraphqlTypes.Color[])
-                    ?.filter(
-                      (color): color is KickzoneGraphqlTypes.Color =>
-                        color != null
-                    )
-                    .map((color) => (
-                      <Box
-                        key={color.id}
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          p: 1,
-                          borderBottom: '1px solid #eee',
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center' }}>
-                          <Box
-                            sx={{
-                              width: 20,
-                              height: 20,
-                              backgroundColor: color.hexCode,
-                              mr: 1,
-                              border: '1px solid #ccc',
-                            }}
-                          />
-                          <Typography>{color.name}</Typography>
-                        </Box>
-                        <Box>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleOpenEditColorModal(color)}
-                          >
-                            <EditIcon fontSize="small" />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            onClick={() => handleOpenDeleteColorModal(color)}
-                            color="error"
-                          >
-                            <DeleteIcon fontSize="small" />
-                          </IconButton>
-                        </Box>
-                      </Box>
-                    ))}
-                </Box>
               </Box>
             </Grid>
             {/* Right Side - ProductInfos Section */}
@@ -1542,6 +1641,21 @@ export function AdminProductEditor({
 
   const modals = (
     <>
+      <ManageCategoriesModal
+        open={isManageCategoriesModalOpen}
+        onClose={() => setIsManageCategoriesModalOpen(false)}
+        categories={categories || []}
+        onAdd={() => setIsNewCategoryModalOpen(true)}
+        onEdit={(category) => {
+          setSelectedCategory(category);
+          setIsEditCategoryModalOpen(true);
+        }}
+        onDelete={handleOpenDeleteCategoryModal}
+        isLoading={
+          isCreatingCategory || isUpdatingCategory || isDeletingCategory
+        }
+        LL={LL}
+      />
       <CategoryModal
         open={isNewCategoryModalOpen}
         onClose={() => setIsNewCategoryModalOpen(false)}
@@ -1619,6 +1733,23 @@ export function AdminProductEditor({
           deleteImageModal.imageType === 'preview' ? 'preview' : 'uploaded'
         }
         isLoading={deleteImageModal.isLoading}
+        LL={LL}
+      />
+      <ManageColorsModal
+        open={isManageColorsModalOpen}
+        onClose={() => setIsManageColorsModalOpen(false)}
+        colors={
+          (availableColors as KickzoneGraphqlTypes.Color[])?.filter(
+            (color): color is KickzoneGraphqlTypes.Color => color != null
+          ) || []
+        }
+        onAdd={() => {
+          setSelectedColor(null);
+          setIsNewColorModalOpen(true);
+        }}
+        onEdit={handleOpenEditColorModal}
+        onDelete={handleOpenDeleteColorModal}
+        isLoading={colorMutationsLoading}
         LL={LL}
       />
       <ColorModal

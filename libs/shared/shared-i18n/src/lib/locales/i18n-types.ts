@@ -1251,6 +1251,14 @@ type RootTranslation = {
 		 * H​e​x​ ​C​o​d​e
 		 */
 		hexCode: string
+		/**
+		 * M​a​n​a​g​e​ ​C​o​l​o​r​s
+		 */
+		manageColors: string
+		/**
+		 * S​e​a​r​c​h​ ​c​o​l​o​r​s​.​.​.
+		 */
+		searchColors: string
 	}
 	categories: {
 		/**
@@ -1270,6 +1278,14 @@ type RootTranslation = {
 		 * @param {unknown} name
 		 */
 		deleteCategoryConfirm: RequiredParams<'name'>
+		/**
+		 * M​a​n​a​g​e​ ​C​a​t​e​g​o​r​i​e​s
+		 */
+		manageCategories: string
+		/**
+		 * S​e​a​r​c​h​ ​c​a​t​e​g​o​r​i​e​s​.​.​.
+		 */
+		searchCategories: string
 	}
 	modal: {
 		/**
@@ -3865,6 +3881,14 @@ export type TranslationFunctions = {
 		 * Hex Code
 		 */
 		hexCode: () => LocalizedString
+		/**
+		 * Manage Colors
+		 */
+		manageColors: () => LocalizedString
+		/**
+		 * Search colors...
+		 */
+		searchColors: () => LocalizedString
 	}
 	categories: {
 		/**
@@ -3883,6 +3907,14 @@ export type TranslationFunctions = {
 		 * Are you sure you want to delete the category "{name}"? This action cannot be undone.
 		 */
 		deleteCategoryConfirm: (arg: { name: unknown }) => LocalizedString
+		/**
+		 * Manage Categories
+		 */
+		manageCategories: () => LocalizedString
+		/**
+		 * Search categories...
+		 */
+		searchCategories: () => LocalizedString
 	}
 	modal: {
 		/**

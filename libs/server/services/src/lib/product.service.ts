@@ -18,7 +18,6 @@ import {
   UpdateProductInput,
 } from '@kickzone-workspace/inputs';
 import { TranslationService } from './translation.service';
-import { MAX_COLORS_PER_VARIANT } from './product-info-colors.util';
 
 @Injectable()
 export class ProductService {
@@ -621,11 +620,6 @@ export class ProductService {
     const uniqueIds = [...new Set(colorIds.filter((id) => Number.isFinite(id)))];
     if (!uniqueIds.length) {
       throw new Error('At least one color is required.');
-    }
-    if (uniqueIds.length > MAX_COLORS_PER_VARIANT) {
-      throw new Error(
-        `A variant can have at most ${MAX_COLORS_PER_VARIANT} colors.`
-      );
     }
     const colors = await this.colorRepository.findBy({ id: In(uniqueIds) });
     if (colors.length !== uniqueIds.length) {

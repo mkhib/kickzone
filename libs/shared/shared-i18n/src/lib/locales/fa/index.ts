@@ -356,6 +356,8 @@ const fa = {
       'آیا مطمئن هستید که می‌خواهید رنگ "{name}" را حذف کنید؟ این عمل قابل بازگشت نیست.',
     colorName: 'نام رنگ',
     hexCode: 'کد هگز',
+    manageColors: 'مدیریت رنگ‌ها',
+    searchColors: 'جستجوی رنگ‌ها...',
   },
 
   // Categories
@@ -365,6 +367,8 @@ const fa = {
     deleteCategory: 'حذف دسته‌بندی',
     deleteCategoryConfirm:
       'آیا مطمئن هستید که می‌خواهید دسته‌بندی "{name}" را حذف کنید؟ این عمل قابل بازگشت نیست.',
+    manageCategories: 'مدیریت دسته‌بندی‌ها',
+    searchCategories: 'جستجوی دسته‌بندی‌ها...',
   },
 
   // Modal
