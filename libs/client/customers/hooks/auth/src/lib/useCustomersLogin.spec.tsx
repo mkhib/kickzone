@@ -1,6 +1,7 @@
+import { useMutation } from '@apollo/client/react';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { act, renderHook } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCustomersLogin } from './useCustomersLogin';
 
 const mockSetAuthUser = vi.fn();
@@ -32,8 +33,6 @@ vi.mock('@kickzone-workspace/customers-graphql', () => ({
 vi.mock('@apollo/client', () => ({
   gql: (strings: TemplateStringsArray) => strings.join(''),
 }));
-
-import { useMutation } from '@apollo/client/react';
 
 describe('useCustomersLogin', () => {
   beforeEach(() => {
