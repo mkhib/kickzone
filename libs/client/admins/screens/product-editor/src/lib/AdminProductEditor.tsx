@@ -33,10 +33,48 @@ import { styled, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useColors } from '@kickzone-workspace/colors-hook';
 import { SketchPicker, ColorResult } from 'react-color';
+
+/** Keep multi-select Autocomplete open after picks; avoid mobile blur closing it mid-selection. */
+function useMultiSelectAutocompleteOpen() {
+  const [open, setOpen] = useState(false);
+  const ignoreNextBlurRef = useRef(false);
+
+  const onOpen = useCallback(() => setOpen(true), []);
+
+  const onClose = useCallback(
+    (_event: React.SyntheticEvent, reason: string) => {
+      if (reason === 'selectOption' || reason === 'removeOption') {
+        return;
+      }
+      if (reason === 'blur' && ignoreNextBlurRef.current) {
+        ignoreNextBlurRef.current = false;
+        return;
+      }
+      setOpen(false);
+    },
+    []
+  );
+
+  const markSelection = useCallback(() => {
+    ignoreNextBlurRef.current = true;
+  }, []);
+
+  return { open, onOpen, onClose, markSelection };
+}
+
+const multiSelectListboxSlotProps = {
+  sx: {
+    maxHeight: { xs: 280, sm: 320 },
+    '& .MuiAutocomplete-option': {
+      minHeight: { xs: 48, sm: 36 },
+      py: { xs: 1.25, sm: 0.75 },
+    },
+  },
+} as const;
 
 interface CategoryModalProps {
   open: boolean;
@@ -277,6 +315,7 @@ const ProductInfoCard = React.memo(
     const isSelectImagesDisabled = info.isUploading || !info.createdId;
     const theme = useTheme();
     const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const colorsAutocomplete = useMultiSelectAutocompleteOpen();
     const uploadButton = (
       <Button
         component="label"
@@ -348,11 +387,26 @@ const ProductInfoCard = React.memo(
         >
           <Autocomplete
             multiple
+            disableCloseOnSelect
+            openOnFocus
+            clearOnBlur={false}
+            open={colorsAutocomplete.open}
+            onOpen={colorsAutocomplete.onOpen}
+            onClose={colorsAutocomplete.onClose}
             options={availableColors}
             getOptionLabel={(option) => option.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
             value={info.colors}
-            onChange={(_e, newValue) => onColorsChange(idx, newValue)}
+            onChange={(_e, newValue, reason) => {
+              if (reason === 'selectOption' || reason === 'removeOption') {
+                colorsAutocomplete.markSelection();
+              }
+              onColorsChange(idx, newValue);
+            }}
+            filterSelectedOptions
+            slotProps={{
+              listbox: multiSelectListboxSlotProps,
+            }}
             renderOption={(props, option) => {
               const { key, ...otherProps } = props;
               return (
@@ -371,6 +425,7 @@ const ProductInfoCard = React.memo(
                         borderRadius: '50%',
                         backgroundColor: option.hexCode,
                         border: '1px solid rgba(0,0,0,0.2)',
+                        flexShrink: 0,
                       }}
                     />
                     {option.name}
@@ -987,6 +1042,7 @@ export function AdminProductEditor({
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const categoriesAutocomplete = useMultiSelectAutocompleteOpen();
 
   const {
     colors: availableColors,
@@ -1477,6 +1533,12 @@ export function AdminProductEditor({
               <Box>
                 <Autocomplete
                   multiple
+                  disableCloseOnSelect
+                  openOnFocus
+                  clearOnBlur={false}
+                  open={categoriesAutocomplete.open}
+                  onOpen={categoriesAutocomplete.onOpen}
+                  onClose={categoriesAutocomplete.onClose}
                   id="categories-autocomplete"
                   options={categories || []}
                   getOptionLabel={(option) => option.name}
@@ -1485,12 +1547,15 @@ export function AdminProductEditor({
                       product.categoryIds.includes(cat.id)
                     ) || []
                   }
-                  onChange={(_e, newValue) =>
+                  onChange={(_e, newValue, reason) => {
+                    if (reason === 'selectOption' || reason === 'removeOption') {
+                      categoriesAutocomplete.markSelection();
+                    }
                     setProduct((prev) => ({
                       ...prev,
                       categoryIds: newValue.map((category) => category.id),
-                    }))
-                  }
+                    }));
+                  }}
                   loading={getCategoriesLoading}
                   renderInput={(params) => (
                     <TextField
@@ -1508,7 +1573,9 @@ export function AdminProductEditor({
                     option.id === value.id
                   }
                   filterSelectedOptions
-                  openOnFocus
+                  slotProps={{
+                    listbox: multiSelectListboxSlotProps,
+                  }}
                 />
                 <Button
                   variant="outlined"
