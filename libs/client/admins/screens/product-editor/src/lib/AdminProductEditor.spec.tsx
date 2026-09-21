@@ -121,6 +121,8 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         deleteCategory: () => 'Delete Category',
         deleteCategoryConfirm: ({ name }: { name: string }) =>
           `Delete ${name}?`,
+        manageCategories: () => 'Manage Categories',
+        searchCategories: () => 'Search categories...',
       },
       modal: {
         deleteImage: () => 'Delete Image',
@@ -138,6 +140,8 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         hexCode: () => 'Hex Code',
         deleteColorConfirm: ({ name }: { name: string }) =>
           `Delete ${name}?`,
+        manageColors: () => 'Manage Colors',
+        searchColors: () => 'Search colors...',
       },
     },
   }),
@@ -200,7 +204,12 @@ describe('AdminProductEditor', () => {
     expect(screen.getByLabelText('Product Name')).toBeInTheDocument();
     expect(screen.getByLabelText('Product Editor Form')).toBeInTheDocument();
     expect(screen.getByText('Product Variants')).toBeInTheDocument();
-    expect(screen.getByText('Colors')).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Manage Categories' })
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: 'Manage Colors' })
+    ).toBeInTheDocument();
   });
 
   it('shows a validation error when required fields are missing', async () => {
@@ -228,16 +237,20 @@ describe('AdminProductEditor', () => {
   it('opens the new category modal', async () => {
     renderEditor();
 
-    fireEvent.click(screen.getByLabelText('Add new category'));
+    fireEvent.click(
+      screen.getByRole('button', { name: 'Manage Categories' })
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Add New Category' }));
 
     await waitFor(() => {
-      expect(screen.getByText('Add New Category')).toBeInTheDocument();
+      expect(screen.getByLabelText('Category Name')).toBeInTheDocument();
     });
   });
 
   it('opens the color modal and creates a color', async () => {
     renderEditor();
 
+    fireEvent.click(screen.getByRole('button', { name: 'Manage Colors' }));
     fireEvent.click(screen.getByRole('button', { name: 'Add New Color' }));
     fireEvent.click(screen.getByTestId('sketch-picker'));
     fireEvent.change(screen.getByLabelText('Color Name'), {

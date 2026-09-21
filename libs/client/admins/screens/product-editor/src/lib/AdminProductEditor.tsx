@@ -293,6 +293,8 @@ interface ProductInfoCardProps {
   disableRemove: boolean;
   onUploadSelectedImages: (infoIdx: number) => void;
   setProductInfos: React.Dispatch<React.SetStateAction<ProductInfoState[]>>;
+  onManageColors?: () => void;
+  manageColorsDisabled?: boolean;
 }
 
 const ProductInfoCard = React.memo(
@@ -307,6 +309,8 @@ const ProductInfoCard = React.memo(
     disableRemove,
     onUploadSelectedImages,
     setProductInfos,
+    onManageColors,
+    manageColorsDisabled = false,
     LL,
   }: ProductInfoCardProps & {
     LL: ReturnType<typeof useI18nContext>['LL'];
@@ -385,59 +389,79 @@ const ProductInfoCard = React.memo(
             flexWrap: { xs: 'nowrap', md: 'wrap' },
           }}
         >
-          <Autocomplete
-            multiple
-            disableCloseOnSelect
-            openOnFocus
-            clearOnBlur={false}
-            open={colorsAutocomplete.open}
-            onOpen={colorsAutocomplete.onOpen}
-            onClose={colorsAutocomplete.onClose}
-            options={availableColors}
-            getOptionLabel={(option) => option.name}
-            isOptionEqualToValue={(option, value) => option.id === value.id}
-            value={info.colors}
-            onChange={(_e, newValue, reason) => {
-              if (reason === 'selectOption' || reason === 'removeOption') {
-                colorsAutocomplete.markSelection();
-              }
-              onColorsChange(idx, newValue);
+          <Box
+            sx={{
+              minWidth: 180,
+              width: '100%',
+              flex: { md: 1 },
+              mb: { xs: 2, md: 0 },
             }}
-            filterSelectedOptions
-            slotProps={{
-              listbox: multiSelectListboxSlotProps,
-            }}
-            renderOption={(props, option) => {
-              const { key, ...otherProps } = props;
-              return (
-                <li key={key} {...otherProps}>
-                  <Box
-                    sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 1,
-                    }}
-                  >
+          >
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              openOnFocus
+              clearOnBlur={false}
+              open={colorsAutocomplete.open}
+              onOpen={colorsAutocomplete.onOpen}
+              onClose={colorsAutocomplete.onClose}
+              options={availableColors}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              value={info.colors}
+              onChange={(_e, newValue, reason) => {
+                if (reason === 'selectOption' || reason === 'removeOption') {
+                  colorsAutocomplete.markSelection();
+                }
+                onColorsChange(idx, newValue);
+              }}
+              filterSelectedOptions
+              slotProps={{
+                listbox: multiSelectListboxSlotProps,
+              }}
+              renderOption={(props, option) => {
+                const { key, ...otherProps } = props;
+                return (
+                  <li key={key} {...otherProps}>
                     <Box
                       sx={{
-                        width: 16,
-                        height: 16,
-                        borderRadius: '50%',
-                        backgroundColor: option.hexCode,
-                        border: '1px solid rgba(0,0,0,0.2)',
-                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
                       }}
-                    />
-                    {option.name}
-                  </Box>
-                </li>
-              );
-            }}
-            renderInput={(params) => (
-              <TextField {...params} label={LL.form.color()} required />
-            )}
-            sx={{ minWidth: 180, width: '100%', mb: { xs: 2, md: 0 } }}
-          />
+                    >
+                      <Box
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: '50%',
+                          backgroundColor: option.hexCode,
+                          border: '1px solid rgba(0,0,0,0.2)',
+                          flexShrink: 0,
+                        }}
+                      />
+                      {option.name}
+                    </Box>
+                  </li>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label={LL.form.color()} required />
+              )}
+              sx={{ width: '100%' }}
+            />
+            {onManageColors ? (
+              <Button
+                variant="outlined"
+                onClick={onManageColors}
+                disabled={manageColorsDisabled}
+                sx={{ mt: 1 }}
+                fullWidth={isMobile}
+              >
+                {LL.colorManagement.manageColors()}
+              </Button>
+            ) : null}
+          </Box>
           <TextField
             label={LL.products.size()}
             name="size"
@@ -1600,16 +1624,6 @@ export function AdminProductEditor({
                   sx={{ mb: 2 }}
                 />
               </Box>
-              <Box sx={{ mt: 2 }}>
-                <Button
-                  variant="outlined"
-                  onClick={() => setIsManageColorsModalOpen(true)}
-                  disabled={colorMutationsLoading}
-                  fullWidth={isMobile}
-                >
-                  {LL.colorManagement.manageColors()}
-                </Button>
-              </Box>
             </Grid>
             {/* Right Side - ProductInfos Section */}
             <Grid size={{ xs: 12, md: 6 }}>
@@ -1638,6 +1652,12 @@ export function AdminProductEditor({
                         color != null
                     ) || []
                   }
+                  onManageColors={
+                    idx === 0
+                      ? () => setIsManageColorsModalOpen(true)
+                      : undefined
+                  }
+                  manageColorsDisabled={colorMutationsLoading}
                   onRemove={handleRemoveProductInfo}
                   disableRemove={productInfos.length === 1}
                   onRemoveImage={(infoIdx: number, imageIdx: number) => {
