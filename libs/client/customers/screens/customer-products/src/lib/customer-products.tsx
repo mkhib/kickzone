@@ -17,6 +17,8 @@ import Pagination from '@mui/material/Pagination';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import InputAdornment from '@mui/material/InputAdornment';
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Search from '@mui/icons-material/Search';
 import ShoppingCart from '@mui/icons-material/ShoppingCart';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
@@ -24,6 +26,7 @@ import {
   useCustomersProducts,
   useCustomersCategories,
   useCustomersColors,
+  useDistinctProductSizes,
 } from '@kickzone-workspace/customers-product-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
@@ -33,6 +36,14 @@ import {
   serializeVariantColorHexes,
 } from '@kickzone-workspace/client-shared-graphql';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
+import {
+  euToUs,
+  expandFilterSizes,
+  formatSizeLabel,
+  FootwearSizeSystem,
+  SizeKind,
+  sortSizeCodes,
+} from '@kickzone-workspace/product-sizes';
 
 export function CustomerProducts() {
   const { LL } = useI18nContext();
@@ -41,6 +52,12 @@ export function CustomerProducts() {
     KickzoneGraphqlTypes.Category[]
   >([]);
   const [selectedColor, setSelectedColor] = useState('');
+  const [sizeFilterKind, setSizeFilterKind] = useState<SizeKind>(
+    SizeKind.Apparel
+  );
+  const [footwearSystem, setFootwearSystem] = useState<FootwearSizeSystem>(
+    FootwearSizeSystem.Eu
+  );
   const [selectedSizes, setSelectedSizes] = useState<string[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
@@ -73,19 +90,30 @@ export function CustomerProducts() {
     return pricingInfo;
   };
 
+  const canonicalFilterSizes = useMemo(
+    () =>
+      expandFilterSizes(sizeFilterKind, footwearSystem, selectedSizes),
+    [sizeFilterKind, footwearSystem, selectedSizes]
+  );
+
   const productInfoFilter = useMemo<
     KickzoneGraphqlTypes.ProductInfoFilterInput | undefined
   >(
     () =>
-      selectedColor || selectedSizes.length
+      selectedColor || canonicalFilterSizes.length
         ? {
             ...(selectedColor
               ? { colorId: [parseInt(selectedColor, 10)] }
               : {}),
-            ...(selectedSizes.length ? { size: selectedSizes } : {}),
+            ...(canonicalFilterSizes.length
+              ? {
+                  size: canonicalFilterSizes,
+                  sizeKind: sizeFilterKind,
+                }
+              : {}),
           }
         : undefined,
-    [selectedColor, selectedSizes]
+    [selectedColor, canonicalFilterSizes, sizeFilterKind]
   );
 
   const filter = useMemo<KickzoneGraphqlTypes.ProductFilterInput>(
@@ -122,6 +150,7 @@ export function CustomerProducts() {
 
   const { categories } = useCustomersCategories();
   const { colors } = useCustomersColors();
+  const { sizes: catalogSizes } = useDistinctProductSizes(sizeFilterKind);
   const safeColors: KickzoneGraphqlTypes.Color[] = (colors ?? []).filter(
     (color): color is KickzoneGraphqlTypes.Color =>
       Boolean(
@@ -133,16 +162,22 @@ export function CustomerProducts() {
   );
 
   const availableSizes = useMemo(() => {
-    const sizeSet = new Set<string>();
-    products.forEach((product) => {
-      product.productInfos?.forEach((info) => {
-        if (info.size) {
-          sizeSet.add(info.size);
+    const sorted = sortSizeCodes(sizeFilterKind, catalogSizes);
+    if (
+      sizeFilterKind === SizeKind.Footwear &&
+      footwearSystem === FootwearSizeSystem.Us
+    ) {
+      const usCodes = new Set<string>();
+      for (const eu of sorted) {
+        const us = euToUs(eu);
+        if (us) {
+          usCodes.add(us);
         }
-      });
-    });
-    return Array.from(sizeSet).sort();
-  }, [products]);
+      }
+      return Array.from(usCodes).sort((a, b) => Number(a) - Number(b));
+    }
+    return sorted;
+  }, [catalogSizes, sizeFilterKind, footwearSystem]);
 
   const handleSearch = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(event.target.value);
@@ -159,6 +194,30 @@ export function CustomerProducts() {
 
   const handleSizeChange = (_event: React.SyntheticEvent, value: string[]) => {
     setSelectedSizes(value);
+    resetPage();
+  };
+
+  const handleSizeKindChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    next: SizeKind | null
+  ) => {
+    if (!next) {
+      return;
+    }
+    setSizeFilterKind(next);
+    setSelectedSizes([]);
+    resetPage();
+  };
+
+  const handleFootwearSystemChange = (
+    _event: React.MouseEvent<HTMLElement>,
+    next: FootwearSizeSystem | null
+  ) => {
+    if (!next) {
+      return;
+    }
+    setFootwearSystem(next);
+    setSelectedSizes([]);
     resetPage();
   };
 
@@ -292,6 +351,38 @@ export function CustomerProducts() {
             )}
             sx={{ minWidth: 220 }}
           />
+
+          <ToggleButtonGroup
+            exclusive
+            size="small"
+            value={sizeFilterKind}
+            onChange={handleSizeKindChange}
+            aria-label={LL.products.sizeKind()}
+          >
+            <ToggleButton value={SizeKind.Apparel}>
+              {LL.products.sizeKindApparel()}
+            </ToggleButton>
+            <ToggleButton value={SizeKind.Footwear}>
+              {LL.products.sizeKindFootwear()}
+            </ToggleButton>
+          </ToggleButtonGroup>
+
+          {sizeFilterKind === SizeKind.Footwear ? (
+            <ToggleButtonGroup
+              exclusive
+              size="small"
+              value={footwearSystem}
+              onChange={handleFootwearSystemChange}
+              aria-label={LL.products.size()}
+            >
+              <ToggleButton value={FootwearSizeSystem.Eu}>
+                {LL.products.sizeSystemEu()}
+              </ToggleButton>
+              <ToggleButton value={FootwearSizeSystem.Us}>
+                {LL.products.sizeSystemUs()}
+              </ToggleButton>
+            </ToggleButtonGroup>
+          ) : null}
 
           <Autocomplete
             multiple
@@ -531,7 +622,17 @@ export function CustomerProducts() {
                             />
                           ))}
                           <Typography variant="caption">
-                            {info.size}
+                            {formatSizeLabel(
+                              info.sizeKind ?? SizeKind.Apparel,
+                              info.size,
+                              FootwearSizeSystem.Eu
+                            )}
+                            {info.sizeKind === SizeKind.Footwear &&
+                            euToUs(info.size)
+                              ? ` (${LL.products.usEquivalent({
+                                  us: euToUs(info.size)!,
+                                })})`
+                              : ''}
                             {info.colors?.length
                               ? ` · ${formatVariantColorNames(info.colors)}`
                               : ''}

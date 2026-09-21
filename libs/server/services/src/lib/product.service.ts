@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In } from 'typeorm';
 import {
@@ -17,10 +17,17 @@ import {
   ProductFilterInput,
   UpdateProductInput,
 } from '@kickzone-workspace/inputs';
+import {
+  inferSizeKindFromRaw,
+  normalizeSizeCode,
+  SizeKind,
+} from '@kickzone-workspace/product-sizes';
 import { TranslationService } from './translation.service';
 
 @Injectable()
-export class ProductService {
+export class ProductService implements OnModuleInit {
+  private readonly logger = new Logger(ProductService.name);
+
   constructor(
     @InjectRepository(Product)
     private readonly productRepository: Repository<Product>,
@@ -36,6 +43,42 @@ export class ProductService {
     private readonly sellerProductRepository: Repository<SellerProduct>,
     private readonly translationService: TranslationService
   ) {}
+
+  async onModuleInit() {
+    await this.normalizeLegacySizes();
+  }
+
+  /** One-time-ish backfill for rows missing sizeKind / free-text sizes. */
+  private async normalizeLegacySizes(): Promise<void> {
+    try {
+      const infos = await this.productInfoRepository.find();
+      let updated = 0;
+      for (const info of infos) {
+        const inferred = inferSizeKindFromRaw(info.size);
+        const nextKind = info.sizeKind || inferred.sizeKind;
+        const normalized =
+          normalizeSizeCode(nextKind, info.size) ?? inferred.size;
+        if (
+          info.sizeKind !== nextKind ||
+          (normalized && info.size !== normalized)
+        ) {
+          info.sizeKind = nextKind;
+          if (normalized) {
+            info.size = normalized;
+          }
+          await this.productInfoRepository.save(info);
+          updated += 1;
+        }
+      }
+      if (updated > 0) {
+        this.logger.log(`Normalized sizeKind/size on ${updated} product infos`);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Skipped size normalization: ${(error as Error).message}`
+      );
+    }
+  }
 
   async getProducts(filter?: ProductFilterInput): Promise<[Product[], number]> {
     const query = this.productRepository
@@ -130,6 +173,7 @@ export class ProductService {
     if (filter?.productInfoFilter) {
       const {
         size,
+        sizeKind,
         price,
         costPrice,
         colorId,
@@ -137,7 +181,10 @@ export class ProductService {
         discount,
         stockQuantity,
       } = filter.productInfoFilter;
-      if (size) query.andWhere('productInfo.size IN (:...size)', { size });
+      if (size?.length)
+        query.andWhere('productInfo.size IN (:...size)', { size });
+      if (sizeKind)
+        query.andWhere('productInfo.sizeKind = :sizeKind', { sizeKind });
       if (price) query.andWhere('productInfo.price IN (:...price)', { price });
       if (costPrice)
         query.andWhere('productInfo.costPrice IN (:...costPrice)', {
@@ -251,10 +298,20 @@ export class ProductService {
     if (!product) {
       throw new Error('Product not found');
     }
+    const sizeKind = input.sizeKind ?? SizeKind.Apparel;
+    const normalizedSize = normalizeSizeCode(sizeKind, input.size);
+    if (!normalizedSize) {
+      throw new Error(
+        sizeKind === SizeKind.Apparel
+          ? 'Invalid apparel size. Use XS–XXXL.'
+          : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'
+      );
+    }
     const colors = await this.resolveOrderedColors(input.colorIds);
     const productInfo = this.productInfoRepository.create({
       product,
-      size: input.size,
+      size: normalizedSize,
+      sizeKind,
       weight: input.weight,
     });
     const savedInfo = await this.productInfoRepository.save(productInfo);
@@ -264,6 +321,19 @@ export class ProductService {
     if (!fullProduct)
       throw new Error('Product not found after creating variant');
     return fullProduct;
+  }
+
+  /** Distinct canonical sizes present in the catalog, optionally by kind. */
+  async getDistinctProductSizes(sizeKind?: SizeKind): Promise<string[]> {
+    const qb = this.productInfoRepository
+      .createQueryBuilder('productInfo')
+      .select('DISTINCT productInfo.size', 'size')
+      .where("productInfo.size IS NOT NULL AND productInfo.size <> ''");
+    if (sizeKind) {
+      qb.andWhere('productInfo.sizeKind = :sizeKind', { sizeKind });
+    }
+    const rows = await qb.getRawMany<{ size: string }>();
+    return rows.map((r) => r.size).filter(Boolean);
   }
 
   async createCategory(input: CreateCategoryInput, name?: string) {
@@ -538,6 +608,7 @@ export class ProductService {
     if (filter?.productInfoFilter) {
       const {
         size,
+        sizeKind,
         price,
         costPrice,
         colorId,
@@ -545,7 +616,10 @@ export class ProductService {
         discount,
         stockQuantity,
       } = filter.productInfoFilter;
-      if (size) query.andWhere('productInfo.size IN (:...size)', { size });
+      if (size?.length)
+        query.andWhere('productInfo.size IN (:...size)', { size });
+      if (sizeKind)
+        query.andWhere('productInfo.sizeKind = :sizeKind', { sizeKind });
       if (price) query.andWhere('productInfo.price IN (:...price)', { price });
       if (costPrice)
         query.andWhere('productInfo.costPrice IN (:...costPrice)', {

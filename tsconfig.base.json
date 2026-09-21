@@ -229,6 +229,9 @@
       "@kickzone-workspace/products-hook": [
         "libs/client/shared/hooks/products/src/index.ts"
       ],
+      "@kickzone-workspace/product-sizes": [
+        "libs/shared/product-sizes/src/index.ts"
+      ],
       "@kickzone-workspace/resolvers": ["libs/server/resolvers/src/index.ts"],
       "@kickzone-workspace/rtl-table-utils": [
         "libs/client/shared/components/rtl-table-utils/src/index.ts"

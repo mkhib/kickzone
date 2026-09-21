@@ -94,6 +94,10 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         saveProduct: () => 'Save Product',
         colors: () => 'Colors',
         size: () => 'Size',
+        sizeKind: () => 'Size type',
+        sizeKindApparel: () => 'Apparel',
+        sizeKindFootwear: () => 'Footwear',
+        selectSize: () => 'Select size',
         weight: () => 'Weight',
         selectImages: () => 'Select Images',
         selectedImagesNotUploaded: () => 'Selected images not uploaded',
@@ -234,6 +238,18 @@ describe('AdminProductEditor', () => {
     expect(screen.getByLabelText('Product Editor Form')).toBeInTheDocument();
   });
 
+  it('offers apparel and footwear size kind selects instead of free-text size', () => {
+    renderEditor();
+
+    expect(
+      screen.getByRole('combobox', { name: /Size type/i })
+    ).toBeInTheDocument();
+    expect(screen.getByRole('combobox', { name: /^Size$/i })).toBeInTheDocument();
+    expect(
+      screen.queryByRole('textbox', { name: /^Size$/i })
+    ).not.toBeInTheDocument();
+  });
+
   it('opens the new category modal', async () => {
     renderEditor();
 
@@ -276,6 +292,7 @@ describe('AdminProductEditor', () => {
           {
             id: 10,
             size: 'M',
+            sizeKind: 'APPAREL',
             colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
             weight: 100,
             images: [],

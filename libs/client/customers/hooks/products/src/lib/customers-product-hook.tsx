@@ -1,6 +1,9 @@
 import { useQuery } from '@apollo/client/react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import { GET_PRODUCTS_QUERY } from '@kickzone-workspace/customers-graphql';
+import {
+  DISTINCT_PRODUCT_SIZES_QUERY,
+  GET_PRODUCTS_QUERY,
+} from '@kickzone-workspace/customers-graphql';
 import { useCategoriesQuery } from '@kickzone-workspace/categories-hook';
 import { useColors } from '@kickzone-workspace/colors-hook';
 
@@ -69,5 +72,23 @@ export function useCustomersColors() {
     loading,
     error,
     refetch: refetchColors,
+  };
+}
+
+export function useDistinctProductSizes(
+  sizeKind?: KickzoneGraphqlTypes.SizeKind
+) {
+  const { data, loading, error, refetch } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'distinctProductSizes'>,
+    KickzoneGraphqlTypes.QueryDistinctProductSizesArgs
+  >(DISTINCT_PRODUCT_SIZES_QUERY, {
+    variables: { sizeKind },
+  });
+
+  return {
+    sizes: data?.distinctProductSizes ?? [],
+    loading,
+    error,
+    refetch,
   };
 }

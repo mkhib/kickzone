@@ -1,9 +1,13 @@
 import { InputType, Field, Float, Int } from '@nestjs/graphql';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
 
 @InputType()
 export class ProductInfoFilterInput {
   @Field(() => [String], { nullable: true })
   size?: string[];
+
+  @Field(() => SizeKind, { nullable: true })
+  sizeKind?: SizeKind;
 
   @Field(() => [Float], { nullable: true })
   price?: number[];

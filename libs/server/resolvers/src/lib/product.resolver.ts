@@ -8,6 +8,7 @@ import {
   UserRole,
 } from '@kickzone-workspace/entities';
 import { RolesGuard, CatalogGuard } from '@kickzone-workspace/guards';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
 import {
   CreateProductInfoInput,
   CreateProductInput,
@@ -62,6 +63,14 @@ export class ProductResolver {
       filter?.first || 10,
       filter?.after
     );
+  }
+
+  @Query(() => [String])
+  async distinctProductSizes(
+    @Args('sizeKind', { type: () => SizeKind, nullable: true })
+    sizeKind?: SizeKind
+  ): Promise<string[]> {
+    return this.productService.getDistinctProductSizes(sizeKind);
   }
 
   @Query(() => ProductConnection)

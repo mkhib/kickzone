@@ -26,9 +26,13 @@ import CardMedia from '@mui/material/CardMedia';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
 import DialogTitle from '@mui/material/DialogTitle';
+import FormControl from '@mui/material/FormControl';
 import Grid from '@mui/material/Grid';
 import IconButton from '@mui/material/IconButton';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
 import { styled, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
@@ -37,6 +41,12 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useColors } from '@kickzone-workspace/colors-hook';
 import { SketchPicker, ColorResult } from 'react-color';
+import {
+  APPAREL_SIZES,
+  euToUs,
+  FOOTWEAR_EU_SIZES,
+  SizeKind,
+} from '@kickzone-workspace/product-sizes';
 
 /** Keep multi-select Autocomplete open after picks; avoid mobile blur closing it mid-selection. */
 function useMultiSelectAutocompleteOpen() {
@@ -254,6 +264,7 @@ const ImagePreviewContainer = styled(Box)(({ theme }) => ({
 export type ProductInfoState = {
   productId: number;
   size: string;
+  sizeKind: SizeKind;
   colors: KickzoneGraphqlTypes.Color[];
   weight: number;
   images: File[];
@@ -462,20 +473,72 @@ const ProductInfoCard = React.memo(
               </Button>
             ) : null}
           </Box>
-          <TextField
-            label={LL.products.size()}
-            name="size"
-            value={info.size}
-            onChange={(
-              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-            ) => onChange(idx, 'size', e.target.value)}
+          <FormControl
             required
             sx={{
               flex: 1,
-              minWidth: 100,
+              minWidth: 120,
               width: isMobile ? '100%' : undefined,
             }}
-          />
+          >
+            <InputLabel id={`size-kind-${idx}`}>
+              {LL.products.sizeKind()}
+            </InputLabel>
+            <Select
+              labelId={`size-kind-${idx}`}
+              label={LL.products.sizeKind()}
+              value={info.sizeKind}
+              onChange={(e: SelectChangeEvent) => {
+                const nextKind = e.target.value as SizeKind;
+                onChange(idx, 'sizeKind', nextKind);
+                onChange(idx, 'size', '');
+              }}
+            >
+              <MenuItem value={SizeKind.Apparel}>
+                {LL.products.sizeKindApparel()}
+              </MenuItem>
+              <MenuItem value={SizeKind.Footwear}>
+                {LL.products.sizeKindFootwear()}
+              </MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl
+            required
+            sx={{
+              flex: 1,
+              minWidth: 120,
+              width: isMobile ? '100%' : undefined,
+            }}
+          >
+            <InputLabel id={`size-value-${idx}`}>
+              {LL.products.size()}
+            </InputLabel>
+            <Select
+              labelId={`size-value-${idx}`}
+              label={LL.products.size()}
+              value={info.size}
+              displayEmpty
+              onChange={(e: SelectChangeEvent) =>
+                onChange(idx, 'size', e.target.value)
+              }
+            >
+              <MenuItem value="">
+                <em>{LL.products.selectSize()}</em>
+              </MenuItem>
+              {(info.sizeKind === SizeKind.Footwear
+                ? FOOTWEAR_EU_SIZES
+                : APPAREL_SIZES
+              ).map((code) => (
+                <MenuItem key={code} value={code}>
+                  {info.sizeKind === SizeKind.Footwear
+                    ? `EU ${code}${
+                        euToUs(code) ? ` (US ${euToUs(code)})` : ''
+                      }`
+                    : code}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
             label={LL.products.weight()}
             name="weight"
@@ -947,6 +1010,7 @@ export type CreatedCatalogProduct = {
   productInfos: Array<{
     id: number;
     size: string;
+    sizeKind?: SizeKind;
     weight: number;
     colors?: Array<{
       id: number;
@@ -989,6 +1053,7 @@ export function AdminProductEditor({
     {
       productId: 0,
       size: '',
+      sizeKind: SizeKind.Apparel,
       colors: [],
       weight: 0,
       images: [],
@@ -1104,6 +1169,7 @@ export function AdminProductEditor({
         loadedProduct.productInfos.map((info) => ({
           productId: loadedProduct.id,
           size: info.size,
+          sizeKind: info.sizeKind ?? SizeKind.Apparel,
           colors: info.colors || [],
           weight: info.weight,
           images: [],
@@ -1172,6 +1238,7 @@ export function AdminProductEditor({
       {
         productId: 0,
         size: '',
+        sizeKind: SizeKind.Apparel,
         colors: [],
         weight: 0,
         images: [],
@@ -1235,6 +1302,7 @@ export function AdminProductEditor({
             },
             productInfos.map((info) => ({
               size: info.size,
+              sizeKind: info.sizeKind,
               colorIds: info.colors.map((c) => c.id),
               weight: Number(info.weight),
             }))
@@ -1265,6 +1333,7 @@ export function AdminProductEditor({
             {
               productId: 0,
               size: '',
+              sizeKind: SizeKind.Apparel,
               colors: [],
               weight: 0,
               images: [],

@@ -1,4 +1,4 @@
-import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+import { ObjectType, Field, Int, Float, registerEnumType } from '@nestjs/graphql';
 import {
   Entity,
   PrimaryGeneratedColumn,
@@ -7,9 +7,14 @@ import {
   OneToMany,
   Relation,
 } from 'typeorm';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
 import { Product } from './product.entity';
 import { Color } from './color.entity';
 import { ProductInfoColor } from './product-info-color.entity';
+
+registerEnumType(SizeKind, {
+  name: 'SizeKind',
+});
 
 @ObjectType()
 @Entity()
@@ -18,9 +23,14 @@ export class ProductInfo {
   @PrimaryGeneratedColumn()
   id: number;
 
+  /** Canonical size code: apparel letter or EU footwear number. */
   @Field()
   @Column()
   size: string;
+
+  @Field(() => SizeKind)
+  @Column({ type: 'varchar', default: SizeKind.Apparel })
+  sizeKind: SizeKind;
 
   @OneToMany(() => ProductInfoColor, (link) => link.productInfo, {
     cascade: true,

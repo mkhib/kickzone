@@ -29,6 +29,7 @@ export const PRODUCT_INFO_FRAGMENT = gql`
   fragment ProductInfoFields on ProductInfo {
     id
     size
+    sizeKind
     colors {
       ...ColorFields
     }

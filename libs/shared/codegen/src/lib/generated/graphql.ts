@@ -128,10 +128,16 @@ export type CreateOrderItemInput = {
   unitPrice: Scalars['Float']['input'];
 };
 
+export enum SizeKind {
+  Apparel = 'APPAREL',
+  Footwear = 'FOOTWEAR',
+}
+
 export type CreateProductInfoInput = {
   colorIds: Array<Scalars['Int']['input']>;
   productId: Scalars['Int']['input'];
   size: Scalars['String']['input'];
+  sizeKind: SizeKind;
   weight: Scalars['Float']['input'];
 };
 
@@ -667,6 +673,7 @@ export type ProductInfo = {
   images?: Maybe<Array<Scalars['String']['output']>>;
   product: Product;
   size: Scalars['String']['output'];
+  sizeKind: SizeKind;
   weight: Scalars['Float']['output'];
 };
 
@@ -676,6 +683,7 @@ export type ProductInfoFilterInput = {
   discount?: InputMaybe<Array<Scalars['Float']['input']>>;
   price?: InputMaybe<Array<Scalars['Float']['input']>>;
   size?: InputMaybe<Array<Scalars['String']['input']>>;
+  sizeKind?: InputMaybe<SizeKind>;
   stockQuantity?: InputMaybe<Array<Scalars['Int']['input']>>;
   weight?: InputMaybe<Array<Scalars['Float']['input']>>;
 };
@@ -694,6 +702,7 @@ export type Query = {
   currencyPreferenceByLocale?: Maybe<CurrencyPreference>;
   currencyPreferences: Array<CurrencyPreference>;
   currentExchangeRate?: Maybe<ExchangeRate>;
+  distinctProductSizes: Array<Scalars['String']['output']>;
   exchangeRateHistory: Array<ExchangeRate>;
   findOne?: Maybe<SellerInfo>;
   getEntityTranslations: Array<Translation>;
@@ -761,6 +770,11 @@ export type QueryCurrencyPreferenceByLocaleArgs = {
 export type QueryCurrentExchangeRateArgs = {
   fromCurrencyCode: Scalars['String']['input'];
   toCurrencyCode: Scalars['String']['input'];
+};
+
+
+export type QueryDistinctProductSizesArgs = {
+  sizeKind?: InputMaybe<SizeKind>;
 };
 
 

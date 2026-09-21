@@ -59,6 +59,7 @@ export const GET_PRODUCTS_QUERY = gql`
           productInfos {
             id
             size
+            sizeKind
             colors {
               id
               name
@@ -94,6 +95,12 @@ export const GET_PRODUCTS_QUERY = gql`
       }
       totalCount
     }
+  }
+`;
+
+export const DISTINCT_PRODUCT_SIZES_QUERY = gql`
+  query DistinctProductSizes($sizeKind: SizeKind) {
+    distinctProductSizes(sizeKind: $sizeKind)
   }
 `;
 

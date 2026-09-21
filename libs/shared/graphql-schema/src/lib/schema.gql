@@ -63,10 +63,16 @@ type Color {
 type ProductInfo {
   id: Int!
   size: String!
+  sizeKind: SizeKind!
   colors: [Color!]!
   weight: Float!
   product: Product!
   images: [String!]
+}
+
+enum SizeKind {
+  APPAREL
+  FOOTWEAR
 }
 
 type Product {
@@ -354,6 +360,7 @@ type Query {
   me: User
   products(filter: ProductFilterInput): ProductConnection!
   sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
+  distinctProductSizes(sizeKind: SizeKind): [String!]!
   categories: [Category!]!
   product(id: Int!): Product
   sellerProductsByProduct(productId: Int!): [SellerProduct!]!
@@ -402,6 +409,7 @@ input ProductFilterInput {
 
 input ProductInfoFilterInput {
   size: [String!]
+  sizeKind: SizeKind
   price: [Float!]
   costPrice: [Float!]
   colorId: [Int!]
@@ -513,6 +521,7 @@ input CreateProductInput {
 input CreateProductInfoInput {
   productId: Int!
   size: String!
+  sizeKind: SizeKind!
   colorIds: [Int!]!
   weight: Float!
 }

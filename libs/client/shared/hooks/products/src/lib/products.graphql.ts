@@ -72,6 +72,7 @@ export const CREATE_PRODUCT_INFO = gql`
       productInfos {
         id
         size
+        sizeKind
         colors {
           id
           name

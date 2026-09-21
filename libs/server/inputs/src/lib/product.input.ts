@@ -5,6 +5,7 @@ import {
   Float,
   registerEnumType,
 } from '@nestjs/graphql';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
 import { ProductInfoFilterInput } from './product-info-filter.input';
 
 export enum ProductArchivedStatus {
@@ -57,6 +58,9 @@ export class CreateProductInfoInput {
 
   @Field()
   size: string;
+
+  @Field(() => SizeKind)
+  sizeKind: SizeKind;
 
   @Field(() => [Int])
   colorIds: number[];

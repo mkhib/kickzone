@@ -706,6 +706,35 @@ type RootTranslation = {
 		 */
 		size: string
 		/**
+		 * S​i​z​e​ ​t​y​p​e
+		 */
+		sizeKind: string
+		/**
+		 * A​p​p​a​r​e​l
+		 */
+		sizeKindApparel: string
+		/**
+		 * F​o​o​t​w​e​a​r
+		 */
+		sizeKindFootwear: string
+		/**
+		 * S​e​l​e​c​t​ ​s​i​z​e
+		 */
+		selectSize: string
+		/**
+		 * E​U
+		 */
+		sizeSystemEu: string
+		/**
+		 * U​S
+		 */
+		sizeSystemUs: string
+		/**
+		 * U​S​ ​e​q​u​i​v​a​l​e​n​t​:​ ​{​u​s​}
+		 * @param {unknown} us
+		 */
+		usEquivalent: RequiredParams<'us'>
+		/**
 		 * C​o​l​o​r
 		 */
 		color: string
@@ -3341,6 +3370,34 @@ export type TranslationFunctions = {
 		 * Size
 		 */
 		size: () => LocalizedString
+		/**
+		 * Size type
+		 */
+		sizeKind: () => LocalizedString
+		/**
+		 * Apparel
+		 */
+		sizeKindApparel: () => LocalizedString
+		/**
+		 * Footwear
+		 */
+		sizeKindFootwear: () => LocalizedString
+		/**
+		 * Select size
+		 */
+		selectSize: () => LocalizedString
+		/**
+		 * EU
+		 */
+		sizeSystemEu: () => LocalizedString
+		/**
+		 * US
+		 */
+		sizeSystemUs: () => LocalizedString
+		/**
+		 * US equivalent: {us}
+		 */
+		usEquivalent: (arg: { us: unknown }) => LocalizedString
 		/**
 		 * Color
 		 */
