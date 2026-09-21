@@ -129,7 +129,7 @@ export type CreateOrderItemInput = {
 };
 
 export type CreateProductInfoInput = {
-  colorId: Scalars['Int']['input'];
+  colorIds: Array<Scalars['Int']['input']>;
   productId: Scalars['Int']['input'];
   size: Scalars['String']['input'];
   weight: Scalars['Float']['input'];
@@ -139,6 +139,7 @@ export type CreateProductInput = {
   categoryIds: Array<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   name: Scalars['String']['input'];
+  sku: Scalars['String']['input'];
 };
 
 export type CreateSellerInput = {
@@ -619,6 +620,7 @@ export type Product = {
   name: Scalars['String']['output'];
   productInfos: Array<ProductInfo>;
   sellerProducts?: Maybe<Array<SellerProduct>>;
+  sku?: Maybe<Scalars['String']['output']>;
 };
 
 export enum ProductArchivedStatus {
@@ -658,7 +660,7 @@ export type ProductFilterInput = {
 
 export type ProductInfo = {
   __typename?: 'ProductInfo';
-  color?: Maybe<Color>;
+  colors: Array<Color>;
   id: Scalars['Int']['output'];
   images?: Maybe<Array<Scalars['String']['output']>>;
   product: Product;
@@ -1073,6 +1075,7 @@ export type UpdateProductInput = {
   description?: InputMaybe<Scalars['String']['input']>;
   id: Scalars['Int']['input'];
   name: Scalars['String']['input'];
+  sku: Scalars['String']['input'];
 };
 
 export type UpdateSellerInput = {

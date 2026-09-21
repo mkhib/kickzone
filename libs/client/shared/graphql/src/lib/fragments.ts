@@ -29,7 +29,7 @@ export const PRODUCT_INFO_FRAGMENT = gql`
   fragment ProductInfoFields on ProductInfo {
     id
     size
-    color {
+    colors {
       ...ColorFields
     }
     weight
@@ -43,6 +43,7 @@ export const BASIC_PRODUCT_FRAGMENT = gql`
   fragment BasicProductFields on Product {
     id
     name
+    sku
     archived
     description
     categories {

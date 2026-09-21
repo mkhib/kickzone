@@ -17,6 +17,7 @@ import {
 } from '@kickzone-workspace/inputs';
 import * as bcrypt from 'bcryptjs';
 import { AuthService } from './auth.service';
+import { formatProductInfoColorNames } from './product-info-colors.util';
 
 @Injectable()
 export class SellerService {
@@ -184,7 +185,7 @@ export class SellerService {
     // Load productInfo with product relation
     const productInfo = await this.productInfoRepository.findOne({
       where: { id: input.productInfoId },
-      relations: ['product'],
+      relations: ['product', 'colorLinks', 'colorLinks.color'],
     });
     if (!productInfo) {
       throw new Error('Product variant not found');
@@ -212,7 +213,7 @@ export class SellerService {
         `You already have a listing for this product variant (${
           productInfo.size
         } - ${
-          productInfo.color?.name || 'No color'
+          formatProductInfoColorNames(productInfo.colorLinks) || 'No color'
         }). Please update the existing listing instead.`
       );
     }
@@ -319,7 +320,8 @@ export class SellerService {
       relations: [
         'product',
         'productInfo',
-        'productInfo.color',
+        'productInfo.colorLinks',
+        'productInfo.colorLinks.color',
         'product.productInfos',
         'product.categories',
       ],

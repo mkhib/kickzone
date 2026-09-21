@@ -18,7 +18,7 @@ export const SELLER_PRODUCTS_BY_PRODUCT = gql`
       productInfo {
         id
         size
-        color {
+        colors {
           name
         }
       }

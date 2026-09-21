@@ -22,6 +22,9 @@ export class CreateProductInput {
   @Field()
   name: string;
 
+  @Field()
+  sku: string;
+
   @Field(() => [Int])
   categoryIds: number[];
 
@@ -36,6 +39,9 @@ export class UpdateProductInput {
 
   @Field()
   name: string;
+
+  @Field()
+  sku: string;
 
   @Field(() => [Int])
   categoryIds: number[];
@@ -52,8 +58,8 @@ export class CreateProductInfoInput {
   @Field()
   size: string;
 
-  @Field(() => Int)
-  colorId: number;
+  @Field(() => [Int])
+  colorIds: number[];
 
   @Field(() => Float)
   weight: number;

@@ -15,3 +15,4 @@ export * from './lib/currency.service';
 export * from './lib/shipping-calculation.service';
 export * from './lib/payment.service';
 export * from './lib/payment-logger.service';
+export * from './lib/product-info-colors.util';

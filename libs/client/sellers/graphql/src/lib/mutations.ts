@@ -29,7 +29,7 @@ export const CREATE_SELLER_PRODUCT_MUTATION = gql`
       productInfo {
         id
         size
-        color {
+        colors {
           name
         }
       }
@@ -52,7 +52,7 @@ export const UPDATE_SELLER_PRODUCT_MUTATION = gql`
       productInfo {
         id
         size
-        color {
+        colors {
           name
         }
       }

@@ -2,6 +2,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CustomersProductCard } from '@kickzone-workspace/customers-product-card';
 import { useProductsQuery } from '@kickzone-workspace/products-hook';
+import { serializeVariantColorHexes } from '@kickzone-workspace/client-shared-graphql';
 import {
   useI18nContext,
   useLanguageContext,
@@ -198,7 +199,7 @@ export function CustomersHome() {
         productImage: productInfo.images?.[0] || null,
         quantity: 1,
         unitPrice: finalPrice,
-        color: productInfo.color?.name || null,
+        color: serializeVariantColorHexes(productInfo.colors),
         size: productInfo.size || null,
         sellerId: sellerProduct.seller.id.toString(),
         sellerName: '',

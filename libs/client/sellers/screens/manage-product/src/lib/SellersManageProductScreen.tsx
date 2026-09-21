@@ -6,6 +6,7 @@ import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
+import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
 import Alert from '@mui/material/Alert';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -429,7 +430,10 @@ export function SellersManageProductScreen() {
                       options={selectedProduct.productInfos}
                       getOptionLabel={(option) =>
                         `${option.size} - ${
-                          option.color?.name || LL.products.noColorSpecified()
+                          formatVariantColorNames(
+                            option.colors,
+                            LL.products.noColorSpecified()
+                          )
                         } (${option.weight}kg)`
                       }
                       value={selectedProductInfo}
@@ -461,24 +465,27 @@ export function SellersManageProductScreen() {
                                 width: '100%',
                               }}
                             >
-                              {option.color && (
+                              {option.colors?.map((color) => (
                                 <Box
+                                  key={color.id}
                                   sx={{
                                     width: 24,
                                     height: 24,
-                                    backgroundColor: option.color.hexCode,
+                                    backgroundColor: color.hexCode,
                                     borderRadius: '50%',
                                     border: '2px solid white',
                                     boxShadow:
                                       '0 0 0 1px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.2)',
                                   }}
                                 />
-                              )}
+                              ))}
                               <Box sx={{ flex: 1 }}>
                                 <Typography fontWeight={600}>
                                   {option.size} -{' '}
-                                  {option.color?.name ||
-                                    LL.products.noColorSpecified()}
+                                  {formatVariantColorNames(
+                                    option.colors,
+                                    LL.products.noColorSpecified()
+                                  )}
                                 </Typography>
                                 <Typography
                                   variant="caption"
@@ -550,23 +557,25 @@ export function SellersManageProductScreen() {
                               mt: 0.5,
                             }}
                           >
-                            {selectedProductInfo.color && (
+                            {selectedProductInfo.colors?.map((color) => (
                               <Box
+                                key={color.id}
                                 sx={{
                                   width: 20,
                                   height: 20,
-                                  backgroundColor:
-                                    selectedProductInfo.color.hexCode,
+                                  backgroundColor: color.hexCode,
                                   borderRadius: '50%',
                                   border: '2px solid white',
                                   boxShadow: '0 0 0 1px rgba(0,0,0,0.1)',
                                 }}
                               />
-                            )}
+                            ))}
                             <Typography variant="body1" fontWeight={500}>
                               {selectedProductInfo.size} -{' '}
-                              {selectedProductInfo.color?.name ||
-                                LL.products.noColorSpecified()}
+                              {formatVariantColorNames(
+                                selectedProductInfo.colors,
+                                LL.products.noColorSpecified()
+                              )}
                             </Typography>
                           </Box>
                         </Box>

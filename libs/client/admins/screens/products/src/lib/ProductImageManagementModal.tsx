@@ -25,6 +25,7 @@ import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import { DialogFormContent } from '@kickzone-workspace/language-components';
+import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
 
 interface ProductImageManagementModalProps {
   open: boolean;
@@ -318,7 +319,9 @@ export function ProductImageManagementModal({
                 <Tab
                   key={productInfo.id}
                   label={`${productInfo.size}${
-                    productInfo.color ? ` - ${productInfo.color.name}` : ''
+                    productInfo.colors?.length
+                      ? ` - ${formatVariantColorNames(productInfo.colors)}`
+                      : ''
                   }`}
                   id={`image-tab-${productInfo.id}`}
                   aria-controls={`image-tabpanel-${productInfo.id}`}
@@ -336,7 +339,9 @@ export function ProductImageManagementModal({
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
                   {LL.products.variant()}: {productInfo.size}
-                  {productInfo.color && ` - ${productInfo.color.name}`}
+                  {productInfo.colors?.length
+                    ? ` - ${formatVariantColorNames(productInfo.colors)}`
+                    : ''}
                 </Typography>
                 {/* Current Images */}
                 <Typography variant="subtitle1" gutterBottom>

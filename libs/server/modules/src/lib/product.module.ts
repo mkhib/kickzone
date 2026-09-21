@@ -3,6 +3,7 @@ import {
   Color,
   Product,
   ProductInfo,
+  ProductInfoColor,
   SellerProduct,
   SellerInfo,
   User,
@@ -10,6 +11,7 @@ import {
 import {
   AuthResolver,
   ProductResolver,
+  ProductInfoResolver,
   SellerProductResolver,
   UserResolver,
 } from '@kickzone-workspace/resolvers';
@@ -34,6 +36,7 @@ import { ConfigService } from '@nestjs/config';
       User,
       Product,
       ProductInfo,
+      ProductInfoColor,
       Category,
       SellerProduct,
       Color,
@@ -50,6 +53,7 @@ import { ConfigService } from '@nestjs/config';
   providers: [
     ProductService,
     ProductResolver,
+    ProductInfoResolver,
     SellerProductResolver,
     SellerService,
     UserService,

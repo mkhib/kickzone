@@ -276,6 +276,10 @@ type RootTranslation = {
 		 */
 		productName: string
 		/**
+		 * S​K​U
+		 */
+		sku: string
+		/**
 		 * D​e​s​c​r​i​p​t​i​o​n
 		 */
 		description: string
@@ -777,6 +781,10 @@ type RootTranslation = {
 		 * P​r​o​d​u​c​t​ ​I​n​f​o​r​m​a​t​i​o​n
 		 */
 		productInformationTitle: string
+		/**
+		 * I​t​e​m​ ​C​o​d​e​ ​(​S​K​U​)
+		 */
+		itemCodeSku: string
 		/**
 		 * Y​o​u​r​ ​P​r​o​d​u​c​t​ ​V​a​r​i​a​n​t​s
 		 */
@@ -2888,6 +2896,10 @@ export type TranslationFunctions = {
 		 */
 		productName: () => LocalizedString
 		/**
+		 * SKU
+		 */
+		sku: () => LocalizedString
+		/**
 		 * Description
 		 */
 		description: () => LocalizedString
@@ -3389,6 +3401,10 @@ export type TranslationFunctions = {
 		 * Product Information
 		 */
 		productInformationTitle: () => LocalizedString
+		/**
+		 * Item Code (SKU)
+		 */
+		itemCodeSku: () => LocalizedString
 		/**
 		 * Your Product Variants
 		 */

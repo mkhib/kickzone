@@ -63,7 +63,7 @@ type Color {
 type ProductInfo {
   id: Int!
   size: String!
-  color: Color
+  colors: [Color!]!
   weight: Float!
   product: Product!
   images: [String!]
@@ -72,6 +72,7 @@ type ProductInfo {
 type Product {
   id: Int!
   name: String!
+  sku: String
   productInfos: [ProductInfo!]!
   categories: [Category!]!
   description: String
@@ -504,6 +505,7 @@ input UpdateCategoryInput {
 
 input CreateProductInput {
   name: String!
+  sku: String!
   categoryIds: [Int!]!
   description: String
 }
@@ -511,7 +513,7 @@ input CreateProductInput {
 input CreateProductInfoInput {
   productId: Int!
   size: String!
-  colorId: Int!
+  colorIds: [Int!]!
   weight: Float!
 }
 
@@ -521,6 +523,7 @@ scalar Upload
 input UpdateProductInput {
   id: Int!
   name: String!
+  sku: String!
   categoryIds: [Int!]!
   description: String
 }

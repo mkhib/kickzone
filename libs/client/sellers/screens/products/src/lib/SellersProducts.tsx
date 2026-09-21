@@ -9,6 +9,7 @@ import {
   usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
+import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -115,7 +116,7 @@ export const SellersProducts = () => {
               productInfo: {
                 id: v.productInfo.id,
                 size: v.productInfo.size,
-                color: v.productInfo.color?.name,
+                color: formatVariantColorNames(v.productInfo.colors),
                 weight: v.productInfo.weight,
               },
               sellerProduct: {
@@ -190,13 +191,7 @@ export const SellersProducts = () => {
             productInfo: {
               id: v.productInfo.id,
               size: v.productInfo.size,
-              color: v.productInfo.color
-                ? {
-                    id: v.productInfo.color.id,
-                    name: v.productInfo.color.name,
-                    hexCode: v.productInfo.color.hexCode,
-                  }
-                : null,
+              colors: v.productInfo.colors,
               weight: v.productInfo.weight,
               images: v.productInfo.images,
             },
@@ -221,7 +216,7 @@ export const SellersProducts = () => {
             .map((pi) => ({
               id: pi.id,
               size: pi.size,
-              color: pi.color?.name,
+              color: formatVariantColorNames(pi.colors),
             })),
           unmatchedSellerProducts: product.sellerProducts
             ?.filter(
@@ -1058,24 +1053,37 @@ export const SellersProducts = () => {
                                     color="text.secondary"
                                   >
                                     <strong>{LL.products.color()}:</strong>{' '}
-                                    {sellerProduct.productInfo.color?.name ||
-                                      LL.products.noColorSpecified()}
-                                    {sellerProduct.productInfo.color && (
+                                    {formatVariantColorNames(
+                                      sellerProduct.productInfo.colors,
+                                      LL.products.noColorSpecified()
+                                    )}
+                                    {sellerProduct.productInfo.colors?.length >
+                                      0 && (
                                       <Box
                                         component="span"
                                         sx={{
-                                          display: 'inline-block',
-                                          width: 16,
-                                          height: 16,
-                                          backgroundColor:
-                                            sellerProduct.productInfo.color
-                                              .hexCode,
-                                          borderRadius: '50%',
-                                          border: '1px solid #ccc',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: 0.5,
                                           ml: 1,
                                           verticalAlign: 'middle',
                                         }}
-                                      />
+                                      >
+                                        {sellerProduct.productInfo.colors.map(
+                                          (color) => (
+                                            <Box
+                                              key={color.id}
+                                              sx={{
+                                                width: 16,
+                                                height: 16,
+                                                backgroundColor: color.hexCode,
+                                                borderRadius: '50%',
+                                                border: '1px solid #ccc',
+                                              }}
+                                            />
+                                          )
+                                        )}
+                                      </Box>
                                     )}
                                   </Typography>
                                   <Typography

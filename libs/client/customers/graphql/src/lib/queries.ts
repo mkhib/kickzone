@@ -53,12 +53,13 @@ export const GET_PRODUCTS_QUERY = gql`
         node {
           id
           name
+          sku
           description
           archived
           productInfos {
             id
             size
-            color {
+            colors {
               id
               name
               hexCode

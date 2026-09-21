@@ -4,6 +4,7 @@ import { Repository, In } from 'typeorm';
 import {
   Product,
   ProductInfo,
+  ProductInfoColor,
   Category,
   Color,
   SellerProduct,
@@ -17,6 +18,7 @@ import {
   UpdateProductInput,
 } from '@kickzone-workspace/inputs';
 import { TranslationService } from './translation.service';
+import { MAX_COLORS_PER_VARIANT } from './product-info-colors.util';
 
 @Injectable()
 export class ProductService {
@@ -25,6 +27,8 @@ export class ProductService {
     private readonly productRepository: Repository<Product>,
     @InjectRepository(ProductInfo)
     private readonly productInfoRepository: Repository<ProductInfo>,
+    @InjectRepository(ProductInfoColor)
+    private readonly productInfoColorRepository: Repository<ProductInfoColor>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
     @InjectRepository(Color)
@@ -38,7 +42,8 @@ export class ProductService {
     const query = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.productInfos', 'productInfo')
-      .leftJoinAndSelect('productInfo.color', 'color')
+      .leftJoinAndSelect('productInfo.colorLinks', 'colorLink')
+      .leftJoinAndSelect('colorLink.color', 'color')
       .leftJoinAndSelect('product.categories', 'category');
 
     // Always use LEFT JOIN for sellerProducts to get all productInfos
@@ -49,9 +54,10 @@ export class ProductService {
       .leftJoinAndSelect('sellerProduct.seller', 'seller')
       .leftJoinAndSelect('seller.user', 'sellerUser')
       .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
-      .leftJoinAndSelect('sellerProductInfo.color', 'sellerProductColor');
+      .leftJoinAndSelect('sellerProductInfo.colorLinks', 'sellerProductColorLink')
+      .leftJoinAndSelect('sellerProductColorLink.color', 'sellerProductColor');
 
-    query.orderBy('productInfo.id', 'ASC');
+    query.orderBy('productInfo.id', 'ASC').addOrderBy('colorLink.position', 'ASC');
 
     // Filter by seller availability - use EXISTS subquery to avoid filtering out products
     // Don't filter sellerProducts in WHERE clause - we'll filter in memory to preserve all productInfos
@@ -139,7 +145,14 @@ export class ProductService {
           costPrice,
         });
       if (colorId)
-        query.andWhere('productInfo.colorId IN (:...colorId)', { colorId });
+        query.andWhere(
+          `EXISTS (
+            SELECT 1 FROM product_info_color pic
+            WHERE pic."productInfoId" = productInfo.id
+              AND pic."colorId" IN (:...colorId)
+          )`,
+          { colorId }
+        );
       if (weight)
         query.andWhere('productInfo.weight IN (:...weight)', { weight });
       if (discount)
@@ -205,6 +218,10 @@ export class ProductService {
   }
 
   async createProduct(input: CreateProductInput) {
+    const sku = input.sku.trim();
+    if (!sku) {
+      throw new Error('SKU is required.');
+    }
     // Check for duplicate product name
     const existing = await this.productRepository.findOneBy({
       name: input.name,
@@ -212,11 +229,16 @@ export class ProductService {
     if (existing) {
       throw new Error('A product with this name already exists.');
     }
+    const existingSku = await this.productRepository.findOneBy({ sku });
+    if (existingSku) {
+      throw new Error('A product with this SKU already exists.');
+    }
     const categories = await this.categoryRepository.findBy({
       id: In(input.categoryIds),
     });
     const product = this.productRepository.create({
       name: input.name,
+      sku,
       categories,
       description: input.description === '' ? null : input.description,
     });
@@ -230,17 +252,14 @@ export class ProductService {
     if (!product) {
       throw new Error('Product not found');
     }
-    const color = await this.colorRepository.findOneBy({ id: input.colorId });
-    if (!color) {
-      throw new Error(`Color with ID ${input.colorId} not found`);
-    }
+    const colors = await this.resolveOrderedColors(input.colorIds);
     const productInfo = this.productInfoRepository.create({
       product,
       size: input.size,
-      color,
       weight: input.weight,
     });
-    await this.productInfoRepository.save(productInfo);
+    const savedInfo = await this.productInfoRepository.save(productInfo);
+    await this.replaceProductInfoColors(savedInfo, colors);
     // Return the full product with relations
     const fullProduct = await this.getProductById(product.id);
     if (!fullProduct)
@@ -362,6 +381,10 @@ export class ProductService {
     if (!product) {
       throw new Error(`Product with ID ${input.id} not found`);
     }
+    const sku = input.sku.trim();
+    if (!sku) {
+      throw new Error('SKU is required.');
+    }
     // Check for duplicate name (excluding current product)
     const existing = await this.productRepository.findOne({
       where: { name: input.name },
@@ -369,10 +392,17 @@ export class ProductService {
     if (existing && existing.id !== input.id) {
       throw new Error('A product with this name already exists.');
     }
+    const existingSku = await this.productRepository.findOne({
+      where: { sku },
+    });
+    if (existingSku && existingSku.id !== input.id) {
+      throw new Error('A product with this SKU already exists.');
+    }
     const categories = await this.categoryRepository.findBy({
       id: In(input.categoryIds),
     });
     product.name = input.name;
+    product.sku = sku;
     product.categories = categories;
     product.description = input.description === '' ? null : input.description;
     return this.productRepository.save(product);
@@ -384,7 +414,8 @@ export class ProductService {
       relations: [
         'productInfos',
         'categories',
-        'productInfos.color',
+        'productInfos.colorLinks',
+        'productInfos.colorLinks.color',
         'sellerProducts',
       ],
       order: {
@@ -398,23 +429,29 @@ export class ProductService {
   async updateProductInfo(
     id: number,
     size: string,
-    colorId: number,
+    colorIds: number[],
     weight: number
   ): Promise<ProductInfo> {
     const productInfo = await this.productInfoRepository.findOne({
       where: { id },
+      relations: ['colorLinks', 'colorLinks.color'],
     });
     if (!productInfo) {
       throw new Error(`ProductInfo with ID ${id} not found`);
     }
-    const color = await this.colorRepository.findOneBy({ id: colorId });
-    if (!color) {
-      throw new Error(`Color with ID ${colorId} not found`);
-    }
+    const colors = await this.resolveOrderedColors(colorIds);
     productInfo.size = size;
-    productInfo.color = color;
     productInfo.weight = weight;
-    return this.productInfoRepository.save(productInfo);
+    await this.productInfoRepository.save(productInfo);
+    await this.replaceProductInfoColors(productInfo, colors);
+    const updated = await this.productInfoRepository.findOne({
+      where: { id },
+      relations: ['colorLinks', 'colorLinks.color'],
+    });
+    if (!updated) {
+      throw new Error(`ProductInfo with ID ${id} not found after update`);
+    }
+    return updated;
   }
 
   // Archive a product (set archived = true)
@@ -440,7 +477,8 @@ export class ProductService {
     const query = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.productInfos', 'productInfo')
-      .leftJoinAndSelect('productInfo.color', 'color')
+      .leftJoinAndSelect('productInfo.colorLinks', 'colorLink')
+      .leftJoinAndSelect('colorLink.color', 'color')
       .leftJoinAndSelect('product.categories', 'category')
       .leftJoinAndSelect(
         'product.sellerProducts',
@@ -449,9 +487,11 @@ export class ProductService {
         { sellerId }
       )
       .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
-      .leftJoinAndSelect('sellerProductInfo.color', 'sellerProductColor')
+      .leftJoinAndSelect('sellerProductInfo.colorLinks', 'sellerProductColorLink')
+      .leftJoinAndSelect('sellerProductColorLink.color', 'sellerProductColor')
       .where('sellerProduct.sellerId = :sellerId', { sellerId })
       .orderBy('productInfo.id', 'ASC')
+      .addOrderBy('colorLink.position', 'ASC')
       .addOrderBy('sellerProduct.id', 'ASC');
 
     if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
@@ -497,7 +537,14 @@ export class ProductService {
           costPrice,
         });
       if (colorId)
-        query.andWhere('productInfo.colorId IN (:...colorId)', { colorId });
+        query.andWhere(
+          `EXISTS (
+            SELECT 1 FROM product_info_color pic
+            WHERE pic."productInfoId" = productInfo.id
+              AND pic."colorId" IN (:...colorId)
+          )`,
+          { colorId }
+        );
       if (weight)
         query.andWhere('productInfo.weight IN (:...weight)', { weight });
       if (discount)
@@ -540,11 +587,58 @@ export class ProductService {
   ): Promise<SellerProduct[]> {
     return this.sellerProductRepository.find({
       where: { product: { id: productId } },
-      relations: ['seller', 'seller.user', 'productInfo', 'productInfo.color'],
+      relations: [
+        'seller',
+        'seller.user',
+        'productInfo',
+        'productInfo.colorLinks',
+        'productInfo.colorLinks.color',
+      ],
       order: {
         price: 'ASC',
         discount: 'DESC',
       },
     });
+  }
+
+  private async resolveOrderedColors(colorIds: number[]): Promise<Color[]> {
+    const uniqueIds = [...new Set(colorIds.filter((id) => Number.isFinite(id)))];
+    if (!uniqueIds.length) {
+      throw new Error('At least one color is required.');
+    }
+    if (uniqueIds.length > MAX_COLORS_PER_VARIANT) {
+      throw new Error(
+        `A variant can have at most ${MAX_COLORS_PER_VARIANT} colors.`
+      );
+    }
+    const colors = await this.colorRepository.findBy({ id: In(uniqueIds) });
+    if (colors.length !== uniqueIds.length) {
+      throw new Error('One or more colors were not found.');
+    }
+    const byId = new Map(colors.map((c) => [c.id, c]));
+    // Preserve the submitted order (first = primary)
+    return colorIds
+      .map((id) => byId.get(id))
+      .filter((c): c is Color => !!c)
+      .filter(
+        (color, index, arr) => arr.findIndex((c) => c.id === color.id) === index
+      );
+  }
+
+  private async replaceProductInfoColors(
+    productInfo: ProductInfo,
+    colors: Color[]
+  ): Promise<void> {
+    await this.productInfoColorRepository.delete({
+      productInfo: { id: productInfo.id },
+    });
+    const links = colors.map((color, position) =>
+      this.productInfoColorRepository.create({
+        productInfo,
+        color,
+        position,
+      })
+    );
+    await this.productInfoColorRepository.save(links);
   }
 }

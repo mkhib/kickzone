@@ -104,6 +104,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
       },
       form: {
         productName: () => 'Product Name',
+        sku: () => 'SKU',
         category: () => 'Category',
         categoryName: () => 'Category Name',
         description: () => 'Description',
@@ -255,13 +256,14 @@ describe('AdminProductEditor', () => {
       product: {
         id: 1,
         name: 'Existing Product',
+        sku: 'SKU-001',
         categories: [{ id: 1, name: 'Category 1' }],
         description: 'Existing Description',
         productInfos: [
           {
             id: 10,
             size: 'M',
-            color: { id: 1, name: 'Red', hexCode: '#ff0000' },
+            colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
             weight: 100,
             images: [],
           },
@@ -273,6 +275,7 @@ describe('AdminProductEditor', () => {
 
     await waitFor(() => {
       expect(screen.getByDisplayValue('Existing Product')).toBeInTheDocument();
+      expect(screen.getByDisplayValue('SKU-001')).toBeInTheDocument();
     });
   });
 });

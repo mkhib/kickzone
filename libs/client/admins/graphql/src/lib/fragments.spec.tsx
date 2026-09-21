@@ -57,6 +57,7 @@ describe('GraphQL Fragments', () => {
     expect(fragmentString).toContain('fragment AdminProductFields on Product');
     expect(fragmentString).toContain('id');
     expect(fragmentString).toContain('name');
+    expect(fragmentString).toContain('sku');
     expect(fragmentString).toContain('archived');
     expect(fragmentString).toContain('description');
     expect(fragmentString).toContain('categories');
@@ -72,6 +73,7 @@ describe('GraphQL Fragments', () => {
     );
     expect(fragmentString).toContain('id');
     expect(fragmentString).toContain('name');
+    expect(fragmentString).toContain('sku');
     expect(fragmentString).toContain('archived');
     expect(fragmentString).toContain('description');
     expect(fragmentString).toContain('categories');

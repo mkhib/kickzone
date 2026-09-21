@@ -6,6 +6,7 @@ import {
   AddToCartInput,
   UpdateCartItemInput,
 } from '@kickzone-workspace/inputs';
+import { serializeProductInfoColorHexes } from './product-info-colors.util';
 
 @Injectable()
 export class CartService {
@@ -43,7 +44,13 @@ export class CartService {
     // Fetch the SellerProduct from database to get all product info
     const sellerProduct = await this.sellerProductRepository.findOne({
       where: { id: addToCartInput.sellerProductId },
-      relations: ['product', 'productInfo', 'productInfo.color', 'seller'],
+      relations: [
+        'product',
+        'productInfo',
+        'productInfo.colorLinks',
+        'productInfo.colorLinks.color',
+        'seller',
+      ],
     });
 
     if (!sellerProduct) {
@@ -88,7 +95,9 @@ export class CartService {
       cartItem.quantity = addToCartInput.quantity;
       cartItem.unitPrice = finalPrice;
       cartItem.totalPrice = addToCartInput.quantity * finalPrice;
-      cartItem.color = sellerProduct.productInfo?.color?.hexCode;
+      cartItem.color = serializeProductInfoColorHexes(
+        sellerProduct.productInfo?.colorLinks
+      );
       cartItem.size = sellerProduct.productInfo?.size;
       cartItem.sellerId = sellerProduct.seller.id.toString();
       cartItem.sellerName = sellerProduct.seller.storeName;

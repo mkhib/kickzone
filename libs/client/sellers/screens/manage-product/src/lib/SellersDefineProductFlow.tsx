@@ -3,6 +3,7 @@ import {
   CreatedCatalogProduct,
 } from '@kickzone-workspace/admin-product-editor';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import Alert from '@mui/material/Alert';
@@ -20,7 +21,7 @@ import React, { useMemo, useState } from 'react';
 type ListingDraft = {
   productInfoId: number;
   label: string;
-  colorHex?: string;
+  colorHexes: string[];
   price: number;
   costPrice: number;
   discount: number;
@@ -32,8 +33,8 @@ const emptyListing = (
   info: CreatedCatalogProduct['productInfos'][number]
 ): ListingDraft => ({
   productInfoId: info.id,
-  label: `${info.size} - ${info.color?.name || ''} (${info.weight}kg)`,
-  colorHex: info.color?.hexCode,
+  label: `${info.size} - ${formatVariantColorNames(info.colors)} (${info.weight}kg)`,
+  colorHexes: (info.colors || []).map((c) => c.hexCode),
   price: 0,
   costPrice: 0,
   discount: 0,
@@ -122,6 +123,7 @@ export function SellersDefineProductFlow({
     <Box component="form" onSubmit={handleSaveListings}>
       <Typography variant="h6" sx={{ mb: 1, fontWeight: 600 }}>
         {created.product.name}
+        {created.product.sku ? ` (${created.product.sku})` : ''}
       </Typography>
       <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
         {LL.products.setYourInventory()}
@@ -144,18 +146,19 @@ export function SellersDefineProductFlow({
                     mb: 2,
                   }}
                 >
-                  {item.colorHex && (
+                  {item.colorHexes.map((hex) => (
                     <Box
+                      key={hex}
                       sx={{
                         width: 20,
                         height: 20,
                         borderRadius: '50%',
-                        backgroundColor: item.colorHex,
+                        backgroundColor: hex,
                         border: '1px solid',
                         borderColor: 'divider',
                       }}
                     />
-                  )}
+                  ))}
                   <Typography fontWeight={600}>{item.label}</Typography>
                 </Box>
                 <Grid container spacing={2}>

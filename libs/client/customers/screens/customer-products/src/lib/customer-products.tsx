@@ -28,6 +28,10 @@ import {
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import {
+  formatVariantColorNames,
+  serializeVariantColorHexes,
+} from '@kickzone-workspace/client-shared-graphql';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 
 export function CustomerProducts() {
@@ -203,7 +207,7 @@ export function CustomerProducts() {
       productImage: productInfo.images?.[0] || null,
       quantity: 1,
       unitPrice: finalPrice,
-      color: productInfo.color?.name || null,
+      color: serializeVariantColorHexes(productInfo.colors),
       size: productInfo.size || null,
       sellerId: sellerProduct.seller.id.toString(),
       sellerName: '', // Not displayed to customers
@@ -371,6 +375,16 @@ export function CustomerProducts() {
                       {product.name}
                     </Typography>
 
+                    {product.sku && (
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 1 }}
+                      >
+                        {LL.products.itemCodeSku()}: {product.sku}
+                      </Typography>
+                    )}
+
                     <Typography
                       variant="body2"
                       color="text.secondary"
@@ -503,18 +517,25 @@ export function CustomerProducts() {
                             gap: 0.5,
                           }}
                         >
-                          {info.color && (
+                          {info.colors?.map((color) => (
                             <Box
+                              key={color.id}
                               sx={{
                                 width: 16,
                                 height: 16,
-                                backgroundColor: info.color.hexCode,
+                                backgroundColor: color.hexCode,
                                 border: '1px solid #ccc',
                                 borderRadius: '50%',
                               }}
+                              title={color.name}
                             />
-                          )}
-                          <Typography variant="caption">{info.size}</Typography>
+                          ))}
+                          <Typography variant="caption">
+                            {info.size}
+                            {info.colors?.length
+                              ? ` · ${formatVariantColorNames(info.colors)}`
+                              : ''}
+                          </Typography>
                         </Box>
                       ))}
                       {product.productInfos.length > 3 && (

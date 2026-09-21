@@ -15,7 +15,7 @@ vi.mock('@kickzone-workspace/admin-product-editor', () => ({
         id: number;
         size: string;
         weight: number;
-        color?: { id: number; name: string; hexCode: string } | null;
+        colors?: Array<{ id: number; name: string; hexCode: string }> | null;
       }>;
     }) => void;
   }) => (
@@ -29,7 +29,7 @@ vi.mock('@kickzone-workspace/admin-product-editor', () => ({
               id: 11,
               size: '42',
               weight: 1,
-              color: { id: 1, name: 'Red', hexCode: '#ff0000' },
+              colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
             },
           ],
         })

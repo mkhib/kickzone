@@ -29,6 +29,7 @@ import {
   Translation,
   PlatformSettings,
   Color,
+  ProductInfoColor,
 } from '@kickzone-workspace/entities';
 import { OrderModule } from '@kickzone-workspace/modules';
 import { OrderService } from '@kickzone-workspace/services';
@@ -108,13 +109,18 @@ describe('Checkout Process E2E Tests', () => {
       description: 'Test Description',
     });
 
-    // Create test product info with size and color
+    // Create test product info with size and colors
     const productInfoRepo = app.get(getRepositoryToken(ProductInfo));
     testProductInfo = await productInfoRepo.save({
       size: 'M',
       weight: 100,
       product: testProduct,
+    });
+    const productInfoColorRepo = app.get(getRepositoryToken(ProductInfoColor));
+    await productInfoColorRepo.save({
+      productInfo: testProductInfo,
       color: testColor,
+      position: 0,
     });
 
     // Create test seller product with stock
@@ -227,6 +233,7 @@ describe('Checkout Process E2E Tests', () => {
             Translation,
             PlatformSettings,
             Color,
+            ProductInfoColor,
           ],
           synchronize: true,
           logging: false, // Disable logging for cleaner test output

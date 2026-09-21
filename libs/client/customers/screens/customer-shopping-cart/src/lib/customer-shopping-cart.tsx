@@ -18,6 +18,7 @@ import {
 } from '@kickzone-workspace/customers-graphql';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
+import { parseColorHexes } from '@kickzone-workspace/client-shared-graphql';
 import {
   useI18nContext,
   useLanguageContext,
@@ -907,14 +908,26 @@ export function CustomerShoppingCart() {
                                   </Typography>
                                   <Box
                                     sx={{
-                                      width: 24,
-                                      height: 24,
-                                      backgroundColor: item.color,
-                                      borderRadius: '50%',
-                                      border: '2px solid white',
-                                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: 0.5,
                                     }}
-                                  />
+                                  >
+                                    {parseColorHexes(item.color).map((hex) => (
+                                      <Box
+                                        key={hex}
+                                        sx={{
+                                          width: 24,
+                                          height: 24,
+                                          backgroundColor: hex,
+                                          borderRadius: '50%',
+                                          border: '2px solid white',
+                                          boxShadow:
+                                            '0 2px 8px rgba(0,0,0,0.15)',
+                                        }}
+                                      />
+                                    ))}
+                                  </Box>
                                 </Box>
                               )}
                               {item.size && (
@@ -1415,15 +1428,26 @@ export function CustomerShoppingCart() {
                             {item.color && (
                               <Box
                                 sx={{
-                                  width: 20,
-                                  height: 20,
-                                  backgroundColor: item.color,
-                                  borderRadius: '50%',
-                                  border: '2px solid white',
-                                  boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
                                   flexShrink: 0,
                                 }}
-                              />
+                              >
+                                {parseColorHexes(item.color).map((hex) => (
+                                  <Box
+                                    key={hex}
+                                    sx={{
+                                      width: 20,
+                                      height: 20,
+                                      backgroundColor: hex,
+                                      borderRadius: '50%',
+                                      border: '2px solid white',
+                                      boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                    }}
+                                  />
+                                ))}
+                              </Box>
                             )}
                             {item.size && (
                               <Typography
@@ -1791,13 +1815,24 @@ export function CustomerShoppingCart() {
                               </Typography>
                               <Box
                                 sx={{
-                                  width: 16,
-                                  height: 16,
-                                  backgroundColor: item.color,
-                                  borderRadius: '50%',
-                                  border: '1px solid #ccc',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
                                 }}
-                              />
+                              >
+                                {parseColorHexes(item.color).map((hex) => (
+                                  <Box
+                                    key={hex}
+                                    sx={{
+                                      width: 16,
+                                      height: 16,
+                                      backgroundColor: hex,
+                                      borderRadius: '50%',
+                                      border: '1px solid #ccc',
+                                    }}
+                                  />
+                                ))}
+                              </Box>
                             </Box>
                           )}
                           {item.size && (

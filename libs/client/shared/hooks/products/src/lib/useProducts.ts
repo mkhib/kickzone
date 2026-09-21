@@ -138,6 +138,7 @@ export const useProducts = () => {
     async (
       productInput: {
         name: string;
+        sku: string;
         categoryIds: number[];
         description?: string | null;
       },

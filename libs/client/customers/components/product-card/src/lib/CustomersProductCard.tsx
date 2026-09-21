@@ -25,6 +25,9 @@ import InventoryIcon from '@mui/icons-material/Inventory';
 import LocalOfferIcon from '@mui/icons-material/LocalOffer';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
+import {
+  formatVariantColorNames,
+} from '@kickzone-workspace/client-shared-graphql';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   'https://image-cdn.hypb.st/https%3A%2F%2Fhypebeast.com%2Fimage%2F2021%2F10%2Fair-jordan-1-high-og-rebellionaire-closer-look-release-info-555088-036-000.jpg?w=960&cbr=1&q=90&fit=max';
@@ -464,6 +467,20 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           {product.name}
         </Typography>
 
+        {product.sku && (
+          <Typography
+            variant="body2"
+            sx={(theme) => ({
+              color: theme.palette.mode === 'dark' ? '#a1a1aa' : '#6b7280',
+              mb: 1,
+              fontSize: { xs: '0.8rem', sm: '0.85rem' },
+              fontWeight: 500,
+            })}
+          >
+            {LL.products.itemCodeSku()}: {product.sku}
+          </Typography>
+        )}
+
         {product.categories && product.categories.length > 0 && (
           <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, mb: 2 }}>
             {product.categories.slice(0, 2).map((cat) => (
@@ -624,7 +641,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               borderTop: '1px solid rgba(0,0,0,0.06)',
             }}
           >
-            {firstInfo.color && (
+            {firstInfo.colors?.length > 0 && (
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                 <Typography
                   variant="caption"
@@ -638,16 +655,22 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 >
                   {LL.products.color()}
                 </Typography>
-                <Box
-                  sx={{
-                    width: 24,
-                    height: 24,
-                    backgroundColor: firstInfo.color.hexCode,
-                    borderRadius: '50%',
-                    border: '2px solid white',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                  }}
-                />
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                  {firstInfo.colors.map((color) => (
+                    <Box
+                      key={color.id}
+                      sx={{
+                        width: 24,
+                        height: 24,
+                        backgroundColor: color.hexCode,
+                        borderRadius: '50%',
+                        border: '2px solid white',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
+                      }}
+                      title={color.name}
+                    />
+                  ))}
+                </Box>
               </Box>
             )}
             {firstInfo.size && (
@@ -748,6 +771,16 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           <FormControl component="fieldset" fullWidth>
             <FormLabel component="legend" sx={{ mb: 2 }}>
               {product.name}
+              {product.sku ? (
+                <Typography
+                  component="span"
+                  variant="body2"
+                  sx={{ display: 'block', mt: 0.5, fontWeight: 400 }}
+                  color="text.secondary"
+                >
+                  {LL.products.itemCodeSku()}: {product.sku}
+                </Typography>
+              ) : null}
             </FormLabel>
             <RadioGroup
               value={selectedVariantId || ''}
@@ -778,18 +811,29 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                               mb: 0.5,
                             }}
                           >
-                            {variant.productInfo.color && (
+                            {variant.productInfo.colors?.length > 0 && (
                               <>
                                 <Box
                                   sx={{
-                                    width: 20,
-                                    height: 20,
-                                    backgroundColor:
-                                      variant.productInfo.color.hexCode,
-                                    borderRadius: '50%',
-                                    border: '1px solid #ccc',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 0.5,
                                   }}
-                                />
+                                >
+                                  {variant.productInfo.colors.map((color) => (
+                                    <Box
+                                      key={color.id}
+                                      sx={{
+                                        width: 20,
+                                        height: 20,
+                                        backgroundColor: color.hexCode,
+                                        borderRadius: '50%',
+                                        border: '1px solid #ccc',
+                                      }}
+                                      title={color.name}
+                                    />
+                                  ))}
+                                </Box>
                                 <Typography
                                   variant="body2"
                                   sx={(theme) => ({
@@ -800,7 +844,9 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                                     fontWeight: 600,
                                   })}
                                 >
-                                  {variant.productInfo.color.name}
+                                  {formatVariantColorNames(
+                                    variant.productInfo.colors
+                                  )}
                                 </Typography>
                               </>
                             )}
@@ -808,7 +854,9 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                               <Typography
                                 variant="body2"
                                 sx={(theme) => ({
-                                  ml: variant.productInfo.color ? 1 : 0,
+                                  ml: variant.productInfo.colors?.length
+                                    ? 1
+                                    : 0,
                                   color:
                                     theme.palette.mode === 'dark'
                                       ? '#f7f7f7'

@@ -145,7 +145,7 @@ const products = [
     categories: [{ id: 1, name: 'Electronics' }],
     productInfos: [
       {
-        color: { id: 1, name: 'Red', hexCode: '#ff0000' },
+        colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
         images: ['/uploads/product-1.jpg'],
       },
     ],
@@ -157,7 +157,7 @@ const products = [
     categories: [{ id: 2, name: 'Clothing' }],
     productInfos: [
       {
-        color: { id: 2, name: 'Blue', hexCode: '#0000ff' },
+        colors: [{ id: 2, name: 'Blue', hexCode: '#0000ff' }],
         images: [],
       },
     ],

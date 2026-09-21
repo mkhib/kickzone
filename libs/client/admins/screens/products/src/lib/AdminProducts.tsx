@@ -37,6 +37,7 @@ import Switch from '@mui/material/Switch';
 import Stack from '@mui/material/Stack';
 import { useSellerListingsByProduct } from './adminProducts.hooks';
 import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
+import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
 
 type LayoutComponentType = React.ComponentType<{ children: ReactNode }>;
 
@@ -377,7 +378,7 @@ export function AdminProducts({
                         </Box>
 
                         {/* Color Indicator */}
-                        {info?.color && (
+                        {info?.colors?.length > 0 && (
                           <Box
                             sx={{
                               position: 'absolute',
@@ -395,20 +396,31 @@ export function AdminProducts({
                           >
                             <Box
                               sx={{
-                                width: 16,
-                                height: 16,
-                                borderRadius: '50%',
-                                backgroundColor: info.color.hexCode,
-                                border: '2px solid white',
-                                boxShadow: '0 0 4px rgba(0,0,0,0.2)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 0.5,
                               }}
-                            />
+                            >
+                              {info.colors.map((color) => (
+                                <Box
+                                  key={color.id}
+                                  sx={{
+                                    width: 16,
+                                    height: 16,
+                                    borderRadius: '50%',
+                                    backgroundColor: color.hexCode,
+                                    border: '2px solid white',
+                                    boxShadow: '0 0 4px rgba(0,0,0,0.2)',
+                                  }}
+                                />
+                              ))}
+                            </Box>
                             <Typography
                               variant="caption"
                               fontWeight={600}
                               sx={{ color: '#000' }}
                             >
-                              {info.color.name}
+                              {formatVariantColorNames(info.colors)}
                             </Typography>
                           </Box>
                         )}

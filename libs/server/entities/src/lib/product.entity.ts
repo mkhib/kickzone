@@ -24,6 +24,10 @@ export class Product {
   @Column({ unique: true })
   name: string;
 
+  @Field({ nullable: true })
+  @Column({ unique: true, nullable: true })
+  sku?: string | null;
+
   @Field(() => [ProductInfo])
   @OneToMany(() => ProductInfo, (productInfo) => productInfo.product)
   productInfos: ProductInfo[];

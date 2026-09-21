@@ -37,6 +37,7 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { useColors } from '@kickzone-workspace/colors-hook';
 import { SketchPicker, ColorResult } from 'react-color';
+import { MAX_COLORS_PER_VARIANT } from '@kickzone-workspace/client-shared-graphql';
 
 interface CategoryModalProps {
   open: boolean;
@@ -216,7 +217,7 @@ const ImagePreviewContainer = styled(Box)(({ theme }) => ({
 export type ProductInfoState = {
   productId: number;
   size: string;
-  color: KickzoneGraphqlTypes.Color | null;
+  colors: KickzoneGraphqlTypes.Color[];
   weight: number;
   images: File[];
   imagePreviews: string[];
@@ -234,7 +235,7 @@ interface ProductInfoCardProps {
     idx: number,
     name: keyof Omit<
       ProductInfoState,
-      | 'color'
+      | 'colors'
       | 'images'
       | 'imagePreviews'
       | 'uploadedImageUrls'
@@ -245,9 +246,9 @@ interface ProductInfoCardProps {
     >,
     value: unknown
   ) => void;
-  onColorChange: (
+  onColorsChange: (
     idx: number,
-    color: KickzoneGraphqlTypes.Color | null
+    colors: KickzoneGraphqlTypes.Color[]
   ) => void;
   availableColors: KickzoneGraphqlTypes.Color[];
   onRemove: (idx: number) => void;
@@ -262,7 +263,7 @@ const ProductInfoCard = React.memo(
     info,
     idx,
     onChange,
-    onColorChange,
+    onColorsChange,
     availableColors,
     onRemove,
     onRemoveImage,
@@ -347,15 +348,51 @@ const ProductInfoCard = React.memo(
           }}
         >
           <Autocomplete
+            multiple
             options={availableColors}
             getOptionLabel={(option) => option.name}
             isOptionEqualToValue={(option, value) => option.id === value.id}
-            value={info.color}
-            onChange={(_e, newValue) => onColorChange(idx, newValue)}
+            value={info.colors}
+            onChange={(_e, newValue) => {
+              if (newValue.length > MAX_COLORS_PER_VARIANT) {
+                return;
+              }
+              onColorsChange(idx, newValue);
+            }}
+            renderOption={(props, option) => {
+              const { key, ...otherProps } = props;
+              return (
+                <li key={key} {...otherProps}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 1,
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 16,
+                        height: 16,
+                        borderRadius: '50%',
+                        backgroundColor: option.hexCode,
+                        border: '1px solid rgba(0,0,0,0.2)',
+                      }}
+                    />
+                    {option.name}
+                  </Box>
+                </li>
+              );
+            }}
             renderInput={(params) => (
-              <TextField {...params} label={LL.form.color()} required />
+              <TextField
+                {...params}
+                label={LL.form.color()}
+                required
+                helperText={`1–${MAX_COLORS_PER_VARIANT} colors`}
+              />
             )}
-            sx={{ minWidth: 120, width: '100%', mb: { xs: 2, md: 0 } }}
+            sx={{ minWidth: 180, width: '100%', mb: { xs: 2, md: 0 } }}
           />
           <TextField
             label={LL.products.size()}
@@ -633,16 +670,16 @@ const DeleteColorModal = ({
 type LayoutComponentType = React.ComponentType<{ children: React.ReactNode }>;
 
 export type CreatedCatalogProduct = {
-  product: { id: number; name: string };
+  product: { id: number; name: string; sku?: string | null };
   productInfos: Array<{
     id: number;
     size: string;
     weight: number;
-    color?: {
+    colors?: Array<{
       id: number;
       name: string;
       hexCode: string;
-    } | null;
+    }> | null;
   }>;
 };
 
@@ -670,6 +707,7 @@ export function AdminProductEditor({
   const { product: loadedProduct } = useProductById(productIdNum);
   const [product, setProduct] = useState({
     name: '',
+    sku: '',
     categoryIds: [] as number[],
     description: '',
   });
@@ -678,7 +716,7 @@ export function AdminProductEditor({
     {
       productId: 0,
       size: '',
-      color: null, // Initialize color as null
+      colors: [],
       weight: 0,
       images: [],
       imagePreviews: [],
@@ -781,6 +819,7 @@ export function AdminProductEditor({
     if (productIdNum && loadedProduct) {
       setProduct({
         name: loadedProduct.name,
+        sku: loadedProduct.sku || '',
         categoryIds: loadedProduct.categories.map((cat) => cat.id),
         description: loadedProduct.description || '',
       });
@@ -788,7 +827,7 @@ export function AdminProductEditor({
         loadedProduct.productInfos.map((info) => ({
           productId: loadedProduct.id,
           size: info.size,
-          color: info.color || null,
+          colors: info.colors || [],
           weight: info.weight,
           images: [],
           imagePreviews: [],
@@ -807,6 +846,7 @@ export function AdminProductEditor({
     productIdNum,
     loadedProduct?.id,
     loadedProduct?.name,
+    loadedProduct?.sku,
     loadedProduct?.description,
     loadedProduct?.categories,
     loadedProduct?.productInfos,
@@ -828,7 +868,7 @@ export function AdminProductEditor({
       index: number,
       name: keyof Omit<
         ProductInfoState,
-        | 'color'
+        | 'colors'
         | 'images'
         | 'imagePreviews'
         | 'uploadedImageUrls'
@@ -855,7 +895,7 @@ export function AdminProductEditor({
       {
         productId: 0,
         size: '',
-        color: null,
+        colors: [],
         weight: 0,
         images: [],
         imagePreviews: [],
@@ -881,14 +921,14 @@ export function AdminProductEditor({
       e.preventDefault();
       try {
         // Validate required fields
-        if (!product.name || product.categoryIds.length === 0) {
+        if (!product.name || !product.sku.trim() || product.categoryIds.length === 0) {
           showSnackbar('Please fill in all required fields', {
             severity: 'error',
           });
           return;
         }
         for (const info of productInfos) {
-          if (!info.size || !info.color || !info.weight) {
+          if (!info.size || !info.colors.length || !info.weight) {
             showSnackbar('Please fill in all product variant fields', {
               severity: 'error',
             });
@@ -900,6 +940,7 @@ export function AdminProductEditor({
           await updateProduct({
             id: productIdNum,
             name: product.name,
+            sku: product.sku.trim(),
             categoryIds: product.categoryIds,
             description:
               product.description === '' ? null : product.description,
@@ -910,13 +951,14 @@ export function AdminProductEditor({
           const created = await createProductWithInfos(
             {
               name: product.name,
+              sku: product.sku.trim(),
               categoryIds: product.categoryIds,
               description:
                 product.description === '' ? null : product.description,
             },
             productInfos.map((info) => ({
               size: info.size,
-              colorId: info.color?.id || 0,
+              colorIds: info.colors.map((c) => c.id),
               weight: Number(info.weight),
             }))
           );
@@ -938,6 +980,7 @@ export function AdminProductEditor({
           // Reset form to initial state
           setProduct({
             name: '',
+            sku: '',
             categoryIds: [],
             description: '',
           });
@@ -945,7 +988,7 @@ export function AdminProductEditor({
             {
               productId: 0,
               size: '',
-              color: null,
+              colors: [],
               weight: 0,
               images: [],
               imagePreviews: [],
@@ -1221,6 +1264,19 @@ export function AdminProductEditor({
                 onChange={handleProductChange}
                 required
               />
+              <TextField
+                id="product-sku"
+                fullWidth
+                label={LL.form.sku()}
+                name="sku"
+                value={product.sku}
+                onChange={handleProductChange}
+                required
+                {...getLtrTextFieldProps()}
+                slotProps={{
+                  htmlInput: { dir: 'ltr', 'aria-label': 'SKU' },
+                }}
+              />
               <Box>
                 <Autocomplete
                   multiple
@@ -1400,13 +1456,13 @@ export function AdminProductEditor({
                   info={info}
                   idx={idx}
                   onChange={handleProductInfoChange}
-                  onColorChange={(
+                  onColorsChange={(
                     idx,
-                    color: KickzoneGraphqlTypes.Color | null
+                    colors: KickzoneGraphqlTypes.Color[]
                   ) =>
                     setProductInfos((prev) => {
                       const updated = [...prev];
-                      updated[idx] = { ...updated[idx], color };
+                      updated[idx] = { ...updated[idx], colors };
                       return updated;
                     })
                   }

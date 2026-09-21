@@ -10,6 +10,7 @@ export const PRODUCT_FRAGMENT = gql`
   fragment ProductFields on Product {
     id
     name
+    sku
     archived
     description
     categories {
@@ -48,6 +49,7 @@ export const CREATE_PRODUCT = gql`
     createProduct(input: $input) {
       id
       name
+      sku
       categories {
         id
         name
@@ -61,6 +63,7 @@ export const CREATE_PRODUCT_INFO = gql`
     createProductInfo(input: $input) {
       id
       name
+      sku
       archived
       categories {
         id
@@ -69,7 +72,7 @@ export const CREATE_PRODUCT_INFO = gql`
       productInfos {
         id
         size
-        color {
+        colors {
           id
           name
           hexCode
@@ -135,6 +138,7 @@ export const UPDATE_PRODUCT = gql`
     updateProduct(input: $input) {
       id
       name
+      sku
       archived
       categories {
         id

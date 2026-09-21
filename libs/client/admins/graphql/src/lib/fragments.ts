@@ -45,6 +45,7 @@ export const ADMIN_PRODUCT_FRAGMENT = gql`
   fragment AdminProductFields on Product {
     id
     name
+    sku
     archived
     description
     categories {
@@ -67,6 +68,7 @@ export const ADMIN_PRODUCT_MANAGEMENT_FRAGMENT = gql`
   fragment AdminProductManagementFields on Product {
     id
     name
+    sku
     archived
     description
     categories {

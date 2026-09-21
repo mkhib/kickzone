@@ -26,6 +26,7 @@ export const SELLER_PRODUCT_PRODUCT_FRAGMENT = gql`
   fragment SellerProductProductFields on Product {
     id
     name
+    sku
     archived
     description
     categories {
@@ -48,6 +49,7 @@ export const SELLER_PRODUCT_MANAGEMENT_FRAGMENT = gql`
   fragment SellerProductManagementFields on Product {
     id
     name
+    sku
     description
     categories {
       ...CategoryFields
