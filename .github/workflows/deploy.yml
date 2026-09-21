@@ -29,7 +29,14 @@ jobs:
         run: npm install -g yarn
 
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: |
+          for i in 1 2 3 4 5; do
+            yarn install --frozen-lockfile && exit 0
+            echo "yarn install failed (attempt $i), retrying in 20s..."
+            sleep 20
+          done
+          echo "yarn install failed after retries"
+          exit 1
 
       - name: Build API
         run: yarn nx build kickzone-api --configuration=production
