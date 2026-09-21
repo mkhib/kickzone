@@ -730,5 +730,45 @@ describe('Checkout Process E2E Tests', () => {
       const result = await orderService.confirmOrderPayment(order.id);
       expect(result.status).toBe(OrderStatus.CONFIRMED);
     });
+
+    it('should cancel a pending order and leave stock unchanged', async () => {
+      const productBefore = await sellerProductRepository.findOne({
+        where: { id: testSellerProduct.id },
+      });
+      const initialStock = productBefore?.stockQuantity ?? 0;
+
+      const order = await orderService.createOrder({
+        customerEmail: testUser.email,
+        customerPhone: '1234567890',
+        customerName: `${testUser.name} ${testUser.lastName}`,
+        shippingAddress: '123 Test St',
+        city: 'Test City',
+        state: 'Test State',
+        zipCode: '12345',
+        country: 'Test Country',
+        sellerId: testSeller.id,
+        items: [
+          {
+            productId: testProduct.id.toString(),
+            sellerProductId: testSellerProduct.id,
+            productName: 'Test Product',
+            quantity: 1,
+            unitPrice: 50,
+            totalPrice: 50,
+          },
+        ],
+        shippingCost: 10,
+      });
+
+      expect(order.status).toBe(OrderStatus.PENDING);
+
+      const cancelled = await orderService.cancelPendingOrder(order.id);
+      expect(cancelled.status).toBe(OrderStatus.CANCELLED);
+
+      const productAfter = await sellerProductRepository.findOne({
+        where: { id: testSellerProduct.id },
+      });
+      expect(productAfter?.stockQuantity).toBe(initialStock);
+    });
   });
 });
