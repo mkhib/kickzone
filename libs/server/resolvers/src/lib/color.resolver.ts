@@ -48,9 +48,16 @@ export class ColorResolver {
   @UseGuards(CatalogGuard)
   async updateColor(
     @Args('id', { type: () => Int }) id: number,
-    @Args('input') input: UpdateColorInput
+    @Args('input') input: UpdateColorInput,
+    @Args('name', { nullable: true }) name?: string,
+    @Context() context?: { req: { locale?: string } }
   ): Promise<Color> {
-    return this.colorService.updateColor(id, input);
+    return this.colorService.updateColor(
+      id,
+      input,
+      name,
+      context?.req?.locale || 'en'
+    );
   }
 
   @Mutation(() => Boolean)

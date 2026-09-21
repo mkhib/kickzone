@@ -29,8 +29,8 @@ export const CREATE_CATEGORY = gql`
 `;
 
 export const UPDATE_CATEGORY = gql`
-  mutation UpdateCategory($input: UpdateCategoryInput!) {
-    updateCategory(input: $input) {
+  mutation UpdateCategory($input: UpdateCategoryInput!, $name: String) {
+    updateCategory(input: $input, name: $name) {
       id
       slug
       sortOrder

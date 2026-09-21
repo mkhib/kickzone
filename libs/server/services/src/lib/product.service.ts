@@ -296,7 +296,7 @@ export class ProductService {
     return savedCategory;
   }
 
-  async updateCategory(input: UpdateCategoryInput) {
+  async updateCategory(input: UpdateCategoryInput, name?: string, locale = 'en') {
     const category = await this.categoryRepository.findOneBy({ id: input.id });
     if (!category) {
       throw new Error('Category not found');
@@ -321,7 +321,21 @@ export class ProductService {
         input.isActive !== undefined ? input.isActive : category.isActive,
     });
 
-    return this.categoryRepository.save(category);
+    const saved = await this.categoryRepository.save(category);
+
+    const trimmedName = name?.trim();
+    if (trimmedName) {
+      await this.translationService.setTranslation({
+        entityType: 'category',
+        entityId: saved.id,
+        locale,
+        fieldName: 'name',
+        value: trimmedName,
+        isAutoTranslated: false,
+      });
+    }
+
+    return saved;
   }
 
   async deleteCategory(id: number) {

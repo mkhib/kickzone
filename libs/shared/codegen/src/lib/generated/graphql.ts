@@ -471,12 +471,14 @@ export type MutationUpdateCartItemArgs = {
 
 export type MutationUpdateCategoryArgs = {
   input: UpdateCategoryInput;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 
 export type MutationUpdateColorArgs = {
   id: Scalars['Int']['input'];
   input: UpdateColorInput;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 

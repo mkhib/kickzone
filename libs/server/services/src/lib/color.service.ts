@@ -119,7 +119,12 @@ export class ColorService implements OnModuleInit {
     return savedColor;
   }
 
-  async updateColor(id: number, input: UpdateColorInput): Promise<Color> {
+  async updateColor(
+    id: number,
+    input: UpdateColorInput,
+    name?: string,
+    locale = 'en'
+  ): Promise<Color> {
     const color = await this.colorRepository.findOneBy({ id });
     if (!color) {
       throw new Error(`Color with ID ${id} not found`);
@@ -138,7 +143,21 @@ export class ColorService implements OnModuleInit {
     if (input.isActive !== undefined) {
       color.isActive = input.isActive;
     }
-    return this.colorRepository.save(color);
+    const saved = await this.colorRepository.save(color);
+
+    const trimmedName = name?.trim();
+    if (trimmedName) {
+      await this.translationService.setTranslation({
+        entityType: 'color',
+        entityId: saved.id,
+        locale,
+        fieldName: 'name',
+        value: trimmedName,
+        isAutoTranslated: false,
+      });
+    }
+
+    return saved;
   }
 
   async deleteColor(id: number): Promise<boolean> {

@@ -1576,7 +1576,13 @@ export function AdminProductEditor({
           try {
             if (selectedCategory) {
               const slug = slugify(name);
-              await updateCategory(selectedCategory.id, slug);
+              await updateCategory(
+                selectedCategory.id,
+                slug,
+                undefined,
+                undefined,
+                name
+              );
             }
             setIsEditCategoryModalOpen(false);
             setSelectedCategory(null);

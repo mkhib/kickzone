@@ -69,7 +69,11 @@ export function useColors() {
     isActive?: boolean
   ) => {
     const response = await updateColorMutation({
-      variables: { id, input: { hexCode, sortOrder, isActive } },
+      variables: {
+        id,
+        input: { hexCode, sortOrder, isActive },
+        ...(name?.trim() ? { name: name.trim() } : {}),
+      },
     });
     return response.data?.updateColor;
   };

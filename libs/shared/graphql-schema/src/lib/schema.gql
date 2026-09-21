@@ -441,7 +441,7 @@ type Mutation {
   forgotPassword(email: String!, baseUrl: String!): Boolean!
   resetPassword(token: String!, newPassword: String!): User!
   createCategory(input: CreateCategoryInput!, name: String): Category!
-  updateCategory(input: UpdateCategoryInput!): Category!
+  updateCategory(input: UpdateCategoryInput!, name: String): Category!
   deleteCategory(id: Int!): Boolean!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): Product!
@@ -461,7 +461,7 @@ type Mutation {
   createMySellerProduct(input: CreateSellerProductInput!): SellerProduct!
   updateMySellerProduct(input: UpdateSellerProductInput!): SellerProduct!
   createColor(input: CreateColorInput!, name: String): Color!
-  updateColor(id: Int!, input: UpdateColorInput!): Color!
+  updateColor(id: Int!, input: UpdateColorInput!, name: String): Color!
   deleteColor(id: Int!): Boolean!
   createOrder(createOrderInput: CreateOrderInput!): Order!
   updateOrder(id: String!, updateOrderInput: UpdateOrderInput!): Order!

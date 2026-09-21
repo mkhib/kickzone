@@ -38,9 +38,15 @@ export class CategoryResolver {
   @Mutation(() => Category)
   @UseGuards(CatalogGuard)
   async updateCategory(
-    @Args('input') input: UpdateCategoryInput
+    @Args('input') input: UpdateCategoryInput,
+    @Args('name', { nullable: true }) name?: string,
+    @Context() context?: { req: { locale?: string } }
   ): Promise<Category> {
-    return this.productService.updateCategory(input);
+    return this.productService.updateCategory(
+      input,
+      name,
+      context?.req?.locale || 'en'
+    );
   }
 
   @Mutation(() => Boolean)

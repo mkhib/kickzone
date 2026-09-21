@@ -29,8 +29,8 @@ export const CREATE_COLOR = gql`
 `;
 
 export const UPDATE_COLOR = gql`
-  mutation UpdateColor($id: Int!, $input: UpdateColorInput!) {
-    updateColor(id: $id, input: $input) {
+  mutation UpdateColor($id: Int!, $input: UpdateColorInput!, $name: String) {
+    updateColor(id: $id, input: $input, name: $name) {
       id
       hexCode
       sortOrder

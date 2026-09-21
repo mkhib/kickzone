@@ -72,11 +72,13 @@ export const useCategories = () => {
     id: number,
     slug: string,
     sortOrder?: number,
-    isActive?: boolean
+    isActive?: boolean,
+    name?: string
   ) =>
     updateCategoryMutation({
       variables: {
         input: { id, slug, sortOrder, isActive },
+        ...(name?.trim() ? { name: name.trim() } : {}),
       },
     });
 
