@@ -84,6 +84,7 @@ export function CurrencyManagement() {
               onChange={(e) => setSelectedFromCurrency(e.target.value)}
               size="small"
               sx={{ minWidth: 200 }}
+              disabled={currencies.length === 0}
             >
               {currencies.map((currency) => (
                 <MenuItem key={currency.code} value={currency.code}>
@@ -98,6 +99,7 @@ export function CurrencyManagement() {
               onChange={(e) => setSelectedToCurrency(e.target.value)}
               size="small"
               sx={{ minWidth: 200 }}
+              disabled={currencies.length === 0}
             >
               {currencies.map((currency) => (
                 <MenuItem key={currency.code} value={currency.code}>
@@ -165,6 +167,7 @@ export function CurrencyManagement() {
                 variant="contained"
                 onClick={handleSetExchangeRate}
                 loading={settingRate}
+                disabled={currencies.length === 0 || !selectedFromCurrency || !selectedToCurrency}
                 sx={{ alignSelf: 'flex-start' }}
               >
                 {LL.currency.setExchangeRate()}
@@ -250,6 +253,7 @@ export function CurrencyManagement() {
                 value={currencyCode}
                 onChange={(e) => setCurrencyCode(e.target.value)}
                 fullWidth
+                disabled={currencies.length === 0}
               >
                 {currencies.map((currency) => (
                   <MenuItem key={currency.code} value={currency.code}>
@@ -261,6 +265,7 @@ export function CurrencyManagement() {
                 variant="contained"
                 onClick={handleSetCurrencyPreference}
                 loading={settingPreference}
+                disabled={currencies.length === 0 || !currencyCode}
                 sx={{ alignSelf: 'flex-start' }}
               >
                 {LL.currency.setPreference()}

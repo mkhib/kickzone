@@ -1,7 +1,9 @@
 import {
   Injectable,
+  Logger,
   NotFoundException,
   BadRequestException,
+  OnModuleInit,
 } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, LessThanOrEqual } from 'typeorm';
@@ -11,8 +13,43 @@ import {
   CurrencyPreference,
 } from '@kickzone-workspace/entities';
 
+/** Core currencies seeded on startup so the admin currency screen works out of the box. */
+export const BASIC_CURRENCIES: Array<{
+  code: string;
+  name: string;
+  symbol: string;
+  decimalPlaces: number;
+  isBaseCurrency: boolean;
+}> = [
+  {
+    code: 'USD',
+    name: 'US Dollar',
+    symbol: '$',
+    decimalPlaces: 2,
+    isBaseCurrency: true,
+  },
+  {
+    code: 'IRR',
+    name: 'Iranian Rial',
+    symbol: 'تومان',
+    decimalPlaces: 0,
+    isBaseCurrency: false,
+  },
+];
+
+/** Locale → currency defaults seeded on startup. */
+export const BASIC_CURRENCY_PREFERENCES: Array<{
+  locale: string;
+  currencyCode: string;
+}> = [
+  { locale: 'fa', currencyCode: 'IRR' },
+  { locale: 'en', currencyCode: 'USD' },
+];
+
 @Injectable()
-export class CurrencyService {
+export class CurrencyService implements OnModuleInit {
+  private readonly logger = new Logger(CurrencyService.name);
+
   constructor(
     @InjectRepository(Currency)
     private currencyRepository: Repository<Currency>,
@@ -21,6 +58,63 @@ export class CurrencyService {
     @InjectRepository(CurrencyPreference)
     private currencyPreferenceRepository: Repository<CurrencyPreference>
   ) {}
+
+  async onModuleInit() {
+    await this.seedBasicCurrencies();
+  }
+
+  /**
+   * Idempotently insert USD/IRR and default locale preferences.
+   * Does not set an exchange rate — admins configure that in the UI.
+   */
+  async seedBasicCurrencies(): Promise<void> {
+    let createdCurrencies = 0;
+
+    for (const basic of BASIC_CURRENCIES) {
+      let currency = await this.currencyRepository.findOne({
+        where: { code: basic.code },
+      });
+      if (!currency) {
+        currency = await this.currencyRepository.save(
+          this.currencyRepository.create({
+            ...basic,
+            isActive: true,
+          })
+        );
+        createdCurrencies += 1;
+      }
+    }
+
+    let createdPreferences = 0;
+    for (const basic of BASIC_CURRENCY_PREFERENCES) {
+      const existing = await this.currencyPreferenceRepository.findOne({
+        where: { locale: basic.locale },
+      });
+      if (existing) {
+        continue;
+      }
+
+      const currency = await this.findCurrencyByCode(basic.currencyCode);
+      if (!currency) {
+        continue;
+      }
+
+      await this.currencyPreferenceRepository.save(
+        this.currencyPreferenceRepository.create({
+          locale: basic.locale,
+          currencyId: currency.id,
+          isActive: true,
+        })
+      );
+      createdPreferences += 1;
+    }
+
+    if (createdCurrencies > 0 || createdPreferences > 0) {
+      this.logger.log(
+        `Seeded ${createdCurrencies} currency(ies) and ${createdPreferences} preference(s)`
+      );
+    }
+  }
 
   // =============== Currency Management ===============
 

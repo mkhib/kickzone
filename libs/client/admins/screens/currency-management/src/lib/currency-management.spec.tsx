@@ -71,8 +71,8 @@ vi.mock('@kickzone-workspace/admins-currency-management-hooks', () => ({
     currencyCode: 'USD',
     setCurrencyCode: vi.fn(),
     currencies: [
-      { code: 'USD', name: 'US Dollar', symbol: '$' },
-      { code: 'IRR', name: 'Iranian Rial', symbol: 'Rial' },
+      { code: 'USD', name: 'US Dollar', symbol: '$', isBaseCurrency: true },
+      { code: 'IRR', name: 'Iranian Rial', symbol: 'Rial', isBaseCurrency: false },
     ],
     currentRate: {
       rate: 42000,
