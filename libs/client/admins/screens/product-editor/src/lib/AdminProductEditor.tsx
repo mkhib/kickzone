@@ -517,14 +517,12 @@ const ProductInfoCard = React.memo(
               labelId={`size-value-${idx}`}
               label={LL.products.size()}
               value={info.size}
-              displayEmpty
               onChange={(e: SelectChangeEvent) =>
                 onChange(idx, 'size', e.target.value)
               }
             >
-              <MenuItem value="">
-                <em>{LL.products.selectSize()}</em>
-              </MenuItem>
+              {/* Keeps empty value valid without showing a closed-select placeholder */}
+              <MenuItem value="" sx={{ display: 'none' }} />
               {(info.sizeKind === SizeKind.Footwear
                 ? FOOTWEAR_EU_SIZES
                 : APPAREL_SIZES
@@ -1594,92 +1592,117 @@ export function AdminProductEditor({
       <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
           <Grid container spacing={3} sx={{ height: '100%' }}>
             {/* Left Side - Basic Product Info */}
-            <Grid
-              size={{ xs: 12, md: 6 }}
-              sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}
-            >
-              <TextField
-                id="product-name"
-                slotProps={{
-                  input: { 'aria-label': 'Product Name' },
+            <Grid size={{ xs: 12, md: 6 }}>
+              <Typography variant="h6" sx={{ mb: 2 }}>
+                {LL.products.productDetails()}
+              </Typography>
+              <Paper
+                elevation={0}
+                sx={{
+                  mb: 2,
+                  p: 2,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: 2,
+                  backgroundColor:
+                    theme.palette.mode === 'dark'
+                      ? 'rgba(18, 18, 22, 0.88)'
+                      : 'rgba(255, 255, 255, 0.96)',
+                  border:
+                    theme.palette.mode === 'dark'
+                      ? '1px solid rgba(255, 255, 255, 0.08)'
+                      : '1px solid rgba(0, 0, 0, 0.08)',
+                  borderRadius: '16px',
+                  boxShadow:
+                    theme.palette.mode === 'dark'
+                      ? '0 10px 30px rgba(0,0,0,0.4)'
+                      : '0 10px 30px rgba(0,0,0,0.12)',
                 }}
-                fullWidth
-                label={LL.form.productName()}
-                name="name"
-                value={product.name}
-                onChange={handleProductChange}
-                required
-              />
-              <TextField
-                id="product-sku"
-                fullWidth
-                label={LL.form.sku()}
-                name="sku"
-                value={product.sku}
-                onChange={handleProductChange}
-                required
-                {...getLtrTextFieldProps()}
-                slotProps={{
-                  htmlInput: { dir: 'ltr', 'aria-label': 'SKU' },
-                }}
-              />
-              <Box>
-                <Autocomplete
-                  multiple
-                  disableCloseOnSelect
-                  openOnFocus
-                  clearOnBlur={false}
-                  open={categoriesAutocomplete.open}
-                  onOpen={categoriesAutocomplete.onOpen}
-                  onClose={categoriesAutocomplete.onClose}
-                  id="categories-autocomplete"
-                  options={categories || []}
-                  getOptionLabel={(option) => option.name}
-                  value={
-                    categories?.filter((cat) =>
-                      product.categoryIds.includes(cat.id)
-                    ) || []
-                  }
-                  onChange={(_e, newValue, reason) => {
-                    if (reason === 'selectOption' || reason === 'removeOption') {
-                      categoriesAutocomplete.markSelection();
-                    }
-                    setProduct((prev) => ({
-                      ...prev,
-                      categoryIds: newValue.map((category) => category.id),
-                    }));
-                  }}
-                  loading={getCategoriesLoading}
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label={LL.form.category()}
-                      slotProps={{
-                        input: {
-                          ...params.InputProps,
-                          'aria-label': 'Category',
-                        },
-                      }}
-                    />
-                  )}
-                  isOptionEqualToValue={(option, value) =>
-                    option.id === value.id
-                  }
-                  filterSelectedOptions
+              >
+                <TextField
+                  id="product-name"
                   slotProps={{
-                    listbox: multiSelectListboxSlotProps,
+                    input: { 'aria-label': 'Product Name' },
+                  }}
+                  fullWidth
+                  label={LL.form.productName()}
+                  name="name"
+                  value={product.name}
+                  onChange={handleProductChange}
+                  required
+                />
+                <TextField
+                  id="product-sku"
+                  fullWidth
+                  label={LL.form.sku()}
+                  name="sku"
+                  value={product.sku}
+                  onChange={handleProductChange}
+                  required
+                  {...getLtrTextFieldProps()}
+                  slotProps={{
+                    htmlInput: { dir: 'ltr', 'aria-label': 'SKU' },
                   }}
                 />
-                <Button
-                  variant="outlined"
-                  onClick={() => setIsManageCategoriesModalOpen(true)}
-                  sx={{ mt: 1 }}
-                  fullWidth={isMobile}
-                >
-                  {LL.categories.manageCategories()}
-                </Button>
-              </Box>
-              <Box sx={{ mt: 2 }}>
+                <Box>
+                  <Autocomplete
+                    multiple
+                    disableCloseOnSelect
+                    openOnFocus
+                    clearOnBlur={false}
+                    open={categoriesAutocomplete.open}
+                    onOpen={categoriesAutocomplete.onOpen}
+                    onClose={categoriesAutocomplete.onClose}
+                    id="categories-autocomplete"
+                    options={categories || []}
+                    getOptionLabel={(option) => option.name}
+                    value={
+                      categories?.filter((cat) =>
+                        product.categoryIds.includes(cat.id)
+                      ) || []
+                    }
+                    onChange={(_e, newValue, reason) => {
+                      if (
+                        reason === 'selectOption' ||
+                        reason === 'removeOption'
+                      ) {
+                        categoriesAutocomplete.markSelection();
+                      }
+                      setProduct((prev) => ({
+                        ...prev,
+                        categoryIds: newValue.map((category) => category.id),
+                      }));
+                    }}
+                    loading={getCategoriesLoading}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label={LL.form.category()}
+                        slotProps={{
+                          input: {
+                            ...params.InputProps,
+                            'aria-label': 'Category',
+                          },
+                        }}
+                      />
+                    )}
+                    isOptionEqualToValue={(option, value) =>
+                      option.id === value.id
+                    }
+                    filterSelectedOptions
+                    slotProps={{
+                      listbox: multiSelectListboxSlotProps,
+                    }}
+                  />
+                  <Button
+                    variant="outlined"
+                    onClick={() => setIsManageCategoriesModalOpen(true)}
+                    sx={{ mt: 1 }}
+                    fullWidth={isMobile}
+                  >
+                    {LL.categories.manageCategories()}
+                  </Button>
+                </Box>
                 <TextField
                   id="product-description"
                   label={LL.form.description()}
@@ -1690,9 +1713,8 @@ export function AdminProductEditor({
                   multiline
                   minRows={3}
                   maxRows={8}
-                  sx={{ mb: 2 }}
                 />
-              </Box>
+              </Paper>
             </Grid>
             {/* Right Side - ProductInfos Section */}
             <Grid size={{ xs: 12, md: 6 }}>

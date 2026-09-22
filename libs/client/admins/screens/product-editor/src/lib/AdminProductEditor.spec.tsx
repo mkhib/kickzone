@@ -89,6 +89,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
       products: {
         addProduct: () => 'Add Product',
         editProduct: () => 'Edit Product',
+        productDetails: () => 'Product Details',
         productVariants: () => 'Product Variants',
         addVariant: () => 'Add Variant',
         saveProduct: () => 'Save Product',
