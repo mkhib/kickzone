@@ -253,4 +253,18 @@ export class PaymentResolver {
       url: this.paymentService.getGatewayUrl(authority),
     };
   }
+
+  /**
+   * Cancel a pending order when the buyer aborts on ZarinPal (Status=NOK).
+   * Per ZarinPal docs, verify must not be called when Status is NOK.
+   */
+  @Mutation(() => Boolean)
+  @UseGuards(GraphqlAuthGuard)
+  async cancelPendingZarinPalOrder(
+    @CurrentUser() _user: { id: string },
+    @Args('orderId') orderId: string
+  ) {
+    await this.orderService.cancelPendingOrder(orderId);
+    return true;
+  }
 }

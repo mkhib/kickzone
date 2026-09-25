@@ -7,9 +7,11 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import { useMutation } from '@apollo/client/react';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
+import { CANCEL_PENDING_ZARINPAL_ORDER_MUTATION } from '@kickzone-workspace/customers-graphql';
 import { useZarinPalPayment } from './use-zarinpal-payment';
 import { useCustomersCartMutations } from '@kickzone-workspace/customers-cart-hook';
 import { useCartStore } from '@kickzone-workspace/customer-cart-store';
@@ -18,6 +20,9 @@ import { useCartStore } from '@kickzone-workspace/customer-cart-store';
  * Payment Callback Screen
  * Handles the return from ZarinPal payment gateway
  * Verifies the payment and redirects accordingly
+ *
+ * Per ZarinPal docs: only call verify when Status=OK.
+ * Status=NOK means the buyer cancelled or the transaction failed.
  */
 export function CustomerPaymentCallback() {
   const navigate = useNavigate();
@@ -64,6 +69,10 @@ export function CustomerPaymentCallback() {
   const { clearCart } = useCustomersCartMutations();
   const clearCartAction = useCartStore((state) => state.clearCart);
 
+  const [cancelPendingOrder] = useMutation(
+    CANCEL_PENDING_ZARINPAL_ORDER_MUTATION
+  );
+
   const { verifyPayment } = useZarinPalPayment({
     onSuccess: async (refId) => {
       setRefId(refId);
@@ -95,10 +104,18 @@ export function CustomerPaymentCallback() {
       return;
     }
 
-    // Check if payment was cancelled
+    // Check if payment was cancelled — do NOT call verify (ZarinPal docs)
     if (status === 'NOK') {
-      setVerificationStatus('cancelled');
       verificationAttemptedRef.current = true;
+      setVerificationStatus('cancelled');
+      const orderIdToCancel = orderIdFromUrl || orderData?.orderId;
+      if (orderIdToCancel) {
+        cancelPendingOrder({ variables: { orderId: orderIdToCancel } }).catch(
+          (err) => {
+            console.error('Failed to cancel pending order after NOK:', err);
+          }
+        );
+      }
       return;
     }
 
@@ -141,7 +158,14 @@ export function CustomerPaymentCallback() {
     };
 
     verify();
-  }, [authority, status, orderData, verifyPayment]);
+  }, [
+    authority,
+    status,
+    orderData,
+    orderIdFromUrl,
+    verifyPayment,
+    cancelPendingOrder,
+  ]);
 
   const handleContinue = () => {
     if (verificationStatus === 'success' && orderData) {
@@ -166,7 +190,8 @@ export function CustomerPaymentCallback() {
             textAlign: 'center',
           }}
         >
-          {(verificationStatus === 'pending' || !orderData) && (
+          {(verificationStatus === 'pending' ||
+            (!orderData && status === 'OK')) && (
             <>
               <CircularProgress size={60} sx={{ mb: 3 }} />
               <Typography variant="h5" gutterBottom>
@@ -257,7 +282,7 @@ export function CustomerPaymentCallback() {
                 پرداخت لغو شد
               </Typography>
               <Alert severity="warning" sx={{ mb: 3 }}>
-                شما پرداخت را لغو کردید. سفارش شما ثبت نشده است.
+                شما پرداخت را لغو کردید. سفارش شما لغو شد.
               </Alert>
               <Button
                 variant="contained"

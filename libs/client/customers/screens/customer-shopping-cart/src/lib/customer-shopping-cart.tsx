@@ -92,6 +92,9 @@ export function CustomerShoppingCart() {
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.shoppingCart());
   const { currentLocale } = useLanguageContext();
+  // ZarinPal is Iran-only; use it for Farsi checkout. Other locales place a
+  // pending order and are contacted for payment (see checkout.demoCheckout).
+  const usesZarinPal = currentLocale === 'fa';
   const steps = [
     LL.checkout.reviewCart(),
     LL.checkout.shippingInformation(),
@@ -220,15 +223,16 @@ export function CustomerShoppingCart() {
 
   const grandTotal = cartTotal + totalShippingCost;
 
-  // Convert total to Toman (IRT) for ZarinPal payment
+  // Convert USD → IRR. Our IRR rates/symbol are stored as Toman (تومان),
+  // matching ZarinPal IRT — do not divide by 10 when sending to the gateway.
   const { convertedAmount: totalInToman, loading: conversionLoading } =
     useConvertPrice({
       amount: grandTotal,
       fromCurrency: 'USD',
-      toCurrency: 'IRR', // ZarinPal uses Toman (IRT), but we store as IRR
+      toCurrency: 'IRR',
     });
 
-  // Payment hook
+  // Payment hook (Farsi / ZarinPal only)
   const { requestPayment, redirectToGateway } = useZarinPalPayment({
     onError: (error) => {
       showSnackbar(`خطا در پرداخت: ${error}`, { severity: 'error' });
@@ -561,22 +565,38 @@ export function CustomerShoppingCart() {
         orderNumber: firstOrder.orderNumber,
       });
 
+      // Non-Farsi: place pending order and contact customer for payment (no ZarinPal)
+      if (!usesZarinPal) {
+        try {
+          await clearCartMutation();
+          clearCartAction();
+        } catch (cartError) {
+          console.error(
+            '[Checkout] Failed to clear cart after order creation:',
+            cartError
+          );
+        }
+
+        setActiveStep(3);
+        setIsCreatingOrder(false);
+        showSnackbar(LL.checkout.demoCheckout(), { severity: 'success' });
+        return;
+      }
+
       // Wait for currency conversion if still loading
       if (conversionLoading) {
         await new Promise((resolve) => setTimeout(resolve, 500));
       }
 
-      // Calculate total amount in Toman (IRT) - ZarinPal expects Toman
-      // Note: totalInToman is actually in Rials (IRR) from the conversion
-      // ZarinPal expects Toman (IRT), where 1 Toman = 10 Rials
-      // So we need to divide by 10 to convert Rials to Toman
-      const amountInToman = Math.round(totalInToman / 10);
+      // IRR amounts in our currency system are already Toman (تومان).
+      // ZarinPal `currency: IRT` expects Toman — send the converted amount as-is.
+      // Official docs: https://www.zarinpal.com/docs/paymentGateway/moreFeatures/currency.html
+      const amountInToman = Math.round(totalInToman);
 
       console.log(`[Checkout] 💱 Currency conversion:`, {
         amountInUSD: grandTotal,
-        amountInRials: totalInToman,
-        amountInToman, // Final amount for ZarinPal
-        conversionRate: totalInToman / grandTotal,
+        amountInToman,
+        conversionRate: grandTotal > 0 ? totalInToman / grandTotal : 0,
       });
 
       // Validate amount is reasonable (not too large or too small)
@@ -587,7 +607,7 @@ export function CustomerShoppingCart() {
       }
 
       if (amountInToman > 100000000) {
-        // 100 million Toman = ~$2000 USD (at 50k rate)
+        // 100 million Toman
         console.warn(
           `[Checkout] ⚠️  Very large payment amount: ${amountInToman} Toman (${grandTotal} USD)`
         );
@@ -604,12 +624,12 @@ export function CustomerShoppingCart() {
         callbackUrl,
       });
 
-      // Request payment from ZarinPal
+      // Request payment from ZarinPal (v4 request.json)
       const authority = await requestPayment({
         amount: amountInToman,
         callback_url: callbackUrl,
         description: `پرداخت سفارش ${firstOrder.orderNumber}`,
-        currency: 'IRT', // Toman
+        currency: 'IRT', // Toman per ZarinPal currency docs
         metadata: {
           mobile: shippingInfo.customerPhone || undefined,
           email: shippingInfo.customerEmail || undefined,
@@ -2012,6 +2032,32 @@ export function CustomerShoppingCart() {
                     <Typography variant="body1" color="text.secondary">
                       {LL.checkout.processingOrder()}
                     </Typography>
+                  </Box>
+                ) : !usesZarinPal && createdOrder ? (
+                  <Box>
+                    <Alert severity="success" sx={{ mb: 2 }}>
+                      {LL.checkout.demoCheckout()}
+                    </Alert>
+                    <Alert severity="info" sx={{ mb: 2 }}>
+                      {LL.checkout.orderProcessed()}
+                    </Alert>
+                    <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                      {LL.checkout.orderNumberLabel()}:{' '}
+                      {createdOrder.orderNumber}
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      size="large"
+                      onClick={() => {
+                        setCheckoutDialogOpen(false);
+                        navigate(CUSTOMER_ROUTES.ORDER_CONFIRMATION, {
+                          state: { orderId: createdOrder.id },
+                        });
+                      }}
+                    >
+                      {LL.orderConfirmation.viewOrders()}
+                    </Button>
                   </Box>
                 ) : paymentAuthority ? (
                   <Box>

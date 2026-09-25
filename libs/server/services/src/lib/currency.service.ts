@@ -30,7 +30,8 @@ export const BASIC_CURRENCIES: Array<{
   },
   {
     code: 'IRR',
-    name: 'Iranian Rial',
+    // Code is IRR for legacy reasons; amounts/symbol are Toman (ZarinPal IRT).
+    name: 'Iranian Toman',
     symbol: 'تومان',
     decimalPlaces: 0,
     isBaseCurrency: false,

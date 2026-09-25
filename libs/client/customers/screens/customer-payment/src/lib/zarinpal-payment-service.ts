@@ -1,11 +1,17 @@
 /**
- * ZarinPal Payment Gateway Service
- * Handles payment request and verification with ZarinPal API via GraphQL
+ * ZarinPal Payment Gateway helpers (client)
+ *
+ * Official API (v4): https://www.zarinpal.com/docs/paymentGateway/connectToGateway.html
+ * Live docs MCP: https://www.zarinpal.com/docs/mcp
+ *
+ * Payment request/verify run on the Nest server (ZARINPAL_MERCHANT_ID).
+ * This module keeps gateway URL fallbacks, types, and Persian error messages.
  */
 
 export interface ZarinPalPaymentRequest {
   merchant_id: string;
-  amount: number; // Amount in Toman (IRR/10)
+  /** Amount in the unit of `currency` (IRT = Toman, IRR = Rial) */
+  amount: number;
   callback_url: string;
   description: string;
   metadata?: {
@@ -13,7 +19,8 @@ export interface ZarinPalPaymentRequest {
     email?: string;
     order_id?: string;
   };
-  currency?: 'IRR' | 'IRT'; // IRR for Rial, IRT for Toman
+  /** IRR = Rial, IRT = Toman. Kickzone uses IRT. */
+  currency?: 'IRR' | 'IRT';
   referrer_id?: string;
 }
 
@@ -33,7 +40,8 @@ export interface ZarinPalPaymentResponse {
 
 export interface ZarinPalVerificationRequest {
   merchant_id: string;
-  amount: number; // Amount in Toman (IRR/10)
+  /** Must match the amount used in the original request */
+  amount: number;
   authority: string;
 }
 
@@ -58,60 +66,54 @@ export const ZARINPAL_SANDBOX_GATEWAY_URL =
   'https://sandbox.zarinpal.com/pg/StartPay';
 
 /**
- * Get merchant ID from environment variable
- * Uses a default UUID for sandbox mode if not set
- */
-export function getZarinPalMerchantId(): string {
-  const merchantId = import.meta.env.VITE_ZARINPAL_MERCHANT_ID;
-  if (!merchantId) {
-    // Default UUID for sandbox testing (ZarinPal sandbox accepts any UUID)
-    return '00000000-0000-0000-0000-000000000000';
-  }
-  return merchantId;
-}
-
-/**
- * Check if we're using sandbox mode
- * Defaults to sandbox mode for development/testing
+ * Client-side sandbox flag used only as a fallback if GraphQL gateway URL fails.
+ * Server sandbox is controlled by ZARINPAL_SANDBOX / NODE_ENV.
  */
 export function isZarinPalSandbox(): boolean {
   const sandboxEnv = import.meta.env.VITE_ZARINPAL_SANDBOX;
-  // Default to sandbox mode unless explicitly set to 'false'
   if (sandboxEnv === undefined || sandboxEnv === '') {
-    return true; // Default to sandbox for now
+    return true;
   }
   return sandboxEnv === 'true';
 }
 
-// Payment functions are now implemented via GraphQL mutations in use-zarinpal-payment.tsx
-// These types and helper functions are kept for backward compatibility
-
 /**
- * Get error message for ZarinPal error codes
+ * Persian messages for ZarinPal status codes
+ * Source: https://www.zarinpal.com/docs/paymentGateway/errorList.html
  */
 export function getZarinPalErrorMessage(code: number): string {
   const errorMessages: Record<number, string> = {
     [-9]: 'خطای اعتبار سنجی',
-    [-10]: 'IP یا مرچنت کد پذیرنده صحیح نیست',
+    [-10]: 'ای‌پی یا مرچنت کد پذیرنده صحیح نیست',
     [-11]: 'مرچنت کد پذیرنده فعال نیست',
     [-12]: 'تلاش بیش از حد در یک بازه زمانی کوتاه',
+    [-13]: 'کد کال‌بک (callback URL) نامعتبر است',
+    [-14]: 'کال‌بک دامنه ثبت‌شده در پنل نیست',
     [-15]: 'ترمینال شما به حالت تعلیق در آمده است',
-    [-16]: 'سطح تایید پذیرنده پایین تر از سطح نقره ای است',
+    [-16]: 'سطح تایید پذیرنده پایین‌تر از سطح نقره‌ای است',
+    [-17]: 'محدودیت در دسترسی پذیرنده',
+    [-18]: 'دامنه یا آدرس کال‌بک نامعتبر است',
+    [-19]: 'امکان ایجاد تراکنش برای این پذیرنده وجود ندارد',
     [-30]: 'اجازه دسترسی به تسویه اشتراکی شناور ندارید',
     [-31]: 'حساب بانکی تسویه اشتراکی به درستی تنظیم نشده است',
-    [-32]: 'مبلغ ارسالی از مجموع مبالغ تسویه اشتراکی بیشتر است',
-    [-33]: 'درخواست مورد نظر یافت نشد',
-    [-34]: 'مبلغ قابل تسویه از مبلغ درخواستی بیشتر است',
-    [-35]: 'تعداد درخواست تسویه بیشتر از حد مجاز است',
+    [-32]: 'مبلغ از مجموع مبالغ تسویه اشتراکی بیشتر است',
+    [-33]: 'درصدهای وارد شده صحیح نیست',
+    [-34]: 'مبلغ از مبلغ قابل تسویه بیشتر است',
+    [-35]: 'تعداد درخواست تسویه بیش از حد مجاز است',
     [-40]: 'اجازه دسترسی به متد مربوطه را ندارید',
-    [-50]: 'سطح تایید پذیرنده پایین تر از سطح طلایی است',
-    [-51]: 'سطح تایید پذیرنده پایین تر از سطح الماس است',
-    [-52]: 'طول IP بیشتر از حد مجاز است',
-    [-53]: 'درخواست مورد نظر یافت نشد',
-    [-54]: 'درخواست مورد نظر یافت نشد',
-    [-101]: 'تراکنش با موفقیت انجام شد',
+    [-41]: 'اطلاعات ارسال‌شده مربوط به AdditionalData غیرمعتبر است',
+    [-50]: 'مبلغ پرداخت‌شده با مبلغ ارسالی در متد وریفای مغایرت دارد',
+    [-51]: 'پرداخت ناموفق',
+    [-52]: 'خطای غیرمنتظره‌ای رخ داده است',
+    [-53]: 'پرداخت متعلق به این مرچنت کد نیست',
+    [-54]: 'اتوریتی نامعتبر است',
+    [-55]: 'تراکنش مورد نظر یافت نشد',
+    [-60]: 'امکان ریورس کردن تراکنش با بانک وجود ندارد',
+    [-61]: 'تراکنش موفق نیست یا قبلا ریورس شده است',
+    [-62]: 'آدرس آی‌پی نامعتبر است',
+    [-63]: 'حداکثر زمان (30 دقیقه) برای ریورس کردن تراکنش گذشته است',
     100: 'عملیات با موفقیت انجام شد',
-    101: 'این تراکنش قبلا تایید شده است',
+    101: 'تراکنش قبلا verify شده است',
   };
 
   return errorMessages[code] || `خطای نامشخص با کد ${code}`;

@@ -488,6 +488,7 @@ type Mutation {
   requestZarinPalPayment(input: ZarinPalPaymentRequestInput!): ZarinPalPaymentResponse!
   verifyZarinPalPayment(input: ZarinPalVerificationRequestInput!): ZarinPalVerificationResponse!
   getZarinPalGatewayUrl(authority: String!): GatewayUrlResponse!
+  cancelPendingZarinPalOrder(orderId: String!): Boolean!
 }
 
 input CreateUserInput {

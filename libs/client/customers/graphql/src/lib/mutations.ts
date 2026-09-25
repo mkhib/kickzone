@@ -214,3 +214,9 @@ export const GET_ZARINPAL_GATEWAY_URL_MUTATION = gql`
     }
   }
 `;
+
+export const CANCEL_PENDING_ZARINPAL_ORDER_MUTATION = gql`
+  mutation CancelPendingZarinPalOrder($orderId: String!) {
+    cancelPendingZarinPalOrder(orderId: $orderId)
+  }
+`;

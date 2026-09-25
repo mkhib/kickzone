@@ -1,36 +1,60 @@
 # Customer Payment Library
 
-This library provides ZarinPal payment gateway integration for customer orders.
+ZarinPal payment gateway for **Farsi (`fa`) checkout**. English checkout places a pending order and uses the “we will contact you for payment” path instead.
+
+Official docs: [Connect to gateway](https://www.zarinpal.com/docs/paymentGateway/connectToGateway.html) · Live MCP: `https://www.zarinpal.com/docs/mcp`
 
 ## Features
 
-- Payment request initiation
-- Payment verification
-- Payment callback handling
-- Error handling and user feedback
-- Support for sandbox mode
+- Payment request (`request.json`) and verification (`verify.json`) via Nest GraphQL
+- Gateway redirect (`StartPay/{authority}`)
+- Callback handling (`Status=OK` → verify; `Status=NOK` → cancel pending order)
+- Sandbox / production URL switching on the server
 
 ## Setup
 
-### Environment Variables
-
-Add the following environment variables to your `.env` file:
+### Server environment (required for live payments)
 
 ```bash
-# Required: ZarinPal Merchant ID (36-character UUID)
-VITE_ZARINPAL_MERCHANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+# Nest API — merchant ID from ZarinPal panel (36-char UUID)
+ZARINPAL_MERCHANT_ID=xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
 
-# Optional: Enable sandbox mode for testing
+# Optional. Defaults to sandbox unless NODE_ENV=production.
+# Set explicitly to 'false' for production charges.
+ZARINPAL_SANDBOX=true
+```
+
+### Client environment (optional fallback only)
+
+```bash
+# Used only if GraphQL getZarinPalGatewayUrl fails
 VITE_ZARINPAL_SANDBOX=true
 ```
+
+Merchant ID is **not** needed in Vite env; the API holds the secret.
 
 ### Getting Your Merchant ID
 
 1. Sign up at [ZarinPal](https://www.zarinpal.com)
-2. Go to your merchant panel
-3. Copy your 36-character merchant ID
+2. Open the merchant panel
+3. Copy the 36-character merchant ID
+4. For sandbox, any UUID is accepted (authorities start with `S`)
 
 ## Usage
+
+### Farsi checkout (automatic)
+
+Shopping cart checkout when `currentLocale === 'fa'`:
+
+1. Create PENDING order(s)
+2. Convert USD → IRR (stored as Toman / تومان)
+3. `requestZarinPalPayment` with `currency: 'IRT'`
+4. Redirect to `StartPay/{authority}`
+5. Callback verifies and confirms order (stock decrease)
+
+### English checkout
+
+Creates a PENDING order, clears the cart, and shows `checkout.demoCheckout` (“We will contact you soon for the payment info.”). No ZarinPal redirect.
 
 ### Using the Payment Hook
 
@@ -38,24 +62,21 @@ VITE_ZARINPAL_SANDBOX=true
 import { useZarinPalPayment } from '@kickzone-workspace/customer-payment';
 
 function CheckoutComponent() {
-  const { requestPayment, redirectToGateway, isRequesting, error } = useZarinPalPayment({
-    onSuccess: (refId) => {
-      console.log('Payment successful! Ref ID:', refId);
-    },
-    onError: (error) => {
-      console.error('Payment error:', error);
-    },
-  });
+  const { requestPayment, redirectToGateway, isRequesting, error } =
+    useZarinPalPayment({
+      onSuccess: (refId) => console.log('Payment successful! Ref ID:', refId),
+      onError: (error) => console.error('Payment error:', error),
+    });
 
   const handlePayment = async () => {
-    // Convert amount to Toman (IRT)
-    const amountInToman = 10000; // Example: 10,000 Toman
+    // Amount in Toman when currency is IRT
+    const amountInToman = 10000;
 
     const authority = await requestPayment({
       amount: amountInToman,
       callback_url: 'https://yoursite.com/payment-callback',
       description: 'Payment for order #12345',
-      currency: 'IRT', // Toman
+      currency: 'IRT',
       metadata: {
         mobile: '09121234567',
         email: 'customer@example.com',
@@ -78,83 +99,28 @@ function CheckoutComponent() {
 
 ### Payment Callback Screen
 
-The payment callback screen is automatically integrated into the router. It handles:
+Route: `/payment-callback?orderId=<order-id>` (ZarinPal adds `Authority` + `Status`).
 
-- Payment verification
-- Success/error states
-- User feedback
-- Navigation to order confirmation
+- `Status=OK` → verify → confirm order + clear cart
+- `Status=NOK` → cancel pending order (no verify)
 
-The callback URL should be: `/payment-callback?orderId=<order-id>`
+## Currency
 
-## Payment Flow
+Kickzone stores Iranian amounts under code `IRR` with symbol تومان and rates in **Toman**. ZarinPal requests use `currency: 'IRT'` with that Toman amount (no ÷10).
 
-1. **Order Creation**: Customer places order
-2. **Payment Request**: System requests payment from ZarinPal
-3. **Gateway Redirect**: Customer is redirected to ZarinPal payment gateway
-4. **Payment Processing**: Customer completes payment on ZarinPal
-5. **Callback**: ZarinPal redirects back to your site with payment status
-6. **Verification**: System verifies payment with ZarinPal
-7. **Order Confirmation**: Customer sees order confirmation
+See [ZarinPal currency docs](https://www.zarinpal.com/docs/paymentGateway/moreFeatures/currency.html).
 
-## Currency Conversion
+## API endpoints (v4)
 
-The payment system automatically converts USD (base currency) to Toman (IRT) for ZarinPal payments using the exchange rate from your currency system.
+| Mode | Request / Verify | StartPay |
+|------|------------------|----------|
+| Production | `https://payment.zarinpal.com/pg/v4/payment/{request\|verify}.json` | `https://payment.zarinpal.com/pg/StartPay/{authority}` |
+| Sandbox | `https://sandbox.zarinpal.com/pg/v4/payment/{request\|verify}.json` | `https://sandbox.zarinpal.com/pg/StartPay/{authority}` |
 
-## Error Handling
-
-The library handles various error scenarios:
-
-- Invalid merchant ID
-- Network errors
-- ZarinPal API errors
-- Payment cancellation
-- Verification failures
-
-All errors are displayed to the user with appropriate messages in Persian.
-
-## Sandbox Mode
-
-For testing, enable sandbox mode:
-
-```bash
-VITE_ZARINPAL_SANDBOX=true
-```
-
-In sandbox mode, use ZarinPal's test credentials. Note: The sandbox URL may need to be updated in the code based on ZarinPal's current sandbox environment.
-
-## API Reference
-
-### `useZarinPalPayment(options?)`
-
-React hook for payment operations.
-
-**Options:**
-
-- `onSuccess?: (refId: number) => void` - Called when payment is verified
-- `onError?: (error: string) => void` - Called on payment errors
-
-**Returns:**
-
-- `isRequesting: boolean` - True when requesting payment
-- `isVerifying: boolean` - True when verifying payment
-- `error: string | null` - Current error message
-- `requestPayment(request)` - Request payment from ZarinPal
-- `verifyPayment(request)` - Verify payment with ZarinPal
-- `redirectToGateway(authority)` - Redirect to payment gateway
-- `clearError()` - Clear current error
-
-### `requestZarinPalPayment(request)`
-
-Direct function to request payment (used internally by the hook).
-
-### `verifyZarinPalPayment(request)`
-
-Direct function to verify payment (used internally by the hook).
+Success codes: `100` (verified), `101` (already verified).
 
 ## Notes
 
-- All amounts should be in Toman (IRT), not Rial
-- The callback URL must be publicly accessible
-- Payment verification should only happen once per transaction
-- Code 101 from verification means payment was already verified (this is normal)
+- Amounts for Kickzone are Toman (`IRT`), not Rial
+- Callback URL must be publicly reachable
+- Verify once per successful payment; `101` on repeat verify is normal

@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 
 export interface ZarinPalPaymentRequest {
-  amount: number; // Amount in Toman (IRT)
+  amount: number; // Amount in unit of currency (Kickzone uses IRT / Toman)
   callback_url: string;
   description: string;
   metadata?: {
@@ -28,7 +28,7 @@ export interface ZarinPalPaymentResponse {
 }
 
 export interface ZarinPalVerificationRequest {
-  amount: number; // Amount in Toman (IRT)
+  amount: number; // Must match request amount / currency unit
   authority: string;
 }
 

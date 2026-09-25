@@ -255,6 +255,7 @@ export type Mutation = {
   deleteEntityTranslations: Scalars['Boolean']['output'];
   deleteOrder: Scalars['Boolean']['output'];
   forgotPassword: Scalars['Boolean']['output'];
+  cancelPendingZarinPalOrder: Scalars['Boolean']['output'];
   getZarinPalGatewayUrl: GatewayUrlResponse;
   initiatePasswordSetup: Scalars['Boolean']['output'];
   login: User;
@@ -393,6 +394,11 @@ export type MutationForgotPasswordArgs = {
 
 export type MutationGetZarinPalGatewayUrlArgs = {
   authority: Scalars['String']['input'];
+};
+
+
+export type MutationCancelPendingZarinPalOrderArgs = {
+  orderId: Scalars['String']['input'];
 };
 
 

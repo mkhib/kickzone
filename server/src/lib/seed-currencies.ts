@@ -3,8 +3,8 @@
  *
  * This script initializes the database with:
  * - USD (US Dollar) as the base currency
- * - IRR (Iranian Rial)
- * - Initial exchange rate: 1 USD = 50,000 IRR (adjust as needed)
+ * - IRR row used for Farsi display / ZarinPal (amounts stored as Toman / تومان)
+ * - Initial exchange rate: 1 USD = 50,000 Toman (adjust as needed)
  * - Currency preferences: fa → IRR, en → USD
  *
  * Run this script once after setting up the database:
@@ -54,26 +54,27 @@ async function seedCurrencies() {
       console.log('ℹ️  USD currency already exists');
     }
 
-    // 2. Create IRR (Iranian Rial)
+    // 2. Create IRR row used for Farsi display / ZarinPal amounts.
+    // NOTE: We label the code IRR but store values as Toman (تومان), matching
+    // ZarinPal's IRT unit. Do not treat these amounts as Rials.
     let irr = await currencyRepo.findOne({ where: { code: 'IRR' } });
     if (!irr) {
       irr = currencyRepo.create({
         code: 'IRR',
-        name: 'Iranian Rial',
+        name: 'Iranian Toman (stored as IRR)',
         symbol: 'تومان',
         decimalPlaces: 0, // No decimal places for Toman
         isActive: true,
         isBaseCurrency: false,
       });
       await currencyRepo.save(irr);
-      console.log('✅ Created IRR currency');
+      console.log('✅ Created IRR currency (Toman amounts)');
     } else {
       console.log('ℹ️  IRR currency already exists');
     }
 
-    // 3. Set initial exchange rate (USD → IRR)
+    // 3. Set initial exchange rate (USD → Toman under IRR code)
     // NOTE: Adjust this rate according to current market rates
-    // This is using Toman (1 Toman = 10 Rial, so 50,000 Toman = 500,000 Rial)
     const existingRate = await exchangeRateRepo.findOne({
       where: {
         fromCurrencyId: usd.id,
@@ -87,7 +88,7 @@ async function seedCurrencies() {
         toCurrencyId: irr.id,
         rate: 50000, // 1 USD = 50,000 Toman (adjust as needed)
         effectiveDate: new Date(),
-        notes: 'Initial exchange rate - seed data',
+        notes: 'Initial exchange rate - seed data (Toman under IRR code)',
       });
       await exchangeRateRepo.save(exchangeRate);
       console.log(
