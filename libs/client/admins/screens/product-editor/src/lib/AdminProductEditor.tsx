@@ -45,8 +45,8 @@ import {
   APPAREL_SIZES,
   euToUs,
   FOOTWEAR_EU_SIZES,
-  SizeKind,
 } from '@kickzone-workspace/product-sizes';
+import SizeKind = KickzoneGraphqlTypes.SizeKind;
 
 /** Keep multi-select Autocomplete open after picks; avoid mobile blur closing it mid-selection. */
 function useMultiSelectAutocompleteOpen() {
@@ -294,10 +294,7 @@ interface ProductInfoCardProps {
     >,
     value: unknown
   ) => void;
-  onColorsChange: (
-    idx: number,
-    colors: KickzoneGraphqlTypes.Color[]
-  ) => void;
+  onColorsChange: (idx: number, colors: KickzoneGraphqlTypes.Color[]) => void;
   availableColors: KickzoneGraphqlTypes.Color[];
   onRemove: (idx: number) => void;
   onRemoveImage: (infoIdx: number, imageIdx: number) => void;
@@ -457,7 +454,17 @@ const ProductInfoCard = React.memo(
                 );
               }}
               renderInput={(params) => (
-                <TextField {...params} label={LL.form.color()} required />
+                <TextField
+                  {...params}
+                  label={LL.form.color()}
+                  required
+                  slotProps={{
+                    htmlInput: {
+                      ...params.inputProps,
+                      required: info.colors.length === 0,
+                    },
+                  }}
+                />
               )}
               sx={{ width: '100%' }}
             />
@@ -529,9 +536,7 @@ const ProductInfoCard = React.memo(
               ).map((code) => (
                 <MenuItem key={code} value={code}>
                   {info.sizeKind === SizeKind.Footwear
-                    ? `EU ${code}${
-                        euToUs(code) ? ` (US ${euToUs(code)})` : ''
-                      }`
+                    ? `EU ${code}${euToUs(code) ? ` (US ${euToUs(code)})` : ''}`
                     : code}
                 </MenuItem>
               ))}
@@ -1263,7 +1268,11 @@ export function AdminProductEditor({
       e.preventDefault();
       try {
         // Validate required fields
-        if (!product.name || !product.sku.trim() || product.categoryIds.length === 0) {
+        if (
+          !product.name ||
+          !product.sku.trim() ||
+          product.categoryIds.length === 0
+        ) {
           showSnackbar('Please fill in all required fields', {
             severity: 'error',
           });
@@ -1590,230 +1599,225 @@ export function AdminProductEditor({
         </Typography>
       )}
       <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
-          <Grid container spacing={3} sx={{ height: '100%' }}>
-            {/* Left Side - Basic Product Info */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                {LL.products.productDetails()}
-              </Typography>
-              <Paper
-                elevation={0}
-                sx={{
-                  mb: 2,
-                  p: 2,
-                  display: 'flex',
-                  flexDirection: 'column',
-                  gap: 2,
-                  backgroundColor:
-                    theme.palette.mode === 'dark'
-                      ? 'rgba(18, 18, 22, 0.88)'
-                      : 'rgba(255, 255, 255, 0.96)',
-                  border:
-                    theme.palette.mode === 'dark'
-                      ? '1px solid rgba(255, 255, 255, 0.08)'
-                      : '1px solid rgba(0, 0, 0, 0.08)',
-                  borderRadius: '16px',
-                  boxShadow:
-                    theme.palette.mode === 'dark'
-                      ? '0 10px 30px rgba(0,0,0,0.4)'
-                      : '0 10px 30px rgba(0,0,0,0.12)',
+        <Grid container spacing={3} sx={{ height: '100%' }}>
+          {/* Left Side - Basic Product Info */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              {LL.products.productDetails()}
+            </Typography>
+            <Paper
+              elevation={0}
+              sx={{
+                mb: 2,
+                p: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(18, 18, 22, 0.88)'
+                    : 'rgba(255, 255, 255, 0.96)',
+                border:
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(255, 255, 255, 0.08)'
+                    : '1px solid rgba(0, 0, 0, 0.08)',
+                borderRadius: '16px',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 10px 30px rgba(0,0,0,0.4)'
+                    : '0 10px 30px rgba(0,0,0,0.12)',
+              }}
+            >
+              <TextField
+                id="product-name"
+                slotProps={{
+                  input: { 'aria-label': 'Product Name' },
                 }}
-              >
-                <TextField
-                  id="product-name"
-                  slotProps={{
-                    input: { 'aria-label': 'Product Name' },
-                  }}
-                  fullWidth
-                  label={LL.form.productName()}
-                  name="name"
-                  value={product.name}
-                  onChange={handleProductChange}
-                  required
-                />
-                <TextField
-                  id="product-sku"
-                  fullWidth
-                  label={LL.form.sku()}
-                  name="sku"
-                  value={product.sku}
-                  onChange={handleProductChange}
-                  required
-                  {...getLtrTextFieldProps()}
-                  slotProps={{
-                    htmlInput: { dir: 'ltr', 'aria-label': 'SKU' },
-                  }}
-                />
-                <Box>
-                  <Autocomplete
-                    multiple
-                    disableCloseOnSelect
-                    openOnFocus
-                    clearOnBlur={false}
-                    open={categoriesAutocomplete.open}
-                    onOpen={categoriesAutocomplete.onOpen}
-                    onClose={categoriesAutocomplete.onClose}
-                    id="categories-autocomplete"
-                    options={categories || []}
-                    getOptionLabel={(option) => option.name}
-                    value={
-                      categories?.filter((cat) =>
-                        product.categoryIds.includes(cat.id)
-                      ) || []
-                    }
-                    onChange={(_e, newValue, reason) => {
-                      if (
-                        reason === 'selectOption' ||
-                        reason === 'removeOption'
-                      ) {
-                        categoriesAutocomplete.markSelection();
-                      }
-                      setProduct((prev) => ({
-                        ...prev,
-                        categoryIds: newValue.map((category) => category.id),
-                      }));
-                    }}
-                    loading={getCategoriesLoading}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label={LL.form.category()}
-                        slotProps={{
-                          input: {
-                            ...params.InputProps,
-                            'aria-label': 'Category',
-                          },
-                        }}
-                      />
-                    )}
-                    isOptionEqualToValue={(option, value) =>
-                      option.id === value.id
-                    }
-                    filterSelectedOptions
-                    slotProps={{
-                      listbox: multiSelectListboxSlotProps,
-                    }}
-                  />
-                  <Button
-                    variant="outlined"
-                    onClick={() => setIsManageCategoriesModalOpen(true)}
-                    sx={{ mt: 1 }}
-                    fullWidth={isMobile}
-                  >
-                    {LL.categories.manageCategories()}
-                  </Button>
-                </Box>
-                <TextField
-                  id="product-description"
-                  label={LL.form.description()}
-                  name="description"
-                  value={product.description || ''}
-                  onChange={handleProductChange}
-                  fullWidth
-                  multiline
-                  minRows={3}
-                  maxRows={8}
-                />
-              </Paper>
-            </Grid>
-            {/* Right Side - ProductInfos Section */}
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                {LL.products.productVariants()}
-              </Typography>
-              {productInfos.map((info, idx) => (
-                <ProductInfoCard
-                  key={idx}
-                  info={info}
-                  idx={idx}
-                  onChange={handleProductInfoChange}
-                  onColorsChange={(
-                    idx,
-                    colors: KickzoneGraphqlTypes.Color[]
-                  ) =>
-                    setProductInfos((prev) => {
-                      const updated = [...prev];
-                      updated[idx] = { ...updated[idx], colors };
-                      return updated;
-                    })
-                  }
-                  availableColors={
-                    (availableColors as KickzoneGraphqlTypes.Color[])?.filter(
-                      (color): color is KickzoneGraphqlTypes.Color =>
-                        color != null
+                fullWidth
+                label={LL.form.productName()}
+                name="name"
+                value={product.name}
+                onChange={handleProductChange}
+                required
+              />
+              <TextField
+                id="product-sku"
+                fullWidth
+                label={LL.form.sku()}
+                name="sku"
+                value={product.sku}
+                onChange={handleProductChange}
+                required
+                {...getLtrTextFieldProps()}
+                slotProps={{
+                  htmlInput: { dir: 'ltr', 'aria-label': 'SKU' },
+                }}
+              />
+              <Box>
+                <Autocomplete
+                  multiple
+                  disableCloseOnSelect
+                  openOnFocus
+                  clearOnBlur={false}
+                  open={categoriesAutocomplete.open}
+                  onOpen={categoriesAutocomplete.onOpen}
+                  onClose={categoriesAutocomplete.onClose}
+                  id="categories-autocomplete"
+                  options={categories || []}
+                  getOptionLabel={(option) => option.name}
+                  value={
+                    categories?.filter((cat) =>
+                      product.categoryIds.includes(cat.id)
                     ) || []
                   }
-                  onManageColors={
-                    idx === 0
-                      ? () => setIsManageColorsModalOpen(true)
-                      : undefined
-                  }
-                  manageColorsDisabled={colorMutationsLoading}
-                  onRemove={handleRemoveProductInfo}
-                  disableRemove={productInfos.length === 1}
-                  onRemoveImage={(infoIdx: number, imageIdx: number) => {
-                    const info = productInfos[infoIdx];
-                    // Check if it's a selected image (newImagePreviews) or uploaded image (uploadedImageUrls)
-                    if (imageIdx < info.newImagePreviews.length) {
-                      // It's a selected image - show confirmation modal
-                      setDeleteImageModal({
-                        open: true,
-                        infoIdx,
-                        imageIdx,
-                        imageType: 'preview',
-                        isLoading: false,
-                      });
-                    } else {
-                      // It's an uploaded image - show confirmation modal
-                      const actualImageIdx =
-                        imageIdx - info.newImagePreviews.length;
-                      setDeleteImageModal({
-                        open: true,
-                        infoIdx,
-                        imageIdx: actualImageIdx,
-                        imageType: 'uploaded',
-                        isLoading: false,
-                      });
+                  onChange={(_e, newValue, reason) => {
+                    if (
+                      reason === 'selectOption' ||
+                      reason === 'removeOption'
+                    ) {
+                      categoriesAutocomplete.markSelection();
                     }
+                    setProduct((prev) => ({
+                      ...prev,
+                      categoryIds: newValue.map((category) => category.id),
+                    }));
                   }}
-                  onUploadSelectedImages={handleUploadSelectedImages}
-                  setProductInfos={setProductInfos}
-                  LL={LL}
+                  loading={getCategoriesLoading}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={LL.form.category()}
+                      slotProps={{
+                        input: {
+                          ...params.InputProps,
+                          'aria-label': 'Category',
+                        },
+                      }}
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                  filterSelectedOptions
+                  slotProps={{
+                    listbox: multiSelectListboxSlotProps,
+                  }}
                 />
-              ))}
-              <Button
-                variant="outlined"
-                startIcon={<AddIcon />}
-                onClick={handleAddProductInfo}
-                sx={{ mt: 2 }}
-                disabled={isCreatingProduct}
-                fullWidth={isMobile}
-              >
-                {LL.products.addVariant()}
-              </Button>
-            </Grid>
-            {/* Save Button */}
-            <Grid size={12} sx={{ mt: 'auto' }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: { xs: 'stretch', md: 'flex-end' },
-                }}
-              >
                 <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  sx={{ textTransform: 'none' }}
-                  loading={isCreatingProduct}
+                  variant="outlined"
+                  onClick={() => setIsManageCategoriesModalOpen(true)}
+                  sx={{ mt: 1 }}
                   fullWidth={isMobile}
                 >
-                  {LL.products.saveProduct()}
+                  {LL.categories.manageCategories()}
                 </Button>
               </Box>
-            </Grid>
+              <TextField
+                id="product-description"
+                label={LL.form.description()}
+                name="description"
+                value={product.description || ''}
+                onChange={handleProductChange}
+                fullWidth
+                multiline
+                minRows={3}
+                maxRows={8}
+              />
+            </Paper>
           </Grid>
-        </form>
+          {/* Right Side - ProductInfos Section */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              {LL.products.productVariants()}
+            </Typography>
+            {productInfos.map((info, idx) => (
+              <ProductInfoCard
+                key={idx}
+                info={info}
+                idx={idx}
+                onChange={handleProductInfoChange}
+                onColorsChange={(idx, colors: KickzoneGraphqlTypes.Color[]) =>
+                  setProductInfos((prev) => {
+                    const updated = [...prev];
+                    updated[idx] = { ...updated[idx], colors };
+                    return updated;
+                  })
+                }
+                availableColors={
+                  (availableColors as KickzoneGraphqlTypes.Color[])?.filter(
+                    (color): color is KickzoneGraphqlTypes.Color =>
+                      color != null
+                  ) || []
+                }
+                onManageColors={
+                  idx === 0 ? () => setIsManageColorsModalOpen(true) : undefined
+                }
+                manageColorsDisabled={colorMutationsLoading}
+                onRemove={handleRemoveProductInfo}
+                disableRemove={productInfos.length === 1}
+                onRemoveImage={(infoIdx: number, imageIdx: number) => {
+                  const info = productInfos[infoIdx];
+                  // Check if it's a selected image (newImagePreviews) or uploaded image (uploadedImageUrls)
+                  if (imageIdx < info.newImagePreviews.length) {
+                    // It's a selected image - show confirmation modal
+                    setDeleteImageModal({
+                      open: true,
+                      infoIdx,
+                      imageIdx,
+                      imageType: 'preview',
+                      isLoading: false,
+                    });
+                  } else {
+                    // It's an uploaded image - show confirmation modal
+                    const actualImageIdx =
+                      imageIdx - info.newImagePreviews.length;
+                    setDeleteImageModal({
+                      open: true,
+                      infoIdx,
+                      imageIdx: actualImageIdx,
+                      imageType: 'uploaded',
+                      isLoading: false,
+                    });
+                  }
+                }}
+                onUploadSelectedImages={handleUploadSelectedImages}
+                setProductInfos={setProductInfos}
+                LL={LL}
+              />
+            ))}
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={handleAddProductInfo}
+              sx={{ mt: 2 }}
+              disabled={isCreatingProduct}
+              fullWidth={isMobile}
+            >
+              {LL.products.addVariant()}
+            </Button>
+          </Grid>
+          {/* Save Button */}
+          <Grid size={12} sx={{ mt: 'auto' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: { xs: 'stretch', md: 'flex-end' },
+              }}
+            >
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                sx={{ textTransform: 'none' }}
+                loading={isCreatingProduct}
+                fullWidth={isMobile}
+              >
+                {LL.products.saveProduct()}
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
+      </form>
     </>
   );
 

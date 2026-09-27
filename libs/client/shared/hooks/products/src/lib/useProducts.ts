@@ -142,12 +142,7 @@ export const useProducts = () => {
 
   const createProductWithInfos = useCallback(
     async (
-      productInput: {
-        name: string;
-        sku: string;
-        categoryIds: number[];
-        description?: string | null;
-      },
+      productInput: KickzoneGraphqlTypes.CreateProductInput,
       productInfos: Omit<
         KickzoneGraphqlTypes.CreateProductInfoInput,
         'productId'
@@ -245,12 +240,7 @@ export const useProducts = () => {
   );
 
   const updateProduct = useCallback(
-    async (input: {
-      id: number;
-      name: string;
-      categoryIds: number[];
-      description?: string | null;
-    }) => {
+    async (input: KickzoneGraphqlTypes.UpdateProductInput) => {
       const { data } = await updateProductMutation({
         variables: { input },
       });
