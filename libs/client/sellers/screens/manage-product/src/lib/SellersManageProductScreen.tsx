@@ -32,6 +32,7 @@ import {
 } from '@kickzone-workspace/shared-i18n';
 import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 import { SellersDefineProductFlow } from './SellersDefineProductFlow';
+import { alpha } from '@mui/material/styles';
 
 const initialFormData: KickzoneGraphqlTypes.CreateSellerProductInput = {
   productInfoId: 0,
@@ -168,8 +169,7 @@ export function SellersManageProductScreen() {
   ) => {
     setFormData((prev) => ({
       ...prev,
-      [field]:
-        typeof value === 'string' ? parseFloat(value) || 0 : value,
+      [field]: typeof value === 'string' ? parseFloat(value) || 0 : value,
     }));
   };
 
@@ -281,12 +281,7 @@ export function SellersManageProductScreen() {
 
         {canManageCatalog && !isEditing && (
           <Box sx={{ mb: 3 }}>
-            <ToggleButtonGroup
-              exclusive
-              fullWidth
-              value={mode}
-              color="primary"
-            >
+            <ToggleButtonGroup exclusive fullWidth value={mode} color="primary">
               <ToggleButton
                 value="existing"
                 component={RouterLink}
@@ -316,622 +311,656 @@ export function SellersManageProductScreen() {
           />
         ) : (
           <>
-        {(createError ||
-          updateError ||
-          productsError ||
-          sellerProductError) && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-            {createError?.message ||
-              updateError?.message ||
-              productsError?.message ||
-              sellerProductError?.message}
-          </Alert>
-        )}
-
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={4}>
-            {/* Product Selection */}
-            <Grid size={{ xs: 12 }}>
-              <Card
-                variant="outlined"
-                sx={{
-                  borderRadius: 2,
-                  border: '1px solid',
-                  borderColor: 'divider',
-                  '&:hover': {
-                    borderColor: 'primary.main',
-                    boxShadow: '0 4px 12px rgba(26,26,25,0.08)',
-                  },
-                  transition: 'all 0.3s',
-                }}
-              >
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
-                    {LL.products.selectProduct()}
-                  </Typography>
-                  <Autocomplete
-                    options={products}
-                    getOptionLabel={(option) => option.name}
-                    value={selectedProduct}
-                    onChange={(_, newValue) => handleProductChange(newValue)}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label={LL.button.chooseProduct()}
-                        required
-                        disabled={isLoading}
-                      />
-                    )}
-                    renderOption={(props, option) => {
-                      const { key, ...otherProps } = props;
-                      return (
-                        <Box
-                          component="li"
-                          key={key}
-                          {...otherProps}
-                          sx={{ py: 1.5 }}
-                        >
-                          <Box sx={{ width: '100%' }}>
-                            <Typography variant="body1" fontWeight={600}>
-                              {option.name}
-                            </Typography>
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                gap: 0.5,
-                                mt: 0.5,
-                                flexWrap: 'wrap',
-                              }}
-                            >
-                              {option.categories.map((cat) => (
-                                <Chip
-                                  key={cat.id}
-                                  label={cat.name}
-                                  size="small"
-                                  sx={{
-                                    backgroundColor: 'primary.50',
-                                    color: 'primary.main',
-                                    fontSize: '0.7rem',
-                                    height: 20,
-                                  }}
-                                />
-                              ))}
-                            </Box>
-                          </Box>
-                        </Box>
-                      );
-                    }}
-                  />
-                </CardContent>
-              </Card>
-            </Grid>
-
-            {/* Product Variant Selection */}
-            {selectedProduct && (
-              <Grid size={{ xs: 12 }}>
-                <Card
-                  variant="outlined"
-                  sx={{
-                    borderRadius: 2,
-                    border: '2px solid',
-                    borderColor: 'secondary.100',
-                    '&:hover': {
-                      borderColor: 'secondary.main',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-                    },
-                    transition: 'all 0.3s',
-                  }}
-                >
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography variant="h6" sx={{ mb: 2, fontWeight: 600 }}>
-                      {LL.products.selectVariant()}
-                    </Typography>
-                    <Autocomplete
-                      options={selectedProduct.productInfos}
-                      getOptionLabel={(option) =>
-                        `${option.size} - ${
-                          formatVariantColorNames(
-                            option.colors,
-                            LL.products.noColorSpecified()
-                          )
-                        } (${option.weight}kg)`
-                      }
-                      value={selectedProductInfo}
-                      onChange={(_, newValue) =>
-                        handleProductInfoChange(newValue)
-                      }
-                      renderInput={(params) => (
-                        <TextField
-                          {...params}
-                          label={LL.button.chooseVariant()}
-                          required
-                          disabled={isLoading}
-                        />
-                      )}
-                      renderOption={(props, option) => {
-                        const { key, ...otherProps } = props;
-                        return (
-                          <Box
-                            component="li"
-                            key={key}
-                            {...otherProps}
-                            sx={{ py: 1.5 }}
-                          >
-                            <Box
-                              sx={{
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1.5,
-                                width: '100%',
-                              }}
-                            >
-                              {option.colors?.map((color) => (
-                                <Box
-                                  key={color.id}
-                                  sx={{
-                                    width: 24,
-                                    height: 24,
-                                    backgroundColor: color.hexCode,
-                                    borderRadius: '50%',
-                                    border: '2px solid white',
-                                    boxShadow:
-                                      '0 0 0 1px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.2)',
-                                  }}
-                                />
-                              ))}
-                              <Box sx={{ flex: 1 }}>
-                                <Typography fontWeight={600}>
-                                  {option.size} -{' '}
-                                  {formatVariantColorNames(
-                                    option.colors,
-                                    LL.products.noColorSpecified()
-                                  )}
-                                </Typography>
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                >
-                                  {LL.products.weight()}:{' '}
-                                  {formatNumber(option.weight)}kg
-                                </Typography>
-                              </Box>
-                            </Box>
-                          </Box>
-                        );
-                      }}
-                    />
-                  </CardContent>
-                </Card>
-              </Grid>
+            {(createError ||
+              updateError ||
+              productsError ||
+              sellerProductError) && (
+              <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+                {createError?.message ||
+                  updateError?.message ||
+                  productsError?.message ||
+                  sellerProductError?.message}
+              </Alert>
             )}
 
-            {/* Product Details Card */}
-            {selectedProduct && selectedProductInfo && (
-              <Grid size={{ xs: 12 }}>
-                <Card
-                  variant="outlined"
-                  sx={{
-                    borderRadius: 2,
-                    background:
-                      'linear-gradient(135deg, #f0f4f8 0%, #e8eef5 100%)',
-                    border: '2px solid',
-                    borderColor: 'info.200',
-                  }}
-                >
-                  <CardContent sx={{ p: 3 }}>
-                    <Typography
-                      variant="h6"
-                      sx={{ mb: 3, fontWeight: 600, color: 'info.main' }}
-                    >
-                      {LL.products.productDetails()}
-                    </Typography>
-                    <Grid container spacing={2}>
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ mb: 2 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight={600}
-                          >
-                            {LL.form.productName()}
-                          </Typography>
-                          <Typography variant="body1" fontWeight={500}>
-                            {selectedProduct.name}
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ mb: 2 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight={600}
-                          >
-                            {LL.products.variant()}
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              gap: 1,
-                              mt: 0.5,
-                            }}
-                          >
-                            {selectedProductInfo.colors?.map((color) => (
-                              <Box
-                                key={color.id}
-                                sx={{
-                                  width: 20,
-                                  height: 20,
-                                  backgroundColor: color.hexCode,
-                                  borderRadius: '50%',
-                                  border: '2px solid white',
-                                  boxShadow: '0 0 0 1px rgba(0,0,0,0.1)',
-                                }}
-                              />
-                            ))}
-                            <Typography variant="body1" fontWeight={500}>
-                              {selectedProductInfo.size} -{' '}
-                              {formatVariantColorNames(
-                                selectedProductInfo.colors,
-                                LL.products.noColorSpecified()
-                              )}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box sx={{ mb: 2 }}>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight={600}
-                          >
-                            {LL.products.weight()}
-                          </Typography>
-                          <Typography variant="body1" fontWeight={500}>
-                            {formatNumber(selectedProductInfo.weight)}kg
-                          </Typography>
-                        </Box>
-                      </Grid>
-                      <Grid size={{ xs: 12, sm: 6 }}>
-                        <Box>
-                          <Typography
-                            variant="caption"
-                            color="text.secondary"
-                            fontWeight={600}
-                          >
-                            {LL.products.categories()}
-                          </Typography>
-                          <Box
-                            sx={{
-                              display: 'flex',
-                              gap: 0.5,
-                              mt: 0.5,
-                              flexWrap: 'wrap',
-                            }}
-                          >
-                            {selectedProduct.categories.map((cat) => (
-                              <Chip
-                                key={cat.id}
-                                label={cat.name}
-                                size="small"
-                                sx={{
-                                  backgroundColor: 'success.50',
-                                  color: 'success.main',
-                                  fontWeight: 600,
-                                }}
-                              />
-                            ))}
-                          </Box>
-                        </Box>
-                      </Grid>
-                    </Grid>
-                  </CardContent>
-                </Card>
-              </Grid>
-            )}
-
-            {/* Pricing and Stock Form */}
-            {selectedProductInfo && (
-              <>
-                <Grid size={{ xs: 12 }}>
-                  <Divider sx={{ my: 2 }} />
-                  <Typography
-                    variant="h6"
-                    sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}
-                  >
-                    {LL.products.pricingInformation()}
-                  </Typography>
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    label={LL.form.price()}
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => handleInputChange('price', e.target.value)}
-                    required
-                    disabled={isLoading}
-                    {...getLtrTextFieldProps({
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': {
-                          borderColor: 'primary.main',
-                        },
-                      },
-                    })}
-                    slotProps={{
-                      htmlInput: { dir: 'ltr', min: 0, step: 0.01 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    label={LL.form.costPrice()}
-                    type="number"
-                    value={formData.costPrice}
-                    onChange={(e) =>
-                      handleInputChange('costPrice', e.target.value)
-                    }
-                    required
-                    disabled={isLoading}
-                    {...getLtrTextFieldProps({
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': {
-                          borderColor: 'primary.main',
-                        },
-                      },
-                    })}
-                    slotProps={{
-                      htmlInput: { dir: 'ltr', min: 0, step: 0.01 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    label={LL.form.discount()}
-                    type="number"
-                    value={formData.discount}
-                    onChange={(e) =>
-                      handleInputChange('discount', e.target.value)
-                    }
-                    disabled={isLoading}
-                    helperText={LL.products.discountHelper()}
-                    {...getLtrTextFieldProps({
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': {
-                          borderColor: 'primary.main',
-                        },
-                      },
-                    })}
-                    slotProps={{
-                      htmlInput: { dir: 'ltr', min: 0, max: 100, step: 0.01 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12, sm: 6 }}>
-                  <TextField
-                    fullWidth
-                    label={LL.form.stockQuantity()}
-                    type="number"
-                    value={formData.stockQuantity}
-                    onChange={(e) =>
-                      handleInputChange('stockQuantity', e.target.value)
-                    }
-                    required
-                    disabled={isLoading}
-                    {...getLtrTextFieldProps({
-                      '& .MuiOutlinedInput-root': {
-                        '&:hover fieldset': {
-                          borderColor: 'primary.main',
-                        },
-                      },
-                    })}
-                    slotProps={{
-                      htmlInput: { dir: 'ltr', min: 0 },
-                    }}
-                  />
-                </Grid>
-
-                <Grid size={{ xs: 12 }}>
-                  <FormControlLabel
-                    control={
-                      <Switch
-                        checked={formData.boxLess ?? false}
-                        onChange={(e) =>
-                          handleInputChange('boxLess', e.target.checked)
-                        }
-                        disabled={isLoading}
-                        color="primary"
-                      />
-                    }
-                    label={LL.products.boxLess()}
-                  />
-                  <Typography variant="caption" color="text.secondary" display="block">
-                    {LL.products.boxLessHelper()}
-                  </Typography>
-                </Grid>
-
-                {/* Final Price Display */}
+            <form onSubmit={handleSubmit}>
+              <Grid container spacing={4}>
+                {/* Product Selection */}
                 <Grid size={{ xs: 12 }}>
                   <Card
+                    variant="outlined"
                     sx={{
-                      background:
-                        'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                      borderRadius: 3,
-                      boxShadow: '0 8px 24px rgba(102, 126, 234, 0.25)',
-                      color: 'white',
+                      borderRadius: 2,
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        boxShadow: '0 4px 12px rgba(26,26,25,0.08)',
+                      },
+                      transition: 'all 0.3s',
                     }}
                   >
                     <CardContent sx={{ p: 3 }}>
-                      <Typography variant="h5" sx={{ mb: 2, fontWeight: 700 }}>
-                        {LL.products.finalPriceAfterDiscount()}
+                      <Typography variant="h6" sx={{ mb: 2, fontWeight: 500 }}>
+                        {LL.products.selectProduct()}
                       </Typography>
-
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          alignItems: 'baseline',
-                          gap: 2,
-                          mb: 2,
-                        }}
-                      >
-                        <Typography variant="h3" sx={{ fontWeight: 700 }}>
-                          ${formatNumber(finalPrice.toFixed(2))}
-                        </Typography>
-                        {currentLocale === 'fa' && (
-                          <Box
-                            sx={{
-                              px: 2,
-                              py: 1,
-                              bgcolor: 'rgba(255,255,255,0.2)',
-                              borderRadius: 2,
-                              fontSize: '1.5rem',
-                              fontWeight: 700,
-                            }}
-                          >
-                            <PriceDisplay
-                              priceInUSD={finalPrice}
-                              showSymbol={true}
-                              showOriginal={false}
-                            />
-                          </Box>
+                      <Autocomplete
+                        options={products}
+                        getOptionLabel={(option) => option.name}
+                        value={selectedProduct}
+                        onChange={(_, newValue) =>
+                          handleProductChange(newValue)
+                        }
+                        renderInput={(params) => (
+                          <TextField
+                            {...params}
+                            label={LL.button.chooseProduct()}
+                            required
+                            disabled={isLoading}
+                          />
                         )}
-                      </Box>
-
-                      <Divider
-                        sx={{ my: 2, borderColor: 'rgba(255,255,255,0.3)' }}
+                        renderOption={(props, option) => {
+                          const { key, ...otherProps } = props;
+                          return (
+                            <Box
+                              component="li"
+                              key={key}
+                              {...otherProps}
+                              sx={{ py: 1.5 }}
+                            >
+                              <Box sx={{ width: '100%' }}>
+                                <Typography variant="body1" fontWeight={600}>
+                                  {option.name}
+                                </Typography>
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    gap: 0.5,
+                                    mt: 0.5,
+                                    flexWrap: 'wrap',
+                                  }}
+                                >
+                                  {option.categories.map((cat) => (
+                                    <Chip
+                                      key={cat.id}
+                                      label={cat.name}
+                                      size="small"
+                                      sx={{
+                                        backgroundColor: 'primary.50',
+                                        color: 'primary.main',
+                                        fontSize: '0.7rem',
+                                        height: 20,
+                                      }}
+                                    />
+                                  ))}
+                                </Box>
+                              </Box>
+                            </Box>
+                          );
+                        }}
                       />
-
-                      <Box sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}>
-                        <Box>
-                          <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                            {LL.products.original()}
-                          </Typography>
-                          <Typography variant="h6" fontWeight={600}>
-                            ${formatNumber(formData.price)}
-                            {currentLocale === 'fa' && (
-                              <Box
-                                component="span"
-                                sx={{
-                                  ml: 1,
-                                  fontSize: '0.9rem',
-                                  opacity: 0.9,
-                                }}
-                              >
-                                (
-                                <PriceDisplay
-                                  priceInUSD={formData.price}
-                                  showSymbol={true}
-                                  showOriginal={false}
-                                />
-                                )
-                              </Box>
-                            )}
-                          </Typography>
-                        </Box>
-
-                        <Box>
-                          <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                            {LL.products.discount()}
-                          </Typography>
-                          <Typography variant="h6" fontWeight={600}>
-                            {formatNumber(formData.discount)}%
-                          </Typography>
-                        </Box>
-
-                        <Box>
-                          <Typography variant="caption" sx={{ opacity: 0.8 }}>
-                            {LL.products.savings()}
-                          </Typography>
-                          <Typography variant="h6" fontWeight={600}>
-                            $
-                            {formatNumber(
-                              (formData.price - finalPrice).toFixed(2)
-                            )}
-                            {currentLocale === 'fa' && (
-                              <Box
-                                component="span"
-                                sx={{
-                                  ml: 1,
-                                  fontSize: '0.9rem',
-                                  opacity: 0.9,
-                                }}
-                              >
-                                (
-                                <PriceDisplay
-                                  priceInUSD={formData.price - finalPrice}
-                                  showSymbol={true}
-                                  showOriginal={false}
-                                />
-                                )
-                              </Box>
-                            )}
-                          </Typography>
-                        </Box>
-                      </Box>
                     </CardContent>
                   </Card>
                 </Grid>
-              </>
-            )}
 
-            {/* Action Buttons */}
-            <Grid size={{ xs: 12 }}>
-              <Box
-                sx={{
-                  display: 'flex',
-                  gap: 2,
-                  justifyContent: 'flex-end',
-                  pt: 2,
-                }}
-              >
-                <Button
-                  variant="outlined"
-                  onClick={resetForm}
-                  disabled={isLoading}
-                  size="large"
-                  sx={{
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 4,
-                  }}
-                >
-                  {LL.button.clear()}
-                </Button>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  color="primary"
-                  disabled={!isFormValid()}
-                  loading={isLoading}
-                  size="large"
-                  sx={{
-                    borderRadius: 2,
-                    textTransform: 'none',
-                    fontWeight: 600,
-                    px: 4,
-                    boxShadow: 'none',
-                    '&:hover': {
-                      boxShadow: 'none',
-                    },
-                  }}
-                >
-                  {isEditing
-                    ? LL.button.updateProduct()
-                    : LL.button.addProduct()}
-                </Button>
-              </Box>
-            </Grid>
-          </Grid>
-        </form>
+                {/* Product Variant Selection */}
+                {selectedProduct && (
+                  <Grid size={{ xs: 12 }}>
+                    <Card
+                      variant="outlined"
+                      sx={{
+                        borderRadius: 2,
+                        border: '2px solid',
+                        borderColor: 'secondary.100',
+                        '&:hover': {
+                          borderColor: 'secondary.main',
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+                        },
+                        transition: 'all 0.3s',
+                      }}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ mb: 2, fontWeight: 600 }}
+                        >
+                          {LL.products.selectVariant()}
+                        </Typography>
+                        <Autocomplete
+                          options={selectedProduct.productInfos}
+                          getOptionLabel={(option) =>
+                            `${option.size} - ${formatVariantColorNames(
+                              option.colors,
+                              LL.products.noColorSpecified()
+                            )} (${option.weight}kg)`
+                          }
+                          value={selectedProductInfo}
+                          onChange={(_, newValue) =>
+                            handleProductInfoChange(newValue)
+                          }
+                          renderInput={(params) => (
+                            <TextField
+                              {...params}
+                              label={LL.button.chooseVariant()}
+                              required
+                              disabled={isLoading}
+                            />
+                          )}
+                          renderOption={(props, option) => {
+                            const { key, ...otherProps } = props;
+                            return (
+                              <Box
+                                component="li"
+                                key={key}
+                                {...otherProps}
+                                sx={{ py: 1.5 }}
+                              >
+                                <Box
+                                  sx={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: 1.5,
+                                    width: '100%',
+                                  }}
+                                >
+                                  {option.colors?.map((color) => (
+                                    <Box
+                                      key={color.id}
+                                      sx={{
+                                        width: 24,
+                                        height: 24,
+                                        backgroundColor: color.hexCode,
+                                        borderRadius: '50%',
+                                        border: '2px solid white',
+                                        boxShadow:
+                                          '0 0 0 1px rgba(0,0,0,0.1), 0 2px 4px rgba(0,0,0,0.2)',
+                                      }}
+                                    />
+                                  ))}
+                                  <Box sx={{ flex: 1 }}>
+                                    <Typography fontWeight={600}>
+                                      {option.size} -{' '}
+                                      {formatVariantColorNames(
+                                        option.colors,
+                                        LL.products.noColorSpecified()
+                                      )}
+                                    </Typography>
+                                    <Typography
+                                      variant="caption"
+                                      color="text.secondary"
+                                    >
+                                      {LL.products.weight()}:{' '}
+                                      {formatNumber(option.weight)}kg
+                                    </Typography>
+                                  </Box>
+                                </Box>
+                              </Box>
+                            );
+                          }}
+                        />
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
+
+                {/* Product Details Card */}
+                {selectedProduct && selectedProductInfo && (
+                  <Grid size={{ xs: 12 }}>
+                    <Card
+                      variant="outlined"
+                      sx={(theme) => ({
+                        borderRadius: 2,
+                        border: '2px solid',
+                        borderColor: 'info.200',
+                        background:
+                          'linear-gradient(135deg, #f0f4f8 0%, #e8eef5 100%)',
+                        ...theme.applyStyles('dark', {
+                          background: `linear-gradient(135deg, ${alpha(
+                            theme.palette.info.main,
+                            0.14
+                          )} 0%, ${alpha(theme.palette.info.main, 0.04)} 100%)`,
+                        }),
+                      })}
+                    >
+                      <CardContent sx={{ p: 3 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{ mb: 3, fontWeight: 600, color: 'info.main' }}
+                        >
+                          {LL.products.productDetails()}
+                        </Typography>
+                        <Grid container spacing={2}>
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Box sx={{ mb: 2 }}>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                fontWeight={600}
+                              >
+                                {LL.form.productName()}
+                              </Typography>
+                              <Typography variant="body1" fontWeight={500}>
+                                {selectedProduct.name}
+                              </Typography>
+                            </Box>
+                          </Grid>
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Box sx={{ mb: 2 }}>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                fontWeight={600}
+                              >
+                                {LL.products.variant()}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 1,
+                                  mt: 0.5,
+                                }}
+                              >
+                                {selectedProductInfo.colors?.map((color) => (
+                                  <Box
+                                    key={color.id}
+                                    sx={{
+                                      width: 20,
+                                      height: 20,
+                                      backgroundColor: color.hexCode,
+                                      borderRadius: '50%',
+                                      border: '2px solid white',
+                                      boxShadow: '0 0 0 1px rgba(0,0,0,0.1)',
+                                    }}
+                                  />
+                                ))}
+                                <Typography variant="body1" fontWeight={500}>
+                                  {selectedProductInfo.size} -{' '}
+                                  {formatVariantColorNames(
+                                    selectedProductInfo.colors,
+                                    LL.products.noColorSpecified()
+                                  )}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Grid>
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Box sx={{ mb: 2 }}>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                fontWeight={600}
+                              >
+                                {LL.products.weight()}
+                              </Typography>
+                              <Typography variant="body1" fontWeight={500}>
+                                {formatNumber(selectedProductInfo.weight)}kg
+                              </Typography>
+                            </Box>
+                          </Grid>
+                          <Grid size={{ xs: 12, sm: 6 }}>
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                                fontWeight={600}
+                              >
+                                {LL.products.categories()}
+                              </Typography>
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  gap: 0.5,
+                                  mt: 0.5,
+                                  flexWrap: 'wrap',
+                                }}
+                              >
+                                {selectedProduct.categories.map((cat) => (
+                                  <Chip
+                                    key={cat.id}
+                                    label={cat.name}
+                                    size="small"
+                                    sx={{
+                                      backgroundColor: 'success.50',
+                                      color: 'success.main',
+                                      fontWeight: 600,
+                                    }}
+                                  />
+                                ))}
+                              </Box>
+                            </Box>
+                          </Grid>
+                        </Grid>
+                      </CardContent>
+                    </Card>
+                  </Grid>
+                )}
+
+                {/* Pricing and Stock Form */}
+                {selectedProductInfo && (
+                  <>
+                    <Grid size={{ xs: 12 }}>
+                      <Divider sx={{ my: 2 }} />
+                      <Typography
+                        variant="h6"
+                        sx={{ mb: 3, fontWeight: 600, color: 'primary.main' }}
+                      >
+                        {LL.products.pricingInformation()}
+                      </Typography>
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label={LL.form.price()}
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) =>
+                          handleInputChange('price', e.target.value)
+                        }
+                        required
+                        disabled={isLoading}
+                        {...getLtrTextFieldProps({
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: 'primary.main',
+                            },
+                          },
+                        })}
+                        slotProps={{
+                          htmlInput: { dir: 'ltr', min: 0, step: 0.01 },
+                        }}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label={LL.form.costPrice()}
+                        type="number"
+                        value={formData.costPrice}
+                        onChange={(e) =>
+                          handleInputChange('costPrice', e.target.value)
+                        }
+                        required
+                        disabled={isLoading}
+                        {...getLtrTextFieldProps({
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: 'primary.main',
+                            },
+                          },
+                        })}
+                        slotProps={{
+                          htmlInput: { dir: 'ltr', min: 0, step: 0.01 },
+                        }}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label={LL.form.discount()}
+                        type="number"
+                        value={formData.discount}
+                        onChange={(e) =>
+                          handleInputChange('discount', e.target.value)
+                        }
+                        disabled={isLoading}
+                        helperText={LL.products.discountHelper()}
+                        {...getLtrTextFieldProps({
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: 'primary.main',
+                            },
+                          },
+                        })}
+                        slotProps={{
+                          htmlInput: {
+                            dir: 'ltr',
+                            min: 0,
+                            max: 100,
+                            step: 0.01,
+                          },
+                        }}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12, sm: 6 }}>
+                      <TextField
+                        fullWidth
+                        label={LL.form.stockQuantity()}
+                        type="number"
+                        value={formData.stockQuantity}
+                        onChange={(e) =>
+                          handleInputChange('stockQuantity', e.target.value)
+                        }
+                        required
+                        disabled={isLoading}
+                        {...getLtrTextFieldProps({
+                          '& .MuiOutlinedInput-root': {
+                            '&:hover fieldset': {
+                              borderColor: 'primary.main',
+                            },
+                          },
+                        })}
+                        slotProps={{
+                          htmlInput: { dir: 'ltr', min: 0 },
+                        }}
+                      />
+                    </Grid>
+
+                    <Grid size={{ xs: 12 }}>
+                      <FormControlLabel
+                        control={
+                          <Switch
+                            checked={formData.boxLess ?? false}
+                            onChange={(e) =>
+                              handleInputChange('boxLess', e.target.checked)
+                            }
+                            disabled={isLoading}
+                            color="primary"
+                          />
+                        }
+                        label={LL.products.boxLess()}
+                      />
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        display="block"
+                      >
+                        {LL.products.boxLessHelper()}
+                      </Typography>
+                    </Grid>
+
+                    {/* Final Price Display */}
+                    <Grid size={{ xs: 12 }}>
+                      <Card
+                        sx={{
+                          background:
+                            'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          borderRadius: 3,
+                          boxShadow: '0 8px 24px rgba(102, 126, 234, 0.25)',
+                          color: 'white',
+                        }}
+                      >
+                        <CardContent sx={{ p: 3 }}>
+                          <Typography
+                            variant="h5"
+                            sx={{ mb: 2, fontWeight: 700 }}
+                          >
+                            {LL.products.finalPriceAfterDiscount()}
+                          </Typography>
+
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: 2,
+                              mb: 2,
+                            }}
+                          >
+                            <Typography variant="h3" sx={{ fontWeight: 700 }}>
+                              ${formatNumber(finalPrice.toFixed(2))}
+                            </Typography>
+                            {currentLocale === 'fa' && (
+                              <Box
+                                sx={{
+                                  px: 2,
+                                  py: 1,
+                                  bgcolor: 'rgba(255,255,255,0.2)',
+                                  borderRadius: 2,
+                                  fontSize: '1.5rem',
+                                  fontWeight: 700,
+                                }}
+                              >
+                                <PriceDisplay
+                                  priceInUSD={finalPrice}
+                                  showSymbol={true}
+                                  showOriginal={false}
+                                />
+                              </Box>
+                            )}
+                          </Box>
+
+                          <Divider
+                            sx={{ my: 2, borderColor: 'rgba(255,255,255,0.3)' }}
+                          />
+
+                          <Box
+                            sx={{ display: 'flex', gap: 3, flexWrap: 'wrap' }}
+                          >
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                sx={{ opacity: 0.8 }}
+                              >
+                                {LL.products.original()}
+                              </Typography>
+                              <Typography variant="h6" fontWeight={600}>
+                                ${formatNumber(formData.price)}
+                                {currentLocale === 'fa' && (
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      ml: 1,
+                                      fontSize: '0.9rem',
+                                      opacity: 0.9,
+                                    }}
+                                  >
+                                    (
+                                    <PriceDisplay
+                                      priceInUSD={formData.price}
+                                      showSymbol={true}
+                                      showOriginal={false}
+                                    />
+                                    )
+                                  </Box>
+                                )}
+                              </Typography>
+                            </Box>
+
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                sx={{ opacity: 0.8 }}
+                              >
+                                {LL.products.discount()}
+                              </Typography>
+                              <Typography variant="h6" fontWeight={600}>
+                                {formatNumber(formData.discount)}%
+                              </Typography>
+                            </Box>
+
+                            <Box>
+                              <Typography
+                                variant="caption"
+                                sx={{ opacity: 0.8 }}
+                              >
+                                {LL.products.savings()}
+                              </Typography>
+                              <Typography variant="h6" fontWeight={600}>
+                                $
+                                {formatNumber(
+                                  (formData.price - finalPrice).toFixed(2)
+                                )}
+                                {currentLocale === 'fa' && (
+                                  <Box
+                                    component="span"
+                                    sx={{
+                                      ml: 1,
+                                      fontSize: '0.9rem',
+                                      opacity: 0.9,
+                                    }}
+                                  >
+                                    (
+                                    <PriceDisplay
+                                      priceInUSD={formData.price - finalPrice}
+                                      showSymbol={true}
+                                      showOriginal={false}
+                                    />
+                                    )
+                                  </Box>
+                                )}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </Grid>
+                  </>
+                )}
+
+                {/* Action Buttons */}
+                <Grid size={{ xs: 12 }}>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: 2,
+                      justifyContent: 'flex-end',
+                      pt: 2,
+                    }}
+                  >
+                    <Button
+                      variant="outlined"
+                      onClick={resetForm}
+                      disabled={isLoading}
+                      size="large"
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 4,
+                      }}
+                    >
+                      {LL.button.clear()}
+                    </Button>
+                    <Button
+                      type="submit"
+                      variant="contained"
+                      color="primary"
+                      disabled={!isFormValid()}
+                      loading={isLoading}
+                      size="large"
+                      sx={{
+                        borderRadius: 2,
+                        textTransform: 'none',
+                        fontWeight: 600,
+                        px: 4,
+                        boxShadow: 'none',
+                        '&:hover': {
+                          boxShadow: 'none',
+                        },
+                      }}
+                    >
+                      {isEditing
+                        ? LL.button.updateProduct()
+                        : LL.button.addProduct()}
+                    </Button>
+                  </Box>
+                </Grid>
+              </Grid>
+            </form>
           </>
         )}
       </GlassmorphismContainer>
