@@ -37,6 +37,14 @@ interface AdminsProductsStore {
   openArchiveDialog: (product: KickzoneGraphqlTypes.Product) => void;
   closeArchiveDialog: () => void;
 
+  // Permanent delete dialog (admin, archived + no active selling only)
+  productDeleteDialogOpen: boolean;
+  productToDelete: KickzoneGraphqlTypes.Product | null;
+  productDeleteConfirmName: string;
+  openProductDeleteDialog: (product: KickzoneGraphqlTypes.Product) => void;
+  closeProductDeleteDialog: () => void;
+  setProductDeleteConfirmName: (value: string) => void;
+
   // Seller listings dialog
   listingsProduct: KickzoneGraphqlTypes.Product | null;
   setListingsProduct: (product: KickzoneGraphqlTypes.Product | null) => void;
@@ -87,6 +95,10 @@ export const useAdminsProductsStore = create<AdminsProductsStore>(
     archiveDialogOpen: false,
     productToArchive: null,
 
+    productDeleteDialogOpen: false,
+    productToDelete: null,
+    productDeleteConfirmName: '',
+
     listingsProduct: null,
 
     currentProduct: null,
@@ -117,6 +129,21 @@ export const useAdminsProductsStore = create<AdminsProductsStore>(
       set(() => ({ archiveDialogOpen: true, productToArchive: product })),
     closeArchiveDialog: () =>
       set(() => ({ archiveDialogOpen: false, productToArchive: null })),
+
+    openProductDeleteDialog: (product) =>
+      set(() => ({
+        productDeleteDialogOpen: true,
+        productToDelete: product,
+        productDeleteConfirmName: '',
+      })),
+    closeProductDeleteDialog: () =>
+      set(() => ({
+        productDeleteDialogOpen: false,
+        productToDelete: null,
+        productDeleteConfirmName: '',
+      })),
+    setProductDeleteConfirmName: (value) =>
+      set(() => ({ productDeleteConfirmName: value })),
 
     setListingsProduct: (product) => set(() => ({ listingsProduct: product })),
 

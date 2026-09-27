@@ -24,6 +24,7 @@ import Tooltip from '@mui/material/Tooltip';
 import { ReactNode, useEffect, useRef } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import ArchiveIcon from '@mui/icons-material/Archive';
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import EditIcon from '@mui/icons-material/Edit';
 import ImageIcon from '@mui/icons-material/Image';
 import StorefrontIcon from '@mui/icons-material/Storefront';
@@ -31,6 +32,7 @@ import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
+import Alert from '@mui/material/Alert';
 import { ProductImageManagementModal } from './ProductImageManagementModal';
 import { useTheme } from '@mui/material/styles';
 import Switch from '@mui/material/Switch';
@@ -38,8 +40,16 @@ import Stack from '@mui/material/Stack';
 import { useSellerListingsByProduct } from './adminProducts.hooks';
 import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
 import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
+import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 
 type LayoutComponentType = React.ComponentType<{ children: ReactNode }>;
+
+const hasActiveSellerInventory = (
+  product: KickzoneGraphqlTypes.Product
+): boolean =>
+  (product.sellerProducts ?? []).some(
+    (sellerProduct) => (sellerProduct.stockQuantity ?? 0) > 0
+  );
 
 export interface AdminProductsProps {
   LayoutComponent?: LayoutComponentType;
@@ -74,6 +84,12 @@ export function AdminProducts({
     productToArchive,
     openArchiveDialog,
     closeArchiveDialog,
+    productDeleteDialogOpen,
+    productToDelete,
+    productDeleteConfirmName,
+    openProductDeleteDialog,
+    closeProductDeleteDialog,
+    setProductDeleteConfirmName,
     listingsProduct,
     setListingsProduct,
     openImageModal,
@@ -81,6 +97,7 @@ export function AdminProducts({
     currentProduct,
   } = useAdminsProductsStore();
   const imageModalOpen = Boolean(currentProduct);
+  const { showSnackbar } = useSnackbarContext();
   const {
     fetchSellerListings,
     listingsResult: {
@@ -109,7 +126,12 @@ export function AdminProducts({
     archivedStatus: status,
   });
   const { categories } = useCategoriesQuery();
-  const { archiveProduct, isArchivingProduct } = useProducts();
+  const {
+    archiveProduct,
+    isArchivingProduct,
+    deleteProduct,
+    isDeletingProduct,
+  } = useProducts();
   const loaderRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
   const API_BASE_URL =
@@ -148,6 +170,47 @@ export function AdminProducts({
   const handleArchiveCancel = () => {
     closeArchiveDialog();
   };
+
+  const canPermanentlyDelete = (product: KickzoneGraphqlTypes.Product) =>
+    showSellerListings &&
+    product.archived &&
+    !hasActiveSellerInventory(product);
+
+  const handleDeleteClick = (product: KickzoneGraphqlTypes.Product) => {
+    if (!canPermanentlyDelete(product)) {
+      showSnackbar(LL.products.deleteProductBlockedActiveSelling(), {
+        severity: 'error',
+      });
+      return;
+    }
+    openProductDeleteDialog(product);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!productToDelete) return;
+    if (productDeleteConfirmName.trim() !== productToDelete.name) {
+      showSnackbar(LL.products.deleteProductNameMismatch(), {
+        severity: 'error',
+      });
+      return;
+    }
+    try {
+      await deleteProduct(productToDelete.id);
+      closeProductDeleteDialog();
+      showSnackbar(LL.products.deleteProductSuccess(), { severity: 'success' });
+      refetch();
+    } catch (err) {
+      showSnackbar((err as Error).message, { severity: 'error' });
+    }
+  };
+
+  const handleDeleteCancel = () => {
+    closeProductDeleteDialog();
+  };
+
+  const deleteNameMatches =
+    !!productToDelete &&
+    productDeleteConfirmName.trim() === productToDelete.name;
 
   const handleOpenImageModal = (product: KickzoneGraphqlTypes.Product) => {
     openImageModal(product, true);
@@ -580,6 +643,23 @@ export function AdminProducts({
                             </IconButton>
                           </Tooltip>
                         )}
+
+                        {canPermanentlyDelete(product) && (
+                          <Tooltip title={LL.products.deleteProduct()}>
+                            <IconButton
+                              size="medium"
+                              onClick={() => handleDeleteClick(product)}
+                              sx={{
+                                color: 'error.dark',
+                                '&:hover': {
+                                  backgroundColor: 'error.50',
+                                },
+                              }}
+                            >
+                              <DeleteForeverIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
                       </CardActions>
                     </Card>
                   </Grid>
@@ -614,6 +694,49 @@ export function AdminProducts({
                   loading={isArchivingProduct}
                 >
                   {LL.products.archiveProduct()}
+                </Button>
+              </DialogActions>
+            </Dialog>
+            <Dialog
+              open={productDeleteDialogOpen}
+              onClose={handleDeleteCancel}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle>{LL.products.deleteProduct()}</DialogTitle>
+              <DialogContent dividers sx={{ pt: 2 }}>
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {LL.products.deleteProductConfirm({
+                    name: productToDelete?.name ?? '',
+                  })}
+                </Alert>
+                <TextField
+                  autoFocus
+                  fullWidth
+                  label={LL.form.productName()}
+                  value={productDeleteConfirmName}
+                  onChange={(e) =>
+                    setProductDeleteConfirmName(e.target.value)
+                  }
+                  disabled={isDeletingProduct}
+                  placeholder={productToDelete?.name}
+                />
+              </DialogContent>
+              <DialogActions>
+                <Button
+                  onClick={handleDeleteCancel}
+                  disabled={isDeletingProduct}
+                >
+                  {LL.button.cancel()}
+                </Button>
+                <Button
+                  onClick={handleDeleteConfirm}
+                  color="error"
+                  variant="contained"
+                  loading={isDeletingProduct}
+                  disabled={!deleteNameMatches || isDeletingProduct}
+                >
+                  {LL.products.deleteProduct()}
                 </Button>
               </DialogActions>
             </Dialog>

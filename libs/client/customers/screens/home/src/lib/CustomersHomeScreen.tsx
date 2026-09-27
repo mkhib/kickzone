@@ -7,6 +7,7 @@ import {
   useI18nContext,
   useLanguageContext,
   usePageTitle,
+  farsiDisplayStack,
 } from '@kickzone-workspace/shared-i18n';
 import SearchIcon from '@mui/icons-material/Search';
 import SortIcon from '@mui/icons-material/Sort';
@@ -62,7 +63,6 @@ export function CustomersHome() {
   });
 
   const { addItem } = useCustomersCartService();
-  const heroDescription = LL.messages.homeDescription();
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -230,11 +230,11 @@ export function CustomersHome() {
             <Box
               sx={{
                 position: 'relative',
-                borderRadius: { xs: 4, md: 6 },
+                borderRadius: { xs: 3, md: 4 },
                 overflow: 'hidden',
-                minHeight: { xs: 240, sm: 300, md: 420 },
-                boxShadow: '0 24px 48px rgba(0,0,0,0.18)',
-                backgroundColor: '#0f0f0f',
+                minHeight: { xs: 280, sm: 340, md: 460 },
+                boxShadow: '0 20px 40px rgba(0,0,0,0.14)',
+                backgroundColor: '#0f0f0e',
               }}
             >
               <Box
@@ -244,7 +244,7 @@ export function CustomersHome() {
                   backgroundImage: 'url(/banner-image.png)',
                   backgroundSize: 'cover',
                   backgroundPosition: 'center',
-                  filter: 'brightness(1.3)',
+                  filter: 'brightness(1.15) contrast(1.05)',
                   transform: isRTL ? 'scale(1.02)' : 'scale(-1.02, 1)',
                 }}
               />
@@ -253,8 +253,8 @@ export function CustomersHome() {
                   position: 'absolute',
                   inset: 0,
                   background: isRTL
-                    ? 'linear-gradient(270deg, rgba(0,0,0,0.46) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.05) 100%)'
-                    : 'linear-gradient(90deg, rgba(0,0,0,0.46) 0%, rgba(0,0,0,0.25) 55%, rgba(0,0,0,0.05) 100%)',
+                    ? 'linear-gradient(270deg, rgba(15,15,14,0.72) 0%, rgba(15,15,14,0.38) 48%, rgba(15,15,14,0.08) 100%)'
+                    : 'linear-gradient(90deg, rgba(15,15,14,0.72) 0%, rgba(15,15,14,0.38) 48%, rgba(15,15,14,0.08) 100%)',
                 }}
               />
               <Container
@@ -266,39 +266,103 @@ export function CustomersHome() {
                   display: 'flex',
                   alignItems: 'center',
                   px: { xs: 2.5, sm: 3, md: 4 },
-                  py: { xs: 3.5, sm: 4, md: 6 },
+                  py: { xs: 4, sm: 5, md: 7 },
                 }}
               >
-                <Box sx={{ maxWidth: { xs: '100%', md: '52%' } }}>
-                  <Typography
-                    component="h2"
-                    variant="h3"
-                    sx={{
-                      fontWeight: 600,
-                      fontSize: { xs: '1.75rem', sm: '2.2rem', md: '3rem' },
-                      letterSpacing: '-0.02em',
-                      color: '#f0efeb',
-                      mb: 1,
-                      lineHeight: 1.15,
-                    }}
-                  >
-                    <Box component="span" sx={{ color: '#c5b89a' }}>
-                      {LL.messages.homeTitleAccent()}
-                    </Box>{' '}
-                    {LL.messages.homeTitle()}
-                  </Typography>
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 400,
-                      fontSize: { xs: '0.95rem', sm: '1rem', md: '1.15rem' },
-                      color: 'rgba(240,239,235,0.82)',
-                      maxWidth: 520,
-                      lineHeight: 1.55,
-                    }}
-                  >
-                    {heroDescription}
-                  </Typography>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    maxWidth: { xs: '100%', md: '56%' },
+                    animation: 'sloganRise 0.9s ease-out both',
+                    '@keyframes sloganRise': {
+                      '0%': { opacity: 0, transform: 'translateY(14px)' },
+                      '100%': { opacity: 1, transform: 'translateY(0)' },
+                    },
+                  }}
+                >
+                  {(() => {
+                    const accent = (
+                      <Typography
+                        component="p"
+                        sx={{
+                          m: 0,
+                          color: '#c5b89a',
+                          lineHeight: 1.15,
+                          ...(isRTL
+                            ? {
+                                mt: { xs: 1.25, md: 1.75 },
+                                // flex-end = physical left in RTL
+                                alignSelf: 'flex-end',
+                                textAlign: 'left',
+                                fontFamily: farsiDisplayStack,
+                                fontWeight: 600,
+                                fontSize: {
+                                  xs: '1.85rem',
+                                  sm: '2.25rem',
+                                  md: '2.75rem',
+                                },
+                                letterSpacing: '0.02em',
+                              }
+                            : {
+                                mb: { xs: 1, md: 1.25 },
+                                fontWeight: 300,
+                                fontSize: {
+                                  xs: '1.15rem',
+                                  sm: '1.35rem',
+                                  md: '1.6rem',
+                                },
+                                letterSpacing: '0.28em',
+                                textTransform: 'uppercase',
+                              }),
+                        }}
+                      >
+                        {LL.messages.homeTitleAccent()}
+                      </Typography>
+                    );
+                    const brand = (
+                      <Typography
+                        component="h1"
+                        sx={{
+                          m: 0,
+                          fontWeight: 600,
+                          fontSize: {
+                            xs: '2.35rem',
+                            sm: '3.1rem',
+                            md: '4.25rem',
+                          },
+                          letterSpacing: { xs: '0.04em', md: '0.08em' },
+                          color: '#f0efeb',
+                          lineHeight: 1,
+                          // Brand mark stays Latin even in Farsi UI
+                          fontFamily:
+                            '"Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif',
+                          ...(isRTL
+                            ? {
+                                // flex-start = physical right in RTL
+                                alignSelf: 'flex-start',
+                                textAlign: 'right',
+                              }
+                            : {}),
+                        }}
+                      >
+                        {LL.messages.homeTitle()}
+                      </Typography>
+                    );
+
+                    // EN: Be → SAINTBALA | FA (RTL): SAINTBALA → باش (verb after)
+                    return isRTL ? (
+                      <>
+                        {brand}
+                        {accent}
+                      </>
+                    ) : (
+                      <>
+                        {accent}
+                        {brand}
+                      </>
+                    );
+                  })()}
                 </Box>
               </Container>
             </Box>

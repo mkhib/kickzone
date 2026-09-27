@@ -1,6 +1,8 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, MoreThan } from 'typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
 import {
   Product,
   ProductInfo,
@@ -8,6 +10,7 @@ import {
   Category,
   Color,
   SellerProduct,
+  OrderItem,
 } from '@kickzone-workspace/entities';
 import {
   CreateProductInput,
@@ -41,6 +44,8 @@ export class ProductService implements OnModuleInit {
     private readonly colorRepository: Repository<Color>,
     @InjectRepository(SellerProduct)
     private readonly sellerProductRepository: Repository<SellerProduct>,
+    @InjectRepository(OrderItem)
+    private readonly orderItemRepository: Repository<OrderItem>,
     private readonly translationService: TranslationService
   ) {}
 
@@ -553,6 +558,80 @@ export class ProductService implements OnModuleInit {
     if (!product) throw new Error('Product not found');
     product.archived = false;
     return this.productRepository.save(product);
+  }
+
+  /**
+   * Permanently delete a product. Allowed only when:
+   * - the product is archived
+   * - no seller listings have stockQuantity > 0
+   * - the product is not referenced by order history
+   */
+  async deleteProduct(id: number): Promise<boolean> {
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['productInfos', 'categories'],
+    });
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    if (!product.archived) {
+      throw new Error('Only archived products can be deleted.');
+    }
+
+    const activeListings = await this.sellerProductRepository.count({
+      where: {
+        product: { id },
+        stockQuantity: MoreThan(0),
+      },
+    });
+    if (activeListings > 0) {
+      throw new Error(
+        'Cannot delete a product that still has active seller inventory.'
+      );
+    }
+
+    const orderHistoryCount = await this.orderItemRepository.count({
+      where: { productId: String(id) },
+    });
+    if (orderHistoryCount > 0) {
+      throw new Error(
+        'Cannot delete a product that appears in order history.'
+      );
+    }
+
+    const uploadDir = path.join(process.cwd(), 'uploads', 'products');
+    for (const info of product.productInfos || []) {
+      for (const imageUrl of info.images || []) {
+        const imageName = path.basename(imageUrl);
+        if (!imageName) continue;
+        const filePath = path.join(uploadDir, imageName);
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Failed to remove product image ${filePath}: ${(error as Error).message}`
+          );
+        }
+      }
+      await this.productInfoColorRepository.delete({
+        productInfo: { id: info.id },
+      });
+      await this.translationService.deleteEntityTranslations(
+        'productInfo',
+        info.id
+      );
+    }
+
+    await this.sellerProductRepository.delete({ product: { id } });
+    await this.productInfoRepository.delete({ product: { id } });
+    await this.translationService.deleteEntityTranslations('product', id);
+
+    product.categories = [];
+    await this.productRepository.save(product);
+    await this.productRepository.delete(id);
+    return true;
   }
 
   async getSellerProducts(

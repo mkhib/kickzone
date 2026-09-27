@@ -9,6 +9,7 @@ import {
   PRODUCTS_QUERY,
   PRODUCT_BY_ID_QUERY,
   ARCHIVE_PRODUCT_MUTATION,
+  DELETE_PRODUCT_MUTATION,
   UPDATE_PRODUCT,
 } from './products.graphql';
 
@@ -129,6 +130,11 @@ export const useProducts = () => {
     KickzoneGraphqlTypes.MutationArchiveProductArgs
   >(ARCHIVE_PRODUCT_MUTATION);
 
+  const [deleteProductMutation, { loading: isDeletingProduct }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'deleteProduct'>,
+    KickzoneGraphqlTypes.MutationDeleteProductArgs
+  >(DELETE_PRODUCT_MUTATION);
+
   const [updateProductMutation] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateProduct'>,
     KickzoneGraphqlTypes.MutationUpdateProductArgs
@@ -228,6 +234,16 @@ export const useProducts = () => {
     [archiveProductMutation]
   );
 
+  const deleteProduct = useCallback(
+    async (id: number) => {
+      const { data } = await deleteProductMutation({ variables: { id } });
+      client.cache.evict({ fieldName: 'products' });
+      client.cache.gc();
+      return data?.deleteProduct ?? false;
+    },
+    [deleteProductMutation, client]
+  );
+
   const updateProduct = useCallback(
     async (input: {
       id: number;
@@ -250,6 +266,8 @@ export const useProducts = () => {
     isCreatingProduct: isCreatingProduct || isCreatingProductInfo,
     archiveProduct,
     isArchivingProduct,
+    deleteProduct,
+    isDeletingProduct,
     updateProduct,
   };
 };

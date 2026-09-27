@@ -265,6 +265,13 @@ const fa = {
     archiveProduct: 'بایگانی محصول',
     archiveProductConfirm:
       'آیا مطمئن هستید که می‌خواهید این محصول را بایگانی کنید؟',
+    deleteProduct: 'حذف محصول',
+    deleteProductConfirm:
+      'این عمل "{name}" را برای همیشه حذف می‌کند و قابل بازگشت نیست. برای تأیید، نام محصول را تایپ کنید.',
+    deleteProductNameMismatch: 'نام محصول مطابقت ندارد',
+    deleteProductSuccess: 'محصول با موفقیت حذف شد',
+    deleteProductBlockedActiveSelling:
+      'این محصول هنوز موجودی فعال فروشنده دارد و قابل حذف نیست.',
     showingProducts: 'نمایش {count} از {total} محصول',
     errorLoadingProducts: 'خطا در بارگذاری محصولات',
     savings: 'صرفه‌جویی',
@@ -388,10 +395,9 @@ const fa = {
   // Messages and notifications
   messages: {
     welcome: `به ${SITE_NAME} خوش آمدید`,
-    homeTitleAccent: 'آزاد کن',
-    homeTitle: 'آیکون خودت رو',
-    homeDescription:
-      'لباس‌های پریمیوم از برندهای با کیفیت رو کشف کن و سبک منحصر به فرد خودت رو نشون بده',
+    homeTitleAccent: 'باش',
+    homeTitle: SITE_NAME,
+    homeDescription: '',
     itemAdded: 'آیتم به سبد خرید اضافه شد',
     itemRemoved: 'آیتم از سبد خرید حذف شد',
     quantityUpdated: 'تعداد به‌روزرسانی شد',

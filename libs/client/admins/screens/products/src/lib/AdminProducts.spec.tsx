@@ -9,11 +9,16 @@ import { AdminProducts } from './AdminProducts';
 const mockLoadMore = vi.fn();
 const mockRefetch = vi.fn();
 const mockArchiveProduct = vi.fn();
+const mockDeleteProduct = vi.fn();
 const mockFetchSellerListings = vi.fn();
 const mockOpenImageModal = vi.fn();
 const mockCloseImageModal = vi.fn();
 const mockOpenArchiveDialog = vi.fn();
 const mockCloseArchiveDialog = vi.fn();
+const mockOpenProductDeleteDialog = vi.fn();
+const mockCloseProductDeleteDialog = vi.fn();
+const mockSetProductDeleteConfirmName = vi.fn();
+const mockShowSnackbar = vi.fn();
 const mockSetSearch = vi.fn();
 const mockSetCategory = vi.fn();
 const mockSetSort = vi.fn();
@@ -73,6 +78,13 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         archiveProduct: () => 'Archive Product',
         archiveProductConfirm: () =>
           'Are you sure you want to archive this product?',
+        deleteProduct: () => 'Delete Product',
+        deleteProductConfirm: ({ name }: { name: string }) =>
+          `This permanently deletes "${name}" and cannot be undone. Type the product name to confirm.`,
+        deleteProductNameMismatch: () => 'Product name does not match',
+        deleteProductSuccess: () => 'Product deleted successfully',
+        deleteProductBlockedActiveSelling: () =>
+          'This product still has active seller inventory and cannot be deleted.',
         showingProducts: ({
           count,
           total,
@@ -90,6 +102,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         sortBy: () => 'Sort By',
         order: () => 'Order',
         status: () => 'Status',
+        productName: () => 'Product Name',
       },
       table: {
         all: () => 'All',
@@ -103,10 +116,17 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         edit: () => 'Edit',
         cancel: () => 'Cancel',
         close: () => 'Close',
+        delete: () => 'Delete',
       },
     },
   }),
   usePageTitle: vi.fn(),
+}));
+
+vi.mock('@kickzone-workspace/snackbar-hook', () => ({
+  useSnackbarContext: () => ({
+    showSnackbar: mockShowSnackbar,
+  }),
 }));
 
 vi.mock('@kickzone-workspace/admins-products-store', () => ({
@@ -149,6 +169,7 @@ const products = [
         images: ['/uploads/product-1.jpg'],
       },
     ],
+    sellerProducts: [],
   },
   {
     id: 2,
@@ -161,6 +182,7 @@ const products = [
         images: [],
       },
     ],
+    sellerProducts: [{ id: 'sp-1', stockQuantity: 0 }],
   },
 ];
 
@@ -179,6 +201,12 @@ const createStoreState = () => ({
   productToArchive: null,
   openArchiveDialog: mockOpenArchiveDialog,
   closeArchiveDialog: mockCloseArchiveDialog,
+  productDeleteDialogOpen: false,
+  productToDelete: null,
+  productDeleteConfirmName: '',
+  openProductDeleteDialog: mockOpenProductDeleteDialog,
+  closeProductDeleteDialog: mockCloseProductDeleteDialog,
+  setProductDeleteConfirmName: mockSetProductDeleteConfirmName,
   listingsProduct: null,
   setListingsProduct: mockSetListingsProduct,
   openImageModal: mockOpenImageModal,
@@ -211,6 +239,8 @@ describe('AdminProducts', () => {
     mockUseProducts.mockReturnValue({
       archiveProduct: mockArchiveProduct,
       isArchivingProduct: false,
+      deleteProduct: mockDeleteProduct,
+      isDeletingProduct: false,
     });
     mockUseSellerListingsByProduct.mockReturnValue({
       fetchSellerListings: mockFetchSellerListings,
@@ -272,10 +302,19 @@ describe('AdminProducts', () => {
     });
     expect(mockOpenArchiveDialog).toHaveBeenCalledWith(products[0]);
     expect(screen.getAllByLabelText('Archive Product')).toHaveLength(1);
+    expect(screen.getByLabelText('Delete Product')).toBeInTheDocument();
 
     await waitFor(() => {
       expect(mockLoadMore).not.toHaveBeenCalled();
     });
+  });
+
+  it('opens delete confirmation for archived products without active stock', () => {
+    renderWithProviders();
+
+    fireEvent.click(screen.getByLabelText('Delete Product'));
+
+    expect(mockOpenProductDeleteDialog).toHaveBeenCalledWith(products[1]);
   });
 
   it('renders loading and error states from the query', () => {
@@ -322,5 +361,45 @@ describe('AdminProducts', () => {
       expect(mockCloseArchiveDialog).toHaveBeenCalled();
       expect(mockRefetch).toHaveBeenCalled();
     });
+  });
+
+  it('confirms permanent delete only when typed name matches', async () => {
+    mockDeleteProduct.mockResolvedValue(true);
+    mockUseAdminsProductsStore.mockReturnValue({
+      ...createStoreState(),
+      productDeleteDialogOpen: true,
+      productToDelete: products[1],
+      productDeleteConfirmName: 'Test Product 2',
+    });
+
+    renderWithProviders();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Product' }));
+
+    await waitFor(() => {
+      expect(mockDeleteProduct).toHaveBeenCalledWith(2);
+      expect(mockCloseProductDeleteDialog).toHaveBeenCalled();
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'Product deleted successfully',
+        { severity: 'success' }
+      );
+      expect(mockRefetch).toHaveBeenCalled();
+    });
+  });
+
+  it('blocks permanent delete when typed name does not match', async () => {
+    mockUseAdminsProductsStore.mockReturnValue({
+      ...createStoreState(),
+      productDeleteDialogOpen: true,
+      productToDelete: products[1],
+      productDeleteConfirmName: 'Wrong Name',
+    });
+
+    renderWithProviders();
+
+    expect(
+      screen.getByRole('button', { name: 'Delete Product' })
+    ).toBeDisabled();
+    expect(mockDeleteProduct).not.toHaveBeenCalled();
   });
 });

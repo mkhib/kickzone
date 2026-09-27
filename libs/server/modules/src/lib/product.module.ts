@@ -1,6 +1,7 @@
 import {
   Category,
   Color,
+  OrderItem,
   Product,
   ProductInfo,
   ProductInfoColor,
@@ -41,6 +42,7 @@ import { ConfigService } from '@nestjs/config';
       SellerProduct,
       Color,
       SellerInfo,
+      OrderItem,
     ]),
     JwtModule.register({
       secret: process.env['JWT_SECRET'] || 'defaultSecret',

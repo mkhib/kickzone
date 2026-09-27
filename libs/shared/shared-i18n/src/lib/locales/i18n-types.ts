@@ -975,6 +975,27 @@ type RootTranslation = {
 		 */
 		archiveProductConfirm: string
 		/**
+		 * D​e​l​e​t​e​ ​P​r​o​d​u​c​t
+		 */
+		deleteProduct: string
+		/**
+		 * T​h​i​s​ ​p​e​r​m​a​n​e​n​t​l​y​ ​d​e​l​e​t​e​s​ ​"​{​n​a​m​e​}​"​ ​a​n​d​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.​ ​T​y​p​e​ ​t​h​e​ ​p​r​o​d​u​c​t​ ​n​a​m​e​ ​t​o​ ​c​o​n​f​i​r​m​.
+		 * @param {unknown} name
+		 */
+		deleteProductConfirm: RequiredParams<'name'>
+		/**
+		 * P​r​o​d​u​c​t​ ​n​a​m​e​ ​d​o​e​s​ ​n​o​t​ ​m​a​t​c​h
+		 */
+		deleteProductNameMismatch: string
+		/**
+		 * P​r​o​d​u​c​t​ ​d​e​l​e​t​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		deleteProductSuccess: string
+		/**
+		 * T​h​i​s​ ​p​r​o​d​u​c​t​ ​s​t​i​l​l​ ​h​a​s​ ​a​c​t​i​v​e​ ​s​e​l​l​e​r​ ​i​n​v​e​n​t​o​r​y​ ​a​n​d​ ​c​a​n​n​o​t​ ​b​e​ ​d​e​l​e​t​e​d​.
+		 */
+		deleteProductBlockedActiveSelling: string
+		/**
 		 * S​h​o​w​i​n​g​ ​{​c​o​u​n​t​}​ ​o​f​ ​{​t​o​t​a​l​}​ ​p​r​o​d​u​c​t​s
 		 * @param {unknown} count
 		 * @param {unknown} total
@@ -1333,16 +1354,13 @@ type RootTranslation = {
 		 */
 		welcome: string
 		/**
-		 * U​n​l​o​c​k
+		 * B​e
 		 */
 		homeTitleAccent: string
 		/**
-		 * Y​o​u​r​ ​I​c​o​n
+		 * S​A​I​N​T​B​A​L​A
 		 */
 		homeTitle: string
-		/**
-		 * D​i​s​c​o​v​e​r​ ​p​r​e​m​i​u​m​ ​c​l​o​t​h​e​s​ ​f​r​o​m​ ​t​o​p​ ​b​r​a​n​d​s​ ​a​n​d​ ​e​x​p​r​e​s​s​ ​y​o​u​r​ ​u​n​i​q​u​e​ ​s​t​y​l​e
-		 */
 		homeDescription: string
 		/**
 		 * I​t​e​m​ ​a​d​d​e​d​ ​t​o​ ​c​a​r​t
@@ -3639,6 +3657,26 @@ export type TranslationFunctions = {
 		 */
 		archiveProductConfirm: () => LocalizedString
 		/**
+		 * Delete Product
+		 */
+		deleteProduct: () => LocalizedString
+		/**
+		 * This permanently deletes "{name}" and cannot be undone. Type the product name to confirm.
+		 */
+		deleteProductConfirm: (arg: { name: unknown }) => LocalizedString
+		/**
+		 * Product name does not match
+		 */
+		deleteProductNameMismatch: () => LocalizedString
+		/**
+		 * Product deleted successfully
+		 */
+		deleteProductSuccess: () => LocalizedString
+		/**
+		 * This product still has active seller inventory and cannot be deleted.
+		 */
+		deleteProductBlockedActiveSelling: () => LocalizedString
+		/**
 		 * Showing {count} of {total} products
 		 */
 		showingProducts: (arg: { count: unknown, total: unknown }) => LocalizedString
@@ -3989,16 +4027,13 @@ export type TranslationFunctions = {
 		 */
 		welcome: () => LocalizedString
 		/**
-		 * Unlock
+		 * Be
 		 */
 		homeTitleAccent: () => LocalizedString
 		/**
-		 * Your Icon
+		 * SAINTBALA
 		 */
 		homeTitle: () => LocalizedString
-		/**
-		 * Discover premium clothes from top brands and express your unique style
-		 */
 		homeDescription: () => LocalizedString
 		/**
 		 * Item added to cart

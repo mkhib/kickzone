@@ -134,6 +134,12 @@ export const ARCHIVE_PRODUCT_MUTATION = gql`
   }
 `;
 
+export const DELETE_PRODUCT_MUTATION = gql`
+  mutation DeleteProduct($id: Int!) {
+    deleteProduct(id: $id)
+  }
+`;
+
 export const UPDATE_PRODUCT = gql`
   mutation UpdateProduct($input: UpdateProductInput!) {
     updateProduct(input: $input) {

@@ -265,6 +265,13 @@ const en = {
     descending: 'Descending',
     archiveProduct: 'Archive Product',
     archiveProductConfirm: 'Are you sure you want to archive this product?',
+    deleteProduct: 'Delete Product',
+    deleteProductConfirm:
+      'This permanently deletes "{name}" and cannot be undone. Type the product name to confirm.',
+    deleteProductNameMismatch: 'Product name does not match',
+    deleteProductSuccess: 'Product deleted successfully',
+    deleteProductBlockedActiveSelling:
+      'This product still has active seller inventory and cannot be deleted.',
     showingProducts: 'Showing {count} of {total} products',
     errorLoadingProducts: 'Error loading products',
     savings: 'Savings',
@@ -387,10 +394,9 @@ const en = {
   // Messages and notifications
   messages: {
     welcome: `Welcome to ${SITE_NAME}`,
-    homeTitleAccent: 'Unlock',
-    homeTitle: 'Your Icon',
-    homeDescription:
-      'Discover premium clothes from top brands and express your unique style',
+    homeTitleAccent: 'Be',
+    homeTitle: SITE_NAME,
+    homeDescription: '',
     itemAdded: 'Item added to cart',
     itemRemoved: 'Item removed from cart',
     quantityUpdated: 'Quantity updated',

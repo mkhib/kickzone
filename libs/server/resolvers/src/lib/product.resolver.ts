@@ -247,6 +247,15 @@ export class ProductResolver {
     return this.productService.unarchiveProduct(id);
   }
 
+  @Mutation(() => Boolean)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async deleteProduct(
+    @Args('id', { type: () => Int }) id: number
+  ): Promise<boolean> {
+    return this.productService.deleteProduct(id);
+  }
+
   @Mutation(() => Product)
   @UseGuards(CatalogGuard)
   async updateProduct(

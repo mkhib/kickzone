@@ -69,11 +69,14 @@ export const saintbalaBrand = {
 
 const FONT_LINK_ID = 'saintbala-fonts';
 const FONT_HREF =
-  'https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700&display=swap';
+  'https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700&display=swap';
 
 const latinStack = '"Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif';
 const farsiStack =
   '"Vazirmatn", "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif';
+/** Display face for Farsi slogan accents (e.g. باش) */
+export const farsiDisplayStack =
+  '"El Messiri", "Vazirmatn", "Manrope", sans-serif';
 
 export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
   const { currentLocale } = useLanguageContext();
@@ -101,13 +104,16 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
     document.documentElement.dir = direction;
     document.documentElement.setAttribute('dir', direction);
 
-    // Load Manrope (EN) + Vazirmatn (FA) together so mixed Latin brand text matches.
-    if (!document.getElementById(FONT_LINK_ID)) {
-      const link = document.createElement('link');
+    // Load Manrope (EN) + Vazirmatn (FA) + El Messiri (FA display) together.
+    let link = document.getElementById(FONT_LINK_ID) as HTMLLinkElement | null;
+    if (!link) {
+      link = document.createElement('link');
       link.id = FONT_LINK_ID;
-      link.href = FONT_HREF;
       link.rel = 'stylesheet';
       document.head.appendChild(link);
+    }
+    if (link.href !== FONT_HREF) {
+      link.href = FONT_HREF;
     }
   }, [direction]);
 

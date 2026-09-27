@@ -71,8 +71,8 @@ type ProductInfo {
 }
 
 enum SizeKind {
-  APPAREL
-  FOOTWEAR
+  Apparel
+  Footwear
 }
 
 type Product {
@@ -359,8 +359,8 @@ type Query {
   users(first: Int, after: String, searchTerm: String): UserConnection!
   me: User
   products(filter: ProductFilterInput): ProductConnection!
-  sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
   distinctProductSizes(sizeKind: SizeKind): [String!]!
+  sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
   categories: [Category!]!
   product(id: Int!): Product
   sellerProductsByProduct(productId: Int!): [SellerProduct!]!
@@ -457,6 +457,7 @@ type Mutation {
   removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
   archiveProduct(id: Int!): Product!
   unarchiveProduct(id: Int!): Product!
+  deleteProduct(id: Int!): Boolean!
   updateProduct(input: UpdateProductInput!): Product!
   setTranslation(input: TranslationInput!): Translation!
   bulkTranslateEntities(input: BulkTranslationInput!): Boolean!

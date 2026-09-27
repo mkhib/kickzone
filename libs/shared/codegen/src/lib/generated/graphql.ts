@@ -128,11 +128,6 @@ export type CreateOrderItemInput = {
   unitPrice: Scalars['Float']['input'];
 };
 
-export enum SizeKind {
-  Apparel = 'APPAREL',
-  Footwear = 'FOOTWEAR',
-}
-
 export type CreateProductInfoInput = {
   colorIds: Array<Scalars['Int']['input']>;
   productId: Scalars['Int']['input'];
@@ -238,6 +233,7 @@ export type Mutation = {
   adminCreateUser: User;
   archiveProduct: Product;
   bulkTranslateEntities: Scalars['Boolean']['output'];
+  cancelPendingZarinPalOrder: Scalars['Boolean']['output'];
   clearCart: Cart;
   createCategory: Category;
   createColor: Color;
@@ -254,8 +250,8 @@ export type Mutation = {
   deleteCurrencyPreference: Scalars['Boolean']['output'];
   deleteEntityTranslations: Scalars['Boolean']['output'];
   deleteOrder: Scalars['Boolean']['output'];
+  deleteProduct: Scalars['Boolean']['output'];
   forgotPassword: Scalars['Boolean']['output'];
-  cancelPendingZarinPalOrder: Scalars['Boolean']['output'];
   getZarinPalGatewayUrl: GatewayUrlResponse;
   initiatePasswordSetup: Scalars['Boolean']['output'];
   login: User;
@@ -304,6 +300,11 @@ export type MutationArchiveProductArgs = {
 
 export type MutationBulkTranslateEntitiesArgs = {
   input: BulkTranslationInput;
+};
+
+
+export type MutationCancelPendingZarinPalOrderArgs = {
+  orderId: Scalars['String']['input'];
 };
 
 
@@ -386,6 +387,11 @@ export type MutationDeleteOrderArgs = {
 };
 
 
+export type MutationDeleteProductArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
 export type MutationForgotPasswordArgs = {
   baseUrl: Scalars['String']['input'];
   email: Scalars['String']['input'];
@@ -394,11 +400,6 @@ export type MutationForgotPasswordArgs = {
 
 export type MutationGetZarinPalGatewayUrlArgs = {
   authority: Scalars['String']['input'];
-};
-
-
-export type MutationCancelPendingZarinPalOrderArgs = {
-  orderId: Scalars['String']['input'];
 };
 
 
@@ -998,6 +999,11 @@ export type ShippingCalculationResult = {
   strategyUsed: Scalars['String']['output'];
   totalShippingCost: Scalars['Float']['output'];
 };
+
+export enum SizeKind {
+  Apparel = 'Apparel',
+  Footwear = 'Footwear'
+}
 
 export type Translation = {
   __typename?: 'Translation';
