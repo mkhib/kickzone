@@ -112,7 +112,6 @@ export function ProductImageManagementModal({
     currentProduct,
     imageModal,
     deleteModal,
-    openImageModal,
     closeImageModal,
     setSelectedTab,
     addSelectedFiles,
@@ -128,17 +127,6 @@ export function ProductImageManagementModal({
   const { uploadProductInfoImages, removeProductInfoImage } = useProducts();
   const { showSnackbar } = useSnackbarContext();
   const { LL } = useI18nContext();
-
-  // Update store when modal opens/closes
-  React.useEffect(() => {
-    if (open && product) {
-      // Only reset tab if the modal wasn't already open
-      const shouldResetTab = !imageModal.open;
-      openImageModal(product, shouldResetTab);
-    } else if (!open) {
-      closeImageModal();
-    }
-  }, [open, product, openImageModal, closeImageModal, imageModal.open]);
 
   const handleTabChange = (_event: React.SyntheticEvent, newValue: number) => {
     console.log('🔄 handleTabChange called:', {

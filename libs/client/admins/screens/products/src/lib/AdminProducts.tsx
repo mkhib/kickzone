@@ -95,8 +95,9 @@ export function AdminProducts({
     openImageModal,
     closeImageModal,
     currentProduct,
+    imageModal,
   } = useAdminsProductsStore();
-  const imageModalOpen = Boolean(currentProduct);
+  const imageModalOpen = imageModal.open;
   const { showSnackbar } = useSnackbarContext();
   const {
     fetchSellerListings,
@@ -715,9 +716,7 @@ export function AdminProducts({
                   fullWidth
                   label={LL.form.productName()}
                   value={productDeleteConfirmName}
-                  onChange={(e) =>
-                    setProductDeleteConfirmName(e.target.value)
-                  }
+                  onChange={(e) => setProductDeleteConfirmName(e.target.value)}
                   disabled={isDeletingProduct}
                   placeholder={productToDelete?.name}
                 />
@@ -769,73 +768,79 @@ export function AdminProducts({
                 maxWidth="md"
                 fullWidth
               >
-              <DialogTitle>
-                Seller listings — {listingsProduct?.name}
-              </DialogTitle>
-              <DialogContent dividers>
-                {listingsLoading && (
-                  <Typography>{LL.status.loading()}</Typography>
-                )}
-                {!listingsLoading &&
-                  listingsData?.sellerProductsByProduct?.length === 0 && (
-                    <Typography>{LL.products.noSellersAvailable()}</Typography>
+                <DialogTitle>
+                  Seller listings — {listingsProduct?.name}
+                </DialogTitle>
+                <DialogContent dividers>
+                  {listingsLoading && (
+                    <Typography>{LL.status.loading()}</Typography>
                   )}
-                {!listingsLoading && sellerListings.length > 0 && (
-                  <Stack spacing={1.5}>
-                    {sellerListings.map((sp, idx) => (
-                      <Box
-                        key={sp.id}
-                        sx={{
-                          display: 'grid',
-                          gridTemplateColumns: '1.5fr 1fr 1fr 0.8fr 0.8fr',
-                          gap: 1,
-                          alignItems: 'center',
-                          border: '1px solid',
-                          borderColor: 'divider',
-                          borderRadius: 1,
-                          p: 1,
-                          backgroundColor:
-                            idx % 2 === 0
-                              ? 'background.default'
-                              : 'action.hover',
-                        }}
-                      >
-                        <Typography sx={{ fontWeight: 700 }}>
-                          {sp.seller?.user?.name || 'Seller'}
-                        </Typography>
-                        <Typography>
-                          {LL.products.price()}: {sp.price}
-                        </Typography>
-                        <Typography>
-                          {LL.products.discount()}: {sp.discount}%
-                        </Typography>
-                        <Typography>
-                          {LL.products.stock()}: {sp.stockQuantity}
-                        </Typography>
-                        <Stack direction="row" alignItems="center" spacing={1}>
-                          <Typography variant="body2">Recommended</Typography>
-                          <Switch
-                            checked={sp.recommended}
-                            onChange={(e) =>
-                              handleToggleRecommended(
-                                sp.id,
-                                sp.seller?.id,
-                                e.target.checked
-                              )
-                            }
-                          />
-                        </Stack>
-                      </Box>
-                    ))}
-                  </Stack>
-                )}
-              </DialogContent>
-              <DialogActions>
-                <Button onClick={() => setListingsProduct(null)}>
-                  {LL.button.close()}
-                </Button>
-              </DialogActions>
-            </Dialog>
+                  {!listingsLoading &&
+                    listingsData?.sellerProductsByProduct?.length === 0 && (
+                      <Typography>
+                        {LL.products.noSellersAvailable()}
+                      </Typography>
+                    )}
+                  {!listingsLoading && sellerListings.length > 0 && (
+                    <Stack spacing={1.5}>
+                      {sellerListings.map((sp, idx) => (
+                        <Box
+                          key={sp.id}
+                          sx={{
+                            display: 'grid',
+                            gridTemplateColumns: '1.5fr 1fr 1fr 0.8fr 0.8fr',
+                            gap: 1,
+                            alignItems: 'center',
+                            border: '1px solid',
+                            borderColor: 'divider',
+                            borderRadius: 1,
+                            p: 1,
+                            backgroundColor:
+                              idx % 2 === 0
+                                ? 'background.default'
+                                : 'action.hover',
+                          }}
+                        >
+                          <Typography sx={{ fontWeight: 700 }}>
+                            {sp.seller?.user?.name || 'Seller'}
+                          </Typography>
+                          <Typography>
+                            {LL.products.price()}: {sp.price}
+                          </Typography>
+                          <Typography>
+                            {LL.products.discount()}: {sp.discount}%
+                          </Typography>
+                          <Typography>
+                            {LL.products.stock()}: {sp.stockQuantity}
+                          </Typography>
+                          <Stack
+                            direction="row"
+                            alignItems="center"
+                            spacing={1}
+                          >
+                            <Typography variant="body2">Recommended</Typography>
+                            <Switch
+                              checked={sp.recommended}
+                              onChange={(e) =>
+                                handleToggleRecommended(
+                                  sp.id,
+                                  sp.seller?.id,
+                                  e.target.checked
+                                )
+                              }
+                            />
+                          </Stack>
+                        </Box>
+                      ))}
+                    </Stack>
+                  )}
+                </DialogContent>
+                <DialogActions>
+                  <Button onClick={() => setListingsProduct(null)}>
+                    {LL.button.close()}
+                  </Button>
+                </DialogActions>
+              </Dialog>
             )}
           </>
         )}
