@@ -224,7 +224,7 @@ export function SellersManageProductScreen() {
       formData.productInfoId > 0 &&
       formData.price > 0 &&
       formData.costPrice > 0 &&
-      formData.stockQuantity > 0 &&
+      formData.stockQuantity >= 0 &&
       formData.discount >= 0 &&
       formData.discount <= 100
     );
