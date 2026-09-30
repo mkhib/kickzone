@@ -85,13 +85,8 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         deleteProductSuccess: () => 'Product deleted successfully',
         deleteProductBlockedActiveSelling: () =>
           'This product still has active seller inventory and cannot be deleted.',
-        showingProducts: ({
-          count,
-          total,
-        }: {
-          count: number;
-          total: number;
-        }) => `Showing ${count} of ${total} products`,
+        showingProducts: ({ count, total }: { count: number; total: number }) =>
+          `Showing ${count} of ${total} products`,
         noSellersAvailable: () => 'No sellers available',
         errorLoadingProducts: () => 'Error loading products',
         discount: () => 'Discount',
@@ -212,6 +207,12 @@ const createStoreState = () => ({
   openImageModal: mockOpenImageModal,
   closeImageModal: mockCloseImageModal,
   currentProduct: null,
+  imageModal: {
+    open: false,
+    selectedTab: 0,
+    selectedFiles: {},
+    selectedFilePreviews: {},
+  },
 });
 
 const renderWithProviders = () =>
@@ -258,7 +259,9 @@ describe('AdminProducts', () => {
 
     expect(screen.getByTestId('admins-layout')).toBeInTheDocument();
     expect(screen.getByText('Products')).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: 'Add Product' })).toBeInTheDocument();
+    expect(
+      screen.getByRole('link', { name: 'Add Product' })
+    ).toBeInTheDocument();
     expect(screen.getByLabelText('Search by name')).toBeInTheDocument();
     expect(screen.getByText('Test Product 1')).toBeInTheDocument();
     expect(screen.getByText('Test Product 2')).toBeInTheDocument();
