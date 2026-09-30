@@ -7,6 +7,7 @@ import {
 import { relayStylePagination } from '@apollo/client/utilities';
 import { onError } from '@apollo/client/link/error';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
+import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 
 const csrfLink = new ApolloLink((operation, forward) => {
   // Get current locale from localStorage (used by LanguageContext)
@@ -43,7 +44,7 @@ const getGraphQLEndpoint = () => {
 
 const graphqlUri = getGraphQLEndpoint();
 
-const httpLink = new HttpLink({
+const httpLink = new UploadHttpLink({
   uri: graphqlUri,
   credentials: 'include',
 });

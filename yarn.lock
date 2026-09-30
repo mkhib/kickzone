@@ -66,6 +66,19 @@
   resolved "https://registry.yarnpkg.com/@apollo/cache-control-types/-/cache-control-types-1.0.3.tgz#5da62cf64c3b4419dabfef4536b57a40c8ff0b47"
   integrity sha512-F17/vCp7QVwom9eG7ToauIKdAxpSoadsJnqIfyryLFSkLSOEqu+eC5Z3N8OXcUVStuOMcNHlyraRsA6rRICu4g==
 
+"@apollo/client@^4.0.0":
+  version "4.3.1"
+  resolved "https://registry.npmjs.org/@apollo/client/-/client-4.3.1.tgz#4c8831ce512457bc8374dfe8fee4d85bc7943f3a"
+  integrity sha512-MFHzUfHxS+A6AzH+cS4896jHuSTRw5ACUANijz1gyesWZDLsbgZ17oCb/KfRAOUuoUr8AzCaBE+xJPi7R7ZOCA==
+  dependencies:
+    "@graphql-typed-document-node/core" "^3.1.1"
+    "@wry/caches" "^1.0.0"
+    "@wry/equality" "^0.5.6"
+    "@wry/trie" "^0.5.0"
+    graphql-tag "^2.12.6"
+    optimism "^0.18.0"
+    tslib "^2.3.0"
+
 "@apollo/client@^4.0.7":
   version "4.0.7"
   resolved "https://registry.yarnpkg.com/@apollo/client/-/client-4.0.7.tgz#cc9bfe652bfc5e4e766fee919e4c2d98606d25ec"
@@ -5794,6 +5807,15 @@
   dependencies:
     "@types/node" "*"
 
+"@types/apollo-upload-client@^19.0.0":
+  version "19.0.0"
+  resolved "https://registry.npmjs.org/@types/apollo-upload-client/-/apollo-upload-client-19.0.0.tgz#c11b8dd9f65004b5c4765df83d42e90b9df76333"
+  integrity sha512-PTl+2ZDeF2ZxCCLf1sQhiUqkBFhtpzBQzgJwaXhyo5ygDVi/398Z9LAXHaIQe0mmI9Hu2EtyYUUFNzfBhcuI0Q==
+  dependencies:
+    "@apollo/client" "^4.0.0"
+    "@types/extract-files" "*"
+    graphql "14 - 16"
+
 "@types/aria-query@^5.0.1":
   version "5.0.4"
   resolved "https://registry.yarnpkg.com/@types/aria-query/-/aria-query-5.0.4.tgz#1a31c3d378850d2778dabb6374d036dcba4ba708"
@@ -6016,6 +6038,11 @@
     "@types/express-serve-static-core" "^4.17.33"
     "@types/qs" "*"
     "@types/serve-static" "*"
+
+"@types/extract-files@*":
+  version "13.0.2"
+  resolved "https://registry.npmjs.org/@types/extract-files/-/extract-files-13.0.2.tgz#0e36682a745e8c7a18fef9e1242e9fc9b467651d"
+  integrity sha512-4sd7uDB0OVZmwH2wD6w7Qlpr2P5Pn8C9IGwnaq9aiiBDD3Lou7CwFjjkJTDYCDsEvk9zxAtmv9TaMg1lt/YJfA==
 
 "@types/fs-extra@^8.0.1":
   version "8.1.5"
@@ -7357,12 +7384,12 @@ apollo-server-types@^3.8.0:
     apollo-reporting-protobuf "^3.4.0"
     apollo-server-env "^4.2.1"
 
-apollo-upload-client@^17.0.0:
-  version "17.0.0"
-  resolved "https://registry.yarnpkg.com/apollo-upload-client/-/apollo-upload-client-17.0.0.tgz#d9baaff8d14e54510de9f2855b487e75ca63b392"
-  integrity sha512-pue33bWVbdlXAGFPkgz53TTmxVMrKeQr0mdRcftNY+PoHIdbGZD0hoaXHvO6OePJAkFz7OiCFUf98p1G/9+Ykw==
+apollo-upload-client@^20.0.0:
+  version "20.0.0"
+  resolved "https://registry.npmjs.org/apollo-upload-client/-/apollo-upload-client-20.0.0.tgz#9b2aece6ac5f35023e27af62e0f15baa4caa8ab8"
+  integrity sha512-nCot+4kmi/hq4xDvPDewPyK9y5QSKtu4vg1qwi2njmPwXuD28wiCR07rV+A0E9V2wvmOts3sltpT7UkaQ9ST2A==
   dependencies:
-    extract-files "^11.0.0"
+    extract-files "^14.0.0"
 
 app-root-path@^3.1.0:
   version "3.1.0"
@@ -10249,6 +10276,13 @@ extract-files@^11.0.0:
   resolved "https://registry.yarnpkg.com/extract-files/-/extract-files-11.0.0.tgz#b72d428712f787eef1f5193aff8ab5351ca8469a"
   integrity sha512-FuoE1qtbJ4bBVvv94CC7s0oTnKUGvQs+Rjf1L2SJFfS+HTVVjhPFtehPdQ0JiGPqVNfSSZvL5yzHHQq2Z4WNhQ==
 
+extract-files@^14.0.0:
+  version "14.0.0"
+  resolved "https://registry.npmjs.org/extract-files/-/extract-files-14.0.0.tgz#2520da6477f92bbf6a23dce8290fedb1a628d0b1"
+  integrity sha512-VAoB+AlrOpQGciq2TswLpuaSx9DYRr0rE/TFj7VxsLuqPfD2U4bZPP/n2mKdfsvLHmWXLQdOsjunD/9Gx3RWIQ==
+  dependencies:
+    is-plain-obj "^4.1.0"
+
 fast-copy@^4.0.0:
   version "4.0.2"
   resolved "https://registry.yarnpkg.com/fast-copy/-/fast-copy-4.0.2.tgz#57f14115e1edbec274f69090072a480aa29cbedd"
@@ -11119,6 +11153,11 @@ graphql-ws@^6.0.3:
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.11.0.tgz#96d17f66370678027fdf59b2d4c20b4efaa8a633"
   integrity sha512-mS1lbMsxgQj6hge1XZ6p7GPhbrtFwUFYi3wRzXAC/FmYnyXMTvvI3td3rjmQ2u8ewXueaSvRPWaEcgVVOT9Jnw==
 
+"graphql@14 - 16":
+  version "16.14.2"
+  resolved "https://registry.npmjs.org/graphql/-/graphql-16.14.2.tgz#83faf25869e3df727cc855161db5da85b0e5b2c0"
+  integrity sha512-Chq1s4CY7jmh8gO2qvLIJyfCDIN+EHLFW/9iShnp1z8FjBQMoodWP1kDC36VAMXXIvAjj4ARa7ntfAV2BrjsbA==
+
 graphql@^16.10.0:
   version "16.10.0"
   resolved "https://registry.yarnpkg.com/graphql/-/graphql-16.10.0.tgz#24c01ae0af6b11ea87bf55694429198aaa8e220c"
@@ -11891,6 +11930,11 @@ is-plain-obj@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/is-plain-obj/-/is-plain-obj-3.0.0.tgz#af6f2ea14ac5a646183a5bbdb5baabbc156ad9d7"
   integrity sha512-gwsOE28k+23GP1B6vFl1oVh/WOzmawBrKwo5Ev6wMKzPkaXaCDIQKzLnvsA42DRlbVTWorkgTKIviAKCWkfUwA==
+
+is-plain-obj@^4.1.0:
+  version "4.1.0"
+  resolved "https://registry.npmjs.org/is-plain-obj/-/is-plain-obj-4.1.0.tgz#d65025edec3657ce032fd7db63c97883eaed71f0"
+  integrity sha512-+Pgi+vMuUNkJyExiMBt5IlFoMyKnr5zhJ4Uspz58WOhBF5QoIZkFyNHIbBAtHwzVAgk5RtndVNsDRN61/mmDqg==
 
 is-plain-object@^2.0.4:
   version "2.0.4"
