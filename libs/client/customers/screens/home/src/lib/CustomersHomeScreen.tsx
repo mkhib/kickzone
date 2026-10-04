@@ -31,7 +31,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Fade from '@mui/material/Fade';
 import CircularProgress from '@mui/material/CircularProgress';
-import { useCallback, useState, useMemo, useEffect } from 'react';
+import { useCallback, useState, useMemo, useEffect, useRef } from 'react';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 
 const SEARCH_DEBOUNCE_MS = 400;
@@ -53,7 +53,7 @@ export function CustomersHome() {
   const isRTL = currentLocale === 'fa';
   usePageTitle(() => LL.pageTitles.home());
 
-  const { products, loading } = useProductsQuery({
+  const { products, loading, loadMore, hasNextPage } = useProductsQuery({
     search,
     sort,
     sortOrder,
@@ -63,6 +63,55 @@ export function CustomersHome() {
   });
 
   const { addItem } = useCustomersCartService();
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const loaderRef = useRef<HTMLDivElement | null>(null);
+
+  const handleLoadMore = useCallback(async () => {
+    if (isLoadingMore || !hasNextPage) return;
+    setIsLoadingMore(true);
+    try {
+      await loadMore();
+    } finally {
+      setIsLoadingMore(false);
+    }
+  }, [isLoadingMore, hasNextPage, loadMore]);
+
+  // Infinite scroll: observe the loader element near the bottom
+  useEffect(() => {
+    if (!hasNextPage) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) {
+          handleLoadMore();
+        }
+      },
+      { rootMargin: '250px' }
+    );
+
+    if (loaderRef.current) {
+      observer.observe(loaderRef.current);
+    }
+
+    return () => observer.disconnect();
+  }, [handleLoadMore, hasNextPage]);
+
+  // Fallback scroll listener in case IntersectionObserver doesn't trigger
+  useEffect(() => {
+    if (!hasNextPage) return;
+
+    const handleScroll = () => {
+      if (isLoadingMore) return;
+      const scrollPosition = window.innerHeight + window.scrollY;
+      const threshold = document.documentElement.scrollHeight - 350;
+      if (scrollPosition >= threshold) {
+        handleLoadMore();
+      }
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleLoadMore, hasNextPage, isLoadingMore]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -459,7 +508,7 @@ export function CustomersHome() {
           </Grid>
         </Paper>
 
-        {loading ? (
+        {loading && homeProducts.length === 0 ? (
           <Box
             sx={{
               display: 'flex',
@@ -494,64 +543,82 @@ export function CustomersHome() {
             )}
           </Box>
         ) : (
-          <Fade in timeout={800}>
-            <Grid
-              container
-              spacing={{ xs: 2, sm: 2.5, md: 3 }}
-              sx={{
-                ...(homeProducts.length === 1
-                  ? { justifyContent: 'center' }
-                  : {}),
-                pb: { xs: 2, md: 3 },
-              }}
-            >
-              {homeProducts.map((item, index) => {
-                return (
-                  <Grid
-                    key={item.key}
-                    size={
-                      homeProducts.length === 1
-                        ? { xs: 12, sm: 8, md: 6, lg: 4 }
-                        : { xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }
-                    }
-                    sx={{
-                      animation: `fadeInUp 0.6s ease-out ${index * 0.08}s both`,
-                      '@keyframes fadeInUp': {
-                        '0%': {
-                          opacity: 0,
-                          transform: 'translateY(24px)',
+          <>
+            <Fade in timeout={800}>
+              <Grid
+                container
+                spacing={{ xs: 2, sm: 2.5, md: 3 }}
+                sx={{
+                  ...(homeProducts.length === 1
+                    ? { justifyContent: 'center' }
+                    : {}),
+                  pb: { xs: 2, md: 3 },
+                }}
+              >
+                {homeProducts.map((item, index) => {
+                  return (
+                    <Grid
+                      key={item.key}
+                      size={
+                        homeProducts.length === 1
+                          ? { xs: 12, sm: 8, md: 6, lg: 4 }
+                          : { xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }
+                      }
+                      sx={{
+                        animation: `fadeInUp 0.6s ease-out ${Math.min((index % 12) * 0.08, 0.5)}s both`,
+                        '@keyframes fadeInUp': {
+                          '0%': {
+                            opacity: 0,
+                            transform: 'translateY(24px)',
+                          },
+                          '100%': {
+                            opacity: 1,
+                            transform: 'translateY(0)',
+                          },
                         },
-                        '100%': {
-                          opacity: 1,
-                          transform: 'translateY(0)',
-                        },
-                      },
-                    }}
-                  >
-                    <CustomersProductCard
-                      product={item.product}
-                      isRecommended={item.isRecommended}
-                      isBoxLess={item.isBoxLess}
-                      onAddToCart={(prod) => {
-                        const firstInfo = prod.productInfos?.[0];
-                        const sp = prod.sellerProducts?.find(
-                          (s) => s.productInfoId === firstInfo?.id
-                        );
-                        if (firstInfo && sp) {
-                          handleAddToCart({
-                            product: prod,
-                            productInfo: firstInfo,
-                            sellerProduct: sp,
-                          });
-                        }
                       }}
-                      onAddVariantToCart={handleAddToCart}
-                    />
-                  </Grid>
-                );
-              })}
-            </Grid>
-          </Fade>
+                    >
+                      <CustomersProductCard
+                        product={item.product}
+                        isRecommended={item.isRecommended}
+                        isBoxLess={item.isBoxLess}
+                        onAddToCart={(prod) => {
+                          const firstInfo = prod.productInfos?.[0];
+                          const sp = prod.sellerProducts?.find(
+                            (s) => s.productInfoId === firstInfo?.id
+                          );
+                          if (firstInfo && sp) {
+                            handleAddToCart({
+                              product: prod,
+                              productInfo: firstInfo,
+                              sellerProduct: sp,
+                            });
+                          }
+                        }}
+                        onAddVariantToCart={handleAddToCart}
+                      />
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            </Fade>
+
+            {hasNextPage && (
+              <Box
+                ref={loaderRef}
+                data-testid="products-scroll-loader"
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  py: 4,
+                  minHeight: 64,
+                }}
+              >
+                <CircularProgress size={32} />
+              </Box>
+            )}
+          </>
         )}
       </Container>
     </CustomersLayout>

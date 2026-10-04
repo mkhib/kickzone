@@ -25,6 +25,7 @@ import {
   normalizeSizeCode,
   SizeKind,
 } from '@kickzone-workspace/product-sizes';
+import { parseOffset } from '@kickzone-workspace/utils';
 import { TranslationService } from './translation.service';
 
 @Injectable()
@@ -234,7 +235,10 @@ export class ProductService implements OnModuleInit {
     }
 
     if (filter?.after) {
-      query.skip(parseInt(filter.after, 10));
+      const offset = parseOffset(filter.after);
+      if (offset > 0) {
+        query.skip(offset);
+      }
     }
 
     // TypeORM's getMany() should handle deduplication automatically
@@ -743,7 +747,10 @@ export class ProductService implements OnModuleInit {
     }
 
     if (filter?.after) {
-      query.skip(parseInt(filter.after, 10));
+      const offset = parseOffset(filter.after);
+      if (offset > 0) {
+        query.skip(offset);
+      }
     }
 
     const products = await query.getMany();

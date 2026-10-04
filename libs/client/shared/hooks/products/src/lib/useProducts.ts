@@ -34,7 +34,7 @@ export function useProductsQuery({
   onlyWithSellers?: boolean;
   onlyInStock?: boolean;
 }) {
-  const { data, loading, error, fetchMore, refetch } = useQuery<
+  const { data, loading, error, fetchMore, refetch, networkStatus } = useQuery<
     Pick<KickzoneGraphqlTypes.Query, 'products'>,
     KickzoneGraphqlTypes.QueryProductsArgs
   >(PRODUCTS_QUERY, {
@@ -63,7 +63,7 @@ export function useProductsQuery({
 
   const loadMore = useCallback(() => {
     if (pageInfo?.hasNextPage) {
-      fetchMore({
+      return fetchMore({
         variables: {
           filter: {
             searchTerm: search || undefined,
@@ -74,7 +74,27 @@ export function useProductsQuery({
             sortOrder,
             archivedStatus,
             sellerId,
+            onlyWithSellers,
+            onlyInStock,
           },
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult?.products) return prev;
+          const existingEdges = prev.products?.edges || [];
+          const newEdges = fetchMoreResult.products?.edges || [];
+          const existingIds = new Set(
+            existingEdges.map((e) => e?.node?.id)
+          );
+          const uniqueNewEdges = newEdges.filter(
+            (e) => e?.node?.id != null && !existingIds.has(e.node.id)
+          );
+          return {
+            ...prev,
+            products: {
+              ...fetchMoreResult.products,
+              edges: [...existingEdges, ...uniqueNewEdges],
+            },
+          };
         },
       });
     }
@@ -88,6 +108,8 @@ export function useProductsQuery({
     sortOrder,
     archivedStatus,
     sellerId,
+    onlyWithSellers,
+    onlyInStock,
   ]);
 
   return {
@@ -95,9 +117,10 @@ export function useProductsQuery({
     loading,
     error,
     loadMore,
-    hasNextPage: pageInfo?.hasNextPage,
+    hasNextPage: Boolean(pageInfo?.hasNextPage),
     totalCount,
     refetch,
+    isFetchingMore: networkStatus === 3,
   };
 }
 

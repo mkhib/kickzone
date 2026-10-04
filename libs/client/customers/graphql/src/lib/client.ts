@@ -2,9 +2,8 @@ import {
   ApolloClient,
   InMemoryCache,
   ApolloLink,
-  HttpLink,
 } from '@apollo/client';
-import { relayStylePagination } from '@apollo/client/utilities';
+
 import { onError } from '@apollo/client/link/error';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
@@ -47,6 +46,55 @@ const graphqlUri = getGraphQLEndpoint();
 const httpLink = new UploadHttpLink({
   uri: graphqlUri,
   credentials: 'include',
+});
+
+interface ProductConnectionCache {
+  edges?: Array<{ node?: { id?: number | string }; cursor?: string }>;
+  pageInfo?: {
+    endCursor?: string;
+    hasNextPage?: boolean;
+    hasPreviousPage?: boolean;
+  };
+  totalCount?: number;
+}
+
+export const productsPaginationPolicy = () => ({
+  keyArgs: (args: Record<string, Record<string, unknown>> | null) => {
+    if (!args || !args.filter) return false;
+    const { first: _first, after: _after, ...rest } = args.filter;
+    return JSON.stringify(rest);
+  },
+  merge(
+    existing: ProductConnectionCache | undefined,
+    incoming: ProductConnectionCache | undefined,
+    { args }: { args: Record<string, { after?: string }> | null }
+  ) {
+    if (!existing) return incoming;
+    if (!incoming) return existing;
+
+    const existingEdges = existing.edges || [];
+    const incomingEdges = incoming.edges || [];
+
+    if (args?.filter?.after) {
+      const existingIds = new Set(
+        existingEdges.map((e) => e?.node?.id)
+      );
+      const uniqueIncomingEdges = incomingEdges.filter(
+        (e) => e?.node?.id != null && !existingIds.has(e.node.id)
+      );
+      return {
+        ...incoming,
+        edges: [...existingEdges, ...uniqueIncomingEdges],
+        pageInfo: incoming.pageInfo,
+        totalCount:
+          incoming.totalCount !== undefined
+            ? incoming.totalCount
+            : existing.totalCount,
+      };
+    }
+
+    return incoming;
+  },
 });
 
 export const createCustomersApolloClient = (onAuthError: () => void) => {
@@ -144,7 +192,7 @@ export const createCustomersApolloClient = (onAuthError: () => void) => {
       typePolicies: {
         Query: {
           fields: {
-            products: relayStylePagination(['filter']),
+            products: productsPaginationPolicy(),
           },
         },
       },
@@ -170,7 +218,7 @@ const apolloClient = new ApolloClient({
     typePolicies: {
       Query: {
         fields: {
-          products: relayStylePagination(['filter']),
+          products: productsPaginationPolicy(),
         },
       },
     },

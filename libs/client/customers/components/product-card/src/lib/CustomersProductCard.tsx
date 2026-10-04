@@ -659,8 +659,8 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         sx={{
           display: 'flex',
           flexDirection: 'column',
-          alignItems: 'center',
-          textAlign: 'center',
+          alignItems: isRTL ? 'flex-end' : 'flex-start',
+          textAlign: isRTL ? 'right' : 'left',
           px: { xs: 2, sm: 2.5 },
           pt: 1,
           pb: 2.5,
@@ -674,7 +674,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: isRTL ? 'flex-end' : 'flex-start',
               gap: 0.75,
               flexWrap: 'wrap',
               mb: 0.75,
@@ -766,7 +766,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             )}
           </Box>
 
-          {/* Line 2: Product Name (Centered, 2 lines clamp) */}
+          {/* Line 2: Product Name (Language-aligned title) */}
           <Typography
             variant="h6"
             component="h3"
@@ -775,7 +775,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               fontSize: { xs: '1rem', sm: '1.12rem' },
               lineHeight: 1.35,
               color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
-              textAlign: 'center',
+              textAlign: isRTL ? 'right' : 'left',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               display: '-webkit-box',
@@ -796,7 +796,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 color: theme.palette.mode === 'dark' ? '#9ca3af' : '#64748b',
                 fontSize: '0.78rem',
                 fontWeight: 500,
-                textAlign: 'center',
+                textAlign: isRTL ? 'right' : 'left',
                 mb: 0.75,
               })}
             >
@@ -809,7 +809,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: isRTL ? 'flex-end' : 'flex-start',
               gap: 1.5,
               my: 0.5,
               minHeight: 32,
@@ -869,12 +869,12 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             )}
           </Box>
 
-          {/* Line 5: Clean Centered Stock Indicator (Size term removed for minimalist clarity) */}
+          {/* Line 5: Clean Language-Aligned Stock Indicator */}
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
-              justifyContent: 'center',
+              justifyContent: isRTL ? 'flex-end' : 'flex-start',
               mt: 0.8,
               mb: 1,
             }}
@@ -929,12 +929,12 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             </Typography>
           </Box>
 
-          {/* Line 6: Available Sizes Chips (ONLY AVAILABLE IN-STOCK SIZES SHOWN) */}
+          {/* Line 6: Available Sizes Chips */}
           <Box
             sx={{
               display: 'flex',
               flexWrap: 'wrap',
-              justifyContent: 'center',
+              justifyContent: isRTL ? 'flex-end' : 'flex-start',
               alignItems: 'center',
               gap: 0.75,
               mb: 1.5,

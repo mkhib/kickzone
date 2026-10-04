@@ -159,7 +159,8 @@ const fa = {
     proceedToPayment: 'ادامه به پرداخت',
     continueToPaymentGateway: 'ادامه به درگاه پرداخت',
     processing: 'در حال پردازش...',
-    paymentInitializationFailed: 'راه‌اندازی پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.',
+    paymentInitializationFailed:
+      'راه‌اندازی پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.',
   },
 
   // Product management
@@ -395,7 +396,7 @@ const fa = {
   // Messages and notifications
   messages: {
     welcome: `به ${SITE_NAME} خوش آمدید`,
-    homeTitleAccent: 'باش',
+    homeTitleAccent: 'بالا باش',
     homeTitle: SITE_NAME,
     homeDescription: '',
     itemAdded: 'آیتم به سبد خرید اضافه شد',
