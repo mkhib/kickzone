@@ -223,7 +223,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   const isRTL = currentLocale === 'fa';
 
   const [isFavorite, setIsFavorite] = useState(initialFavorite);
-  const [selectedColorId, setSelectedColorId] = useState<number | string | null>(null);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
 
   // Sync external favorite prop if changed
@@ -283,55 +282,10 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       .filter((v): v is NonNullable<typeof v> => v !== null);
   }, [product]);
 
-  // Collect all unique colors available among in-stock variants
-  const allAvailableColors = useMemo(() => {
-    const colorMap = new Map<number | string, KickzoneGraphqlTypes.Color>();
-    availableVariants.forEach((v) => {
-      v.productInfo.colors?.forEach((c) => {
-        if (c && (c.id !== undefined || c.hexCode)) {
-          const key = c.id ?? c.hexCode;
-          if (!colorMap.has(key)) {
-            colorMap.set(key, c);
-          }
-        }
-      });
-    });
-
-    if (colorMap.size === 0 && product.productInfos?.[0]?.colors?.length) {
-      product.productInfos[0].colors.forEach((c) => {
-        const key = c.id ?? c.hexCode;
-        if (!colorMap.has(key)) {
-          colorMap.set(key, c);
-        }
-      });
-    }
-
-    return Array.from(colorMap.values());
-  }, [availableVariants, product.productInfos]);
-
-  // Set default selected color
-  useEffect(() => {
-    if (allAvailableColors.length > 0 && selectedColorId === null) {
-      setSelectedColorId(allAvailableColors[0].id ?? allAvailableColors[0].hexCode);
-    }
-  }, [allAvailableColors, selectedColorId]);
-
-  // Filter variants by selected color if multiple colors exist
-  const colorFilteredVariants = useMemo(() => {
-    if (!selectedColorId || allAvailableColors.length <= 1) {
-      return availableVariants;
-    }
-    const filtered = availableVariants.filter((v) =>
-      v.productInfo.colors?.some((c) => (c.id ?? c.hexCode) === selectedColorId)
-    );
-    return filtered.length > 0 ? filtered : availableVariants;
-  }, [availableVariants, selectedColorId, allAvailableColors.length]);
-
-  // CRITICAL REQUIREMENT: Only available sizes are shown on the cards!
-  // Extracts only sizes with in-stock sellers for the current color filter.
+  // CRITICAL REQUIREMENT: Only available in-stock sizes are shown on the cards!
   const availableSizes = useMemo(() => {
     const sizeSet = new Set<string>();
-    colorFilteredVariants.forEach((v) => {
+    availableVariants.forEach((v) => {
       if (v.productInfo.size && v.stockQuantity > 0) {
         sizeSet.add(v.productInfo.size);
       }
@@ -342,12 +296,12 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       return [];
     }
 
-    const firstKind = colorFilteredVariants[0]?.productInfo.sizeKind;
+    const firstKind = availableVariants[0]?.productInfo.sizeKind;
     const kind = isFootwearSizeKind(firstKind)
       ? SizeKind.Footwear
       : SizeKind.Apparel;
     return sortSizeCodes(kind, rawSizes);
-  }, [colorFilteredVariants]);
+  }, [availableVariants]);
 
   // Ensure an available size is selected by default
   useEffect(() => {
@@ -362,17 +316,25 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 
   // Find active variant corresponding to selected size
   const activeVariant = useMemo(() => {
-    if (colorFilteredVariants.length === 0) {
-      return availableVariants[0] || null;
+    if (availableVariants.length === 0) {
+      return null;
     }
     if (selectedSize) {
-      const match = colorFilteredVariants.find(
+      const match = availableVariants.find(
         (v) => v.productInfo.size === selectedSize
       );
       if (match) return match;
     }
-    return colorFilteredVariants[0];
-  }, [colorFilteredVariants, availableVariants, selectedSize]);
+    return availableVariants[0];
+  }, [availableVariants, selectedSize]);
+
+  // The colors of this single variant (not for user choice; displays this variant's palette)
+  const variantColors = useMemo(() => {
+    if (activeVariant?.productInfo?.colors?.length) {
+      return activeVariant.productInfo.colors;
+    }
+    return product.productInfos?.[0]?.colors || [];
+  }, [activeVariant, product.productInfos]);
 
   // Product pricing and stock calculations
   const pricingInfo = useMemo(() => {
@@ -404,20 +366,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 
   // Active color name for the top right badge
   const activeColorName = useMemo(() => {
-    if (selectedColorId) {
-      const col = allAvailableColors.find(
-        (c) => (c.id ?? c.hexCode) === selectedColorId
-      );
-      if (col?.name) return col.name;
-    }
-    if (activeVariant?.productInfo?.colors?.length) {
-      return formatVariantColorNames(activeVariant.productInfo.colors);
-    }
-    if (allAvailableColors.length > 0) {
-      return allAvailableColors[0].name || allAvailableColors[0].hexCode;
+    if (variantColors.length > 0) {
+      return formatVariantColorNames(variantColors);
     }
     return '';
-  }, [selectedColorId, allAvailableColors, activeVariant]);
+  }, [variantColors]);
 
   // Active image: prefer image matching active variant
   const rawImage =
@@ -483,7 +436,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     <Card
       sx={(theme) => {
         const isDark = theme.palette.mode === 'dark';
-        const ambientRgb = getAmbientTint(allAvailableColors, product.id);
+        const ambientRgb = getAmbientTint(variantColors, product.id);
 
         return {
           width: '100%',
@@ -500,8 +453,8 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             ? '1px solid rgba(255, 255, 255, 0.14)'
             : '1px solid rgba(255, 255, 255, 0.75)',
           background: isDark
-            ? `radial-gradient(circle at 50% 15%, rgba(${ambientRgb}, 0.22) 0%, transparent 65%), linear-gradient(180deg, rgba(26, 28, 36, 0.75) 0%, rgba(16, 17, 24, 0.85) 100%)`
-            : `radial-gradient(circle at 50% 15%, rgba(${ambientRgb}, 0.16) 0%, transparent 65%), linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(250, 251, 254, 0.58) 50%, rgba(246, 247, 252, 0.7) 100%)`,
+            ? `radial-gradient(circle at 50% 28%, rgba(${ambientRgb}, 0.22) 0%, transparent 68%), linear-gradient(180deg, rgba(26, 28, 36, 0.75) 0%, rgba(16, 17, 24, 0.85) 100%)`
+            : `radial-gradient(circle at 50% 28%, rgba(${ambientRgb}, 0.16) 0%, transparent 68%), linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(250, 251, 254, 0.58) 50%, rgba(246, 247, 252, 0.7) 100%)`,
           boxShadow: isDark
             ? '0 20px 50px -10px rgba(0, 0, 0, 0.55), inset 0 1px 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.3)'
             : '0 16px 40px -10px rgba(0, 0, 0, 0.08), 0 24px 60px -15px rgba(0, 0, 0, 0.05), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.03)',
@@ -517,162 +470,135 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         };
       }}
     >
-      {/* Top Floating Glass Controls (Favorite & Color Badge) */}
-      <Box
-        sx={{
-          position: 'absolute',
-          top: 14,
-          left: 14,
-          right: 14,
-          zIndex: 10,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          pointerEvents: 'none',
+      {/* Top Left Floating Favorite / Wishlist Button (Fixed on top-left in both LTR and RTL) */}
+      <IconButton
+        onClick={handleFavoriteClick}
+        size="small"
+        aria-label="favorite"
+        sx={(theme) => {
+          const isDark = theme.palette.mode === 'dark';
+          return {
+            position: 'absolute',
+            top: 14,
+            left: 14,
+            zIndex: 10,
+            width: 36,
+            height: 36,
+            borderRadius: '50%',
+            background: isDark
+              ? 'rgba(255, 255, 255, 0.12)'
+              : 'rgba(255, 255, 255, 0.72)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: isDark
+              ? '1px solid rgba(255, 255, 255, 0.18)'
+              : '1px solid rgba(255, 255, 255, 0.85)',
+            boxShadow: isDark
+              ? '0 4px 14px rgba(0, 0, 0, 0.35)'
+              : '0 4px 14px rgba(0, 0, 0, 0.06)',
+            transition: 'all 0.25s ease',
+            '&:hover': {
+              transform: 'scale(1.08)',
+              background: isDark
+                ? 'rgba(255, 255, 255, 0.2)'
+                : 'rgba(255, 255, 255, 0.95)',
+            },
+          };
         }}
       >
-        {/* Favorite / Wishlist Heart Button (Top Left) */}
-        <IconButton
-          onClick={handleFavoriteClick}
-          size="small"
-          aria-label="favorite"
+        {isFavorite ? (
+          <Favorite sx={{ fontSize: 18, color: '#ef4444' }} />
+        ) : (
+          <FavoriteBorder
+            sx={(theme) => ({
+              fontSize: 18,
+              color:
+                theme.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.85)'
+                  : '#475569',
+            })}
+          />
+        )}
+      </IconButton>
+
+      {/* Top Right Colors Badge (Fixed on top-right in both LTR and RTL; colors belong to this variant) */}
+      {variantColors.length > 0 && (
+        <Box
           sx={(theme) => {
             const isDark = theme.palette.mode === 'dark';
             return {
-              pointerEvents: 'auto',
-              width: 36,
-              height: 36,
-              borderRadius: '50%',
+              position: 'absolute',
+              top: 14,
+              right: 14,
+              zIndex: 10,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0.85,
+              borderRadius: '9999px',
+              px: 1.4,
+              py: 0.5,
               background: isDark
                 ? 'rgba(255, 255, 255, 0.12)'
                 : 'rgba(255, 255, 255, 0.72)',
               backdropFilter: 'blur(16px)',
+              WebkitBackdropFilter: 'blur(16px)',
               border: isDark
                 ? '1px solid rgba(255, 255, 255, 0.18)'
                 : '1px solid rgba(255, 255, 255, 0.85)',
               boxShadow: isDark
                 ? '0 4px 14px rgba(0, 0, 0, 0.35)'
                 : '0 4px 14px rgba(0, 0, 0, 0.06)',
-              transition: 'all 0.25s ease',
-              '&:hover': {
-                transform: 'scale(1.08)',
-                background: isDark
-                  ? 'rgba(255, 255, 255, 0.2)'
-                  : 'rgba(255, 255, 255, 0.95)',
-              },
+              direction: isRTL ? 'rtl' : 'ltr',
+              pointerEvents: 'none',
             };
           }}
         >
-          {isFavorite ? (
-            <Favorite sx={{ fontSize: 18, color: '#ef4444' }} />
-          ) : (
-            <FavoriteBorder
+          {activeColorName && (
+            <Typography
               sx={(theme) => ({
-                fontSize: 18,
-                color:
-                  theme.palette.mode === 'dark'
-                    ? 'rgba(255, 255, 255, 0.85)'
-                    : '#475569',
+                fontSize: '0.78rem',
+                fontWeight: 600,
+                color: theme.palette.mode === 'dark' ? '#e4e4e7' : '#1f2937',
+                lineHeight: 1,
+                userSelect: 'none',
               })}
-            />
+            >
+              {activeColorName}
+            </Typography>
           )}
-        </IconButton>
-
-        {/* Colors Badge (Top Right) */}
-        {allAvailableColors.length > 0 && (
-          <Box
-            sx={(theme) => {
-              const isDark = theme.palette.mode === 'dark';
-              return {
-                pointerEvents: 'auto',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 0.85,
-                borderRadius: '9999px',
-                px: 1.4,
-                py: 0.5,
-                background: isDark
-                  ? 'rgba(255, 255, 255, 0.12)'
-                  : 'rgba(255, 255, 255, 0.72)',
-                backdropFilter: 'blur(16px)',
-                border: isDark
-                  ? '1px solid rgba(255, 255, 255, 0.18)'
-                  : '1px solid rgba(255, 255, 255, 0.85)',
-                boxShadow: isDark
-                  ? '0 4px 14px rgba(0, 0, 0, 0.35)'
-                  : '0 4px 14px rgba(0, 0, 0, 0.06)',
-              };
-            }}
-          >
-            {activeColorName && (
-              <Typography
-                sx={(theme) => ({
-                  fontSize: '0.78rem',
-                  fontWeight: 600,
-                  color: theme.palette.mode === 'dark' ? '#e4e4e7' : '#1f2937',
-                  lineHeight: 1,
-                  userSelect: 'none',
-                })}
-              >
-                {activeColorName}
-              </Typography>
-            )}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              {allAvailableColors.map((col, idx) => {
-                const colKey = col.id ?? col.hexCode;
-                const isCurrentActive =
-                  allAvailableColors.length === 1 ||
-                  colKey === selectedColorId ||
-                  (selectedColorId === null && idx === 0);
-
-                return (
-                  <Box
-                    key={colKey || idx}
-                    component="span"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      if (allAvailableColors.length > 1) {
-                        setSelectedColorId(colKey);
-                      }
-                    }}
-                    sx={(theme) => {
-                      const isDark = theme.palette.mode === 'dark';
-                      return {
-                        width: 18,
-                        height: 18,
-                        borderRadius: '50%',
-                        backgroundColor: col.hexCode,
-                        cursor:
-                          allAvailableColors.length > 1 ? 'pointer' : 'default',
-                        boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                        border:
-                          col.hexCode.toLowerCase() === '#ffffff' ||
-                          col.hexCode.toLowerCase() === '#fff'
-                            ? '1px solid rgba(0,0,0,0.18)'
-                            : '1px solid rgba(255,255,255,0.4)',
-                        outline: isCurrentActive
-                          ? `2px solid ${isDark ? '#ffffff' : '#18181b'}`
-                          : 'none',
-                        outlineOffset: '2px',
-                        transition: 'all 0.2s ease',
-                        '&:hover': {
-                          transform:
-                            allAvailableColors.length > 1
-                              ? 'scale(1.15)'
-                              : 'none',
-                        },
-                      };
-                    }}
-                    title={col.name}
-                  />
-                );
-              })}
-            </Box>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+            {variantColors.map((col, idx) => (
+              <Box
+                key={col.id || col.hexCode || idx}
+                component="span"
+                sx={(theme) => {
+                  const isDark = theme.palette.mode === 'dark';
+                  return {
+                    width: 18,
+                    height: 18,
+                    borderRadius: '50%',
+                    backgroundColor: col.hexCode,
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
+                    border:
+                      col.hexCode.toLowerCase() === '#ffffff' ||
+                      col.hexCode.toLowerCase() === '#fff'
+                        ? '1px solid rgba(0,0,0,0.18)'
+                        : '1px solid rgba(255,255,255,0.4)',
+                    outline:
+                      variantColors.length === 1 || idx === 0
+                        ? `2px solid ${isDark ? '#ffffff' : '#18181b'}`
+                        : 'none',
+                    outlineOffset: '2px',
+                  };
+                }}
+                title={col.name}
+              />
+            ))}
           </Box>
-        )}
-      </Box>
+        </Box>
+      )}
 
-      {/* Product Image Section with Smooth Vertical Gradient Fade */}
+      {/* Product Image Section with Ethereal Progressive Gradient Blur & Fade */}
       <Box
         sx={{
           position: 'relative',
@@ -682,10 +608,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          // Progressive dissolve mask inspired by soft ethereal card fadiness
           maskImage:
-            'linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0.65) 75%, rgba(0,0,0,0) 100%)',
+            'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)',
           WebkitMaskImage:
-            'linear-gradient(to bottom, rgba(0,0,0,1) 50%, rgba(0,0,0,0.65) 75%, rgba(0,0,0,0) 100%)',
+            'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)',
         }}
       >
         <CardMedia
@@ -697,22 +624,33 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             width: '100%',
             height: '100%',
             objectFit: isFootwear ? 'contain' : 'cover',
-            p: isFootwear ? { xs: 2, sm: 2.5 } : 0,
+            p: isFootwear ? { xs: 2.5, sm: 3 } : 0,
             transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         />
 
-        {/* Ambient overlay gradient blending image into card background */}
+        {/* Ethereal Frosted Blur & Ambient Tint Overlay melting image seamlessly into details */}
         <Box
-          sx={(theme) => ({
-            position: 'absolute',
-            inset: 0,
-            pointerEvents: 'none',
-            background:
-              theme.palette.mode === 'dark'
-                ? 'linear-gradient(180deg, rgba(18, 18, 24, 0) 0%, rgba(18, 18, 24, 0.25) 55%, rgba(18, 18, 24, 0.75) 80%, rgba(18, 18, 24, 0.96) 100%)'
-                : 'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 55%, rgba(255, 255, 255, 0.7) 80%, rgba(255, 255, 255, 0.94) 100%)',
-          })}
+          sx={(theme) => {
+            const isDark = theme.palette.mode === 'dark';
+            return {
+              position: 'absolute',
+              left: 0,
+              right: 0,
+              bottom: 0,
+              height: '52%',
+              pointerEvents: 'none',
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              maskImage:
+                'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,1) 100%)',
+              WebkitMaskImage:
+                'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,1) 100%)',
+              background: isDark
+                ? 'linear-gradient(180deg, rgba(18, 18, 24, 0) 0%, rgba(18, 18, 24, 0.25) 35%, rgba(18, 18, 24, 0.72) 75%, rgba(18, 18, 24, 0.96) 100%)'
+                : 'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 35%, rgba(255, 255, 255, 0.68) 75%, rgba(255, 255, 255, 0.94) 100%)',
+            };
+          }}
         />
       </Box>
 
@@ -931,86 +869,67 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             )}
           </Box>
 
-          {/* Line 5: Stock Warning (Left) and Size Label (Right) */}
+          {/* Line 5: Clean Centered Stock Indicator (Size term removed for minimalist clarity) */}
           <Box
             sx={{
-              width: '100%',
               display: 'flex',
-              justifyContent: 'space-between',
               alignItems: 'center',
-              px: 0.5,
-              mt: 1,
-              mb: 0.85,
+              justifyContent: 'center',
+              mt: 0.8,
+              mb: 1,
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-              <Typography
+            <Typography
+              sx={(theme) => {
+                const isDark = theme.palette.mode === 'dark';
+                return {
+                  color: isDark ? '#fb923c' : '#ea580c',
+                  fontWeight: 600,
+                  fontSize: '0.76rem',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.6,
+                  letterSpacing: '0.01em',
+                };
+              }}
+            >
+              <Box
+                component="span"
                 sx={(theme) => {
                   const isDark = theme.palette.mode === 'dark';
                   return {
-                    color: isDark ? '#fb923c' : '#ea580c',
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.5,
+                    display: 'inline-block',
+                    width: 6,
+                    height: 6,
+                    borderRadius: '50%',
+                    backgroundColor: isDark ? '#fb923c' : '#ea580c',
+                    boxShadow: isDark ? '0 0 8px #fb923c' : '0 0 6px #ea580c',
                   };
                 }}
-              >
-                <Box
-                  component="span"
-                  sx={(theme) => {
-                    const isDark = theme.palette.mode === 'dark';
-                    return {
-                      display: 'inline-block',
-                      width: 6,
-                      height: 6,
-                      borderRadius: '50%',
-                      backgroundColor: isDark ? '#fb923c' : '#ea580c',
-                      boxShadow: isDark ? '0 0 8px #fb923c' : '0 0 6px #ea580c',
-                    };
-                  }}
-                />
-                {displayLowStock
-                  ? isRTL
-                    ? `تنها ${formatNumber(
-                        pricingInfo?.stockQuantity || 0,
-                        currentLocale
-                      )} عدد باقی مانده`
-                    : `Only ${formatNumber(
-                        pricingInfo?.stockQuantity || 0,
-                        currentLocale
-                      )} left in stock`
-                  : isRTL
-                  ? `${formatNumber(
-                      pricingInfo?.stockQuantity || 0,
-                      currentLocale
-                    )} عدد موجود`
-                  : `${formatNumber(
-                      pricingInfo?.stockQuantity || 0,
-                      currentLocale
-                    )} in stock`}
-              </Typography>
-            </Box>
-
-            <Typography
-              sx={(theme) => ({
-                color: theme.palette.mode === 'dark' ? '#9ca3af' : '#64748b',
-                fontSize: '0.75rem',
-                fontWeight: 500,
-              })}
-            >
-              {isFootwear
+              />
+              {displayLowStock
                 ? isRTL
-                  ? 'سایز اروپایی'
-                  : 'EU Size'
+                  ? `تنها ${formatNumber(
+                      pricingInfo?.stockQuantity || 0,
+                      currentLocale
+                    )} عدد باقی مانده`
+                  : `Only ${formatNumber(
+                      pricingInfo?.stockQuantity || 0,
+                      currentLocale
+                    )} left in stock`
                 : isRTL
-                ? 'سایز'
-                : 'Size'}
+                ? `${formatNumber(
+                    pricingInfo?.stockQuantity || 0,
+                    currentLocale
+                  )} عدد موجود`
+                : `${formatNumber(
+                    pricingInfo?.stockQuantity || 0,
+                    currentLocale
+                  )} in stock`}
             </Typography>
           </Box>
 
-          {/* Line 6: Available Sizes Chips (ONLY AVAILABLE IN-STOCK SIZES) */}
+          {/* Line 6: Available Sizes Chips (ONLY AVAILABLE IN-STOCK SIZES SHOWN) */}
           <Box
             sx={{
               display: 'flex',
@@ -1074,6 +993,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                               ? '1px solid rgba(255, 255, 255, 0.12)'
                               : '1px solid rgba(0, 0, 0, 0.06)',
                             backdropFilter: 'blur(8px)',
+                            WebkitBackdropFilter: 'blur(8px)',
                             '&:hover': {
                               backgroundColor: isDark
                                 ? 'rgba(255, 255, 255, 0.18)'
@@ -1129,6 +1049,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                       color: '#f0e6d6',
                       boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
                       backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
                       '&:hover': {
                         background:
                           'linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.1) 100%)',
@@ -1143,6 +1064,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                       color: '#5c3d19',
                       boxShadow: '0 8px 24px rgba(217, 186, 140, 0.25)',
                       backdropFilter: 'blur(12px)',
+                      WebkitBackdropFilter: 'blur(12px)',
                       '&:hover': {
                         background:
                           'linear-gradient(180deg, rgba(255, 248, 238, 0.98) 0%, rgba(247, 236, 218, 0.98) 100%)',
