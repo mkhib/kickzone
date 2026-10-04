@@ -7,6 +7,7 @@ import { AdminsUnauthorizedScreen } from '@kickzone-workspace/admins-unauthorize
 import { createPrivateRoute } from '@kickzone-workspace/private-route';
 import { BrowserRouter, Route, Routes } from 'react-router-dom';
 import { SellerManagement } from '@kickzone-workspace/admin-seller-management';
+import { AdminCustomerManagement } from '@kickzone-workspace/admin-customer-management';
 import { LanguageComponents } from '@kickzone-workspace/language-components';
 import { AdminTranslationManagement } from '@kickzone-workspace/translation-management';
 import { AdminSellerOrders } from '@kickzone-workspace/admin-seller-orders';
@@ -33,6 +34,10 @@ export function AdminsRouter() {
             element={<AdminProductEditor />}
           />
           <Route path={ADMIN_ROUTES.SELLERS} element={<SellerManagement />} />
+          <Route
+            path={ADMIN_ROUTES.CUSTOMERS}
+            element={<AdminCustomerManagement />}
+          />
           <Route path={ADMIN_ROUTES.ORDERS} element={<AdminSellerOrders />} />
           <Route
             path={ADMIN_ROUTES.CURRENCY}

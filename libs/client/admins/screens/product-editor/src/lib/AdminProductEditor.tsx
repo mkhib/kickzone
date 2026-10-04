@@ -4,7 +4,11 @@ import {
   useCategoriesQuery,
 } from '@kickzone-workspace/categories-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import { useProducts, useProductById } from '@kickzone-workspace/products-hook';
+import {
+  useProducts,
+  useProductById,
+  resolveProductImageUrl,
+} from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
@@ -639,11 +643,7 @@ const ProductInfoCard = React.memo(
                       <CardMedia
                         component="img"
                         height="140"
-                        image={
-                          preview.startsWith('/uploads/')
-                            ? `${BACKEND_BASE_URL}${preview}`
-                            : preview
-                        }
+                        image={resolveProductImageUrl(preview)}
                         alt={`Product variant image ${imageIdx + 1}`}
                       />
                       <CardActions>
@@ -672,9 +672,6 @@ const ProductInfoCard = React.memo(
     );
   }
 );
-
-const BACKEND_BASE_URL =
-  import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:4000';
 
 interface ColorModalProps {
   open: boolean;

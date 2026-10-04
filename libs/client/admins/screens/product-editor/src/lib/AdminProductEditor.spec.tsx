@@ -55,16 +55,21 @@ vi.mock('@kickzone-workspace/categories-hook', () => ({
   }),
 }));
 
-vi.mock('@kickzone-workspace/products-hook', () => ({
-  useProducts: () => ({
-    createProductWithInfos: mockCreateProductWithInfos,
-    uploadProductInfoImages: mockUploadProductInfoImages,
-    removeProductInfoImage: mockRemoveProductInfoImage,
-    isCreatingProduct: false,
-    updateProduct: mockUpdateProduct,
-  }),
-  useProductById: (...args: unknown[]) => mockUseProductById(...args),
-}));
+vi.mock('@kickzone-workspace/products-hook', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@kickzone-workspace/products-hook')>();
+  return {
+    ...actual,
+    useProducts: () => ({
+      createProductWithInfos: mockCreateProductWithInfos,
+      uploadProductInfoImages: mockUploadProductInfoImages,
+      removeProductInfoImage: mockRemoveProductInfoImage,
+      isCreatingProduct: false,
+      updateProduct: mockUpdateProduct,
+    }),
+    useProductById: (...args: unknown[]) => mockUseProductById(...args),
+  };
+});
 
 vi.mock('@kickzone-workspace/colors-hook', () => ({
   useColors: () => ({

@@ -14,6 +14,8 @@ export default defineConfig(() => ({
   // },
   test: {
     name: 'admin-customer-management',
+    setupFiles: ['../../../../../setupTests.ts'],
+    passWithNoTests: true,
     watch: false,
     globals: true,
     environment: 'jsdom',

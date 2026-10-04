@@ -34,9 +34,9 @@ export class UserResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   async users(
-    @Args('first', { nullable: true }) first: number,
-    @Args('after', { nullable: true }) after: string,
-    @Args('searchTerm', { nullable: true }) searchTerm: string,
+    @Args('first', { nullable: true }) first?: number,
+    @Args('after', { nullable: true }) after?: string,
+    @Args('searchTerm', { nullable: true }) searchTerm?: string,
     @Args('role', { type: () => UserRole, nullable: true }) role?: UserRole
   ): Promise<Connection<User>> {
     return this.userService.findAllPaginated({
@@ -51,9 +51,9 @@ export class UserResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   async customers(
-    @Args('first', { nullable: true }) first: number,
-    @Args('after', { nullable: true }) after: string,
-    @Args('searchTerm', { nullable: true }) searchTerm: string
+    @Args('first', { nullable: true }) first?: number,
+    @Args('after', { nullable: true }) after?: string,
+    @Args('searchTerm', { nullable: true }) searchTerm?: string
   ): Promise<Connection<User>> {
     return this.userService.findAllPaginated({
       first,

@@ -51,10 +51,15 @@ vi.mock('@kickzone-workspace/categories-hook', () => ({
   }),
 }));
 
-vi.mock('@kickzone-workspace/products-hook', () => ({
-  useProductsQuery: () => mockUseProductsQuery(),
-  useProducts: () => mockUseProducts(),
-}));
+vi.mock('@kickzone-workspace/products-hook', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@kickzone-workspace/products-hook')>();
+  return {
+    ...actual,
+    useProductsQuery: () => mockUseProductsQuery(),
+    useProducts: () => mockUseProducts(),
+  };
+});
 
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
   useI18nContext: () => ({
@@ -434,5 +439,13 @@ describe('AdminProducts', () => {
       );
       expect(mockRefetch).toHaveBeenCalled();
     });
+  });
+
+  it('renders product image with resolved relative path without prepending backend host', () => {
+    mockUseAdminsProductsStore.mockReturnValue(createStoreState());
+    renderWithProviders();
+
+    const img = screen.getByRole('img', { name: 'Test Product 1' });
+    expect(img).toHaveAttribute('src', '/uploads/product-1.jpg');
   });
 });

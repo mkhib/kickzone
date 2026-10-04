@@ -132,7 +132,7 @@ export class CartService {
     if (updateInput.quantity !== undefined) {
       if (cartItem.sellerProductId) {
         const sellerProduct = await this.sellerProductRepository.findOne({
-          where: { id: parseInt(cartItem.sellerProductId, 10) },
+          where: { id: cartItem.sellerProductId },
         });
         if (
           sellerProduct &&

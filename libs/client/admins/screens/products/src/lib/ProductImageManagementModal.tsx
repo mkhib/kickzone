@@ -20,7 +20,10 @@ import AddPhotoIcon from '@mui/icons-material/AddPhotoAlternate';
 import UploadIcon from '@mui/icons-material/Upload';
 import WarningIcon from '@mui/icons-material/Warning';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
-import { useProducts } from '@kickzone-workspace/products-hook';
+import {
+  useProducts,
+  resolveProductImageUrl,
+} from '@kickzone-workspace/products-hook';
 import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
 import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-store';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
@@ -345,11 +348,7 @@ export function ProductImageManagementModal({
                           <CardMedia
                             component="img"
                             height="140"
-                            image={
-                              imageUrl.startsWith('/uploads/')
-                                ? `http://127.0.0.1:4000${imageUrl}`
-                                : imageUrl
-                            }
+                            image={resolveProductImageUrl(imageUrl)}
                             alt={`Product image ${imageIndex + 1}`}
                             sx={{ objectFit: 'cover' }}
                           />

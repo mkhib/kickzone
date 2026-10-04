@@ -30,6 +30,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import TranslateIcon from '@mui/icons-material/Translate';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
+import PeopleIcon from '@mui/icons-material/People';
 
 export function AdminsHeaderbar() {
   const { admin: user, setAdmin, logoutAdmin } = useAdminsAuthContext();
@@ -293,6 +294,17 @@ export function AdminsHeaderbar() {
                 <StorefrontIcon />
               </ListItemIcon>
               <CustomListItemText primary={LL.navigation.sellers()} />
+            </ListItemButton>
+
+            <ListItemButton
+              to={ADMIN_ROUTES.CUSTOMERS}
+              component={RouterLink}
+              selected={location.pathname === ADMIN_ROUTES.CUSTOMERS}
+            >
+              <ListItemIcon>
+                <PeopleIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.customers()} />
             </ListItemButton>
 
             <ListItemButton

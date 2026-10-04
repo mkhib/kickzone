@@ -4,6 +4,8 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useProductsQuery,
   useProducts,
+  resolveProductImageUrl,
+  getProductPrimaryImage,
 } from '@kickzone-workspace/products-hook';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
@@ -138,8 +140,6 @@ export function AdminProducts({
   } = useProducts();
   const loaderRef = useRef<HTMLDivElement | null>(null);
   const theme = useTheme();
-  const API_BASE_URL =
-    import.meta.env.VITE_API_BASE_URL ?? 'http://127.0.0.1:4000';
 
   // Infinite scroll: observe the loader div
   useEffect(() => {
@@ -354,11 +354,9 @@ export function AdminProducts({
           <>
             <Grid container spacing={3}>
               {filteredProducts.map((product: KickzoneGraphqlTypes.Product) => {
-                const info = product.productInfos[0];
-                const firstImage = info?.images?.[0];
-                const imageUrl = firstImage?.startsWith('/uploads/')
-                  ? `${API_BASE_URL}${firstImage}`
-                  : firstImage;
+                const info = product.productInfos?.[0];
+                const primaryImage = getProductPrimaryImage(product);
+                const imageUrl = resolveProductImageUrl(primaryImage);
 
                 return (
                   <Grid key={product.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
@@ -389,11 +387,29 @@ export function AdminProducts({
                           overflow: 'hidden',
                         }}
                       >
-                        {imageUrl ? (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: 'text.disabled',
+                          }}
+                        >
+                          <ImageIcon sx={{ fontSize: 60 }} />
+                        </Box>
+                        {imageUrl && (
                           <Box
                             component="img"
                             src={imageUrl}
                             alt={product.name}
+                            onError={(e: React.SyntheticEvent<HTMLImageElement>) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                            }}
                             sx={{
                               position: 'absolute',
                               top: 0,
@@ -403,22 +419,6 @@ export function AdminProducts({
                               objectFit: 'cover',
                             }}
                           />
-                        ) : (
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              height: '100%',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              color: 'text.disabled',
-                            }}
-                          >
-                            <ImageIcon sx={{ fontSize: 60 }} />
-                          </Box>
                         )}
 
                         {/* Status Badge */}

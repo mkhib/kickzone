@@ -22,6 +22,10 @@ describe('ADMIN_ROUTES', () => {
     expect(ADMIN_ROUTES.SELLERS).toBe('/sellers');
   });
 
+  it('should define CUSTOMERS route', () => {
+    expect(ADMIN_ROUTES.CUSTOMERS).toBe('/customers');
+  });
+
   it('should define LOGIN route', () => {
     expect(ADMIN_ROUTES.LOGIN).toBe('/login');
   });
@@ -41,6 +45,7 @@ describe('ADMIN_ROUTES', () => {
       'PRODUCTS_NEW',
       'PRODUCTS_EDIT',
       'SELLERS',
+      'CUSTOMERS',
       'ORDERS',
       'CURRENCY',
       'LOGIN',

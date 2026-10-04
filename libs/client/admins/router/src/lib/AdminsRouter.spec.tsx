@@ -31,6 +31,12 @@ vi.mock('@kickzone-workspace/admin-seller-management', () => ({
   ),
 }));
 
+vi.mock('@kickzone-workspace/admin-customer-management', () => ({
+  AdminCustomerManagement: () => (
+    <div data-testid="admin-customer-management">Customer Management</div>
+  ),
+}));
+
 vi.mock('@kickzone-workspace/admin-seller-orders', () => ({
   AdminSellerOrders: () => (
     <div data-testid="admin-seller-orders">Admin Seller Orders</div>
@@ -159,6 +165,11 @@ describe('AdminsRouter', () => {
       expect(screen.getByTestId('navigate-to-login')).toBeInTheDocument();
     });
 
+    it('should redirect to login for /customers route when not authenticated', () => {
+      renderWithRouter(['/customers']);
+      expect(screen.getByTestId('navigate-to-login')).toBeInTheDocument();
+    });
+
     it('should redirect to login for /orders, /currency, and /translations', () => {
       ['/orders', '/currency', '/translations'].forEach((route) => {
         const { unmount } = renderWithRouter([route]);
@@ -206,6 +217,12 @@ describe('AdminsRouter', () => {
 
     it('should render private route outlet for /sellers route', () => {
       renderWithRouter(['/sellers']);
+      expect(screen.getByTestId('private-route-outlet')).toBeInTheDocument();
+      expect(screen.getByTestId('outlet-content')).toBeInTheDocument();
+    });
+
+    it('should render private route outlet for /customers route', () => {
+      renderWithRouter(['/customers']);
       expect(screen.getByTestId('private-route-outlet')).toBeInTheDocument();
       expect(screen.getByTestId('outlet-content')).toBeInTheDocument();
     });
@@ -303,6 +320,7 @@ describe('AdminsRouter', () => {
         '/products/new',
         '/products/edit/123',
         '/sellers',
+        '/customers',
       ];
 
       protectedRoutes.forEach((route) => {
@@ -341,6 +359,7 @@ describe('AdminsRouter', () => {
         '/products/new',
         '/products/edit/123',
         '/sellers',
+        '/customers',
       ];
       const publicRoutes = ['/login', '/unauthorized'];
 

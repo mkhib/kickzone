@@ -22,6 +22,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         adminPanel: () => 'Admin Panel',
         products: () => 'Products',
         sellers: () => 'Sellers',
+        customers: () => 'Customers',
         translations: () => 'Translations',
         languageSettings: () => 'Language Settings',
       },
@@ -131,6 +132,7 @@ describe('AdminsHeaderbar', () => {
     expect(screen.getAllByText('Add New Product').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Products').length).toBeGreaterThan(0);
     expect(screen.getByText('Sellers')).toBeInTheDocument();
+    expect(screen.getByText('Customers')).toBeInTheDocument();
     expect(screen.getByText('All Seller Orders')).toBeInTheDocument();
     expect(screen.getByText('Currency')).toBeInTheDocument();
   });
