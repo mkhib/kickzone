@@ -27,7 +27,7 @@ export function useSellersProducts({
     categoryIdValue = categoryId;
   }
 
-  const { data, loading, error, fetchMore, refetch } = useQuery<
+  const { data, loading, error, fetchMore, refetch, previousData } = useQuery<
     KickzoneGraphqlTypes.Query,
     KickzoneGraphqlTypes.QuerySellerProductsForMeArgs
   >(SELLER_PRODUCTS_FOR_ME_QUERY, {
@@ -44,9 +44,11 @@ export function useSellersProducts({
     notifyOnNetworkStatusChange: true,
   });
 
-  const products = data?.sellerProductsForMe?.edges?.map((e) => e.node) || [];
-  const pageInfo = data?.sellerProductsForMe?.pageInfo;
-  const totalCount = data?.sellerProductsForMe?.totalCount || 0;
+  const currentData = data ?? previousData;
+  const products =
+    currentData?.sellerProductsForMe?.edges?.map((e) => e.node) || [];
+  const pageInfo = currentData?.sellerProductsForMe?.pageInfo;
+  const totalCount = currentData?.sellerProductsForMe?.totalCount || 0;
 
   const loadMore = () => {
     if (pageInfo?.hasNextPage) {

@@ -27,11 +27,16 @@ import Stack from '@mui/material/Stack';
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import Grid from '@mui/material/Grid';
+import Alert from '@mui/material/Alert';
+import CircularProgress from '@mui/material/CircularProgress';
+import LinearProgress from '@mui/material/LinearProgress';
+import InputAdornment from '@mui/material/InputAdornment';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Visibility as ViewIcon,
   Close as CloseIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import Dialog from '@mui/material/Dialog';
 import DialogTitle from '@mui/material/DialogTitle';
@@ -40,6 +45,8 @@ import DialogActions from '@mui/material/DialogActions';
 import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { useState, useEffect } from 'react';
+
+const SEARCH_DEBOUNCE_MS = 400;
 
 export const SellersProducts = () => {
   const { canManageCatalog } = useSellersAuthContext();
@@ -61,6 +68,37 @@ export const SellersProducts = () => {
     setSellersProductsSortField,
     setStatus,
   } = useSellersProductsStore();
+
+  const [searchInput, setSearchInput] = useState(search);
+
+  // Sync local searchInput if search in store changes externally (e.g. resetFilters)
+  useEffect(() => {
+    setSearchInput(search);
+  }, [search]);
+
+  // Debounce search update to avoid firing queries on every keystroke
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (searchInput !== search) {
+        setSearch(searchInput);
+      }
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  }, [searchInput, search, setSearch]);
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Enter') {
+      if (searchInput !== search) {
+        setSearch(searchInput);
+      }
+    }
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput('');
+    setSearch('');
+  };
 
   const {
     sellersProducts,
@@ -246,28 +284,6 @@ export const SellersProducts = () => {
     setSelectedProductForView(null);
   };
 
-  if (isSellersProductsLoading) {
-    return (
-      <SellersLayout>
-        <Box sx={{ p: 3 }}>
-          <Typography>{LL.products.loadingProducts()}</Typography>
-        </Box>
-      </SellersLayout>
-    );
-  }
-
-  if (sellersProductsError) {
-    return (
-      <SellersLayout>
-        <Box sx={{ p: 3 }}>
-          <Typography color="error">
-            {LL.products.errorLoadingProducts()}: {sellersProductsError.message}
-          </Typography>
-        </Box>
-      </SellersLayout>
-    );
-  }
-
   return (
     <SellersLayout>
       <GlassmorphismContainer fullHeight>
@@ -328,9 +344,31 @@ export const SellersProducts = () => {
               <TextField
                 fullWidth
                 label={LL.products.searchProducts()}
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={handleSearchKeyDown}
                 size="small"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <SearchIcon fontSize="small" color="action" />
+                      </InputAdornment>
+                    ),
+                    endAdornment: searchInput ? (
+                      <InputAdornment position="end">
+                        <IconButton
+                          aria-label={LL.button.clear() || 'Clear'}
+                          onClick={handleClearSearch}
+                          edge="end"
+                          size="small"
+                        >
+                          <CloseIcon fontSize="small" />
+                        </IconButton>
+                      </InputAdornment>
+                    ) : null,
+                  },
+                }}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -397,8 +435,56 @@ export const SellersProducts = () => {
           </Grid>
         </Box>
 
+        {/* Error State (when no products) */}
+        {sellersProductsError && sellersProducts.length === 0 && (
+          <Box sx={{ py: 4 }}>
+            <Alert severity="error">
+              {LL.products.errorLoadingProducts()}: {sellersProductsError.message}
+            </Alert>
+          </Box>
+        )}
+
+        {/* Error Alert (when products are displayed) */}
+        {sellersProductsError && sellersProducts.length > 0 && (
+          <Alert severity="error" sx={{ mb: 3 }}>
+            {LL.products.errorLoadingProducts()}: {sellersProductsError.message}
+          </Alert>
+        )}
+
+        {/* Initial Loading State */}
+        {isSellersProductsLoading && sellersProducts.length === 0 && !sellersProductsError && (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              py: 10,
+              gap: 2,
+            }}
+          >
+            <CircularProgress />
+            <Typography color="text.secondary">
+              {LL.products.loadingProducts()}
+            </Typography>
+          </Box>
+        )}
+
+        {/* Subsequent / Filter Loading Progress */}
+        {isSellersProductsLoading && sellersProducts.length > 0 && (
+          <LinearProgress sx={{ mb: 2, borderRadius: 1 }} />
+        )}
+
         {/* Products Grid */}
-        <Grid container spacing={3}>
+        {sellersProducts.length > 0 && (
+          <Grid
+            container
+            spacing={3}
+            sx={{
+              opacity: isSellersProductsLoading ? 0.6 : 1,
+              transition: 'opacity 0.2s ease-in-out',
+            }}
+          >
           {sellersProducts.map((product: KickzoneGraphqlTypes.Product) => {
             // Since the backend filters by seller ID, sellerProducts should only contain current seller's products
             const sellerProducts = product.sellerProducts || [];
@@ -801,14 +887,16 @@ export const SellersProducts = () => {
             );
           })}
         </Grid>
+        )}
 
         {/* Load More */}
-        {hasMoreSellersProducts && (
+        {hasMoreSellersProducts && sellersProducts.length > 0 && (
           <Box sx={{ display: 'flex', justifyContent: 'center', mt: 4 }}>
             <Button
               onClick={loadMoreSellersProducts}
               variant="outlined"
               size="large"
+              disabled={isSellersProductsLoading}
               sx={{ minWidth: 200, textTransform: 'none' }}
             >
               {LL.products.loadMore()}
@@ -817,7 +905,9 @@ export const SellersProducts = () => {
         )}
 
         {/* Empty State */}
-        {sellersProducts.length === 0 && !isSellersProductsLoading && (
+        {sellersProducts.length === 0 &&
+          !isSellersProductsLoading &&
+          !sellersProductsError && (
           <Box
             sx={(theme) => {
               const isDark = theme.palette.mode === 'dark';
