@@ -1,4 +1,4 @@
-import React, { useCallback, useState, useMemo, useEffect } from 'react';
+import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useI18nContext,
@@ -11,6 +11,7 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import ShoppingBagOutlined from '@mui/icons-material/ShoppingBagOutlined';
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
 import Favorite from '@mui/icons-material/Favorite';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
@@ -20,6 +21,7 @@ import {
   isFootwearSizeKind,
   SizeKind,
 } from '@kickzone-workspace/product-sizes';
+import { useCartStore } from '@kickzone-workspace/customer-cart-store';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   'https://image-cdn.hypb.st/https%3A%2F%2Fhypebeast.com%2Fimage%2F2021%2F10%2Fair-jordan-1-high-og-rebellionaire-closer-look-release-info-555088-036-000.jpg?w=960&cbr=1&q=90&fit=max';
@@ -78,6 +80,34 @@ function extractBrand(productName: string, fallback = 'Nike'): string {
     return firstWord.charAt(0).toUpperCase() + firstWord.slice(1).toLowerCase();
   }
   return fallback;
+}
+
+/**
+ * Generates CSS background for a single circular disc.
+ * - 1 color: solid color
+ * - 2 colors: 50/50 sharp diagonal split
+ * - 3+ colors: sharp conic-gradient pie slices
+ */
+export function getMultiColorDiscBackground(
+  colors?: Array<{ hexCode: string }> | null
+): string {
+  if (!colors || colors.length === 0) return 'transparent';
+  const cleanHexes = colors
+    .map((c) => (c.hexCode || '').trim())
+    .filter(Boolean);
+  if (cleanHexes.length === 0) return 'transparent';
+  if (cleanHexes.length === 1) return cleanHexes[0];
+  if (cleanHexes.length === 2) {
+    return `linear-gradient(135deg, ${cleanHexes[0]} 0%, ${cleanHexes[0]} 50%, ${cleanHexes[1]} 50%, ${cleanHexes[1]} 100%)`;
+  }
+  const count = cleanHexes.length;
+  const slice = 360 / count;
+  const stops = cleanHexes.map((hex, i) => {
+    const start = (i * slice).toFixed(1);
+    const end = ((i + 1) * slice).toFixed(1);
+    return `${hex} ${start}deg ${end}deg`;
+  });
+  return `conic-gradient(${stops.join(', ')})`;
 }
 
 // Compute soft ambient glow RGB matching product colors/character
@@ -223,7 +253,21 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   const isRTL = currentLocale === 'fa';
 
   const [isFavorite, setIsFavorite] = useState(initialFavorite);
+  const [selectedColorwayKey, setSelectedColorwayKey] = useState<string | null>(
+    null
+  );
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
+  const [isAddedRecently, setIsAddedRecently] = useState(false);
+  const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Clear micro-animation timer on unmount
+  useEffect(() => {
+    return () => {
+      if (addedTimerRef.current) {
+        clearTimeout(addedTimerRef.current);
+      }
+    };
+  }, []);
 
   // Sync external favorite prop if changed
   useEffect(() => {
@@ -282,10 +326,92 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       .filter((v): v is NonNullable<typeof v> => v !== null);
   }, [product]);
 
+  // Group in-stock variants (or fallback catalog items) by unique colorway
+  const availableColorways = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        key: string;
+        colors: Array<{ id?: number; hexCode: string; name?: string }>;
+        name: string;
+        variants: typeof availableVariants;
+      }
+    >();
+
+    const sourceVariants =
+      availableVariants.length > 0
+        ? availableVariants
+        : (product.productInfos || []).map((pi) => ({
+            productInfo: pi,
+            sellerProduct: (product.sellerProducts || [])[0],
+            originalPrice: 0,
+            finalPrice: 0,
+            discount: 0,
+            stockQuantity: 0,
+          }));
+
+    sourceVariants.forEach((v) => {
+      const colors = v.productInfo.colors || [];
+      if (colors.length === 0) return;
+      const key =
+        colors
+          .map((c) => (c.hexCode || '').toLowerCase().trim())
+          .sort()
+          .join(',') || `single-${v.productInfo.id}`;
+
+      const existing = map.get(key);
+      if (!existing) {
+        map.set(key, {
+          key,
+          colors,
+          name: formatVariantColorNames(colors),
+          variants: [v],
+        });
+      } else {
+        existing.variants.push(v);
+      }
+    });
+
+    return Array.from(map.values());
+  }, [availableVariants, product.productInfos, product.sellerProducts]);
+
+  // Sync selected colorway
+  useEffect(() => {
+    if (availableColorways.length > 0) {
+      if (
+        !selectedColorwayKey ||
+        !availableColorways.some((c) => c.key === selectedColorwayKey)
+      ) {
+        setSelectedColorwayKey(availableColorways[0].key);
+      }
+    } else {
+      setSelectedColorwayKey(null);
+    }
+  }, [availableColorways, selectedColorwayKey]);
+
+  // Active colorway
+  const activeColorway = useMemo(() => {
+    if (!selectedColorwayKey) return availableColorways[0] || null;
+    return (
+      availableColorways.find((c) => c.key === selectedColorwayKey) ||
+      availableColorways[0] ||
+      null
+    );
+  }, [availableColorways, selectedColorwayKey]);
+
+  // Variants matching the currently selected colorway
+  const activeColorwayVariants = useMemo(() => {
+    if (availableColorways.length === 0) {
+      return availableVariants;
+    }
+    const match = availableColorways.find((c) => c.key === selectedColorwayKey);
+    return match ? match.variants : availableVariants;
+  }, [availableColorways, selectedColorwayKey, availableVariants]);
+
   // CRITICAL REQUIREMENT: Only available in-stock sizes are shown on the cards!
   const availableSizes = useMemo(() => {
     const sizeSet = new Set<string>();
-    availableVariants.forEach((v) => {
+    activeColorwayVariants.forEach((v) => {
       if (v.productInfo.size && v.stockQuantity > 0) {
         sizeSet.add(v.productInfo.size);
       }
@@ -296,12 +422,12 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       return [];
     }
 
-    const firstKind = availableVariants[0]?.productInfo.sizeKind;
+    const firstKind = activeColorwayVariants[0]?.productInfo.sizeKind;
     const kind = isFootwearSizeKind(firstKind)
       ? SizeKind.Footwear
       : SizeKind.Apparel;
     return sortSizeCodes(kind, rawSizes);
-  }, [availableVariants]);
+  }, [activeColorwayVariants]);
 
   // Ensure an available size is selected by default
   useEffect(() => {
@@ -314,27 +440,30 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     }
   }, [availableSizes, selectedSize]);
 
-  // Find active variant corresponding to selected size
+  // Find active variant corresponding to selected size & colorway
   const activeVariant = useMemo(() => {
-    if (availableVariants.length === 0) {
-      return null;
+    if (activeColorwayVariants.length === 0) {
+      return availableVariants[0] || null;
     }
     if (selectedSize) {
-      const match = availableVariants.find(
+      const match = activeColorwayVariants.find(
         (v) => v.productInfo.size === selectedSize
       );
       if (match) return match;
     }
-    return availableVariants[0];
-  }, [availableVariants, selectedSize]);
+    return activeColorwayVariants[0];
+  }, [activeColorwayVariants, selectedSize, availableVariants]);
 
-  // The colors of this single variant (not for user choice; displays this variant's palette)
+  // The colors of this active variant / colorway
   const variantColors = useMemo(() => {
+    if (activeColorway?.colors?.length) {
+      return activeColorway.colors;
+    }
     if (activeVariant?.productInfo?.colors?.length) {
       return activeVariant.productInfo.colors;
     }
     return product.productInfos?.[0]?.colors || [];
-  }, [activeVariant, product.productInfos]);
+  }, [activeColorway, activeVariant, product.productInfos]);
 
   // Product pricing and stock calculations
   const pricingInfo = useMemo(() => {
@@ -366,15 +495,19 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 
   // Active color name for the top right badge
   const activeColorName = useMemo(() => {
+    if (activeColorway?.name) {
+      return activeColorway.name;
+    }
     if (variantColors.length > 0) {
       return formatVariantColorNames(variantColors);
     }
     return '';
-  }, [variantColors]);
+  }, [activeColorway, variantColors]);
 
   // Active image: prefer image matching active variant
   const rawImage =
     activeVariant?.productInfo.images?.[0] ||
+    activeColorwayVariants[0]?.productInfo.images?.[0] ||
     product.productInfos?.find((pi) => pi.images?.[0])?.images?.[0] ||
     product.sellerProducts?.find((sp) => sp.productInfo?.images?.[0])
       ?.productInfo?.images?.[0];
@@ -400,6 +533,24 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     );
   }, [activeVariant, categoryName, product.name]);
 
+  const cartItems = useCartStore((state) => state.items);
+
+  // Check quantity already in cart for this specific variant
+  const cartQuantityForActiveVariant = useMemo(() => {
+    if (!activeVariant) return 0;
+    const match = cartItems.find(
+      (item) =>
+        item.productId === product.id.toString() &&
+        (item.productInfoId === activeVariant.productInfo.id.toString() ||
+          item.sellerProductId === activeVariant.sellerProduct.id.toString())
+    );
+    return match?.quantity || 0;
+  }, [cartItems, product.id, activeVariant]);
+
+  const stockAvailable = pricingInfo?.stockQuantity || 0;
+  const isMaxInCart =
+    stockAvailable > 0 && cartQuantityForActiveVariant >= stockAvailable;
+
   const handleFavoriteClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -412,7 +563,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   const handleAddToCartClick = useCallback(
     (e: React.MouseEvent) => {
       e.stopPropagation();
-      if (!activeVariant) return;
+      if (!activeVariant || isMaxInCart) return;
 
       if (onAddVariantToCart) {
         onAddVariantToCart({
@@ -428,8 +579,17 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         };
         onAddToCart(productWithSelectedVariant);
       }
+
+      // Micro-animation feedback
+      setIsAddedRecently(true);
+      if (addedTimerRef.current) {
+        clearTimeout(addedTimerRef.current);
+      }
+      addedTimerRef.current = setTimeout(() => {
+        setIsAddedRecently(false);
+      }, 1400);
     },
-    [activeVariant, product, onAddToCart, onAddVariantToCart]
+    [activeVariant, isMaxInCart, product, onAddToCart, onAddVariantToCart]
   );
 
   return (
@@ -521,11 +681,13 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         )}
       </IconButton>
 
-      {/* Top Right Colors Badge (Fixed on top-right in both LTR and RTL; colors belong to this variant) */}
-      {variantColors.length > 0 && (
+      {/* Top Right Colors Badge (Single multi-color disc if 1 variant; multiple discs if different variant colors exist) */}
+      {availableColorways.length > 0 && variantColors.length > 0 && (
         <Box
           sx={(theme) => {
             const isDark = theme.palette.mode === 'dark';
+            const isMultiColorway = availableColorways.length > 1;
+
             return {
               position: 'absolute',
               top: 14,
@@ -549,7 +711,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 ? '0 4px 14px rgba(0, 0, 0, 0.35)'
                 : '0 4px 14px rgba(0, 0, 0, 0.06)',
               direction: isRTL ? 'rtl' : 'ltr',
-              pointerEvents: 'none',
+              pointerEvents: isMultiColorway ? 'auto' : 'none',
             };
           }}
         >
@@ -566,34 +728,62 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               {activeColorName}
             </Typography>
           )}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-            {variantColors.map((col, idx) => (
-              <Box
-                key={col.id || col.hexCode || idx}
-                component="span"
-                sx={(theme) => {
-                  const isDark = theme.palette.mode === 'dark';
-                  return {
-                    width: 18,
-                    height: 18,
-                    borderRadius: '50%',
-                    backgroundColor: col.hexCode,
-                    boxShadow: '0 1px 3px rgba(0,0,0,0.2)',
-                    border:
-                      col.hexCode.toLowerCase() === '#ffffff' ||
-                      col.hexCode.toLowerCase() === '#fff'
-                        ? '1px solid rgba(0,0,0,0.18)'
-                        : '1px solid rgba(255,255,255,0.4)',
-                    outline:
-                      variantColors.length === 1 || idx === 0
-                        ? `2px solid ${isDark ? '#ffffff' : '#18181b'}`
-                        : 'none',
-                    outlineOffset: '2px',
-                  };
-                }}
-                title={col.name}
-              />
-            ))}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+            {availableColorways.map((colway) => {
+              const isMultiColorway = availableColorways.length > 1;
+              const isSelected = colway.key === selectedColorwayKey;
+
+              return (
+                <Box
+                  key={colway.key}
+                  component={isMultiColorway ? 'button' : 'span'}
+                  type={isMultiColorway ? 'button' : undefined}
+                  onClick={
+                    isMultiColorway
+                      ? (e: React.MouseEvent) => {
+                          e.stopPropagation();
+                          setSelectedColorwayKey(colway.key);
+                        }
+                      : undefined
+                  }
+                  title={colway.name}
+                  aria-label={colway.name}
+                  sx={(theme) => {
+                    const isDark = theme.palette.mode === 'dark';
+                    const goldColor = isDark ? '#c5b89a' : '#8f8468';
+
+                    return {
+                      width: 19,
+                      height: 19,
+                      p: 0,
+                      borderRadius: '50%',
+                      background: getMultiColorDiscBackground(colway.colors),
+                      boxShadow: '0 1px 4px rgba(0,0,0,0.22)',
+                      border: isDark
+                        ? '1px solid rgba(255,255,255,0.35)'
+                        : '1px solid rgba(0,0,0,0.15)',
+                      outline:
+                        isMultiColorway && isSelected
+                          ? `2px solid ${goldColor}`
+                          : 'none',
+                      outlineOffset: '2px',
+                      cursor: isMultiColorway ? 'pointer' : 'default',
+                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+                      transform:
+                        isMultiColorway && isSelected
+                          ? 'scale(1.12)'
+                          : 'scale(1)',
+                      '&:hover': isMultiColorway
+                        ? {
+                            transform: 'scale(1.22)',
+                            boxShadow: `0 0 8px ${goldColor}`,
+                          }
+                        : undefined,
+                    };
+                  }}
+                />
+              );
+            })}
           </Box>
         </Box>
       )}
@@ -669,7 +859,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         }}
       >
         <Box sx={{ width: '100%' }}>
-          {/* Line 1: Badge • Brand • Category */}
+          {/* Line 1: Tags • Brand • Category */}
           <Box
             sx={{
               display: 'flex',
@@ -677,23 +867,36 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               justifyContent: isRTL ? 'flex-end' : 'flex-start',
               gap: 0.75,
               flexWrap: 'wrap',
-              mb: 0.75,
+              mb: 0.85,
             }}
           >
-            <Typography
-              component="span"
+            {/* Status Tag: Master's Pick / New */}
+            <Box
               sx={(theme) => {
                 const isDark = theme.palette.mode === 'dark';
                 return {
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5,
+                  borderRadius: '9999px',
+                  px: 1.2,
+                  py: 0.3,
+                  fontSize: '0.72rem',
                   fontWeight: 700,
-                  fontSize: '0.78rem',
-                  color: isRecommended
-                    ? isDark
-                      ? '#f59e0b'
-                      : '#d97706'
-                    : isDark
-                    ? '#fb923c'
-                    : '#ea580c',
+                  letterSpacing: '0.02em',
+                  lineHeight: 1.2,
+                  backdropFilter: 'blur(16px) saturate(180%)',
+                  WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                  background: isDark
+                    ? 'linear-gradient(180deg, rgba(197, 184, 154, 0.16) 0%, rgba(197, 184, 154, 0.05) 100%)'
+                    : 'linear-gradient(180deg, rgba(168, 152, 112, 0.16) 0%, rgba(168, 152, 112, 0.05) 100%)',
+                  border: isDark
+                    ? '1px solid rgba(197, 184, 154, 0.32)'
+                    : '1px solid rgba(143, 132, 104, 0.35)',
+                  color: isDark ? '#c5b89a' : '#7c6d48',
+                  boxShadow: isDark
+                    ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1)'
+                    : '0 2px 8px rgba(168, 152, 112, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.75)',
                 };
               }}
             >
@@ -704,11 +907,76 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 : isRTL
                 ? 'جدید'
                 : 'New'}
-            </Typography>
-
-            <Box component="span" sx={{ opacity: 0.45, fontSize: '0.7rem' }}>
-              •
             </Box>
+
+            {/* Discount Tag (if any) */}
+            {pricingInfo && pricingInfo.discount > 0 && (
+              <Box
+                sx={(theme) => {
+                  const isDark = theme.palette.mode === 'dark';
+                  return {
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    borderRadius: '9999px',
+                    px: 1.1,
+                    py: 0.3,
+                    fontSize: '0.72rem',
+                    fontWeight: 700,
+                    letterSpacing: '0.02em',
+                    lineHeight: 1.2,
+                    backdropFilter: 'blur(16px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                    background: isDark
+                      ? 'linear-gradient(180deg, rgba(239, 68, 68, 0.16) 0%, rgba(197, 184, 154, 0.06) 100%)'
+                      : 'linear-gradient(180deg, rgba(220, 38, 38, 0.12) 0%, rgba(168, 152, 112, 0.06) 100%)',
+                    border: isDark
+                      ? '1px solid rgba(239, 68, 68, 0.38)'
+                      : '1px solid rgba(220, 38, 38, 0.32)',
+                    color: isDark ? '#fca5a5' : '#b91c1c',
+                    boxShadow: isDark
+                      ? '0 2px 8px rgba(239, 68, 68, 0.2)'
+                      : '0 2px 8px rgba(220, 38, 38, 0.12)',
+                  };
+                }}
+              >
+                {isRTL
+                  ? `${pricingInfo.discount}٪ تخفیف`
+                  : `${pricingInfo.discount}% OFF`}
+              </Box>
+            )}
+
+            {/* Box-less Tag (if any) */}
+            {isBoxLess && (
+              <Box
+                sx={(theme) => {
+                  const isDark = theme.palette.mode === 'dark';
+                  return {
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: 0.5,
+                    borderRadius: '9999px',
+                    px: 1.1,
+                    py: 0.3,
+                    fontSize: '0.72rem',
+                    fontWeight: 600,
+                    letterSpacing: '0.02em',
+                    lineHeight: 1.2,
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    background: isDark
+                      ? 'rgba(197, 184, 154, 0.08)'
+                      : 'rgba(168, 152, 112, 0.08)',
+                    border: isDark
+                      ? '1px solid rgba(197, 184, 154, 0.22)'
+                      : '1px solid rgba(143, 132, 104, 0.25)',
+                    color: isDark ? '#c5b89a' : '#7c6d48',
+                  };
+                }}
+              >
+                {LL.products.boxLess()}
+              </Box>
+            )}
 
             <Typography
               component="span"
@@ -739,28 +1007,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   })}
                 >
                   {categoryName}
-                </Typography>
-              </>
-            )}
-
-            {isBoxLess && (
-              <>
-                <Box
-                  component="span"
-                  sx={{ opacity: 0.45, fontSize: '0.7rem' }}
-                >
-                  •
-                </Box>
-                <Typography
-                  component="span"
-                  sx={(theme) => ({
-                    color:
-                      theme.palette.mode === 'dark' ? '#a1a1aa' : '#64748b',
-                    fontWeight: 600,
-                    fontSize: '0.75rem',
-                  })}
-                >
-                  {LL.products.boxLess()}
                 </Typography>
               </>
             )}
@@ -882,8 +1128,9 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             <Typography
               sx={(theme) => {
                 const isDark = theme.palette.mode === 'dark';
+                const goldColor = isDark ? '#c5b89a' : '#7c6d48';
                 return {
-                  color: isDark ? '#fb923c' : '#ea580c',
+                  color: goldColor,
                   fontWeight: 600,
                   fontSize: '0.76rem',
                   display: 'inline-flex',
@@ -897,13 +1144,16 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 component="span"
                 sx={(theme) => {
                   const isDark = theme.palette.mode === 'dark';
+                  const goldColor = isDark ? '#c5b89a' : '#7c6d48';
                   return {
                     display: 'inline-block',
                     width: 6,
                     height: 6,
                     borderRadius: '50%',
-                    backgroundColor: isDark ? '#fb923c' : '#ea580c',
-                    boxShadow: isDark ? '0 0 8px #fb923c' : '0 0 6px #ea580c',
+                    backgroundColor: goldColor,
+                    boxShadow: isDark
+                      ? '0 0 8px #c5b89a'
+                      : '0 0 6px #7c6d48',
                   };
                 }}
               />
@@ -929,7 +1179,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             </Typography>
           </Box>
 
-          {/* Line 6: Available Sizes Chips */}
+          {/* Line 6: Available Sizes Chips (Blurry Liquid Glass with Gold Accents) */}
           <Box
             sx={{
               display: 'flex',
@@ -967,38 +1217,41 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                       justifyContent: 'center',
                       fontSize: '0.75rem',
                       fontFamily: 'inherit',
+                      backdropFilter: 'blur(12px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(12px) saturate(180%)',
                       transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                       ...(isSelected
                         ? {
-                            backgroundColor: isDark
-                              ? 'rgba(255, 255, 255, 0.95)'
-                              : '#ffffff',
-                            color: '#09090b',
+                            background: isDark
+                              ? 'linear-gradient(180deg, rgba(197, 184, 154, 0.28) 0%, rgba(197, 184, 154, 0.14) 100%)'
+                              : 'linear-gradient(180deg, rgba(168, 152, 112, 0.24) 0%, rgba(168, 152, 112, 0.12) 100%)',
+                            color: isDark ? '#ffffff' : '#2e2513',
                             fontWeight: 700,
                             border: isDark
-                              ? '1px solid rgba(255, 255, 255, 0.4)'
-                              : '1px solid rgba(0, 0, 0, 0.12)',
+                              ? '1px solid rgba(197, 184, 154, 0.75)'
+                              : '1px solid rgba(143, 132, 104, 0.75)',
                             boxShadow: isDark
-                              ? '0 4px 14px rgba(255, 255, 255, 0.25)'
-                              : '0 4px 12px rgba(0, 0, 0, 0.12)',
+                              ? '0 0 14px rgba(197, 184, 154, 0.35)'
+                              : '0 0 12px rgba(168, 152, 112, 0.3)',
                             transform: 'translateY(-1px)',
                           }
                         : {
-                            backgroundColor: isDark
-                              ? 'rgba(255, 255, 255, 0.08)'
-                              : 'rgba(255, 255, 255, 0.55)',
-                            color: isDark ? '#d4d4d8' : '#334155',
+                            background: isDark
+                              ? 'rgba(197, 184, 154, 0.08)'
+                              : 'rgba(168, 152, 112, 0.08)',
+                            color: isDark ? '#d4cbb8' : '#5c4e33',
                             fontWeight: 500,
                             border: isDark
-                              ? '1px solid rgba(255, 255, 255, 0.12)'
-                              : '1px solid rgba(0, 0, 0, 0.06)',
-                            backdropFilter: 'blur(8px)',
-                            WebkitBackdropFilter: 'blur(8px)',
+                              ? '1px solid rgba(197, 184, 154, 0.2)'
+                              : '1px solid rgba(168, 152, 112, 0.25)',
                             '&:hover': {
-                              backgroundColor: isDark
-                                ? 'rgba(255, 255, 255, 0.18)'
-                                : 'rgba(255, 255, 255, 0.85)',
-                              color: isDark ? '#ffffff' : '#0f172a',
+                              background: isDark
+                                ? 'rgba(197, 184, 154, 0.18)'
+                                : 'rgba(168, 152, 112, 0.18)',
+                              border: isDark
+                                ? '1px solid rgba(197, 184, 154, 0.45)'
+                                : '1px solid rgba(168, 152, 112, 0.45)',
+                              color: isDark ? '#ffffff' : '#1f1a0e',
                               transform: 'translateY(-1px)',
                             },
                           }),
@@ -1012,16 +1265,43 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           </Box>
         </Box>
 
-        {/* Line 7: Add to Cart Button (Full-width liquid glass pill button) */}
+        {/* Line 7: Add to Cart Button (Liquid Frosted Glass Pill Button with micro-interaction) */}
         <Box sx={{ width: '100%' }}>
           <Button
             variant="contained"
             fullWidth
-            disabled={hasNoSellers || isOutOfStock}
+            disabled={hasNoSellers || isOutOfStock || isMaxInCart}
             onClick={handleAddToCartClick}
-            startIcon={<ShoppingBagOutlined sx={{ fontSize: 19 }} />}
+            startIcon={
+              isAddedRecently ? (
+                <CheckCircleOutline
+                  sx={(theme) => ({
+                    fontSize: 20,
+                    color:
+                      theme.palette.mode === 'dark' ? '#c5b89a' : '#7c6d48',
+                    animation:
+                      'cartCheckPop 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275) both',
+                    '@keyframes cartCheckPop': {
+                      '0%': {
+                        transform: 'scale(0.3) rotate(-25deg)',
+                        opacity: 0,
+                      },
+                      '100%': { transform: 'scale(1) rotate(0deg)', opacity: 1 },
+                    },
+                  })}
+                />
+              ) : (
+                <ShoppingBagOutlined sx={{ fontSize: 19 }} />
+              )
+            }
             sx={(theme) => {
               const isDark = theme.palette.mode === 'dark';
+              const isDisabled = hasNoSellers || isOutOfStock || isMaxInCart;
+
+              // Gold champagne color tokens from theme
+              const goldColor = isDark ? '#c5b89a' : '#7c6d48';
+              const goldHover = isDark ? '#ddd4bf' : '#65583b';
+
               return {
                 borderRadius: '9999px',
                 py: { xs: 1.15, sm: 1.3 },
@@ -1029,49 +1309,81 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 fontSize: { xs: '0.85rem', sm: '0.92rem' },
                 letterSpacing: '0.02em',
                 textTransform: 'none',
-                transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
-                ...(hasNoSellers || isOutOfStock
+                position: 'relative',
+                overflow: 'hidden',
+                backdropFilter: 'blur(20px) saturate(190%)',
+                WebkitBackdropFilter: 'blur(20px) saturate(190%)',
+                transition:
+                  'all 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                ...(isDisabled
                   ? {
                       background: isDark
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(0, 0, 0, 0.05)',
+                        ? 'rgba(255, 255, 255, 0.04)'
+                        : 'rgba(0, 0, 0, 0.04)',
                       color: isDark ? '#71717a' : '#9ca3af',
                       border: isDark
                         ? '1px solid rgba(255, 255, 255, 0.08)'
                         : '1px solid rgba(0, 0, 0, 0.08)',
                       boxShadow: 'none',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
                     }
                   : isDark
                   ? {
-                      background:
-                        'linear-gradient(180deg, rgba(255, 255, 255, 0.14) 0%, rgba(255, 255, 255, 0.06) 100%)',
-                      border: '1px solid rgba(255, 255, 255, 0.18)',
-                      color: '#f0e6d6',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.3)',
-                      backdropFilter: 'blur(12px)',
-                      WebkitBackdropFilter: 'blur(12px)',
+                      // Translucent blurry liquid glass with warm gold tint in Dark Mode
+                      background: isAddedRecently
+                        ? 'linear-gradient(180deg, rgba(197, 184, 154, 0.25) 0%, rgba(197, 184, 154, 0.12) 100%)'
+                        : 'linear-gradient(180deg, rgba(197, 184, 154, 0.13) 0%, rgba(197, 184, 154, 0.04) 100%)',
+                      border: isAddedRecently
+                        ? '1px solid rgba(197, 184, 154, 0.65)'
+                        : '1px solid rgba(197, 184, 154, 0.28)',
+                      color: isAddedRecently ? '#ffffff' : goldColor,
+                      boxShadow: isAddedRecently
+                        ? '0 0 24px rgba(197, 184, 154, 0.45), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.25)'
+                        : '0 8px 24px -4px rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.12)',
+                      transform: isAddedRecently ? 'scale(1.02)' : 'none',
                       '&:hover': {
                         background:
-                          'linear-gradient(180deg, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.1) 100%)',
-                        boxShadow: '0 12px 30px rgba(0, 0, 0, 0.45)',
+                          'linear-gradient(180deg, rgba(197, 184, 154, 0.22) 0%, rgba(197, 184, 154, 0.08) 100%)',
+                        border: '1px solid rgba(197, 184, 154, 0.48)',
+                        color: goldHover,
+                        boxShadow:
+                          '0 12px 30px -4px rgba(197, 184, 154, 0.25), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.22)',
                         transform: 'translateY(-2px)',
                       },
                     }
                   : {
-                      background:
-                        'linear-gradient(180deg, rgba(253, 245, 233, 0.95) 0%, rgba(245, 233, 213, 0.95) 100%)',
-                      border: '1px solid rgba(217, 186, 140, 0.55)',
-                      color: '#5c3d19',
-                      boxShadow: '0 8px 24px rgba(217, 186, 140, 0.25)',
-                      backdropFilter: 'blur(12px)',
-                      WebkitBackdropFilter: 'blur(12px)',
+                      // Translucent blurry liquid glass with warm gold tint in Light Mode
+                      background: isAddedRecently
+                        ? 'linear-gradient(180deg, rgba(168, 152, 112, 0.26) 0%, rgba(168, 152, 112, 0.14) 100%)'
+                        : 'linear-gradient(180deg, rgba(168, 152, 112, 0.14) 0%, rgba(168, 152, 112, 0.05) 100%)',
+                      border: isAddedRecently
+                        ? '1px solid rgba(143, 132, 104, 0.65)'
+                        : '1px solid rgba(143, 132, 104, 0.32)',
+                      color: isAddedRecently ? '#3e351f' : goldColor,
+                      boxShadow: isAddedRecently
+                        ? '0 0 20px rgba(168, 152, 112, 0.35), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.8)'
+                        : '0 8px 20px -4px rgba(168, 152, 112, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.75)',
+                      transform: isAddedRecently ? 'scale(1.02)' : 'none',
                       '&:hover': {
                         background:
-                          'linear-gradient(180deg, rgba(255, 248, 238, 0.98) 0%, rgba(247, 236, 218, 0.98) 100%)',
-                        boxShadow: '0 12px 28px rgba(217, 186, 140, 0.35)',
+                          'linear-gradient(180deg, rgba(168, 152, 112, 0.22) 0%, rgba(168, 152, 112, 0.08) 100%)',
+                        border: '1px solid rgba(143, 132, 104, 0.5)',
+                        color: goldHover,
+                        boxShadow:
+                          '0 12px 26px -4px rgba(168, 152, 112, 0.22), inset 0 1px 2px 0 rgba(255, 255, 255, 0.9)',
                         transform: 'translateY(-2px)',
                       },
                     }),
+                '@keyframes cartButtonBounce': {
+                  '0%': { transform: 'scale(1)' },
+                  '35%': { transform: 'scale(0.95)' },
+                  '65%': { transform: 'scale(1.03)' },
+                  '100%': { transform: 'scale(1)' },
+                },
+                animation: isAddedRecently
+                  ? 'cartButtonBounce 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+                  : 'none',
               };
             }}
           >
@@ -1079,6 +1391,14 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               ? LL.products.noSellers()
               : isOutOfStock
               ? LL.products.outOfStock()
+              : isMaxInCart
+              ? isRTL
+                ? `حداکثر (${formatNumber(stockAvailable, currentLocale)}) در سبد`
+                : `Max (${stockAvailable}) in Cart`
+              : isAddedRecently
+              ? isRTL
+                ? 'به سبد خرید افزوده شد'
+                : 'Added to Cart'
               : isRTL
               ? 'افزودن به سبد خرید'
               : LL.products.addToCart()}

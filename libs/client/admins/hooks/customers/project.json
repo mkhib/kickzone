@@ -1,0 +1,9 @@
+{
+  "name": "admins-customers-hooks",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/admins/hooks/customers/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project admins-customers-hooks --web",
+  "targets": {}
+}

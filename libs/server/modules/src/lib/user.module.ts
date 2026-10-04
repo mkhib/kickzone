@@ -4,9 +4,14 @@ import { User } from '@kickzone-workspace/entities';
 import { UserService } from '@kickzone-workspace/services';
 import { UserResolver } from '@kickzone-workspace/resolvers';
 import { AuthModule } from './auth.module';
+import { CustomerProfileModule } from './customer-profile.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), forwardRef(() => AuthModule)],
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    forwardRef(() => AuthModule),
+    CustomerProfileModule,
+  ],
   providers: [UserService, UserResolver],
   exports: [UserService],
 })

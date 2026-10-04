@@ -709,6 +709,7 @@ export type Query = {
   currencyPreferenceByLocale?: Maybe<CurrencyPreference>;
   currencyPreferences: Array<CurrencyPreference>;
   currentExchangeRate?: Maybe<ExchangeRate>;
+  customers: UserConnection;
   distinctProductSizes: Array<Scalars['String']['output']>;
   exchangeRateHistory: Array<ExchangeRate>;
   findOne?: Maybe<SellerInfo>;
@@ -777,6 +778,13 @@ export type QueryCurrencyPreferenceByLocaleArgs = {
 export type QueryCurrentExchangeRateArgs = {
   fromCurrencyCode: Scalars['String']['input'];
   toCurrencyCode: Scalars['String']['input'];
+};
+
+
+export type QueryCustomersArgs = {
+  after?: InputMaybe<Scalars['String']['input']>;
+  first?: InputMaybe<Scalars['Int']['input']>;
+  searchTerm?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -881,6 +889,7 @@ export type QuerySellersArgs = {
 export type QueryUsersArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
+  role?: InputMaybe<UserRole>;
   searchTerm?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1133,6 +1142,7 @@ export type UpdateSellerProductInput = {
 
 export type User = {
   __typename?: 'User';
+  customerProfile?: Maybe<CustomerProfile>;
   email: Scalars['String']['output'];
   id: Scalars['ID']['output'];
   lastName: Scalars['String']['output'];

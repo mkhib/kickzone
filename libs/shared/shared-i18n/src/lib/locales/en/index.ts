@@ -48,6 +48,7 @@ const en = {
     shoppingCart: 'Shopping Cart',
     cart: 'Cart',
     sellers: 'Sellers',
+    customers: 'Customers',
     adminPanel: 'Admin Panel',
     sellersPortal: 'Sellers Portal',
     languageSettings: 'Language Settings',
@@ -116,6 +117,11 @@ const en = {
     view: 'View',
     inactive: 'Inactive',
     loadingCategories: 'Loading categories...',
+    city: 'City',
+    state: 'State',
+    zipCode: 'Postal Code',
+    country: 'Country',
+    customerDetails: 'Customer Details',
   },
 
   // Checkout and cart
@@ -574,10 +580,23 @@ const en = {
     adminProducts: 'Products',
     adminProductEditor: 'Product Editor',
     adminSellers: 'Seller Management',
+    adminCustomers: 'Customer Management',
     adminOrders: 'Order Management',
     adminCurrency: 'Currency Management',
     adminTranslations: 'Translation Management',
     adminLogin: 'Admin Login',
+  },
+
+  adminCustomers: {
+    title: 'Customer Management',
+    registeredCustomers: 'Registered Customers',
+    customerCount: '{count:number} customers registered',
+    searchPlaceholder: 'Search by name, email, or username...',
+    profileDetails: 'Customer Profile Details',
+    noProfile: 'No profile details provided',
+    viewDetails: 'View Details',
+    registeredOn: 'Registered',
+    noCustomersFound: 'No registered customers found',
   },
 
   // Common greetings and text

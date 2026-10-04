@@ -36,20 +36,31 @@ describe('useCartStore', () => {
     expect(useCartStore.getState().getTotalPrice()).toBe(100);
   });
 
-  it('merges quantity when the same productInfo is added again', () => {
+  it('merges quantity when the same productInfo is added again and clamps to availableStock', () => {
     useCartStore.getState().addItem(baseItem);
     useCartStore.getState().addItem({ ...baseItem, quantity: 2 });
     const items = useCartStore.getState().items;
     expect(items).toHaveLength(1);
     expect(items[0].quantity).toBe(3);
     expect(items[0].totalPrice).toBe(300);
+
+    // Try adding more than availableStock (stock is 5, currently 3)
+    useCartStore.getState().addItem({ ...baseItem, quantity: 5 });
+    expect(useCartStore.getState().items[0].quantity).toBe(5);
+    expect(useCartStore.getState().items[0].totalPrice).toBe(500);
   });
 
-  it('updates and removes items', () => {
+  it('updates and removes items, respecting availableStock limit', () => {
     useCartStore.getState().addItem(baseItem);
     const id = useCartStore.getState().items[0].id;
     useCartStore.getState().updateItemQuantity(id, 4);
     expect(useCartStore.getState().items[0].totalPrice).toBe(400);
+
+    // Clamps to availableStock (5)
+    useCartStore.getState().updateItemQuantity(id, 10);
+    expect(useCartStore.getState().items[0].quantity).toBe(5);
+    expect(useCartStore.getState().items[0].totalPrice).toBe(500);
+
     useCartStore.getState().removeItem(id);
     expect(useCartStore.getState().items).toHaveLength(0);
   });

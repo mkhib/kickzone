@@ -1,4 +1,4 @@
-import { User } from '@kickzone-workspace/entities';
+import { User, UserRole } from '@kickzone-workspace/entities';
 import { CreateUserInput } from '@kickzone-workspace/inputs';
 import {
   Connection,
@@ -21,12 +21,17 @@ export class UserService {
     first = 10,
     after,
     searchTerm,
-  }: ConnectionArgs): Promise<Connection<User>> {
+    role,
+  }: ConnectionArgs & { role?: UserRole }): Promise<Connection<User>> {
     const query = this.userRepository.createQueryBuilder('user');
 
+    if (role) {
+      query.andWhere('user.role = :role', { role });
+    }
+
     if (searchTerm) {
-      query.where(
-        'LOWER(user.name) LIKE LOWER(:searchTerm) OR LOWER(user.lastName) LIKE LOWER(:searchTerm) OR LOWER(user.email) LIKE LOWER(:searchTerm)',
+      query.andWhere(
+        '(LOWER(user.name) LIKE LOWER(:searchTerm) OR LOWER(user.lastName) LIKE LOWER(:searchTerm) OR LOWER(user.email) LIKE LOWER(:searchTerm) OR LOWER(user.username) LIKE LOWER(:searchTerm))',
         { searchTerm: `%${searchTerm}%` }
       );
     }

@@ -59,10 +59,20 @@ export class CartService {
       );
     }
 
-    // Check stock availability
-    if (sellerProduct.stockQuantity < addToCartInput.quantity) {
+    const cart = await this.getOrCreateCart(userId);
+
+    // Check if item already exists in cart
+    const existingItem = cart.items.find(
+      (item) => item.sellerProductId === addToCartInput.sellerProductId
+    );
+
+    const currentQty = existingItem?.quantity || 0;
+    const requestedTotal = currentQty + addToCartInput.quantity;
+
+    // Check stock availability including what is already in the cart
+    if (sellerProduct.stockQuantity < requestedTotal) {
       throw new NotFoundException(
-        `Insufficient stock. Available: ${sellerProduct.stockQuantity}, Requested: ${addToCartInput.quantity}`
+        `Insufficient stock. Available: ${sellerProduct.stockQuantity}, Already in cart: ${currentQty}, Requested: ${addToCartInput.quantity}`
       );
     }
 
@@ -72,13 +82,6 @@ export class CartService {
         ? sellerProduct.price -
           (sellerProduct.price * sellerProduct.discount) / 100
         : sellerProduct.price;
-
-    const cart = await this.getOrCreateCart(userId);
-
-    // Check if item already exists in cart
-    const existingItem = cart.items.find(
-      (item) => item.sellerProductId === addToCartInput.sellerProductId
-    );
 
     if (existingItem) {
       // Update quantity
@@ -126,9 +129,21 @@ export class CartService {
       throw new NotFoundException('Cart item not found');
     }
 
-    Object.assign(cartItem, updateInput);
-
     if (updateInput.quantity !== undefined) {
+      if (cartItem.sellerProductId) {
+        const sellerProduct = await this.sellerProductRepository.findOne({
+          where: { id: parseInt(cartItem.sellerProductId, 10) },
+        });
+        if (
+          sellerProduct &&
+          updateInput.quantity > sellerProduct.stockQuantity
+        ) {
+          throw new NotFoundException(
+            `Insufficient stock. Available: ${sellerProduct.stockQuantity}, Requested: ${updateInput.quantity}`
+          );
+        }
+      }
+      cartItem.quantity = updateInput.quantity;
       cartItem.totalPrice = cartItem.quantity * cartItem.unitPrice;
     }
 

@@ -1,8 +1,24 @@
-import { User, UserConnection, UserRole } from '@kickzone-workspace/entities';
+import {
+  CustomerProfile,
+  User,
+  UserConnection,
+  UserRole,
+} from '@kickzone-workspace/entities';
 import { RolesGuard } from '@kickzone-workspace/guards';
-import { UserService, AuthService } from '@kickzone-workspace/services';
+import {
+  UserService,
+  AuthService,
+  CustomerProfileService,
+} from '@kickzone-workspace/services';
 import { SetMetadata, UseGuards } from '@nestjs/common';
-import { Args, Query, Resolver, Mutation } from '@nestjs/graphql';
+import {
+  Args,
+  Query,
+  Resolver,
+  Mutation,
+  ResolveField,
+  Parent,
+} from '@nestjs/graphql';
 import { Connection } from '@kickzone-workspace/utils';
 import { CreateUserInput } from '@kickzone-workspace/inputs';
 
@@ -10,7 +26,8 @@ import { CreateUserInput } from '@kickzone-workspace/inputs';
 export class UserResolver {
   constructor(
     private userService: UserService,
-    private authService: AuthService
+    private authService: AuthService,
+    private customerProfileService: CustomerProfileService
   ) {}
 
   @Query(() => UserConnection)
@@ -19,13 +36,38 @@ export class UserResolver {
   async users(
     @Args('first', { nullable: true }) first: number,
     @Args('after', { nullable: true }) after: string,
+    @Args('searchTerm', { nullable: true }) searchTerm: string,
+    @Args('role', { type: () => UserRole, nullable: true }) role?: UserRole
+  ): Promise<Connection<User>> {
+    return this.userService.findAllPaginated({
+      first,
+      after,
+      searchTerm,
+      role,
+    });
+  }
+
+  @Query(() => UserConnection)
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async customers(
+    @Args('first', { nullable: true }) first: number,
+    @Args('after', { nullable: true }) after: string,
     @Args('searchTerm', { nullable: true }) searchTerm: string
   ): Promise<Connection<User>> {
     return this.userService.findAllPaginated({
       first,
       after,
       searchTerm,
+      role: UserRole.CUSTOMER,
     });
+  }
+
+  @ResolveField(() => CustomerProfile, { nullable: true })
+  async customerProfile(
+    @Parent() user: User
+  ): Promise<CustomerProfile | null> {
+    return this.customerProfileService.getProfile(user.id);
   }
 
   @Mutation(() => User)

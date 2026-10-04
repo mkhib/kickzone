@@ -93,18 +93,43 @@ export const useCartStore = create<CartStore>()(
           itemData.productInfoId
         );
 
+        const maxStock =
+          typeof itemData.availableStock === 'number' && itemData.availableStock > 0
+            ? itemData.availableStock
+            : typeof existingItem?.availableStock === 'number' &&
+              existingItem.availableStock > 0
+            ? existingItem.availableStock
+            : undefined;
+
         if (existingItem) {
-          // Update existing item quantity
-          get().updateItemQuantity(
-            existingItem.id,
-            existingItem.quantity + itemData.quantity
-          );
+          // If already at or above max stock, prevent adding more
+          if (maxStock !== undefined && existingItem.quantity >= maxStock) {
+            return;
+          }
+
+          const targetQuantity = existingItem.quantity + itemData.quantity;
+          const clampedQuantity =
+            maxStock !== undefined
+              ? Math.min(targetQuantity, maxStock)
+              : targetQuantity;
+
+          get().updateItemQuantity(existingItem.id, clampedQuantity);
         } else {
+          const clampedQuantity =
+            maxStock !== undefined
+              ? Math.min(itemData.quantity, maxStock)
+              : itemData.quantity;
+
+          if (clampedQuantity <= 0) {
+            return;
+          }
+
           // Add new item
           const newItem: CartItem = {
             ...itemData,
             id: generateId(),
-            totalPrice: itemData.unitPrice * itemData.quantity,
+            quantity: clampedQuantity,
+            totalPrice: itemData.unitPrice * clampedQuantity,
           };
 
           set((state) => ({
@@ -127,13 +152,20 @@ export const useCartStore = create<CartStore>()(
           return;
         }
 
+        const existing = get().items.find((item) => item.id === itemId);
+        const maxStock = existing?.availableStock;
+        const finalQuantity =
+          typeof maxStock === 'number' && maxStock > 0
+            ? Math.min(quantity, maxStock)
+            : quantity;
+
         set((state) => ({
           items: state.items.map((item) =>
             item.id === itemId
               ? {
                   ...item,
-                  quantity,
-                  totalPrice: item.unitPrice * quantity,
+                  quantity: finalQuantity,
+                  totalPrice: item.unitPrice * finalQuantity,
                 }
               : item
           ),

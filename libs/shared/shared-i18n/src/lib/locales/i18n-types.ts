@@ -178,6 +178,10 @@ type RootTranslation = {
 		 */
 		sellers: string
 		/**
+		 * C​u​s​t​o​m​e​r​s
+		 */
+		customers: string
+		/**
 		 * A​d​m​i​n​ ​P​a​n​e​l
 		 */
 		adminPanel: string
@@ -421,6 +425,26 @@ type RootTranslation = {
 		 * L​o​a​d​i​n​g​ ​c​a​t​e​g​o​r​i​e​s​.​.​.
 		 */
 		loadingCategories: string
+		/**
+		 * C​i​t​y
+		 */
+		city: string
+		/**
+		 * S​t​a​t​e
+		 */
+		state: string
+		/**
+		 * P​o​s​t​a​l​ ​C​o​d​e
+		 */
+		zipCode: string
+		/**
+		 * C​o​u​n​t​r​y
+		 */
+		country: string
+		/**
+		 * C​u​s​t​o​m​e​r​ ​D​e​t​a​i​l​s
+		 */
+		customerDetails: string
 	}
 	checkout: {
 		/**
@@ -1875,6 +1899,10 @@ type RootTranslation = {
 		 */
 		adminSellers: string
 		/**
+		 * C​u​s​t​o​m​e​r​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		adminCustomers: string
+		/**
 		 * O​r​d​e​r​ ​M​a​n​a​g​e​m​e​n​t
 		 */
 		adminOrders: string
@@ -1890,6 +1918,45 @@ type RootTranslation = {
 		 * A​d​m​i​n​ ​L​o​g​i​n
 		 */
 		adminLogin: string
+	}
+	adminCustomers: {
+		/**
+		 * C​u​s​t​o​m​e​r​ ​M​a​n​a​g​e​m​e​n​t
+		 */
+		title: string
+		/**
+		 * R​e​g​i​s​t​e​r​e​d​ ​C​u​s​t​o​m​e​r​s
+		 */
+		registeredCustomers: string
+		/**
+		 * {​c​o​u​n​t​}​ ​c​u​s​t​o​m​e​r​s​ ​r​e​g​i​s​t​e​r​e​d
+		 * @param {number} count
+		 */
+		customerCount: RequiredParams<'count'>
+		/**
+		 * S​e​a​r​c​h​ ​b​y​ ​n​a​m​e​,​ ​e​m​a​i​l​,​ ​o​r​ ​u​s​e​r​n​a​m​e​.​.​.
+		 */
+		searchPlaceholder: string
+		/**
+		 * C​u​s​t​o​m​e​r​ ​P​r​o​f​i​l​e​ ​D​e​t​a​i​l​s
+		 */
+		profileDetails: string
+		/**
+		 * N​o​ ​p​r​o​f​i​l​e​ ​d​e​t​a​i​l​s​ ​p​r​o​v​i​d​e​d
+		 */
+		noProfile: string
+		/**
+		 * V​i​e​w​ ​D​e​t​a​i​l​s
+		 */
+		viewDetails: string
+		/**
+		 * R​e​g​i​s​t​e​r​e​d
+		 */
+		registeredOn: string
+		/**
+		 * N​o​ ​r​e​g​i​s​t​e​r​e​d​ ​c​u​s​t​o​m​e​r​s​ ​f​o​u​n​d
+		 */
+		noCustomersFound: string
 	}
 	/**
 	 * H​e​l​l​o
@@ -2861,6 +2928,10 @@ export type TranslationFunctions = {
 		 */
 		sellers: () => LocalizedString
 		/**
+		 * Customers
+		 */
+		customers: () => LocalizedString
+		/**
 		 * Admin Panel
 		 */
 		adminPanel: () => LocalizedString
@@ -3104,6 +3175,26 @@ export type TranslationFunctions = {
 		 * Loading categories...
 		 */
 		loadingCategories: () => LocalizedString
+		/**
+		 * City
+		 */
+		city: () => LocalizedString
+		/**
+		 * State
+		 */
+		state: () => LocalizedString
+		/**
+		 * Postal Code
+		 */
+		zipCode: () => LocalizedString
+		/**
+		 * Country
+		 */
+		country: () => LocalizedString
+		/**
+		 * Customer Details
+		 */
+		customerDetails: () => LocalizedString
 	}
 	checkout: {
 		/**
@@ -4546,6 +4637,10 @@ export type TranslationFunctions = {
 		 */
 		adminSellers: () => LocalizedString
 		/**
+		 * Customer Management
+		 */
+		adminCustomers: () => LocalizedString
+		/**
 		 * Order Management
 		 */
 		adminOrders: () => LocalizedString
@@ -4561,6 +4656,44 @@ export type TranslationFunctions = {
 		 * Admin Login
 		 */
 		adminLogin: () => LocalizedString
+	}
+	adminCustomers: {
+		/**
+		 * Customer Management
+		 */
+		title: () => LocalizedString
+		/**
+		 * Registered Customers
+		 */
+		registeredCustomers: () => LocalizedString
+		/**
+		 * {count} customers registered
+		 */
+		customerCount: (arg: { count: number }) => LocalizedString
+		/**
+		 * Search by name, email, or username...
+		 */
+		searchPlaceholder: () => LocalizedString
+		/**
+		 * Customer Profile Details
+		 */
+		profileDetails: () => LocalizedString
+		/**
+		 * No profile details provided
+		 */
+		noProfile: () => LocalizedString
+		/**
+		 * View Details
+		 */
+		viewDetails: () => LocalizedString
+		/**
+		 * Registered
+		 */
+		registeredOn: () => LocalizedString
+		/**
+		 * No registered customers found
+		 */
+		noCustomersFound: () => LocalizedString
 	}
 	/**
 	 * Hello

@@ -48,6 +48,7 @@ const fa = {
     shoppingCart: 'سبد خرید',
     cart: 'سبد',
     sellers: 'فروشندگان',
+    customers: 'مشتریان',
     adminPanel: 'پنل مدیریت',
     sellersPortal: 'پورتال فروشندگان',
     languageSettings: 'تنظیمات زبان/Language Settings',
@@ -116,6 +117,11 @@ const fa = {
     view: 'مشاهده',
     inactive: 'غیرفعال',
     loadingCategories: 'در حال بارگذاری دسته‌بندی‌ها...',
+    city: 'شهر',
+    state: 'استان',
+    zipCode: 'کد پستی',
+    country: 'کشور',
+    customerDetails: 'جزئیات مشتری',
   },
 
   // Checkout and cart
@@ -578,10 +584,23 @@ const fa = {
     adminProducts: 'محصولات',
     adminProductEditor: 'ویرایشگر محصول',
     adminSellers: 'مدیریت فروشندگان',
+    adminCustomers: 'مدیریت مشتریان',
     adminOrders: 'مدیریت سفارشات',
     adminCurrency: 'مدیریت ارز',
     adminTranslations: 'مدیریت ترجمه',
     adminLogin: 'ورود مدیر',
+  },
+
+  adminCustomers: {
+    title: 'مدیریت مشتریان',
+    registeredCustomers: 'مشتریان ثبت‌نام شده',
+    customerCount: '{count:number} مشتری ثبت‌نام کرده‌اند',
+    searchPlaceholder: 'جستجو بر اساس نام، ایمیل، یا نام کاربری...',
+    profileDetails: 'اطلاعات پروفایل مشتری',
+    noProfile: 'اطلاعات پروفایلی ثبت نشده است',
+    viewDetails: 'مشاهده جزئیات',
+    registeredOn: 'تاریخ عضویت',
+    noCustomersFound: 'هیچ مشتری ثبت‌نام‌شده‌ای یافت نشد',
   },
 
   // Common greetings and text

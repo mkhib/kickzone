@@ -16,6 +16,7 @@ type User {
   email: String!
   role: UserRole!
   locale: String
+  customerProfile: CustomerProfile
 }
 
 enum UserRole {
@@ -356,7 +357,8 @@ type GatewayUrlResponse {
 }
 
 type Query {
-  users(first: Int, after: String, searchTerm: String): UserConnection!
+  users(first: Int, after: String, searchTerm: String, role: UserRole): UserConnection!
+  customers(first: Int, after: String, searchTerm: String): UserConnection!
   me: User
   products(filter: ProductFilterInput): ProductConnection!
   distinctProductSizes(sizeKind: SizeKind): [String!]!

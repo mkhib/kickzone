@@ -16,6 +16,9 @@
     "baseUrl": ".",
     "strictPropertyInitialization": false,
     "paths": {
+      "@kickzone-workspace/admin-customer-management": [
+        "libs/client/admins/screens/customer-management/src/index.ts"
+      ],
       "@kickzone-workspace/admin-product-editor": [
         "libs/client/admins/screens/product-editor/src/index.ts"
       ],
@@ -36,6 +39,9 @@
       ],
       "@kickzone-workspace/admins-currency-management-hooks": [
         "libs/client/admins/hooks/currency-management/src/index.ts"
+      ],
+      "@kickzone-workspace/admins-customers-hooks": [
+        "libs/client/admins/hooks/customers/src/index.ts"
       ],
       "@kickzone-workspace/admins-footer": [
         "libs/client/admins/components/footer/src/index.ts"
@@ -214,11 +220,11 @@
       "@kickzone-workspace/order-status-chip": [
         "libs/client/shared/components/order-status-chip/src/index.ts"
       ],
-      "@kickzone-workspace/password-field": [
-        "libs/client/shared/components/password-field/src/index.ts"
-      ],
       "@kickzone-workspace/orders-hook": [
         "libs/client/sellers/hooks/orders/src/index.ts"
+      ],
+      "@kickzone-workspace/password-field": [
+        "libs/client/shared/components/password-field/src/index.ts"
       ],
       "@kickzone-workspace/price-display": [
         "libs/client/shared/components/price-display/src/index.ts"
@@ -226,11 +232,11 @@
       "@kickzone-workspace/private-route": [
         "libs/client/shared/components/private-route/src/index.ts"
       ],
-      "@kickzone-workspace/products-hook": [
-        "libs/client/shared/hooks/products/src/index.ts"
-      ],
       "@kickzone-workspace/product-sizes": [
         "libs/shared/product-sizes/src/index.ts"
+      ],
+      "@kickzone-workspace/products-hook": [
+        "libs/client/shared/hooks/products/src/index.ts"
       ],
       "@kickzone-workspace/resolvers": ["libs/server/resolvers/src/index.ts"],
       "@kickzone-workspace/rtl-table-utils": [
@@ -244,6 +250,9 @@
       ],
       "@kickzone-workspace/sellers-auth-hooks": [
         "libs/client/sellers/hooks/auth/src/index.ts"
+      ],
+      "@kickzone-workspace/sellers-catalog-screen": [
+        "libs/client/sellers/screens/catalog/src/index.ts"
       ],
       "@kickzone-workspace/sellers-footer": [
         "libs/client/sellers/components/footer/src/index.ts"
@@ -265,9 +274,6 @@
       ],
       "@kickzone-workspace/sellers-manage-product-screen": [
         "libs/client/sellers/screens/manage-product/src/index.ts"
-      ],
-      "@kickzone-workspace/sellers-catalog-screen": [
-        "libs/client/sellers/screens/catalog/src/index.ts"
       ],
       "@kickzone-workspace/sellers-products-hooks": [
         "libs/client/sellers/hooks/products/src/index.ts"
