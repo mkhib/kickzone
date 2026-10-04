@@ -190,9 +190,10 @@ export function Headerbar() {
             color="inherit"
             component={RouterLink}
             to={CUSTOMER_ROUTES.CART}
+            aria-label="cart"
             sx={{
-              display: { xs: 'none', sm: 'inline-flex' },
-              mx: 1,
+              display: 'inline-flex',
+              mx: { xs: 0.5, sm: 1 },
               '&:hover': {
                 backgroundColor: 'rgba(255, 255, 255, 0.1)',
               },

@@ -309,4 +309,89 @@ describe('AdminProductEditor', () => {
       expect(screen.getByDisplayValue('SKU-001')).toBeInTheDocument();
     });
   });
+
+  it('submits ALL chosen colors from the input to the product, not just the first one', async () => {
+    mockCreateProductWithInfos.mockResolvedValue({
+      product: { id: 1, name: 'Multi-Color Shoe' },
+      productInfos: [
+        {
+          id: 10,
+          size: 'M',
+          colors: [
+            { id: 1, name: 'Red', hexCode: '#ff0000' },
+            { id: 2, name: 'Blue', hexCode: '#0000ff' },
+          ],
+        },
+      ],
+    });
+
+    const { container } = renderEditor();
+
+    // Fill product details
+    const nameInput = container.querySelector('#product-name') as HTMLInputElement;
+    fireEvent.change(nameInput, {
+      target: { value: 'Multi-Color Shoe' },
+    });
+    const skuInput = container.querySelector('#product-sku') as HTMLInputElement;
+    fireEvent.change(skuInput, {
+      target: { value: 'SHOE-MULTI-01' },
+    });
+
+    // Select category
+    const categoryInput = container.querySelector('#categories-autocomplete') as HTMLInputElement;
+    fireEvent.focus(categoryInput);
+    fireEvent.keyDown(categoryInput, { key: 'ArrowDown' });
+    const categoryOption = await screen.findByText('Category 1');
+    fireEvent.click(categoryOption);
+
+    // Select size
+    const sizeSelect = screen.getByRole('combobox', { name: /^Size$/i });
+    fireEvent.mouseDown(sizeSelect);
+    const sizeOption = await screen.findByRole('option', { name: 'M' });
+    fireEvent.click(sizeOption);
+
+    // Select first color (Red)
+    const colorInput = screen.getByLabelText(/Color/i);
+    fireEvent.focus(colorInput);
+    fireEvent.keyDown(colorInput, { key: 'ArrowDown' });
+    const redOption = await screen.findByText('Red');
+    fireEvent.click(redOption);
+
+    // Select second color (Blue)
+    fireEvent.focus(colorInput);
+    fireEvent.keyDown(colorInput, { key: 'ArrowDown' });
+    const blueOption = await screen.findByText('Blue');
+    fireEvent.click(blueOption);
+
+    // Fill weight
+    const weightInput = container.querySelector(
+      'input[name="weight"]'
+    ) as HTMLInputElement;
+    fireEvent.change(weightInput, {
+      target: { value: '300' },
+    });
+
+    // Submit form
+    fireEvent.submit(screen.getByLabelText('Product Editor Form'));
+
+    await waitFor(() => {
+      expect(mockCreateProductWithInfos).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockCreateProductWithInfos).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Multi-Color Shoe',
+        sku: 'SHOE-MULTI-01',
+        categoryIds: [1],
+      }),
+      [
+        expect.objectContaining({
+          size: 'M',
+          colorIds: [1, 2], // Verifies BOTH colors are set, not just the first one [1]
+          weight: 300,
+        }),
+      ]
+    );
+  });
 });
+
