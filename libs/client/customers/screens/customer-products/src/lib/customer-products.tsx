@@ -41,6 +41,7 @@ import {
   expandFilterSizes,
   formatSizeLabel,
   FootwearSizeSystem,
+  isFootwearSizeKind,
   SizeKind,
   sortSizeCodes,
 } from '@kickzone-workspace/product-sizes';
@@ -627,7 +628,7 @@ export function CustomerProducts() {
                               info.size,
                               FootwearSizeSystem.Eu
                             )}
-                            {info.sizeKind === SizeKind.Footwear &&
+                            {isFootwearSizeKind(info.sizeKind) &&
                             euToUs(info.size)
                               ? ` (${LL.products.usEquivalent({
                                   us: euToUs(info.size)!,

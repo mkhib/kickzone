@@ -45,8 +45,12 @@ describe('product-sizes', () => {
 
   it('formats size labels', () => {
     expect(formatSizeLabel(SizeKind.Apparel, 'M')).toBe('M');
+    expect(formatSizeLabel('Apparel' as SizeKind, 'M')).toBe('M');
     expect(
       formatSizeLabel(SizeKind.Footwear, '42', FootwearSizeSystem.Eu)
+    ).toBe('EU 42');
+    expect(
+      formatSizeLabel('Footwear' as SizeKind, '42', FootwearSizeSystem.Eu)
     ).toBe('EU 42');
     expect(
       formatSizeLabel(SizeKind.Footwear, '42', FootwearSizeSystem.Us)

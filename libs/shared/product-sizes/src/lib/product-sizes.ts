@@ -100,15 +100,23 @@ export function isFootwearEuCode(code: string): boolean {
   return FOOTWEAR_EU_SIZES.includes(normalizeFootwearEuCode(code));
 }
 
+export function isApparelSizeKind(kind?: SizeKind | string | null): boolean {
+  return String(kind ?? '').trim().toUpperCase() === SizeKind.Apparel;
+}
+
+export function isFootwearSizeKind(kind?: SizeKind | string | null): boolean {
+  return String(kind ?? '').trim().toUpperCase() === SizeKind.Footwear;
+}
+
 export function normalizeSizeCode(
-  kind: SizeKind,
+  kind: SizeKind | string,
   raw: string
 ): string | null {
   const trimmed = String(raw ?? '').trim();
   if (!trimmed) {
     return null;
   }
-  if (kind === SizeKind.Apparel) {
+  if (isApparelSizeKind(kind)) {
     const upper = trimmed.toUpperCase();
     return isApparelSizeCode(upper) ? upper : null;
   }
@@ -133,11 +141,11 @@ export function usToEuCodes(usCode: string): string[] {
 }
 
 export function formatSizeLabel(
-  kind: SizeKind,
+  kind: SizeKind | string,
   canonicalCode: string,
   system: FootwearSizeSystem = FootwearSizeSystem.Eu
 ): string {
-  if (kind === SizeKind.Apparel) {
+  if (isApparelSizeKind(kind)) {
     return canonicalCode;
   }
   if (system === FootwearSizeSystem.Us) {
@@ -153,14 +161,14 @@ export function formatSizeLabel(
  * Footwear: if system is US, map each US size to one or more EU codes.
  */
 export function expandFilterSizes(
-  kind: SizeKind,
+  kind: SizeKind | string,
   system: FootwearSizeSystem,
   selected: string[]
 ): string[] {
   if (!selected.length) {
     return [];
   }
-  if (kind === SizeKind.Apparel) {
+  if (isApparelSizeKind(kind)) {
     return selected
       .map((s) => normalizeSizeCode(SizeKind.Apparel, s))
       .filter((s): s is string => !!s);
@@ -205,8 +213,8 @@ export function inferSizeKindFromRaw(raw: string): {
   return { sizeKind: SizeKind.Apparel, size: trimmed.toUpperCase() };
 }
 
-export function sortSizeCodes(kind: SizeKind, codes: string[]): string[] {
-  if (kind === SizeKind.Apparel) {
+export function sortSizeCodes(kind: SizeKind | string, codes: string[]): string[] {
+  if (isApparelSizeKind(kind)) {
     return [...codes].sort(
       (a, b) =>
         APPAREL_SIZES.indexOf(a as ApparelSizeCode) -

@@ -63,9 +63,13 @@ import { useConvertPrice } from '@kickzone-workspace/currency-hook';
 // Import types from cart store
 import type { CartItem } from '@kickzone-workspace/customer-cart-store';
 
-// Utility to convert numbers to locale format (supports Farsi digits)
+// Utility to convert numbers to locale format (supports Farsi digits while preserving non-numeric strings like apparel sizes)
 const formatNumber = (num: number | string, locale: string): string => {
-  return Number(num).toLocaleString(locale);
+  const n = Number(num);
+  if (Number.isNaN(n)) {
+    return String(num);
+  }
+  return n.toLocaleString(locale);
 };
 
 const CTA_FILL_LIGHT = '#1a1a19';

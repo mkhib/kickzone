@@ -48,9 +48,13 @@ const resolveImageUrl = (img?: string | null) => {
   return img;
 };
 
-// Utility to convert numbers to locale format (supports Farsi digits)
+// Utility to convert numbers to locale format (supports Farsi digits while preserving non-numeric strings like apparel sizes)
 const formatNumber = (num: number | string, locale: string): string => {
-  return Number(num).toLocaleString(locale);
+  const n = Number(num);
+  if (Number.isNaN(n)) {
+    return String(num);
+  }
+  return n.toLocaleString(locale);
 };
 
 interface ProductCardProps {
