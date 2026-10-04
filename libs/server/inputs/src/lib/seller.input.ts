@@ -6,6 +6,7 @@ import {
   IsString,
   IsNumber,
   IsPositive,
+  Min,
 } from 'class-validator';
 
 @InputType()
@@ -141,6 +142,7 @@ export class CreateSellerProductInput {
   @Field(() => Int)
   @IsNotEmpty()
   @IsNumber()
+  @Min(0)
   stockQuantity: number;
 
   @Field({ nullable: true })
@@ -182,6 +184,7 @@ export class UpdateSellerProductInput {
   @Field(() => Int, { nullable: true })
   @IsOptional()
   @IsNumber()
+  @Min(0)
   stockQuantity?: number;
 
   @Field({ nullable: true })

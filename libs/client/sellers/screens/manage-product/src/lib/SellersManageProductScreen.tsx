@@ -23,7 +23,7 @@ import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import {
   useI18nContext,
@@ -110,15 +110,38 @@ export function SellersManageProductScreen() {
       // Set the form data
       const newFormData = {
         productInfoId: sellerProduct.productInfo.id,
-        price: sellerProduct.price || 0,
-        costPrice: sellerProduct.costPrice || 0,
-        discount: sellerProduct.discount || 0,
-        stockQuantity: sellerProduct.stockQuantity || 0,
+        price: sellerProduct.price ?? 0,
+        costPrice: sellerProduct.costPrice ?? 0,
+        discount: sellerProduct.discount ?? 0,
+        stockQuantity: sellerProduct.stockQuantity ?? 0,
         boxLess: sellerProduct.boxLess ?? false,
       };
       setFormData(newFormData);
     }
   }, [sellerProduct, isEditing, sellerProductError, isSellerProductLoading]);
+
+  const productOptions = useMemo(() => {
+    if (
+      isEditing &&
+      selectedProduct &&
+      !products.some((p) => p.id === selectedProduct.id)
+    ) {
+      return [selectedProduct, ...products];
+    }
+    return products;
+  }, [isEditing, selectedProduct, products]);
+
+  const variantOptions = useMemo(() => {
+    const list = selectedProduct?.productInfos || [];
+    if (
+      isEditing &&
+      selectedProductInfo &&
+      !list.some((info) => info.id === selectedProductInfo.id)
+    ) {
+      return [selectedProductInfo, ...list];
+    }
+    return list;
+  }, [isEditing, selectedProductInfo, selectedProduct?.productInfos]);
 
   const resetForm = () => {
     setFormData(initialFormData);
@@ -167,9 +190,23 @@ export function SellersManageProductScreen() {
     field: keyof KickzoneGraphqlTypes.CreateSellerProductInput,
     value: string | number | boolean
   ) => {
+    let parsed: any = value;
+    if (typeof value === 'string') {
+      if (field === 'stockQuantity') {
+        parsed = value === '' ? 0 : parseInt(value, 10);
+        if (isNaN(parsed) || parsed < 0) parsed = 0;
+      } else if (
+        field === 'price' ||
+        field === 'costPrice' ||
+        field === 'discount'
+      ) {
+        parsed = value === '' ? 0 : parseFloat(value);
+        if (isNaN(parsed) || parsed < 0) parsed = 0;
+      }
+    }
     setFormData((prev) => ({
       ...prev,
-      [field]: typeof value === 'string' ? parseFloat(value) || 0 : value,
+      [field]: parsed,
     }));
   };
 
@@ -345,18 +382,22 @@ export function SellersManageProductScreen() {
                         {LL.products.selectProduct()}
                       </Typography>
                       <Autocomplete
-                        options={products}
+                        options={productOptions}
                         getOptionLabel={(option) => option.name}
                         value={selectedProduct}
                         onChange={(_, newValue) =>
                           handleProductChange(newValue)
                         }
+                        isOptionEqualToValue={(option, value) =>
+                          option?.id === value?.id
+                        }
+                        disabled={isEditing || isLoading}
                         renderInput={(params) => (
                           <TextField
                             {...params}
                             label={LL.button.chooseProduct()}
                             required
-                            disabled={isLoading}
+                            disabled={isEditing || isLoading}
                           />
                         )}
                         renderOption={(props, option) => {
@@ -427,7 +468,7 @@ export function SellersManageProductScreen() {
                           {LL.products.selectVariant()}
                         </Typography>
                         <Autocomplete
-                          options={selectedProduct.productInfos}
+                          options={variantOptions}
                           getOptionLabel={(option) =>
                             `${option.size} - ${formatVariantColorNames(
                               option.colors,
@@ -438,12 +479,16 @@ export function SellersManageProductScreen() {
                           onChange={(_, newValue) =>
                             handleProductInfoChange(newValue)
                           }
+                          isOptionEqualToValue={(option, value) =>
+                            option?.id === value?.id
+                          }
+                          disabled={isEditing || isLoading}
                           renderInput={(params) => (
                             <TextField
                               {...params}
                               label={LL.button.chooseVariant()}
                               required
-                              disabled={isLoading}
+                              disabled={isEditing || isLoading}
                             />
                           )}
                           renderOption={(props, option) => {

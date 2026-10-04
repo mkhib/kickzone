@@ -405,4 +405,34 @@ describe('AdminProducts', () => {
     ).toBeDisabled();
     expect(mockDeleteProduct).not.toHaveBeenCalled();
   });
+
+  it('allows permanent delete when showSellerListings is false (e.g. seller catalog management)', async () => {
+    mockDeleteProduct.mockResolvedValue(true);
+    mockUseAdminsProductsStore.mockReturnValue({
+      ...createStoreState(),
+      productDeleteDialogOpen: true,
+      productToDelete: products[1],
+      productDeleteConfirmName: 'Test Product 2',
+    });
+
+    render(
+      <MemoryRouter>
+        <ThemeProvider theme={theme}>
+          <AdminProducts showSellerListings={false} />
+        </ThemeProvider>
+      </MemoryRouter>
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'Delete Product' }));
+
+    await waitFor(() => {
+      expect(mockDeleteProduct).toHaveBeenCalledWith(2);
+      expect(mockCloseProductDeleteDialog).toHaveBeenCalled();
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'Product deleted successfully',
+        { severity: 'success' }
+      );
+      expect(mockRefetch).toHaveBeenCalled();
+    });
+  });
 });

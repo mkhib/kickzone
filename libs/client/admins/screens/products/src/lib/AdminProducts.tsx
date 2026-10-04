@@ -58,6 +58,8 @@ export interface AdminProductsProps {
   /** Admin-only: seller listings / recommended toggles. Hidden for catalog sellers. */
   showSellerListings?: boolean;
   title?: string;
+  /** Whether archived products with zero active inventory can be deleted. Defaults to true. */
+  allowDelete?: boolean;
 }
 
 export function AdminProducts({
@@ -66,6 +68,7 @@ export function AdminProducts({
   productsEditPath = (id: number) => `/products/edit/${id}`,
   showSellerListings = true,
   title,
+  allowDelete = true,
 }: AdminProductsProps = {}) {
   const { LL } = useI18nContext();
   usePageTitle(() => title || LL.pageTitles.adminProducts());
@@ -173,7 +176,7 @@ export function AdminProducts({
   };
 
   const canPermanentlyDelete = (product: KickzoneGraphqlTypes.Product) =>
-    showSellerListings &&
+    allowDelete &&
     product.archived &&
     !hasActiveSellerInventory(product);
 

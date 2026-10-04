@@ -57,6 +57,7 @@ export const UPDATE_SELLER_PRODUCT_MUTATION = gql`
         }
       }
       product {
+        id
         name
       }
     }

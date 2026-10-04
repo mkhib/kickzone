@@ -248,8 +248,7 @@ export class ProductResolver {
   }
 
   @Mutation(() => Boolean)
-  @UseGuards(RolesGuard)
-  @SetMetadata('roles', [UserRole.ADMIN])
+  @UseGuards(CatalogGuard)
   async deleteProduct(
     @Args('id', { type: () => Int }) id: number
   ): Promise<boolean> {

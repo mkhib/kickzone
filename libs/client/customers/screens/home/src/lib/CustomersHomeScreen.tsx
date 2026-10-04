@@ -72,87 +72,37 @@ export function CustomersHome() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
-  const productVariants = useMemo(() => {
-    const variants: Array<{
-      product: KickzoneGraphqlTypes.Product;
-      productInfo: KickzoneGraphqlTypes.ProductInfo;
-      sellerProduct: KickzoneGraphqlTypes.SellerProduct;
-      isRecommended?: boolean;
-      isBoxLess?: boolean;
-      variantKey: string;
-    }> = [];
-
-    products.forEach((product) => {
-      if (!product.productInfos || !product.sellerProducts) {
-        return;
-      }
-
-      product.productInfos.forEach((productInfo) => {
-        const allSellerProducts =
-          product.sellerProducts?.filter(
-            (sp) =>
-              (sp.productInfoId === productInfo.id ||
-                sp.productInfo?.id === productInfo.id) &&
-              sp.seller &&
-              sp.stockQuantity > 0
-          ) || [];
-
-        const sellerProductsWithPrice = allSellerProducts.map((sp) => {
-          const originalPrice = sp.price;
-          const discount = sp.discount || 0;
-          const finalPrice =
-            discount > 0
-              ? originalPrice - (originalPrice * discount) / 100
-              : originalPrice;
-
-          return {
-            sellerProduct: sp,
-            originalPrice,
-            finalPrice,
-            discount,
-          };
-        });
-
-        sellerProductsWithPrice.sort((a, b) => {
-          if (a.finalPrice !== b.finalPrice) {
-            return a.finalPrice - b.finalPrice;
-          }
-          return (
-            (b.sellerProduct.stockQuantity || 0) -
-            (a.sellerProduct.stockQuantity || 0)
-          );
-        });
-
-        const bestSellerProduct = sellerProductsWithPrice[0];
-
-        if (bestSellerProduct) {
-          const isRecommended = Boolean(
-            (
-              bestSellerProduct.sellerProduct as unknown as {
-                recommended?: boolean;
-              }
-            )?.recommended
-          );
-          const isBoxLess = Boolean(
-            (
-              bestSellerProduct.sellerProduct as unknown as {
-                boxLess?: boolean;
-              }
-            )?.boxLess
-          );
-          variants.push({
-            product,
-            productInfo,
-            sellerProduct: bestSellerProduct.sellerProduct,
-            isRecommended,
-            isBoxLess,
-            variantKey: `${product.id}-${productInfo.id}`,
-          });
+  const homeProducts = useMemo(() => {
+    return products
+      .filter((product) => {
+        if (!product.productInfos || !product.sellerProducts) {
+          return false;
         }
-      });
-    });
+        return product.sellerProducts.some(
+          (sp) => sp.seller && sp.stockQuantity > 0
+        );
+      })
+      .map((product) => {
+        const isRecommended = Boolean(
+          product.sellerProducts?.some(
+            (sp) =>
+              (sp as unknown as { recommended?: boolean })?.recommended
+          )
+        );
+        const isBoxLess = Boolean(
+          product.sellerProducts?.some(
+            (sp) =>
+              (sp as unknown as { boxLess?: boolean })?.boxLess
+          )
+        );
 
-    return variants;
+        return {
+          product,
+          isRecommended,
+          isBoxLess,
+          key: `product-${product.id}`,
+        };
+      });
   }, [products]);
 
   const applySearchNow = useCallback(() => {
@@ -520,7 +470,7 @@ export function CustomersHome() {
           >
             <CircularProgress />
           </Box>
-        ) : productVariants.length === 0 ? (
+        ) : homeProducts.length === 0 ? (
           <Box
             sx={{
               display: 'flex',
@@ -549,33 +499,27 @@ export function CustomersHome() {
               container
               spacing={{ xs: 2, sm: 2.5, md: 3 }}
               sx={{
-                ...(productVariants.length === 1
+                ...(homeProducts.length === 1
                   ? { justifyContent: 'center' }
                   : {}),
                 pb: { xs: 2, md: 3 },
               }}
             >
-              {productVariants.map((variant, index) => {
-                const variantProduct: KickzoneGraphqlTypes.Product = {
-                  ...variant.product,
-                  productInfos: [variant.productInfo],
-                  sellerProducts: [variant.sellerProduct],
-                };
-
+              {homeProducts.map((item, index) => {
                 return (
                   <Grid
-                    key={variant.variantKey}
+                    key={item.key}
                     size={
-                      productVariants.length === 1
+                      homeProducts.length === 1
                         ? { xs: 12, sm: 8, md: 6, lg: 4 }
                         : { xs: 12, sm: 6, md: 4, lg: 3, xl: 3 }
                     }
                     sx={{
-                      animation: `fadeInUp 0.6s ease-out ${index * 0.1}s both`,
+                      animation: `fadeInUp 0.6s ease-out ${index * 0.08}s both`,
                       '@keyframes fadeInUp': {
                         '0%': {
                           opacity: 0,
-                          transform: 'translateY(30px)',
+                          transform: 'translateY(24px)',
                         },
                         '100%': {
                           opacity: 1,
@@ -585,10 +529,23 @@ export function CustomersHome() {
                     }}
                   >
                     <CustomersProductCard
-                      product={variantProduct}
-                      isRecommended={variant.isRecommended ?? false}
-                      isBoxLess={variant.isBoxLess ?? false}
-                      onAddToCart={() => handleAddToCart(variant)}
+                      product={item.product}
+                      isRecommended={item.isRecommended}
+                      isBoxLess={item.isBoxLess}
+                      onAddToCart={(prod) => {
+                        const firstInfo = prod.productInfos?.[0];
+                        const sp = prod.sellerProducts?.find(
+                          (s) => s.productInfoId === firstInfo?.id
+                        );
+                        if (firstInfo && sp) {
+                          handleAddToCart({
+                            product: prod,
+                            productInfo: firstInfo,
+                            sellerProduct: sp,
+                          });
+                        }
+                      }}
+                      onAddVariantToCart={handleAddToCart}
                     />
                   </Grid>
                 );
