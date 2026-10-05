@@ -7,6 +7,32 @@ import {
   useRemoveItem,
   useUpdateItemQuantity,
 } from '@kickzone-workspace/customer-cart-store';
+import {
+  useIsCheckoutDialogOpen,
+  useIsAuthDialogOpen,
+  useCheckoutActiveStep,
+  useCheckoutShippingInfo,
+  useCheckoutValidationErrors,
+  useIsCreatingOrder,
+  useCreatedOrder,
+  usePaymentAuthority,
+  useOpenCheckoutDialog,
+  useCloseCheckoutDialog,
+  useOpenAuthDialog,
+  useCloseAuthDialog,
+  useSetCheckoutStep,
+  useNextCheckoutStep,
+  usePrevCheckoutStep,
+  useSetShippingInfo,
+  useUpdateShippingField,
+  useSetValidationErrors,
+  useClearAllValidationErrors,
+  useSetIsCreatingOrder,
+  useSetCreatedOrder,
+  useSetPaymentAuthority,
+  useResetCheckout,
+  type ShippingInfo,
+} from '@kickzone-workspace/customer-checkout-store';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { useCustomersCartMutations } from '@kickzone-workspace/customers-cart-hook';
@@ -26,10 +52,7 @@ import {
   usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
-import {
-  validateShippingInfo,
-  type ShippingInfoFormData,
-} from '@kickzone-workspace/shipping-validation';
+import { validateShippingInfo } from '@kickzone-workspace/shipping-validation';
 import Add from '@mui/icons-material/Add';
 import Close from '@mui/icons-material/Close';
 import Delete from '@mui/icons-material/Delete';
@@ -58,7 +81,7 @@ import Stepper from '@mui/material/Stepper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
-import { useState, useEffect, useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { useZarinPalPayment } from '@kickzone-workspace/customer-payment';
@@ -107,31 +130,31 @@ export function CustomerShoppingCart() {
     LL.checkout.payment(),
   ];
 
-  const [activeStep, setActiveStep] = useState(0);
-  const [createdOrder, setCreatedOrder] = useState<{
-    id: string;
-    orderNumber: string;
-  } | null>(null);
-  const [paymentAuthority, setPaymentAuthority] = useState<string | null>(null);
-  const [isCreatingOrder, setIsCreatingOrder] = useState(false);
-  const [shippingInfo, setShippingInfo] = useState<
-    Partial<ShippingInfoFormData>
-  >({
-    customerName: '',
-    customerEmail: '',
-    customerPhone: '',
-    shippingAddress: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    country: '',
-    notes: '',
-  });
-  const [validationErrors, setValidationErrors] = useState<
-    Record<string, string | undefined>
-  >({});
-  const [checkoutDialogOpen, setCheckoutDialogOpen] = useState(false);
-  const [authDialogOpen, setAuthDialogOpen] = useState(false);
+  // Use checkout store (Zustand)
+  const activeStep = useCheckoutActiveStep();
+  const createdOrder = useCreatedOrder();
+  const paymentAuthority = usePaymentAuthority();
+  const isCreatingOrder = useIsCreatingOrder();
+  const shippingInfo = useCheckoutShippingInfo();
+  const validationErrors = useCheckoutValidationErrors();
+  const checkoutDialogOpen = useIsCheckoutDialogOpen();
+  const authDialogOpen = useIsAuthDialogOpen();
+
+  const openCheckoutDialog = useOpenCheckoutDialog();
+  const closeCheckoutDialog = useCloseCheckoutDialog();
+  const openAuthDialog = useOpenAuthDialog();
+  const closeAuthDialog = useCloseAuthDialog();
+  const setActiveStep = useSetCheckoutStep();
+  const nextStep = useNextCheckoutStep();
+  const prevStep = usePrevCheckoutStep();
+  const setShippingInfo = useSetShippingInfo();
+  const updateShippingField = useUpdateShippingField();
+  const setValidationErrors = useSetValidationErrors();
+  const clearAllValidationErrors = useClearAllValidationErrors();
+  const setIsCreatingOrder = useSetIsCreatingOrder();
+  const setCreatedOrder = useSetCreatedOrder();
+  const setPaymentAuthority = useSetPaymentAuthority();
+  const resetCheckout = useResetCheckout();
 
   // Use cart store
   const cartItems = useCartItems();
@@ -313,7 +336,7 @@ export function CustomerShoppingCart() {
         notes: prev.notes,
       }));
     }
-  }, [profileData, user]);
+  }, [profileData, user, setShippingInfo]);
 
   const handleQuantityChange = async (
     itemId: string,
@@ -403,23 +426,14 @@ export function CustomerShoppingCart() {
   const handleCheckout = () => {
     // Check if user is authenticated
     if (!user) {
-      setAuthDialogOpen(true);
+      openAuthDialog();
       return;
     }
-    setCheckoutDialogOpen(true);
+    openCheckoutDialog();
   };
 
   const handleShippingInfoChange = (field: string, value: string) => {
-    setShippingInfo((prev) => ({ ...prev, [field]: value }));
-
-    // Clear validation error for this field when user starts typing
-    if (validationErrors[field]) {
-      setValidationErrors((prev) => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
+    updateShippingField(field as keyof ShippingInfo, value);
   };
 
   const handleNext = async () => {
@@ -437,7 +451,7 @@ export function CustomerShoppingCart() {
       }
 
       // Clear any previous validation errors
-      setValidationErrors({});
+      clearAllValidationErrors();
     }
 
     // If moving from step 2 (order summary) to step 3 (payment), create order and initiate payment
@@ -446,7 +460,7 @@ export function CustomerShoppingCart() {
       return;
     }
 
-    setActiveStep((prev) => prev + 1);
+    nextStep();
   };
 
   const handleCreateOrderAndInitiatePayment = async () => {
@@ -760,7 +774,7 @@ export function CustomerShoppingCart() {
   };
 
   const handleBack = () => {
-    setActiveStep((prev) => prev - 1);
+    prevStep();
   };
 
   if (cartLoading) {
@@ -1351,7 +1365,7 @@ export function CustomerShoppingCart() {
         {/* Checkout Dialog */}
         <Dialog
           open={checkoutDialogOpen}
-          onClose={() => setCheckoutDialogOpen(false)}
+          onClose={closeCheckoutDialog}
           maxWidth="sm"
           fullWidth
           scroll="paper"
@@ -1391,7 +1405,7 @@ export function CustomerShoppingCart() {
             </Typography>
             <IconButton
               aria-label="close"
-              onClick={() => setCheckoutDialogOpen(false)}
+              onClick={closeCheckoutDialog}
               size="small"
               sx={{
                 color: 'text.secondary',
@@ -2206,7 +2220,8 @@ export function CustomerShoppingCart() {
                       fullWidth={isMobile}
                       size={isMobile ? 'medium' : 'large'}
                       onClick={() => {
-                        setCheckoutDialogOpen(false);
+                        closeCheckoutDialog();
+                        resetCheckout();
                         navigate(CUSTOMER_ROUTES.ORDER_CONFIRMATION, {
                           state: { orderId: createdOrder.id },
                         });
@@ -2278,7 +2293,7 @@ export function CustomerShoppingCart() {
           >
             <Button
               size={isMobile ? 'small' : 'medium'}
-              onClick={() => setCheckoutDialogOpen(false)}
+              onClick={closeCheckoutDialog}
             >
               {LL.button.cancel()}
             </Button>
@@ -2328,7 +2343,7 @@ export function CustomerShoppingCart() {
         {/* Authentication Required Dialog */}
         <Dialog
           open={authDialogOpen}
-          onClose={() => setAuthDialogOpen(false)}
+          onClose={closeAuthDialog}
           maxWidth="xs"
           fullWidth
           PaperProps={{
@@ -2358,7 +2373,7 @@ export function CustomerShoppingCart() {
           <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 } }}>
             <Button
               size={isMobile ? 'small' : 'medium'}
-              onClick={() => setAuthDialogOpen(false)}
+              onClick={closeAuthDialog}
             >
               {LL.button.cancel()}
             </Button>
@@ -2366,7 +2381,7 @@ export function CustomerShoppingCart() {
               variant="contained"
               size={isMobile ? 'small' : 'medium'}
               onClick={() => {
-                setAuthDialogOpen(false);
+                closeAuthDialog();
                 navigate(CUSTOMER_ROUTES.LOGIN, {
                   state: { from: CUSTOMER_ROUTES.CART },
                 });

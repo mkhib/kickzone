@@ -107,6 +107,9 @@
       "@kickzone-workspace/customer-checkout": [
         "libs/client/customers/screens/customer-checkout/src/index.ts"
       ],
+      "@kickzone-workspace/customer-checkout-store": [
+        "libs/client/customers/zustand/customer-checkout-store/src/index.ts"
+      ],
       "@kickzone-workspace/customer-forgot-password": [
         "libs/client/customers/screens/forgot-password/src/index.ts"
       ],
