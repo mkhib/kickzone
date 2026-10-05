@@ -286,12 +286,13 @@ export const useProducts = () => {
 };
 
 export function useProductById(id: number | undefined) {
+  const isValidId = typeof id === 'number' && !isNaN(id) && id > 0;
   const { data, loading, error, refetch } = useQuery<
     Pick<KickzoneGraphqlTypes.Query, 'product'>,
     KickzoneGraphqlTypes.QueryProductArgs
   >(PRODUCT_BY_ID_QUERY, {
-    variables: { id: id || 0 },
-    skip: typeof id === 'undefined',
+    variables: { id: isValidId ? id : 0 },
+    skip: !isValidId,
   });
   return { product: data?.product, loading, error, refetch };
 }

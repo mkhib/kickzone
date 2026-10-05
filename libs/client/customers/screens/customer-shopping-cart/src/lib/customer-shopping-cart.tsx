@@ -20,6 +20,7 @@ import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { parseColorHexes } from '@kickzone-workspace/client-shared-graphql';
 import {
+  saintbalaBrand,
   useI18nContext,
   useLanguageContext,
   usePageTitle,
@@ -30,7 +31,9 @@ import {
   type ShippingInfoFormData,
 } from '@kickzone-workspace/shipping-validation';
 import Add from '@mui/icons-material/Add';
+import Close from '@mui/icons-material/Close';
 import Delete from '@mui/icons-material/Delete';
+import Edit from '@mui/icons-material/Edit';
 import Remove from '@mui/icons-material/Remove';
 import ShoppingCartCheckout from '@mui/icons-material/ShoppingCartCheckout';
 import Alert from '@mui/material/Alert';
@@ -40,6 +43,7 @@ import { LottieEmptyCart } from '@kickzone-workspace/lottie-empty-cart';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
 import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
 import DialogActions from '@mui/material/DialogActions';
@@ -72,12 +76,6 @@ const formatNumber = (num: number | string, locale: string): string => {
   return n.toLocaleString(locale);
 };
 
-const CTA_FILL_LIGHT = '#1a1a19';
-const CTA_TEXT_LIGHT = '#faf9f7';
-const CTA_FILL_DARK = '#c5b89a';
-const CTA_TEXT_DARK = '#121210';
-const ACCENT_TEXT = '#8f8468';
-
 const isItemRecommended = (
   item: CartItem & { isRecommended?: boolean; recommended?: boolean }
 ): boolean => {
@@ -86,9 +84,12 @@ const isItemRecommended = (
 
 export function CustomerShoppingCart() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
-  const ctaFill = isDark ? CTA_FILL_DARK : CTA_FILL_LIGHT;
-  const ctaText = isDark ? CTA_TEXT_DARK : CTA_TEXT_LIGHT;
+  const brand = isDark ? saintbalaBrand.dark : saintbalaBrand.light;
+  const ctaFill = brand.ctaBg;
+  const ctaText = brand.ctaFg;
+  const ctaHover = brand.ctaHover;
   // Initialize cart service to sync server cart with local store
   // This ensures shipping fees are fetched and synced when user is logged in
   useCustomersCartService();
@@ -890,10 +891,7 @@ export function CustomerShoppingCart() {
                             variant="h6"
                             sx={{
                               fontWeight: 700,
-                              color:
-                                theme.palette.mode === 'dark'
-                                  ? '#ffffff'
-                                  : '#0f0f0f',
+                              color: 'text.primary',
                             }}
                           >
                             {item.productName}
@@ -919,10 +917,7 @@ export function CustomerShoppingCart() {
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color:
-                                        theme.palette.mode === 'dark'
-                                          ? '#b8b8b8'
-                                          : '#666',
+                                      color: 'text.secondary',
                                       fontWeight: 600,
                                       textTransform: 'uppercase',
                                       fontSize: '0.75rem',
@@ -941,19 +936,20 @@ export function CustomerShoppingCart() {
                                       <Box
                                         key={hex}
                                         sx={{
-                                          width: 24,
-                                          height: 24,
+                                          width: 16,
+                                          height: 16,
                                           backgroundColor: hex,
                                           borderRadius: '50%',
                                           border: '2px solid white',
                                           boxShadow:
-                                            '0 2px 8px rgba(0,0,0,0.15)',
+                                            '0 2px 4px rgba(0,0,0,0.2)',
                                         }}
                                       />
                                     ))}
                                   </Box>
                                 </Box>
                               )}
+
                               {item.size && (
                                 <Box
                                   sx={{
@@ -965,10 +961,7 @@ export function CustomerShoppingCart() {
                                   <Typography
                                     variant="caption"
                                     sx={{
-                                      color:
-                                        theme.palette.mode === 'dark'
-                                          ? '#b8b8b8'
-                                          : '#666',
+                                      color: 'text.secondary',
                                       fontWeight: 600,
                                       textTransform: 'uppercase',
                                       fontSize: '0.75rem',
@@ -980,10 +973,7 @@ export function CustomerShoppingCart() {
                                     variant="body2"
                                     sx={{
                                       fontWeight: 700,
-                                      color:
-                                        theme.palette.mode === 'dark'
-                                          ? '#ffffff'
-                                          : '#1a1a1a',
+                                      color: 'text.primary',
                                     }}
                                   >
                                     {formatNumber(item.size, currentLocale)}
@@ -1005,10 +995,8 @@ export function CustomerShoppingCart() {
                               sx={{
                                 fontWeight: 700,
                                 color: isItemRecommended(item)
-                                  ? ACCENT_TEXT
-                                  : theme.palette.mode === 'dark'
-                                  ? '#ffffff'
-                                  : '#0f0f0f',
+                                  ? theme.palette.primary.main
+                                  : 'text.primary',
                               }}
                             >
                               <PriceDisplay
@@ -1024,8 +1012,8 @@ export function CustomerShoppingCart() {
                                 sx={{
                                   color:
                                     item.availableStock < 5
-                                      ? '#f5576c'
-                                      : '#ff9800',
+                                      ? 'error.main'
+                                      : 'warning.main',
                                   fontWeight: 600,
                                 }}
                               >
@@ -1049,7 +1037,8 @@ export function CustomerShoppingCart() {
                             gap: 2,
                             mt: 2,
                             pt: 2,
-                            borderTop: '1px solid rgba(0,0,0,0.08)',
+                            borderTop: '1px solid',
+                            borderColor: 'divider',
                           }}
                         >
                           <Box
@@ -1057,16 +1046,13 @@ export function CustomerShoppingCart() {
                               display: 'flex',
                               alignItems: 'center',
                               gap: 1,
-                              background:
-                                theme.palette.mode === 'dark'
-                                  ? '#111114'
-                                  : '#111114',
+                              bgcolor: isDark
+                                ? 'rgba(255,255,255,0.06)'
+                                : 'rgba(0,0,0,0.04)',
                               borderRadius: 3,
                               p: 0.5,
-                              border:
-                                theme.palette.mode === 'dark'
-                                  ? '1px solid rgba(255,255,255,0.12)'
-                                  : '1px solid rgba(255,255,255,0.08)',
+                              border: '1px solid',
+                              borderColor: 'divider',
                             }}
                           >
                             <IconButton
@@ -1079,11 +1065,9 @@ export function CustomerShoppingCart() {
                                 )
                               }
                               sx={{
-                                background: 'transparent',
-                                color: '#ffffff',
-                                boxShadow: 'none',
+                                color: 'text.primary',
                                 '&:hover': {
-                                  background: 'rgba(255,255,255,0.08)',
+                                  background: 'action.hover',
                                 },
                               }}
                             >
@@ -1095,7 +1079,7 @@ export function CustomerShoppingCart() {
                                 textAlign: 'center',
                                 fontWeight: 700,
                                 fontSize: '1.1rem',
-                                color: '#ffffff',
+                                color: 'text.primary',
                               }}
                             >
                               {formatNumber(item.quantity, currentLocale)}
@@ -1111,15 +1095,12 @@ export function CustomerShoppingCart() {
                               }
                               disabled={item.quantity >= item.availableStock}
                               sx={{
-                                background: 'transparent',
-                                color: '#ffffff',
-                                boxShadow: 'none',
+                                color: 'text.primary',
                                 '&:hover': {
-                                  background: 'rgba(255,255,255,0.08)',
+                                  background: 'action.hover',
                                 },
                                 '&.Mui-disabled': {
-                                  background: 'rgba(255,255,255,0.05)',
-                                  opacity: 0.4,
+                                  color: 'text.disabled',
                                 },
                               }}
                             >
@@ -1139,10 +1120,8 @@ export function CustomerShoppingCart() {
                               sx={{
                                 fontWeight: 800,
                                 color: isItemRecommended(item)
-                                  ? ACCENT_TEXT
-                                  : theme.palette.mode === 'dark'
-                                  ? '#ffffff'
-                                  : '#0f0f0f',
+                                  ? theme.palette.primary.main
+                                  : 'text.primary',
                               }}
                             >
                               <PriceDisplay
@@ -1155,9 +1134,9 @@ export function CustomerShoppingCart() {
                             <IconButton
                               onClick={() => handleRemoveItem(item.id)}
                               sx={{
-                                color: '#b45542',
+                                color: 'error.main',
                                 '&:hover': {
-                                  background: 'rgba(180, 85, 66, 0.12)',
+                                  background: 'action.hover',
                                 },
                               }}
                             >
@@ -1181,16 +1160,13 @@ export function CustomerShoppingCart() {
               >
                 <Button
                   variant="outlined"
+                  color="error"
                   onClick={handleClearCart}
                   sx={{
                     borderRadius: 3,
-                    borderColor: '#f5576c',
-                    color: '#f5576c',
                     fontWeight: 600,
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      borderColor: '#f5576c',
-                      background: 'rgba(245, 87, 108, 0.08)',
                       transform: 'translateY(-1px)',
                     },
                   }}
@@ -1201,7 +1177,7 @@ export function CustomerShoppingCart() {
                   variant="body2"
                   sx={{
                     fontWeight: 600,
-                    color: ACCENT_TEXT,
+                    color: 'primary.main',
                     fontSize: '0.95rem',
                   }}
                 >
@@ -1359,7 +1335,7 @@ export function CustomerShoppingCart() {
                     color: ctaText,
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      backgroundColor: isDark ? '#d4c9b0' : '#2e2e2c',
+                      backgroundColor: ctaHover,
                       boxShadow: 'none',
                       color: ctaText,
                     },
@@ -1376,12 +1352,73 @@ export function CustomerShoppingCart() {
         <Dialog
           open={checkoutDialogOpen}
           onClose={() => setCheckoutDialogOpen(false)}
-          maxWidth="md"
+          maxWidth="sm"
           fullWidth
+          scroll="paper"
+          PaperProps={{
+            sx: {
+              borderRadius: { xs: 2.5, sm: 3 },
+              m: { xs: 1.5, sm: 2, md: 3 },
+              width: { xs: 'calc(100% - 24px)', sm: '100%' },
+              maxWidth: { xs: '100%', sm: 560, md: 620 },
+              maxHeight: { xs: 'calc(100% - 24px)', sm: 'calc(100% - 64px)' },
+              display: 'flex',
+              flexDirection: 'column',
+              overflowX: 'hidden',
+            },
+          }}
         >
-          <DialogTitle>{LL.checkout.orderSummary()}</DialogTitle>
-          <DialogContent dividers sx={{ pt: 2 }}>
-            <Stepper activeStep={activeStep} sx={{ mb: 3 }}>
+          <DialogTitle
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: { xs: 2, sm: 3 },
+              py: { xs: 1.5, sm: 2 },
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
+            <Typography
+              variant="h6"
+              component="div"
+              sx={{
+                fontWeight: 700,
+                fontSize: { xs: '1.05rem', sm: '1.25rem' },
+              }}
+            >
+              {steps[activeStep]}
+            </Typography>
+            <IconButton
+              aria-label="close"
+              onClick={() => setCheckoutDialogOpen(false)}
+              size="small"
+              sx={{
+                color: 'text.secondary',
+                '&:hover': {
+                  backgroundColor: 'action.hover',
+                },
+              }}
+            >
+              <Close fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent
+            dividers
+            sx={{
+              px: { xs: 1.5, sm: 3 },
+              py: { xs: 1.5, sm: 2.5 },
+              overflowX: 'hidden',
+            }}
+          >
+            {/* Desktop / tablet Stepper */}
+            <Stepper
+              activeStep={activeStep}
+              sx={{
+                display: { xs: 'none', sm: 'flex' },
+                mb: 3,
+              }}
+            >
               {steps.map((label) => (
                 <Step key={label}>
                   <StepLabel>{label}</StepLabel>
@@ -1389,53 +1426,116 @@ export function CustomerShoppingCart() {
               ))}
             </Stepper>
 
+            {/* Mobile progress indicator */}
+            <Box sx={{ display: { xs: 'block', sm: 'none' }, mb: 2 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  mb: 1,
+                }}
+              >
+                <Typography
+                  variant="body2"
+                  fontWeight={700}
+                  color="primary.main"
+                  sx={{ fontSize: '0.85rem' }}
+                >
+                  {steps[activeStep]}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  fontWeight={600}
+                >
+                  {formatNumber(activeStep + 1, currentLocale)} /{' '}
+                  {formatNumber(steps.length, currentLocale)}
+                </Typography>
+              </Box>
+              <Box sx={{ display: 'flex', gap: 0.75, width: '100%' }}>
+                {steps.map((_, idx) => (
+                  <Box
+                    key={idx}
+                    sx={{
+                      flex: 1,
+                      height: 4,
+                      borderRadius: 2,
+                      backgroundColor:
+                        idx <= activeStep
+                          ? 'primary.main'
+                          : isDark
+                          ? 'rgba(255,255,255,0.15)'
+                          : 'rgba(0,0,0,0.1)',
+                      transition: 'background-color 0.3s ease',
+                    }}
+                  />
+                ))}
+              </Box>
+            </Box>
+
             {activeStep === 0 && (
               <Box>
-                <Typography variant="h6" gutterBottom>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 700,
+                    color: 'text.primary',
+                    mb: { xs: 1.5, sm: 2 },
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
                   {LL.checkout.reviewCart()}
                 </Typography>
-                <Box sx={{ mb: 3 }}>
+                <Box sx={{ mb: 2 }}>
                   {cartItems.map((item: CartItem) => (
                     <Box
                       key={item.id}
                       sx={{
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'flex-start',
-                        py: 2,
-                        borderBottom: '1px solid #e0e0e0',
+                        alignItems: 'center',
+                        py: { xs: 1.25, sm: 1.75 },
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        gap: 1.5,
                         '&:last-child': {
                           borderBottom: 'none',
                         },
                       }}
                     >
-                      <Box sx={{ display: 'flex', gap: 2, flex: 1 }}>
+                      <Box
+                        sx={{
+                          display: 'flex',
+                          gap: 1.5,
+                          flex: 1,
+                          minWidth: 0,
+                          alignItems: 'center',
+                        }}
+                      >
                         {item.productImage && (
                           <Box
                             component="img"
                             src={item.productImage}
                             alt={item.productName}
                             sx={{
-                              width: 60,
-                              height: 60,
+                              width: { xs: 48, sm: 56 },
+                              height: { xs: 48, sm: 56 },
                               objectFit: 'cover',
-                              borderRadius: 2,
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                              borderRadius: 1.5,
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.08)',
                               flexShrink: 0,
                             }}
                           />
                         )}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Typography
-                            variant="body1"
-                            fontWeight={500}
+                            variant="body2"
+                            fontWeight={600}
                             sx={{
-                              mb: 0.5,
                               overflow: 'hidden',
                               textOverflow: 'ellipsis',
-                              display: '-webkit-box',
-                              WebkitLineClamp: 2,
-                              WebkitBoxOrient: 'vertical',
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             {item.productName}
@@ -1444,9 +1544,9 @@ export function CustomerShoppingCart() {
                             sx={{
                               display: 'flex',
                               alignItems: 'center',
-                              gap: 1.5,
+                              gap: 1,
                               flexWrap: 'wrap',
-                              mt: 0.5,
+                              mt: 0.25,
                             }}
                           >
                             {item.color && (
@@ -1462,12 +1562,12 @@ export function CustomerShoppingCart() {
                                   <Box
                                     key={hex}
                                     sx={{
-                                      width: 20,
-                                      height: 20,
+                                      width: 14,
+                                      height: 14,
                                       backgroundColor: hex,
                                       borderRadius: '50%',
-                                      border: '2px solid white',
-                                      boxShadow: '0 2px 4px rgba(0,0,0,0.15)',
+                                      border: '1.5px solid white',
+                                      boxShadow: '0 1px 3px rgba(0,0,0,0.15)',
                                     }}
                                   />
                                 ))}
@@ -1479,10 +1579,12 @@ export function CustomerShoppingCart() {
                                 color="text.secondary"
                                 sx={{
                                   fontWeight: 500,
-                                  px: 1,
-                                  py: 0.25,
+                                  px: 0.75,
+                                  py: 0.1,
                                   borderRadius: 1,
-                                  backgroundColor: 'rgba(0,0,0,0.04)',
+                                  backgroundColor: isDark
+                                    ? 'rgba(255,255,255,0.06)'
+                                    : 'rgba(0,0,0,0.04)',
                                 }}
                               >
                                 {LL.products.size()}:{' '}
@@ -1499,37 +1601,31 @@ export function CustomerShoppingCart() {
                           </Box>
                         </Box>
                       </Box>
-                      <Box sx={{ textAlign: 'right', ml: 2, flexShrink: 0 }}>
-                        <PriceDisplay
-                          priceInUSD={item.totalPrice}
-                          showSymbol={true}
-                          showOriginal={false}
-                        />
+                      <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                        <Typography variant="body2" fontWeight={700}>
+                          <PriceDisplay
+                            priceInUSD={item.totalPrice}
+                            showSymbol={true}
+                            showOriginal={false}
+                          />
+                        </Typography>
                       </Box>
                     </Box>
                   ))}
                 </Box>
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 1.5 }} />
                 <Box
                   sx={{
                     display: 'flex',
-                    flexDirection: { xs: 'column', lg: 'row' },
-                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
-                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     mb: 1,
-                    gap: { xs: 0.5, lg: 1 },
                   }}
                 >
-                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <Typography variant="body2" color="text.secondary">
                     {LL.checkout.subtotal()}:
                   </Typography>
-                  <Typography
-                    sx={{
-                      textAlign: { xs: 'left', lg: 'right' },
-                      minWidth: 0,
-                      flex: { xs: 'none', lg: '1 1 auto' },
-                    }}
-                  >
+                  <Typography variant="body2" fontWeight={600}>
                     <PriceDisplay
                       priceInUSD={cartTotal}
                       showSymbol={true}
@@ -1542,23 +1638,15 @@ export function CustomerShoppingCart() {
                 <Box
                   sx={{
                     display: 'flex',
-                    flexDirection: { xs: 'column', lg: 'row' },
-                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
-                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     mb: 1,
-                    gap: { xs: 0.5, lg: 1 },
                   }}
                 >
-                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <Typography variant="body2" color="text.secondary">
                     {LL.checkout.shipping()}:
                   </Typography>
-                  <Typography
-                    sx={{
-                      textAlign: { xs: 'left', lg: 'right' },
-                      minWidth: 0,
-                      flex: { xs: 'none', lg: '1 1 auto' },
-                    }}
-                  >
+                  <Typography variant="body2" fontWeight={600}>
                     <PriceDisplay
                       priceInUSD={totalShippingCost}
                       showSymbol={true}
@@ -1567,30 +1655,22 @@ export function CustomerShoppingCart() {
                   </Typography>
                 </Box>
 
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 1.5 }} />
 
                 <Box
                   sx={{
                     display: 'flex',
-                    flexDirection: { xs: 'column', lg: 'row' },
-                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
-                    alignItems: { xs: 'flex-start', lg: 'center' },
-                    gap: { xs: 0.5, lg: 1 },
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                   }}
                 >
-                  <Typography
-                    variant="h6"
-                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                  >
+                  <Typography variant="subtitle1" fontWeight={700}>
                     {LL.checkout.total()}:
                   </Typography>
                   <Typography
-                    variant="h6"
-                    sx={{
-                      textAlign: { xs: 'left', lg: 'right' },
-                      minWidth: 0,
-                      flex: { xs: 'none', lg: '1 1 auto' },
-                    }}
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="primary.main"
                   >
                     <PriceDisplay
                       priceInUSD={grandTotal}
@@ -1605,21 +1685,22 @@ export function CustomerShoppingCart() {
             {activeStep === 1 && (
               <Box>
                 <Typography
-                  variant="h6"
-                  gutterBottom
+                  variant="subtitle1"
                   sx={{
                     fontWeight: 700,
-                    color: '#1a1a1a',
-                    mb: 3,
+                    color: 'text.primary',
+                    mb: { xs: 1.5, sm: 2 },
+                    display: { xs: 'none', sm: 'block' },
                   }}
                 >
                   {LL.checkout.shippingInformation()}
                 </Typography>
-                <Grid container spacing={2.5}>
+                <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
                       required
+                      size={isMobile ? 'small' : 'medium'}
                       label={LL.form.fullName()}
                       value={shippingInfo.customerName || ''}
                       onChange={(e) =>
@@ -1638,6 +1719,7 @@ export function CustomerShoppingCart() {
                     <TextField
                       fullWidth
                       required
+                      size={isMobile ? 'small' : 'medium'}
                       label={LL.form.email()}
                       type="email"
                       value={shippingInfo.customerEmail || ''}
@@ -1660,6 +1742,7 @@ export function CustomerShoppingCart() {
                     <TextField
                       fullWidth
                       required
+                      size={isMobile ? 'small' : 'medium'}
                       label={LL.form.phone()}
                       value={shippingInfo.customerPhone || ''}
                       onChange={(e) =>
@@ -1681,6 +1764,7 @@ export function CustomerShoppingCart() {
                     <TextField
                       fullWidth
                       required
+                      size={isMobile ? 'small' : 'medium'}
                       label={LL.form.country()}
                       value={shippingInfo.country || ''}
                       onChange={(e) =>
@@ -1699,6 +1783,7 @@ export function CustomerShoppingCart() {
                     <TextField
                       fullWidth
                       required
+                      size={isMobile ? 'small' : 'medium'}
                       label={LL.form.address()}
                       value={shippingInfo.shippingAddress || ''}
                       onChange={(e) =>
@@ -1720,6 +1805,7 @@ export function CustomerShoppingCart() {
                     <TextField
                       fullWidth
                       required
+                      size={isMobile ? 'small' : 'medium'}
                       label={LL.form.city()}
                       value={shippingInfo.city || ''}
                       onChange={(e) =>
@@ -1734,10 +1820,11 @@ export function CustomerShoppingCart() {
                       }}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                  <Grid size={{ xs: 6, sm: 4 }}>
                     <TextField
                       fullWidth
                       required
+                      size={isMobile ? 'small' : 'medium'}
                       label={LL.form.state()}
                       value={shippingInfo.state || ''}
                       onChange={(e) =>
@@ -1752,10 +1839,11 @@ export function CustomerShoppingCart() {
                       }}
                     />
                   </Grid>
-                  <Grid size={{ xs: 12, sm: 4 }}>
+                  <Grid size={{ xs: 6, sm: 4 }}>
                     <TextField
                       fullWidth
                       required
+                      size={isMobile ? 'small' : 'medium'}
                       label={LL.form.zipCode()}
                       value={shippingInfo.zipCode || ''}
                       onChange={(e) =>
@@ -1773,9 +1861,10 @@ export function CustomerShoppingCart() {
                   <Grid size={{ xs: 12 }}>
                     <TextField
                       fullWidth
+                      size={isMobile ? 'small' : 'medium'}
                       label={LL.form.notes()}
                       multiline
-                      rows={3}
+                      rows={isMobile ? 2 : 3}
                       value={shippingInfo.notes || ''}
                       onChange={(e) =>
                         handleShippingInfoChange('notes', e.target.value)
@@ -1795,24 +1884,106 @@ export function CustomerShoppingCart() {
 
             {activeStep === 2 && (
               <Box>
-                <Typography variant="h6" gutterBottom>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 700,
+                    color: 'text.primary',
+                    mb: { xs: 1.5, sm: 2 },
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
                   {LL.checkout.orderSummary()}
                 </Typography>
 
+                {/* Shipping address review card */}
+                {shippingInfo.shippingAddress && (
+                  <Box
+                    sx={{
+                      p: { xs: 1.5, sm: 2 },
+                      mb: 2,
+                      borderRadius: 2,
+                      backgroundColor: isDark
+                        ? 'rgba(255,255,255,0.04)'
+                        : 'rgba(0,0,0,0.02)',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        mb: 0.75,
+                      }}
+                    >
+                      <Typography variant="subtitle2" fontWeight={700}>
+                        {LL.checkout.shippingInformation()}
+                      </Typography>
+                      <Button
+                        size="small"
+                        startIcon={<Edit sx={{ fontSize: '0.9rem !important' }} />}
+                        onClick={() => setActiveStep(1)}
+                        sx={{
+                          minWidth: 'auto',
+                          py: 0.25,
+                          px: 1,
+                          fontSize: '0.8rem',
+                        }}
+                      >
+                        {LL.button.edit()}
+                      </Button>
+                    </Box>
+                    <Typography variant="body2" color="text.secondary">
+                      {shippingInfo.customerName} - {shippingInfo.customerPhone}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mt: 0.25 }}
+                    >
+                      {[
+                        shippingInfo.shippingAddress,
+                        shippingInfo.city,
+                        shippingInfo.state,
+                        shippingInfo.zipCode,
+                        shippingInfo.country,
+                      ]
+                        .filter(Boolean)
+                        .join('، ')}
+                    </Typography>
+                  </Box>
+                )}
+
                 {/* Display cart items */}
-                <Box sx={{ mb: 3 }}>
+                <Box sx={{ mb: 2 }}>
                   {cartItems.map((item: CartItem) => (
                     <Box
                       key={item.id}
                       sx={{
                         display: 'flex',
                         justifyContent: 'space-between',
+                        alignItems: 'center',
                         py: 1,
-                        borderBottom: '1px solid #e0e0e0',
+                        borderBottom: '1px solid',
+                        borderColor: 'divider',
+                        gap: 1.5,
+                        '&:last-child': {
+                          borderBottom: 'none',
+                        },
                       }}
                     >
-                      <Box>
-                        <Typography variant="body1" fontWeight={500}>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={500}
+                          sx={{
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
                           {item.productName}
                         </Typography>
                         <Box
@@ -1820,7 +1991,7 @@ export function CustomerShoppingCart() {
                             display: 'flex',
                             alignItems: 'center',
                             gap: 1.5,
-                            mt: 0.5,
+                            mt: 0.25,
                           }}
                         >
                           {item.color && (
@@ -1848,8 +2019,8 @@ export function CustomerShoppingCart() {
                                   <Box
                                     key={hex}
                                     sx={{
-                                      width: 16,
-                                      height: 16,
+                                      width: 14,
+                                      height: 14,
                                       backgroundColor: hex,
                                       borderRadius: '50%',
                                       border: '1px solid #ccc',
@@ -1882,25 +2053,23 @@ export function CustomerShoppingCart() {
                               </Typography>
                             </Box>
                           )}
+                          <Typography
+                            variant="caption"
+                            color="text.secondary"
+                          >
+                            {LL.table.quantity()}:{' '}
+                            {formatNumber(item.quantity, currentLocale)}
+                          </Typography>
                         </Box>
-                        <Typography
-                          variant="caption"
-                          color="text.secondary"
-                          sx={{ mt: 0.5 }}
-                        >
-                          {LL.table.quantity()}:{' '}
-                          {formatNumber(item.quantity, currentLocale)}
-                        </Typography>
                       </Box>
-                      <Box sx={{ textAlign: 'right' }}>
+                      <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
                         <Typography
+                          variant="body2"
                           sx={{
                             fontWeight: 700,
                             color: isItemRecommended(item)
-                              ? ACCENT_TEXT
-                              : theme.palette.mode === 'dark'
-                              ? '#ffffff'
-                              : '#0f0f0f',
+                              ? theme.palette.primary.main
+                              : 'text.primary',
                           }}
                         >
                           <PriceDisplay
@@ -1918,27 +2087,15 @@ export function CustomerShoppingCart() {
                 <Box
                   sx={{
                     display: 'flex',
-                    flexDirection: { xs: 'column', lg: 'row' },
-                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
-                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     mb: 1,
-                    gap: { xs: 0.5, lg: 1 },
                   }}
                 >
-                  <Typography
-                    variant="body1"
-                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                  >
+                  <Typography variant="body2" color="text.secondary">
                     {LL.checkout.subtotal()}:
                   </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      textAlign: { xs: 'left', lg: 'right' },
-                      minWidth: 0,
-                      flex: { xs: 'none', lg: '1 1 auto' },
-                    }}
-                  >
+                  <Typography variant="body2" fontWeight={600}>
                     <PriceDisplay
                       priceInUSD={cartTotal}
                       showSymbol={true}
@@ -1951,27 +2108,15 @@ export function CustomerShoppingCart() {
                 <Box
                   sx={{
                     display: 'flex',
-                    flexDirection: { xs: 'column', lg: 'row' },
-                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
-                    alignItems: { xs: 'flex-start', lg: 'center' },
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
                     mb: 1,
-                    gap: { xs: 0.5, lg: 1 },
                   }}
                 >
-                  <Typography
-                    variant="body1"
-                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
-                  >
+                  <Typography variant="body2" color="text.secondary">
                     {LL.checkout.shipping()}:
                   </Typography>
-                  <Typography
-                    variant="body1"
-                    sx={{
-                      textAlign: { xs: 'left', lg: 'right' },
-                      minWidth: 0,
-                      flex: { xs: 'none', lg: '1 1 auto' },
-                    }}
-                  >
+                  <Typography variant="body2" fontWeight={600}>
                     <PriceDisplay
                       priceInUSD={totalShippingCost}
                       showSymbol={true}
@@ -1980,32 +2125,26 @@ export function CustomerShoppingCart() {
                   </Typography>
                 </Box>
 
-                <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 1.5 }} />
 
                 <Box
                   sx={{
                     display: 'flex',
-                    flexDirection: { xs: 'column', lg: 'row' },
-                    justifyContent: { xs: 'flex-start', lg: 'space-between' },
-                    alignItems: { xs: 'flex-start', lg: 'center' },
-                    mb: 2,
-                    gap: { xs: 0.5, lg: 1 },
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    mb: 1,
                   }}
                 >
                   <Typography
-                    variant="h6"
-                    sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}
+                    variant="subtitle1"
+                    fontWeight={700}
                   >
                     {LL.checkout.total()}:
                   </Typography>
                   <Typography
-                    variant="h6"
-                    color="primary"
-                    sx={{
-                      textAlign: { xs: 'left', lg: 'right' },
-                      minWidth: 0,
-                      flex: { xs: 'none', lg: '1 1 auto' },
-                    }}
+                    variant="subtitle1"
+                    fontWeight={700}
+                    color="primary.main"
                   >
                     <PriceDisplay
                       priceInUSD={grandTotal}
@@ -2019,7 +2158,15 @@ export function CustomerShoppingCart() {
 
             {activeStep === 3 && (
               <Box>
-                <Typography variant="h6" gutterBottom>
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 700,
+                    color: 'text.primary',
+                    mb: { xs: 1.5, sm: 2 },
+                    display: { xs: 'none', sm: 'block' },
+                  }}
+                >
                   {LL.checkout.payment()}
                 </Typography>
                 {isCreatingOrder ? (
@@ -2045,14 +2192,19 @@ export function CustomerShoppingCart() {
                     <Alert severity="info" sx={{ mb: 2 }}>
                       {LL.checkout.orderProcessed()}
                     </Alert>
-                    <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2 }}
+                    >
                       {LL.checkout.orderNumberLabel()}:{' '}
                       {createdOrder.orderNumber}
                     </Typography>
                     <Button
                       variant="contained"
                       color="primary"
-                      size="large"
+                      fullWidth={isMobile}
+                      size={isMobile ? 'medium' : 'large'}
                       onClick={() => {
                         setCheckoutDialogOpen(false);
                         navigate(CUSTOMER_ROUTES.ORDER_CONFIRMATION, {
@@ -2077,11 +2229,11 @@ export function CustomerShoppingCart() {
                         py: 2,
                       }}
                     >
-                      <Typography variant="body1" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary">
                         {LL.checkout.orderNumberLabel()}:{' '}
                         {createdOrder?.orderNumber}
                       </Typography>
-                      <Typography variant="body1" fontWeight={500}>
+                      <Typography variant="body1" fontWeight={600}>
                         {LL.checkout.totalAmountLabel()}:{' '}
                         <PriceDisplay
                           priceInUSD={grandTotal}
@@ -2092,12 +2244,13 @@ export function CustomerShoppingCart() {
                       <Button
                         variant="contained"
                         color="primary"
+                        fullWidth={isMobile}
                         size="large"
                         onClick={() => redirectToGateway(paymentAuthority)}
                         sx={{
-                          mt: 2,
+                          mt: 1,
                           px: 4,
-                          py: 1.5,
+                          py: 1.25,
                           fontSize: '1rem',
                           fontWeight: 600,
                         }}
@@ -2114,16 +2267,33 @@ export function CustomerShoppingCart() {
               </Box>
             )}
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setCheckoutDialogOpen(false)}>
+          <DialogActions
+            sx={{
+              px: { xs: 2, sm: 3 },
+              py: { xs: 1.25, sm: 2 },
+              borderTop: '1px solid',
+              borderColor: 'divider',
+              gap: 1,
+            }}
+          >
+            <Button
+              size={isMobile ? 'small' : 'medium'}
+              onClick={() => setCheckoutDialogOpen(false)}
+            >
               {LL.button.cancel()}
             </Button>
             {activeStep > 0 && activeStep < 3 && (
-              <Button onClick={handleBack}>{LL.button.back()}</Button>
+              <Button
+                size={isMobile ? 'small' : 'medium'}
+                onClick={handleBack}
+              >
+                {LL.button.back()}
+              </Button>
             )}
             {activeStep < 2 ? (
               <Button
                 variant="contained"
+                size={isMobile ? 'small' : 'medium'}
                 onClick={handleNext}
                 sx={{
                   transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -2138,6 +2308,7 @@ export function CustomerShoppingCart() {
             ) : activeStep === 2 ? (
               <Button
                 variant="contained"
+                size={isMobile ? 'small' : 'medium'}
                 onClick={handleNext}
                 loading={isCreatingOrder}
                 sx={{
@@ -2158,21 +2329,42 @@ export function CustomerShoppingCart() {
         <Dialog
           open={authDialogOpen}
           onClose={() => setAuthDialogOpen(false)}
-          maxWidth="sm"
+          maxWidth="xs"
           fullWidth
+          PaperProps={{
+            sx: {
+              borderRadius: { xs: 2.5, sm: 3 },
+              m: { xs: 1.5, sm: 2 },
+              width: { xs: 'calc(100% - 24px)', sm: '100%' },
+              maxWidth: 420,
+            },
+          }}
         >
-          <DialogTitle>{LL.checkout.authenticationRequired()}</DialogTitle>
-          <DialogContent>
-            <Typography variant="body1" gutterBottom>
+          <DialogTitle
+            sx={{
+              px: { xs: 2, sm: 3 },
+              py: { xs: 1.5, sm: 2 },
+              fontSize: { xs: '1.05rem', sm: '1.25rem' },
+              fontWeight: 700,
+            }}
+          >
+            {LL.checkout.authenticationRequired()}
+          </DialogTitle>
+          <DialogContent sx={{ px: { xs: 2, sm: 3 }, py: 1 }}>
+            <Typography variant="body2" color="text.secondary">
               {LL.checkout.authenticationMessage()}
             </Typography>
           </DialogContent>
-          <DialogActions>
-            <Button onClick={() => setAuthDialogOpen(false)}>
+          <DialogActions sx={{ px: { xs: 2, sm: 3 }, py: { xs: 1.5, sm: 2 } }}>
+            <Button
+              size={isMobile ? 'small' : 'medium'}
+              onClick={() => setAuthDialogOpen(false)}
+            >
               {LL.button.cancel()}
             </Button>
             <Button
               variant="contained"
+              size={isMobile ? 'small' : 'medium'}
               onClick={() => {
                 setAuthDialogOpen(false);
                 navigate(CUSTOMER_ROUTES.LOGIN, {

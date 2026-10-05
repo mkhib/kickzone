@@ -1,5 +1,7 @@
 import React, { useCallback, useState, useMemo, useEffect, useRef } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { getCustomerProductDetailsRoute } from '@kickzone-workspace/customers-routes';
 import {
   useI18nContext,
   useLanguageContext,
@@ -234,12 +236,22 @@ export interface ProductCardProps {
    * Callback when favorite button is toggled
    */
   onToggleFavorite?: (productId: string | number) => void;
+  /**
+   * Callback when product card (image or title) is clicked to view details
+   */
+  onCardClick?: (product: KickzoneGraphqlTypes.Product) => void;
+  /**
+   * Optional link destination URL. Defaults to `/products/${product.id}`.
+   */
+  to?: string;
 }
 
 export const CustomersProductCard: React.FC<ProductCardProps> = ({
   product,
+  to,
   onAddToCart,
   onAddVariantToCart,
+  onCardClick,
   discountOverride,
   lowStockOverride,
   lowStockThreshold = 5,
@@ -248,6 +260,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   isFavorite: initialFavorite = false,
   onToggleFavorite,
 }) => {
+  const productDetailsUrl = to || getCustomerProductDetailsRoute(product.id);
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
   const isRTL = currentLocale === 'fa';
@@ -537,7 +550,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 
   // Check quantity already in cart for this specific variant
   const cartQuantityForActiveVariant = useMemo(() => {
-    if (!activeVariant) return 0;
+    if (!activeVariant || !cartItems) return 0;
     const match = cartItems.find(
       (item) =>
         item.productId === product.id.toString() &&
@@ -684,6 +697,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       {/* Top Right Colors Badge (Single multi-color disc if 1 variant; multiple discs if different variant colors exist) */}
       {availableColorways.length > 0 && variantColors.length > 0 && (
         <Box
+          dir={isRTL ? 'rtl' : 'ltr'}
           sx={(theme) => {
             const isDark = theme.palette.mode === 'dark';
             const isMultiColorway = availableColorways.length > 1;
@@ -710,7 +724,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               boxShadow: isDark
                 ? '0 4px 14px rgba(0, 0, 0, 0.35)'
                 : '0 4px 14px rgba(0, 0, 0, 0.06)',
-              direction: isRTL ? 'rtl' : 'ltr',
               pointerEvents: isMultiColorway ? 'auto' : 'none',
             };
           }}
@@ -790,14 +803,19 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 
       {/* Product Image Section with Ethereal Progressive Gradient Blur & Fade */}
       <Box
+        component={RouterLink}
+        to={productDetailsUrl}
+        onClick={onCardClick ? () => onCardClick(product) : undefined}
         sx={{
           position: 'relative',
-          height: { xs: 260, sm: 290, md: 320 },
-          width: '100%',
-          overflow: 'hidden',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          textDecoration: 'none',
+          cursor: 'pointer',
+          height: { xs: 260, sm: 290, md: 320 },
+          width: '100%',
+          overflow: 'hidden',
           // Progressive dissolve mask inspired by soft ethereal card fadiness
           maskImage:
             'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)',
@@ -1015,13 +1033,22 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           {/* Line 2: Product Name (Language-aligned title) */}
           <Typography
             variant="h6"
-            component="h3"
+            component={RouterLink}
+            to={productDetailsUrl}
+            onClick={onCardClick ? () => onCardClick(product) : undefined}
             sx={(theme) => ({
               fontWeight: 700,
               fontSize: { xs: '1rem', sm: '1.12rem' },
               lineHeight: 1.35,
               color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
               textAlign: isRTL ? 'right' : 'left',
+              textDecoration: 'none',
+              cursor: 'pointer',
+              transition: 'color 0.2s ease',
+              '&:hover': {
+                color:
+                  theme.palette.mode === 'dark' ? '#c5b89a' : '#8f8468',
+              },
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               display: '-webkit-box',

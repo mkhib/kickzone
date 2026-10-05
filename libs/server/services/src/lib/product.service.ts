@@ -503,7 +503,7 @@ export class ProductService implements OnModuleInit {
   }
 
   async getProductById(id: number): Promise<Product | null> {
-    return this.productRepository.findOne({
+    const product = await this.productRepository.findOne({
       where: { id },
       relations: [
         'productInfos',
@@ -511,6 +511,11 @@ export class ProductService implements OnModuleInit {
         'productInfos.colorLinks',
         'productInfos.colorLinks.color',
         'sellerProducts',
+        'sellerProducts.seller',
+        'sellerProducts.seller.user',
+        'sellerProducts.productInfo',
+        'sellerProducts.productInfo.colorLinks',
+        'sellerProducts.productInfo.colorLinks.color',
       ],
       order: {
         productInfos: {
@@ -518,6 +523,16 @@ export class ProductService implements OnModuleInit {
         },
       },
     });
+
+    if (!product) return null;
+
+    if (product.sellerProducts) {
+      product.sellerProducts = product.sellerProducts.filter(
+        (sp) => sp.productInfo != null
+      );
+    }
+
+    return product;
   }
 
   async updateProductInfo(

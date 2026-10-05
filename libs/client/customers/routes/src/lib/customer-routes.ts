@@ -1,6 +1,7 @@
 export const CUSTOMER_ROUTES = {
   HOME: '/',
   PRODUCTS: '/home',
+  PRODUCT_DETAILS: '/products/:id',
   LOGIN: '/login',
   SIGNUP: '/signup',
   FORGOT_PASSWORD: '/forgot-password',
@@ -15,3 +16,6 @@ export const CUSTOMER_ROUTES = {
 } as const;
 
 export type CustomerRouteKey = keyof typeof CUSTOMER_ROUTES;
+
+export const getCustomerProductDetailsRoute = (id: string | number) =>
+  `/products/${id}`;

@@ -360,6 +360,7 @@ type Query {
   users(first: Int, after: String, searchTerm: String, role: UserRole): UserConnection!
   customers(first: Int, after: String, searchTerm: String): UserConnection!
   me: User
+  myProfile: CustomerProfile!
   products(filter: ProductFilterInput): ProductConnection!
   distinctProductSizes(sizeKind: SizeKind): [String!]!
   sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
@@ -390,7 +391,6 @@ type Query {
   exchangeRateHistory(fromCurrencyCode: String!, toCurrencyCode: String!, limit: Int): [ExchangeRate!]!
   currencyPreferences: [CurrencyPreference!]!
   currencyPreferenceByLocale(locale: String!): CurrencyPreference
-  myProfile: CustomerProfile!
 }
 
 input ProductFilterInput {
@@ -450,6 +450,7 @@ type Mutation {
   register(name: String!, email: String!, password: String!): User!
   forgotPassword(email: String!, baseUrl: String!): Boolean!
   resetPassword(token: String!, newPassword: String!): User!
+  updateMyProfile(input: UpdateCustomerProfileInput!): CustomerProfile!
   createCategory(input: CreateCategoryInput!, name: String): Category!
   updateCategory(input: UpdateCategoryInput!, name: String): Category!
   deleteCategory(id: Int!): Boolean!
@@ -487,7 +488,6 @@ type Mutation {
   setExchangeRate(input: SetExchangeRateInput!): ExchangeRate!
   setCurrencyPreference(locale: String!, currencyCode: String!): CurrencyPreference!
   deleteCurrencyPreference(id: Int!): Boolean!
-  updateMyProfile(input: UpdateCustomerProfileInput!): CustomerProfile!
   requestZarinPalPayment(input: ZarinPalPaymentRequestInput!): ZarinPalPaymentResponse!
   verifyZarinPalPayment(input: ZarinPalVerificationRequestInput!): ZarinPalVerificationResponse!
   getZarinPalGatewayUrl(authority: String!): GatewayUrlResponse!
@@ -501,6 +501,15 @@ input CreateUserInput {
   email: String!
   password: String!
   role: UserRole!
+}
+
+input UpdateCustomerProfileInput {
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
 }
 
 input CreateCategoryInput {
@@ -711,15 +720,6 @@ input SetExchangeRateInput {
   rate: Float!
   effectiveDate: DateTime
   notes: String
-}
-
-input UpdateCustomerProfileInput {
-  phone: String
-  address: String
-  city: String
-  state: String
-  zipCode: String
-  country: String
 }
 
 input ZarinPalPaymentRequestInput {

@@ -1,8 +1,10 @@
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { useNavigate } from 'react-router-dom';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CustomersProductCard } from '@kickzone-workspace/customers-product-card';
 import { useProductsQuery } from '@kickzone-workspace/products-hook';
 import { serializeVariantColorHexes } from '@kickzone-workspace/client-shared-graphql';
+import { getCustomerProductDetailsRoute } from '@kickzone-workspace/customers-routes';
 import {
   useI18nContext,
   useLanguageContext,
@@ -44,6 +46,7 @@ const filterFieldSx = {
 } as const;
 
 export function CustomersHome() {
+  const navigate = useNavigate();
   const [searchInput, setSearchInput] = useState('');
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('price');
@@ -582,6 +585,9 @@ export function CustomersHome() {
                         product={item.product}
                         isRecommended={item.isRecommended}
                         isBoxLess={item.isBoxLess}
+                        onCardClick={(prod) =>
+                          navigate(getCustomerProductDetailsRoute(prod.id))
+                        }
                         onAddToCart={(prod) => {
                           const firstInfo = prod.productInfos?.[0];
                           const sp = prod.sellerProducts?.find(

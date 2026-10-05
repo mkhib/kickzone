@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { CustomersHome } from '@kickzone-workspace/customers-home-screen';
+import { CustomerProductDetails } from '@kickzone-workspace/customer-product-details';
 import { CustomersLogin } from '@kickzone-workspace/customers-login-screen';
 import { CustomersUnauthorizedScreen } from '@kickzone-workspace/customers-unauthorized-screen';
 import { CustomerShoppingCart } from '@kickzone-workspace/customer-shopping-cart';
@@ -19,6 +20,11 @@ export function CustomersRouter() {
       <Routes>
         <Route path={CUSTOMER_ROUTES.HOME} element={<CustomersHome />} />
         <Route path={CUSTOMER_ROUTES.PRODUCTS} element={<CustomersHome />} />
+        <Route
+          path={CUSTOMER_ROUTES.PRODUCT_DETAILS}
+          element={<CustomerProductDetails />}
+        />
+        <Route path="/product/:id" element={<CustomerProductDetails />} />
         <Route path={CUSTOMER_ROUTES.LOGIN} element={<CustomersLogin />} />
         <Route path={CUSTOMER_ROUTES.SIGNUP} element={<CustomerSignup />} />
         <Route

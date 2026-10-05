@@ -7,6 +7,15 @@ import { CustomersHome } from './CustomersHomeScreen';
 const mockUseProductsQuery = vi.fn();
 const mockLoadMore = vi.fn();
 const mockAddItem = vi.fn();
+const mockNavigate = vi.fn();
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: () => mockNavigate,
+  };
+});
 
 vi.mock('@kickzone-workspace/customers-layout', () => ({
   CustomersLayout: ({ children }: { children: React.ReactNode }) => (
