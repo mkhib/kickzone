@@ -83,8 +83,31 @@ type Product {
   productInfos: [ProductInfo!]!
   categories: [Category!]!
   description: String
+  descriptions: [ProductDescription!]
   sellerProducts: [SellerProduct!]
   archived: Boolean!
+}
+
+type SiteLanguage {
+  id: ID!
+  code: String!
+  name: String!
+  nativeName: String!
+  isRTL: Boolean!
+  isActive: Boolean!
+  isDefault: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ProductDescription {
+  id: ID!
+  productId: Int!
+  language: SiteLanguage!
+  languageId: Int!
+  description: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
 }
 
 type ProductEdge {
@@ -391,6 +414,8 @@ type Query {
   exchangeRateHistory(fromCurrencyCode: String!, toCurrencyCode: String!, limit: Int): [ExchangeRate!]!
   currencyPreferences: [CurrencyPreference!]!
   currencyPreferenceByLocale(locale: String!): CurrencyPreference
+  siteLanguages(activeOnly: Boolean): [SiteLanguage!]!
+  siteLanguage(code: String!): SiteLanguage
 }
 
 input ProductFilterInput {
@@ -492,6 +517,9 @@ type Mutation {
   verifyZarinPalPayment(input: ZarinPalVerificationRequestInput!): ZarinPalVerificationResponse!
   getZarinPalGatewayUrl(authority: String!): GatewayUrlResponse!
   cancelPendingZarinPalOrder(orderId: String!): Boolean!
+  createSiteLanguage(input: CreateSiteLanguageInput!): SiteLanguage!
+  updateSiteLanguage(id: Int!, input: UpdateSiteLanguageInput!): SiteLanguage!
+  deleteSiteLanguage(id: Int!): Boolean!
 }
 
 input CreateUserInput {
@@ -524,11 +552,18 @@ input UpdateCategoryInput {
   isActive: Boolean
 }
 
+input ProductDescriptionInput {
+  languageId: Int
+  languageCode: String
+  description: String!
+}
+
 input CreateProductInput {
   name: String!
   sku: String!
   categoryIds: [Int!]!
   description: String
+  descriptions: [ProductDescriptionInput!]
 }
 
 input CreateProductInfoInput {
@@ -548,6 +583,24 @@ input UpdateProductInput {
   sku: String!
   categoryIds: [Int!]!
   description: String
+  descriptions: [ProductDescriptionInput!]
+}
+
+input CreateSiteLanguageInput {
+  code: String!
+  name: String!
+  nativeName: String!
+  isRTL: Boolean = false
+  isActive: Boolean = true
+  isDefault: Boolean = false
+}
+
+input UpdateSiteLanguageInput {
+  name: String
+  nativeName: String
+  isRTL: Boolean
+  isActive: Boolean
+  isDefault: Boolean
 }
 
 input TranslationInput {

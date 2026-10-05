@@ -92,6 +92,16 @@ export const createShippingInfoSchema = (LL: TranslationFunctions) =>
       .or(z.literal('')),
   });
 
+/**
+ * Converts Persian (۰-۹) and Arabic (٠-٩) digits to standard English ASCII digits (0-9).
+ */
+export const toEnglishDigits = (value: string): string => {
+  if (!value) return '';
+  return value
+    .replace(/[۰-۹]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1728))
+    .replace(/[٠-٩]/g, (d) => String.fromCharCode(d.charCodeAt(0) - 1584));
+};
+
 export const validateShippingInfo = (
   data: Partial<ShippingInfoFormData>,
   LL: TranslationFunctions
@@ -101,8 +111,15 @@ export const validateShippingInfo = (
   validatedData?: ShippingInfoFormData;
 } => {
   try {
+    const normalizedData: Partial<ShippingInfoFormData> = {
+      ...data,
+      zipCode: data.zipCode ? toEnglishDigits(data.zipCode).trim() : data.zipCode,
+      customerPhone: data.customerPhone
+        ? toEnglishDigits(data.customerPhone).trim()
+        : data.customerPhone,
+    };
     const schema = createShippingInfoSchema(LL);
-    const validatedData = schema.parse(data);
+    const validatedData = schema.parse(normalizedData);
     return {
       isValid: true,
       errors: {},

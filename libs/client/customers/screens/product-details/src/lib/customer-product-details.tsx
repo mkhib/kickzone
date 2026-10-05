@@ -36,7 +36,6 @@ import ChevronRight from '@mui/icons-material/ChevronRight';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Check from '@mui/icons-material/Check';
 import GppGoodOutlined from '@mui/icons-material/GppGoodOutlined';
-import LocalShippingOutlined from '@mui/icons-material/LocalShippingOutlined';
 import PublishedWithChangesOutlined from '@mui/icons-material/PublishedWithChangesOutlined';
 import StraightenOutlined from '@mui/icons-material/StraightenOutlined';
 import ArrowForward from '@mui/icons-material/ArrowForward';
@@ -232,6 +231,9 @@ export function CustomerProductDetails() {
   const [zoomCoord, setZoomCoord] = useState({ x: 50, y: 50 });
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxZoom, setLightboxZoom] = useState(1);
+  const [lightboxPan, setLightboxPan] = useState({ x: 0, y: 0 });
+  const [isLightboxDragging, setIsLightboxDragging] = useState(false);
+  const dragStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
   const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -618,17 +620,91 @@ export function CustomerProductDetails() {
     navigate(CUSTOMER_ROUTES.CART);
   }, [handleAddToCart, navigate]);
 
+  const handleResetLightbox = useCallback(() => {
+    setLightboxZoom(1);
+    setLightboxPan({ x: 0, y: 0 });
+    setIsLightboxDragging(false);
+  }, []);
+
   const handlePrevImage = useCallback(() => {
     setActiveImageIndex((prev) =>
       prev === 0 ? galleryImages.length - 1 : prev - 1
     );
-  }, [galleryImages.length]);
+    handleResetLightbox();
+  }, [galleryImages.length, handleResetLightbox]);
 
   const handleNextImage = useCallback(() => {
     setActiveImageIndex((prev) =>
       prev === galleryImages.length - 1 ? 0 : prev + 1
     );
-  }, [galleryImages.length]);
+    handleResetLightbox();
+  }, [galleryImages.length, handleResetLightbox]);
+
+  const handleLightboxMouseDown = useCallback(
+    (e: React.MouseEvent) => {
+      if (lightboxZoom <= 1) return;
+      e.preventDefault();
+      setIsLightboxDragging(true);
+      dragStartRef.current = {
+        x: e.clientX,
+        y: e.clientY,
+        panX: lightboxPan.x,
+        panY: lightboxPan.y,
+      };
+    },
+    [lightboxZoom, lightboxPan]
+  );
+
+  const handleLightboxMouseMove = useCallback(
+    (e: React.MouseEvent) => {
+      if (!isLightboxDragging || lightboxZoom <= 1) return;
+      e.preventDefault();
+      const dx = e.clientX - dragStartRef.current.x;
+      const dy = e.clientY - dragStartRef.current.y;
+      setLightboxPan({
+        x: dragStartRef.current.panX + dx,
+        y: dragStartRef.current.panY + dy,
+      });
+    },
+    [isLightboxDragging, lightboxZoom]
+  );
+
+  const handleLightboxMouseUp = useCallback(() => {
+    setIsLightboxDragging(false);
+  }, []);
+
+  const handleLightboxTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      if (lightboxZoom <= 1 || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      setIsLightboxDragging(true);
+      dragStartRef.current = {
+        x: touch.clientX,
+        y: touch.clientY,
+        panX: lightboxPan.x,
+        panY: lightboxPan.y,
+      };
+    },
+    [lightboxZoom, lightboxPan]
+  );
+
+  const handleLightboxTouchMove = useCallback(
+    (e: React.TouchEvent) => {
+      if (!isLightboxDragging || lightboxZoom <= 1 || e.touches.length !== 1) return;
+      const touch = e.touches[0];
+      const dx = touch.clientX - dragStartRef.current.x;
+      const dy = touch.clientY - dragStartRef.current.y;
+      setLightboxPan({
+        x: dragStartRef.current.panX + dx,
+        y: dragStartRef.current.panY + dy,
+      });
+    },
+    [isLightboxDragging, lightboxZoom]
+  );
+
+  const handleLightboxTouchEnd = useCallback(() => {
+    setIsLightboxDragging(false);
+  }, []);
 
   // Loading Skeleton State
   if (loading) {
@@ -1372,17 +1448,26 @@ export function CustomerProductDetails() {
                             display: 'inline-flex',
                             alignItems: 'center',
                             borderRadius: '9999px',
-                            px: 1.1,
-                            py: 0.25,
+                            px: 1.25,
+                            py: 0.35,
                             fontSize: '0.75rem',
-                            fontWeight: 700,
+                            fontWeight: 800,
+                            letterSpacing: '0.025em',
+                            backdropFilter: 'blur(22px) saturate(200%)',
+                            WebkitBackdropFilter: 'blur(22px) saturate(200%)',
                             background: isDark
-                              ? 'rgba(239, 68, 68, 0.16)'
-                              : 'rgba(220, 38, 38, 0.12)',
+                              ? 'linear-gradient(135deg, rgba(235, 110, 55, 0.38) 0%, rgba(197, 135, 80, 0.22) 50%, rgba(245, 135, 65, 0.34) 100%)'
+                              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 238, 228, 0.62) 50%, rgba(255, 255, 255, 0.72) 100%)',
                             border: isDark
-                              ? '1px solid rgba(239, 68, 68, 0.38)'
-                              : '1px solid rgba(220, 38, 38, 0.32)',
-                            color: isDark ? '#fca5a5' : '#b91c1c',
+                              ? '1px solid rgba(255, 155, 110, 0.6)'
+                              : '1px solid rgba(235, 110, 55, 0.32)',
+                            color: isDark ? '#ffffff' : '#000000',
+                            textShadow: isDark
+                              ? '0 1px 3px rgba(0, 0, 0, 0.85), 0 0 8px rgba(235, 110, 55, 0.4)'
+                              : 'none',
+                            boxShadow: isDark
+                              ? '0 6px 18px -3px rgba(220, 75, 45, 0.4), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35)'
+                              : '0 4px 16px -2px rgba(220, 75, 45, 0.14), 0 2px 6px -1px rgba(0, 0, 0, 0.04), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.03)',
                           }}
                         >
                           {isRTL
@@ -1781,21 +1866,6 @@ export function CustomerProductDetails() {
                   </Button>
                 </Box>
 
-                {/* Free Delivery & Payment Notice */}
-                <Typography
-                  sx={{
-                    textAlign: 'center',
-                    fontSize: '0.78rem',
-                    color: isDark ? '#a8a69f' : '#6b7280',
-                    lineHeight: 1.6,
-                    mb: 3,
-                  }}
-                >
-                  {isRTL
-                    ? 'ارسال رایگان سفارش‌های بالای ۵ میلیون تومان • پرداخت در محل یا آنلاین'
-                    : 'Free shipping on orders over 5,000,000 Toman • Pay on delivery or online'}
-                </Typography>
-
                 {/* Accordions Section */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                   {/* 1. Description Accordion */}
@@ -1989,54 +2059,6 @@ export function CustomerProductDetails() {
                       </Button>
                     </AccordionDetails>
                   </Accordion>
-
-                  {/* 4. Shipping & Exchange Accordion */}
-                  <Accordion
-                    expanded={expandedAccordion === 'shipping'}
-                    onChange={(_, isExpanded) =>
-                      setExpandedAccordion(isExpanded ? 'shipping' : false)
-                    }
-                    disableGutters
-                    elevation={0}
-                    sx={{
-                      borderRadius: '16px !important',
-                      background: isDark
-                        ? 'rgba(255, 255, 255, 0.04)'
-                        : 'rgba(0, 0, 0, 0.02)',
-                      border: isDark
-                        ? '1px solid rgba(255, 255, 255, 0.08)'
-                        : '1px solid rgba(0, 0, 0, 0.06)',
-                      '&::before': { display: 'none' },
-                    }}
-                  >
-                    <AccordionSummary
-                      expandIcon={
-                        <ExpandMore
-                          sx={{
-                            color: isDark ? '#ffffff' : '#1a1a19',
-                          }}
-                        />
-                      }
-                      sx={{ px: 2.5, minHeight: 52 }}
-                    >
-                      <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>
-                        {isRTL ? 'ارسال و شرایط تعویض' : 'Shipping & Exchange'}
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails sx={{ px: 2.5, pb: 2.5, pt: 0 }}>
-                      <Typography
-                        sx={{
-                          fontSize: '0.85rem',
-                          lineHeight: 1.85,
-                          color: isDark ? '#d4d4d8' : '#4b5563',
-                        }}
-                      >
-                        {isRTL
-                          ? '• تهران: تحویل ۱ الی ۲ روز کاری با پیک اختصاصی سنت‌بالا\n• سایر استان‌ها: تحویل ۲ الی ۴ روز کاری با پست پیشتاز\n• ضمانت تعویض سایز و مدل تا ۷ روز پس از تحویل، مشروط به عدم استفاده، تمیز بودن کالا و حفظ برچسب‌های اصالت (در حال حاضر مرجوعی وجه انجام نمی‌شود و صرفاً تعویض سایز و مدل امکان‌پذیر است).'
-                          : '• Fast express delivery within 1-2 days in Tehran and 2-4 days nationwide.\n• 7-day size or model exchange guarantee provided items are unworn and tags remain attached (returns for refund are not available at this time).'}
-                      </Typography>
-                    </AccordionDetails>
-                  </Accordion>
                 </Box>
               </Box>
             </Grid>
@@ -2046,7 +2068,7 @@ export function CustomerProductDetails() {
           <Box sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 6, md: 8 } }}>
             <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
               {/* Feature 1: Authenticity */}
-              <Grid size={{ xs: 12, md: 4 }}>
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Box
                   dir={isRTL ? 'rtl' : 'ltr'}
                   sx={{
@@ -2099,64 +2121,8 @@ export function CustomerProductDetails() {
                 </Box>
               </Grid>
 
-              {/* Feature 2: Fast Delivery */}
-              <Grid size={{ xs: 12, md: 4 }}>
-                <Box
-                  dir={isRTL ? 'rtl' : 'ltr'}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    p: 2.5,
-                    borderRadius: '20px',
-                    backdropFilter: 'blur(20px)',
-                    background: isDark
-                      ? 'rgba(26, 28, 36, 0.65)'
-                      : 'rgba(255, 255, 255, 0.75)',
-                    border: isDark
-                      ? '1px solid rgba(255, 255, 255, 0.12)'
-                      : '1px solid rgba(255, 255, 255, 0.85)',
-                    boxShadow: isDark
-                      ? '0 10px 30px rgba(0, 0, 0, 0.35)'
-                      : '0 8px 24px rgba(0, 0, 0, 0.05)',
-                    textAlign: isRTL ? 'right' : 'left',
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '14px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      background: isDark
-                        ? 'rgba(197, 184, 154, 0.18)'
-                        : 'rgba(168, 152, 112, 0.15)',
-                      color: isDark ? '#c5b89a' : '#8f8468',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <LocalShippingOutlined />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 0.25 }}>
-                      {isRTL ? 'ارسال سریع' : 'Fast Shipping'}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: isDark ? '#a1a1aa' : '#64748b', fontSize: '0.8rem' }}
-                    >
-                      {isRTL
-                        ? 'تهران ۱-۲ روز • شهرستان ۲-۴ روز'
-                        : 'Tehran 1-2 days • Nationwide 2-4 days'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              {/* Feature 3: 7 Days Exchange */}
-              <Grid size={{ xs: 12, md: 4 }}>
+              {/* Feature 2: 7 Days Exchange */}
+              <Grid size={{ xs: 12, sm: 6 }}>
                 <Box
                   dir={isRTL ? 'rtl' : 'ltr'}
                   sx={{
@@ -2718,10 +2684,39 @@ export function CustomerProductDetails() {
 
             {/* Lightbox Controls */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+              {/* Reset button appears on the other side of the buttons so ZoomIn, ZoomOut, and Close never shift position */}
+              {lightboxZoom > 1 && (
+                <Tooltip title={isRTL ? 'اندازه اولیه' : 'Reset'} arrow>
+                  <IconButton
+                    size="small"
+                    aria-label={isRTL ? 'اندازه اولیه' : 'Reset'}
+                    onClick={handleResetLightbox}
+                    sx={{
+                      color: isDark ? '#c5b89a' : '#8f8468',
+                      background: isDark
+                        ? 'rgba(197, 184, 154, 0.16)'
+                        : 'rgba(143, 132, 104, 0.12)',
+                      border: isDark
+                        ? '1px solid rgba(197, 184, 154, 0.35)'
+                        : '1px solid rgba(143, 132, 104, 0.3)',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        background: isDark
+                          ? 'rgba(197, 184, 154, 0.28)'
+                          : 'rgba(143, 132, 104, 0.22)',
+                      },
+                    }}
+                  >
+                    <RestartAlt fontSize="small" />
+                  </IconButton>
+                </Tooltip>
+              )}
+
               <Tooltip title={isRTL ? 'بزرگ‌نمایی' : 'Zoom In'} arrow>
                 <IconButton
                   size="small"
-                  onClick={() => setLightboxZoom((z) => Math.min(3, z + 0.5))}
+                  aria-label={isRTL ? 'بزرگ‌نمایی' : 'Zoom In'}
+                  onClick={() => setLightboxZoom((z) => Math.min(3, +(z + 0.5).toFixed(1)))}
                   sx={{
                     color: isDark ? '#ffffff' : '#1a1a19',
                     background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
@@ -2733,7 +2728,14 @@ export function CustomerProductDetails() {
               <Tooltip title={isRTL ? 'کوچک‌نمایی' : 'Zoom Out'} arrow>
                 <IconButton
                   size="small"
-                  onClick={() => setLightboxZoom((z) => Math.max(1, z - 0.5))}
+                  aria-label={isRTL ? 'کوچک‌نمایی' : 'Zoom Out'}
+                  onClick={() =>
+                    setLightboxZoom((z) => {
+                      const next = Math.max(1, +(z - 0.5).toFixed(1));
+                      if (next === 1) setLightboxPan({ x: 0, y: 0 });
+                      return next;
+                    })
+                  }
                   sx={{
                     color: isDark ? '#ffffff' : '#1a1a19',
                     background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
@@ -2742,26 +2744,13 @@ export function CustomerProductDetails() {
                   <ZoomOut fontSize="small" />
                 </IconButton>
               </Tooltip>
-              {lightboxZoom > 1 && (
-                <Tooltip title={isRTL ? 'اندازه اولیه' : 'Reset'} arrow>
-                  <IconButton
-                    size="small"
-                    onClick={() => setLightboxZoom(1)}
-                    sx={{
-                      color: isDark ? '#ffffff' : '#1a1a19',
-                      background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                    }}
-                  >
-                    <RestartAlt fontSize="small" />
-                  </IconButton>
-                </Tooltip>
-              )}
               <Tooltip title={isRTL ? 'بستن' : 'Close'} arrow>
                 <IconButton
                   size="small"
+                  aria-label={isRTL ? 'بستن' : 'Close'}
                   onClick={() => {
                     setLightboxOpen(false);
-                    setLightboxZoom(1);
+                    handleResetLightbox();
                   }}
                   sx={{
                     color: isDark ? '#ffffff' : '#1a1a19',
@@ -2776,6 +2765,13 @@ export function CustomerProductDetails() {
 
           {/* Large Image Stage */}
           <Box
+            onMouseDown={handleLightboxMouseDown}
+            onMouseMove={handleLightboxMouseMove}
+            onMouseUp={handleLightboxMouseUp}
+            onMouseLeave={handleLightboxMouseUp}
+            onTouchStart={handleLightboxTouchStart}
+            onTouchMove={handleLightboxTouchMove}
+            onTouchEnd={handleLightboxTouchEnd}
             sx={{
               position: 'relative',
               display: 'flex',
@@ -2785,6 +2781,14 @@ export function CustomerProductDetails() {
               maxHeight: '68vh',
               overflow: 'hidden',
               py: 2,
+              cursor:
+                lightboxZoom > 1
+                  ? isLightboxDragging
+                    ? 'grabbing'
+                    : 'grab'
+                  : 'default',
+              userSelect: 'none',
+              touchAction: lightboxZoom > 1 ? 'none' : 'auto',
             }}
           >
             {/* Prev Image */}
@@ -2797,7 +2801,7 @@ export function CustomerProductDetails() {
                   position: 'absolute',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  zIndex: 5,
+                  zIndex: 10,
                   background: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)',
                   backdropFilter: 'blur(10px)',
                   color: isDark ? '#ffffff' : '#18181b',
@@ -2810,18 +2814,21 @@ export function CustomerProductDetails() {
               </IconButton>
             )}
 
-            {/* Image with zoom level */}
+            {/* Image with zoom level and pan translation */}
             <Box
               component="img"
               src={activeMainImage}
               alt={product.name}
+              draggable={false}
               sx={{
                 maxWidth: '100%',
                 maxHeight: '64vh',
                 objectFit: 'contain',
-                transform: `scale(${lightboxZoom})`,
-                transition: 'transform 0.25s ease',
+                transform: `translate(${lightboxPan.x}px, ${lightboxPan.y}px) scale(${lightboxZoom})`,
+                transformOrigin: 'center center',
+                transition: isLightboxDragging ? 'none' : 'transform 0.22s ease-out',
                 userSelect: 'none',
+                pointerEvents: 'none',
               }}
             />
 
@@ -2835,7 +2842,7 @@ export function CustomerProductDetails() {
                   position: 'absolute',
                   top: '50%',
                   transform: 'translateY(-50%)',
-                  zIndex: 5,
+                  zIndex: 10,
                   background: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)',
                   backdropFilter: 'blur(10px)',
                   color: isDark ? '#ffffff' : '#18181b',
@@ -2846,6 +2853,43 @@ export function CustomerProductDetails() {
               >
                 <ChevronRight />
               </IconButton>
+            )}
+
+            {/* Pan guide hint when zoomed */}
+            {lightboxZoom > 1 && (
+              <Box
+                sx={{
+                  position: 'absolute',
+                  bottom: 14,
+                  left: '50%',
+                  transform: 'translateX(-50%)',
+                  zIndex: 9,
+                  px: 2,
+                  py: 0.6,
+                  borderRadius: '9999px',
+                  backdropFilter: 'blur(16px)',
+                  background: isDark ? 'rgba(0, 0, 0, 0.68)' : 'rgba(255, 255, 255, 0.88)',
+                  border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0, 0, 0, 0.08)',
+                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
+                  pointerEvents: 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 0.8,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '0.75rem',
+                    fontWeight: 600,
+                    color: isDark ? '#e4e4e7' : '#1f2937',
+                    fontFamily: isRTL ? farsiDisplayStack : 'inherit',
+                  }}
+                >
+                  {isRTL
+                    ? 'برای جابجایی تصویر کلیک کنید و بکشید'
+                    : 'Click & drag to pan around image'}
+                </Typography>
+              </Box>
             )}
           </Box>
 

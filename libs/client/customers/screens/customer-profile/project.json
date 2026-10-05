@@ -1,0 +1,9 @@
+{
+  "name": "customer-profile",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/customer-profile/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-profile --web",
+  "targets": {}
+}

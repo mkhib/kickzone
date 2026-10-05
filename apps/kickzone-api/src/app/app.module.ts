@@ -21,6 +21,8 @@ import {
   ExchangeRate,
   CurrencyPreference,
   PlatformSettings,
+  SiteLanguage,
+  ProductDescription,
 } from '@kickzone-workspace/entities';
 import {
   AuthModule,
@@ -39,6 +41,7 @@ import {
   PlatformSettingsModule,
   PaymentModule,
   CatalogGuardModule,
+  SiteLanguageModule,
 } from '@kickzone-workspace/modules';
 import { GraphQLModule } from '@nestjs/graphql';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
@@ -94,6 +97,8 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
         ExchangeRate,
         CurrencyPreference,
         PlatformSettings,
+        SiteLanguage,
+        ProductDescription,
       ],
       synchronize: true,
     }),
@@ -153,6 +158,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
     PlatformSettingsModule,
     PaymentModule,
     CatalogGuardModule,
+    SiteLanguageModule,
   ],
 })
 export class AppModule {}

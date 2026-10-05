@@ -16,3 +16,4 @@ export * from './lib/shipping-calculation.service';
 export * from './lib/payment.service';
 export * from './lib/payment-logger.service';
 export * from './lib/product-info-colors.util';
+export * from './lib/site-language.service';

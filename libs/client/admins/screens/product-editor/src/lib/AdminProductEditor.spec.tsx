@@ -84,6 +84,34 @@ vi.mock('@kickzone-workspace/colors-hook', () => ({
   }),
 }));
 
+vi.mock('@kickzone-workspace/site-languages-hook', () => ({
+  useSiteLanguages: () => ({
+    siteLanguages: [
+      {
+        id: '1',
+        code: 'fa',
+        name: 'Persian',
+        nativeName: 'فارسی',
+        isRTL: true,
+        isActive: true,
+        isDefault: true,
+      },
+      {
+        id: '2',
+        code: 'en',
+        name: 'English',
+        nativeName: 'English',
+        isRTL: false,
+        isActive: true,
+        isDefault: false,
+      },
+    ],
+    loading: false,
+    error: undefined,
+    refetch: vi.fn(),
+  }),
+}));
+
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
   useI18nContext: () => ({
     LL: {
@@ -396,6 +424,107 @@ describe('AdminProductEditor', () => {
           weight: 300,
         }),
       ]
+    );
+  });
+
+  it('allows defining product descriptions in multiple languages (English and Farsi)', async () => {
+    mockCreateProductWithInfos.mockResolvedValue({
+      product: { id: 2, name: 'Multilingual Shoe' },
+      productInfos: [
+        {
+          id: 20,
+          size: 'M',
+          colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
+        },
+      ],
+    });
+
+    const { container } = renderEditor();
+
+    // Verify tabs for languages are present
+    expect(screen.getByRole('tab', { name: /فارسی/i })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: /English/i })).toBeInTheDocument();
+
+    // Fill Farsi description on active default tab
+    const farsiDescInput = screen.getByTestId('product-description-fa');
+    fireEvent.change(farsiDescInput, {
+      target: { value: 'کفش ورزشی عالی' },
+    });
+
+    // Switch to English tab
+    const englishTab = screen.getByRole('tab', { name: /English/i });
+    fireEvent.click(englishTab);
+
+    // Fill English description
+    const englishDescInput = screen.getByTestId('product-description-en');
+    fireEvent.change(englishDescInput, {
+      target: { value: 'Great athletic shoe' },
+    });
+
+    // Fill required product details
+    const nameInput = container.querySelector(
+      '#product-name'
+    ) as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: 'Multilingual Shoe' } });
+    const skuInput = container.querySelector(
+      '#product-sku'
+    ) as HTMLInputElement;
+    fireEvent.change(skuInput, { target: { value: 'SHOE-MULTI-LANG' } });
+
+    // Select category
+    const categoryInput = container.querySelector(
+      '#categories-autocomplete'
+    ) as HTMLInputElement;
+    fireEvent.focus(categoryInput);
+    fireEvent.keyDown(categoryInput, { key: 'ArrowDown' });
+    const categoryOption = await screen.findByText('Category 1');
+    fireEvent.click(categoryOption);
+
+    // Select size
+    const sizeSelect = screen.getByRole('combobox', { name: /^Size$/i });
+    fireEvent.mouseDown(sizeSelect);
+    const sizeOption = await screen.findByRole('option', { name: 'M' });
+    fireEvent.click(sizeOption);
+
+    // Select color
+    const colorInput = screen.getByLabelText(/Color/i);
+    fireEvent.focus(colorInput);
+    fireEvent.keyDown(colorInput, { key: 'ArrowDown' });
+    const redOption = await screen.findByText('Red');
+    fireEvent.click(redOption);
+
+    // Fill weight
+    const weightInput = container.querySelector(
+      'input[name="weight"]'
+    ) as HTMLInputElement;
+    fireEvent.change(weightInput, { target: { value: '250' } });
+
+    // Submit form
+    fireEvent.submit(screen.getByLabelText('Product Editor Form'));
+
+    await waitFor(() => {
+      expect(mockCreateProductWithInfos).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockCreateProductWithInfos).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: 'Multilingual Shoe',
+        sku: 'SHOE-MULTI-LANG',
+        categoryIds: [1],
+        descriptions: expect.arrayContaining([
+          expect.objectContaining({
+            languageId: 1,
+            languageCode: 'fa',
+            description: 'کفش ورزشی عالی',
+          }),
+          expect.objectContaining({
+            languageId: 2,
+            languageCode: 'en',
+            description: 'Great athletic shoe',
+          }),
+        ]),
+      }),
+      expect.any(Array)
     );
   });
 });

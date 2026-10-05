@@ -19,6 +19,18 @@ registerEnumType(ProductArchivedStatus, {
 });
 
 @InputType()
+export class ProductDescriptionInput {
+  @Field(() => Int, { nullable: true })
+  languageId?: number;
+
+  @Field({ nullable: true })
+  languageCode?: string;
+
+  @Field()
+  description: string;
+}
+
+@InputType()
 export class CreateProductInput {
   @Field()
   name: string;
@@ -31,6 +43,9 @@ export class CreateProductInput {
 
   @Field({ nullable: true })
   description?: string;
+
+  @Field(() => [ProductDescriptionInput], { nullable: true })
+  descriptions?: ProductDescriptionInput[];
 }
 
 @InputType()
@@ -49,6 +64,9 @@ export class UpdateProductInput {
 
   @Field({ nullable: true })
   description?: string;
+
+  @Field(() => [ProductDescriptionInput], { nullable: true })
+  descriptions?: ProductDescriptionInput[];
 }
 
 @InputType()

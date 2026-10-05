@@ -162,6 +162,10 @@ type RootTranslation = {
 		 */
 		orders: string
 		/**
+		 * P​r​o​f​i​l​e
+		 */
+		profile: string
+		/**
 		 * C​o​n​t​a​c​t
 		 */
 		contact: string
@@ -1839,6 +1843,10 @@ type RootTranslation = {
 		 */
 		orderConfirmation: string
 		/**
+		 * U​s​e​r​ ​P​r​o​f​i​l​e
+		 */
+		profile: string
+		/**
 		 * S​i​g​n​ ​I​n
 		 */
 		login: string
@@ -2761,6 +2769,240 @@ type RootTranslation = {
 			bulkTranslationFailed: string
 		}
 	}
+	customerProfile: {
+		/**
+		 * U​s​e​r​ ​P​r​o​f​i​l​e​ ​|​ ​S​A​I​N​T​B​A​L​A
+		 */
+		pageTitle: string
+		/**
+		 * E​d​i​t​ ​I​n​f​o​r​m​a​t​i​o​n
+		 */
+		editInformation: string
+		/**
+		 * P​r​o​f​i​l​e​ ​&​ ​A​d​d​r​e​s​s
+		 */
+		tabProfileAndAddresses: string
+		/**
+		 * M​y​ ​O​r​d​e​r​s
+		 */
+		tabMyOrders: string
+		/**
+		 * A​c​c​o​u​n​t​ ​S​e​c​u​r​i​t​y
+		 */
+		tabSettingsAndSecurity: string
+		/**
+		 * F​a​s​t​ ​O​r​d​e​r​ ​T​r​a​c​k​i​n​g
+		 */
+		orderBannerTitle: string
+		/**
+		 * R​e​v​i​e​w​ ​p​r​e​v​i​o​u​s​ ​o​r​d​e​r​s​ ​o​r​ ​t​r​a​c​k​ ​y​o​u​r​ ​l​a​t​e​s​t​ ​s​h​i​p​m​e​n​t​s​.
+		 */
+		orderBannerTextDefault: string
+		/**
+		 * V​i​e​w​ ​A​l​l​ ​O​r​d​e​r​s
+		 */
+		goToOrders: string
+		/**
+		 * A​c​c​o​u​n​t​ ​I​n​f​o​r​m​a​t​i​o​n
+		 */
+		identityCardTitle: string
+		/**
+		 * U​s​e​r​ ​A​c​c​o​u​n​t​ ​D​e​t​a​i​l​s
+		 */
+		identityCardSubtitle: string
+		/**
+		 * F​u​l​l​ ​N​a​m​e
+		 */
+		fullName: string
+		/**
+		 * P​h​o​n​e​ ​N​u​m​b​e​r
+		 */
+		phone: string
+		/**
+		 * E​m​a​i​l​ ​A​d​d​r​e​s​s
+		 */
+		email: string
+		/**
+		 * U​s​e​r​n​a​m​e
+		 */
+		username: string
+		/**
+		 * A​c​c​o​u​n​t​ ​T​y​p​e
+		 */
+		accountType: string
+		/**
+		 * C​u​s​t​o​m​e​r​ ​A​c​c​o​u​n​t
+		 */
+		customerAccount: string
+		/**
+		 * C​o​p​y​ ​E​m​a​i​l
+		 */
+		copyEmail: string
+		/**
+		 * E​m​a​i​l​ ​c​o​p​i​e​d​ ​t​o​ ​c​l​i​p​b​o​a​r​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		emailCopied: string
+		/**
+		 * P​r​e​f​e​r​r​e​d​ ​S​i​z​i​n​g
+		 */
+		preferencesCardTitle: string
+		/**
+		 * E​d​i​t
+		 */
+		edit: string
+		/**
+		 * A​p​p​a​r​e​l​ ​S​i​z​e
+		 */
+		preferredClothingSize: string
+		/**
+		 * S​h​o​e​ ​S​i​z​e
+		 */
+		standardShoeSize: string
+		/**
+		 * S​h​i​p​p​i​n​g​ ​A​d​d​r​e​s​s
+		 */
+		shippingCenterTitle: string
+		/**
+		 * S​h​i​p​p​i​n​g​ ​A​d​d​r​e​s​s
+		 */
+		shippingCenterSubtitle: string
+		/**
+		 * A​d​d​ ​N​e​w​ ​A​d​d​r​e​s​s
+		 */
+		addNewAddress: string
+		/**
+		 * E​d​i​t​ ​A​d​d​r​e​s​s
+		 */
+		editAddress: string
+		/**
+		 * D​e​f​a​u​l​t​ ​S​h​i​p​p​i​n​g​ ​A​d​d​r​e​s​s
+		 */
+		primaryAddressBadge: string
+		/**
+		 * N​o​ ​a​d​d​r​e​s​s​ ​a​d​d​e​d​ ​y​e​t
+		 */
+		noAddressTitle: string
+		/**
+		 * A​d​d​ ​y​o​u​r​ ​s​h​i​p​p​i​n​g​ ​a​d​d​r​e​s​s​ ​f​o​r​ ​f​a​s​t​ ​d​e​l​i​v​e​r​y​.
+		 */
+		noAddressSubtitle: string
+		/**
+		 * P​r​o​v​i​n​c​e​ ​/​ ​S​t​a​t​e
+		 */
+		province: string
+		/**
+		 * C​i​t​y
+		 */
+		city: string
+		/**
+		 * P​o​s​t​a​l​ ​C​o​d​e​:
+		 */
+		postalCode: string
+		/**
+		 * C​o​u​n​t​r​y
+		 */
+		country: string
+		/**
+		 * R​e​c​i​p​i​e​n​t​:
+		 */
+		recipient: string
+		/**
+		 * E​d​i​t​ ​A​c​c​o​u​n​t​ ​I​n​f​o​r​m​a​t​i​o​n
+		 */
+		editProfileDialogTitle: string
+		/**
+		 * E​d​i​t​ ​S​h​i​p​p​i​n​g​ ​A​d​d​r​e​s​s
+		 */
+		editAddressDialogTitle: string
+		/**
+		 * E​d​i​t​ ​P​r​e​f​e​r​r​e​d​ ​S​i​z​i​n​g
+		 */
+		editPreferencesDialogTitle: string
+		/**
+		 * F​i​r​s​t​ ​N​a​m​e
+		 */
+		firstName: string
+		/**
+		 * L​a​s​t​ ​N​a​m​e
+		 */
+		lastName: string
+		/**
+		 * F​u​l​l​ ​S​t​r​e​e​t​ ​A​d​d​r​e​s​s
+		 */
+		addressLine: string
+		/**
+		 * S​a​v​e​ ​C​h​a​n​g​e​s
+		 */
+		saveChanges: string
+		/**
+		 * C​a​n​c​e​l
+		 */
+		cancel: string
+		/**
+		 * I​n​f​o​r​m​a​t​i​o​n​ ​s​a​v​e​d​ ​s​u​c​c​e​s​s​f​u​l​l​y
+		 */
+		saveSuccess: string
+		/**
+		 * F​a​i​l​e​d​ ​t​o​ ​s​a​v​e​ ​i​n​f​o​r​m​a​t​i​o​n
+		 */
+		saveError: string
+		/**
+		 * P​l​e​a​s​e​ ​s​i​g​n​ ​i​n​ ​t​o​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​t​o​ ​v​i​e​w​ ​y​o​u​r​ ​p​r​o​f​i​l​e​ ​d​e​t​a​i​l​s​,​ ​m​a​n​a​g​e​ ​a​d​d​r​e​s​s​e​s​,​ ​a​n​d​ ​e​d​i​t​ ​i​n​f​o​r​m​a​t​i​o​n​.
+		 */
+		noUserWarning: string
+		/**
+		 * S​i​g​n​ ​I​n​ ​t​o​ ​A​c​c​o​u​n​t
+		 */
+		loginButton: string
+		/**
+		 * G​u​e​s​t​ ​U​s​e​r
+		 */
+		guestAccount: string
+		/**
+		 * P​l​e​a​s​e​ ​l​o​g​ ​i​n​ ​t​o​ ​v​i​e​w​ ​y​o​u​r​ ​o​r​d​e​r​s​.
+		 */
+		guestNoOrders: string
+		/**
+		 * S​e​c​u​r​i​t​y​ ​s​e​t​t​i​n​g​s​ ​a​n​d​ ​p​a​s​s​w​o​r​d​ ​m​a​n​a​g​e​m​e​n​t​ ​a​r​e​ ​o​n​l​y​ ​a​v​a​i​l​a​b​l​e​ ​f​o​r​ ​s​i​g​n​e​d​-​i​n​ ​u​s​e​r​s​.
+		 */
+		guestNoSecurity: string
+		/**
+		 * P​l​e​a​s​e​ ​l​o​g​ ​i​n​ ​t​o​ ​a​d​d​ ​o​r​ ​m​a​n​a​g​e​ ​y​o​u​r​ ​d​e​l​i​v​e​r​y​ ​a​d​d​r​e​s​s​.
+		 */
+		guestNoAddress: string
+		/**
+		 * P​l​e​a​s​e​ ​l​o​g​ ​i​n​ ​t​o​ ​e​d​i​t
+		 */
+		loginToEditTooltip: string
+		/**
+		 * S​e​c​u​r​i​t​y​ ​&​ ​A​c​c​o​u​n​t​ ​S​e​t​t​i​n​g​s
+		 */
+		securityTitle: string
+		/**
+		 * C​h​a​n​g​e​ ​P​a​s​s​w​o​r​d
+		 */
+		changePassword: string
+		/**
+		 * A​ ​p​a​s​s​w​o​r​d​ ​r​e​s​e​t​ ​l​i​n​k​ ​w​i​l​l​ ​b​e​ ​s​e​n​t​ ​t​o​ ​y​o​u​r​ ​e​m​a​i​l​ ​a​d​d​r​e​s​s​.
+		 */
+		changePasswordDesc: string
+		/**
+		 * L​o​g​ ​O​u​t
+		 */
+		logout: string
+		/**
+		 * S​e​c​u​r​e​l​y​ ​s​i​g​n​ ​o​u​t​ ​o​f​ ​y​o​u​r​ ​a​c​c​o​u​n​t​ ​o​n​ ​t​h​i​s​ ​d​e​v​i​c​e
+		 */
+		logoutDesc: string
+		/**
+		 * N​o​ ​o​r​d​e​r​s​ ​p​l​a​c​e​d​ ​y​e​t​.
+		 */
+		noOrdersFound: string
+		/**
+		 * E​x​p​l​o​r​e​ ​&​ ​S​h​o​p​ ​P​r​o​d​u​c​t​s
+		 */
+		startShopping: string
+	}
 }
 
 export type TranslationFunctions = {
@@ -2911,6 +3153,10 @@ export type TranslationFunctions = {
 		 * Orders
 		 */
 		orders: () => LocalizedString
+		/**
+		 * Profile
+		 */
+		profile: () => LocalizedString
 		/**
 		 * Contact
 		 */
@@ -4577,6 +4823,10 @@ export type TranslationFunctions = {
 		 */
 		orderConfirmation: () => LocalizedString
 		/**
+		 * User Profile
+		 */
+		profile: () => LocalizedString
+		/**
 		 * Sign In
 		 */
 		login: () => LocalizedString
@@ -5482,6 +5732,240 @@ export type TranslationFunctions = {
 			 */
 			bulkTranslationFailed: () => LocalizedString
 		}
+	}
+	customerProfile: {
+		/**
+		 * User Profile | SAINTBALA
+		 */
+		pageTitle: () => LocalizedString
+		/**
+		 * Edit Information
+		 */
+		editInformation: () => LocalizedString
+		/**
+		 * Profile & Address
+		 */
+		tabProfileAndAddresses: () => LocalizedString
+		/**
+		 * My Orders
+		 */
+		tabMyOrders: () => LocalizedString
+		/**
+		 * Account Security
+		 */
+		tabSettingsAndSecurity: () => LocalizedString
+		/**
+		 * Fast Order Tracking
+		 */
+		orderBannerTitle: () => LocalizedString
+		/**
+		 * Review previous orders or track your latest shipments.
+		 */
+		orderBannerTextDefault: () => LocalizedString
+		/**
+		 * View All Orders
+		 */
+		goToOrders: () => LocalizedString
+		/**
+		 * Account Information
+		 */
+		identityCardTitle: () => LocalizedString
+		/**
+		 * User Account Details
+		 */
+		identityCardSubtitle: () => LocalizedString
+		/**
+		 * Full Name
+		 */
+		fullName: () => LocalizedString
+		/**
+		 * Phone Number
+		 */
+		phone: () => LocalizedString
+		/**
+		 * Email Address
+		 */
+		email: () => LocalizedString
+		/**
+		 * Username
+		 */
+		username: () => LocalizedString
+		/**
+		 * Account Type
+		 */
+		accountType: () => LocalizedString
+		/**
+		 * Customer Account
+		 */
+		customerAccount: () => LocalizedString
+		/**
+		 * Copy Email
+		 */
+		copyEmail: () => LocalizedString
+		/**
+		 * Email copied to clipboard successfully
+		 */
+		emailCopied: () => LocalizedString
+		/**
+		 * Preferred Sizing
+		 */
+		preferencesCardTitle: () => LocalizedString
+		/**
+		 * Edit
+		 */
+		edit: () => LocalizedString
+		/**
+		 * Apparel Size
+		 */
+		preferredClothingSize: () => LocalizedString
+		/**
+		 * Shoe Size
+		 */
+		standardShoeSize: () => LocalizedString
+		/**
+		 * Shipping Address
+		 */
+		shippingCenterTitle: () => LocalizedString
+		/**
+		 * Shipping Address
+		 */
+		shippingCenterSubtitle: () => LocalizedString
+		/**
+		 * Add New Address
+		 */
+		addNewAddress: () => LocalizedString
+		/**
+		 * Edit Address
+		 */
+		editAddress: () => LocalizedString
+		/**
+		 * Default Shipping Address
+		 */
+		primaryAddressBadge: () => LocalizedString
+		/**
+		 * No address added yet
+		 */
+		noAddressTitle: () => LocalizedString
+		/**
+		 * Add your shipping address for fast delivery.
+		 */
+		noAddressSubtitle: () => LocalizedString
+		/**
+		 * Province / State
+		 */
+		province: () => LocalizedString
+		/**
+		 * City
+		 */
+		city: () => LocalizedString
+		/**
+		 * Postal Code:
+		 */
+		postalCode: () => LocalizedString
+		/**
+		 * Country
+		 */
+		country: () => LocalizedString
+		/**
+		 * Recipient:
+		 */
+		recipient: () => LocalizedString
+		/**
+		 * Edit Account Information
+		 */
+		editProfileDialogTitle: () => LocalizedString
+		/**
+		 * Edit Shipping Address
+		 */
+		editAddressDialogTitle: () => LocalizedString
+		/**
+		 * Edit Preferred Sizing
+		 */
+		editPreferencesDialogTitle: () => LocalizedString
+		/**
+		 * First Name
+		 */
+		firstName: () => LocalizedString
+		/**
+		 * Last Name
+		 */
+		lastName: () => LocalizedString
+		/**
+		 * Full Street Address
+		 */
+		addressLine: () => LocalizedString
+		/**
+		 * Save Changes
+		 */
+		saveChanges: () => LocalizedString
+		/**
+		 * Cancel
+		 */
+		cancel: () => LocalizedString
+		/**
+		 * Information saved successfully
+		 */
+		saveSuccess: () => LocalizedString
+		/**
+		 * Failed to save information
+		 */
+		saveError: () => LocalizedString
+		/**
+		 * Please sign in to your account to view your profile details, manage addresses, and edit information.
+		 */
+		noUserWarning: () => LocalizedString
+		/**
+		 * Sign In to Account
+		 */
+		loginButton: () => LocalizedString
+		/**
+		 * Guest User
+		 */
+		guestAccount: () => LocalizedString
+		/**
+		 * Please log in to view your orders.
+		 */
+		guestNoOrders: () => LocalizedString
+		/**
+		 * Security settings and password management are only available for signed-in users.
+		 */
+		guestNoSecurity: () => LocalizedString
+		/**
+		 * Please log in to add or manage your delivery address.
+		 */
+		guestNoAddress: () => LocalizedString
+		/**
+		 * Please log in to edit
+		 */
+		loginToEditTooltip: () => LocalizedString
+		/**
+		 * Security & Account Settings
+		 */
+		securityTitle: () => LocalizedString
+		/**
+		 * Change Password
+		 */
+		changePassword: () => LocalizedString
+		/**
+		 * A password reset link will be sent to your email address.
+		 */
+		changePasswordDesc: () => LocalizedString
+		/**
+		 * Log Out
+		 */
+		logout: () => LocalizedString
+		/**
+		 * Securely sign out of your account on this device
+		 */
+		logoutDesc: () => LocalizedString
+		/**
+		 * No orders placed yet.
+		 */
+		noOrdersFound: () => LocalizedString
+		/**
+		 * Explore & Shop Products
+		 */
+		startShopping: () => LocalizedString
 	}
 }
 

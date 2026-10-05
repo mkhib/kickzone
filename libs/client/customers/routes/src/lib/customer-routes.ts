@@ -8,6 +8,7 @@ export const CUSTOMER_ROUTES = {
   RESET_PASSWORD: '/reset-password/:token',
   CART: '/cart',
   ORDERS: '/orders',
+  PROFILE: '/profile',
   CONTACT: '/contact',
   LANGUAGE_SETTINGS: '/language-settings',
   UNAUTHORIZED: '/unauthorized',

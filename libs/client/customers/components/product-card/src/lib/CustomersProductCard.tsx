@@ -11,11 +11,8 @@ import CardMedia from '@mui/material/CardMedia';
 import Typography from '@mui/material/Typography';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
 import ShoppingBagOutlined from '@mui/icons-material/ShoppingBagOutlined';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
-import FavoriteBorder from '@mui/icons-material/FavoriteBorder';
-import Favorite from '@mui/icons-material/Favorite';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
 import {
@@ -265,7 +262,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   const { currentLocale } = useLanguageContext();
   const isRTL = currentLocale === 'fa';
 
-  const [isFavorite, setIsFavorite] = useState(initialFavorite);
   const [selectedColorwayKey, setSelectedColorwayKey] = useState<string | null>(
     null
   );
@@ -281,11 +277,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       }
     };
   }, []);
-
-  // Sync external favorite prop if changed
-  useEffect(() => {
-    setIsFavorite(initialFavorite);
-  }, [initialFavorite]);
 
   // Find all available variants that have at least one in-stock sellerProduct
   const availableVariants = useMemo(() => {
@@ -526,25 +517,33 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       ?.productInfo?.images?.[0];
   const image = resolveImageUrl(rawImage) || PRODUCT_IMAGE_PLACEHOLDER;
 
-  // Athletic brand & category
+  // Athletic brand & all categories
   const brand = useMemo(() => extractBrand(product.name), [product.name]);
-  const categoryName = useMemo(
-    () => product.categories?.[0]?.name || '',
-    [product.categories]
-  );
+  const allCategories = useMemo(() => {
+    if (!product.categories || !Array.isArray(product.categories)) {
+      return [];
+    }
+    const seen = new Set<string>();
+    return product.categories.filter((cat) => {
+      const name = cat?.name?.trim();
+      if (!name || seen.has(name)) return false;
+      seen.add(name);
+      return true;
+    });
+  }, [product.categories]);
 
   const isFootwear = useMemo(() => {
     if (activeVariant?.productInfo?.sizeKind) {
       return isFootwearSizeKind(activeVariant.productInfo.sizeKind);
     }
-    const cat = categoryName.toLowerCase();
+    const cats = allCategories.map((c) => c.name.toLowerCase()).join(' ');
     return (
-      cat.includes('کفش') ||
-      cat.includes('shoe') ||
-      cat.includes('sneaker') ||
+      cats.includes('کفش') ||
+      cats.includes('shoe') ||
+      cats.includes('sneaker') ||
       /air\s*max|jordan\s*1|dunk/i.test(product.name)
     );
-  }, [activeVariant, categoryName, product.name]);
+  }, [activeVariant, allCategories, product.name]);
 
   const cartItems = useCartStore((state) => state.items);
 
@@ -563,15 +562,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   const stockAvailable = pricingInfo?.stockQuantity || 0;
   const isMaxInCart =
     stockAvailable > 0 && cartQuantityForActiveVariant >= stockAvailable;
-
-  const handleFavoriteClick = useCallback(
-    (e: React.MouseEvent) => {
-      e.stopPropagation();
-      setIsFavorite((prev) => !prev);
-      onToggleFavorite?.(product.id);
-    },
-    [product.id, onToggleFavorite]
-  );
 
   const handleAddToCartClick = useCallback(
     (e: React.MouseEvent) => {
@@ -614,87 +604,171 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         return {
           width: '100%',
           height: '100%',
-          borderRadius: '28px',
+          borderRadius: '26px',
           overflow: 'hidden',
           position: 'relative',
           display: 'flex',
           flexDirection: 'column',
           backdropFilter: 'blur(24px) saturate(190%)',
           WebkitBackdropFilter: 'blur(24px) saturate(190%)',
-          transition: 'all 0.4s cubic-bezier(0.16, 1, 0.3, 1)',
+          transition: 'all 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
           border: isDark
-            ? '1px solid rgba(255, 255, 255, 0.14)'
-            : '1px solid rgba(255, 255, 255, 0.75)',
+            ? '1px solid rgba(255, 255, 255, 0.1)'
+            : '1px solid rgba(0, 0, 0, 0.07)',
           background: isDark
-            ? `radial-gradient(circle at 50% 28%, rgba(${ambientRgb}, 0.22) 0%, transparent 68%), linear-gradient(180deg, rgba(26, 28, 36, 0.75) 0%, rgba(16, 17, 24, 0.85) 100%)`
-            : `radial-gradient(circle at 50% 28%, rgba(${ambientRgb}, 0.16) 0%, transparent 68%), linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, rgba(250, 251, 254, 0.58) 50%, rgba(246, 247, 252, 0.7) 100%)`,
+            ? `radial-gradient(circle at 50% 24%, rgba(${ambientRgb}, 0.22) 0%, transparent 64%), linear-gradient(180deg, rgba(24, 26, 33, 0.85) 0%, rgba(14, 15, 20, 0.96) 100%)`
+            : `radial-gradient(circle at 50% 24%, rgba(${ambientRgb}, 0.14) 0%, transparent 64%), linear-gradient(180deg, rgba(255, 255, 255, 0.86) 0%, rgba(248, 249, 252, 0.76) 100%)`,
           boxShadow: isDark
-            ? '0 20px 50px -10px rgba(0, 0, 0, 0.55), inset 0 1px 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.3)'
-            : '0 16px 40px -10px rgba(0, 0, 0, 0.08), 0 24px 60px -15px rgba(0, 0, 0, 0.05), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.03)',
+            ? '0 16px 40px -10px rgba(0, 0, 0, 0.55), inset 0 1px 1px 0 rgba(255, 255, 255, 0.14)'
+            : '0 14px 34px -10px rgba(0, 0, 0, 0.07), 0 4px 12px -2px rgba(0, 0, 0, 0.03), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95)',
           '&:hover': {
             transform: 'translateY(-6px)',
+            borderColor: isDark
+              ? 'rgba(197, 184, 154, 0.35)'
+              : 'rgba(168, 152, 112, 0.4)',
             boxShadow: isDark
-              ? '0 28px 65px -10px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.25)'
-              : '0 24px 50px -10px rgba(0, 0, 0, 0.12), 0 32px 70px -15px rgba(0, 0, 0, 0.08), inset 0 1px 2px 0 rgba(255, 255, 255, 1)',
+              ? '0 26px 60px -12px rgba(0, 0, 0, 0.7), 0 0 24px rgba(197, 184, 154, 0.15), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.22)'
+              : '0 24px 50px -10px rgba(0, 0, 0, 0.11), 0 0 20px rgba(168, 152, 112, 0.12), inset 0 1px 2px 0 rgba(255, 255, 255, 1)',
             '& .product-image': {
-              transform: 'scale(1.04)',
+              transform: 'scale(1.06) translateY(-4px)',
             },
           },
         };
       }}
     >
-      {/* Top Left Floating Favorite / Wishlist Button (Fixed on top-left in both LTR and RTL) */}
-      <IconButton
-        onClick={handleFavoriteClick}
-        size="small"
-        aria-label="favorite"
-        sx={(theme) => {
-          const isDark = theme.palette.mode === 'dark';
-          return {
-            position: 'absolute',
-            top: 14,
-            left: 14,
-            zIndex: 10,
-            width: 36,
-            height: 36,
-            borderRadius: '50%',
-            background: isDark
-              ? 'rgba(255, 255, 255, 0.12)'
-              : 'rgba(255, 255, 255, 0.72)',
-            backdropFilter: 'blur(16px)',
-            WebkitBackdropFilter: 'blur(16px)',
-            border: isDark
-              ? '1px solid rgba(255, 255, 255, 0.18)'
-              : '1px solid rgba(255, 255, 255, 0.85)',
-            boxShadow: isDark
-              ? '0 4px 14px rgba(0, 0, 0, 0.35)'
-              : '0 4px 14px rgba(0, 0, 0, 0.06)',
-            transition: 'all 0.25s ease',
-            '&:hover': {
-              transform: 'scale(1.08)',
-              background: isDark
-                ? 'rgba(255, 255, 255, 0.2)'
-                : 'rgba(255, 255, 255, 0.95)',
-            },
-          };
+      {/* Floating Status Badges (Overlaid on Image at Top Left) */}
+      <Box
+        sx={{
+          position: 'absolute',
+          top: 14,
+          left: 14,
+          zIndex: 11,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'flex-start',
+          gap: 0.65,
+          pointerEvents: 'none',
         }}
       >
-        {isFavorite ? (
-          <Favorite sx={{ fontSize: 18, color: '#ef4444' }} />
-        ) : (
-          <FavoriteBorder
-            sx={(theme) => ({
-              fontSize: 18,
-              color:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(255, 255, 255, 0.85)'
-                  : '#475569',
-            })}
-          />
+        {/* Discount Badge */}
+        {pricingInfo && pricingInfo.discount > 0 && (
+          <Box
+            sx={(theme) => {
+              const isDark = theme.palette.mode === 'dark';
+              return {
+                display: 'inline-flex',
+                alignItems: 'center',
+                borderRadius: '9999px',
+                px: 1.25,
+                py: 0.38,
+                fontSize: '0.73rem',
+                fontWeight: 800,
+                letterSpacing: '0.025em',
+                lineHeight: 1.2,
+                backdropFilter: 'blur(22px) saturate(200%)',
+                WebkitBackdropFilter: 'blur(22px) saturate(200%)',
+                background: isDark
+                  ? 'linear-gradient(135deg, rgba(235, 110, 55, 0.38) 0%, rgba(197, 135, 80, 0.22) 50%, rgba(245, 135, 65, 0.34) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 238, 228, 0.62) 50%, rgba(255, 255, 255, 0.72) 100%)',
+                border: isDark
+                  ? '1px solid rgba(255, 155, 110, 0.6)'
+                  : '1px solid rgba(235, 110, 55, 0.32)',
+                color: isDark ? '#ffffff' : '#000000',
+                textShadow: isDark
+                  ? '0 1px 3px rgba(0, 0, 0, 0.85), 0 0 8px rgba(235, 110, 55, 0.4)'
+                  : 'none',
+                boxShadow: isDark
+                  ? '0 6px 18px -3px rgba(220, 75, 45, 0.4), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35)'
+                  : '0 4px 16px -2px rgba(220, 75, 45, 0.14), 0 2px 6px -1px rgba(0, 0, 0, 0.04), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.03)',
+              };
+            }}
+          >
+            {isRTL
+              ? `${pricingInfo.discount}٪ تخفیف`
+              : `${pricingInfo.discount}% OFF`}
+          </Box>
         )}
-      </IconButton>
 
-      {/* Top Right Colors Badge (Single multi-color disc if 1 variant; multiple discs if different variant colors exist) */}
+        {/* Status Tag: Master's Pick / New */}
+        <Box
+          sx={(theme) => {
+            const isDark = theme.palette.mode === 'dark';
+            return {
+              display: 'inline-flex',
+              alignItems: 'center',
+              borderRadius: '9999px',
+              px: 1.25,
+              py: 0.38,
+              fontSize: '0.73rem',
+              fontWeight: 800,
+              letterSpacing: '0.025em',
+              lineHeight: 1.2,
+              backdropFilter: 'blur(22px) saturate(200%)',
+              WebkitBackdropFilter: 'blur(22px) saturate(200%)',
+              background: isDark
+                ? 'linear-gradient(135deg, rgba(197, 184, 154, 0.38) 0%, rgba(140, 125, 95, 0.22) 50%, rgba(220, 208, 180, 0.32) 100%)'
+                : 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(248, 243, 230, 0.62) 50%, rgba(255, 255, 255, 0.72) 100%)',
+              border: isDark
+                ? '1px solid rgba(225, 215, 190, 0.65)'
+                : '1px solid rgba(197, 184, 154, 0.38)',
+              color: isDark ? '#ffffff' : '#000000',
+              textShadow: isDark
+                ? '0 1px 3px rgba(0, 0, 0, 0.85), 0 0 8px rgba(197, 184, 154, 0.4)'
+                : 'none',
+              boxShadow: isDark
+                ? '0 6px 18px -3px rgba(0, 0, 0, 0.55), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.7), inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35)'
+                : '0 4px 16px -2px rgba(180, 160, 120, 0.14), 0 2px 6px -1px rgba(0, 0, 0, 0.04), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.03)',
+            };
+          }}
+        >
+          {isRecommended
+            ? isRTL
+              ? 'نمونه'
+              : "Master's Pick"
+            : isRTL
+            ? 'جدید'
+            : 'New'}
+        </Box>
+
+        {/* Box-less Badge */}
+        {isBoxLess && (
+          <Box
+            sx={(theme) => {
+              const isDark = theme.palette.mode === 'dark';
+              return {
+                display: 'inline-flex',
+                alignItems: 'center',
+                borderRadius: '9999px',
+                px: 1.15,
+                py: 0.32,
+                fontSize: '0.71rem',
+                fontWeight: 700,
+                letterSpacing: '0.02em',
+                lineHeight: 1.2,
+                backdropFilter: 'blur(22px) saturate(200%)',
+                WebkitBackdropFilter: 'blur(22px) saturate(200%)',
+                background: isDark
+                  ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.16) 0%, rgba(197, 184, 154, 0.1) 50%, rgba(255, 255, 255, 0.14) 100%)'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(245, 247, 250, 0.6) 50%, rgba(255, 255, 255, 0.72) 100%)',
+                border: isDark
+                  ? '1px solid rgba(255, 255, 255, 0.3)'
+                  : '1px solid rgba(255, 255, 255, 0.85)',
+                color: isDark ? '#ffffff' : '#000000',
+                textShadow: isDark
+                  ? '0 1px 2px rgba(0, 0, 0, 0.8)'
+                  : 'none',
+                boxShadow: isDark
+                  ? '0 4px 14px -2px rgba(0, 0, 0, 0.4), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.5), inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.25)'
+                  : '0 4px 14px -2px rgba(0, 0, 0, 0.06), 0 2px 6px -1px rgba(0, 0, 0, 0.04), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.03)',
+              };
+            }}
+          >
+            {LL.products.boxLess()}
+          </Box>
+        )}
+      </Box>
+
+      {/* Top Right Colors Badge (Interactive colorway selector) */}
       {availableColorways.length > 0 && variantColors.length > 0 && (
         <Box
           dir={isRTL ? 'rtl' : 'ltr'}
@@ -706,7 +780,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               position: 'absolute',
               top: 14,
               right: 14,
-              zIndex: 10,
+              zIndex: 12,
               display: 'flex',
               alignItems: 'center',
               gap: 0.85,
@@ -714,8 +788,8 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               px: 1.4,
               py: 0.5,
               background: isDark
-                ? 'rgba(255, 255, 255, 0.12)'
-                : 'rgba(255, 255, 255, 0.72)',
+                ? 'rgba(255, 255, 255, 0.1)'
+                : 'rgba(255, 255, 255, 0.75)',
               backdropFilter: 'blur(16px)',
               WebkitBackdropFilter: 'blur(16px)',
               border: isDark
@@ -801,26 +875,29 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         </Box>
       )}
 
-      {/* Product Image Section with Ethereal Progressive Gradient Blur & Fade */}
+      {/* Product Image Section: Crisp Hero Showcase with Atmospheric Spotlight */}
       <Box
         component={RouterLink}
         to={productDetailsUrl}
         onClick={onCardClick ? () => onCardClick(product) : undefined}
-        sx={{
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          textDecoration: 'none',
-          cursor: 'pointer',
-          height: { xs: 260, sm: 290, md: 320 },
-          width: '100%',
-          overflow: 'hidden',
-          // Progressive dissolve mask inspired by soft ethereal card fadiness
-          maskImage:
-            'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)',
-          WebkitMaskImage:
-            'linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,1) 40%, rgba(0,0,0,0.85) 60%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)',
+        sx={(theme) => {
+          const isDark = theme.palette.mode === 'dark';
+          const ambientRgb = getAmbientTint(variantColors, product.id);
+
+          return {
+            position: 'relative',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            textDecoration: 'none',
+            cursor: 'pointer',
+            height: { xs: 240, sm: 270, md: 290 },
+            width: '100%',
+            overflow: 'hidden',
+            background: isDark
+              ? `radial-gradient(circle at 50% 55%, rgba(${ambientRgb}, 0.22) 0%, rgba(${ambientRgb}, 0.04) 50%, transparent 72%)`
+              : `radial-gradient(circle at 50% 55%, rgba(${ambientRgb}, 0.16) 0%, rgba(${ambientRgb}, 0.03) 50%, transparent 72%)`,
+          };
         }}
       >
         <CardMedia
@@ -833,11 +910,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             height: '100%',
             objectFit: isFootwear ? 'contain' : 'cover',
             p: isFootwear ? { xs: 2.5, sm: 3 } : 0,
-            transition: 'transform 0.5s cubic-bezier(0.16, 1, 0.3, 1)',
+            transition: 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)',
           }}
         />
 
-        {/* Ethereal Frosted Blur & Ambient Tint Overlay melting image seamlessly into details */}
+        {/* Minimal bottom vignette for seamless background transition without blurring shoe details */}
         <Box
           sx={(theme) => {
             const isDark = theme.palette.mode === 'dark';
@@ -846,17 +923,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               left: 0,
               right: 0,
               bottom: 0,
-              height: '52%',
+              height: '14%',
               pointerEvents: 'none',
-              backdropFilter: 'blur(8px)',
-              WebkitBackdropFilter: 'blur(8px)',
-              maskImage:
-                'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,1) 100%)',
-              WebkitMaskImage:
-                'linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,0.4) 35%, rgba(0,0,0,1) 100%)',
               background: isDark
-                ? 'linear-gradient(180deg, rgba(18, 18, 24, 0) 0%, rgba(18, 18, 24, 0.25) 35%, rgba(18, 18, 24, 0.72) 75%, rgba(18, 18, 24, 0.96) 100%)'
-                : 'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.2) 35%, rgba(255, 255, 255, 0.68) 75%, rgba(255, 255, 255, 0.94) 100%)',
+                ? 'linear-gradient(180deg, rgba(14, 15, 20, 0) 0%, rgba(14, 15, 20, 0.55) 100%)'
+                : 'linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.55) 100%)',
             };
           }}
         />
@@ -869,15 +940,15 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           flexDirection: 'column',
           alignItems: isRTL ? 'flex-end' : 'flex-start',
           textAlign: isRTL ? 'right' : 'left',
-          px: { xs: 2, sm: 2.5 },
-          pt: 1,
-          pb: 2.5,
+          px: { xs: 2, sm: 2.25 },
+          pt: 1.5,
+          pb: 2.25,
           flexGrow: 1,
           justifyContent: 'space-between',
         }}
       >
         <Box sx={{ width: '100%' }}>
-          {/* Line 1: Tags • Brand • Category */}
+          {/* Metadata Row: Brand & ALL Categories */}
           <Box
             sx={{
               display: 'flex',
@@ -885,152 +956,80 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               justifyContent: isRTL ? 'flex-end' : 'flex-start',
               gap: 0.75,
               flexWrap: 'wrap',
-              mb: 0.85,
+              mb: 1,
+              width: '100%',
             }}
           >
-            {/* Status Tag: Master's Pick / New */}
+            {/* Brand Tag */}
             <Box
               sx={(theme) => {
                 const isDark = theme.palette.mode === 'dark';
                 return {
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: 0.5,
-                  borderRadius: '9999px',
-                  px: 1.2,
-                  py: 0.3,
+                  borderRadius: '6px',
+                  px: 0.9,
+                  py: 0.25,
                   fontSize: '0.72rem',
-                  fontWeight: 700,
-                  letterSpacing: '0.02em',
+                  fontWeight: 800,
+                  letterSpacing: '0.07em',
+                  textTransform: 'uppercase',
                   lineHeight: 1.2,
-                  backdropFilter: 'blur(16px) saturate(180%)',
-                  WebkitBackdropFilter: 'blur(16px) saturate(180%)',
                   background: isDark
-                    ? 'linear-gradient(180deg, rgba(197, 184, 154, 0.16) 0%, rgba(197, 184, 154, 0.05) 100%)'
-                    : 'linear-gradient(180deg, rgba(168, 152, 112, 0.16) 0%, rgba(168, 152, 112, 0.05) 100%)',
+                    ? 'linear-gradient(135deg, rgba(197, 184, 154, 0.22) 0%, rgba(197, 184, 154, 0.08) 100%)'
+                    : 'linear-gradient(135deg, rgba(168, 152, 112, 0.18) 0%, rgba(168, 152, 112, 0.08) 100%)',
                   border: isDark
-                    ? '1px solid rgba(197, 184, 154, 0.32)'
-                    : '1px solid rgba(143, 132, 104, 0.35)',
+                    ? '1px solid rgba(197, 184, 154, 0.38)'
+                    : '1px solid rgba(143, 132, 104, 0.38)',
                   color: isDark ? '#c5b89a' : '#7c6d48',
-                  boxShadow: isDark
-                    ? '0 2px 8px rgba(0, 0, 0, 0.25), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1)'
-                    : '0 2px 8px rgba(168, 152, 112, 0.12), inset 0 1px 1px 0 rgba(255, 255, 255, 0.75)',
                 };
               }}
             >
-              {isRecommended
-                ? isRTL
-                  ? 'نمونه'
-                  : "Master's Pick"
-                : isRTL
-                ? 'جدید'
-                : 'New'}
+              {brand}
             </Box>
 
-            {/* Discount Tag (if any) */}
-            {pricingInfo && pricingInfo.discount > 0 && (
+            {/* All Categories rendered as sleek micro-chips */}
+            {allCategories.map((cat) => (
               <Box
+                key={cat.id || cat.name}
+                component="span"
                 sx={(theme) => {
                   const isDark = theme.palette.mode === 'dark';
                   return {
                     display: 'inline-flex',
                     alignItems: 'center',
-                    gap: 0.5,
                     borderRadius: '9999px',
                     px: 1.1,
-                    py: 0.3,
-                    fontSize: '0.72rem',
-                    fontWeight: 700,
-                    letterSpacing: '0.02em',
-                    lineHeight: 1.2,
-                    backdropFilter: 'blur(16px) saturate(180%)',
-                    WebkitBackdropFilter: 'blur(16px) saturate(180%)',
+                    py: 0.25,
+                    fontSize: '0.71rem',
+                    fontWeight: 600,
+                    lineHeight: 1.25,
+                    letterSpacing: '0.01em',
                     background: isDark
-                      ? 'linear-gradient(180deg, rgba(239, 68, 68, 0.16) 0%, rgba(197, 184, 154, 0.06) 100%)'
-                      : 'linear-gradient(180deg, rgba(220, 38, 38, 0.12) 0%, rgba(168, 152, 112, 0.06) 100%)',
+                      ? 'rgba(255, 255, 255, 0.06)'
+                      : 'rgba(0, 0, 0, 0.04)',
                     border: isDark
-                      ? '1px solid rgba(239, 68, 68, 0.38)'
-                      : '1px solid rgba(220, 38, 38, 0.32)',
-                    color: isDark ? '#fca5a5' : '#b91c1c',
-                    boxShadow: isDark
-                      ? '0 2px 8px rgba(239, 68, 68, 0.2)'
-                      : '0 2px 8px rgba(220, 38, 38, 0.12)',
+                      ? '1px solid rgba(255, 255, 255, 0.09)'
+                      : '1px solid rgba(0, 0, 0, 0.06)',
+                    color: isDark ? '#d4d4d8' : '#4b5563',
+                    backdropFilter: 'blur(8px)',
+                    WebkitBackdropFilter: 'blur(8px)',
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      background: isDark
+                        ? 'rgba(255, 255, 255, 0.12)'
+                        : 'rgba(0, 0, 0, 0.08)',
+                      color: isDark ? '#ffffff' : '#111827',
+                    },
                   };
                 }}
               >
-                {isRTL
-                  ? `${pricingInfo.discount}٪ تخفیف`
-                  : `${pricingInfo.discount}% OFF`}
+                {cat.name}
               </Box>
-            )}
-
-            {/* Box-less Tag (if any) */}
-            {isBoxLess && (
-              <Box
-                sx={(theme) => {
-                  const isDark = theme.palette.mode === 'dark';
-                  return {
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: 0.5,
-                    borderRadius: '9999px',
-                    px: 1.1,
-                    py: 0.3,
-                    fontSize: '0.72rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.02em',
-                    lineHeight: 1.2,
-                    backdropFilter: 'blur(16px)',
-                    WebkitBackdropFilter: 'blur(16px)',
-                    background: isDark
-                      ? 'rgba(197, 184, 154, 0.08)'
-                      : 'rgba(168, 152, 112, 0.08)',
-                    border: isDark
-                      ? '1px solid rgba(197, 184, 154, 0.22)'
-                      : '1px solid rgba(143, 132, 104, 0.25)',
-                    color: isDark ? '#c5b89a' : '#7c6d48',
-                  };
-                }}
-              >
-                {LL.products.boxLess()}
-              </Box>
-            )}
-
-            <Typography
-              component="span"
-              sx={(theme) => ({
-                color: theme.palette.mode === 'dark' ? '#d4d4d8' : '#4b5563',
-                fontWeight: 600,
-                fontSize: '0.78rem',
-              })}
-            >
-              {brand}
-            </Typography>
-
-            {categoryName && (
-              <>
-                <Box
-                  component="span"
-                  sx={{ opacity: 0.45, fontSize: '0.7rem' }}
-                >
-                  •
-                </Box>
-                <Typography
-                  component="span"
-                  sx={(theme) => ({
-                    color:
-                      theme.palette.mode === 'dark' ? '#d4d4d8' : '#4b5563',
-                    fontWeight: 600,
-                    fontSize: '0.78rem',
-                  })}
-                >
-                  {categoryName}
-                </Typography>
-              </>
-            )}
+            ))}
           </Box>
 
-          {/* Line 2: Product Name (Language-aligned title) */}
+          {/* Product Name (Language-aligned title) */}
           <Typography
             variant="h6"
             component={RouterLink}
@@ -1038,7 +1037,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             onClick={onCardClick ? () => onCardClick(product) : undefined}
             sx={(theme) => ({
               fontWeight: 700,
-              fontSize: { xs: '1rem', sm: '1.12rem' },
+              fontSize: { xs: '0.98rem', sm: '1.08rem' },
               lineHeight: 1.35,
               color: theme.palette.mode === 'dark' ? '#ffffff' : '#0f172a',
               textAlign: isRTL ? 'right' : 'left',
@@ -1061,30 +1060,30 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             {product.name}
           </Typography>
 
-          {/* Line 3: SKU / Item Code */}
+          {/* SKU / Item Code */}
           {product.sku && (
             <Typography
               variant="body2"
               sx={(theme) => ({
                 color: theme.palette.mode === 'dark' ? '#9ca3af' : '#64748b',
-                fontSize: '0.78rem',
+                fontSize: '0.76rem',
                 fontWeight: 500,
                 textAlign: isRTL ? 'right' : 'left',
                 mb: 0.75,
               })}
             >
-              {isRTL ? `کد محصول ${product.sku}` : `SKU: ${product.sku}`}
+              {isRTL ? `کد محصول: ${product.sku}` : `SKU: ${product.sku}`}
             </Typography>
           )}
 
-          {/* Line 4: Pricing */}
+          {/* Pricing Row */}
           <Box
             sx={{
               display: 'flex',
-              alignItems: 'center',
+              alignItems: 'baseline',
               justifyContent: isRTL ? 'flex-end' : 'flex-start',
-              gap: 1.5,
-              my: 0.5,
+              gap: 1.25,
+              my: 0.6,
               minHeight: 32,
             }}
           >
@@ -1107,7 +1106,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                       textDecoration: 'line-through',
                       color:
                         theme.palette.mode === 'dark' ? '#71717a' : '#94a3b8',
-                      fontSize: '0.92rem',
+                      fontSize: '0.88rem',
                       fontWeight: 500,
                     })}
                   >
@@ -1142,22 +1141,27 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             )}
           </Box>
 
-          {/* Line 5: Clean Language-Aligned Stock Indicator */}
+          {/* Stock Indicator with Glowing Status Dot */}
           <Box
             sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: isRTL ? 'flex-end' : 'flex-start',
-              mt: 0.8,
+              mt: 0.6,
               mb: 1,
             }}
           >
             <Typography
               sx={(theme) => {
                 const isDark = theme.palette.mode === 'dark';
-                const goldColor = isDark ? '#c5b89a' : '#7c6d48';
+                const dotColor = displayLowStock
+                  ? '#f59e0b'
+                  : isDark
+                  ? '#c5b89a'
+                  : '#7c6d48';
+
                 return {
-                  color: goldColor,
+                  color: dotColor,
                   fontWeight: 600,
                   fontSize: '0.76rem',
                   display: 'inline-flex',
@@ -1171,16 +1175,24 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 component="span"
                 sx={(theme) => {
                   const isDark = theme.palette.mode === 'dark';
-                  const goldColor = isDark ? '#c5b89a' : '#7c6d48';
+                  const dotColor = displayLowStock
+                    ? '#f59e0b'
+                    : isDark
+                    ? '#c5b89a'
+                    : '#7c6d48';
+
                   return {
                     display: 'inline-block',
                     width: 6,
                     height: 6,
                     borderRadius: '50%',
-                    backgroundColor: goldColor,
-                    boxShadow: isDark
-                      ? '0 0 8px #c5b89a'
-                      : '0 0 6px #7c6d48',
+                    backgroundColor: dotColor,
+                    boxShadow: `0 0 8px ${dotColor}`,
+                    animation: 'stockPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                    '@keyframes stockPulse': {
+                      '0%, 100%': { transform: 'scale(1)', opacity: 1 },
+                      '50%': { transform: 'scale(1.35)', opacity: 0.7 },
+                    },
                   };
                 }}
               />
@@ -1206,7 +1218,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             </Typography>
           </Box>
 
-          {/* Line 6: Available Sizes Chips (Blurry Liquid Glass with Gold Accents) */}
+          {/* Available Sizes Chips */}
           <Box
             sx={{
               display: 'flex',
@@ -1292,7 +1304,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           </Box>
         </Box>
 
-        {/* Line 7: Add to Cart Button (Liquid Frosted Glass Pill Button with micro-interaction) */}
+        {/* Action Button: Liquid Frosted Glass Pill Button */}
         <Box sx={{ width: '100%' }}>
           <Button
             variant="contained"
@@ -1325,7 +1337,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               const isDark = theme.palette.mode === 'dark';
               const isDisabled = hasNoSellers || isOutOfStock || isMaxInCart;
 
-              // Gold champagne color tokens from theme
               const goldColor = isDark ? '#c5b89a' : '#7c6d48';
               const goldHover = isDark ? '#ddd4bf' : '#65583b';
 
@@ -1357,7 +1368,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                     }
                   : isDark
                   ? {
-                      // Translucent blurry liquid glass with warm gold tint in Dark Mode
                       background: isAddedRecently
                         ? 'linear-gradient(180deg, rgba(197, 184, 154, 0.25) 0%, rgba(197, 184, 154, 0.12) 100%)'
                         : 'linear-gradient(180deg, rgba(197, 184, 154, 0.13) 0%, rgba(197, 184, 154, 0.04) 100%)',
@@ -1380,7 +1390,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                       },
                     }
                   : {
-                      // Translucent blurry liquid glass with warm gold tint in Light Mode
                       background: isAddedRecently
                         ? 'linear-gradient(180deg, rgba(168, 152, 112, 0.26) 0%, rgba(168, 152, 112, 0.14) 100%)'
                         : 'linear-gradient(180deg, rgba(168, 152, 112, 0.14) 0%, rgba(168, 152, 112, 0.05) 100%)',

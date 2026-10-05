@@ -11,6 +11,8 @@ import {
   Color,
   SellerProduct,
   OrderItem,
+  ProductDescription,
+  SiteLanguage,
 } from '@kickzone-workspace/entities';
 import {
   CreateProductInput,
@@ -47,6 +49,10 @@ export class ProductService implements OnModuleInit {
     private readonly sellerProductRepository: Repository<SellerProduct>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepository: Repository<OrderItem>,
+    @InjectRepository(ProductDescription)
+    private readonly productDescriptionRepository: Repository<ProductDescription>,
+    @InjectRepository(SiteLanguage)
+    private readonly siteLanguageRepository: Repository<SiteLanguage>,
     private readonly translationService: TranslationService
   ) {}
 
@@ -92,7 +98,9 @@ export class ProductService implements OnModuleInit {
       .leftJoinAndSelect('product.productInfos', 'productInfo')
       .leftJoinAndSelect('productInfo.colorLinks', 'colorLink')
       .leftJoinAndSelect('colorLink.color', 'color')
-      .leftJoinAndSelect('product.categories', 'category');
+      .leftJoinAndSelect('product.categories', 'category')
+      .leftJoinAndSelect('product.descriptions', 'productDescription')
+      .leftJoinAndSelect('productDescription.language', 'descLanguage');
 
     // Always use LEFT JOIN for sellerProducts to get all productInfos
     // We'll filter sellerProducts in the WHERE clause instead
@@ -291,13 +299,45 @@ export class ProductService implements OnModuleInit {
     const categories = await this.categoryRepository.findBy({
       id: In(input.categoryIds),
     });
+    let fallbackDescription =
+      input.description === '' ? null : input.description;
+    if (!fallbackDescription && input.descriptions?.length) {
+      const enDesc = input.descriptions.find((d) => d.languageCode === 'en');
+      const faDesc = input.descriptions.find((d) => d.languageCode === 'fa');
+      const firstValid = input.descriptions.find((d) => d.description?.trim());
+      fallbackDescription =
+        enDesc?.description ||
+        faDesc?.description ||
+        firstValid?.description ||
+        null;
+    }
+
     const product = this.productRepository.create({
       name: input.name,
       sku,
       categories,
-      description: input.description === '' ? null : input.description,
+      description: fallbackDescription,
     });
-    return this.productRepository.save(product);
+    const savedProduct = await this.productRepository.save(product);
+
+    if (input.descriptions && input.descriptions.length > 0) {
+      await this.saveProductDescriptions(savedProduct.id, input.descriptions);
+    } else if (input.description && input.description.trim()) {
+      const defaultLang = await this.siteLanguageRepository.findOne({
+        where: [{ isDefault: true, isActive: true }, { isActive: true }],
+      });
+      if (defaultLang) {
+        await this.productDescriptionRepository.save(
+          this.productDescriptionRepository.create({
+            productId: savedProduct.id,
+            languageId: defaultLang.id,
+            description: input.description.trim(),
+          })
+        );
+      }
+    }
+
+    return (await this.getProductById(savedProduct.id)) || savedProduct;
   }
 
   async createProductInfo(input: CreateProductInfoInput): Promise<Product> {
@@ -498,14 +538,55 @@ export class ProductService implements OnModuleInit {
     product.name = input.name;
     product.sku = sku;
     product.categories = categories;
-    product.description = input.description === '' ? null : input.description;
-    return this.productRepository.save(product);
+
+    if (input.descriptions && input.descriptions.length > 0) {
+      await this.saveProductDescriptions(product.id, input.descriptions);
+      const enDesc = input.descriptions.find((d) => d.languageCode === 'en');
+      const faDesc = input.descriptions.find((d) => d.languageCode === 'fa');
+      const firstValid = input.descriptions.find((d) => d.description?.trim());
+      product.description =
+        enDesc?.description ||
+        faDesc?.description ||
+        firstValid?.description ||
+        null;
+    } else if (input.description !== undefined) {
+      product.description =
+        input.description === '' ? null : input.description;
+      if (product.description) {
+        const defaultLang = await this.siteLanguageRepository.findOne({
+          where: [{ isDefault: true, isActive: true }, { isActive: true }],
+        });
+        if (defaultLang) {
+          const existingDesc =
+            await this.productDescriptionRepository.findOne({
+              where: { productId: product.id, languageId: defaultLang.id },
+            });
+          if (existingDesc) {
+            existingDesc.description = product.description;
+            await this.productDescriptionRepository.save(existingDesc);
+          } else {
+            await this.productDescriptionRepository.save(
+              this.productDescriptionRepository.create({
+                productId: product.id,
+                languageId: defaultLang.id,
+                description: product.description,
+              })
+            );
+          }
+        }
+      }
+    }
+
+    await this.productRepository.save(product);
+    return (await this.getProductById(product.id)) || product;
   }
 
   async getProductById(id: number): Promise<Product | null> {
     const product = await this.productRepository.findOne({
       where: { id },
       relations: [
+        'descriptions',
+        'descriptions.language',
         'productInfos',
         'categories',
         'productInfos.colorLinks',
@@ -663,6 +744,8 @@ export class ProductService implements OnModuleInit {
       .leftJoinAndSelect('productInfo.colorLinks', 'colorLink')
       .leftJoinAndSelect('colorLink.color', 'color')
       .leftJoinAndSelect('product.categories', 'category')
+      .leftJoinAndSelect('product.descriptions', 'productDescription')
+      .leftJoinAndSelect('productDescription.language', 'descLanguage')
       .leftJoinAndSelect(
         'product.sellerProducts',
         'sellerProduct',
@@ -825,5 +908,87 @@ export class ProductService implements OnModuleInit {
       })
     );
     await this.productInfoColorRepository.save(links);
+  }
+
+  async saveProductDescriptions(
+    productId: number,
+    descriptions: Array<{ languageId?: number; languageCode?: string; description: string }>
+  ): Promise<void> {
+    for (const descInput of descriptions) {
+      let lang: SiteLanguage | null = null;
+      if (descInput.languageId) {
+        lang = await this.siteLanguageRepository.findOne({
+          where: { id: descInput.languageId },
+        });
+      } else if (descInput.languageCode) {
+        lang = await this.siteLanguageRepository.findOne({
+          where: { code: descInput.languageCode.trim().toLowerCase() },
+        });
+      }
+      if (!lang) continue;
+
+      const trimmed = descInput.description ? descInput.description.trim() : '';
+      const existing = await this.productDescriptionRepository.findOne({
+        where: { productId, languageId: lang.id },
+      });
+
+      if (!trimmed) {
+        if (existing) {
+          await this.productDescriptionRepository.delete(existing.id);
+        }
+      } else {
+        if (existing) {
+          existing.description = trimmed;
+          await this.productDescriptionRepository.save(existing);
+        } else {
+          await this.productDescriptionRepository.save(
+            this.productDescriptionRepository.create({
+              productId,
+              languageId: lang.id,
+              description: trimmed,
+            })
+          );
+        }
+      }
+    }
+  }
+
+  async resolveProductDescription(
+    product: Product,
+    locale: string
+  ): Promise<string | null> {
+    let descs = product.descriptions;
+    if (!descs) {
+      descs = await this.productDescriptionRepository.find({
+        where: { productId: product.id },
+        relations: ['language'],
+      });
+    }
+
+    if (descs && descs.length > 0) {
+      const direct = descs.find(
+        (d) => d.language?.code?.toLowerCase() === locale.toLowerCase()
+      );
+      if (direct && direct.description?.trim()) return direct.description;
+
+      const defaultDesc = descs.find((d) => d.language?.isDefault);
+      if (defaultDesc && defaultDesc.description?.trim())
+        return defaultDesc.description;
+
+      const firstValid = descs.find((d) => d.description?.trim());
+      if (firstValid) return firstValid.description;
+    }
+
+    return product.description || null;
+  }
+
+  async getProductDescriptions(
+    productId: number
+  ): Promise<ProductDescription[]> {
+    return this.productDescriptionRepository.find({
+      where: { productId },
+      relations: ['language'],
+      order: { id: 'ASC' },
+    });
   }
 }

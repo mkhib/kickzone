@@ -12,7 +12,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 type CustomerUser = Pick<
   KickzoneGraphqlTypes.User,
   'id' | 'name' | 'email' | 'role'
->;
+> & { lastName?: string | null };
 
 interface AuthContextType {
   user: CustomerUser | null;
@@ -30,6 +30,7 @@ const ME_QUERY = gql`
     me {
       id
       name
+      lastName
       email
       role
     }

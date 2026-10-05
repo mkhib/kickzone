@@ -8,6 +8,8 @@ import {
   SellerProduct,
   SellerInfo,
   User,
+  ProductDescription,
+  SiteLanguage,
 } from '@kickzone-workspace/entities';
 import {
   AuthResolver,
@@ -42,6 +44,8 @@ import { ConfigService } from '@nestjs/config';
       Color,
       SellerInfo,
       OrderItem,
+      ProductDescription,
+      SiteLanguage,
     ]),
     JwtModule.register({
       secret: process.env['JWT_SECRET'] || 'defaultSecret',

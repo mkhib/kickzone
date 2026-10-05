@@ -17,3 +17,4 @@ export * from './lib/customer-profile.module';
 export * from './lib/platform-settings.module';
 export * from './lib/payment.module';
 export * from './lib/catalog-guard.module';
+export * from './lib/site-language.module';

@@ -236,6 +236,16 @@ export function Headerbar() {
               >
                 <MenuItem
                   component={RouterLink}
+                  to={CUSTOMER_ROUTES.PROFILE}
+                  onClick={handleUserMenuClose}
+                >
+                  <ListItemIcon>
+                    <AccountCircleIcon fontSize="small" />
+                  </ListItemIcon>
+                  {LL.navigation.profile()}
+                </MenuItem>
+                <MenuItem
+                  component={RouterLink}
                   to={CUSTOMER_ROUTES.ORDERS}
                   onClick={handleUserMenuClose}
                 >
@@ -294,6 +304,20 @@ export function Headerbar() {
           </ListItemIcon>
           <CustomListItemText primary={LL.navigation.shoppingCart()} />
         </ListItemButton>
+
+        {user && (
+          <ListItemButton
+            to={CUSTOMER_ROUTES.PROFILE}
+            component={RouterLink}
+            selected={location.pathname === CUSTOMER_ROUTES.PROFILE}
+            onClick={handleDrawerToggle}
+          >
+            <ListItemIcon>
+              <AccountCircleIcon />
+            </ListItemIcon>
+            <CustomListItemText primary={LL.navigation.profile()} />
+          </ListItemButton>
+        )}
 
         {user && (
           <ListItemButton

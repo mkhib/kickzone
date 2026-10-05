@@ -6,6 +6,7 @@ import {
   SellerProduct,
   User,
   UserRole,
+  ProductDescription,
 } from '@kickzone-workspace/entities';
 import { RolesGuard, CatalogGuard } from '@kickzone-workspace/guards';
 import { SizeKind } from '@kickzone-workspace/product-sizes';
@@ -261,6 +262,27 @@ export class ProductResolver {
     @Args('input') input: UpdateProductInput
   ): Promise<Product> {
     return this.productService.updateProduct(input);
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  async description(
+    @Parent() product: Product,
+    @Context() context?: { req: { locale?: string } }
+  ): Promise<string | null> {
+    return this.productService.resolveProductDescription(
+      product,
+      context?.req?.locale || 'en'
+    );
+  }
+
+  @ResolveField(() => [ProductDescription], { nullable: true })
+  async descriptions(
+    @Parent() product: Product
+  ): Promise<ProductDescription[]> {
+    if (product.descriptions) {
+      return product.descriptions;
+    }
+    return this.productService.getProductDescriptions(product.id);
   }
 }
 

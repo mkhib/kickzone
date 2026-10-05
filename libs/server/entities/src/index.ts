@@ -15,3 +15,5 @@ export * from './lib/exchange-rate.entity';
 export * from './lib/currency-preference.entity';
 export * from './lib/platform-settings.entity';
 export * from './lib/seller-order.entity';
+export * from './lib/site-language.entity';
+export * from './lib/product-description.entity';

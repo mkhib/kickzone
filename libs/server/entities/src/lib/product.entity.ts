@@ -12,6 +12,7 @@ import {
 import { Category } from './category.entity';
 import { ProductInfo } from './product-info.entity';
 import { SellerProduct } from './seller-product.entity';
+import { ProductDescription } from './product-description.entity';
 
 @ObjectType()
 @Entity()
@@ -40,6 +41,14 @@ export class Product {
   @Field({ nullable: true })
   @Column({ type: 'text', nullable: true })
   description?: string | null;
+
+  @Field(() => [ProductDescription], { nullable: true })
+  @OneToMany(
+    () => ProductDescription,
+    (productDescription) => productDescription.product,
+    { cascade: true }
+  )
+  descriptions?: Relation<ProductDescription>[];
 
   @Field(() => [SellerProduct], { nullable: true })
   @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)

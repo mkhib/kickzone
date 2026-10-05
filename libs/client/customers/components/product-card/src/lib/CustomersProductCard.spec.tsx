@@ -211,25 +211,60 @@ describe('CustomersProductCard', () => {
     }
   });
 
-  it('toggles favorite when clicking the favorite icon button', () => {
-    const handleAddToCart = vi.fn();
-    const handleToggleFavorite = vi.fn();
-
+  it('does not render the favorite button as the feature is not yet available', () => {
     render(
       <MemoryRouter>
         <CustomersProductCard
           product={mockProduct}
-          onAddToCart={handleAddToCart}
-          onToggleFavorite={handleToggleFavorite}
-          isFavorite={false}
+          onAddToCart={vi.fn()}
         />
       </MemoryRouter>
     );
 
-    const favoriteButton = screen.getByLabelText(/نشان کردن|افزودن به علاقه‌مندی‌ها|favorite/i);
-    expect(favoriteButton).toBeInTheDocument();
+    const favoriteButton = screen.queryByLabelText(/نشان کردن|افزودن به علاقه‌مندی‌ها|favorite/i);
+    expect(favoriteButton).not.toBeInTheDocument();
+  });
 
-    fireEvent.click(favoriteButton);
-    expect(handleToggleFavorite).toHaveBeenCalledWith(101);
+  it('displays all categories on the card item when multiple categories are present', () => {
+    const productWithMultipleCategories: KickzoneGraphqlTypes.Product = {
+      ...mockProduct,
+      categories: [
+        { id: 1, name: 'کفش ورزشی', createdAt: '', updatedAt: '' },
+        { id: 2, name: 'مردانه', createdAt: '', updatedAt: '' },
+        { id: 3, name: 'بسکتبال', createdAt: '', updatedAt: '' },
+      ],
+    };
+
+    render(
+      <MemoryRouter>
+        <CustomersProductCard
+          product={productWithMultipleCategories}
+          onAddToCart={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('کفش ورزشی')).toBeInTheDocument();
+    expect(screen.getByText('مردانه')).toBeInTheDocument();
+    expect(screen.getByText('بسکتبال')).toBeInTheDocument();
+  });
+
+  it('renders correctly when product has empty or no categories', () => {
+    const productWithoutCategories: KickzoneGraphqlTypes.Product = {
+      ...mockProduct,
+      categories: [],
+    };
+
+    render(
+      <MemoryRouter>
+        <CustomersProductCard
+          product={productWithoutCategories}
+          onAddToCart={vi.fn()}
+        />
+      </MemoryRouter>
+    );
+
+    expect(screen.getByText('Air Jordan 1 Retro High OG')).toBeInTheDocument();
   });
 });
+

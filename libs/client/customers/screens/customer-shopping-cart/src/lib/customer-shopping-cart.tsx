@@ -52,7 +52,10 @@ import {
   usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
-import { validateShippingInfo } from '@kickzone-workspace/shipping-validation';
+import {
+  validateShippingInfo,
+  toEnglishDigits,
+} from '@kickzone-workspace/shipping-validation';
 import Add from '@mui/icons-material/Add';
 import Close from '@mui/icons-material/Close';
 import Delete from '@mui/icons-material/Delete';
@@ -433,7 +436,8 @@ export function CustomerShoppingCart() {
   };
 
   const handleShippingInfoChange = (field: string, value: string) => {
-    updateShippingField(field as keyof ShippingInfo, value);
+    const finalValue = field === 'zipCode' ? toEnglishDigits(value) : value;
+    updateShippingField(field as keyof ShippingInfo, finalValue);
   };
 
   const handleNext = async () => {
@@ -501,11 +505,11 @@ export function CustomerShoppingCart() {
         await updateProfileMutation({
           variables: {
             input: {
-              phone: shippingInfo.customerPhone,
+              phone: toEnglishDigits(shippingInfo.customerPhone),
               address: shippingInfo.shippingAddress,
               city: shippingInfo.city,
               state: shippingInfo.state,
-              zipCode: shippingInfo.zipCode,
+              zipCode: toEnglishDigits(shippingInfo.zipCode),
               country: shippingInfo.country,
             },
           },
@@ -539,11 +543,11 @@ export function CustomerShoppingCart() {
           return createOrderMutation({
             customerName: shippingInfo.customerName || '',
             customerEmail: shippingInfo.customerEmail || '',
-            customerPhone: shippingInfo.customerPhone || '',
+            customerPhone: toEnglishDigits(shippingInfo.customerPhone || ''),
             shippingAddress: shippingInfo.shippingAddress || '',
             city: shippingInfo.city || '',
             state: shippingInfo.state || '',
-            zipCode: shippingInfo.zipCode || '',
+            zipCode: toEnglishDigits(shippingInfo.zipCode || ''),
             country: shippingInfo.country || '',
             notes: shippingInfo.notes || '',
             sellerId: parseInt(sellerId, 10),
@@ -1861,10 +1865,11 @@ export function CustomerShoppingCart() {
                       label={LL.form.zipCode()}
                       value={shippingInfo.zipCode || ''}
                       onChange={(e) =>
-                        handleShippingInfoChange('zipCode', e.target.value)
+                        handleShippingInfoChange('zipCode', toEnglishDigits(e.target.value))
                       }
                       error={!!validationErrors.zipCode}
                       helperText={validationErrors.zipCode}
+                      slotProps={{ htmlInput: { dir: 'ltr' } }}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,

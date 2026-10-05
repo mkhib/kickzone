@@ -246,16 +246,16 @@ describe('CustomerProductDetails Screen', () => {
     expect(screen.getByText('افزودن به سبد خرید')).toBeInTheDocument();
     expect(screen.getByText('خرید فوری')).toBeInTheDocument();
 
-    // Value propositions
+    // Value propositions (Fast delivery removed, Authenticity and Exchange remain)
     expect(screen.getByText('اصالت کالا')).toBeInTheDocument();
-    expect(screen.getByText('ارسال سریع')).toBeInTheDocument();
+    expect(screen.queryByText('ارسال سریع')).not.toBeInTheDocument();
     expect(screen.getByText('ضمانت تعویض ۷ روزه')).toBeInTheDocument();
 
-    // Accordions
+    // Accordions (Shipping & exchange removed per requirements)
     expect(screen.getByText('توضیحات')).toBeInTheDocument();
     expect(screen.getByText('جزئیات و جنس')).toBeInTheDocument();
     expect(screen.getAllByText('راهنمای سایز').length).toBeGreaterThan(0);
-    expect(screen.getByText('ارسال و شرایط تعویض')).toBeInTheDocument();
+    expect(screen.queryByText('ارسال و شرایط تعویض')).not.toBeInTheDocument();
   });
 
   it('allows selecting sizes and calls addItem when Add to Cart is clicked', async () => {
@@ -318,5 +318,39 @@ describe('CustomerProductDetails Screen', () => {
 
     expect(screen.getByText('پیشنهادهای مشابه')).toBeInTheDocument();
     expect(screen.getByTestId('similar-card-999')).toBeInTheDocument();
+  });
+
+  it('manages Lightbox zoom and conditionally displays the reset button', async () => {
+    render(<CustomerProductDetails />);
+
+    // Open lightbox via main image zoom button
+    const expandButton = screen.getByLabelText('zoom image');
+    fireEvent.click(expandButton);
+
+    // Lightbox modal should be open
+    expect(screen.getByLabelText('بزرگ‌نمایی')).toBeInTheDocument();
+    expect(screen.getByLabelText('کوچک‌نمایی')).toBeInTheDocument();
+    expect(screen.getByLabelText('بستن')).toBeInTheDocument();
+
+    // At 1x zoom, the Reset button must NOT be present
+    expect(screen.queryByLabelText('اندازه اولیه')).not.toBeInTheDocument();
+
+    // Click Zoom In
+    const zoomInBtn = screen.getByLabelText('بزرگ‌نمایی');
+    fireEvent.click(zoomInBtn);
+
+    // Now zoom > 1, Reset button appears on the other side of the controls
+    expect(screen.getByLabelText('اندازه اولیه')).toBeInTheDocument();
+
+    // Click Reset button to return to 1x zoom
+    const resetBtn = screen.getByLabelText('اندازه اولیه');
+    fireEvent.click(resetBtn);
+
+    // Reset button should disappear again
+    expect(screen.queryByLabelText('اندازه اولیه')).not.toBeInTheDocument();
+
+    // Close Lightbox
+    const closeBtn = screen.getByLabelText('بستن');
+    fireEvent.click(closeBtn);
   });
 });

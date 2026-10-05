@@ -318,7 +318,7 @@ describe('CustomerSignup', () => {
   it('should have link to login page', () => {
     renderComponent();
 
-    const loginLink = screen.getByText(/Already have an account/i).closest('a');
+    const loginLink = screen.getByRole('link', { name: 'Sign In' });
     expect(loginLink).toHaveAttribute('href', '/login');
   });
 

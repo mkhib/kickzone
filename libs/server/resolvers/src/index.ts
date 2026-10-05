@@ -13,6 +13,7 @@ export * from './lib/translation.input';
 export * from './lib/currency.resolver';
 export * from './lib/shipping.resolver';
 export * from './lib/payment.resolver';
+export * from './lib/site-language.resolver';
 // Export input types for GraphQL schema generation
 export {
   SellerShippingInfoInput,

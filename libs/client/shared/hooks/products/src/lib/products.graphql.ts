@@ -13,6 +13,19 @@ export const PRODUCT_FRAGMENT = gql`
     sku
     archived
     description
+    descriptions {
+      id
+      productId
+      languageId
+      language {
+        id
+        code
+        name
+        nativeName
+        isRTL
+      }
+      description
+    }
     categories {
       ...CategoryFields
     }
@@ -50,6 +63,20 @@ export const CREATE_PRODUCT = gql`
       id
       name
       sku
+      description
+      descriptions {
+        id
+        productId
+        languageId
+        language {
+          id
+          code
+          name
+          nativeName
+          isRTL
+        }
+        description
+      }
       categories {
         id
         name
@@ -152,6 +179,19 @@ export const UPDATE_PRODUCT = gql`
         name
       }
       description
+      descriptions {
+        id
+        productId
+        languageId
+        language {
+          id
+          code
+          name
+          nativeName
+          isRTL
+        }
+        description
+      }
     }
   }
 `;

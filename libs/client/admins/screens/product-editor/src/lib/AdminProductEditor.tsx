@@ -24,6 +24,10 @@ import WarningIcon from '@mui/icons-material/Warning';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import { useSiteLanguages } from '@kickzone-workspace/site-languages-hook';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
 import CardMedia from '@mui/material/CardMedia';
@@ -1042,6 +1046,37 @@ export function AdminProductEditor({
   const { id } = useParams<{ id?: string }>();
   const productIdNum = id ? Number(id) : undefined;
   const { product: loadedProduct } = useProductById(productIdNum);
+  const { siteLanguages } = useSiteLanguages();
+
+  const languagesToDisplay = React.useMemo(() => {
+    if (siteLanguages && siteLanguages.length > 0) {
+      return siteLanguages;
+    }
+    return [
+      {
+        id: '1',
+        code: 'fa',
+        name: 'Persian',
+        nativeName: 'فارسی',
+        isRTL: true,
+        isActive: true,
+        isDefault: true,
+      },
+      {
+        id: '2',
+        code: 'en',
+        name: 'English',
+        nativeName: 'English',
+        isRTL: false,
+        isActive: true,
+        isDefault: false,
+      },
+    ];
+  }, [siteLanguages]);
+
+  const [activeDescTab, setActiveDescTab] = useState('fa');
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({});
+
   const [product, setProduct] = useState({
     name: '',
     sku: '',
@@ -1159,6 +1194,20 @@ export function AdminProductEditor({
   // Fetch product if editing
   useEffect(() => {
     if (productIdNum && loadedProduct) {
+      const descMap: Record<string, string> = {};
+      const productAny = loadedProduct as any;
+      if (productAny.descriptions && productAny.descriptions.length > 0) {
+        productAny.descriptions.forEach((d: any) => {
+          if (d.language?.code) {
+            descMap[d.language.code] = d.description;
+          }
+        });
+      } else if (loadedProduct.description) {
+        descMap['fa'] = loadedProduct.description;
+        descMap['en'] = loadedProduct.description;
+      }
+      setDescriptions(descMap);
+
       setProduct({
         name: loadedProduct.name,
         sku: loadedProduct.sku || '',
@@ -1201,6 +1250,20 @@ export function AdminProductEditor({
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const { name, value } = e.target;
       setProduct((prev) => ({ ...prev, [name]: value }));
+    },
+    []
+  );
+
+  const handleDescriptionChange = useCallback(
+    (langCode: string, value: string) => {
+      setDescriptions((prev) => ({ ...prev, [langCode]: value }));
+    },
+    []
+  );
+
+  const handleDescTabChange = useCallback(
+    (_event: React.SyntheticEvent, newLocale: string) => {
+      setActiveDescTab(newLocale);
     },
     []
   );
@@ -1283,6 +1346,21 @@ export function AdminProductEditor({
             return;
           }
         }
+        const descriptionList = languagesToDisplay
+          .map((lang) => ({
+            languageId: Number(lang.id),
+            languageCode: lang.code,
+            description: descriptions[lang.code]?.trim() || '',
+          }))
+          .filter((d) => d.description !== '');
+
+        const primaryDesc =
+          descriptions[activeDescTab]?.trim() ||
+          descriptions['fa']?.trim() ||
+          descriptions['en']?.trim() ||
+          Object.values(descriptions).find((v) => v?.trim())?.trim() ||
+          (product.description === '' ? null : product.description);
+
         if (productIdNum) {
           // Editing existing product
           await updateProduct({
@@ -1290,8 +1368,8 @@ export function AdminProductEditor({
             name: product.name,
             sku: product.sku.trim(),
             categoryIds: product.categoryIds,
-            description:
-              product.description === '' ? null : product.description,
+            description: primaryDesc,
+            descriptions: descriptionList,
           });
           showSnackbar('Product updated successfully', { severity: 'success' });
         } else {
@@ -1301,8 +1379,9 @@ export function AdminProductEditor({
               name: product.name,
               sku: product.sku.trim(),
               categoryIds: product.categoryIds,
-              description:
-                product.description === '' ? null : product.description,
+              description: primaryDesc,
+              descriptions:
+                descriptionList.length > 0 ? descriptionList : undefined,
             },
             productInfos.map((info) => ({
               size: info.size,
@@ -1327,6 +1406,7 @@ export function AdminProductEditor({
             return;
           }
           // Reset form to initial state
+          setDescriptions({});
           setProduct({
             name: '',
             sku: '',
@@ -1709,17 +1789,92 @@ export function AdminProductEditor({
                   {LL.categories.manageCategories()}
                 </Button>
               </Box>
-              <TextField
-                id="product-description"
-                label={LL.form.description()}
-                name="description"
-                value={product.description || ''}
-                onChange={handleProductChange}
-                fullWidth
-                multiline
-                minRows={3}
-                maxRows={8}
-              />
+              <Box sx={{ mt: 2 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ mb: 1, fontWeight: 600, color: 'text.secondary' }}
+                >
+                  {LL.form.description()}
+                </Typography>
+                <Tabs
+                  value={activeDescTab}
+                  onChange={handleDescTabChange}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  sx={{ borderBottom: 1, borderColor: 'divider', mb: 1.5 }}
+                >
+                  {languagesToDisplay.map((lang) => {
+                    const hasContent = Boolean(descriptions[lang.code]?.trim());
+                    return (
+                      <Tab
+                        key={lang.code}
+                        value={lang.code}
+                        label={
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.75,
+                            }}
+                          >
+                            <span>
+                              {lang.nativeName} ({lang.name})
+                            </span>
+                            {hasContent && (
+                              <Chip
+                                size="small"
+                                label="✓"
+                                color="success"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.7rem',
+                                  px: 0.25,
+                                }}
+                              />
+                            )}
+                          </Box>
+                        }
+                      />
+                    );
+                  })}
+                </Tabs>
+
+                {languagesToDisplay.map((lang) => {
+                  if (activeDescTab !== lang.code) return null;
+                  return (
+                    <TextField
+                      key={lang.code}
+                      id={`product-description-${lang.code}`}
+                      label={`${LL.form.description()} (${lang.nativeName})`}
+                      name={`description-${lang.code}`}
+                      value={descriptions[lang.code] || ''}
+                      onChange={(e) =>
+                        handleDescriptionChange(lang.code, e.target.value)
+                      }
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      maxRows={8}
+                      dir={lang.isRTL ? 'rtl' : 'ltr'}
+                      slotProps={{
+                        htmlInput: {
+                          'data-testid': `product-description-${lang.code}`,
+                        },
+                      }}
+                      placeholder={
+                        lang.isRTL
+                          ? 'توضیحات محصول را به زبان فارسی وارد کنید...'
+                          : 'Enter product description in English...'
+                      }
+                      helperText={
+                        lang.isDefault
+                          ? 'زبان پیش‌فرض سایت / Default site language'
+                          : undefined
+                      }
+                    />
+                  );
+                })}
+              </Box>
             </Paper>
           </Grid>
           {/* Right Side - ProductInfos Section */}

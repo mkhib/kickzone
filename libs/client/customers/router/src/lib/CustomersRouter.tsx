@@ -8,6 +8,7 @@ import { CustomerSignup } from '@kickzone-workspace/customer-signup';
 import { CustomerForgotPassword } from '@kickzone-workspace/customer-forgot-password';
 import { CustomerResetPassword } from '@kickzone-workspace/customer-reset-password';
 import { CustomerOrders } from '@kickzone-workspace/customer-orders';
+import { CustomerProfile } from '@kickzone-workspace/customer-profile';
 import { CustomerOrderConfirmation } from '@kickzone-workspace/customer-order-confirmation';
 import { CustomerPaymentCallback } from '@kickzone-workspace/customer-payment';
 import { LanguageComponents } from '@kickzone-workspace/language-components';
@@ -37,6 +38,7 @@ export function CustomersRouter() {
         />
         <Route path={CUSTOMER_ROUTES.CART} element={<CustomerShoppingCart />} />
         <Route path={CUSTOMER_ROUTES.ORDERS} element={<CustomerOrders />} />
+        <Route path={CUSTOMER_ROUTES.PROFILE} element={<CustomerProfile />} />
         <Route
           path={CUSTOMER_ROUTES.ORDER_CONFIRMATION}
           element={<CustomerOrderConfirmation />}

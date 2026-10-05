@@ -9,3 +9,4 @@ export * from './lib/order-pagination.inputs';
 export * from './lib/seller-order-pagination.inputs';
 export * from './lib/cart.inputs';
 export * from './lib/customer-auth.inputs';
+export * from './lib/site-language.input';

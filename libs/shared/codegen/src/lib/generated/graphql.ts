@@ -139,6 +139,7 @@ export type CreateProductInfoInput = {
 export type CreateProductInput = {
   categoryIds: Array<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  descriptions?: InputMaybe<Array<ProductDescriptionInput>>;
   name: Scalars['String']['input'];
   sku: Scalars['String']['input'];
 };
@@ -164,6 +165,15 @@ export type CreateSellerProductInput = {
   productInfoId: Scalars['Int']['input'];
   recommended?: InputMaybe<Scalars['Boolean']['input']>;
   stockQuantity: Scalars['Int']['input'];
+};
+
+export type CreateSiteLanguageInput = {
+  code: Scalars['String']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  isDefault?: InputMaybe<Scalars['Boolean']['input']>;
+  isRTL?: InputMaybe<Scalars['Boolean']['input']>;
+  name: Scalars['String']['input'];
+  nativeName: Scalars['String']['input'];
 };
 
 export type CreateUserInput = {
@@ -244,6 +254,7 @@ export type Mutation = {
   createProductInfo: Product;
   createSeller: SellerInfo;
   createSellerProduct: SellerProduct;
+  createSiteLanguage: SiteLanguage;
   createUser: User;
   deleteCategory: Scalars['Boolean']['output'];
   deleteColor: Scalars['Boolean']['output'];
@@ -251,6 +262,7 @@ export type Mutation = {
   deleteEntityTranslations: Scalars['Boolean']['output'];
   deleteOrder: Scalars['Boolean']['output'];
   deleteProduct: Scalars['Boolean']['output'];
+  deleteSiteLanguage: Scalars['Boolean']['output'];
   forgotPassword: Scalars['Boolean']['output'];
   getZarinPalGatewayUrl: GatewayUrlResponse;
   initiatePasswordSetup: Scalars['Boolean']['output'];
@@ -278,6 +290,7 @@ export type Mutation = {
   updateProduct: Product;
   updateSeller: SellerInfo;
   updateSellerProduct: SellerProduct;
+  updateSiteLanguage: SiteLanguage;
   uploadProductInfoImages: Array<Scalars['String']['output']>;
   verifyZarinPalPayment: ZarinPalVerificationResponse;
 };
@@ -356,6 +369,11 @@ export type MutationCreateSellerProductArgs = {
 };
 
 
+export type MutationCreateSiteLanguageArgs = {
+  input: CreateSiteLanguageInput;
+};
+
+
 export type MutationCreateUserArgs = {
   createUserInput: CreateUserInput;
 };
@@ -388,6 +406,11 @@ export type MutationDeleteOrderArgs = {
 
 
 export type MutationDeleteProductArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type MutationDeleteSiteLanguageArgs = {
   id: Scalars['Int']['input'];
 };
 
@@ -538,6 +561,12 @@ export type MutationUpdateSellerProductArgs = {
 };
 
 
+export type MutationUpdateSiteLanguageArgs = {
+  id: Scalars['Int']['input'];
+  input: UpdateSiteLanguageInput;
+};
+
+
 export type MutationUploadProductInfoImagesArgs = {
   files: Array<Scalars['Upload']['input']>;
   productInfoId: Scalars['Int']['input'];
@@ -631,6 +660,7 @@ export type Product = {
   archived: Scalars['Boolean']['output'];
   categories: Array<Category>;
   description?: Maybe<Scalars['String']['output']>;
+  descriptions?: Maybe<Array<ProductDescription>>;
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   productInfos: Array<ProductInfo>;
@@ -649,6 +679,23 @@ export type ProductConnection = {
   edges: Array<ProductEdge>;
   pageInfo: PageInfo;
   totalCount: Scalars['Int']['output'];
+};
+
+export type ProductDescription = {
+  __typename?: 'ProductDescription';
+  createdAt: Scalars['DateTime']['output'];
+  description: Scalars['String']['output'];
+  id: Scalars['ID']['output'];
+  language: SiteLanguage;
+  languageId: Scalars['Int']['output'];
+  productId: Scalars['Int']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
+export type ProductDescriptionInput = {
+  description: Scalars['String']['input'];
+  languageCode?: InputMaybe<Scalars['String']['input']>;
+  languageId?: InputMaybe<Scalars['Int']['input']>;
 };
 
 export type ProductEdge = {
@@ -730,6 +777,8 @@ export type Query = {
   sellerProductsByProduct: Array<SellerProduct>;
   sellerProductsForMe: ProductConnection;
   sellers: SellerConnection;
+  siteLanguage?: Maybe<SiteLanguage>;
+  siteLanguages: Array<SiteLanguage>;
   users: UserConnection;
 };
 
@@ -886,6 +935,16 @@ export type QuerySellersArgs = {
 };
 
 
+export type QuerySiteLanguageArgs = {
+  code: Scalars['String']['input'];
+};
+
+
+export type QuerySiteLanguagesArgs = {
+  activeOnly?: InputMaybe<Scalars['Boolean']['input']>;
+};
+
+
 export type QueryUsersArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: InputMaybe<Scalars['Int']['input']>;
@@ -1009,6 +1068,19 @@ export type ShippingCalculationResult = {
   totalShippingCost: Scalars['Float']['output'];
 };
 
+export type SiteLanguage = {
+  __typename?: 'SiteLanguage';
+  code: Scalars['String']['output'];
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['ID']['output'];
+  isActive: Scalars['Boolean']['output'];
+  isDefault: Scalars['Boolean']['output'];
+  isRTL: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  nativeName: Scalars['String']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export enum SizeKind {
   Apparel = 'Apparel',
   Footwear = 'Footwear'
@@ -1110,6 +1182,7 @@ export type UpdateOrderStatusInput = {
 export type UpdateProductInput = {
   categoryIds: Array<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
+  descriptions?: InputMaybe<Array<ProductDescriptionInput>>;
   id: Scalars['Int']['input'];
   name: Scalars['String']['input'];
   sku: Scalars['String']['input'];
@@ -1138,6 +1211,14 @@ export type UpdateSellerProductInput = {
   productInfoId?: InputMaybe<Scalars['Int']['input']>;
   recommended?: InputMaybe<Scalars['Boolean']['input']>;
   stockQuantity?: InputMaybe<Scalars['Int']['input']>;
+};
+
+export type UpdateSiteLanguageInput = {
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  isDefault?: InputMaybe<Scalars['Boolean']['input']>;
+  isRTL?: InputMaybe<Scalars['Boolean']['input']>;
+  name?: InputMaybe<Scalars['String']['input']>;
+  nativeName?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type User = {

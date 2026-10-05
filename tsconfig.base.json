@@ -131,6 +131,9 @@
       "@kickzone-workspace/customer-products": [
         "libs/client/customers/screens/customer-products/src/index.ts"
       ],
+      "@kickzone-workspace/customer-profile": [
+        "libs/client/customers/screens/customer-profile/src/index.ts"
+      ],
       "@kickzone-workspace/customer-reset-password": [
         "libs/client/customers/screens/reset-password/src/index.ts"
       ],
@@ -314,6 +317,9 @@
       ],
       "@kickzone-workspace/shipping-validation": [
         "libs/client/customers/validations/src/index.ts"
+      ],
+      "@kickzone-workspace/site-languages-hook": [
+        "libs/client/shared/hooks/site-languages/src/index.ts"
       ],
       "@kickzone-workspace/sizes": ["libs/client/shared/ui/sizes/src/index.ts"],
       "@kickzone-workspace/snackbar": [
