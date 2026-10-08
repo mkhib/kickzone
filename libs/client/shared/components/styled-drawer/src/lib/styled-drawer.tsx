@@ -9,19 +9,39 @@ import Divider from '@mui/material/Divider';
 import { styled } from '@mui/material/styles';
 import { ReactNode } from 'react';
 
-const BaseStyledDrawer = styled(Drawer)({
-  width: DRAWER_WIDTH,
-  flexShrink: 0,
-  '& .MuiDrawer-paper': {
+const BaseStyledDrawer = styled(Drawer)(({ theme }) => {
+  const isDark = theme.palette.mode === 'dark';
+
+  return {
     width: DRAWER_WIDTH,
-    boxSizing: 'border-box',
-    marginTop: HEIGHTS.header,
-    height: HEIGHTS.drawer,
-    borderTopLeftRadius: '0 !important',
-    borderBottomLeftRadius: '0 !important',
-    borderTopRightRadius: '16px !important',
-    borderBottomRightRadius: '16px !important',
-  },
+    flexShrink: 0,
+    '& .MuiDrawer-paper': {
+      width: DRAWER_WIDTH,
+      boxSizing: 'border-box',
+      marginTop: HEIGHTS.header,
+      height: HEIGHTS.drawer,
+      borderTopLeftRadius: '0 !important',
+      borderBottomLeftRadius: '0 !important',
+      borderTopRightRadius: '16px !important',
+      borderBottomRightRadius: '16px !important',
+      // Liquid glass styling
+      backgroundColor: isDark
+        ? 'rgba(18, 18, 22, 0.38) !important'
+        : 'rgba(255, 255, 255, 0.28) !important',
+      backgroundImage: isDark
+        ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(0, 0, 0, 0.18) 100%) !important'
+        : 'linear-gradient(145deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 40%, rgba(255, 255, 255, 0.28) 100%) !important',
+      backdropFilter: 'blur(32px) saturate(210%) !important',
+      WebkitBackdropFilter: 'blur(32px) saturate(210%) !important',
+      borderRight: isDark
+        ? '1px solid rgba(255, 255, 255, 0.14) !important'
+        : '1px solid rgba(255, 255, 255, 0.6) !important',
+      borderLeft: 'none !important',
+      boxShadow: isDark
+        ? '0 24px 64px rgba(0, 0, 0, 0.55), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.18), inset -1px 0 1.5px 0 rgba(255, 255, 255, 0.08) !important'
+        : '0 24px 60px rgba(0, 0, 0, 0.08), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.8), inset -1px 0 1.5px 0 rgba(255, 255, 255, 0.5) !important',
+    },
+  };
 });
 
 export const CustomListItemText = styled(ListItemText)(({ theme }) => ({
