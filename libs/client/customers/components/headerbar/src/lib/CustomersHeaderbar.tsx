@@ -13,6 +13,7 @@ import ReceiptIcon from '@mui/icons-material/Receipt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import LightModeIcon from '@mui/icons-material/LightMode';
 import DarkModeIcon from '@mui/icons-material/DarkMode';
+import LogoutIcon from '@mui/icons-material/Logout';
 import AppBar from '@mui/material/AppBar';
 import Box from '@mui/material/Box';
 import Badge from '@mui/material/Badge';
@@ -25,11 +26,42 @@ import MenuItem from '@mui/material/MenuItem';
 import Divider from '@mui/material/Divider';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
-import { useState, useEffect } from 'react';
+import { useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link as RouterLink, useLocation } from 'react-router-dom';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
 
-export function Headerbar() {
+export interface CustomerNavItem {
+  id: string;
+  label: string;
+  path?: string;
+  icon: React.ReactNode;
+  badge?: number;
+  onClick?: () => void;
+  visible: boolean;
+}
+
+export interface CustomersHeaderbarProps {
+  drawerItems?: React.ReactNode;
+  handledInTabbarIds?: string[];
+  showAllInDrawerOnMobile?: boolean;
+}
+
+export const DEFAULT_CUSTOMER_TABBAR_IDS_AUTHENTICATED = [
+  'home',
+  'cart',
+  'orders',
+  'profile',
+];
+
+export const DEFAULT_CUSTOMER_TABBAR_IDS_GUEST = ['home', 'cart', 'login'];
+
+export function Headerbar({
+  drawerItems,
+  handledInTabbarIds,
+  showAllInDrawerOnMobile = false,
+}: CustomersHeaderbarProps = {}) {
   const { user, logout } = useCustomersAuth();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
@@ -39,6 +71,8 @@ export function Headerbar() {
   const { LL } = useI18nContext();
   const themeMode = useUIStore((s) => s.theme.mode);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   useEffect(() => {
     const handleScroll = () => {
@@ -61,18 +95,89 @@ export function Headerbar() {
     setAnchorEl(null);
   };
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     handleUserMenuClose();
     logout();
-  };
+  }, [logout]);
+
+  const activeHandledInTabbarIds = useMemo(() => {
+    if (handledInTabbarIds) return handledInTabbarIds;
+    return user
+      ? DEFAULT_CUSTOMER_TABBAR_IDS_AUTHENTICATED
+      : DEFAULT_CUSTOMER_TABBAR_IDS_GUEST;
+  }, [handledInTabbarIds, user]);
+
+  const allNavItems: CustomerNavItem[] = useMemo(
+    () => [
+      {
+        id: 'home',
+        label: LL.navigation.home(),
+        path: CUSTOMER_ROUTES.PRODUCTS,
+        icon: <HomeIcon />,
+        visible: true,
+      },
+      {
+        id: 'cart',
+        label: LL.navigation.shoppingCart(),
+        path: CUSTOMER_ROUTES.CART,
+        icon: <ShoppingCartIcon />,
+        badge: totalItems,
+        visible: true,
+      },
+      {
+        id: 'profile',
+        label: LL.navigation.profile(),
+        path: CUSTOMER_ROUTES.PROFILE,
+        icon: <AccountCircleIcon />,
+        visible: Boolean(user),
+      },
+      {
+        id: 'orders',
+        label: LL.orders.myOrders(),
+        path: CUSTOMER_ROUTES.ORDERS,
+        icon: <ReceiptIcon />,
+        visible: Boolean(user),
+      },
+      {
+        id: 'logout',
+        label: LL.button.logout(),
+        icon: <LogoutIcon />,
+        onClick: handleLogout,
+        visible: Boolean(user),
+      },
+      {
+        id: 'login',
+        label: LL.button.login(),
+        path: CUSTOMER_ROUTES.LOGIN,
+        icon: <AccountCircleIcon />,
+        visible: !user,
+      },
+    ],
+    [LL, totalItems, user, handleLogout]
+  );
+
+  const unhandledNavItems = useMemo(
+    () =>
+      allNavItems.filter(
+        (item) => item.visible && !activeHandledInTabbarIds.includes(item.id)
+      ),
+    [allNavItems, activeHandledInTabbarIds]
+  );
+
+  const hasUnhandledItems =
+    unhandledNavItems.length > 0 || Boolean(drawerItems);
+
+  // On mobile device size, instead of having hamburger menu by default,
+  // we only show the header menu if there are still items not handled in the tabbar.
+  const showMenuButton = !isMobile || hasUnhandledItems;
 
   return (
     <>
       <AppBar
         position="fixed"
         sx={{
-          background: (theme) => {
-            const isDark = theme.palette.mode === 'dark';
+          background: (currentTheme) => {
+            const isDark = currentTheme.palette.mode === 'dark';
             return isScrolled
               ? isDark
                 ? 'rgba(14, 14, 18, 0.9)'
@@ -83,17 +188,17 @@ export function Headerbar() {
           },
           backdropFilter: 'blur(20px) saturate(180%)',
           WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-          borderBottom: (theme) => {
-            const isDark = theme.palette.mode === 'dark';
+          borderBottom: (currentTheme) => {
+            const isDark = currentTheme.palette.mode === 'dark';
             return isDark
               ? '1px solid rgba(255,255,255,0.06)'
               : '1px solid rgba(0,0,0,0.08)';
           },
           borderLeft: 'none',
           boxShadow: 'none !important',
-          zIndex: (theme) => theme.zIndex.appBar + 1,
-          color: (theme) =>
-            theme.palette.mode === 'dark' ? '#f5f5f5' : '#000',
+          zIndex: (currentTheme) => currentTheme.zIndex.appBar + 1,
+          color: (currentTheme) =>
+            currentTheme.palette.mode === 'dark' ? '#f5f5f5' : '#000',
           transition: 'all 0.3s ease-in-out',
         }}
       >
@@ -104,15 +209,17 @@ export function Headerbar() {
             px: { xs: 2, md: 3 },
           }}
         >
-          <IconButton
-            edge="start"
-            color="inherit"
-            aria-label="menu"
-            onClick={handleDrawerToggle}
-            sx={{ mr: 2 }}
-          >
-            <MenuIcon />
-          </IconButton>
+          {showMenuButton && (
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={handleDrawerToggle}
+              sx={{ mr: { xs: 0.5, sm: 2 } }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
 
           <IconButton
             color="inherit"
@@ -279,79 +386,160 @@ export function Headerbar() {
 
       {/* Drawer */}
       <StyledDrawer open={drawerOpen} onClose={handleDrawerToggle}>
-        <ListItemButton
-          to={CUSTOMER_ROUTES.PRODUCTS}
-          component={RouterLink}
-          selected={location.pathname === CUSTOMER_ROUTES.PRODUCTS}
-          onClick={handleDrawerToggle}
-        >
-          <ListItemIcon>
-            <HomeIcon />
-          </ListItemIcon>
-          <CustomListItemText primary={LL.navigation.home()} />
-        </ListItemButton>
+        {isMobile && !showAllInDrawerOnMobile ? (
+          <>
+            {user && (
+              <Box
+                sx={{
+                  p: 2,
+                  pb: 1.5,
+                  borderBottom: (currentTheme) =>
+                    currentTheme.palette.mode === 'dark'
+                      ? '1px solid rgba(255,255,255,0.08)'
+                      : '1px solid rgba(0,0,0,0.08)',
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <AccountCircleIcon
+                    sx={{ fontSize: 36, color: 'primary.main' }}
+                  />
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography
+                      variant="subtitle2"
+                      noWrap
+                      sx={{ fontWeight: 600 }}
+                    >
+                      {user.name}
+                    </Typography>
+                    {user.email && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        noWrap
+                      >
+                        {user.email}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
+              </Box>
+            )}
 
-        <ListItemButton
-          to={CUSTOMER_ROUTES.CART}
-          component={RouterLink}
-          selected={location.pathname === CUSTOMER_ROUTES.CART}
-          onClick={handleDrawerToggle}
-        >
-          <ListItemIcon>
-            <Badge badgeContent={totalItems} color="error">
-              <ShoppingCartIcon />
-            </Badge>
-          </ListItemIcon>
-          <CustomListItemText primary={LL.navigation.shoppingCart()} />
-        </ListItemButton>
+            {unhandledNavItems.map((item) => (
+              <ListItemButton
+                key={item.id}
+                to={item.path}
+                component={item.path ? RouterLink : 'div'}
+                selected={item.path ? location.pathname === item.path : false}
+                onClick={() => {
+                  handleDrawerToggle();
+                  if (item.onClick) item.onClick();
+                }}
+              >
+                <ListItemIcon>
+                  {item.badge !== undefined && item.badge > 0 ? (
+                    <Badge badgeContent={item.badge} color="error">
+                      {item.icon}
+                    </Badge>
+                  ) : (
+                    item.icon
+                  )}
+                </ListItemIcon>
+                <CustomListItemText primary={item.label} />
+              </ListItemButton>
+            ))}
 
-        {user && (
-          <ListItemButton
-            to={CUSTOMER_ROUTES.PROFILE}
-            component={RouterLink}
-            selected={location.pathname === CUSTOMER_ROUTES.PROFILE}
-            onClick={handleDrawerToggle}
-          >
-            <ListItemIcon>
-              <AccountCircleIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.navigation.profile()} />
-          </ListItemButton>
-        )}
-
-        {user && (
-          <ListItemButton
-            to={CUSTOMER_ROUTES.ORDERS}
-            component={RouterLink}
-            selected={location.pathname === CUSTOMER_ROUTES.ORDERS}
-            onClick={handleDrawerToggle}
-          >
-            <ListItemIcon>
-              <ReceiptIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.orders.myOrders()} />
-          </ListItemButton>
-        )}
-
-        {user ? (
-          <ListItemButton onClick={handleLogout}>
-            <ListItemIcon>
-              <AccountCircleIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.button.logout()} />
-          </ListItemButton>
+            {drawerItems && (
+              <>
+                <Divider sx={{ my: 1 }} />
+                {drawerItems}
+              </>
+            )}
+          </>
         ) : (
-          <ListItemButton
-            to={CUSTOMER_ROUTES.LOGIN}
-            component={RouterLink}
-            selected={location.pathname === CUSTOMER_ROUTES.LOGIN}
-            onClick={handleDrawerToggle}
-          >
-            <ListItemIcon>
-              <AccountCircleIcon />
-            </ListItemIcon>
-            <CustomListItemText primary={LL.button.login()} />
-          </ListItemButton>
+          <>
+            <ListItemButton
+              to={CUSTOMER_ROUTES.PRODUCTS}
+              component={RouterLink}
+              selected={location.pathname === CUSTOMER_ROUTES.PRODUCTS}
+              onClick={handleDrawerToggle}
+            >
+              <ListItemIcon>
+                <HomeIcon />
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.home()} />
+            </ListItemButton>
+
+            <ListItemButton
+              to={CUSTOMER_ROUTES.CART}
+              component={RouterLink}
+              selected={location.pathname === CUSTOMER_ROUTES.CART}
+              onClick={handleDrawerToggle}
+            >
+              <ListItemIcon>
+                <Badge badgeContent={totalItems} color="error">
+                  <ShoppingCartIcon />
+                </Badge>
+              </ListItemIcon>
+              <CustomListItemText primary={LL.navigation.shoppingCart()} />
+            </ListItemButton>
+
+            {user && (
+              <ListItemButton
+                to={CUSTOMER_ROUTES.PROFILE}
+                component={RouterLink}
+                selected={location.pathname === CUSTOMER_ROUTES.PROFILE}
+                onClick={handleDrawerToggle}
+              >
+                <ListItemIcon>
+                  <AccountCircleIcon />
+                </ListItemIcon>
+                <CustomListItemText primary={LL.navigation.profile()} />
+              </ListItemButton>
+            )}
+
+            {user && (
+              <ListItemButton
+                to={CUSTOMER_ROUTES.ORDERS}
+                component={RouterLink}
+                selected={location.pathname === CUSTOMER_ROUTES.ORDERS}
+                onClick={handleDrawerToggle}
+              >
+                <ListItemIcon>
+                  <ReceiptIcon />
+                </ListItemIcon>
+                <CustomListItemText primary={LL.orders.myOrders()} />
+              </ListItemButton>
+            )}
+
+            {user ? (
+              <ListItemButton onClick={handleLogout}>
+                <ListItemIcon>
+                  <LogoutIcon />
+                </ListItemIcon>
+                <CustomListItemText primary={LL.button.logout()} />
+              </ListItemButton>
+            ) : (
+              <ListItemButton
+                to={CUSTOMER_ROUTES.LOGIN}
+                component={RouterLink}
+                selected={location.pathname === CUSTOMER_ROUTES.LOGIN}
+                onClick={handleDrawerToggle}
+              >
+                <ListItemIcon>
+                  <AccountCircleIcon />
+                </ListItemIcon>
+                <CustomListItemText primary={LL.button.login()} />
+              </ListItemButton>
+            )}
+
+            {drawerItems && (
+              <>
+                <Divider sx={{ my: 1 }} />
+                {drawerItems}
+              </>
+            )}
+          </>
         )}
       </StyledDrawer>
     </>

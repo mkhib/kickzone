@@ -16,7 +16,7 @@ import { PasswordTextField } from '@kickzone-workspace/password-field';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import { useTheme, type SxProps, type Theme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 
@@ -94,72 +94,6 @@ export function CustomerSignup() {
 
       showSnackbar(errorMessage, { severity: 'error' });
     }
-  };
-
-  const liquidInputSx: SxProps<Theme> = {
-    mb: 2,
-    '& .MuiOutlinedInput-root': {
-      borderRadius: '14px',
-      backgroundColor: isDark
-        ? 'rgba(255, 255, 255, 0.035)'
-        : 'rgba(255, 255, 255, 0.72)',
-      backdropFilter: 'blur(16px)',
-      WebkitBackdropFilter: 'blur(16px)',
-      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-      '& fieldset': {
-        borderColor: isDark
-          ? 'rgba(240, 239, 235, 0.12)'
-          : 'rgba(26, 26, 25, 0.12)',
-        borderWidth: '1px',
-        transition: 'all 0.25s ease',
-      },
-      '&:hover fieldset': {
-        borderColor: isDark
-          ? 'rgba(197, 184, 154, 0.5)'
-          : 'rgba(143, 132, 104, 0.5)',
-      },
-      '&.Mui-focused': {
-        backgroundColor: isDark
-          ? 'rgba(255, 255, 255, 0.06)'
-          : 'rgba(255, 255, 255, 0.95)',
-        boxShadow: isDark
-          ? '0 0 0 3px rgba(197, 184, 154, 0.2), 0 8px 24px -4px rgba(0, 0, 0, 0.5)'
-          : '0 0 0 3px rgba(143, 132, 104, 0.18), 0 8px 20px -4px rgba(143, 132, 104, 0.15)',
-        '& fieldset': {
-          borderColor: isDark ? '#c5b89a' : '#8f8468',
-          borderWidth: '1.5px',
-        },
-      },
-      '&.Mui-error fieldset': {
-        borderColor: isDark ? '#f87171' : '#dc2626',
-      },
-    },
-    '& .MuiInputLabel-root': {
-      color: isDark ? '#a8a69f' : '#6b7280',
-      '&.Mui-focused': {
-        color: isDark ? '#c5b89a' : '#8f8468',
-        fontWeight: 600,
-      },
-    },
-    '& .MuiInputBase-input': {
-      color: isDark ? '#f0efeb' : '#1a1a19',
-      fontSize: '0.92rem',
-    },
-    '& .MuiIconButton-root': {
-      color: isDark ? 'rgba(197, 184, 154, 0.75)' : 'rgba(143, 132, 104, 0.75)',
-      transition: 'all 0.2s ease',
-      '&:hover': {
-        color: isDark ? '#ffffff' : '#1a1a19',
-        backgroundColor: isDark
-          ? 'rgba(255, 255, 255, 0.08)'
-          : 'rgba(0, 0, 0, 0.04)',
-      },
-    },
-    '& .MuiFormHelperText-root': {
-      mx: 0.5,
-      mt: 0.5,
-      fontSize: '0.78rem',
-    },
   };
 
   return (
@@ -435,11 +369,18 @@ export function CustomerSignup() {
             <Box
               component="form"
               onSubmit={handleSubmit}
-              sx={{ width: '100%', mt: 0.5 }}
+              sx={{
+                width: '100%',
+                mt: 0.5,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+              }}
             >
               <TextField
                 required
                 fullWidth
+                size="small"
                 id="name"
                 label={LL.form.fullName()}
                 name="name"
@@ -449,12 +390,12 @@ export function CustomerSignup() {
                 onChange={handleChange('name')}
                 error={!!errors.name}
                 helperText={errors.name}
-                sx={liquidInputSx}
               />
 
               <TextField
                 required
                 fullWidth
+                size="small"
                 id="email"
                 label={LL.form.email()}
                 name="email"
@@ -463,12 +404,13 @@ export function CustomerSignup() {
                 onChange={handleChange('email')}
                 error={!!errors.email}
                 helperText={errors.email}
-                {...getLtrTextFieldProps(liquidInputSx)}
+                {...getLtrTextFieldProps()}
               />
 
               <PasswordTextField
                 required
                 fullWidth
+                size="small"
                 name="password"
                 label={LL.form.password()}
                 id="password"
@@ -477,12 +419,12 @@ export function CustomerSignup() {
                 onChange={handleChange('password')}
                 error={!!errors.password}
                 helperText={errors.password}
-                sx={liquidInputSx}
               />
 
               <PasswordTextField
                 required
                 fullWidth
+                size="small"
                 name="confirmPassword"
                 label={LL.authorization.confirmPassword()}
                 id="confirmPassword"
@@ -491,7 +433,6 @@ export function CustomerSignup() {
                 onChange={handleChange('confirmPassword')}
                 error={!!errors.confirmPassword}
                 helperText={errors.confirmPassword}
-                sx={liquidInputSx}
               />
 
               <Button

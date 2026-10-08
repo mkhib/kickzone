@@ -212,9 +212,11 @@ export type CustomerProfile = {
   __typename?: 'CustomerProfile';
   address?: Maybe<Scalars['String']['output']>;
   city?: Maybe<Scalars['String']['output']>;
+  clothingSize?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   phone?: Maybe<Scalars['String']['output']>;
+  shoeSize?: Maybe<Scalars['String']['output']>;
   state?: Maybe<Scalars['String']['output']>;
   userId: Scalars['String']['output'];
   zipCode?: Maybe<Scalars['String']['output']>;
@@ -1141,8 +1143,10 @@ export type UpdateCurrencyInput = {
 export type UpdateCustomerProfileInput = {
   address?: InputMaybe<Scalars['String']['input']>;
   city?: InputMaybe<Scalars['String']['input']>;
+  clothingSize?: InputMaybe<Scalars['String']['input']>;
   country?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
+  shoeSize?: InputMaybe<Scalars['String']['input']>;
   state?: InputMaybe<Scalars['String']['input']>;
   zipCode?: InputMaybe<Scalars['String']['input']>;
 };

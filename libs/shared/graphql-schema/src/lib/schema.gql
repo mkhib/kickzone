@@ -76,18 +76,6 @@ enum SizeKind {
   Footwear
 }
 
-type Product {
-  id: Int!
-  name: String!
-  sku: String
-  productInfos: [ProductInfo!]!
-  categories: [Category!]!
-  description: String
-  descriptions: [ProductDescription!]
-  sellerProducts: [SellerProduct!]
-  archived: Boolean!
-}
-
 type SiteLanguage {
   id: ID!
   code: String!
@@ -108,6 +96,18 @@ type ProductDescription {
   description: String!
   createdAt: DateTime!
   updatedAt: DateTime!
+}
+
+type Product {
+  id: Int!
+  name: String!
+  sku: String
+  productInfos: [ProductInfo!]!
+  categories: [Category!]!
+  description: String
+  descriptions: [ProductDescription!]
+  sellerProducts: [SellerProduct!]
+  archived: Boolean!
 }
 
 type ProductEdge {
@@ -256,6 +256,8 @@ type CustomerProfile {
   state: String
   zipCode: String
   country: String
+  clothingSize: String
+  shoeSize: String
 }
 
 type Translation {
@@ -538,6 +540,8 @@ input UpdateCustomerProfileInput {
   state: String
   zipCode: String
   country: String
+  clothingSize: String
+  shoeSize: String
 }
 
 input CreateCategoryInput {
@@ -552,18 +556,18 @@ input UpdateCategoryInput {
   isActive: Boolean
 }
 
-input ProductDescriptionInput {
-  languageId: Int
-  languageCode: String
-  description: String!
-}
-
 input CreateProductInput {
   name: String!
   sku: String!
   categoryIds: [Int!]!
   description: String
   descriptions: [ProductDescriptionInput!]
+}
+
+input ProductDescriptionInput {
+  languageId: Int
+  languageCode: String
+  description: String!
 }
 
 input CreateProductInfoInput {
@@ -584,23 +588,6 @@ input UpdateProductInput {
   categoryIds: [Int!]!
   description: String
   descriptions: [ProductDescriptionInput!]
-}
-
-input CreateSiteLanguageInput {
-  code: String!
-  name: String!
-  nativeName: String!
-  isRTL: Boolean = false
-  isActive: Boolean = true
-  isDefault: Boolean = false
-}
-
-input UpdateSiteLanguageInput {
-  name: String
-  nativeName: String
-  isRTL: Boolean
-  isActive: Boolean
-  isDefault: Boolean
 }
 
 input TranslationInput {
@@ -789,4 +776,21 @@ input ZarinPalVerificationRequestInput {
   amount: Int!
   authority: String!
   order_id: String
+}
+
+input CreateSiteLanguageInput {
+  code: String!
+  name: String!
+  nativeName: String!
+  isRTL: Boolean = false
+  isActive: Boolean = true
+  isDefault: Boolean = false
+}
+
+input UpdateSiteLanguageInput {
+  name: String
+  nativeName: String
+  isRTL: Boolean
+  isActive: Boolean
+  isDefault: Boolean
 }

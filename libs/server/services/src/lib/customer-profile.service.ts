@@ -10,6 +10,8 @@ export interface UpdateCustomerProfileInput {
   state?: string;
   zipCode?: string;
   country?: string;
+  clothingSize?: string;
+  shoeSize?: string;
 }
 
 @Injectable()
@@ -45,6 +47,8 @@ export class CustomerProfileService {
       state: input.state ?? profile.state,
       zipCode: input.zipCode ?? profile.zipCode,
       country: input.country ?? profile.country,
+      clothingSize: input.clothingSize ?? profile.clothingSize,
+      shoeSize: input.shoeSize ?? profile.shoeSize,
     });
 
     return this.customerProfileRepository.save(profile);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
 import Box from '@mui/material/Box';
@@ -12,6 +12,10 @@ import DialogTitle from '@mui/material/DialogTitle';
 import DialogContent from '@mui/material/DialogContent';
 import DialogActions from '@mui/material/DialogActions';
 import TextField from '@mui/material/TextField';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import Select from '@mui/material/Select';
+import MenuItem from '@mui/material/MenuItem';
 import CircularProgress from '@mui/material/CircularProgress';
 import Alert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
@@ -23,11 +27,9 @@ import LocationOn from '@mui/icons-material/LocationOn';
 import Straighten from '@mui/icons-material/Straighten';
 import Edit from '@mui/icons-material/Edit';
 import ContentCopy from '@mui/icons-material/ContentCopy';
-import Security from '@mui/icons-material/Security';
 import ShoppingBag from '@mui/icons-material/ShoppingBag';
 import VpnKey from '@mui/icons-material/VpnKey';
 import MarkunreadMailbox from '@mui/icons-material/MarkunreadMailbox';
-import PhoneInTalk from '@mui/icons-material/PhoneInTalk';
 import Logout from '@mui/icons-material/Logout';
 import ArrowForward from '@mui/icons-material/ArrowForward';
 import ArrowBack from '@mui/icons-material/ArrowBack';
@@ -44,46 +46,21 @@ import {
   useI18nContext,
   useLanguageContext,
   usePageTitle,
-  farsiDisplayStack,
 } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import {
   GET_MY_PROFILE,
   UPDATE_MY_PROFILE,
-  GET_MY_ORDERS_QUERY,
 } from '@kickzone-workspace/customers-graphql';
-import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
-import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { toEnglishDigits } from '@kickzone-workspace/shipping-validation';
+import {
+  APPAREL_SIZES,
+  FOOTWEAR_EU_SIZES,
+  euToUs,
+} from '@kickzone-workspace/product-sizes';
 
-export interface TailoredPreferences {
-  clothingSize: string;
-  shoeSize: string;
-}
-
-const DEFAULT_PREFERENCES: TailoredPreferences = {
-  clothingSize: 'M / L',
-  shoeSize: '42 EU (8.5 US)',
-};
-
-interface OrderItem {
-  id: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
-interface OrderData {
-  id: string;
-  orderNumber: string;
-  status: string;
-  total: number;
-  createdAt: string;
-  items: OrderItem[];
-}
+const farsiFont = '"Vazirmatn", "Manrope", sans-serif';
 
 export function CustomerProfile() {
   const { LL } = useI18nContext();
@@ -98,7 +75,7 @@ export function CustomerProfile() {
   const { user, logout } = useCustomersAuth();
   const isLoggedIn = Boolean(user);
 
-  // Active Navigation Tab: 0 = Profile & Address, 1 = Orders, 2 = Security
+  // Active Navigation Tab: 0 = Profile & Address, 1 = Security
   const [activeTab, setActiveTab] = useState<number>(0);
 
   // Modals state
@@ -106,7 +83,7 @@ export function CustomerProfile() {
   const [editAddressOpen, setEditAddressOpen] = useState(false);
   const [editPreferencesOpen, setEditPreferencesOpen] = useState(false);
 
-  // Query: My Profile
+  // Query: My Profile (includes preferred sizing from database)
   const { data: profileData, refetch: refetchProfile } = useQuery<{
     myProfile: {
       id: string;
@@ -117,17 +94,10 @@ export function CustomerProfile() {
       state?: string | null;
       zipCode?: string | null;
       country?: string | null;
+      clothingSize?: string | null;
+      shoeSize?: string | null;
     };
   }>(GET_MY_PROFILE, {
-    fetchPolicy: 'cache-and-network',
-    skip: !isLoggedIn,
-  });
-
-  // Query: My Orders
-  const { data: ordersData, loading: ordersLoading } = useQuery<{
-    myOrders: OrderData[];
-  }>(GET_MY_ORDERS_QUERY, {
-    variables: { first: 10 },
     fetchPolicy: 'cache-and-network',
     skip: !isLoggedIn,
   });
@@ -135,29 +105,6 @@ export function CustomerProfile() {
   // Mutation: Update My Profile
   const [updateProfileMutation, { loading: updatingProfile }] =
     useMutation(UPDATE_MY_PROFILE);
-
-  // User Preferences in Local Storage
-  const userStorageKey = user?.id || 'guest';
-  const preferencesKey = `kickzone_preferences_${userStorageKey}`;
-
-  const [preferences, setPreferences] = useState<TailoredPreferences>(() => {
-    try {
-      const stored = localStorage.getItem(preferencesKey);
-      if (stored) return JSON.parse(stored);
-    } catch {
-      // fallback
-    }
-    return DEFAULT_PREFERENCES;
-  });
-
-  const savePreferences = (newPrefs: TailoredPreferences) => {
-    setPreferences(newPrefs);
-    try {
-      localStorage.setItem(preferencesKey, JSON.stringify(newPrefs));
-    } catch {
-      // ignore
-    }
-  };
 
   // Profile Form state
   const [profileForm, setProfileForm] = useState({
@@ -212,8 +159,20 @@ export function CustomerProfile() {
     }
   }, [profileData]);
 
-  // Preferences Form state
-  const [prefForm, setPrefForm] = useState<TailoredPreferences>(preferences);
+  // Preferred Sizing Form state
+  const [prefForm, setPrefForm] = useState({
+    clothingSize: profileData?.myProfile?.clothingSize || '',
+    shoeSize: profileData?.myProfile?.shoeSize || '',
+  });
+
+  useEffect(() => {
+    if (profileData?.myProfile) {
+      setPrefForm({
+        clothingSize: profileData.myProfile.clothingSize || '',
+        shoeSize: profileData.myProfile.shoeSize || '',
+      });
+    }
+  }, [profileData]);
 
   // Address display data (placeholders when not logged in)
   const currentAddress = (isLoggedIn && profileData?.myProfile?.address) || '';
@@ -226,12 +185,15 @@ export function CustomerProfile() {
     isLoggedIn && (currentAddress || currentCity || currentState || currentZipCode)
   );
 
-  // Orders count
-  const myOrders = useMemo(
-    () => (isLoggedIn ? ordersData?.myOrders || [] : []),
-    [isLoggedIn, ordersData]
-  );
-  const ordersCount = myOrders.length;
+  // Preferred sizing display data from service
+  const currentClothingSize =
+    (isLoggedIn && profileData?.myProfile?.clothingSize) || '';
+  const currentShoeSize =
+    (isLoggedIn && profileData?.myProfile?.shoeSize) || '';
+  const displayClothingSize = isLoggedIn
+    ? currentClothingSize || '—'
+    : '—';
+  const displayShoeSize = isLoggedIn ? currentShoeSize || '—' : '—';
 
   // Display user info (only placeholders if not logged in)
   const displayName = isLoggedIn && user?.name
@@ -242,8 +204,6 @@ export function CustomerProfile() {
   const displayRole = isLoggedIn
     ? LL.customerProfile.customerAccount()
     : LL.customerProfile.guestAccount();
-  const displayClothingSize = isLoggedIn ? preferences.clothingSize : '—';
-  const displayShoeSize = isLoggedIn ? preferences.shoeSize : '—';
 
   // Handle Copy Email
   const handleCopyEmail = () => {
@@ -299,7 +259,6 @@ export function CustomerProfile() {
   const handleSaveProfile = async () => {
     if (!isLoggedIn) return;
     const cleanPhone = toEnglishDigits(profileForm.phone).trim();
-
     try {
       await updateProfileMutation({
         variables: {
@@ -317,203 +276,207 @@ export function CustomerProfile() {
     }
   };
 
-  // Save Preferences Form Action
-  const handleSavePreferences = () => {
+  // Open Edit Preferences Modal
+  const handleOpenEditPreferences = () => {
     if (!isLoggedIn) return;
-    savePreferences(prefForm);
-    setEditPreferencesOpen(false);
-    showSnackbar(LL.customerProfile.saveSuccess(), 'success');
+    setPrefForm({
+      clothingSize: currentClothingSize,
+      shoeSize: currentShoeSize,
+    });
+    setEditPreferencesOpen(true);
   };
 
-  // Handle Logout
-  const handleLogout = async () => {
+  // Save Preferred Sizing to Service
+  const handleSavePreferences = async () => {
     if (!isLoggedIn) return;
+    try {
+      await updateProfileMutation({
+        variables: {
+          input: {
+            clothingSize: prefForm.clothingSize || null,
+            shoeSize: prefForm.shoeSize || null,
+          },
+        },
+      });
+      refetchProfile();
+      setEditPreferencesOpen(false);
+      showSnackbar(LL.customerProfile.saveSuccess(), 'success');
+    } catch (err) {
+      console.error('Error updating sizing preferences:', err);
+      showSnackbar(LL.customerProfile.saveError(), 'error');
+    }
+  };
+
+  // Logout handler
+  const handleLogout = async () => {
     try {
       await logout();
-      navigate(CUSTOMER_ROUTES.HOME);
-    } catch (err) {
-      console.error('Logout error:', err);
+      navigate(CUSTOMER_ROUTES.LOGIN);
+    } catch (error) {
+      console.error('Logout error:', error);
     }
   };
 
-  // Format date helper
-  const formatDate = (dateStr: string) => {
-    try {
-      return new Date(dateStr).toLocaleDateString(currentLocale, {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-      });
-    } catch {
-      return dateStr;
-    }
+  // Dynamic Theme Colors
+  const colors = {
+    bgPage: isDark ? '#0f0f0e' : '#f4f3f0',
+    liquidCardBg: isDark
+      ? 'linear-gradient(145deg, rgba(28, 28, 25, 0.72) 0%, rgba(18, 18, 16, 0.85) 100%)'
+      : 'linear-gradient(145deg, rgba(255, 255, 255, 0.78) 0%, rgba(247, 246, 242, 0.9) 100%)',
+    bgCard: isDark ? 'rgba(28, 28, 25, 0.6)' : 'rgba(255, 255, 255, 0.65)',
+    border: isDark
+      ? '1px solid rgba(255, 255, 255, 0.08)'
+      : '1px solid rgba(0, 0, 0, 0.06)',
+    borderSubtle: isDark
+      ? '1px solid rgba(255, 255, 255, 0.05)'
+      : '1px solid rgba(0, 0, 0, 0.04)',
+    textPrimary: isDark ? '#f5f5f2' : '#181816',
+    textSecondary: isDark ? '#9c9a92' : '#6b6962',
+    textMuted: isDark ? '#6b6962' : '#9c9a92',
+    accentBrass: isDark ? '#d4c7a5' : '#8f8362',
+    itemBg: isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)',
+    itemBorder: isDark
+      ? '1px solid rgba(255, 255, 255, 0.05)'
+      : '1px solid rgba(0, 0, 0, 0.04)',
+    tabBarBg: isDark ? 'rgba(22, 22, 20, 0.7)' : 'rgba(240, 239, 235, 0.8)',
+    tabBarBorder: isDark
+      ? '1px solid rgba(255, 255, 255, 0.08)'
+      : '1px solid rgba(0, 0, 0, 0.06)',
+    activeTabBg: isDark ? '#262623' : '#ffffff',
+    activeTabColor: isDark ? '#ffffff' : '#121210',
+    activeTabBorder: isDark
+      ? '1px solid rgba(255, 255, 255, 0.12)'
+      : '1px solid rgba(0, 0, 0, 0.08)',
+    buttonPrimaryBg: isDark ? '#e6dfd1' : '#181816',
+    buttonPrimaryColor: isDark ? '#121210' : '#ffffff',
+    buttonPrimaryHover: isDark ? '#d8cebc' : '#2c2c28',
+    shadow: isDark
+      ? '0 20px 40px rgba(0, 0, 0, 0.4)'
+      : '0 20px 40px rgba(0, 0, 0, 0.04)',
   };
-
-  // Design Tokens based on Light / Dark mode
-  const colors = useMemo(() => {
-    if (isDark) {
-      return {
-        bgPage: '#0f0f0e',
-        bgCard: 'rgba(24, 24, 22, 0.85)',
-        border: '1px solid rgba(240, 239, 235, 0.08)',
-        borderSubtle: '1px solid rgba(240, 239, 235, 0.06)',
-        shadow: '0 16px 40px -8px rgba(0, 0, 0, 0.5)',
-        itemBg: 'rgba(32, 32, 28, 0.65)',
-        itemBorder: '1px solid rgba(240, 239, 235, 0.08)',
-        textPrimary: '#f0efeb',
-        textSecondary: '#a8a69f',
-        textMuted: '#7c766e',
-        accentBrass: '#c5b89a',
-        activeTabBg: '#262622',
-        activeTabColor: '#f0efeb',
-        activeTabBorder: '1px solid rgba(197, 184, 154, 0.35)',
-        tabBarBg: 'rgba(24, 24, 22, 0.85)',
-        tabBarBorder: '1px solid rgba(240, 239, 235, 0.08)',
-        buttonPrimaryBg: '#c5b89a',
-        buttonPrimaryColor: '#121210',
-        buttonPrimaryHover: '#ddd4bf',
-      };
-    }
-    return {
-      bgPage: '#f4f3f0',
-      bgCard: 'rgba(255, 255, 255, 0.85)',
-      border: '1px solid rgba(26, 26, 25, 0.08)',
-      borderSubtle: '1px solid rgba(26, 26, 25, 0.06)',
-      shadow: '0 16px 40px -10px rgba(0, 0, 0, 0.05)',
-      itemBg: 'rgba(247, 246, 243, 0.75)',
-      itemBorder: '1px solid rgba(26, 26, 25, 0.06)',
-      textPrimary: '#1a1a19',
-      textSecondary: '#5c5b57',
-      textMuted: '#8a8880',
-      accentBrass: '#8f8468',
-      activeTabBg: '#ffffff',
-      activeTabColor: '#1a1a19',
-      activeTabBorder: '1px solid rgba(26, 26, 25, 0.08)',
-      tabBarBg: 'rgba(255, 255, 255, 0.65)',
-      tabBarBorder: '1px solid rgba(26, 26, 25, 0.08)',
-      buttonPrimaryBg: '#1a1a19',
-      buttonPrimaryColor: '#faf9f7',
-      buttonPrimaryHover: '#2e2e2c',
-    };
-  }, [isDark]);
 
   return (
     <CustomersLayout>
       <Box
         sx={{
           minHeight: '100vh',
-          width: '100%',
-          position: 'relative',
-          overflowX: 'hidden',
-          backgroundColor: colors.bgPage,
-          color: colors.textPrimary,
-          fontFamily: theme.typography.fontFamily,
-          pt: { xs: 3, md: 5 },
-          pb: 10,
-          px: { xs: 2, sm: 3, md: 5 },
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          transition: 'background-color 0.3s ease, color 0.3s ease',
+          py: { xs: 3, md: 5 },
+          maxWidth: 1200,
+          mx: 'auto',
+          px: { xs: 2, sm: 3, md: 4 },
+          fontFamily: isRtl ? farsiFont : theme.typography.fontFamily,
         }}
       >
-        <Box sx={{ width: '100%', maxWidth: '1240px', position: 'relative', zIndex: 1 }}>
-          {/* Prominent Login Prompt Banner for unauthenticated visitors */}
-          {!isLoggedIn && (
-            <Alert
-              severity="info"
-              icon={<Login sx={{ color: colors.accentBrass }} />}
-              sx={{
-                mb: 4,
-                borderRadius: '20px',
-                p: { xs: 2, md: 2.5 },
-                backdropFilter: 'blur(24px)',
-                backgroundColor: isDark ? 'rgba(32, 32, 28, 0.95)' : 'rgba(255, 255, 255, 0.95)',
-                border: isDark ? '1px solid rgba(197, 184, 154, 0.3)' : '1px solid rgba(143, 132, 104, 0.3)',
-                boxShadow: colors.shadow,
-                color: colors.textPrimary,
-                fontFamily: 'inherit',
-                display: 'flex',
-                alignItems: 'center',
-                '& .MuiAlert-message': {
-                  fontSize: { xs: '13px', md: '14px' },
-                  fontWeight: 600,
-                  lineHeight: 1.7,
-                },
-              }}
-              action={
-                <Button
-                  variant="contained"
-                  size="small"
-                  onClick={() => navigate(CUSTOMER_ROUTES.LOGIN)}
-                  startIcon={<Login sx={{ fontSize: 16 }} />}
-                  sx={{
-                    fontWeight: 700,
-                    textTransform: 'none',
-                    borderRadius: '9999px',
-                    backgroundColor: colors.buttonPrimaryBg,
-                    color: colors.buttonPrimaryColor,
-                    px: 3,
-                    py: 1,
-                    fontFamily: 'inherit',
-                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.15)',
-                    '&:hover': { backgroundColor: colors.buttonPrimaryHover },
-                  }}
-                >
-                  {LL.customerProfile.loginButton()}
-                </Button>
-              }
-            >
-              {LL.customerProfile.noUserWarning()}
-            </Alert>
-          )}
+        {/* Unauthenticated / Guest Warning Banner */}
+        {!isLoggedIn && (
+          <Alert
+            severity="info"
+            icon={<Login sx={{ fontSize: 22, color: colors.accentBrass }} />}
+            action={
+              <Button
+                variant="contained"
+                size="small"
+                onClick={() => navigate(CUSTOMER_ROUTES.LOGIN)}
+                startIcon={<Login sx={{ fontSize: 16 }} />}
+                sx={{
+                  borderRadius: '9999px',
+                  textTransform: 'none',
+                  fontFamily: isRtl ? farsiFont : 'inherit',
+                  backgroundColor: colors.buttonPrimaryBg,
+                  color: colors.buttonPrimaryColor,
+                  fontWeight: 700,
+                  fontSize: '12px',
+                  px: 2,
+                  '&:hover': { backgroundColor: colors.buttonPrimaryHover },
+                }}
+              >
+                {LL.customerProfile.loginButton()}
+              </Button>
+            }
+            sx={{
+              mb: 3.5,
+              borderRadius: '20px',
+              backgroundColor: isDark
+                ? 'rgba(36, 36, 32, 0.85)'
+                : 'rgba(245, 244, 239, 0.95)',
+              backdropFilter: 'blur(16px)',
+              border: colors.border,
+              color: colors.textPrimary,
+              fontFamily: isRtl ? farsiFont : 'inherit',
+              alignItems: 'center',
+              boxShadow: colors.shadow,
+            }}
+          >
+            {LL.customerProfile.noUserWarning()}
+          </Alert>
+        )}
 
-          {/* Member Hero Identity Bar */}
+        {/* Master Liquid Glass Container wrapping the profile sections */}
+        <Box
+          sx={{
+            borderRadius: { xs: '28px', md: '36px' },
+            p: { xs: 2.5, sm: 4, md: 5 },
+            background: colors.liquidCardBg,
+            backdropFilter: 'blur(32px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(32px) saturate(190%)',
+            border: colors.border,
+            boxShadow: isDark
+              ? '0 30px 60px rgba(0, 0, 0, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.08)'
+              : '0 30px 60px rgba(0, 0, 0, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.9)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: { xs: 3, md: 4 },
+          }}
+        >
+          {/* Header: User Avatar & Actions */}
           <Box
             component="header"
             sx={{
-              width: '100%',
-              mb: 4,
               display: 'flex',
-              flexDirection: { xs: 'column', md: 'row' },
-              alignItems: { xs: 'flex-start', md: 'center' },
+              flexDirection: { xs: 'column', sm: 'row' },
+              alignItems: { xs: 'flex-start', sm: 'center' },
               justifyContent: 'space-between',
-              gap: 3,
+              gap: 2.5,
+              pb: 3,
+              borderBottom: colors.borderSubtle,
             }}
           >
-            {/* Identity Info */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
-              {/* Squircle Avatar */}
+              {/* Profile Avatar Glass Ring */}
               <Box
                 sx={{
-                  width: { xs: 68, md: 76 },
-                  height: { xs: 68, md: 76 },
-                  borderRadius: '24px',
-                  backgroundColor: colors.bgCard,
-                  border: colors.border,
-                  boxShadow: colors.shadow,
+                  position: 'relative',
+                  width: { xs: 68, md: 80 },
+                  height: { xs: 68, md: 80 },
+                  borderRadius: '50%',
+                  background: isDark
+                    ? 'linear-gradient(135deg, #262622 0%, #161614 100%)'
+                    : 'linear-gradient(135deg, #f0efe9 0%, #e3e2dc 100%)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  border: isDark
+                    ? '1.5px solid rgba(255, 255, 255, 0.12)'
+                    : '1.5px solid rgba(0, 0, 0, 0.08)',
+                  boxShadow: colors.shadow,
                   color: colors.accentBrass,
-                  opacity: isLoggedIn ? 1 : 0.65,
                   flexShrink: 0,
                 }}
               >
-                <Person sx={{ fontSize: { xs: 36, md: 42 } }} />
+                <Person sx={{ fontSize: { xs: 38, md: 44 } }} />
               </Box>
 
               {/* Names & User Subtitle */}
-              <Box sx={{ display: 'flex', flexDirection: 'column', textAlign: 'right' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', textAlign: isRtl ? 'right' : 'left' }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
                   <Typography
                     variant="h5"
                     component="h1"
                     sx={{
                       fontWeight: 800,
-                      fontSize: { xs: '20px', md: '26px' },
+                      fontSize: { xs: '22px', md: '28px' },
                       color: colors.textPrimary,
-                      fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+                      fontFamily: isRtl ? farsiFont : 'inherit',
                     }}
                   >
                     {displayName}
@@ -527,16 +490,16 @@ export function CustomerProfile() {
                       fontWeight: 600,
                       backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.05)',
                       color: colors.textSecondary,
-                      fontFamily: 'inherit',
+                      fontFamily: isRtl ? farsiFont : 'inherit',
                     }}
                   />
                 </Box>
                 <Typography
                   sx={{
-                    fontSize: '13px',
+                    fontSize: '14px',
                     color: colors.textSecondary,
                     mt: 0.5,
-                    fontFamily: 'inherit',
+                    fontFamily: isRtl ? farsiFont : 'inherit',
                   }}
                 >
                   {displayEmail}
@@ -544,8 +507,42 @@ export function CustomerProfile() {
               </Box>
             </Box>
 
-            {/* Quick Action Button (Disabled when not logged in) */}
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, alignSelf: { xs: 'stretch', md: 'auto' } }}>
+            {/* Header Action Buttons (Orders screen shortcut + Edit Information) */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1.5,
+                flexWrap: 'wrap',
+                alignSelf: { xs: 'stretch', sm: 'auto' },
+              }}
+            >
+              {/* Direct button to Orders Screen */}
+              <Button
+                component={RouterLink}
+                to={CUSTOMER_ROUTES.ORDERS}
+                variant="outlined"
+                startIcon={<ShoppingBag sx={{ fontSize: 18, color: colors.accentBrass }} />}
+                sx={{
+                  height: 42,
+                  px: 2.5,
+                  borderRadius: '9999px',
+                  borderColor: colors.accentBrass,
+                  color: colors.textPrimary,
+                  fontSize: '13px',
+                  fontWeight: 600,
+                  textTransform: 'none',
+                  fontFamily: isRtl ? farsiFont : 'inherit',
+                  '&:hover': {
+                    borderColor: colors.accentBrass,
+                    backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
+                  },
+                }}
+              >
+                {LL.customerProfile.tabMyOrders()}
+              </Button>
+
+              {/* Edit Information Button */}
               <Tooltip title={!isLoggedIn ? LL.customerProfile.loginToEditTooltip() : ''}>
                 <span>
                   <Button
@@ -554,7 +551,7 @@ export function CustomerProfile() {
                     onClick={() => isLoggedIn && setEditProfileOpen(true)}
                     startIcon={<Edit sx={{ fontSize: 16 }} />}
                     sx={{
-                      height: 44,
+                      height: 42,
                       px: 3,
                       borderRadius: '9999px',
                       backgroundColor: colors.buttonPrimaryBg,
@@ -562,7 +559,7 @@ export function CustomerProfile() {
                       fontSize: '13px',
                       fontWeight: 700,
                       textTransform: 'none',
-                      fontFamily: 'inherit',
+                      fontFamily: isRtl ? farsiFont : 'inherit',
                       boxShadow: isDark
                         ? '0 6px 20px rgba(0, 0, 0, 0.4)'
                         : '0 6px 20px rgba(0, 0, 0, 0.12)',
@@ -583,12 +580,11 @@ export function CustomerProfile() {
             </Box>
           </Box>
 
-          {/* Segmented Glass Tab Bar */}
+          {/* Segmented Glass Tab Bar (Profile & Addresses, Account Security) */}
           <Box
             component="nav"
             sx={{
               width: '100%',
-              mb: 4,
               p: 0.75,
               borderRadius: '24px',
               backgroundColor: colors.tabBarBg,
@@ -599,9 +595,6 @@ export function CustomerProfile() {
               alignItems: 'center',
               justifyContent: 'space-between',
               gap: 1,
-              overflowX: 'auto',
-              scrollbarWidth: 'none',
-              '&::-webkit-scrollbar': { display: 'none' },
             }}
           >
             {/* Tab 0: Profile & Address */}
@@ -611,7 +604,6 @@ export function CustomerProfile() {
               onClick={() => setActiveTab(0)}
               sx={{
                 flex: 1,
-                minWidth: '180px',
                 height: 46,
                 borderRadius: '18px',
                 px: 2,
@@ -619,11 +611,11 @@ export function CustomerProfile() {
                 border: activeTab === 0 ? colors.activeTabBorder : 'none',
                 outline: 'none',
                 cursor: 'pointer',
-                fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+                fontFamily: isRtl ? farsiFont : 'inherit',
                 backgroundColor: activeTab === 0 ? colors.activeTabBg : 'transparent',
                 color: activeTab === 0 ? colors.activeTabColor : colors.textSecondary,
                 fontWeight: activeTab === 0 ? 700 : 500,
-                fontSize: { xs: '12px', sm: '13px' },
+                fontSize: { xs: '13px', sm: '14px' },
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -640,14 +632,13 @@ export function CustomerProfile() {
               <span>{LL.customerProfile.tabProfileAndAddresses()}</span>
             </Box>
 
-            {/* Tab 1: Orders */}
+            {/* Tab 1: Account Security */}
             <Box
               component="button"
               type="button"
               onClick={() => setActiveTab(1)}
               sx={{
                 flex: 1,
-                minWidth: '180px',
                 height: 46,
                 borderRadius: '18px',
                 px: 2,
@@ -655,11 +646,11 @@ export function CustomerProfile() {
                 border: activeTab === 1 ? colors.activeTabBorder : 'none',
                 outline: 'none',
                 cursor: 'pointer',
-                fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+                fontFamily: isRtl ? farsiFont : 'inherit',
                 backgroundColor: activeTab === 1 ? colors.activeTabBg : 'transparent',
                 color: activeTab === 1 ? colors.activeTabColor : colors.textSecondary,
                 fontWeight: activeTab === 1 ? 700 : 500,
-                fontSize: { xs: '12px', sm: '13px' },
+                fontSize: { xs: '13px', sm: '14px' },
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
@@ -672,64 +663,10 @@ export function CustomerProfile() {
                 },
               }}
             >
-              <ShoppingBag sx={{ fontSize: 18, color: colors.accentBrass }} />
-              <span>{LL.customerProfile.tabMyOrders()}</span>
-              {ordersCount > 0 && (
-                <Box
-                  sx={{
-                    px: 1,
-                    py: 0.2,
-                    borderRadius: '9999px',
-                    backgroundColor: colors.accentBrass,
-                    color: isDark ? '#121210' : '#ffffff',
-                    fontSize: '11px',
-                    fontWeight: 700,
-                    fontFamily: 'inherit',
-                  }}
-                >
-                  {ordersCount}
-                </Box>
-              )}
-            </Box>
-
-            {/* Tab 2: Account Security */}
-            <Box
-              component="button"
-              type="button"
-              onClick={() => setActiveTab(2)}
-              sx={{
-                flex: 1,
-                minWidth: '180px',
-                height: 46,
-                borderRadius: '18px',
-                px: 2,
-                py: 1,
-                border: activeTab === 2 ? colors.activeTabBorder : 'none',
-                outline: 'none',
-                cursor: 'pointer',
-                fontFamily: isRtl ? farsiDisplayStack : 'inherit',
-                backgroundColor: activeTab === 2 ? colors.activeTabBg : 'transparent',
-                color: activeTab === 2 ? colors.activeTabColor : colors.textSecondary,
-                fontWeight: activeTab === 2 ? 700 : 500,
-                fontSize: { xs: '12px', sm: '13px' },
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: 1.25,
-                boxShadow: activeTab === 2 ? colors.shadow : 'none',
-                transition: 'all 0.2s ease',
-                '&:hover': {
-                  color: colors.textPrimary,
-                  backgroundColor: activeTab === 2 ? colors.activeTabBg : isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
-                },
-              }}
-            >
               <VpnKey sx={{ fontSize: 18, color: colors.accentBrass }} />
               <span>{LL.customerProfile.tabSettingsAndSecurity()}</span>
             </Box>
           </Box>
-
-          {/* Conditional View by Active Tab */}
 
           {/* TAB 0: Profile Details & Shipping Address */}
           {activeTab === 0 && (
@@ -764,35 +701,19 @@ export function CustomerProfile() {
                           fontSize: '15px',
                           fontWeight: 700,
                           color: colors.textPrimary,
-                          fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+                          fontFamily: isRtl ? farsiFont : 'inherit',
                         }}
                       >
                         {LL.customerProfile.identityCardTitle()}
                       </Typography>
                     </Box>
-                    <Tooltip title={!isLoggedIn ? LL.customerProfile.loginToEditTooltip() : ''}>
-                      <span>
-                        <IconButton
-                          size="small"
-                          disabled={!isLoggedIn}
-                          onClick={() => isLoggedIn && setEditProfileOpen(true)}
-                          sx={{
-                            color: colors.textMuted,
-                            '&:hover': { color: colors.textPrimary },
-                            '&.Mui-disabled': { opacity: 0.4 },
-                          }}
-                        >
-                          <Edit sx={{ fontSize: 16 }} />
-                        </IconButton>
-                      </span>
-                    </Tooltip>
                   </Box>
 
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>
                     {/* Full Name */}
                     <Box
                       sx={{
-                        p: 1.75,
+                        p: 2,
                         borderRadius: '16px',
                         backgroundColor: colors.itemBg,
                         border: colors.itemBorder,
@@ -801,11 +722,11 @@ export function CustomerProfile() {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <Box sx={{ textAlign: 'right' }}>
-                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.25, fontFamily: 'inherit' }}>
+                      <Box sx={{ textAlign: isRtl ? 'right' : 'left' }}>
+                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.35, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {LL.customerProfile.fullName()}
                         </Typography>
-                        <Typography sx={{ fontSize: '13px', fontWeight: 700, color: colors.textPrimary, fontFamily: 'inherit' }}>
+                        <Typography sx={{ fontSize: { xs: '15px', sm: '16px' }, fontWeight: 700, color: colors.textPrimary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {displayName}
                         </Typography>
                       </Box>
@@ -814,7 +735,7 @@ export function CustomerProfile() {
                     {/* Phone Number */}
                     <Box
                       sx={{
-                        p: 1.75,
+                        p: 2,
                         borderRadius: '16px',
                         backgroundColor: colors.itemBg,
                         border: colors.itemBorder,
@@ -823,11 +744,11 @@ export function CustomerProfile() {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <Box sx={{ textAlign: 'right' }}>
-                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.25, fontFamily: 'inherit' }}>
+                      <Box sx={{ textAlign: isRtl ? 'right' : 'left' }}>
+                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.35, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {LL.customerProfile.phone()}
                         </Typography>
-                        <Typography dir="ltr" sx={{ fontSize: '13px', fontWeight: 700, color: colors.textPrimary, fontFamily: 'inherit' }}>
+                        <Typography dir="ltr" sx={{ fontSize: { xs: '15px', sm: '16px' }, fontWeight: 700, color: colors.textPrimary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {displayPhone}
                         </Typography>
                       </Box>
@@ -836,7 +757,7 @@ export function CustomerProfile() {
                     {/* Email */}
                     <Box
                       sx={{
-                        p: 1.75,
+                        p: 2,
                         borderRadius: '16px',
                         backgroundColor: colors.itemBg,
                         border: colors.itemBorder,
@@ -845,11 +766,11 @@ export function CustomerProfile() {
                         justifyContent: 'space-between',
                       }}
                     >
-                      <Box sx={{ textAlign: 'right' }}>
-                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.25, fontFamily: 'inherit' }}>
+                      <Box sx={{ textAlign: isRtl ? 'right' : 'left' }}>
+                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.35, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {LL.customerProfile.email()}
                         </Typography>
-                        <Typography dir="ltr" sx={{ fontSize: '13px', fontWeight: 600, color: colors.textPrimary, fontFamily: 'inherit' }}>
+                        <Typography dir="ltr" sx={{ fontSize: { xs: '14px', sm: '15px' }, fontWeight: 700, color: colors.textPrimary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {displayEmail}
                         </Typography>
                       </Box>
@@ -868,7 +789,7 @@ export function CustomerProfile() {
                   </Box>
                 </Box>
 
-                {/* Sizing Preferences Card */}
+                {/* Sizing Preferences Card (Connected to Database / Service) */}
                 <Box
                   sx={{
                     borderRadius: '28px',
@@ -896,7 +817,7 @@ export function CustomerProfile() {
                           fontSize: '15px',
                           fontWeight: 700,
                           color: colors.textPrimary,
-                          fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+                          fontFamily: isRtl ? farsiFont : 'inherit',
                         }}
                       >
                         {LL.customerProfile.preferencesCardTitle()}
@@ -907,20 +828,15 @@ export function CustomerProfile() {
                         <Button
                           size="small"
                           disabled={!isLoggedIn}
-                          onClick={() => {
-                            if (isLoggedIn) {
-                              setPrefForm(preferences);
-                              setEditPreferencesOpen(true);
-                            }
-                          }}
+                          onClick={handleOpenEditPreferences}
                           sx={{
-                            fontSize: '11px',
+                            fontSize: '12px',
                             fontWeight: 700,
                             color: colors.accentBrass,
                             textTransform: 'none',
                             minWidth: 'auto',
                             p: 0,
-                            fontFamily: 'inherit',
+                            fontFamily: isRtl ? farsiFont : 'inherit',
                             '&:hover': { textDecoration: 'underline', backgroundColor: 'transparent' },
                             '&.Mui-disabled': { opacity: 0.4 },
                           }}
@@ -935,17 +851,17 @@ export function CustomerProfile() {
                     <Grid size={{ xs: 6 }}>
                       <Box
                         sx={{
-                          p: 1.75,
+                          p: 2,
                           borderRadius: '16px',
                           backgroundColor: colors.itemBg,
                           border: colors.itemBorder,
-                          textAlign: 'right',
+                          textAlign: isRtl ? 'right' : 'left',
                         }}
                       >
-                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.5, fontFamily: 'inherit' }}>
+                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.5, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {LL.customerProfile.preferredClothingSize()}
                         </Typography>
-                        <Typography sx={{ fontSize: '13px', fontWeight: 700, color: colors.textPrimary, fontFamily: 'inherit' }}>
+                        <Typography sx={{ fontSize: { xs: '14px', sm: '15px' }, fontWeight: 700, color: colors.textPrimary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {displayClothingSize}
                         </Typography>
                       </Box>
@@ -953,17 +869,17 @@ export function CustomerProfile() {
                     <Grid size={{ xs: 6 }}>
                       <Box
                         sx={{
-                          p: 1.75,
+                          p: 2,
                           borderRadius: '16px',
                           backgroundColor: colors.itemBg,
                           border: colors.itemBorder,
-                          textAlign: 'right',
+                          textAlign: isRtl ? 'right' : 'left',
                         }}
                       >
-                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.5, fontFamily: 'inherit' }}>
+                        <Typography sx={{ fontSize: '11px', color: colors.textMuted, mb: 0.5, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {LL.customerProfile.standardShoeSize()}
                         </Typography>
-                        <Typography sx={{ fontSize: '13px', fontWeight: 700, color: colors.textPrimary, fontFamily: 'inherit' }}>
+                        <Typography sx={{ fontSize: { xs: '14px', sm: '15px' }, fontWeight: 700, color: colors.textPrimary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                           {displayShoeSize}
                         </Typography>
                       </Box>
@@ -972,8 +888,9 @@ export function CustomerProfile() {
                 </Box>
               </Grid>
 
-              {/* Column 2: Single Shipping Address (7 Cols) */}
-              <Grid size={{ xs: 12, lg: 7 }}>
+              {/* Column 2: Single Shipping Address & Orders Banner (7 Cols) */}
+              <Grid size={{ xs: 12, lg: 7 }} sx={{ display: 'flex', flexDirection: 'column', gap: 3.5 }}>
+                {/* Shipping Address Card */}
                 <Box
                   sx={{
                     borderRadius: '28px',
@@ -1001,7 +918,7 @@ export function CustomerProfile() {
                           fontSize: '15px',
                           fontWeight: 700,
                           color: colors.textPrimary,
-                          fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+                          fontFamily: isRtl ? farsiFont : 'inherit',
                         }}
                       >
                         {LL.customerProfile.shippingCenterTitle()}
@@ -1023,7 +940,7 @@ export function CustomerProfile() {
                             fontSize: '12px',
                             fontWeight: 600,
                             textTransform: 'none',
-                            fontFamily: 'inherit',
+                            fontFamily: isRtl ? farsiFont : 'inherit',
                             borderColor: colors.accentBrass,
                             color: colors.textPrimary,
                             '&:hover': {
@@ -1049,7 +966,7 @@ export function CustomerProfile() {
                         p: { xs: 2.5, md: 3 },
                         backgroundColor: colors.itemBg,
                         border: colors.itemBorder,
-                        textAlign: 'right',
+                        textAlign: isRtl ? 'right' : 'left',
                       }}
                     >
                       <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
@@ -1065,7 +982,7 @@ export function CustomerProfile() {
                             color: isDark ? '#121210' : '#ffffff',
                             fontSize: '11px',
                             fontWeight: 700,
-                            fontFamily: 'inherit',
+                            fontFamily: isRtl ? farsiFont : 'inherit',
                           }}
                         >
                           <LocationOn sx={{ fontSize: 13 }} />
@@ -1084,7 +1001,7 @@ export function CustomerProfile() {
                           color: colors.accentBrass,
                           mb: 1.5,
                           flexWrap: 'wrap',
-                          fontFamily: 'inherit',
+                          fontFamily: isRtl ? farsiFont : 'inherit',
                         }}
                       >
                         {currentState && <span>{LL.customerProfile.province()}: {currentState}</span>}
@@ -1106,33 +1023,22 @@ export function CustomerProfile() {
                           color: colors.textPrimary,
                           lineHeight: 1.7,
                           mb: 2,
-                          fontFamily: 'inherit',
+                          fontFamily: isRtl ? farsiFont : 'inherit',
                         }}
                       >
                         {currentAddress}
                       </Typography>
 
-                      {/* Metadata: Postal Code & Recipient */}
-                      <Grid container spacing={2} sx={{ pt: 2, borderTop: colors.borderSubtle }}>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '12px', color: colors.textSecondary, fontFamily: 'inherit' }}>
-                            <MarkunreadMailbox sx={{ fontSize: 16, color: colors.textMuted }} />
-                            <span>{LL.customerProfile.postalCode()}</span>
-                            <Typography component="span" dir="ltr" sx={{ fontWeight: 700, color: colors.textPrimary, letterSpacing: '0.05em', fontFamily: 'inherit' }}>
-                              {currentZipCode ? toEnglishDigits(currentZipCode) : '—'}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                        <Grid size={{ xs: 12, sm: 6 }}>
-                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '12px', color: colors.textSecondary, fontFamily: 'inherit' }}>
-                            <PhoneInTalk sx={{ fontSize: 16, color: colors.textMuted }} />
-                            <span>{LL.customerProfile.recipient()}</span>
-                            <Typography component="span" sx={{ fontWeight: 700, color: colors.textPrimary, fontFamily: 'inherit' }}>
-                              {displayName} {displayPhone !== '—' ? `(${displayPhone})` : ''}
-                            </Typography>
-                          </Box>
-                        </Grid>
-                      </Grid>
+                      {/* Metadata: Postal Code (Recipient removed as requested) */}
+                      <Box sx={{ pt: 2, borderTop: colors.borderSubtle }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, fontSize: '12px', color: colors.textSecondary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                          <MarkunreadMailbox sx={{ fontSize: 16, color: colors.accentBrass }} />
+                          <span>{LL.customerProfile.postalCode()}</span>
+                          <Typography component="span" dir="ltr" sx={{ fontWeight: 700, color: colors.textPrimary, letterSpacing: '0.05em', fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                            {currentZipCode ? toEnglishDigits(currentZipCode) : '—'}
+                          </Typography>
+                        </Box>
+                      </Box>
                     </Box>
                   ) : (
                     <Box
@@ -1154,12 +1060,20 @@ export function CustomerProfile() {
                           fontWeight: 700,
                           fontSize: '15px',
                           color: colors.textPrimary,
-                          fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+                          fontFamily: isRtl ? farsiFont : 'inherit',
                         }}
                       >
                         {LL.customerProfile.noAddressTitle()}
                       </Typography>
-                      <Typography sx={{ fontSize: '13px', color: colors.textSecondary, maxWidth: 360, fontFamily: 'inherit' }}>
+                      <Typography
+                        sx={{
+                          fontSize: '13px',
+                          color: colors.textSecondary,
+                          maxWidth: 380,
+                          lineHeight: 1.6,
+                          fontFamily: isRtl ? farsiFont : 'inherit',
+                        }}
+                      >
                         {isLoggedIn
                           ? LL.customerProfile.noAddressSubtitle()
                           : LL.customerProfile.guestNoAddress()}
@@ -1170,21 +1084,18 @@ export function CustomerProfile() {
                             variant="contained"
                             disabled={!isLoggedIn}
                             onClick={handleOpenEditAddress}
+                            startIcon={<LocationOn />}
                             sx={{
                               mt: 1,
                               borderRadius: '9999px',
                               backgroundColor: colors.buttonPrimaryBg,
                               color: colors.buttonPrimaryColor,
-                              px: 3,
                               textTransform: 'none',
+                              fontFamily: isRtl ? farsiFont : 'inherit',
                               fontWeight: 700,
-                              fontFamily: 'inherit',
+                              px: 3,
                               '&:hover': { backgroundColor: colors.buttonPrimaryHover },
-                              '&.Mui-disabled': {
-                                opacity: 0.45,
-                                backgroundColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
-                                color: colors.textMuted,
-                              },
+                              '&.Mui-disabled': { opacity: 0.45 },
                             }}
                           >
                             {LL.customerProfile.addNewAddress()}
@@ -1194,226 +1105,97 @@ export function CustomerProfile() {
                     </Box>
                   )}
                 </Box>
-              </Grid>
-            </Grid>
-          )}
 
-          {/* TAB 1: Orders (KickZone Site Style) */}
-          {activeTab === 1 && (
-            <Box
-              sx={{
-                width: '100%',
-                borderRadius: '28px',
-                p: { xs: 2.5, md: 3.5 },
-                backgroundColor: colors.bgCard,
-                backdropFilter: 'blur(24px)',
-                boxShadow: colors.shadow,
-                border: colors.border,
-                textAlign: 'right',
-              }}
-            >
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                  <ShoppingBag sx={{ fontSize: 22, color: colors.accentBrass }} />
-                  <Typography
-                    variant="h6"
-                    sx={{
-                      fontWeight: 800,
-                      color: colors.textPrimary,
-                      fontFamily: isRtl ? farsiDisplayStack : 'inherit',
-                    }}
-                  >
-                    {LL.customerProfile.tabMyOrders()}
-                  </Typography>
-                </Box>
-                {isLoggedIn && (
+                {/* Quick Order Tracker Banner (Navigates to Orders Screen) */}
+                <Box
+                  sx={{
+                    borderRadius: '28px',
+                    p: { xs: 2.5, md: 3 },
+                    backgroundColor: colors.bgCard,
+                    backdropFilter: 'blur(24px)',
+                    boxShadow: colors.shadow,
+                    border: colors.border,
+                    display: 'flex',
+                    flexDirection: { xs: 'column', sm: 'row' },
+                    alignItems: { xs: 'flex-start', sm: 'center' },
+                    justifyContent: 'space-between',
+                    gap: 2,
+                  }}
+                >
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                    <Box
+                      sx={{
+                        width: 48,
+                        height: 48,
+                        borderRadius: '16px',
+                        backgroundColor: colors.itemBg,
+                        border: colors.itemBorder,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: colors.accentBrass,
+                        flexShrink: 0,
+                      }}
+                    >
+                      <ShoppingBag sx={{ fontSize: 24 }} />
+                    </Box>
+                    <Box sx={{ textAlign: isRtl ? 'right' : 'left' }}>
+                      <Typography sx={{ fontWeight: 700, fontSize: '15px', color: colors.textPrimary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                        {LL.customerProfile.orderBannerTitle()}
+                      </Typography>
+                      <Typography sx={{ fontSize: '12px', color: colors.textSecondary, mt: 0.25, fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                        {LL.customerProfile.orderBannerTextDefault()}
+                      </Typography>
+                    </Box>
+                  </Box>
                   <Button
-                    variant="outlined"
-                    onClick={() => navigate(CUSTOMER_ROUTES.ORDERS)}
+                    component={RouterLink}
+                    to={CUSTOMER_ROUTES.ORDERS}
+                    variant="contained"
                     endIcon={isRtl ? <ArrowBack sx={{ fontSize: 16 }} /> : <ArrowForward sx={{ fontSize: 16 }} />}
                     sx={{
                       borderRadius: '9999px',
-                      borderColor: colors.accentBrass,
-                      color: colors.textPrimary,
                       textTransform: 'none',
-                      fontWeight: 600,
+                      backgroundColor: colors.buttonPrimaryBg,
+                      color: colors.buttonPrimaryColor,
                       fontSize: '12px',
-                      fontFamily: 'inherit',
-                      '&:hover': {
-                        borderColor: colors.accentBrass,
-                        backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
-                      },
+                      fontWeight: 700,
+                      px: 2.5,
+                      py: 1,
+                      whiteSpace: 'nowrap',
+                      fontFamily: isRtl ? farsiFont : 'inherit',
+                      alignSelf: { xs: 'stretch', sm: 'auto' },
+                      '&:hover': { backgroundColor: colors.buttonPrimaryHover },
                     }}
                   >
                     {LL.customerProfile.goToOrders()}
                   </Button>
-                )}
-              </Box>
-
-              {!isLoggedIn ? (
-                <Box sx={{ py: 6, textAlign: 'center', color: colors.textSecondary }}>
-                  <Typography sx={{ mb: 2.5, fontSize: '14px', fontFamily: 'inherit' }}>
-                    {LL.customerProfile.guestNoOrders()}
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    onClick={() => navigate(CUSTOMER_ROUTES.LOGIN)}
-                    startIcon={<Login sx={{ fontSize: 16 }} />}
-                    sx={{
-                      borderRadius: '9999px',
-                      backgroundColor: colors.buttonPrimaryBg,
-                      color: colors.buttonPrimaryColor,
-                      px: 3.5,
-                      py: 1,
-                      textTransform: 'none',
-                      fontWeight: 700,
-                      fontFamily: 'inherit',
-                      '&:hover': { backgroundColor: colors.buttonPrimaryHover },
-                    }}
-                  >
-                    {LL.customerProfile.loginButton()}
-                  </Button>
                 </Box>
-              ) : ordersLoading ? (
-                <Box sx={{ py: 6, display: 'flex', justifyContent: 'center' }}>
-                  <CircularProgress size={32} sx={{ color: colors.accentBrass }} />
-                </Box>
-              ) : myOrders.length > 0 ? (
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}>
-                  {myOrders.map((order) => (
-                    <Box
-                      key={order.id}
-                      sx={{
-                        p: { xs: 2, md: 2.5 },
-                        borderRadius: '20px',
-                        backgroundColor: colors.itemBg,
-                        border: colors.itemBorder,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: 1.5,
-                      }}
-                    >
-                      <Box
-                        sx={{
-                          display: 'flex',
-                          flexWrap: 'wrap',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          gap: 1.5,
-                          pb: 1.5,
-                          borderBottom: colors.borderSubtle,
-                        }}
-                      >
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-                          <Typography sx={{ fontWeight: 800, fontSize: '14px', color: colors.textPrimary, fontFamily: 'inherit' }}>
-                            سفارش #{order.orderNumber}
-                          </Typography>
-                          <OrderStatusChip status={order.status} />
-                        </Box>
-                        <Typography sx={{ fontSize: '12px', color: colors.textMuted, fontFamily: 'inherit' }}>
-                          {formatDate(order.createdAt)}
-                        </Typography>
-                      </Box>
-
-                      {/* Items List */}
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
-                        {order.items.map((item) => (
-                          <Box
-                            key={item.id}
-                            sx={{
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
-                              fontSize: '13px',
-                              fontFamily: 'inherit',
-                            }}
-                          >
-                            <Typography sx={{ color: colors.textPrimary, fontWeight: 500, fontFamily: 'inherit' }}>
-                              {item.productName}{' '}
-                              <Typography component="span" sx={{ color: colors.textMuted, fontSize: '12px', fontFamily: 'inherit' }}>
-                                (تعداد: {item.quantity})
-                              </Typography>
-                            </Typography>
-                            <Typography sx={{ color: colors.textSecondary, fontWeight: 600, fontFamily: 'inherit' }}>
-                              <PriceDisplay priceInUSD={item.totalPrice} showSymbol={true} />
-                            </Typography>
-                          </Box>
-                        ))}
-                      </Box>
-
-                      {/* Order Footer */}
-                      <Box
-                        sx={{
-                          pt: 1.5,
-                          borderTop: colors.borderSubtle,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                        }}
-                      >
-                        <Typography sx={{ fontSize: '13px', fontWeight: 600, color: colors.textSecondary, fontFamily: 'inherit' }}>
-                          مبلغ کل فاکتور:
-                        </Typography>
-                        <Typography sx={{ fontSize: '15px', fontWeight: 800, color: colors.accentBrass, fontFamily: 'inherit' }}>
-                          <PriceDisplay priceInUSD={order.total} showSymbol={true} />
-                        </Typography>
-                      </Box>
-                    </Box>
-                  ))}
-                </Box>
-              ) : (
-                <Box sx={{ py: 6, textAlign: 'center', color: colors.textSecondary }}>
-                  <Typography sx={{ mb: 2, fontSize: '14px', fontFamily: 'inherit' }}>
-                    {LL.customerProfile.noOrdersFound()}
-                  </Typography>
-                  <Button
-                    variant="contained"
-                    onClick={() => navigate(CUSTOMER_ROUTES.PRODUCTS)}
-                    sx={{
-                      borderRadius: '9999px',
-                      backgroundColor: colors.buttonPrimaryBg,
-                      color: colors.buttonPrimaryColor,
-                      px: 3,
-                      textTransform: 'none',
-                      fontWeight: 700,
-                      fontFamily: 'inherit',
-                      '&:hover': { backgroundColor: colors.buttonPrimaryHover },
-                    }}
-                  >
-                    {LL.customerProfile.startShopping()}
-                  </Button>
-                </Box>
-              )}
-            </Box>
+              </Grid>
+            </Grid>
           )}
 
-          {/* TAB 2: Account Security (No 2FA) */}
-          {activeTab === 2 && (
+          {/* TAB 1: Account Security & Authentication */}
+          {activeTab === 1 && (
             <Box
               sx={{
                 width: '100%',
-                borderRadius: '28px',
-                p: { xs: 2.5, md: 3.5 },
-                backgroundColor: colors.bgCard,
-                backdropFilter: 'blur(24px)',
-                boxShadow: colors.shadow,
-                border: colors.border,
-                textAlign: 'right',
+                direction: isRtl ? 'rtl' : 'ltr',
               }}
             >
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
-                <Security sx={{ fontSize: 22, color: colors.accentBrass }} />
-                <Typography
-                  variant="h6"
-                  sx={{
-                    fontWeight: 800,
-                    color: colors.textPrimary,
-                    fontFamily: isRtl ? farsiDisplayStack : 'inherit',
-                  }}
-                >
-                  {LL.customerProfile.securityTitle()}
-                </Typography>
-              </Box>
+              <Typography
+                variant="h6"
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '18px',
+                  color: colors.textPrimary,
+                  mb: 3,
+                  textAlign: isRtl ? 'right' : 'left',
+                  fontFamily: isRtl ? farsiFont : 'inherit',
+                }}
+              >
+                {LL.customerProfile.securityTitle()}
+              </Typography>
 
               {!isLoggedIn && (
                 <Alert
@@ -1423,7 +1205,7 @@ export function CustomerProfile() {
                     borderRadius: '16px',
                     backgroundColor: isDark ? 'rgba(32, 32, 28, 0.8)' : 'rgba(247, 246, 243, 0.8)',
                     color: colors.textPrimary,
-                    fontFamily: 'inherit',
+                    fontFamily: isRtl ? farsiFont : 'inherit',
                     '& .MuiAlert-icon': { color: colors.accentBrass },
                   }}
                 >
@@ -1442,13 +1224,14 @@ export function CustomerProfile() {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
+                    direction: isRtl ? 'rtl' : 'ltr',
                   }}
                 >
-                  <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: colors.textPrimary, mb: 0.5, fontFamily: 'inherit' }}>
+                  <Box sx={{ textAlign: isRtl ? 'right' : 'left' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: colors.textPrimary, mb: 0.5, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                       {LL.customerProfile.email()}
                     </Typography>
-                    <Typography dir="ltr" sx={{ fontSize: '13px', color: colors.textSecondary, fontFamily: 'inherit' }}>
+                    <Typography dir="ltr" sx={{ fontSize: '13px', color: colors.textSecondary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                       {displayEmail}
                     </Typography>
                   </Box>
@@ -1467,13 +1250,14 @@ export function CustomerProfile() {
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
                     gap: 1.5,
+                    direction: isRtl ? 'rtl' : 'ltr',
                   }}
                 >
-                  <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: colors.textPrimary, mb: 0.5, fontFamily: 'inherit' }}>
+                  <Box sx={{ textAlign: isRtl ? 'right' : 'left' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: colors.textPrimary, mb: 0.5, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                       {LL.customerProfile.changePassword()}
                     </Typography>
-                    <Typography sx={{ fontSize: '12px', color: colors.textSecondary, fontFamily: 'inherit' }}>
+                    <Typography sx={{ fontSize: '12px', color: colors.textSecondary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                       {LL.customerProfile.changePasswordDesc()}
                     </Typography>
                   </Box>
@@ -1492,7 +1276,7 @@ export function CustomerProfile() {
                           borderColor: colors.accentBrass,
                           color: colors.textPrimary,
                           fontWeight: 600,
-                          fontFamily: 'inherit',
+                          fontFamily: isRtl ? farsiFont : 'inherit',
                           '&:hover': {
                             borderColor: colors.accentBrass,
                             backgroundColor: isDark ? 'rgba(255,255,255,0.04)' : 'rgba(0,0,0,0.04)',
@@ -1518,13 +1302,14 @@ export function CustomerProfile() {
                     justifyContent: 'space-between',
                     flexWrap: 'wrap',
                     gap: 1.5,
+                    direction: isRtl ? 'rtl' : 'ltr',
                   }}
                 >
-                  <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: colors.textPrimary, mb: 0.5, fontFamily: 'inherit' }}>
+                  <Box sx={{ textAlign: isRtl ? 'right' : 'left' }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '14px', color: colors.textPrimary, mb: 0.5, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                       {LL.customerProfile.logout()}
                     </Typography>
-                    <Typography sx={{ fontSize: '12px', color: colors.textSecondary, fontFamily: 'inherit' }}>
+                    <Typography sx={{ fontSize: '12px', color: colors.textSecondary, fontFamily: isRtl ? farsiFont : 'inherit' }}>
                       {LL.customerProfile.logoutDesc()}
                     </Typography>
                   </Box>
@@ -1539,7 +1324,7 @@ export function CustomerProfile() {
                       borderRadius: '9999px',
                       textTransform: 'none',
                       fontWeight: 600,
-                      fontFamily: 'inherit',
+                      fontFamily: isRtl ? farsiFont : 'inherit',
                       '&.Mui-disabled': { opacity: 0.45 },
                     }}
                   >
@@ -1550,8 +1335,6 @@ export function CustomerProfile() {
             </Box>
           )}
         </Box>
-
-        {/* ----------------- DIALOGS ----------------- */}
 
         {/* Dialog 1: Edit Profile */}
         <Dialog
@@ -1565,18 +1348,18 @@ export function CustomerProfile() {
               backgroundColor: isDark ? '#1a1a17' : '#ffffff',
               backgroundImage: 'none',
               border: colors.border,
-              fontFamily: theme.typography.fontFamily,
+              fontFamily: isRtl ? farsiFont : theme.typography.fontFamily,
               p: 1,
             },
           }}
         >
           <DialogTitle
             sx={{
-              textAlign: 'right',
+              textAlign: isRtl ? 'right' : 'left',
               fontWeight: 700,
               color: colors.textPrimary,
               pb: 1,
-              fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+              fontFamily: isRtl ? farsiFont : 'inherit',
             }}
           >
             {LL.customerProfile.editProfileDialogTitle()}
@@ -1585,14 +1368,15 @@ export function CustomerProfile() {
             <TextField
               label={LL.customerProfile.firstName()}
               value={profileForm.name}
-              onChange={(e) => setProfileForm({ ...profileForm, name: e.target.value })}
+              disabled
               fullWidth
               size="small"
+              helperText="جهت تغییر نام به پشتیبانی پیام دهید"
             />
             <TextField
               label={LL.customerProfile.lastName()}
               value={profileForm.lastName}
-              onChange={(e) => setProfileForm({ ...profileForm, lastName: e.target.value })}
+              disabled
               fullWidth
               size="small"
             />
@@ -1609,7 +1393,7 @@ export function CustomerProfile() {
             <Button
               onClick={() => setEditProfileOpen(false)}
               color="inherit"
-              sx={{ borderRadius: '9999px', textTransform: 'none', fontFamily: 'inherit' }}
+              sx={{ borderRadius: '9999px', textTransform: 'none', fontFamily: isRtl ? farsiFont : 'inherit' }}
             >
               {LL.customerProfile.cancel()}
             </Button>
@@ -1620,7 +1404,7 @@ export function CustomerProfile() {
               sx={{
                 borderRadius: '9999px',
                 textTransform: 'none',
-                fontFamily: 'inherit',
+                fontFamily: isRtl ? farsiFont : 'inherit',
                 backgroundColor: colors.buttonPrimaryBg,
                 color: colors.buttonPrimaryColor,
                 px: 3,
@@ -1644,18 +1428,18 @@ export function CustomerProfile() {
               backgroundColor: isDark ? '#1a1a17' : '#ffffff',
               backgroundImage: 'none',
               border: colors.border,
-              fontFamily: theme.typography.fontFamily,
+              fontFamily: isRtl ? farsiFont : theme.typography.fontFamily,
               p: 1,
             },
           }}
         >
           <DialogTitle
             sx={{
-              textAlign: 'right',
+              textAlign: isRtl ? 'right' : 'left',
               fontWeight: 700,
               color: colors.textPrimary,
               pb: 1,
-              fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+              fontFamily: isRtl ? farsiFont : 'inherit',
             }}
           >
             {LL.customerProfile.editAddressDialogTitle()}
@@ -1717,7 +1501,7 @@ export function CustomerProfile() {
             <Button
               onClick={() => setEditAddressOpen(false)}
               color="inherit"
-              sx={{ borderRadius: '9999px', textTransform: 'none', fontFamily: 'inherit' }}
+              sx={{ borderRadius: '9999px', textTransform: 'none', fontFamily: isRtl ? farsiFont : 'inherit' }}
             >
               {LL.customerProfile.cancel()}
             </Button>
@@ -1728,7 +1512,7 @@ export function CustomerProfile() {
               sx={{
                 borderRadius: '9999px',
                 textTransform: 'none',
-                fontFamily: 'inherit',
+                fontFamily: isRtl ? farsiFont : 'inherit',
                 backgroundColor: colors.buttonPrimaryBg,
                 color: colors.buttonPrimaryColor,
                 px: 3,
@@ -1740,7 +1524,7 @@ export function CustomerProfile() {
           </DialogActions>
         </Dialog>
 
-        {/* Dialog 3: Edit Preferred Sizing */}
+        {/* Dialog 3: Edit Preferred Sizing with Dropdown Selects */}
         <Dialog
           open={editPreferencesOpen}
           onClose={() => setEditPreferencesOpen(false)}
@@ -1752,63 +1536,104 @@ export function CustomerProfile() {
               backgroundColor: isDark ? '#1a1a17' : '#ffffff',
               backgroundImage: 'none',
               border: colors.border,
-              fontFamily: theme.typography.fontFamily,
+              fontFamily: isRtl ? farsiFont : theme.typography.fontFamily,
               p: 1,
             },
           }}
         >
           <DialogTitle
             sx={{
-              textAlign: 'right',
+              textAlign: isRtl ? 'right' : 'left',
               fontWeight: 700,
               color: colors.textPrimary,
               pb: 1,
-              fontFamily: isRtl ? farsiDisplayStack : 'inherit',
+              fontFamily: isRtl ? farsiFont : 'inherit',
             }}
           >
             {LL.customerProfile.editPreferencesDialogTitle()}
           </DialogTitle>
-          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: '16px !important' }}>
-            <TextField
-              label={LL.customerProfile.preferredClothingSize()}
-              value={prefForm.clothingSize}
-              onChange={(e) => setPrefForm({ ...prefForm, clothingSize: e.target.value })}
-              fullWidth
-              size="small"
-              placeholder="e.g. M / L"
-            />
-            <TextField
-              label={LL.customerProfile.standardShoeSize()}
-              value={prefForm.shoeSize}
-              onChange={(e) => setPrefForm({ ...prefForm, shoeSize: e.target.value })}
-              fullWidth
-              size="small"
-              placeholder="e.g. 42 EU (8.5 US)"
-            />
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: '16px !important' }}>
+            {/* Apparel / Clothing Size Dropdown */}
+            <FormControl fullWidth size="small">
+              <InputLabel id="apparel-size-label" sx={{ fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                {LL.customerProfile.preferredClothingSize()}
+              </InputLabel>
+              <Select
+                labelId="apparel-size-label"
+                value={prefForm.clothingSize}
+                label={LL.customerProfile.preferredClothingSize()}
+                onChange={(e) => setPrefForm({ ...prefForm, clothingSize: e.target.value })}
+                sx={{
+                  fontFamily: isRtl ? farsiFont : 'inherit',
+                  textAlign: isRtl ? 'right' : 'left',
+                  borderRadius: '12px',
+                }}
+              >
+                <MenuItem value="" sx={{ fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                  <em>—</em>
+                </MenuItem>
+                {APPAREL_SIZES.map((size) => (
+                  <MenuItem key={size} value={size} sx={{ fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                    {size}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+
+            {/* Footwear / Shoe Size Dropdown */}
+            <FormControl fullWidth size="small">
+              <InputLabel id="footwear-size-label" sx={{ fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                {LL.customerProfile.standardShoeSize()}
+              </InputLabel>
+              <Select
+                labelId="footwear-size-label"
+                value={prefForm.shoeSize}
+                label={LL.customerProfile.standardShoeSize()}
+                onChange={(e) => setPrefForm({ ...prefForm, shoeSize: e.target.value })}
+                sx={{
+                  fontFamily: isRtl ? farsiFont : 'inherit',
+                  textAlign: isRtl ? 'right' : 'left',
+                  borderRadius: '12px',
+                }}
+              >
+                <MenuItem value="" sx={{ fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                  <em>—</em>
+                </MenuItem>
+                {FOOTWEAR_EU_SIZES.map((eu) => {
+                  const us = euToUs(eu);
+                  const label = us ? `${eu} EU (${us} US)` : `${eu} EU`;
+                  return (
+                    <MenuItem key={eu} value={label} sx={{ fontFamily: isRtl ? farsiFont : 'inherit' }}>
+                      {label}
+                    </MenuItem>
+                  );
+                })}
+              </Select>
+            </FormControl>
           </DialogContent>
           <DialogActions sx={{ px: 3, pb: 2, justifyContent: 'space-between' }}>
             <Button
               onClick={() => setEditPreferencesOpen(false)}
               color="inherit"
-              sx={{ borderRadius: '9999px', textTransform: 'none', fontFamily: 'inherit' }}
+              sx={{ borderRadius: '9999px', textTransform: 'none', fontFamily: isRtl ? farsiFont : 'inherit' }}
             >
               {LL.customerProfile.cancel()}
             </Button>
             <Button
               variant="contained"
               onClick={handleSavePreferences}
-              disabled={!isLoggedIn}
+              disabled={updatingProfile || !isLoggedIn}
               sx={{
                 borderRadius: '9999px',
                 textTransform: 'none',
-                fontFamily: 'inherit',
+                fontFamily: isRtl ? farsiFont : 'inherit',
                 backgroundColor: colors.buttonPrimaryBg,
                 color: colors.buttonPrimaryColor,
                 px: 3,
                 '&:hover': { backgroundColor: colors.buttonPrimaryHover },
               }}
             >
-              {LL.customerProfile.saveChanges()}
+              {updatingProfile ? <CircularProgress size={20} color="inherit" /> : LL.customerProfile.saveChanges()}
             </Button>
           </DialogActions>
         </Dialog>

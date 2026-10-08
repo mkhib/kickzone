@@ -2,20 +2,38 @@ import React from 'react';
 import { Layout } from '@kickzone-workspace/layout';
 import { Headerbar } from '@kickzone-workspace/customers-headerbar';
 import { CustomersFooter } from '@kickzone-workspace/customers-footer';
+import { CustomersTabbar } from './CustomersTabbar';
 
-interface CustomersLayoutProps {
+export interface CustomersLayoutProps {
   children: React.ReactNode;
   drawerItems?: React.ReactNode;
+  handledInTabbarIds?: string[];
 }
 
 export function CustomersLayout({
   children,
   drawerItems,
+  handledInTabbarIds,
 }: CustomersLayoutProps) {
-  const header = <Headerbar />;
+  const header = (
+    <Headerbar
+      drawerItems={drawerItems}
+      handledInTabbarIds={handledInTabbarIds}
+    />
+  );
   const footer = <CustomersFooter />;
+  const bottomBar = (
+    <CustomersTabbar handledInTabbarIds={handledInTabbarIds} />
+  );
 
-  return <Layout header={header} body={children} footer={footer} />;
+  return (
+    <Layout
+      header={header}
+      body={children}
+      footer={footer}
+      bottomBar={bottomBar}
+    />
+  );
 }
 
 export default CustomersLayout;

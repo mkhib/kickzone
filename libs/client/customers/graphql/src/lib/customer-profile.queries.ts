@@ -11,6 +11,8 @@ export const GET_MY_PROFILE = gql`
       state
       zipCode
       country
+      clothingSize
+      shoeSize
     }
   }
 `;
@@ -26,6 +28,8 @@ export const UPDATE_MY_PROFILE = gql`
       state
       zipCode
       country
+      clothingSize
+      shoeSize
     }
   }
 `;

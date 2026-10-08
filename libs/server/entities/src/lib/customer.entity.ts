@@ -43,6 +43,14 @@ export class CustomerProfile {
   @Column({ nullable: true })
   country?: string;
 
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  clothingSize?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  shoeSize?: string;
+
   @OneToOne(() => User, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'userId' })
   user: User;

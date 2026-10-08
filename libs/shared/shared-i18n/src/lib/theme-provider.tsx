@@ -327,21 +327,82 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
             },
           },
         },
+        MuiBackdrop: {
+          styleOverrides: {
+            root: {
+              backdropFilter: 'blur(8px)',
+              WebkitBackdropFilter: 'blur(8px)',
+              backgroundColor:
+                mode === 'dark'
+                  ? 'rgba(0, 0, 0, 0.45) !important'
+                  : 'rgba(26, 26, 25, 0.2) !important',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            },
+            invisible: {
+              backgroundColor: 'transparent !important',
+              backdropFilter: 'none !important',
+              WebkitBackdropFilter: 'none !important',
+            },
+          },
+        },
         MuiDrawer: {
           styleOverrides: {
             paper: {
               backgroundColor:
                 mode === 'dark'
-                  ? 'rgba(15, 15, 14, 0.94) !important'
-                  : 'rgba(250, 249, 247, 0.94) !important',
-              backdropFilter: 'blur(20px) saturate(160%) !important',
-              WebkitBackdropFilter: 'blur(20px) saturate(160%) !important',
-              borderRight: `1px solid ${brand.divider}`,
-              borderLeft: 'none',
+                  ? 'rgba(18, 18, 16, 0.72) !important'
+                  : 'rgba(250, 249, 247, 0.72) !important',
+              backgroundImage:
+                mode === 'dark'
+                  ? 'linear-gradient(135deg, rgba(255, 255, 255, 0.07) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(0, 0, 0, 0.2) 100%) !important'
+                  : 'linear-gradient(135deg, rgba(255, 255, 255, 0.7) 0%, rgba(250, 249, 247, 0.45) 50%, rgba(245, 243, 238, 0.6) 100%) !important',
+              backdropFilter: 'blur(24px) saturate(190%) !important',
+              WebkitBackdropFilter: 'blur(24px) saturate(190%) !important',
+              color: `${brand.text} !important`,
+              borderRight:
+                mode === 'dark'
+                  ? '1px solid rgba(240, 239, 235, 0.12) !important'
+                  : '1px solid rgba(255, 255, 255, 0.8) !important',
+              borderLeft: 'none !important',
               boxShadow:
                 mode === 'dark'
-                  ? '0 10px 32px 0 rgba(0, 0, 0, 0.5)'
-                  : '0 8px 28px 0 rgba(26, 26, 25, 0.08)',
+                  ? '0 24px 50px -12px rgba(0, 0, 0, 0.7), 0 8px 24px 0 rgba(0, 0, 0, 0.4), inset 0 1px 2px 0 rgba(255, 255, 255, 0.12), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.35) !important'
+                  : '0 20px 48px -10px rgba(180, 165, 140, 0.25), 0 8px 24px 0 rgba(26, 26, 25, 0.06), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(143, 132, 104, 0.08) !important',
+              transition:
+                'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease !important',
+              '& .MuiDivider-root': {
+                borderColor:
+                  mode === 'dark'
+                    ? 'rgba(240, 239, 235, 0.08)'
+                    : 'rgba(26, 26, 25, 0.08)',
+              },
+              '& .MuiListItemButton-root': {
+                borderRadius: '10px',
+                margin: '2px 8px',
+                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                '&:hover': {
+                  backgroundColor:
+                    mode === 'dark'
+                      ? 'rgba(255, 255, 255, 0.08)'
+                      : 'rgba(26, 26, 25, 0.05)',
+                },
+                '&.Mui-selected': {
+                  backgroundColor:
+                    mode === 'dark'
+                      ? 'rgba(197, 184, 154, 0.2)'
+                      : 'rgba(143, 132, 104, 0.12)',
+                  '&:hover': {
+                    backgroundColor:
+                      mode === 'dark'
+                        ? 'rgba(197, 184, 154, 0.26)'
+                        : 'rgba(143, 132, 104, 0.18)',
+                  },
+                },
+              },
+              '& .MuiListItemIcon-root': {
+                color: mode === 'dark' ? brand.primaryLight : brand.primary,
+                minWidth: 40,
+              },
             },
           },
         },

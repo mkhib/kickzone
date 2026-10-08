@@ -44,26 +44,9 @@ const mockProfileData = {
     state: 'تهران',
     zipCode: '1987654321',
     country: 'ایران',
+    clothingSize: 'M',
+    shoeSize: '42 EU (9 US)',
   },
-  myOrders: [
-    {
-      id: 'ord-1',
-      orderNumber: 'KZ-1001',
-      status: 'PROCESSING',
-      total: 18500000,
-      createdAt: new Date().toISOString(),
-      items: [
-        {
-          id: 'item-1',
-          productId: 'prod-1',
-          productName: 'کتونی نایکی جردن',
-          quantity: 1,
-          unitPrice: 18500000,
-          totalPrice: 18500000,
-        },
-      ],
-    },
-  ],
 };
 
 const mockMutationFn = vi.fn().mockResolvedValue({ data: {} });
@@ -75,18 +58,6 @@ vi.mock('@apollo/client/react', () => ({
     refetch: vi.fn(),
   }),
   useMutation: () => [mockMutationFn, { loading: false }],
-}));
-
-vi.mock('@kickzone-workspace/order-status-chip', () => ({
-  OrderStatusChip: ({ status }: { status: string }) => (
-    <div data-testid="order-status-chip">{status}</div>
-  ),
-}));
-
-vi.mock('@kickzone-workspace/price-display', () => ({
-  PriceDisplay: ({ priceInUSD }: { priceInUSD: number }) => (
-    <span data-testid="price-display">{priceInUSD} تومان</span>
-  ),
 }));
 
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
@@ -149,14 +120,11 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         changePasswordDesc: () => 'جهت تغییر رمز عبور، لینک بازیابی به ایمیل شما ارسال می‌شود.',
         logout: () => 'خروج از حساب کاربری',
         logoutDesc: () => 'خروج امن از حساب در این مرورگر',
-        noOrdersFound: () => 'هنوز سفارشی ثبت نشده است.',
-        startShopping: () => 'مشاهده و خرید محصولات',
       },
     },
   }),
   useLanguageContext: () => ({ currentLocale: 'fa' }),
   usePageTitle: vi.fn(),
-  farsiDisplayStack: '"El Messiri", "Vazirmatn", "Manrope", sans-serif',
 }));
 
 vi.mock('@kickzone-workspace/snackbar-hook', () => ({
@@ -175,7 +143,7 @@ describe('CustomerProfile', () => {
     };
   });
 
-  it('renders successfully with user details and editorial sections when authenticated', () => {
+  it('renders successfully with user details, preferred sizes from service, and orders navigation', () => {
     render(
       <MemoryRouter>
         <CustomerProfile />
@@ -184,14 +152,20 @@ describe('CustomerProfile', () => {
 
     expect(screen.getAllByText('آرشام پارسا').length).toBeGreaterThan(0);
     expect(screen.getByText('مشخصات و نشانی')).toBeTruthy();
-    expect(screen.getByText('سفارش‌های من')).toBeTruthy();
     expect(screen.getByText('امنیت حساب')).toBeTruthy();
     expect(screen.getByText('اطلاعات کاربری')).toBeTruthy();
     expect(screen.getByText('نشانی تحویل سفارش')).toBeTruthy();
     expect(screen.getByText('سایز انتخابی برای خرید')).toBeTruthy();
     expect(screen.getByText('حساب مشتری')).toBeTruthy();
 
-    // Verify edit buttons are present and not disabled
+    // Verify sizes loaded from backend service
+    expect(screen.getByText('M')).toBeTruthy();
+    expect(screen.getByText('42 EU (9 US)')).toBeTruthy();
+
+    // Verify direct orders button is available
+    expect(screen.getByRole('link', { name: /سفارش‌های من/i })).toBeTruthy();
+
+    // Verify edit buttons are enabled
     const editInfoBtn = screen.getByRole('button', { name: 'ویرایش اطلاعات' });
     expect(editInfoBtn).not.toBeDisabled();
   });
@@ -205,7 +179,7 @@ describe('CustomerProfile', () => {
       </MemoryRouter>
     );
 
-    // Displays the login prompt alert banner at the top
+    // Displays login prompt
     expect(screen.getByText('لطفاً ابتدا وارد حساب کاربری خود شوید.')).toBeTruthy();
     expect(screen.getByRole('button', { name: 'ورود به حساب کاربری' })).toBeTruthy();
 
@@ -242,11 +216,9 @@ describe('CustomerProfile', () => {
     // Dialog opens with title
     expect(screen.getByText('ویرایش نشانی تحویل')).toBeTruthy();
 
-    // Find the postal code input and type Persian digits '۱۲۳۴۵۶۷۸۹۰'
+    // Find postal code input and type Persian digits
     const postalCodeInput = screen.getByLabelText('کد پستی:');
     fireEvent.change(postalCodeInput, { target: { value: '۱۲۳۴۵۶۷۸۹۰' } });
-
-    // The value should be converted to English ASCII '1234567890'
     expect(postalCodeInput).toHaveValue('1234567890');
 
     // Click save changes
@@ -259,6 +231,38 @@ describe('CustomerProfile', () => {
           variables: {
             input: expect.objectContaining({
               zipCode: '1234567890',
+            }),
+          },
+        })
+      );
+    });
+  });
+
+  it('saves preferred sizing selections to backend service', async () => {
+    render(
+      <MemoryRouter>
+        <CustomerProfile />
+      </MemoryRouter>
+    );
+
+    // Click edit preferred sizing button
+    const editPrefBtn = screen.getByRole('button', { name: 'ویرایش' });
+    fireEvent.click(editPrefBtn);
+
+    // Dialog opens
+    expect(screen.getByText('ویرایش سایزهای انتخابی')).toBeTruthy();
+
+    // Click save changes
+    const saveBtn = screen.getByRole('button', { name: 'ذخیره تغییرات' });
+    fireEvent.click(saveBtn);
+
+    await waitFor(() => {
+      expect(mockMutationFn).toHaveBeenCalledWith(
+        expect.objectContaining({
+          variables: {
+            input: expect.objectContaining({
+              clothingSize: 'M',
+              shoeSize: '42 EU (9 US)',
             }),
           },
         })

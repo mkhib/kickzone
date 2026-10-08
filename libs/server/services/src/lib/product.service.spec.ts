@@ -10,6 +10,8 @@ import {
   ProductInfo,
   ProductInfoColor,
   SellerProduct,
+  ProductDescription,
+  SiteLanguage,
 } from '@kickzone-workspace/entities';
 import { TranslationService } from './translation.service';
 import { SizeKind } from '@kickzone-workspace/product-sizes';
@@ -111,6 +113,23 @@ describe('ProductService - Color Handling', () => {
         {
           provide: getRepositoryToken(OrderItem),
           useValue: mockOrderItemRepo,
+        },
+        {
+          provide: getRepositoryToken(ProductDescription),
+          useValue: {
+            find: jest.fn().mockResolvedValue([]),
+            findOne: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockImplementation((dto) => dto),
+            save: jest.fn().mockImplementation((dto) => Promise.resolve(dto)),
+            delete: jest.fn().mockResolvedValue({ affected: 1 }),
+          },
+        },
+        {
+          provide: getRepositoryToken(SiteLanguage),
+          useValue: {
+            find: jest.fn().mockResolvedValue([]),
+            findOne: jest.fn().mockResolvedValue(null),
+          },
         },
         {
           provide: TranslationService,

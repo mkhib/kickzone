@@ -9,42 +9,33 @@ import Divider from '@mui/material/Divider';
 import { styled } from '@mui/material/styles';
 import { ReactNode } from 'react';
 
-const BaseStyledDrawer = styled(Drawer)(({ theme }) => {
-  const isDark = theme.palette.mode === 'dark';
-  return {
+const BaseStyledDrawer = styled(Drawer)({
+  width: DRAWER_WIDTH,
+  flexShrink: 0,
+  '& .MuiDrawer-paper': {
     width: DRAWER_WIDTH,
-    flexShrink: 0,
-    '& .MuiDrawer-paper': {
-      width: DRAWER_WIDTH,
-      boxSizing: 'border-box',
-      marginTop: HEIGHTS.header,
-      height: HEIGHTS.drawer,
-      borderTopLeftRadius: '0 !important',
-      borderBottomLeftRadius: '0 !important',
-      backgroundColor: isDark
-        ? 'rgba(18, 18, 22, 0.92)'
-        : 'rgba(255, 255, 255, 0.9)',
-      color: isDark ? '#ffffff' : '#000000',
-      backdropFilter: 'blur(20px) saturate(180%)',
-      WebkitBackdropFilter: 'blur(20px) saturate(180%)',
-      boxShadow: isDark
-        ? '0 10px 28px rgba(0,0,0,0.5)'
-        : '0 8px 32px 0 rgba(31, 38, 135, 0.15)',
-    },
-  };
+    boxSizing: 'border-box',
+    marginTop: HEIGHTS.header,
+    height: HEIGHTS.drawer,
+    borderTopLeftRadius: '0 !important',
+    borderBottomLeftRadius: '0 !important',
+    borderTopRightRadius: '16px !important',
+    borderBottomRightRadius: '16px !important',
+  },
 });
 
 export const CustomListItemText = styled(ListItemText)(({ theme }) => ({
-  color: theme.palette.mode === 'dark' ? '#ffffff' : '#000000',
+  color: theme.palette.text.primary,
   fontWeight: 600,
 }));
 
-interface StyledDrawerProps {
+export interface StyledDrawerProps {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
   variant?: 'temporary' | 'persistent' | 'permanent';
   keepMounted?: boolean;
+  anchor?: 'left' | 'right' | 'top' | 'bottom';
 }
 
 export function StyledDrawer({
@@ -53,9 +44,8 @@ export function StyledDrawer({
   children,
   variant = 'temporary',
   keepMounted = false,
+  anchor = 'left',
 }: StyledDrawerProps) {
-  const anchor: 'left' | 'right' | 'top' | 'bottom' = 'left';
-
   return (
     <BaseStyledDrawer
       anchor={anchor}
@@ -65,12 +55,22 @@ export function StyledDrawer({
       ModalProps={{ keepMounted }}
     >
       <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
-        <IconButton onClick={onClose}>
+        <IconButton
+          onClick={onClose}
+          sx={{
+            color: 'inherit',
+            transition: 'transform 0.2s ease',
+            '&:hover': {
+              transform: 'scale(1.08)',
+            },
+          }}
+          aria-label="close drawer"
+        >
           <CloseIcon />
         </IconButton>
       </Box>
       <Divider />
-      <List>{children}</List>
+      <List sx={{ px: 0.5, py: 1 }}>{children}</List>
     </BaseStyledDrawer>
   );
 }

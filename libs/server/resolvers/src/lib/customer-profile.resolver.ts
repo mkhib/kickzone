@@ -25,6 +25,12 @@ export class UpdateCustomerProfileInput {
 
   @Field({ nullable: true })
   country?: string;
+
+  @Field({ nullable: true })
+  clothingSize?: string;
+
+  @Field({ nullable: true })
+  shoeSize?: string;
 }
 
 @Resolver(() => CustomerProfile)

@@ -67,4 +67,10 @@ export class CustomerProfileInput {
 
   @Field(() => String, { nullable: true })
   country?: string;
+
+  @Field(() => String, { nullable: true })
+  clothingSize?: string;
+
+  @Field(() => String, { nullable: true })
+  shoeSize?: string;
 }

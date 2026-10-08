@@ -9,6 +9,7 @@ type LayoutProps = ILayoutProps & {
   body: React.ReactNode;
   footer: React.ReactNode;
   loadingComponent?: React.ReactNode;
+  bottomBar?: React.ReactNode;
 };
 
 export interface ILayoutProps {
@@ -21,6 +22,7 @@ export function Layout({
   footer,
   isLoading = false,
   loadingComponent,
+  bottomBar,
 }: LayoutProps) {
   const { handleClose, open, message, severity, progress } = useSnackbar();
 
@@ -50,7 +52,7 @@ export function Layout({
           flex: 1,
           pt: 10, // Increased padding to account for fixed header with blur
           px: { xs: 2, sm: 3, md: 4 },
-          pb: 4,
+          pb: bottomBar ? { xs: 11, sm: 4 } : 4,
         }}
       >
         <Grid container spacing={2}>
@@ -59,7 +61,22 @@ export function Layout({
           </Grid>
         </Grid>
       </Box>
-      <Box>{footer}</Box>
+      <Box sx={{ pb: bottomBar ? { xs: 9, sm: 0 } : 0 }}>{footer}</Box>
+      {bottomBar && (
+        <Box
+          component="aside"
+          sx={{
+            display: { xs: 'block', sm: 'none' },
+            position: 'fixed',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: (theme) => theme.zIndex.appBar,
+          }}
+        >
+          {bottomBar}
+        </Box>
+      )}
       <Snackbar
         open={open}
         message={message}
