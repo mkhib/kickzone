@@ -7,6 +7,7 @@ import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import ErrorOutline from '@mui/icons-material/ErrorOutline';
+import { useTheme } from '@mui/material/styles';
 import { useMutation } from '@apollo/client/react';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
@@ -179,124 +180,405 @@ export function CustomerPaymentCallback() {
     }
   };
 
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
+
   return (
     <CustomersLayout>
-      <GlassmorphismContainer fullHeight>
+      <Box
+        sx={{
+          position: 'relative',
+          minHeight: 'calc(100vh - 120px)',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          py: { xs: 6, md: 10 },
+          px: 2,
+        }}
+      >
+        {/* Ambient liquid lighting glow orbs */}
         <Box
           sx={{
-            maxWidth: 600,
+            position: 'absolute',
+            top: '10%',
+            right: '15%',
+            width: { xs: 260, sm: 420 },
+            height: { xs: 260, sm: 420 },
+            borderRadius: '50%',
+            background: isDark
+              ? 'radial-gradient(circle, rgba(197, 184, 154, 0.15) 0%, rgba(197, 184, 154, 0.02) 65%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(230, 215, 185, 0.5) 0%, rgba(240, 230, 205, 0.18) 60%, transparent 70%)',
+            filter: 'blur(75px)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'floatOrb 14s ease-in-out infinite alternate',
+            '@keyframes floatOrb': {
+              '0%': { transform: 'translate(0, 0) scale(1)' },
+              '100%': { transform: 'translate(-30px, 35px) scale(1.08)' },
+            },
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: '10%',
+            left: '12%',
+            width: { xs: 240, sm: 380 },
+            height: { xs: 240, sm: 380 },
+            borderRadius: '50%',
+            background: isDark
+              ? 'radial-gradient(circle, rgba(140, 120, 80, 0.12) 0%, rgba(100, 85, 55, 0.02) 65%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(245, 230, 215, 0.45) 0%, rgba(240, 220, 200, 0.15) 60%, transparent 70%)',
+            filter: 'blur(80px)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'floatOrb2 16s ease-in-out infinite alternate',
+            '@keyframes floatOrb2': {
+              '0%': { transform: 'translate(0, 0) scale(1)' },
+              '100%': { transform: 'translate(35px, -25px) scale(1.06)' },
+            },
+          }}
+        />
+
+        <GlassmorphismContainer
+          wrapperSx={{
+            width: '100%',
+            maxWidth: 580,
             mx: 'auto',
-            p: 4,
+            position: 'relative',
+            zIndex: 1,
+            p: 0,
+          }}
+          containerSx={{
+            p: { xs: 3.5, sm: 5 },
             textAlign: 'center',
+            borderRadius: '32px !important',
+            backdropFilter: 'blur(30px) saturate(190%)',
+            WebkitBackdropFilter: 'blur(30px) saturate(190%)',
+            background: isDark
+              ? 'linear-gradient(145deg, rgba(28, 28, 24, 0.88) 0%, rgba(20, 20, 18, 0.8) 50%, rgba(15, 15, 14, 0.88) 100%)'
+              : 'linear-gradient(145deg, rgba(255, 255, 255, 0.94) 0%, rgba(250, 248, 244, 0.85) 50%, rgba(245, 242, 236, 0.9) 100%)',
+            border: isDark
+              ? '1px solid rgba(240, 239, 235, 0.12)'
+              : '1px solid rgba(255, 255, 255, 0.95)',
+            boxShadow: isDark
+              ? '0 30px 70px -15px rgba(0, 0, 0, 0.65), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.08)'
+              : '0 25px 60px -15px rgba(180, 160, 130, 0.22), inset 0 1px 2px 0 rgba(255, 255, 255, 1)',
           }}
         >
-          {(verificationStatus === 'pending' ||
-            (!orderData && status === 'OK')) && (
-            <>
-              <CircularProgress size={60} sx={{ mb: 3 }} />
-              <Typography variant="h5" gutterBottom>
-                {!orderData
-                  ? 'در حال بارگذاری اطلاعات سفارش...'
-                  : 'در حال تایید پرداخت...'}
-              </Typography>
-              <Typography variant="body2" color="text.secondary">
-                لطفا صبر کنید
-              </Typography>
-            </>
-          )}
-
-          {verificationStatus === 'success' && (
-            <>
-              <CheckCircle
-                sx={{
-                  fontSize: 80,
-                  color: '#4CAF50',
-                  mb: 3,
-                }}
-              />
-              <Typography variant="h5" gutterBottom color="success.main">
-                پرداخت با موفقیت انجام شد
-              </Typography>
-              {refId && (
-                <Typography variant="body1" sx={{ mt: 2, mb: 3 }}>
-                  شماره تراکنش: {refId}
+          <Box sx={{ width: '100%' }}>
+            {(verificationStatus === 'pending' ||
+              (!orderData && status === 'OK')) && (
+              <Box sx={{ py: 3 }}>
+                <CircularProgress
+                  size={64}
+                  thickness={3}
+                  sx={{
+                    mb: 3,
+                    color: isDark ? '#c5b89a' : '#7c6d48',
+                  }}
+                />
+                <Typography
+                  variant="h5"
+                  gutterBottom
+                  sx={{
+                    fontWeight: 700,
+                    color: isDark ? '#f4f4f2' : '#181816',
+                    fontSize: { xs: '1.25rem', sm: '1.45rem' },
+                  }}
+                >
+                  {!orderData
+                    ? 'در حال بارگذاری اطلاعات سفارش...'
+                    : 'در حال تایید پرداخت...'}
                 </Typography>
-              )}
-              <Alert severity="success" sx={{ mb: 3 }}>
-                سفارش شما با موفقیت ثبت شد و پرداخت انجام شد.
-              </Alert>
-              <Button
-                variant="contained"
-                size="large"
-                onClick={handleContinue}
-                sx={{ mt: 2 }}
-              >
-                ادامه
-              </Button>
-            </>
-          )}
+                <Typography variant="body2" color="text.secondary">
+                  لطفا چند لحظه شکیبا باشید
+                </Typography>
+              </Box>
+            )}
 
-          {verificationStatus === 'error' && (
-            <>
-              <ErrorOutline
-                sx={{
-                  fontSize: 80,
-                  color: '#f44336',
-                  mb: 3,
-                }}
-              />
-              <Typography variant="h5" gutterBottom color="error.main">
-                خطا در پرداخت
-              </Typography>
-              {errorMessage && (
-                <Alert severity="error" sx={{ mb: 3 }}>
-                  {errorMessage}
+            {verificationStatus === 'success' && (
+              <Box>
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 76,
+                    height: 76,
+                    borderRadius: '24px',
+                    mb: 2.5,
+                    backdropFilter: 'blur(16px)',
+                    background: isDark
+                      ? 'rgba(197, 184, 154, 0.15)'
+                      : 'rgba(143, 132, 104, 0.12)',
+                    border: isDark
+                      ? '1px solid rgba(197, 184, 154, 0.35)'
+                      : '1px solid rgba(143, 132, 104, 0.25)',
+                    boxShadow: isDark
+                      ? '0 10px 30px rgba(197, 184, 154, 0.25)'
+                      : '0 10px 25px rgba(143, 132, 104, 0.15)',
+                  }}
+                >
+                  <CheckCircle
+                    sx={{
+                      fontSize: 44,
+                      color: isDark ? '#c5b89a' : '#7c6d48',
+                    }}
+                  />
+                </Box>
+                <Typography
+                  variant="h5"
+                  gutterBottom
+                  sx={{
+                    fontWeight: 800,
+                    color: isDark ? '#f4f4f2' : '#181816',
+                    fontSize: { xs: '1.35rem', sm: '1.6rem' },
+                    mb: 1,
+                  }}
+                >
+                  پرداخت با موفقیت انجام شد
+                </Typography>
+                {refId && (
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 1,
+                      px: 2.5,
+                      py: 1,
+                      borderRadius: '9999px',
+                      background: isDark
+                        ? 'rgba(197, 184, 154, 0.08)'
+                        : 'rgba(143, 132, 104, 0.08)',
+                      border: isDark
+                        ? '1px solid rgba(197, 184, 154, 0.25)'
+                        : '1px solid rgba(143, 132, 104, 0.2)',
+                      mt: 1,
+                      mb: 2.5,
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: 600,
+                        fontFamily: 'monospace',
+                        color: isDark ? '#f4f4f2' : '#181816',
+                        letterSpacing: '0.05em',
+                      }}
+                    >
+                      شماره تراکنش: {refId}
+                    </Typography>
+                  </Box>
+                )}
+                <Alert
+                  severity="success"
+                  sx={{
+                    mb: 3.5,
+                    borderRadius: '20px',
+                    backdropFilter: 'blur(20px)',
+                    background: isDark
+                      ? 'rgba(197, 184, 154, 0.08)'
+                      : 'rgba(143, 132, 104, 0.07)',
+                    border: isDark
+                      ? '1px solid rgba(197, 184, 154, 0.25)'
+                      : '1px solid rgba(143, 132, 104, 0.2)',
+                    color: isDark ? '#f4f4f2' : '#181816',
+                    '& .MuiAlert-icon': {
+                      color: isDark ? '#c5b89a' : '#7c6d48',
+                    },
+                  }}
+                >
+                  سفارش شما با موفقیت ثبت شد و پرداخت تایید گردید.
                 </Alert>
-              )}
-              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-                در صورت کسر وجه از حساب شما، مبلغ تا 72 ساعت آینده به حساب شما
-                بازگردانده می‌شود.
-              </Typography>
-              <Button
-                variant="contained"
-                size="large"
-                component={RouterLink}
-                to={CUSTOMER_ROUTES.ORDERS}
-                sx={{ mt: 2 }}
-              >
-                بازگشت به سفارشات
-              </Button>
-            </>
-          )}
+                <Button
+                  variant="contained"
+                  size="large"
+                  onClick={handleContinue}
+                  sx={{
+                    borderRadius: '9999px',
+                    py: 1.5,
+                    px: 5,
+                    fontWeight: 700,
+                    fontSize: '1rem',
+                    textTransform: 'none',
+                    ...(isDark
+                      ? {
+                          background:
+                            'linear-gradient(135deg, rgba(197, 184, 154, 0.96) 0%, rgba(181, 171, 147, 0.94) 100%)',
+                          color: '#121210',
+                          border: '1px solid rgba(255, 255, 255, 0.4)',
+                          boxShadow:
+                            '0 10px 28px -4px rgba(197, 184, 154, 0.45)',
+                          '&:hover': {
+                            background:
+                              'linear-gradient(135deg, #ffffff 0%, rgba(210, 198, 170, 0.98) 100%)',
+                            transform: 'translateY(-2px)',
+                          },
+                        }
+                      : {
+                          background:
+                            'linear-gradient(135deg, #1f1f1d 0%, #121210 100%)',
+                          color: '#ffffff',
+                          boxShadow: '0 10px 24px -4px rgba(0, 0, 0, 0.28)',
+                          '&:hover': {
+                            background:
+                              'linear-gradient(135deg, #2c2c28 0%, #050505 100%)',
+                            transform: 'translateY(-2px)',
+                          },
+                        }),
+                  }}
+                >
+                  مشاهده جزییات سفارش
+                </Button>
+              </Box>
+            )}
 
-          {verificationStatus === 'cancelled' && (
-            <>
-              <ErrorOutline
-                sx={{
-                  fontSize: 80,
-                  color: '#ff9800',
-                  mb: 3,
-                }}
-              />
-              <Typography variant="h5" gutterBottom color="warning.main">
-                پرداخت لغو شد
-              </Typography>
-              <Alert severity="warning" sx={{ mb: 3 }}>
-                شما پرداخت را لغو کردید. سفارش شما لغو شد.
-              </Alert>
-              <Button
-                variant="contained"
-                size="large"
-                component={RouterLink}
-                to={CUSTOMER_ROUTES.CART}
-                sx={{ mt: 2 }}
-              >
-                بازگشت به سبد خرید
-              </Button>
-            </>
-          )}
-        </Box>
-      </GlassmorphismContainer>
+            {verificationStatus === 'error' && (
+              <Box>
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 76,
+                    height: 76,
+                    borderRadius: '24px',
+                    mb: 2.5,
+                    backdropFilter: 'blur(16px)',
+                    background: 'rgba(239, 68, 68, 0.12)',
+                    border: '1px solid rgba(239, 68, 68, 0.25)',
+                    boxShadow: '0 10px 25px rgba(239, 68, 68, 0.15)',
+                  }}
+                >
+                  <ErrorOutline sx={{ fontSize: 44, color: '#ef4444' }} />
+                </Box>
+                <Typography
+                  variant="h5"
+                  gutterBottom
+                  sx={{
+                    fontWeight: 800,
+                    color: isDark ? '#f4f4f2' : '#181816',
+                    fontSize: { xs: '1.35rem', sm: '1.6rem' },
+                    mb: 1.5,
+                  }}
+                >
+                  خطا در پرداخت
+                </Typography>
+                {errorMessage && (
+                  <Alert
+                    severity="error"
+                    sx={{
+                      mb: 2.5,
+                      borderRadius: '20px',
+                      background: 'rgba(239, 68, 68, 0.08)',
+                      border: '1px solid rgba(239, 68, 68, 0.2)',
+                    }}
+                  >
+                    {errorMessage}
+                  </Alert>
+                )}
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ mb: 3.5, lineHeight: 1.8 }}
+                >
+                  در صورت کسر وجه از حساب شما، مبلغ تا ۷۲ ساعت آینده به حساب شما
+                  بازگردانده می‌شود.
+                </Typography>
+                <Button
+                  variant="contained"
+                  size="large"
+                  component={RouterLink}
+                  to={CUSTOMER_ROUTES.ORDERS}
+                  sx={{
+                    borderRadius: '9999px',
+                    py: 1.5,
+                    px: 4.5,
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    background: isDark ? '#c5b89a' : '#1a1a19',
+                    color: isDark ? '#121210' : '#ffffff',
+                    '&:hover': {
+                      background: isDark ? '#ddd4bf' : '#333331',
+                      transform: 'translateY(-2px)',
+                    },
+                  }}
+                >
+                  بازگشت به سفارشات
+                </Button>
+              </Box>
+            )}
+
+            {verificationStatus === 'cancelled' && (
+              <Box>
+                <Box
+                  sx={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    width: 76,
+                    height: 76,
+                    borderRadius: '24px',
+                    mb: 2.5,
+                    backdropFilter: 'blur(16px)',
+                    background: 'rgba(245, 158, 11, 0.12)',
+                    border: '1px solid rgba(245, 158, 11, 0.25)',
+                    boxShadow: '0 10px 25px rgba(245, 158, 11, 0.15)',
+                  }}
+                >
+                  <ErrorOutline sx={{ fontSize: 44, color: '#f59e0b' }} />
+                </Box>
+                <Typography
+                  variant="h5"
+                  gutterBottom
+                  sx={{
+                    fontWeight: 800,
+                    color: isDark ? '#f4f4f2' : '#181816',
+                    fontSize: { xs: '1.35rem', sm: '1.6rem' },
+                    mb: 1.5,
+                  }}
+                >
+                  پرداخت لغو شد
+                </Typography>
+                <Alert
+                  severity="warning"
+                  sx={{
+                    mb: 3.5,
+                    borderRadius: '20px',
+                    background: 'rgba(245, 158, 11, 0.08)',
+                    border: '1px solid rgba(245, 158, 11, 0.2)',
+                  }}
+                >
+                  شما فرایند پرداخت را لغو کردید. سفارش شما معلق شد.
+                </Alert>
+                <Button
+                  variant="contained"
+                  size="large"
+                  component={RouterLink}
+                  to={CUSTOMER_ROUTES.CART}
+                  sx={{
+                    borderRadius: '9999px',
+                    py: 1.5,
+                    px: 4.5,
+                    fontWeight: 700,
+                    textTransform: 'none',
+                    background: isDark ? '#c5b89a' : '#1a1a19',
+                    color: isDark ? '#121210' : '#ffffff',
+                    '&:hover': {
+                      background: isDark ? '#ddd4bf' : '#333331',
+                      transform: 'translateY(-2px)',
+                    },
+                  }}
+                >
+                  بازگشت به سبد خرید
+                </Button>
+              </Box>
+            )}
+          </Box>
+        </GlassmorphismContainer>
+      </Box>
     </CustomersLayout>
   );
 }

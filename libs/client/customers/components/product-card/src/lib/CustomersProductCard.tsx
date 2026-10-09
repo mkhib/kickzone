@@ -503,7 +503,11 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       return activeColorway.name;
     }
     if (variantColors.length > 0) {
-      return formatVariantColorNames(variantColors);
+      const cleanColors = variantColors.map((c) => ({
+        name: c.name || '',
+        hexCode: c.hexCode,
+      }));
+      return formatVariantColorNames(cleanColors);
     }
     return '';
   }, [activeColorway, variantColors]);
@@ -1349,8 +1353,12 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 textTransform: 'none',
                 position: 'relative',
                 overflow: 'hidden',
-                backdropFilter: 'blur(20px) saturate(190%)',
-                WebkitBackdropFilter: 'blur(20px) saturate(190%)',
+                backdropFilter: isDisabled
+                  ? 'blur(8px)'
+                  : 'blur(20px) saturate(190%)',
+                WebkitBackdropFilter: isDisabled
+                  ? 'blur(8px)'
+                  : 'blur(20px) saturate(190%)',
                 transition:
                   'all 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
                 ...(isDisabled
@@ -1363,8 +1371,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                         ? '1px solid rgba(255, 255, 255, 0.08)'
                         : '1px solid rgba(0, 0, 0, 0.08)',
                       boxShadow: 'none',
-                      backdropFilter: 'blur(8px)',
-                      WebkitBackdropFilter: 'blur(8px)',
                     }
                   : isDark
                   ? {

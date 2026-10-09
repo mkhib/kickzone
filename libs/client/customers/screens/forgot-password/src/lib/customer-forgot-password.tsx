@@ -7,16 +7,17 @@ import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersForgotPassword } from '@kickzone-workspace/customers-auth-hooks';
 import { getErrorMessage } from '@kickzone-workspace/translations';
 import LockResetOutlined from '@mui/icons-material/LockResetOutlined';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
+import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
+import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import TextField from '@mui/material/TextField';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CssBaseline from '@mui/material/CssBaseline';
-import Paper from '@mui/material/Paper';
-import Alert from '@mui/material/Alert';
-import { colors } from '@kickzone-workspace/colors';
+import { useTheme } from '@mui/material/styles';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 
 export function CustomerForgotPassword() {
@@ -25,6 +26,12 @@ export function CustomerForgotPassword() {
   const { showSnackbar } = useSnackbar();
   const { handleForgotPassword, forgotPasswordLoading } =
     useCustomersForgotPassword();
+  const theme = useTheme();
+
+  const isDark = theme.palette.mode === 'dark';
+  const isRtl = theme.direction === 'rtl';
+
+  const goldColor = isDark ? '#c5b89a' : '#7c6d48';
 
   const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
@@ -55,118 +62,398 @@ export function CustomerForgotPassword() {
 
   return (
     <CustomersLayout>
-      <Container component="main" maxWidth="xs">
-        <CssBaseline />
-        <Paper
-          elevation={3}
+      <Box
+        sx={{
+          minHeight: 'calc(100vh - 120px)',
+          width: '100%',
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          pt: { xs: 8, sm: 10 },
+          pb: { xs: 8, sm: 10 },
+          px: 2,
+          overflow: 'hidden',
+        }}
+      >
+        {/* Ambient liquid lighting glow orbs */}
+        <Box
           sx={{
-            marginTop: 8,
-            marginBottom: 8,
-            padding: 4,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            borderRadius: 2,
+            position: 'absolute',
+            top: { xs: '5%', md: '10%' },
+            right: { xs: '-5%', md: '15%' },
+            width: { xs: 260, sm: 400, md: 480 },
+            height: { xs: 260, sm: 400, md: 480 },
+            borderRadius: '50%',
+            background: isDark
+              ? 'radial-gradient(circle, rgba(197, 184, 154, 0.15) 0%, rgba(197, 184, 154, 0.02) 65%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(230, 215, 185, 0.55) 0%, rgba(240, 230, 205, 0.2) 60%, transparent 70%)',
+            filter: 'blur(70px)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'floatOrb 14s ease-in-out infinite alternate',
+            '@keyframes floatOrb': {
+              '0%': { transform: 'translate(0, 0) scale(1)' },
+              '100%': { transform: 'translate(-30px, 35px) scale(1.08)' },
+            },
           }}
-        >
-          <LockResetOutlined sx={{ fontSize: 40, color: colors.main }} />
-          <Typography
-            component="h1"
-            variant="h5"
-            sx={{ mt: 2, mb: 1, color: colors.text }}
-          >
-            {LL.authorization.resetYourPassword()}
-          </Typography>
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: { xs: '5%', md: '8%' },
+            left: { xs: '-5%', md: '12%' },
+            width: { xs: 240, sm: 380, md: 440 },
+            height: { xs: 240, sm: 380, md: 440 },
+            borderRadius: '50%',
+            background: isDark
+              ? 'radial-gradient(circle, rgba(140, 120, 80, 0.12) 0%, rgba(100, 85, 55, 0.02) 65%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(245, 230, 215, 0.5) 0%, rgba(240, 220, 200, 0.18) 60%, transparent 70%)',
+            filter: 'blur(80px)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'floatOrb2 16s ease-in-out infinite alternate',
+            '@keyframes floatOrb2': {
+              '0%': { transform: 'translate(0, 0) scale(1)' },
+              '100%': { transform: 'translate(35px, -25px) scale(1.06)' },
+            },
+          }}
+        />
 
-          {submitted ? (
-            <Box sx={{ mt: 3, textAlign: 'center' }}>
-              <Alert severity="success" sx={{ mb: 3 }}>
-                {LL.authorization.resetLinkSent()}
-              </Alert>
-              <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
-                {LL.checkout.orderProcessed()}
-              </Typography>
-              <Button
-                fullWidth
-                variant="outlined"
-                component={RouterLink}
-                to={CUSTOMER_ROUTES.LOGIN}
-                startIcon={<ArrowBackIcon />}
+        <Container
+          component="main"
+          maxWidth="xs"
+          sx={{ position: 'relative', zIndex: 1, p: 0 }}
+        >
+          <CssBaseline />
+          <GlassmorphismContainer
+            wrapperSx={{
+              p: 0,
+              width: '100%',
+              maxWidth: 460,
+              mx: 'auto',
+            }}
+            containerSx={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              borderRadius: '28px !important',
+              p: { xs: 3, sm: 4.5 },
+              width: '100%',
+              backgroundColor: isDark
+                ? 'rgba(24, 24, 22, 0.82) !important'
+                : 'rgba(255, 255, 255, 0.88) !important',
+              backgroundImage: isDark
+                ? 'linear-gradient(145deg, rgba(28, 28, 24, 0.85) 0%, rgba(20, 20, 18, 0.75) 50%, rgba(15, 15, 14, 0.85) 100%) !important'
+                : 'linear-gradient(145deg, rgba(255, 255, 255, 0.92) 0%, rgba(250, 248, 244, 0.80) 50%, rgba(245, 242, 236, 0.88) 100%) !important',
+              border: isDark
+                ? '1px solid rgba(240, 239, 235, 0.12) !important'
+                : '1px solid rgba(255, 255, 255, 0.9) !important',
+              backdropFilter: 'blur(28px) saturate(190%) !important',
+              WebkitBackdropFilter: 'blur(28px) saturate(190%) !important',
+              boxShadow: isDark
+                ? '0 24px 64px -12px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 2px 0 rgba(255, 255, 255, 0.14), inset 0 -1px 1px 0 rgba(0, 0, 0, 0.3) !important'
+                : '0 24px 60px -12px rgba(180, 165, 140, 0.25), 0 0 0 1px rgba(143, 132, 104, 0.1), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 1px 0 rgba(143, 132, 104, 0.08) !important',
+            }}
+          >
+            {/* Specular top edge highlight */}
+            <Box
+              sx={{
+                position: 'absolute',
+                top: 0,
+                left: '12%',
+                right: '12%',
+                height: '1px',
+                background: isDark
+                  ? 'linear-gradient(90deg, transparent 0%, rgba(197, 184, 154, 0.6) 50%, transparent 100%)'
+                  : 'linear-gradient(90deg, transparent 0%, rgba(143, 132, 104, 0.45) 50%, transparent 100%)',
+                filter: 'blur(0.5px)',
+              }}
+            />
+
+            {/* Floating Liquid Glass Icon Badge */}
+            <Box
+              sx={{
+                width: 64,
+                height: 64,
+                borderRadius: '20px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: isDark
+                  ? 'linear-gradient(135deg, rgba(197, 184, 154, 0.22) 0%, rgba(197, 184, 154, 0.06) 100%)'
+                  : 'linear-gradient(135deg, rgba(168, 152, 112, 0.22) 0%, rgba(168, 152, 112, 0.08) 100%)',
+                border: isDark
+                  ? '1px solid rgba(197, 184, 154, 0.4)'
+                  : '1px solid rgba(143, 132, 104, 0.35)',
+                boxShadow: isDark
+                  ? '0 12px 28px -4px rgba(0, 0, 0, 0.5), 0 0 20px rgba(197, 184, 154, 0.2), inset 0 1px 1px 0 rgba(255, 255, 255, 0.3)'
+                  : '0 10px 24px -4px rgba(168, 152, 112, 0.25), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.85)',
+                backdropFilter: 'blur(16px)',
+                WebkitBackdropFilter: 'blur(16px)',
+                color: goldColor,
+                mb: 2,
+                transition: 'all 0.3s ease',
+                '&:hover': {
+                  transform: 'translateY(-2px) scale(1.03)',
+                },
+              }}
+            >
+              <LockResetOutlined sx={{ fontSize: 32 }} />
+            </Box>
+
+            {/* Brand Sub-label */}
+            <Typography
+              variant="caption"
+              sx={{
+                textTransform: 'uppercase',
+                letterSpacing: '0.24em',
+                fontWeight: 700,
+                fontSize: '0.72rem',
+                color: isDark ? '#c5b89a' : '#8f8468',
+                mb: 0.75,
+              }}
+            >
+              SAINTBALA
+            </Typography>
+
+            {/* Main Title Heading */}
+            <Typography
+              component="h1"
+              variant="h5"
+              sx={{
+                fontWeight: 700,
+                letterSpacing: isRtl ? 0 : '-0.02em',
+                fontSize: { xs: '1.5rem', sm: '1.75rem' },
+                color: isDark ? '#f0efeb' : '#1a1a19',
+                textAlign: 'center',
+                mb: 1,
+              }}
+            >
+              {LL.authorization.resetYourPassword()}
+            </Typography>
+
+            {submitted ? (
+              <Box
                 sx={{
-                  borderColor: colors.main,
-                  color: colors.main,
-                  textDecoration: 'none',
-                  '&:hover': {
-                    borderColor: colors.hoverMain,
-                    backgroundColor: 'rgba(0, 0, 0, 0.04)',
-                  },
+                  mt: 2,
+                  width: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  textAlign: 'center',
+                  gap: 2,
                 }}
               >
-                {LL.authorization.backToLogin()}
-              </Button>
-            </Box>
-          ) : (
-            <>
-              <Typography
-                variant="body2"
-                color="text.secondary"
-                sx={{ mt: 2, mb: 3, textAlign: 'center' }}
-              >
-                {LL.authorization.enterEmailForReset()}
-              </Typography>
-              <Box
-                component="form"
-                onSubmit={handleSubmit}
-                sx={{ mt: 1, width: '100%' }}
-              >
-                <TextField
-                  margin="normal"
-                  required
-                  fullWidth
-                  id="email"
-                  label={LL.form.email()}
-                  name="email"
-                  autoComplete="email"
-                  autoFocus
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  {...getLtrTextFieldProps()}
-                />
-                <Button
-                  type="submit"
-                  fullWidth
-                  variant="contained"
-                  loading={forgotPasswordLoading}
+                <Box
                   sx={{
-                    mt: 3,
-                    mb: 2,
-                    backgroundColor: colors.main,
-                    '&:hover': { backgroundColor: colors.hoverMain },
+                    width: '100%',
+                    p: 2.5,
+                    borderRadius: '20px',
+                    background: isDark
+                      ? 'rgba(16, 185, 129, 0.12)'
+                      : 'rgba(16, 185, 129, 0.1)',
+                    border: '1px solid rgba(16, 185, 129, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: 1.5,
                   }}
                 >
-                  {LL.authorization.sendResetLink()}
-                </Button>
+                  <CheckCircleOutline
+                    sx={{ color: '#10b981', fontSize: 24, flexShrink: 0 }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: '0.88rem',
+                      fontWeight: 600,
+                      color: isDark ? '#34d399' : '#059669',
+                      textAlign: isRtl ? 'right' : 'left',
+                    }}
+                  >
+                    {LL.authorization.resetLinkSent()}
+                  </Typography>
+                </Box>
+
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: isDark ? '#a8a69f' : '#6b7280',
+                    fontSize: '0.86rem',
+                    lineHeight: 1.5,
+                    mb: 1,
+                  }}
+                >
+                  {LL.checkout.orderProcessed()}
+                </Typography>
+
                 <Button
                   fullWidth
-                  variant="text"
                   component={RouterLink}
                   to={CUSTOMER_ROUTES.LOGIN}
-                  startIcon={<ArrowBackIcon />}
+                  startIcon={
+                    isRtl ? (
+                      <ArrowForwardRounded sx={{ fontSize: 18 }} />
+                    ) : (
+                      <ArrowBackRounded sx={{ fontSize: 18 }} />
+                    )
+                  }
                   sx={{
-                    color: colors.main,
-                    textDecoration: 'none',
+                    borderRadius: '9999px',
+                    py: 1.25,
+                    fontWeight: 600,
+                    fontSize: '0.9rem',
+                    textTransform: 'none',
+                    backgroundColor: isDark
+                      ? 'rgba(255, 255, 255, 0.06)'
+                      : 'rgba(0, 0, 0, 0.04)',
+                    border: isDark
+                      ? '1px solid rgba(255, 255, 255, 0.12)'
+                      : '1px solid rgba(0, 0, 0, 0.08)',
+                    color: isDark ? '#f4f4f2' : '#181816',
                     '&:hover': {
-                      backgroundColor: 'rgba(0, 0, 0, 0.04)',
+                      backgroundColor: isDark
+                        ? 'rgba(255, 255, 255, 0.12)'
+                        : 'rgba(0, 0, 0, 0.08)',
                     },
                   }}
                 >
                   {LL.authorization.backToLogin()}
                 </Button>
               </Box>
-            </>
-          )}
-        </Paper>
-      </Container>
+            ) : (
+              <>
+                {/* Subtitle instructions */}
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: isDark ? '#a8a69f' : '#6b7280',
+                    textAlign: 'center',
+                    maxWidth: 340,
+                    mb: 3,
+                    fontSize: '0.86rem',
+                    lineHeight: 1.5,
+                  }}
+                >
+                  {LL.authorization.enterEmailForReset()}
+                </Typography>
+
+                <Box
+                  component="form"
+                  onSubmit={handleSubmit}
+                  sx={{
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2,
+                  }}
+                >
+                  <TextField
+                    required
+                    fullWidth
+                    size="small"
+                    id="email"
+                    label={LL.form.email()}
+                    name="email"
+                    autoComplete="email"
+                    autoFocus
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    {...getLtrTextFieldProps()}
+                  />
+
+                  {/* Primary submit button */}
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    loading={forgotPasswordLoading}
+                    sx={{
+                      mt: 1.5,
+                      mb: 0.5,
+                      py: 1.4,
+                      borderRadius: '9999px',
+                      fontWeight: 700,
+                      fontSize: '0.94rem',
+                      letterSpacing: isRtl ? 0 : '0.03em',
+                      textTransform: 'none',
+                      position: 'relative',
+                      overflow: 'hidden',
+                      backdropFilter: 'blur(20px) saturate(190%)',
+                      WebkitBackdropFilter: 'blur(20px) saturate(190%)',
+                      transition:
+                        'all 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                      ...(isDark
+                        ? {
+                            background:
+                              'linear-gradient(135deg, rgba(197, 184, 154, 0.96) 0%, rgba(181, 171, 147, 0.94) 100%)',
+                            color: '#121210',
+                            border: '1px solid rgba(255, 255, 255, 0.4)',
+                            boxShadow:
+                              '0 10px 28px -4px rgba(197, 184, 154, 0.45), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.6)',
+                            '&:hover': {
+                              background:
+                                'linear-gradient(135deg, #ffffff 0%, rgba(210, 198, 170, 0.98) 100%)',
+                              transform: 'translateY(-2px) scale(1.01)',
+                              boxShadow:
+                                '0 14px 34px -4px rgba(197, 184, 154, 0.6), inset 0 1px 2px 0 rgba(255, 255, 255, 0.9)',
+                            },
+                          }
+                        : {
+                            background:
+                              'linear-gradient(135deg, #1f1f1d 0%, #121210 100%)',
+                            color: '#ffffff',
+                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                            boxShadow:
+                              '0 10px 24px -4px rgba(0, 0, 0, 0.28), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35)',
+                            '&:hover': {
+                              background:
+                                'linear-gradient(135deg, #2c2c28 0%, #050505 100%)',
+                              transform: 'translateY(-2px) scale(1.01)',
+                              boxShadow:
+                                '0 14px 30px -4px rgba(0, 0, 0, 0.38), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.5)',
+                            },
+                          }),
+                    }}
+                  >
+                    {LL.authorization.sendResetLink()}
+                  </Button>
+
+                  {/* Back to Login Button */}
+                  <Button
+                    fullWidth
+                    component={RouterLink}
+                    to={CUSTOMER_ROUTES.LOGIN}
+                    startIcon={
+                      isRtl ? (
+                        <ArrowForwardRounded sx={{ fontSize: 18 }} />
+                      ) : (
+                        <ArrowBackRounded sx={{ fontSize: 18 }} />
+                      )
+                    }
+                    sx={{
+                      borderRadius: '9999px',
+                      py: 1,
+                      fontWeight: 600,
+                      fontSize: '0.88rem',
+                      textTransform: 'none',
+                      color: isDark ? '#a8a69f' : '#6b7280',
+                      transition: 'all 0.2s ease',
+                      '&:hover': {
+                        backgroundColor: isDark
+                          ? 'rgba(255, 255, 255, 0.05)'
+                          : 'rgba(0, 0, 0, 0.04)',
+                        color: isDark ? '#ffffff' : '#1a1a19',
+                      },
+                    }}
+                  >
+                    {LL.authorization.backToLogin()}
+                  </Button>
+                </Box>
+              </>
+            )}
+          </GlassmorphismContainer>
+        </Container>
+      </Box>
     </CustomersLayout>
   );
 }

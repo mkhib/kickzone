@@ -112,10 +112,7 @@ export function CustomerShoppingCart() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isDark = theme.palette.mode === 'dark';
-  const brand = isDark ? saintbalaBrand.dark : saintbalaBrand.light;
-  const ctaFill = brand.ctaBg;
-  const ctaText = brand.ctaFg;
-  const ctaHover = brand.ctaHover;
+
   // Initialize cart service to sync server cart with local store
   // This ensures shipping fees are fetched and synced when user is logged in
   useCustomersCartService();
@@ -810,13 +807,87 @@ export function CustomerShoppingCart() {
     <CustomersLayout>
       <Box
         sx={{
-          py: 2,
-          px: { xs: 1, md: 2 },
+          minHeight: '100vh',
+          width: '100%',
+          position: 'relative',
+          overflow: 'hidden',
+          py: { xs: 3, md: 5 },
+          px: { xs: 2, sm: 3, md: 4 },
         }}
       >
-        <Typography variant="h4" gutterBottom>
-          {LL.checkout.shoppingCart()}
-        </Typography>
+        {/* Ambient liquid lighting glow orbs */}
+        <Box
+          sx={{
+            position: 'absolute',
+            top: { xs: '2%', md: '5%' },
+            right: { xs: '-8%', md: '10%' },
+            width: { xs: 280, sm: 420, md: 500 },
+            height: { xs: 280, sm: 420, md: 500 },
+            borderRadius: '50%',
+            background: isDark
+              ? 'radial-gradient(circle, rgba(197, 184, 154, 0.15) 0%, rgba(197, 184, 154, 0.02) 65%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(230, 215, 185, 0.55) 0%, rgba(240, 230, 205, 0.2) 60%, transparent 70%)',
+            filter: 'blur(75px)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'floatOrb 15s ease-in-out infinite alternate',
+            '@keyframes floatOrb': {
+              '0%': { transform: 'translate(0, 0) scale(1)' },
+              '100%': { transform: 'translate(-30px, 35px) scale(1.08)' },
+            },
+          }}
+        />
+        <Box
+          sx={{
+            position: 'absolute',
+            bottom: { xs: '5%', md: '10%' },
+            left: { xs: '-8%', md: '8%' },
+            width: { xs: 260, sm: 400, md: 460 },
+            height: { xs: 260, sm: 400, md: 460 },
+            borderRadius: '50%',
+            background: isDark
+              ? 'radial-gradient(circle, rgba(140, 120, 80, 0.12) 0%, rgba(100, 85, 55, 0.02) 65%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(245, 230, 215, 0.5) 0%, rgba(240, 220, 200, 0.18) 60%, transparent 70%)',
+            filter: 'blur(80px)',
+            pointerEvents: 'none',
+            zIndex: 0,
+            animation: 'floatOrb2 17s ease-in-out infinite alternate',
+            '@keyframes floatOrb2': {
+              '0%': { transform: 'translate(0, 0) scale(1)' },
+              '100%': { transform: 'translate(35px, -25px) scale(1.06)' },
+            },
+          }}
+        />
+
+        <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 1280, mx: 'auto' }}>
+          {/* Header */}
+          <Box sx={{ mb: { xs: 3, md: 4 } }}>
+            <Typography
+              variant="caption"
+              sx={{
+                display: 'block',
+                textTransform: 'uppercase',
+                letterSpacing: '0.24em',
+                fontWeight: 700,
+                fontSize: '0.74rem',
+                color: isDark ? '#c5b89a' : '#7c6d48',
+                mb: 0.5,
+              }}
+            >
+              SAINTBALA • ATELIER
+            </Typography>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: '1.75rem', sm: '2.2rem' },
+                color: isDark ? '#f4f4f2' : '#181816',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              {LL.checkout.shoppingCart()}
+            </Typography>
+          </Box>
 
         {!hasItems ? (
           <Box
@@ -856,29 +927,28 @@ export function CustomerShoppingCart() {
               {cartItems.map((item) => (
                 <Card
                   key={item.id}
-                  sx={(theme) => ({
-                    mb: 2,
-                    borderRadius: 3,
-                    boxShadow:
-                      theme.palette.mode === 'dark'
-                        ? '0 8px 20px rgba(0,0,0,0.45)'
-                        : '0 4px 12px rgba(0,0,0,0.08)',
-                    background:
-                      theme.palette.mode === 'dark'
-                        ? 'linear-gradient(180deg, #0e0e12 0%, #14141a 100%)'
-                        : 'linear-gradient(180deg, #ffffff 0%, #f9fafb 100%)',
-                    border:
-                      theme.palette.mode === 'dark'
-                        ? '1px solid rgba(255,255,255,0.08)'
-                        : '1px solid rgba(0,0,0,0.04)',
-                    transition: 'all 0.3s ease',
+                  sx={{
+                    mb: 2.5,
+                    borderRadius: '24px',
+                    backdropFilter: 'blur(20px) saturate(180%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+                    background: isDark
+                      ? 'linear-gradient(145deg, rgba(28, 28, 24, 0.78) 0%, rgba(20, 20, 18, 0.82) 100%)'
+                      : 'linear-gradient(145deg, rgba(255, 255, 255, 0.92) 0%, rgba(250, 248, 244, 0.82) 100%)',
+                    border: isDark
+                      ? '1px solid rgba(240, 239, 235, 0.12)'
+                      : '1px solid rgba(255, 255, 255, 0.95)',
+                    boxShadow: isDark
+                      ? '0 16px 40px -10px rgba(0, 0, 0, 0.5), inset 0 1px 1px 0 rgba(255, 255, 255, 0.12)'
+                      : '0 14px 34px -10px rgba(180, 165, 140, 0.2), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95)',
+                    transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
                     '&:hover': {
-                      boxShadow:
-                        theme.palette.mode === 'dark'
-                          ? '0 10px 26px rgba(0,0,0,0.55)'
-                          : '0 6px 20px rgba(0,0,0,0.12)',
+                      transform: 'translateY(-2px)',
+                      boxShadow: isDark
+                        ? '0 20px 48px -10px rgba(0, 0, 0, 0.6), inset 0 1px 1px 0 rgba(255, 255, 255, 0.18)'
+                        : '0 18px 40px -10px rgba(180, 165, 140, 0.28), inset 0 1px 2px 0 rgba(255, 255, 255, 1)',
                     },
-                  })}
+                  }}
                 >
                   <Box sx={{ p: 3 }}>
                     <Grid container spacing={3} alignItems="center">
@@ -1210,23 +1280,43 @@ export function CustomerShoppingCart() {
               <Box
                 sx={{
                   position: 'sticky',
-                  top: 20,
-                  p: 3,
-                  borderRadius: 3,
-                  border:
-                    theme.palette.mode === 'dark'
-                      ? '1px solid rgba(255,255,255,0.12)'
-                      : '1px solid rgba(0,0,0,0.08)',
-                  background: 'transparent',
-                  boxShadow: 'none',
-                  backdropFilter: 'none',
+                  top: 24,
+                  p: { xs: 2.5, sm: 3.5 },
+                  borderRadius: '28px',
+                  backdropFilter: 'blur(28px) saturate(190%)',
+                  WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+                  background: isDark
+                    ? 'linear-gradient(145deg, rgba(28, 28, 24, 0.85) 0%, rgba(20, 20, 18, 0.88) 100%)'
+                    : 'linear-gradient(145deg, rgba(255, 255, 255, 0.92) 0%, rgba(250, 248, 244, 0.88) 100%)',
+                  border: isDark
+                    ? '1px solid rgba(240, 239, 235, 0.14)'
+                    : '1px solid rgba(255, 255, 255, 0.95)',
+                  boxShadow: isDark
+                    ? '0 24px 60px -12px rgba(0, 0, 0, 0.65), inset 0 1px 1px 0 rgba(255, 255, 255, 0.14)'
+                    : '0 20px 50px -12px rgba(180, 165, 140, 0.25), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95)',
                 }}
               >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    display: 'block',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.22em',
+                    fontWeight: 700,
+                    fontSize: '0.72rem',
+                    color: isDark ? '#c5b89a' : '#7c6d48',
+                    mb: 0.5,
+                  }}
+                >
+                  BESPOKE CHECKOUT
+                </Typography>
                 <Typography
                   variant="h5"
                   sx={{
                     fontWeight: 800,
-                    mb: 3,
+                    fontSize: { xs: '1.35rem', sm: '1.5rem' },
+                    color: isDark ? '#f4f4f2' : '#181816',
+                    mb: 2,
                   }}
                 >
                   {LL.checkout.orderSummary()}
@@ -1239,17 +1329,18 @@ export function CustomerShoppingCart() {
                     flexDirection: { xs: 'column', lg: 'row' },
                     justifyContent: { xs: 'flex-start', lg: 'space-between' },
                     alignItems: { xs: 'flex-start', lg: 'center' },
-                    mb: 1,
+                    mb: 1.5,
                     gap: { xs: 0.5, lg: 1 },
                   }}
                 >
-                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0, color: 'text.secondary' }}>
                     {LL.checkout.subtotal()}:
                   </Typography>
                   <Typography
                     sx={{
                       textAlign: { xs: 'left', lg: 'right' },
                       minWidth: 0,
+                      fontWeight: 600,
                       flex: { xs: 'none', lg: '1 1 auto' },
                     }}
                   >
@@ -1268,17 +1359,18 @@ export function CustomerShoppingCart() {
                     flexDirection: { xs: 'column', lg: 'row' },
                     justifyContent: { xs: 'flex-start', lg: 'space-between' },
                     alignItems: { xs: 'flex-start', lg: 'center' },
-                    mb: 1,
+                    mb: 1.5,
                     gap: { xs: 0.5, lg: 1 },
                   }}
                 >
-                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0 }}>
+                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0, color: 'text.secondary' }}>
                     {LL.checkout.shipping()}:
                   </Typography>
                   <Typography
                     sx={{
                       textAlign: { xs: 'left', lg: 'right' },
                       minWidth: 0,
+                      fontWeight: 600,
                       flex: { xs: 'none', lg: '1 1 auto' },
                     }}
                   >
@@ -1292,6 +1384,7 @@ export function CustomerShoppingCart() {
 
                 <Divider sx={{ my: 2 }} />
 
+                {/* Total Grand Box */}
                 <Box
                   sx={{
                     display: 'flex',
@@ -1300,18 +1393,21 @@ export function CustomerShoppingCart() {
                     alignItems: { xs: 'flex-start', lg: 'center' },
                     mb: 3,
                     p: 2,
-                    borderRadius: 2,
-                    backgroundColor: ctaFill,
-                    color: ctaText,
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    borderRadius: '18px',
+                    background: isDark
+                      ? 'rgba(197, 184, 154, 0.12)'
+                      : 'rgba(143, 132, 104, 0.1)',
+                    border: isDark
+                      ? '1px solid rgba(197, 184, 154, 0.25)'
+                      : '1px solid rgba(143, 132, 104, 0.2)',
                     gap: { xs: 0.5, lg: 1 },
                   }}
                 >
                   <Typography
                     variant="h6"
                     sx={{
-                      fontWeight: 600,
-                      color: ctaText,
+                      fontWeight: 700,
+                      color: isDark ? '#f4f4f2' : '#181816',
                       whiteSpace: 'nowrap',
                       flexShrink: 0,
                     }}
@@ -1321,8 +1417,8 @@ export function CustomerShoppingCart() {
                   <Typography
                     variant="h5"
                     sx={{
-                      fontWeight: 600,
-                      color: ctaText,
+                      fontWeight: 800,
+                      color: isDark ? '#c5b89a' : '#7c6d48',
                       textAlign: { xs: 'left', lg: 'right' },
                       minWidth: 0,
                       flex: { xs: 'none', lg: '1 1 auto' },
@@ -1343,20 +1439,49 @@ export function CustomerShoppingCart() {
                   startIcon={<ShoppingCartCheckout />}
                   onClick={handleCheckout}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: '9999px',
                     py: 1.5,
-                    fontWeight: 600,
-                    fontSize: '1rem',
+                    fontWeight: 700,
+                    fontSize: '0.98rem',
+                    letterSpacing: '0.02em',
                     textTransform: 'none',
-                    boxShadow: 'none',
-                    backgroundColor: ctaFill,
-                    color: ctaText,
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    '&:hover': {
-                      backgroundColor: ctaHover,
-                      boxShadow: 'none',
-                      color: ctaText,
-                    },
+                    position: 'relative',
+                    overflow: 'hidden',
+                    backdropFilter: 'blur(20px) saturate(190%)',
+                    WebkitBackdropFilter: 'blur(20px) saturate(190%)',
+                    transition:
+                      'all 0.3s cubic-bezier(0.16, 1, 0.3, 1), transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                    ...(isDark
+                      ? {
+                          background:
+                            'linear-gradient(135deg, rgba(197, 184, 154, 0.96) 0%, rgba(181, 171, 147, 0.94) 100%)',
+                          color: '#121210',
+                          border: '1px solid rgba(255, 255, 255, 0.4)',
+                          boxShadow:
+                            '0 10px 28px -4px rgba(197, 184, 154, 0.45), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.6)',
+                          '&:hover': {
+                            background:
+                              'linear-gradient(135deg, #ffffff 0%, rgba(210, 198, 170, 0.98) 100%)',
+                            transform: 'translateY(-2px) scale(1.01)',
+                            boxShadow:
+                              '0 14px 34px -4px rgba(197, 184, 154, 0.6), inset 0 1px 2px 0 rgba(255, 255, 255, 0.9)',
+                          },
+                        }
+                      : {
+                          background:
+                            'linear-gradient(135deg, #1f1f1d 0%, #121210 100%)',
+                          color: '#ffffff',
+                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                          boxShadow:
+                            '0 10px 24px -4px rgba(0, 0, 0, 0.28), inset 0 1px 1px 0 rgba(255, 255, 255, 0.35)',
+                          '&:hover': {
+                            background:
+                              'linear-gradient(135deg, #2c2c28 0%, #050505 100%)',
+                            transform: 'translateY(-2px) scale(1.01)',
+                            boxShadow:
+                              '0 14px 30px -4px rgba(0, 0, 0, 0.38), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.5)',
+                          },
+                        }),
                   }}
                 >
                   {LL.checkout.proceedToCheckout()}
@@ -1365,6 +1490,7 @@ export function CustomerShoppingCart() {
             </Grid>
           </Grid>
         )}
+        </Box>
 
         {/* Checkout Dialog */}
         <Dialog
@@ -1375,7 +1501,7 @@ export function CustomerShoppingCart() {
           scroll="paper"
           PaperProps={{
             sx: {
-              borderRadius: { xs: 2.5, sm: 3 },
+              borderRadius: { xs: 3, sm: '28px' },
               m: { xs: 1.5, sm: 2, md: 3 },
               width: { xs: 'calc(100% - 24px)', sm: '100%' },
               maxWidth: { xs: '100%', sm: 560, md: 620 },
@@ -1383,6 +1509,17 @@ export function CustomerShoppingCart() {
               display: 'flex',
               flexDirection: 'column',
               overflowX: 'hidden',
+              backdropFilter: 'blur(28px) saturate(190%)',
+              WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+              background: isDark
+                ? 'linear-gradient(145deg, rgba(28, 28, 24, 0.94) 0%, rgba(20, 20, 18, 0.9) 100%)'
+                : 'linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 248, 244, 0.92) 100%)',
+              border: isDark
+                ? '1px solid rgba(240, 239, 235, 0.12)'
+                : '1px solid rgba(255, 255, 255, 0.9)',
+              boxShadow: isDark
+                ? '0 24px 60px -12px rgba(0, 0, 0, 0.7), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.08)'
+                : '0 24px 60px -12px rgba(0, 0, 0, 0.12), inset 0 1px 2px 0 rgba(255, 255, 255, 1)',
             },
           }}
         >
@@ -2353,10 +2490,21 @@ export function CustomerShoppingCart() {
           fullWidth
           PaperProps={{
             sx: {
-              borderRadius: { xs: 2.5, sm: 3 },
+              borderRadius: { xs: 3, sm: '24px' },
               m: { xs: 1.5, sm: 2 },
               width: { xs: 'calc(100% - 24px)', sm: '100%' },
-              maxWidth: 420,
+              maxWidth: 440,
+              backdropFilter: 'blur(28px) saturate(190%)',
+              WebkitBackdropFilter: 'blur(28px) saturate(190%)',
+              background: isDark
+                ? 'linear-gradient(145deg, rgba(28, 28, 24, 0.94) 0%, rgba(20, 20, 18, 0.9) 100%)'
+                : 'linear-gradient(145deg, rgba(255, 255, 255, 0.95) 0%, rgba(250, 248, 244, 0.92) 100%)',
+              border: isDark
+                ? '1px solid rgba(240, 239, 235, 0.12)'
+                : '1px solid rgba(255, 255, 255, 0.9)',
+              boxShadow: isDark
+                ? '0 24px 60px -12px rgba(0, 0, 0, 0.7), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.08)'
+                : '0 24px 60px -12px rgba(0, 0, 0, 0.12), inset 0 1px 2px 0 rgba(255, 255, 255, 1)',
             },
           }}
         >

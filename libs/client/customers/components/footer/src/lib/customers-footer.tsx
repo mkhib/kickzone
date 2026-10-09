@@ -11,12 +11,17 @@ export function CustomersFooter() {
       sx={(theme) => {
         const isDark = theme.palette.mode === 'dark';
         return {
-          backgroundColor: isDark ? '#0b0b0f' : '#f5f5f5',
+          backgroundColor: isDark
+            ? 'rgba(18, 18, 16, 0.78)'
+            : 'rgba(250, 248, 244, 0.82)',
+          backdropFilter: 'blur(20px) saturate(180%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(180%)',
           borderTop: isDark
-            ? '1px solid rgba(255, 255, 255, 0.12)'
-            : '1px solid #e0e0e0',
-          color: isDark ? '#f5f5f5' : 'inherit',
-          padding: 2,
+            ? '1px solid rgba(240, 239, 235, 0.08)'
+            : '1px solid rgba(0, 0, 0, 0.06)',
+          color: isDark ? '#f4f4f2' : '#181816',
+          py: 2.5,
+          px: { xs: 2.5, md: 4 },
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
