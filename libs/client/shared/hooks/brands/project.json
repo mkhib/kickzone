@@ -1,0 +1,9 @@
+{
+  "name": "brands-hook",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/shared/hooks/brands/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project brands-hook --web",
+  "targets": {}
+}

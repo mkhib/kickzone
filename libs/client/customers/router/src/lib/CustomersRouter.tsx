@@ -1,5 +1,8 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
-import { CustomersHome } from '@kickzone-workspace/customers-home-screen';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import {
+  CustomersHome,
+  CustomersShopScreen,
+} from '@kickzone-workspace/customers-home-screen';
 import { CustomerProductDetails } from '@kickzone-workspace/customer-product-details';
 import { CustomersLogin } from '@kickzone-workspace/customers-login-screen';
 import { CustomersUnauthorizedScreen } from '@kickzone-workspace/customers-unauthorized-screen';
@@ -20,7 +23,12 @@ export function CustomersRouter() {
     <BrowserRouter>
       <Routes>
         <Route path={CUSTOMER_ROUTES.HOME} element={<CustomersHome />} />
-        <Route path={CUSTOMER_ROUTES.PRODUCTS} element={<CustomersHome />} />
+        <Route
+          path={CUSTOMER_ROUTES.PRODUCTS}
+          element={<Navigate to={CUSTOMER_ROUTES.HOME} replace />}
+        />
+        <Route path={CUSTOMER_ROUTES.SHOP} element={<CustomersShopScreen />} />
+        <Route path={CUSTOMER_ROUTES.BRAND} element={<CustomersShopScreen />} />
         <Route
           path={CUSTOMER_ROUTES.PRODUCT_DETAILS}
           element={<CustomerProductDetails />}

@@ -3,12 +3,15 @@ import { Field, Int, ObjectType } from '@nestjs/graphql';
 import {
   Column,
   Entity,
+  JoinColumn,
   JoinTable,
   ManyToMany,
+  ManyToOne,
   OneToMany,
   PrimaryGeneratedColumn,
   Relation,
 } from 'typeorm';
+import { Brand } from './brand.entity';
 import { Category } from './category.entity';
 import { ProductInfo } from './product-info.entity';
 import { SellerProduct } from './seller-product.entity';
@@ -37,6 +40,18 @@ export class Product {
   @ManyToMany(() => Category, (category) => category.products)
   @JoinTable()
   categories: Category[];
+
+  @Field(() => Brand, { nullable: true })
+  @ManyToOne(() => Brand, (brand) => brand.products, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'brandId' })
+  brand?: Brand | null;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ type: 'int', nullable: true })
+  brandId?: number | null;
 
   @Field({ nullable: true })
   @Column({ type: 'text', nullable: true })

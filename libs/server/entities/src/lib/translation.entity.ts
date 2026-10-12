@@ -21,7 +21,7 @@ export class Translation {
 
   @Field()
   @Column({ length: 50 })
-  entityType: string; // 'category', 'color', 'product', 'productInfo'
+  entityType: string; // 'category', 'color', 'brand', 'product', 'productInfo'
 
   @Field(() => Int)
   @Column()

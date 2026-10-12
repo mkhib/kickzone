@@ -31,45 +31,45 @@ interface RTLThemeProviderProps {
  */
 export const saintbalaBrand = {
   light: {
-    background: '#f2f1ef',
-    paper: '#faf9f7',
-    text: '#1a1a19',
-    textSecondary: '#5c5b57',
-    primary: '#8f8468',
-    primaryLight: '#b5ab93',
-    primaryDark: '#6e6550',
-    secondary: '#1a1a19',
-    divider: 'rgba(26, 26, 25, 0.08)',
-    ctaBg: '#1a1a19',
-    ctaFg: '#faf9f7',
+    background: '#f6f5f2',
+    paper: '#fbfaf8',
+    text: '#1d1d1f',
+    textSecondary: '#424245',
+    primary: '#8a6a3d',
+    primaryLight: '#b08a52',
+    primaryDark: '#5e4420',
+    secondary: '#1d1d1f',
+    divider: 'rgba(0, 0, 0, 0.09)',
+    ctaBg: '#1d1d1f',
+    ctaFg: '#f6f5f2',
     ctaHover: '#2e2e2c',
-    ctaDisabledBg: 'rgba(26, 26, 25, 0.38)',
-    ctaDisabledFg: 'rgba(250, 249, 247, 0.72)',
+    ctaDisabledBg: 'rgba(29, 29, 31, 0.38)',
+    ctaDisabledFg: 'rgba(251, 250, 248, 0.72)',
   },
   dark: {
-    background: '#0f0f0e',
-    paper: '#181816',
-    text: '#f0efeb',
-    textSecondary: '#a8a69f',
-    primary: '#c5b89a',
-    primaryLight: '#ddd4bf',
-    primaryDark: '#9a8d70',
-    secondary: '#f0efeb',
-    divider: 'rgba(240, 239, 235, 0.08)',
-    ctaBg: '#c5b89a',
-    ctaFg: '#121210',
-    ctaHover: '#d4c9b0',
-    ctaDisabledBg: 'rgba(197, 184, 154, 0.42)',
-    ctaDisabledFg: 'rgba(18, 18, 16, 0.72)',
+    background: '#000000',
+    paper: '#0b0b0c',
+    text: '#f5f5f7',
+    textSecondary: '#d2d2d7',
+    primary: '#c9a774',
+    primaryLight: '#d8bc8c',
+    primaryDark: '#8a6a3d',
+    secondary: '#f5f5f7',
+    divider: 'rgba(255, 255, 255, 0.12)',
+    ctaBg: '#c9a774',
+    ctaFg: '#000000',
+    ctaHover: '#d8bc8c',
+    ctaDisabledBg: 'rgba(201, 167, 116, 0.42)',
+    ctaDisabledFg: 'rgba(0, 0, 0, 0.72)',
   },
   /** Soft brass accent for inline highlights (home, badges) */
-  accent: '#a89870',
-  accentSoft: '#c5b89a',
+  accent: '#8a6a3d',
+  accentSoft: '#c9a774',
 } as const;
 
 const FONT_LINK_ID = 'saintbala-fonts';
 const FONT_HREF =
-  'https://fonts.googleapis.com/css2?family=El+Messiri:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Vazirmatn:wght@300;400;500;600;700&display=swap';
+  'https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=El+Messiri:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700&family=Vazirmatn:wght@400;500;600;700;800;900&display=swap';
 
 const latinStack = '"Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif';
 const farsiStack =
@@ -103,8 +103,16 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
   useEffect(() => {
     document.documentElement.dir = direction;
     document.documentElement.setAttribute('dir', direction);
+    document.documentElement.setAttribute('lang', currentLocale);
+    document.documentElement.setAttribute('data-theme', mode);
+    document.documentElement.setAttribute(
+      'data-locale',
+      currentLocale === 'fa' ? 'fa' : 'en'
+    );
+    // One sans stack per locale: Vazirmatn (FA) / Manrope (EN). Serif only for SAINTBALA.
+    document.documentElement.style.setProperty('--font-sans', fontFamily);
 
-    // Load Manrope (EN) + Vazirmatn (FA) + El Messiri (FA display) together.
+    // Load Cormorant + Manrope (EN) + Vazirmatn (FA) + El Messiri (FA display) together.
     let link = document.getElementById(FONT_LINK_ID) as HTMLLinkElement | null;
     if (!link) {
       link = document.createElement('link');
@@ -115,7 +123,7 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
     if (link.href !== FONT_HREF) {
       link.href = FONT_HREF;
     }
-  }, [direction]);
+  }, [direction, mode, currentLocale, fontFamily]);
 
   const theme = useMemo(() => {
     const brand = mode === 'dark' ? saintbalaBrand.dark : saintbalaBrand.light;
@@ -348,64 +356,90 @@ export function RTLThemeProvider({ children }: RTLThemeProviderProps) {
         MuiDrawer: {
           styleOverrides: {
             paper: {
+              // Liquid glass — promote to own compositor layer
+              isolation: 'isolate',
+              transform: 'translateZ(0)',
+              backfaceVisibility: 'hidden',
+              contain: 'paint',
               backgroundColor:
                 mode === 'dark'
-                  ? 'rgba(18, 18, 22, 0.38) !important'
-                  : 'rgba(255, 255, 255, 0.28) !important',
+                  ? 'rgba(14, 14, 16, 0.52) !important'
+                  : 'rgba(255, 255, 255, 0.42) !important',
               backgroundImage:
                 mode === 'dark'
-                  ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(0, 0, 0, 0.18) 100%) !important'
-                  : 'linear-gradient(145deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 40%, rgba(255, 255, 255, 0.28) 100%) !important',
-              backdropFilter: 'blur(32px) saturate(210%) !important',
-              WebkitBackdropFilter: 'blur(32px) saturate(210%) !important',
+                  ? [
+                      'linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, transparent 28%)',
+                      'linear-gradient(155deg, rgba(201, 167, 116, 0.08) 0%, transparent 42%, rgba(0, 0, 0, 0.22) 100%)',
+                    ].join(', ') + ' !important'
+                  : [
+                      'linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, transparent 32%)',
+                      'linear-gradient(155deg, rgba(255, 255, 255, 0.55) 0%, rgba(246, 245, 242, 0.18) 45%, rgba(255, 255, 255, 0.35) 100%)',
+                    ].join(', ') + ' !important',
+              // Slightly softer blur = smoother item hover over glass
+              backdropFilter: 'blur(24px) saturate(180%) !important',
+              WebkitBackdropFilter: 'blur(24px) saturate(180%) !important',
               color: `${brand.text} !important`,
               borderRight:
                 mode === 'dark'
-                  ? '1px solid rgba(255, 255, 255, 0.14) !important'
-                  : '1px solid rgba(255, 255, 255, 0.6) !important',
+                  ? '1px solid rgba(255, 255, 255, 0.12) !important'
+                  : '1px solid rgba(255, 255, 255, 0.72) !important',
               borderLeft: 'none !important',
               boxShadow:
                 mode === 'dark'
-                  ? '0 24px 64px rgba(0, 0, 0, 0.55), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.18), inset -1px 0 1.5px 0 rgba(255, 255, 255, 0.08) !important'
-                  : '0 24px 60px rgba(0, 0, 0, 0.08), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.8), inset -1px 0 1.5px 0 rgba(255, 255, 255, 0.5) !important',
+                  ? [
+                      '0 28px 64px rgba(0, 0, 0, 0.55)',
+                      'inset 0 1px 0 0 rgba(255, 255, 255, 0.14)',
+                      'inset 0 -1px 0 0 rgba(0, 0, 0, 0.25)',
+                      'inset -1px 0 0 0 rgba(255, 255, 255, 0.06)',
+                    ].join(', ') + ' !important'
+                  : [
+                      '0 24px 56px rgba(29, 29, 31, 0.08)',
+                      'inset 0 1px 0 0 rgba(255, 255, 255, 0.9)',
+                      'inset 0 -1px 0 0 rgba(143, 132, 104, 0.06)',
+                      'inset -1px 0 0 0 rgba(255, 255, 255, 0.55)',
+                    ].join(', ') + ' !important',
               transition:
-                'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.3s ease, border-color 0.3s ease !important',
+                'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important',
               '& .MuiDivider-root': {
                 borderColor:
                   mode === 'dark'
                     ? 'rgba(255, 255, 255, 0.08)'
                     : 'rgba(0, 0, 0, 0.06)',
               },
+              // Hover lag fix: never animate backdrop-filter on items
               '& .MuiListItemButton-root': {
                 borderRadius: '12px',
-                margin: '4px 8px',
-                transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+                margin: '3px 8px',
+                transition:
+                  'background-color 0.15s ease, transform 0.15s ease',
+                backdropFilter: 'none',
+                WebkitBackdropFilter: 'none',
                 '&:hover': {
                   backgroundColor:
                     mode === 'dark'
-                      ? 'rgba(255, 255, 255, 0.1)'
-                      : 'rgba(255, 255, 255, 0.35)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
+                      ? 'rgba(255, 255, 255, 0.08)'
+                      : 'rgba(29, 29, 31, 0.05)',
+                  backdropFilter: 'none',
+                  WebkitBackdropFilter: 'none',
                 },
                 '&.Mui-selected': {
                   backgroundColor:
                     mode === 'dark'
-                      ? 'rgba(197, 184, 154, 0.22)'
-                      : 'rgba(143, 132, 104, 0.18)',
-                  backdropFilter: 'blur(10px)',
-                  WebkitBackdropFilter: 'blur(10px)',
+                      ? 'rgba(201, 167, 116, 0.18)'
+                      : 'rgba(138, 106, 61, 0.12)',
+                  backdropFilter: 'none',
+                  WebkitBackdropFilter: 'none',
                   '&:hover': {
                     backgroundColor:
                       mode === 'dark'
-                        ? 'rgba(197, 184, 154, 0.28)'
-                        : 'rgba(143, 132, 104, 0.24)',
+                        ? 'rgba(201, 167, 116, 0.24)'
+                        : 'rgba(138, 106, 61, 0.16)',
                   },
                 },
               },
               '& .MuiListItemIcon-root': {
-                color: mode === 'dark' ? brand.primaryLight : brand.primary,
-                minWidth: 40,
+                minWidth: 48,
+                color: 'inherit',
               },
             },
           },

@@ -7,6 +7,7 @@ import {
   Product,
   ProductInfo,
   ProductInfoColor,
+  Brand,
   Category,
   Color,
   SellerProduct,
@@ -43,6 +44,8 @@ export class ProductService implements OnModuleInit {
     private readonly productInfoColorRepository: Repository<ProductInfoColor>,
     @InjectRepository(Category)
     private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Brand)
+    private readonly brandRepository: Repository<Brand>,
     @InjectRepository(Color)
     private readonly colorRepository: Repository<Color>,
     @InjectRepository(SellerProduct)
@@ -99,6 +102,7 @@ export class ProductService implements OnModuleInit {
       .leftJoinAndSelect('productInfo.colorLinks', 'colorLink')
       .leftJoinAndSelect('colorLink.color', 'color')
       .leftJoinAndSelect('product.categories', 'category')
+      .leftJoinAndSelect('product.brand', 'brand')
       .leftJoinAndSelect('product.descriptions', 'productDescription')
       .leftJoinAndSelect('productDescription.language', 'descLanguage');
 
@@ -112,8 +116,6 @@ export class ProductService implements OnModuleInit {
       .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
       .leftJoinAndSelect('sellerProductInfo.colorLinks', 'sellerProductColorLink')
       .leftJoinAndSelect('sellerProductColorLink.color', 'sellerProductColor');
-
-    query.orderBy('productInfo.id', 'ASC').addOrderBy('colorLink.position', 'ASC');
 
     // Filter by seller availability - use EXISTS subquery to avoid filtering out products
     // Don't filter sellerProducts in WHERE clause - we'll filter in memory to preserve all productInfos
@@ -164,6 +166,30 @@ export class ProductService implements OnModuleInit {
       });
     }
 
+    if (filter?.ids?.length) {
+      query.andWhere('product.id IN (:...ids)', { ids: filter.ids });
+    }
+
+    if (filter?.categorySlugs?.length) {
+      filter.categorySlugs.forEach((slug, idx) => {
+        query.andWhere(
+          `EXISTS (
+            SELECT 1 FROM product_category pc
+            JOIN category c ON pc."categoryId" = c.id
+            WHERE pc."productId" = product.id
+              AND (LOWER(c.slug) = :catSlug_${idx} OR LOWER(c.name) = :catSlug_${idx})
+          )`,
+          { [`catSlug_${idx}`]: slug.toLowerCase() }
+        );
+      });
+    }
+
+    if (filter?.brand) {
+      query.andWhere('LOWER(brand.slug) = :brandSlug', {
+        brandSlug: filter.brand.toLowerCase(),
+      });
+    }
+
     if (filter?.categoryIds?.length) {
       query.andWhere('category.id IN (:...categoryIds)', {
         categoryIds: filter.categoryIds,
@@ -173,8 +199,8 @@ export class ProductService implements OnModuleInit {
         categoryId: filter.categoryId,
       });
     } else if (filter?.category) {
-      query.andWhere('category.name = :category', {
-        category: filter.category,
+      query.andWhere('LOWER(category.slug) = :category', {
+        category: filter.category.toLowerCase(),
       });
     }
 
@@ -223,17 +249,35 @@ export class ProductService implements OnModuleInit {
         });
     }
 
+    // Catalog sort must be primary ORDER BY; relation ordering is secondary only.
     if (filter?.sort) {
-      const order = filter.sortOrder === 'desc' ? 'DESC' : 'ASC';
-      if (filter.sort === 'price') {
-        query.addOrderBy('sellerProduct.price', order);
-      } else if (filter.sort === 'discount') {
-        query.addOrderBy('sellerProduct.discount', order);
-      } else if (filter.sort === 'color') {
-        query.addOrderBy('color.name', order);
+      if (filter.sort === 'ID_DESC') {
+        query.orderBy('product.id', 'DESC');
+      } else if (filter.sort === 'PRICE_ASC') {
+        query.orderBy('sellerProduct.price', 'ASC');
+      } else if (filter.sort === 'PRICE_DESC') {
+        query.orderBy('sellerProduct.price', 'DESC');
       } else {
-        query.addOrderBy('product.name', order);
+        const order = filter.sortOrder === 'desc' ? 'DESC' : 'ASC';
+        if (filter.sort === 'price') {
+          query.orderBy('sellerProduct.price', order);
+        } else if (filter.sort === 'id') {
+          query.orderBy('product.id', order);
+        } else if (filter.sort === 'discount') {
+          query.orderBy('sellerProduct.discount', order);
+        } else if (filter.sort === 'color') {
+          query.orderBy('color.name', order);
+        } else {
+          query.orderBy('product.name', order);
+        }
       }
+      query
+        .addOrderBy('productInfo.id', 'ASC')
+        .addOrderBy('colorLink.position', 'ASC');
+    } else {
+      query
+        .orderBy('productInfo.id', 'ASC')
+        .addOrderBy('colorLink.position', 'ASC');
     }
 
     const totalCount = await query.getCount();
@@ -299,6 +343,13 @@ export class ProductService implements OnModuleInit {
     const categories = await this.categoryRepository.findBy({
       id: In(input.categoryIds),
     });
+    let brand: Brand | null = null;
+    if (input.brandId != null) {
+      brand = await this.brandRepository.findOneBy({ id: input.brandId });
+      if (!brand) {
+        throw new Error(`Brand with ID ${input.brandId} not found`);
+      }
+    }
     let fallbackDescription =
       input.description === '' ? null : input.description;
     if (!fallbackDescription && input.descriptions?.length) {
@@ -316,6 +367,8 @@ export class ProductService implements OnModuleInit {
       name: input.name,
       sku,
       categories,
+      brand: brand ?? undefined,
+      brandId: brand?.id ?? null,
       description: fallbackDescription,
     });
     const savedProduct = await this.productRepository.save(product);
@@ -539,6 +592,22 @@ export class ProductService implements OnModuleInit {
     product.sku = sku;
     product.categories = categories;
 
+    if (input.brandId !== undefined) {
+      if (input.brandId == null) {
+        product.brand = null;
+        product.brandId = null;
+      } else {
+        const brand = await this.brandRepository.findOneBy({
+          id: input.brandId,
+        });
+        if (!brand) {
+          throw new Error(`Brand with ID ${input.brandId} not found`);
+        }
+        product.brand = brand;
+        product.brandId = brand.id;
+      }
+    }
+
     if (input.descriptions && input.descriptions.length > 0) {
       await this.saveProductDescriptions(product.id, input.descriptions);
       const enDesc = input.descriptions.find((d) => d.languageCode === 'en');
@@ -589,6 +658,7 @@ export class ProductService implements OnModuleInit {
         'descriptions.language',
         'productInfos',
         'categories',
+        'brand',
         'productInfos.colorLinks',
         'productInfos.colorLinks.color',
         'sellerProducts',
@@ -744,6 +814,7 @@ export class ProductService implements OnModuleInit {
       .leftJoinAndSelect('productInfo.colorLinks', 'colorLink')
       .leftJoinAndSelect('colorLink.color', 'color')
       .leftJoinAndSelect('product.categories', 'category')
+      .leftJoinAndSelect('product.brand', 'brand')
       .leftJoinAndSelect('product.descriptions', 'productDescription')
       .leftJoinAndSelect('productDescription.language', 'descLanguage')
       .leftJoinAndSelect(
@@ -766,6 +837,12 @@ export class ProductService implements OnModuleInit {
       });
     }
 
+    if (filter?.brand) {
+      query.andWhere('LOWER(brand.slug) = :brandSlug', {
+        brandSlug: filter.brand.toLowerCase(),
+      });
+    }
+
     if (filter?.categoryIds?.length) {
       query.andWhere('category.id IN (:...categoryIds)', {
         categoryIds: filter.categoryIds,
@@ -775,8 +852,8 @@ export class ProductService implements OnModuleInit {
         categoryId: filter.categoryId,
       });
     } else if (filter?.category) {
-      query.andWhere('category.name = :category', {
-        category: filter.category,
+      query.andWhere('LOWER(category.slug) = :category', {
+        category: filter.category.toLowerCase(),
       });
     }
 
@@ -990,5 +1067,14 @@ export class ProductService implements OnModuleInit {
       relations: ['language'],
       order: { id: 'ASC' },
     });
+  }
+
+  private readonly newsletterEmails = new Set<string>();
+
+  async subscribeNewsletter(email: string): Promise<boolean> {
+    const trimmed = (email || '').trim().toLowerCase();
+    if (!trimmed || !trimmed.includes('@')) return false;
+    this.newsletterEmails.add(trimmed);
+    return true;
   }
 }

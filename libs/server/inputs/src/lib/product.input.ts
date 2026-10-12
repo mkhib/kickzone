@@ -41,6 +41,9 @@ export class CreateProductInput {
   @Field(() => [Int])
   categoryIds: number[];
 
+  @Field(() => Int, { nullable: true })
+  brandId?: number | null;
+
   @Field({ nullable: true })
   description?: string;
 
@@ -61,6 +64,9 @@ export class UpdateProductInput {
 
   @Field(() => [Int])
   categoryIds: number[];
+
+  @Field(() => Int, { nullable: true })
+  brandId?: number | null;
 
   @Field({ nullable: true })
   description?: string;
@@ -91,6 +97,15 @@ export class CreateProductInfoInput {
 export class ProductFilterInput {
   @Field({ nullable: true })
   category?: string;
+
+  @Field(() => [String], { nullable: true })
+  categorySlugs?: string[];
+
+  @Field({ nullable: true })
+  brand?: string;
+
+  @Field(() => [Int], { nullable: true })
+  ids?: number[];
 
   @Field({ nullable: true })
   searchTerm?: string;

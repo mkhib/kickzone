@@ -22,31 +22,55 @@ const BaseStyledDrawer = styled(Drawer)(({ theme }) => {
       height: HEIGHTS.drawer,
       borderTopLeftRadius: '0 !important',
       borderBottomLeftRadius: '0 !important',
-      borderTopRightRadius: '16px !important',
-      borderBottomRightRadius: '16px !important',
-      // Liquid glass styling
+      borderTopRightRadius: '18px !important',
+      borderBottomRightRadius: '18px !important',
+      // Liquid glass — GPU-isolated layer (avoids hover thrash with backdrop-filter)
+      isolation: 'isolate',
+      transform: 'translateZ(0)',
+      backfaceVisibility: 'hidden',
+      contain: 'paint',
       backgroundColor: isDark
-        ? 'rgba(18, 18, 22, 0.38) !important'
-        : 'rgba(255, 255, 255, 0.28) !important',
+        ? 'rgba(14, 14, 16, 0.52) !important'
+        : 'rgba(255, 255, 255, 0.42) !important',
       backgroundImage: isDark
-        ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 40%, rgba(0, 0, 0, 0.18) 100%) !important'
-        : 'linear-gradient(145deg, rgba(255, 255, 255, 0.5) 0%, rgba(255, 255, 255, 0.12) 40%, rgba(255, 255, 255, 0.28) 100%) !important',
-      backdropFilter: 'blur(32px) saturate(210%) !important',
-      WebkitBackdropFilter: 'blur(32px) saturate(210%) !important',
+        ? [
+            'linear-gradient(180deg, rgba(255, 255, 255, 0.10) 0%, transparent 28%)',
+            'linear-gradient(155deg, rgba(201, 167, 116, 0.08) 0%, transparent 42%, rgba(0, 0, 0, 0.22) 100%)',
+          ].join(', ') + ' !important'
+        : [
+            'linear-gradient(180deg, rgba(255, 255, 255, 0.72) 0%, transparent 32%)',
+            'linear-gradient(155deg, rgba(255, 255, 255, 0.55) 0%, rgba(246, 245, 242, 0.18) 45%, rgba(255, 255, 255, 0.35) 100%)',
+          ].join(', ') + ' !important',
+      backdropFilter: 'blur(24px) saturate(180%) !important',
+      WebkitBackdropFilter: 'blur(24px) saturate(180%) !important',
       borderRight: isDark
-        ? '1px solid rgba(255, 255, 255, 0.14) !important'
-        : '1px solid rgba(255, 255, 255, 0.6) !important',
+        ? '1px solid rgba(255, 255, 255, 0.12) !important'
+        : '1px solid rgba(255, 255, 255, 0.72) !important',
       borderLeft: 'none !important',
       boxShadow: isDark
-        ? '0 24px 64px rgba(0, 0, 0, 0.55), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.18), inset -1px 0 1.5px 0 rgba(255, 255, 255, 0.08) !important'
-        : '0 24px 60px rgba(0, 0, 0, 0.08), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.8), inset -1px 0 1.5px 0 rgba(255, 255, 255, 0.5) !important',
+        ? [
+            '0 28px 64px rgba(0, 0, 0, 0.55)',
+            'inset 0 1px 0 0 rgba(255, 255, 255, 0.14)',
+            'inset 0 -1px 0 0 rgba(0, 0, 0, 0.25)',
+            'inset -1px 0 0 0 rgba(255, 255, 255, 0.06)',
+          ].join(', ') + ' !important'
+        : [
+            '0 24px 56px rgba(29, 29, 31, 0.08)',
+            'inset 0 1px 0 0 rgba(255, 255, 255, 0.9)',
+            'inset 0 -1px 0 0 rgba(143, 132, 104, 0.06)',
+            'inset -1px 0 0 0 rgba(255, 255, 255, 0.55)',
+          ].join(', ') + ' !important',
     },
   };
 });
 
 export const CustomListItemText = styled(ListItemText)(({ theme }) => ({
   color: theme.palette.text.primary,
-  fontWeight: 600,
+  '& .MuiListItemText-primary': {
+    fontWeight: 600,
+    fontSize: '0.9375rem',
+    letterSpacing: '0.01em',
+  },
 }));
 
 export interface StyledDrawerProps {
@@ -74,23 +98,49 @@ export function StyledDrawer({
       variant={variant}
       ModalProps={{ keepMounted }}
     >
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', p: 1 }}>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          px: 1,
+          pt: 1,
+          pb: 0.5,
+        }}
+      >
         <IconButton
           onClick={onClose}
           sx={{
-            color: 'inherit',
-            transition: 'transform 0.2s ease',
+            color: 'text.secondary',
+            transition: 'background-color 0.15s ease, color 0.15s ease',
             '&:hover': {
-              transform: 'scale(1.08)',
+              backgroundColor: (t) =>
+                t.palette.mode === 'dark'
+                  ? 'rgba(255, 255, 255, 0.08)'
+                  : 'rgba(0, 0, 0, 0.05)',
+              color: 'text.primary',
             },
           }}
           aria-label="close drawer"
         >
-          <CloseIcon />
+          <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
-      <Divider />
-      <List sx={{ px: 0.5, py: 1 }}>{children}</List>
+      <Divider sx={{ opacity: 0.7 }} />
+      <List
+        sx={{
+          px: 0.5,
+          py: 1,
+          // Keep item hover cheap: no backdrop-filter on children
+          '& .MuiListItemButton-root': {
+            transition:
+              'background-color 0.15s ease, transform 0.15s ease !important',
+            backdropFilter: 'none !important',
+            WebkitBackdropFilter: 'none !important',
+          },
+        }}
+      >
+        {children}
+      </List>
     </BaseStyledDrawer>
   );
 }

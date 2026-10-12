@@ -240,7 +240,7 @@ describe('CustomerSignup', () => {
         'Registration successful! Welcome to SAINTBALA.',
         { severity: 'success' }
       );
-      expect(mockNavigate).toHaveBeenCalledWith('/home', { replace: true });
+      expect(mockNavigate).toHaveBeenCalledWith('/', { replace: true });
     });
   });
 

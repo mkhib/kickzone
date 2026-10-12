@@ -14,6 +14,7 @@ type LayoutProps = ILayoutProps & {
 
 export interface ILayoutProps {
   isLoading?: boolean;
+  disablePadding?: boolean;
 }
 
 export function Layout({
@@ -21,6 +22,7 @@ export function Layout({
   body,
   footer,
   isLoading = false,
+  disablePadding = false,
   loadingComponent,
   bottomBar,
 }: LayoutProps) {
@@ -50,16 +52,20 @@ export function Layout({
       <Box
         sx={{
           flex: 1,
-          pt: 10, // Increased padding to account for fixed header with blur
-          px: { xs: 2, sm: 3, md: 4 },
-          pb: bottomBar ? { xs: 11, sm: 4 } : 4,
+          pt: disablePadding ? 0 : 10,
+          px: disablePadding ? 0 : { xs: 2, sm: 3, md: 4 },
+          pb: disablePadding ? 0 : bottomBar ? { xs: 11, sm: 4 } : 4,
         }}
       >
-        <Grid container spacing={2}>
-          <Grid size={12} component="div">
-            {isLoading ? loadingComponent : body}
+        {disablePadding ? (
+          isLoading ? loadingComponent : body
+        ) : (
+          <Grid container spacing={2}>
+            <Grid size={12} component="div">
+              {isLoading ? loadingComponent : body}
+            </Grid>
           </Grid>
-        </Grid>
+        )}
       </Box>
       <Box sx={{ pb: bottomBar ? { xs: 9, sm: 0 } : 0 }}>{footer}</Box>
       {bottomBar && (

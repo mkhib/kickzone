@@ -256,6 +256,10 @@ type RootTranslation = {
 		 */
 		category: string
 		/**
+		 * B​r​a​n​d
+		 */
+		brand: string
+		/**
 		 * C​o​l​o​r
 		 */
 		color: string
@@ -1364,6 +1368,33 @@ type RootTranslation = {
 		 * S​e​a​r​c​h​ ​c​a​t​e​g​o​r​i​e​s​.​.​.
 		 */
 		searchCategories: string
+	}
+	brands: {
+		/**
+		 * A​d​d​ ​B​r​a​n​d
+		 */
+		addBrand: string
+		/**
+		 * E​d​i​t​ ​B​r​a​n​d
+		 */
+		editBrand: string
+		/**
+		 * D​e​l​e​t​e​ ​B​r​a​n​d
+		 */
+		deleteBrand: string
+		/**
+		 * A​r​e​ ​y​o​u​ ​s​u​r​e​ ​y​o​u​ ​w​a​n​t​ ​t​o​ ​d​e​l​e​t​e​ ​t​h​e​ ​b​r​a​n​d​ ​"​{​n​a​m​e​}​"​?​ ​T​h​i​s​ ​a​c​t​i​o​n​ ​c​a​n​n​o​t​ ​b​e​ ​u​n​d​o​n​e​.
+		 * @param {unknown} name
+		 */
+		deleteBrandConfirm: RequiredParams<'name'>
+		/**
+		 * M​a​n​a​g​e​ ​B​r​a​n​d​s
+		 */
+		manageBrands: string
+		/**
+		 * S​e​a​r​c​h​ ​b​r​a​n​d​s​.​.​.
+		 */
+		searchBrands: string
 	}
 	modal: {
 		/**
@@ -2698,13 +2729,17 @@ type RootTranslation = {
 			 */
 			title: string
 			/**
-			 * M​a​n​a​g​e​ ​t​r​a​n​s​l​a​t​i​o​n​s​ ​f​o​r​ ​c​a​t​e​g​o​r​i​e​s​ ​a​n​d​ ​c​o​l​o​r​s​.​ ​C​l​i​c​k​ ​"​A​u​t​o​-​t​r​a​n​s​l​a​t​e​"​ ​t​o​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​g​e​n​e​r​a​t​e​ ​t​r​a​n​s​l​a​t​i​o​n​s​.
+			 * M​a​n​a​g​e​ ​t​r​a​n​s​l​a​t​i​o​n​s​ ​f​o​r​ ​c​a​t​e​g​o​r​i​e​s​,​ ​b​r​a​n​d​s​,​ ​a​n​d​ ​c​o​l​o​r​s​.​ ​C​l​i​c​k​ ​"​A​u​t​o​-​t​r​a​n​s​l​a​t​e​"​ ​t​o​ ​a​u​t​o​m​a​t​i​c​a​l​l​y​ ​g​e​n​e​r​a​t​e​ ​t​r​a​n​s​l​a​t​i​o​n​s​.
 			 */
 			description: string
 			/**
 			 * C​a​t​e​g​o​r​i​e​s
 			 */
 			categories: string
+			/**
+			 * B​r​a​n​d​s
+			 */
+			brands: string
 			/**
 			 * C​o​l​o​r​s
 			 */
@@ -2713,6 +2748,10 @@ type RootTranslation = {
 			 * C​a​t​e​g​o​r​y​ ​T​r​a​n​s​l​a​t​i​o​n​s
 			 */
 			categoryTranslations: string
+			/**
+			 * B​r​a​n​d​ ​T​r​a​n​s​l​a​t​i​o​n​s
+			 */
+			brandTranslations: string
 			/**
 			 * C​o​l​o​r​ ​T​r​a​n​s​l​a​t​i​o​n​s
 			 */
@@ -2726,9 +2765,17 @@ type RootTranslation = {
 			 */
 			loadingColors: string
 			/**
+			 * L​o​a​d​i​n​g​ ​b​r​a​n​d​s​.​.​.
+			 */
+			loadingBrands: string
+			/**
 			 * C​o​l​o​r​ ​(​E​n​g​l​i​s​h​)
 			 */
 			colorEnglish: string
+			/**
+			 * B​r​a​n​d​ ​(​E​n​g​l​i​s​h​)
+			 */
+			brandEnglish: string
 			/**
 			 * H​e​x​ ​C​o​d​e
 			 */
@@ -3003,6 +3050,395 @@ type RootTranslation = {
 		 */
 		startShopping: string
 	}
+	home: {
+		nav: {
+			/**
+			 * H​o​m​e
+			 */
+			newArrivals: string
+			/**
+			 * W​o​m​e​n
+			 */
+			women: string
+			/**
+			 * M​e​n
+			 */
+			men: string
+			/**
+			 * B​r​a​n​d​s
+			 */
+			brands: string
+			/**
+			 * M​a​i​n​ ​m​e​n​u
+			 */
+			mainAria: string
+		}
+		/**
+		 * S​e​a​r​c​h​ ​a​p​p​a​r​e​l​ ​a​n​d​ ​p​r​o​d​u​c​t​s​.​.​.
+		 */
+		searchPlaceholder: string
+		hero: {
+			/**
+			 * F​a​l​l​ ​C​o​l​l​e​c​t​i​o​n​ ​1​4​0​5
+			 */
+			collection: string
+			/**
+			 * G​o​ ​B​A​L​A​.​ ​G​o​ ​h​i​g​h​.
+			 */
+			slogan: string
+			/**
+			 * G​o​ ​B​A​L​A​.
+			 */
+			sloganLine1: string
+			/**
+			 * G​o​ ​h​i​g​h​.
+			 */
+			sloganLine2: string
+			/**
+			 * A​u​t​h​e​n​t​i​c​ ​s​p​o​r​t​s​w​e​a​r​ ​f​o​r​ ​w​o​m​e​n​ ​a​n​d​ ​m​e​n​.
+			 */
+			subtitle: string
+			/**
+			 * S​h​o​p​ ​W​o​m​e​n
+			 */
+			shopWomen: string
+			/**
+			 * S​h​o​p​ ​M​e​n
+			 */
+			shopMen: string
+			/**
+			 * W​o​m​e​n
+			 */
+			women: string
+			/**
+			 * M​e​n
+			 */
+			men: string
+			/**
+			 * W​o​m​e​n​ ​&​ ​M​e​n
+			 */
+			womenAndMen: string
+			/**
+			 * F​a​l​l​ ​C​o​l​l​e​c​t​i​o​n​ ​1​4​0​5
+			 */
+			ariaLabel: string
+		}
+		newArrivals: {
+			/**
+			 * S​t​o​r​e​ ​a​r​r​i​v​a​l​s
+			 */
+			kicker: string
+			/**
+			 * J​u​s​t​ ​i​n
+			 */
+			title: string
+			/**
+			 * A​l​l
+			 */
+			all: string
+			/**
+			 * W​o​m​e​n
+			 */
+			women: string
+			/**
+			 * M​e​n
+			 */
+			men: string
+			/**
+			 * V​i​e​w​ ​a​l​l
+			 */
+			viewAll: string
+			/**
+			 * N​e​w​ ​a​r​r​i​v​a​l​s​ ​g​e​n​d​e​r​ ​f​i​l​t​e​r
+			 */
+			filterAria: string
+		}
+		categories: {
+			/**
+			 * C​a​t​e​g​o​r​i​e​s
+			 */
+			kicker: string
+			/**
+			 * W​h​e​r​e​ ​t​o​ ​s​t​a​r​t​?
+			 */
+			title: string
+			/**
+			 * W​o​m​e​n
+			 */
+			women: string
+			/**
+			 * M​e​n
+			 */
+			men: string
+			/**
+			 * H​o​o​d​i​e​s
+			 */
+			hoodies: string
+			/**
+			 * P​a​n​t​s
+			 */
+			pants: string
+			/**
+			 * J​o​r​d​a​n
+			 */
+			jordan: string
+			/**
+			 * J​u​m​p​m​a​n​ ​h​e​r​i​t​a​g​e​,​ ​f​o​r​ ​b​o​t​h​.
+			 */
+			jordanTagline: string
+			/**
+			 * {​c​o​u​n​t​}​ ​p​r​o​d​u​c​t​s
+			 * @param {unknown} count
+			 */
+			productCount: RequiredParams<'count'>
+		}
+		brands: {
+			/**
+			 * B​r​a​n​d​s
+			 */
+			kicker: string
+			/**
+			 * B​r​a​n​d​s​ ​w​e​ ​c​a​r​r​y​.
+			 */
+			title: string
+			/**
+			 * A​l​l​ ​{​b​r​a​n​d​}​ ​p​r​o​d​u​c​t​s
+			 * @param {unknown} brand
+			 */
+			allProducts: RequiredParams<'brand'>
+			/**
+			 * F​r​o​m​ ​t​e​c​h​ ​f​l​e​e​c​e​ ​t​o​ ​t​h​e​ ​S​w​o​o​s​h​ ​—​ ​e​v​e​r​y​d​a​y​ ​c​l​a​s​s​i​c​s​.
+			 */
+			lineNike: string
+			/**
+			 * J​u​m​p​m​a​n​ ​h​e​r​i​t​a​g​e​,​ ​f​r​o​m​ ​t​h​e​ ​c​o​u​r​t​ ​t​o​ ​t​h​e​ ​s​t​r​e​e​t​.
+			 */
+			lineJordan: string
+			/**
+			 * T​h​r​e​e​ ​s​t​r​i​p​e​s​,​ ​o​n​e​ ​s​i​g​n​a​t​u​r​e​ ​—​ ​s​i​m​p​l​e​ ​a​n​d​ ​l​a​s​t​i​n​g​.
+			 */
+			lineAdidas: string
+		}
+		picks: {
+			/**
+			 * P​i​c​k​s
+			 */
+			kicker: string
+			/**
+			 * S​A​I​N​T​B​A​L​A​ ​s​e​l​e​c​t​i​o​n​s
+			 */
+			title: string
+			/**
+			 * P​r​e​v​i​o​u​s
+			 */
+			prev: string
+			/**
+			 * N​e​x​t
+			 */
+			next: string
+		}
+		trust: {
+			/**
+			 * W​h​y​ ​s​h​o​p​ ​w​i​t​h​ ​S​A​I​N​T​B​A​L​A
+			 */
+			ariaLabel: string
+			/**
+			 * A​u​t​h​e​n​t​i​c​i​t​y
+			 */
+			authenticityTitle: string
+			/**
+			 * 1​0​0​%​ ​o​r​i​g​i​n​a​l​ ​a​p​p​a​r​e​l
+			 */
+			authenticityLine: string
+			/**
+			 * S​e​c​u​r​e​ ​p​a​y​m​e​n​t
+			 */
+			paymentTitle: string
+			/**
+			 * O​n​l​i​n​e​ ​p​a​y​m​e​n​t​ ​w​i​t​h​ ​Z​a​r​i​n​p​a​l
+			 */
+			paymentLine: string
+		}
+		newsletter: {
+			/**
+			 * N​e​w​s​l​e​t​t​e​r
+			 */
+			kicker: string
+			/**
+			 * B​e​ ​t​h​e​ ​f​i​r​s​t​.
+			 */
+			title: string
+			/**
+			 * G​e​t​ ​n​o​t​i​f​i​e​d​ ​w​h​e​n​ ​n​e​w​ ​a​r​r​i​v​a​l​s​ ​l​a​n​d​.
+			 */
+			subtitle: string
+			/**
+			 * E​m​a​i​l
+			 */
+			emailLabel: string
+			/**
+			 * Y​o​u​r​ ​e​m​a​i​l
+			 */
+			emailPlaceholder: string
+			/**
+			 * S​u​b​s​c​r​i​b​e
+			 */
+			subscribe: string
+			/**
+			 * T​h​a​n​k​s​!​ ​Y​o​u​r​ ​e​m​a​i​l​ ​i​s​ ​r​e​g​i​s​t​e​r​e​d​.
+			 */
+			success: string
+			/**
+			 * S​o​m​e​t​h​i​n​g​ ​w​e​n​t​ ​w​r​o​n​g​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
+			 */
+			error: string
+		}
+		shop: {
+			/**
+			 * S​A​I​N​T​B​A​L​A​ ​s​h​o​p
+			 */
+			kicker: string
+			/**
+			 * A​l​l​ ​p​r​o​d​u​c​t​s
+			 */
+			allProducts: string
+			/**
+			 * {​c​a​t​e​g​o​r​y​}​ ​p​r​o​d​u​c​t​s
+			 * @param {unknown} category
+			 */
+			productsInCategory: RequiredParams<'category'>
+			/**
+			 * {​b​r​a​n​d​}​ ​p​r​o​d​u​c​t​s
+			 * @param {unknown} brand
+			 */
+			productsByBrand: RequiredParams<'brand'>
+			/**
+			 * S​e​a​r​c​h​ ​b​y​ ​m​o​d​e​l​ ​o​r​ ​S​K​U​.​.​.
+			 */
+			searchPlaceholder: string
+			/**
+			 * S​o​r​t
+			 */
+			sortLabel: string
+			/**
+			 * B​r​a​n​d
+			 */
+			brandLabel: string
+			/**
+			 * C​a​t​e​g​o​r​y
+			 */
+			categoryLabel: string
+			/**
+			 * A​l​l​ ​b​r​a​n​d​s
+			 */
+			allBrands: string
+			/**
+			 * A​l​l
+			 */
+			allCategories: string
+			/**
+			 * C​l​e​a​r​ ​f​i​l​t​e​r​s
+			 */
+			clearFilters: string
+			/**
+			 * N​e​w​e​s​t
+			 */
+			newest: string
+			/**
+			 * L​o​w​e​s​t​ ​p​r​i​c​e
+			 */
+			cheapest: string
+			/**
+			 * H​i​g​h​e​s​t​ ​p​r​i​c​e
+			 */
+			mostExpensive: string
+			/**
+			 * N​o​ ​p​r​o​d​u​c​t​s​ ​f​o​u​n​d​.
+			 */
+			noProducts: string
+		}
+		footer: {
+			/**
+			 * A​u​t​h​e​n​t​i​c​ ​s​p​o​r​t​s​w​e​a​r​ ​f​o​r​ ​w​o​m​e​n​ ​a​n​d​ ​m​e​n​.
+			 */
+			tagline: string
+			/**
+			 * S​h​o​p
+			 */
+			store: string
+			/**
+			 * B​r​a​n​d​s
+			 */
+			brands: string
+			/**
+			 * H​e​l​p
+			 */
+			guide: string
+			/**
+			 * A​c​c​o​u​n​t
+			 */
+			account: string
+			/**
+			 * N​e​w
+			 */
+			newArrivals: string
+			/**
+			 * W​o​m​e​n
+			 */
+			women: string
+			/**
+			 * M​e​n
+			 */
+			men: string
+			/**
+			 * H​o​o​d​i​e​s
+			 */
+			hoodies: string
+			/**
+			 * P​a​n​t​s
+			 */
+			pants: string
+			/**
+			 * A​u​t​h​e​n​t​i​c​i​t​y
+			 */
+			authenticity: string
+			/**
+			 * S​i​z​e​ ​g​u​i​d​e
+			 */
+			sizeGuide: string
+			/**
+			 * P​a​y​ ​w​i​t​h​ ​Z​a​r​i​n​p​a​l
+			 */
+			payment: string
+			/**
+			 * S​i​g​n​ ​i​n​ ​w​i​t​h​ ​e​m​a​i​l
+			 */
+			loginWithEmail: string
+			/**
+			 * C​a​r​t
+			 */
+			cart: string
+			/**
+			 * F​a​v​o​r​i​t​e​s
+			 */
+			favorites: string
+			/**
+			 * ©​ ​{​y​e​a​r​}​ ​S​A​I​N​T​B​A​L​A
+			 * @param {unknown} year
+			 */
+			copyright: RequiredParams<'year'>
+			/**
+			 * O​n​l​i​n​e​ ​p​a​y​m​e​n​t​ ​w​i​t​h​ ​Z​a​r​i​n​p​a​l
+			 */
+			paymentOnline: string
+		}
+		currency: {
+			/**
+			 * T​o​m​a​n
+			 */
+			toman: string
+		}
+	}
 }
 
 export type TranslationFunctions = {
@@ -3247,6 +3683,10 @@ export type TranslationFunctions = {
 		 * Category
 		 */
 		category: () => LocalizedString
+		/**
+		 * Brand
+		 */
+		brand: () => LocalizedString
 		/**
 		 * Color
 		 */
@@ -4347,6 +4787,32 @@ export type TranslationFunctions = {
 		 * Search categories...
 		 */
 		searchCategories: () => LocalizedString
+	}
+	brands: {
+		/**
+		 * Add Brand
+		 */
+		addBrand: () => LocalizedString
+		/**
+		 * Edit Brand
+		 */
+		editBrand: () => LocalizedString
+		/**
+		 * Delete Brand
+		 */
+		deleteBrand: () => LocalizedString
+		/**
+		 * Are you sure you want to delete the brand "{name}"? This action cannot be undone.
+		 */
+		deleteBrandConfirm: (arg: { name: unknown }) => LocalizedString
+		/**
+		 * Manage Brands
+		 */
+		manageBrands: () => LocalizedString
+		/**
+		 * Search brands...
+		 */
+		searchBrands: () => LocalizedString
 	}
 	modal: {
 		/**
@@ -5664,13 +6130,17 @@ export type TranslationFunctions = {
 			 */
 			title: () => LocalizedString
 			/**
-			 * Manage translations for categories and colors. Click "Auto-translate" to automatically generate translations.
+			 * Manage translations for categories, brands, and colors. Click "Auto-translate" to automatically generate translations.
 			 */
 			description: () => LocalizedString
 			/**
 			 * Categories
 			 */
 			categories: () => LocalizedString
+			/**
+			 * Brands
+			 */
+			brands: () => LocalizedString
 			/**
 			 * Colors
 			 */
@@ -5679,6 +6149,10 @@ export type TranslationFunctions = {
 			 * Category Translations
 			 */
 			categoryTranslations: () => LocalizedString
+			/**
+			 * Brand Translations
+			 */
+			brandTranslations: () => LocalizedString
 			/**
 			 * Color Translations
 			 */
@@ -5692,9 +6166,17 @@ export type TranslationFunctions = {
 			 */
 			loadingColors: () => LocalizedString
 			/**
+			 * Loading brands...
+			 */
+			loadingBrands: () => LocalizedString
+			/**
 			 * Color (English)
 			 */
 			colorEnglish: () => LocalizedString
+			/**
+			 * Brand (English)
+			 */
+			brandEnglish: () => LocalizedString
 			/**
 			 * Hex Code
 			 */
@@ -5966,6 +6448,390 @@ export type TranslationFunctions = {
 		 * Explore & Shop Products
 		 */
 		startShopping: () => LocalizedString
+	}
+	home: {
+		nav: {
+			/**
+			 * Home
+			 */
+			newArrivals: () => LocalizedString
+			/**
+			 * Women
+			 */
+			women: () => LocalizedString
+			/**
+			 * Men
+			 */
+			men: () => LocalizedString
+			/**
+			 * Brands
+			 */
+			brands: () => LocalizedString
+			/**
+			 * Main menu
+			 */
+			mainAria: () => LocalizedString
+		}
+		/**
+		 * Search apparel and products...
+		 */
+		searchPlaceholder: () => LocalizedString
+		hero: {
+			/**
+			 * Fall Collection 1405
+			 */
+			collection: () => LocalizedString
+			/**
+			 * Go BALA. Go high.
+			 */
+			slogan: () => LocalizedString
+			/**
+			 * Go BALA.
+			 */
+			sloganLine1: () => LocalizedString
+			/**
+			 * Go high.
+			 */
+			sloganLine2: () => LocalizedString
+			/**
+			 * Authentic sportswear for women and men.
+			 */
+			subtitle: () => LocalizedString
+			/**
+			 * Shop Women
+			 */
+			shopWomen: () => LocalizedString
+			/**
+			 * Shop Men
+			 */
+			shopMen: () => LocalizedString
+			/**
+			 * Women
+			 */
+			women: () => LocalizedString
+			/**
+			 * Men
+			 */
+			men: () => LocalizedString
+			/**
+			 * Women & Men
+			 */
+			womenAndMen: () => LocalizedString
+			/**
+			 * Fall Collection 1405
+			 */
+			ariaLabel: () => LocalizedString
+		}
+		newArrivals: {
+			/**
+			 * Store arrivals
+			 */
+			kicker: () => LocalizedString
+			/**
+			 * Just in
+			 */
+			title: () => LocalizedString
+			/**
+			 * All
+			 */
+			all: () => LocalizedString
+			/**
+			 * Women
+			 */
+			women: () => LocalizedString
+			/**
+			 * Men
+			 */
+			men: () => LocalizedString
+			/**
+			 * View all
+			 */
+			viewAll: () => LocalizedString
+			/**
+			 * New arrivals gender filter
+			 */
+			filterAria: () => LocalizedString
+		}
+		categories: {
+			/**
+			 * Categories
+			 */
+			kicker: () => LocalizedString
+			/**
+			 * Where to start?
+			 */
+			title: () => LocalizedString
+			/**
+			 * Women
+			 */
+			women: () => LocalizedString
+			/**
+			 * Men
+			 */
+			men: () => LocalizedString
+			/**
+			 * Hoodies
+			 */
+			hoodies: () => LocalizedString
+			/**
+			 * Pants
+			 */
+			pants: () => LocalizedString
+			/**
+			 * Jordan
+			 */
+			jordan: () => LocalizedString
+			/**
+			 * Jumpman heritage, for both.
+			 */
+			jordanTagline: () => LocalizedString
+			/**
+			 * {count} products
+			 */
+			productCount: (arg: { count: unknown }) => LocalizedString
+		}
+		brands: {
+			/**
+			 * Brands
+			 */
+			kicker: () => LocalizedString
+			/**
+			 * Brands we carry.
+			 */
+			title: () => LocalizedString
+			/**
+			 * All {brand} products
+			 */
+			allProducts: (arg: { brand: unknown }) => LocalizedString
+			/**
+			 * From tech fleece to the Swoosh — everyday classics.
+			 */
+			lineNike: () => LocalizedString
+			/**
+			 * Jumpman heritage, from the court to the street.
+			 */
+			lineJordan: () => LocalizedString
+			/**
+			 * Three stripes, one signature — simple and lasting.
+			 */
+			lineAdidas: () => LocalizedString
+		}
+		picks: {
+			/**
+			 * Picks
+			 */
+			kicker: () => LocalizedString
+			/**
+			 * SAINTBALA selections
+			 */
+			title: () => LocalizedString
+			/**
+			 * Previous
+			 */
+			prev: () => LocalizedString
+			/**
+			 * Next
+			 */
+			next: () => LocalizedString
+		}
+		trust: {
+			/**
+			 * Why shop with SAINTBALA
+			 */
+			ariaLabel: () => LocalizedString
+			/**
+			 * Authenticity
+			 */
+			authenticityTitle: () => LocalizedString
+			/**
+			 * 100% original apparel
+			 */
+			authenticityLine: () => LocalizedString
+			/**
+			 * Secure payment
+			 */
+			paymentTitle: () => LocalizedString
+			/**
+			 * Online payment with Zarinpal
+			 */
+			paymentLine: () => LocalizedString
+		}
+		newsletter: {
+			/**
+			 * Newsletter
+			 */
+			kicker: () => LocalizedString
+			/**
+			 * Be the first.
+			 */
+			title: () => LocalizedString
+			/**
+			 * Get notified when new arrivals land.
+			 */
+			subtitle: () => LocalizedString
+			/**
+			 * Email
+			 */
+			emailLabel: () => LocalizedString
+			/**
+			 * Your email
+			 */
+			emailPlaceholder: () => LocalizedString
+			/**
+			 * Subscribe
+			 */
+			subscribe: () => LocalizedString
+			/**
+			 * Thanks! Your email is registered.
+			 */
+			success: () => LocalizedString
+			/**
+			 * Something went wrong. Please try again.
+			 */
+			error: () => LocalizedString
+		}
+		shop: {
+			/**
+			 * SAINTBALA shop
+			 */
+			kicker: () => LocalizedString
+			/**
+			 * All products
+			 */
+			allProducts: () => LocalizedString
+			/**
+			 * {category} products
+			 */
+			productsInCategory: (arg: { category: unknown }) => LocalizedString
+			/**
+			 * {brand} products
+			 */
+			productsByBrand: (arg: { brand: unknown }) => LocalizedString
+			/**
+			 * Search by model or SKU...
+			 */
+			searchPlaceholder: () => LocalizedString
+			/**
+			 * Sort
+			 */
+			sortLabel: () => LocalizedString
+			/**
+			 * Brand
+			 */
+			brandLabel: () => LocalizedString
+			/**
+			 * Category
+			 */
+			categoryLabel: () => LocalizedString
+			/**
+			 * All brands
+			 */
+			allBrands: () => LocalizedString
+			/**
+			 * All
+			 */
+			allCategories: () => LocalizedString
+			/**
+			 * Clear filters
+			 */
+			clearFilters: () => LocalizedString
+			/**
+			 * Newest
+			 */
+			newest: () => LocalizedString
+			/**
+			 * Lowest price
+			 */
+			cheapest: () => LocalizedString
+			/**
+			 * Highest price
+			 */
+			mostExpensive: () => LocalizedString
+			/**
+			 * No products found.
+			 */
+			noProducts: () => LocalizedString
+		}
+		footer: {
+			/**
+			 * Authentic sportswear for women and men.
+			 */
+			tagline: () => LocalizedString
+			/**
+			 * Shop
+			 */
+			store: () => LocalizedString
+			/**
+			 * Brands
+			 */
+			brands: () => LocalizedString
+			/**
+			 * Help
+			 */
+			guide: () => LocalizedString
+			/**
+			 * Account
+			 */
+			account: () => LocalizedString
+			/**
+			 * New
+			 */
+			newArrivals: () => LocalizedString
+			/**
+			 * Women
+			 */
+			women: () => LocalizedString
+			/**
+			 * Men
+			 */
+			men: () => LocalizedString
+			/**
+			 * Hoodies
+			 */
+			hoodies: () => LocalizedString
+			/**
+			 * Pants
+			 */
+			pants: () => LocalizedString
+			/**
+			 * Authenticity
+			 */
+			authenticity: () => LocalizedString
+			/**
+			 * Size guide
+			 */
+			sizeGuide: () => LocalizedString
+			/**
+			 * Pay with Zarinpal
+			 */
+			payment: () => LocalizedString
+			/**
+			 * Sign in with email
+			 */
+			loginWithEmail: () => LocalizedString
+			/**
+			 * Cart
+			 */
+			cart: () => LocalizedString
+			/**
+			 * Favorites
+			 */
+			favorites: () => LocalizedString
+			/**
+			 * © {year} SAINTBALA
+			 */
+			copyright: (arg: { year: unknown }) => LocalizedString
+			/**
+			 * Online payment with Zarinpal
+			 */
+			paymentOnline: () => LocalizedString
+		}
+		currency: {
+			/**
+			 * Toman
+			 */
+			toman: () => LocalizedString
+		}
 	}
 }
 

@@ -4,6 +4,7 @@ export * from './lib/product.resolver';
 export * from './lib/product-info.resolver';
 export * from './lib/customer-profile.resolver';
 export * from './lib/category.resolver';
+export * from './lib/brand.resolver';
 export * from './lib/color.resolver';
 export * from './lib/seller-info.resolver';
 export * from './lib/order.resolver';

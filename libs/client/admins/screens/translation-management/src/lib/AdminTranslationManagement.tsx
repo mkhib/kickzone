@@ -59,6 +59,18 @@ const GET_COLORS = gql`
   }
 `;
 
+const GET_BRANDS = gql`
+  query GetBrands {
+    brands {
+      id
+      slug
+      sortOrder
+      isActive
+      name
+    }
+  }
+`;
+
 interface TabPanelProps {
   children?: React.ReactNode;
   index: number;
@@ -84,7 +96,7 @@ function TabPanel(props: TabPanelProps) {
 interface TranslationsModalProps {
   open: boolean;
   onClose: () => void;
-  entityType: 'category' | 'color';
+  entityType: 'category' | 'color' | 'brand';
   entityId: number;
   entityName: string;
   onRefetchReady?: (refetch: () => void) => void;
@@ -265,7 +277,7 @@ export function AdminTranslationManagement() {
   const [tabValue, setTabValue] = useState(0);
   const [translationsModal, setTranslationsModal] = useState<{
     open: boolean;
-    entityType: 'category' | 'color';
+    entityType: 'category' | 'color' | 'brand';
     entityId: number;
     entityName: string;
   } | null>(null);
@@ -285,9 +297,15 @@ export function AdminTranslationManagement() {
     refetch: refetchColors,
   } = useQuery<Pick<KickzoneGraphqlTypes.Query, 'colors'>>(GET_COLORS);
 
+  const {
+    data: brandsData,
+    loading: brandsLoading,
+    refetch: refetchBrands,
+  } = useQuery<Pick<KickzoneGraphqlTypes.Query, 'brands'>>(GET_BRANDS);
+
   const handleBulkTranslate = useCallback(
     async (
-      entityType: 'category' | 'color',
+      entityType: 'category' | 'color' | 'brand',
       entityIds: number[],
       sourceLocale: string,
       targetLocales: string[]
@@ -344,6 +362,7 @@ export function AdminTranslationManagement() {
             aria-label="translation tabs"
           >
             <Tab label={LL.admin.translationManagement.categories()} />
+            <Tab label={LL.admin.translationManagement.brands()} />
             <Tab label={LL.admin.translationManagement.colors()} />
           </Tabs>
 
@@ -421,6 +440,83 @@ export function AdminTranslationManagement() {
           </TabPanel>
 
           <TabPanel value={tabValue} index={1}>
+            <Typography variant="h6" gutterBottom>
+              {LL.admin.translationManagement.brandTranslations()}
+            </Typography>
+            {brandsLoading ? (
+              <Typography>
+                {LL.admin.translationManagement.loadingBrands()}
+              </Typography>
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>
+                        {LL.admin.translationManagement.brandEnglish()}
+                      </TableCell>
+                      <TableCell>{LL.table.slug()}</TableCell>
+                      <TableCell>{LL.table.status()}</TableCell>
+                      <TableCell>{LL.table.view()}</TableCell>
+                      <TableCell>{LL.table.actions()}</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {brandsData?.brands?.map((brand) => (
+                      <TableRow key={brand?.id}>
+                        <TableCell>
+                          <Typography>{brand?.name}</Typography>
+                        </TableCell>
+                        <TableCell>{brand?.slug}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={
+                              brand?.isActive
+                                ? LL.table.active()
+                                : LL.table.inactive()
+                            }
+                            color={brand?.isActive ? 'success' : 'default'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            size="small"
+                            onClick={() =>
+                              brand?.id &&
+                              setTranslationsModal({
+                                open: true,
+                                entityType: 'brand',
+                                entityId: brand.id,
+                                entityName: brand.name,
+                              })
+                            }
+                          >
+                            <VisibilityIcon />
+                          </IconButton>
+                        </TableCell>
+                        <TableCell>
+                          <TranslateToOtherLanguagesButton
+                            onClick={() =>
+                              brand?.id &&
+                              handleBulkTranslate(
+                                'brand',
+                                [brand.id],
+                                'en',
+                                ['fa', 'ar']
+                              )
+                            }
+                          />
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
+          </TabPanel>
+
+          <TabPanel value={tabValue} index={2}>
             <Typography variant="h6" gutterBottom>
               {LL.admin.translationManagement.colorTranslations()}
             </Typography>
@@ -534,9 +630,10 @@ export function AdminTranslationManagement() {
               )
             }
             onSaveSuccess={() => {
-              // Refetch categories/colors to update the main table
               if (translationsModal.entityType === 'category') {
                 refetchCategories();
+              } else if (translationsModal.entityType === 'brand') {
+                refetchBrands();
               } else {
                 refetchColors();
               }

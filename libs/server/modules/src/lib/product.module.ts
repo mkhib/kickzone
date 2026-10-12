@@ -1,4 +1,5 @@
 import {
+  Brand,
   Category,
   Color,
   OrderItem,
@@ -40,6 +41,7 @@ import { ConfigService } from '@nestjs/config';
       ProductInfo,
       ProductInfoColor,
       Category,
+      Brand,
       SellerProduct,
       Color,
       SellerInfo,

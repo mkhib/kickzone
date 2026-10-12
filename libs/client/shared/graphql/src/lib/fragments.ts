@@ -13,6 +13,15 @@ export const CATEGORY_FRAGMENT = gql`
   fragment CategoryFields on Category {
     id
     name
+    slug
+  }
+`;
+
+export const BRAND_FRAGMENT = gql`
+  fragment BrandFields on Brand {
+    id
+    name
+    slug
   }
 `;
 
@@ -50,10 +59,15 @@ export const BASIC_PRODUCT_FRAGMENT = gql`
     categories {
       ...CategoryFields
     }
+    brand {
+      ...BrandFields
+    }
+    brandId
     productInfos {
       ...ProductInfoFields
     }
   }
   ${CATEGORY_FRAGMENT}
+  ${BRAND_FRAGMENT}
   ${PRODUCT_INFO_FRAGMENT}
 `;

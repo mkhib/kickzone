@@ -16,6 +16,9 @@ import {
 export function useProductsQuery({
   search,
   categoryId,
+  category,
+  categorySlugs,
+  brand,
   sort = '',
   sortOrder = 'asc',
   pageSize = 12,
@@ -26,6 +29,9 @@ export function useProductsQuery({
 }: {
   search: string;
   categoryId?: number;
+  category?: string;
+  categorySlugs?: string[];
+  brand?: string;
   sort?: string;
   sortOrder?: 'asc' | 'desc';
   pageSize?: number;
@@ -34,22 +40,45 @@ export function useProductsQuery({
   onlyWithSellers?: boolean;
   onlyInStock?: boolean;
 }) {
+  const buildFilter = useCallback(
+    (after?: string) => ({
+      searchTerm: search || undefined,
+      categoryId: categoryId || undefined,
+      category: category || undefined,
+      categorySlugs:
+        categorySlugs && categorySlugs.length > 0 ? categorySlugs : undefined,
+      brand: brand || undefined,
+      first: pageSize,
+      after,
+      sort,
+      sortOrder,
+      archivedStatus,
+      sellerId,
+      onlyWithSellers,
+      onlyInStock,
+    }),
+    [
+      search,
+      categoryId,
+      category,
+      categorySlugs,
+      brand,
+      pageSize,
+      sort,
+      sortOrder,
+      archivedStatus,
+      sellerId,
+      onlyWithSellers,
+      onlyInStock,
+    ]
+  );
+
   const { data, loading, error, fetchMore, refetch, networkStatus } = useQuery<
     Pick<KickzoneGraphqlTypes.Query, 'products'>,
     KickzoneGraphqlTypes.QueryProductsArgs
   >(PRODUCTS_QUERY, {
     variables: {
-      filter: {
-        searchTerm: search || undefined,
-        categoryId: categoryId || undefined,
-        first: pageSize,
-        sort,
-        sortOrder,
-        archivedStatus,
-        sellerId,
-        onlyWithSellers,
-        onlyInStock,
-      },
+      filter: buildFilter(),
     },
     notifyOnNetworkStatusChange: true,
   });
@@ -65,18 +94,7 @@ export function useProductsQuery({
     if (pageInfo?.hasNextPage) {
       return fetchMore({
         variables: {
-          filter: {
-            searchTerm: search || undefined,
-            categoryId: categoryId || undefined,
-            first: pageSize,
-            after: pageInfo.endCursor,
-            sort,
-            sortOrder,
-            archivedStatus,
-            sellerId,
-            onlyWithSellers,
-            onlyInStock,
-          },
+          filter: buildFilter(pageInfo.endCursor ?? undefined),
         },
         updateQuery: (prev, { fetchMoreResult }) => {
           if (!fetchMoreResult?.products) return prev;
@@ -98,19 +116,7 @@ export function useProductsQuery({
         },
       });
     }
-  }, [
-    fetchMore,
-    pageInfo,
-    search,
-    categoryId,
-    pageSize,
-    sort,
-    sortOrder,
-    archivedStatus,
-    sellerId,
-    onlyWithSellers,
-    onlyInStock,
-  ]);
+  }, [fetchMore, pageInfo, buildFilter]);
 
   return {
     products,

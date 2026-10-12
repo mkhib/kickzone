@@ -284,6 +284,11 @@ export class ProductResolver {
     }
     return this.productService.getProductDescriptions(product.id);
   }
+
+  @Mutation(() => Boolean)
+  async subscribeNewsletter(@Args('email') email: string): Promise<boolean> {
+    return this.productService.subscribeNewsletter(email);
+  }
 }
 
 @Resolver(() => SellerProduct)

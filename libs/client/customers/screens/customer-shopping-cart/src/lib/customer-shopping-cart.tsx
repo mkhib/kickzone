@@ -874,7 +874,7 @@ export function CustomerShoppingCart() {
                 mb: 0.5,
               }}
             >
-              SAINTBALA • ATELIER
+              SAINTBALA
             </Typography>
             <Typography
               variant="h4"
@@ -907,7 +907,7 @@ export function CustomerShoppingCart() {
             <Button
               variant="contained"
               component={RouterLink}
-              to={CUSTOMER_ROUTES.PRODUCTS}
+              to={CUSTOMER_ROUTES.SHOP}
               sx={{
                 mt: 1,
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -1308,7 +1308,7 @@ export function CustomerShoppingCart() {
                     mb: 0.5,
                   }}
                 >
-                  BESPOKE CHECKOUT
+                  CHECKOUT
                 </Typography>
                 <Typography
                   variant="h5"

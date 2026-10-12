@@ -1,5 +1,6 @@
 import { gql } from '@apollo/client';
 import {
+  BRAND_FRAGMENT,
   CATEGORY_FRAGMENT,
   PRODUCT_INFO_FRAGMENT,
   BASIC_PRODUCT_FRAGMENT,
@@ -29,6 +30,10 @@ export const PRODUCT_FRAGMENT = gql`
     categories {
       ...CategoryFields
     }
+    brand {
+      ...BrandFields
+    }
+    brandId
     productInfos {
       ...ProductInfoFields
     }
@@ -54,6 +59,7 @@ export const PRODUCT_FRAGMENT = gql`
     }
   }
   ${CATEGORY_FRAGMENT}
+  ${BRAND_FRAGMENT}
   ${PRODUCT_INFO_FRAGMENT}
 `;
 
@@ -81,6 +87,12 @@ export const CREATE_PRODUCT = gql`
         id
         name
       }
+      brand {
+        id
+        name
+        slug
+      }
+      brandId
     }
   }
 `;
@@ -178,6 +190,12 @@ export const UPDATE_PRODUCT = gql`
         id
         name
       }
+      brand {
+        id
+        name
+        slug
+      }
+      brandId
       description
       descriptions {
         id

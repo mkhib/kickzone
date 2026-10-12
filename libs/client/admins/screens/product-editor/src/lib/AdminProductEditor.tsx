@@ -3,6 +3,7 @@ import {
   useCategories,
   useCategoriesQuery,
 } from '@kickzone-workspace/categories-hook';
+import { useBrandsQuery } from '@kickzone-workspace/brands-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useProducts,
@@ -1081,6 +1082,7 @@ export function AdminProductEditor({
     name: '',
     sku: '',
     categoryIds: [] as number[],
+    brandId: null as number | null,
     description: '',
   });
 
@@ -1146,6 +1148,7 @@ export function AdminProductEditor({
   } | null>(null);
 
   const { categories, getCategoriesLoading } = useCategoriesQuery();
+  const { brands, getBrandsLoading } = useBrandsQuery();
   const {
     createCategory,
     updateCategory,
@@ -1212,6 +1215,7 @@ export function AdminProductEditor({
         name: loadedProduct.name,
         sku: loadedProduct.sku || '',
         categoryIds: loadedProduct.categories.map((cat) => cat.id),
+        brandId: loadedProduct.brandId ?? loadedProduct.brand?.id ?? null,
         description: loadedProduct.description || '',
       });
       setProductInfos(
@@ -1368,6 +1372,7 @@ export function AdminProductEditor({
             name: product.name,
             sku: product.sku.trim(),
             categoryIds: product.categoryIds,
+            brandId: product.brandId,
             description: primaryDesc,
             descriptions: descriptionList,
           });
@@ -1379,6 +1384,7 @@ export function AdminProductEditor({
               name: product.name,
               sku: product.sku.trim(),
               categoryIds: product.categoryIds,
+              brandId: product.brandId,
               description: primaryDesc,
               descriptions:
                 descriptionList.length > 0 ? descriptionList : undefined,
@@ -1411,6 +1417,7 @@ export function AdminProductEditor({
             name: '',
             sku: '',
             categoryIds: [],
+            brandId: null,
             description: '',
           });
           setProductInfos([
@@ -1788,6 +1795,38 @@ export function AdminProductEditor({
                 >
                   {LL.categories.manageCategories()}
                 </Button>
+              </Box>
+              <Box>
+                <Autocomplete
+                  id="brand-autocomplete"
+                  options={brands || []}
+                  getOptionLabel={(option) => option.name}
+                  value={
+                    brands?.find((b) => b.id === product.brandId) || null
+                  }
+                  onChange={(_e, newValue) => {
+                    setProduct((prev) => ({
+                      ...prev,
+                      brandId: newValue?.id ?? null,
+                    }));
+                  }}
+                  loading={getBrandsLoading}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={LL.form.brand()}
+                      slotProps={{
+                        input: {
+                          ...params.InputProps,
+                          'aria-label': 'Brand',
+                        },
+                      }}
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                />
               </Box>
               <Box sx={{ mt: 2 }}>
                 <Typography

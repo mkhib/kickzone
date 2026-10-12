@@ -1,1 +1,295 @@
-/* You can add global styles to this file, and also import other style files */
+/* ==========================================================================
+   SAINTBALA Design Tokens & Global Styles (Campaign v4)
+   ========================================================================== */
+
+:root,
+[data-theme="light"] {
+  --page: #f6f5f2;
+  --paper: #fbfaf8;
+  --ink: #1d1d1f;
+  --ink-2: #424245;
+  --ink-3: #6e6e73;
+  --hair: rgba(0, 0, 0, 0.09);
+  --accent: #8a6a3d;
+  --stock: #7a5a2e;
+  --stock-dot: #c99a55;
+  --cta-ink: #5e4420;
+  --cta-tint: rgba(176, 138, 82, 0.12);
+  --cta-tint-hover: rgba(176, 138, 82, 0.20);
+  --cta-tint-active: rgba(176, 138, 82, 0.28);
+  --frame: #e9e8e5;
+  --bar: rgba(246, 245, 242, 0.72);
+  --bar-solid: rgba(246, 245, 242, 0.90);
+  --focus: #0066d6;
+  --card-glass-bg: rgba(255, 255, 255, 0.30);
+  --card-glass-border: rgba(255, 255, 255, 0.65);
+}
+
+[data-theme="dark"] {
+  --page: #000000;
+  --paper: #0b0b0c;
+  --ink: #f5f5f7;
+  --ink-2: #d2d2d7;
+  --ink-3: #8e8e93;
+  --hair: rgba(255, 255, 255, 0.12);
+  --accent: #c9a774;
+  --stock: #d8bc8c;
+  --stock-dot: #c99a55;
+  --cta-ink: #ecd3a8;
+  --cta-tint: rgba(216, 188, 140, 0.10);
+  --cta-tint-hover: rgba(216, 188, 140, 0.17);
+  --cta-tint-active: rgba(216, 188, 140, 0.24);
+  --frame: #161617;
+  --bar: rgba(16, 16, 18, 0.66);
+  --bar-solid: rgba(16, 16, 18, 0.86);
+  --focus: #4da3ff;
+  --card-glass-bg: rgba(22, 22, 23, 0.45);
+  --card-glass-border: rgba(255, 255, 255, 0.14);
+}
+
+:root {
+  --wrap: 1180px;
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  /* Default FA; theme provider overrides per locale (Manrope for EN). */
+  --font-sans: "Vazirmatn", system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+  --font-serif: "Cormorant Garamond", Georgia, serif;
+}
+
+html[data-locale="en"] {
+  --font-sans: "Manrope", "Helvetica Neue", Helvetica, Arial, sans-serif;
+}
+
+html[data-locale="fa"] {
+  --font-sans: "Vazirmatn", system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
+}
+
+/* Hero theme adaptation: brighter panels in light, deeper in dark */
+[data-theme="light"] .hero-campaign {
+  background-color: #1a1917;
+  color: #ffffff;
+}
+[data-theme="light"] .hero-campaign .hero-panel-img {
+  filter: brightness(1.08) contrast(1.02) saturate(1.04);
+}
+[data-theme="light"] .hero-campaign .hero-copy {
+  color: #ffffff;
+  text-shadow: 0 2px 28px rgba(0, 0, 0, 0.35);
+}
+[data-theme="dark"] .hero-campaign {
+  background-color: #0a0a0a;
+  color: #f5f5f7;
+}
+[data-theme="dark"] .hero-campaign .hero-panel-img {
+  filter: brightness(0.9) contrast(1.04) saturate(0.96);
+}
+[data-theme="dark"] .hero-campaign .hero-copy {
+  color: #f5f5f7;
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.45);
+}
+
+@property --t {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@property --v {
+  syntax: "<number>";
+  inherits: true;
+  initial-value: 0;
+}
+
+@keyframes ch-t {
+  from { --t: 0; }
+  to { --t: 1; }
+}
+
+@keyframes rv-v {
+  from { --v: 0; }
+  to { --v: 1; }
+}
+
+@supports (animation-timeline: view()) {
+  .hero-campaign {
+    view-timeline: --hero block;
+    animation: ch-t linear both;
+    animation-timeline: --hero;
+    animation-range: exit 0% exit 100%;
+  }
+
+  .rv {
+    animation: rv-v linear both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 30%;
+  }
+}
+
+.rv {
+  --vd: clamp(0, calc(var(--v) * 1.25 - var(--d, 0) * 0.08), 1);
+  opacity: var(--vd);
+  transform: translate3d(0, calc((1 - var(--vd)) * 28px), 0);
+  transition: opacity 0.35s var(--ease), transform 0.35s var(--ease);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rv {
+    --v: 1 !important;
+    --vd: 1 !important;
+    opacity: 1 !important;
+    transform: none !important;
+    animation: none !important;
+    transition: none !important;
+  }
+  .hero-campaign {
+    --t: 0 !important;
+    animation: none !important;
+  }
+  * {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+  }
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--page);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  overflow-x: clip;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Accessibility Skip link */
+.skip-link {
+  position: absolute;
+  top: -100px;
+  inset-inline-start: 16px;
+  background: var(--ink);
+  color: var(--page);
+  padding: 8px 16px;
+  border-radius: 999px;
+  z-index: 10000;
+  font-weight: 600;
+  text-decoration: none;
+  font-size: 14px;
+  transition: top 0.2s var(--ease);
+}
+.skip-link:focus-visible {
+  top: 16px;
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+/* SAINTBALA wordmark typography */
+.font-saintbala {
+  font-family: var(--font-serif);
+  letter-spacing: 0.34em;
+  font-weight: 400;
+  direction: ltr;
+  display: inline-block;
+}
+
+/* Glass Card Component Styles */
+.glass-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  background: var(--card-glass-bg);
+  backdrop-filter: blur(26px) saturate(190%) brightness(1.04);
+  -webkit-backdrop-filter: blur(26px) saturate(190%) brightness(1.04);
+  border: 1px solid var(--card-glass-border);
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.08), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.6);
+  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+  width: 100%;
+}
+
+.glass-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 50px -16px rgba(0, 0, 0, 0.18), inset 0 1px 2px 0 rgba(255, 255, 255, 0.85);
+}
+
+.glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s var(--ease);
+  background: radial-gradient(320px circle at var(--mx, -500px) var(--my, -500px), rgba(255, 255, 255, 0.22), transparent 70%);
+  z-index: 1;
+}
+
+.glass-card:hover::before {
+  opacity: 1;
+}
+
+.glass-card.is-compact {
+  border-radius: 22px;
+}
+
+/* Card image fade mask for standard cards */
+.card-media-fade {
+  mask-image: linear-gradient(to bottom, #000 46%, transparent 99%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 46%, transparent 99%);
+}
+
+/* Bronze CTA pill */
+.btn-cta-bronze {
+  background: var(--cta-tint);
+  color: var(--cta-ink);
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+  transition: all 0.25s var(--ease);
+}
+.btn-cta-bronze:hover {
+  background: var(--cta-tint-hover);
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+.btn-cta-bronze:active {
+  background: var(--cta-tint-active);
+  transform: scale(0.97);
+}
+
+/* Ticker edge mask */
+.ticker-mask {
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+@keyframes ticker-slide {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(50%);
+  }
+}
+
+.ticker-track {
+  display: flex;
+  width: max-content;
+  animation: ticker-slide 46s linear infinite;
+}
+.ticker-track:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ticker-track {
+    animation: none !important;
+  }
+}
+

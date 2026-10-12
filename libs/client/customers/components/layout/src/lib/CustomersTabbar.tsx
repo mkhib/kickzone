@@ -47,9 +47,9 @@ export function CustomersTabbar({
         {
           id: 'home',
           label: LL.navigation.home(),
-          path: CUSTOMER_ROUTES.PRODUCTS,
+          path: CUSTOMER_ROUTES.HOME,
           icon: <HomeIcon />,
-          matchPaths: [CUSTOMER_ROUTES.PRODUCTS, CUSTOMER_ROUTES.HOME, '/'],
+          matchPaths: [CUSTOMER_ROUTES.HOME, CUSTOMER_ROUTES.PRODUCTS, '/'],
         },
         {
           id: 'cart',
@@ -80,9 +80,9 @@ export function CustomersTabbar({
       {
         id: 'home',
         label: LL.navigation.home(),
-        path: CUSTOMER_ROUTES.PRODUCTS,
+        path: CUSTOMER_ROUTES.HOME,
         icon: <HomeIcon />,
-        matchPaths: [CUSTOMER_ROUTES.PRODUCTS, CUSTOMER_ROUTES.HOME, '/'],
+        matchPaths: [CUSTOMER_ROUTES.HOME, CUSTOMER_ROUTES.PRODUCTS, '/'],
       },
       {
         id: 'cart',

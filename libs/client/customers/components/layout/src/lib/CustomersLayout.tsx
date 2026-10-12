@@ -8,12 +8,14 @@ export interface CustomersLayoutProps {
   children: React.ReactNode;
   drawerItems?: React.ReactNode;
   handledInTabbarIds?: string[];
+  disablePadding?: boolean;
 }
 
 export function CustomersLayout({
   children,
   drawerItems,
   handledInTabbarIds,
+  disablePadding = false,
 }: CustomersLayoutProps) {
   const header = (
     <Headerbar
@@ -32,6 +34,7 @@ export function CustomersLayout({
       body={children}
       footer={footer}
       bottomBar={bottomBar}
+      disablePadding={disablePadding}
     />
   );
 }

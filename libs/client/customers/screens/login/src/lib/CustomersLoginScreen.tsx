@@ -53,9 +53,9 @@ export function CustomersLogin() {
 
       showSnackbar(LL.messages.welcome(), { severity: 'success' });
 
-      // Redirect to the page they were trying to access, or default to PRODUCTS
+      // Redirect to the page they were trying to access, or default to home
       const from =
-        (location.state as { from?: string })?.from || CUSTOMER_ROUTES.PRODUCTS;
+        (location.state as { from?: string })?.from || CUSTOMER_ROUTES.HOME;
       navigate(from, { replace: true });
     } catch (error) {
       const { translationKey, rawMessage } = getErrorMessage(error as Error);

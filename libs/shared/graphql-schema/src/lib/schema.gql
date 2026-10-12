@@ -36,7 +36,7 @@ type UserConnection {
   totalCount: Int!
 }
 
-type Category {
+type Brand {
   id: Int!
   slug: String!
   sortOrder: Int!
@@ -50,6 +50,16 @@ type Category {
 A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
 """
 scalar DateTime
+
+type Category {
+  id: Int!
+  slug: String!
+  sortOrder: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+}
 
 type Color {
   id: Int!
@@ -104,6 +114,8 @@ type Product {
   sku: String
   productInfos: [ProductInfo!]!
   categories: [Category!]!
+  brand: Brand
+  brandId: Int
   description: String
   descriptions: [ProductDescription!]
   sellerProducts: [SellerProduct!]
@@ -395,6 +407,8 @@ type Query {
   getTranslation(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String): String!
   getEntityTranslations(entityType: String!, entityId: Int!): [Translation!]!
   getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
+  brands(onlyWithProducts: Boolean): [Brand!]!
+  brand(id: Int!): Brand
   sellers(filter: SellerFilterInput, first: Int! = 100, after: String): SellerConnection!
   findOne(id: Int!): SellerInfo
   mySellerInfo: SellerInfo
@@ -422,6 +436,9 @@ type Query {
 
 input ProductFilterInput {
   category: String
+  categorySlugs: [String!]
+  brand: String
+  ids: [Int!]
   searchTerm: String
   productInfoFilter: ProductInfoFilterInput
   categoryIds: [Int!]
@@ -489,9 +506,13 @@ type Mutation {
   unarchiveProduct(id: Int!): Product!
   deleteProduct(id: Int!): Boolean!
   updateProduct(input: UpdateProductInput!): Product!
+  subscribeNewsletter(email: String!): Boolean!
   setTranslation(input: TranslationInput!): Translation!
   bulkTranslateEntities(input: BulkTranslationInput!): Boolean!
   deleteEntityTranslations(entityType: String!, entityId: Int!): Boolean!
+  createBrand(input: CreateBrandInput!, name: String): Brand!
+  updateBrand(input: UpdateBrandInput!, name: String): Brand!
+  deleteBrand(id: Int!): Boolean!
   createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
   updateSeller(updateSellerInput: UpdateSellerInput!): SellerInfo!
   toggleSellerActive(id: Int!): SellerInfo!
@@ -560,6 +581,7 @@ input CreateProductInput {
   name: String!
   sku: String!
   categoryIds: [Int!]!
+  brandId: Int
   description: String
   descriptions: [ProductDescriptionInput!]
 }
@@ -586,6 +608,7 @@ input UpdateProductInput {
   name: String!
   sku: String!
   categoryIds: [Int!]!
+  brandId: Int
   description: String
   descriptions: [ProductDescriptionInput!]
 }
@@ -605,6 +628,18 @@ input BulkTranslationInput {
   entityIds: [Int!]!
   sourceLocale: String!
   targetLocales: [String!]!
+}
+
+input CreateBrandInput {
+  slug: String!
+  sortOrder: Int = 0
+}
+
+input UpdateBrandInput {
+  id: Int!
+  slug: String
+  sortOrder: Int
+  isActive: Boolean
 }
 
 input CreateSellerInput {

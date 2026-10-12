@@ -23,6 +23,17 @@ export type AddToCartInput = {
   sellerProductId: Scalars['String']['input'];
 };
 
+export type Brand = {
+  __typename?: 'Brand';
+  createdAt: Scalars['DateTime']['output'];
+  id: Scalars['Int']['output'];
+  isActive: Scalars['Boolean']['output'];
+  name: Scalars['String']['output'];
+  slug: Scalars['String']['output'];
+  sortOrder: Scalars['Int']['output'];
+  updatedAt: Scalars['DateTime']['output'];
+};
+
 export type BulkTranslationInput = {
   entityIds: Array<Scalars['Int']['input']>;
   entityType: Scalars['String']['input'];
@@ -82,6 +93,11 @@ export type Color = {
   updatedAt: Scalars['DateTime']['output'];
 };
 
+export type CreateBrandInput = {
+  slug: Scalars['String']['input'];
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type CreateCategoryInput = {
   slug: Scalars['String']['input'];
   sortOrder?: InputMaybe<Scalars['Int']['input']>;
@@ -137,6 +153,7 @@ export type CreateProductInfoInput = {
 };
 
 export type CreateProductInput = {
+  brandId?: InputMaybe<Scalars['Int']['input']>;
   categoryIds: Array<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   descriptions?: InputMaybe<Array<ProductDescriptionInput>>;
@@ -247,6 +264,7 @@ export type Mutation = {
   bulkTranslateEntities: Scalars['Boolean']['output'];
   cancelPendingZarinPalOrder: Scalars['Boolean']['output'];
   clearCart: Cart;
+  createBrand: Brand;
   createCategory: Category;
   createColor: Color;
   createCurrency: Currency;
@@ -258,6 +276,7 @@ export type Mutation = {
   createSellerProduct: SellerProduct;
   createSiteLanguage: SiteLanguage;
   createUser: User;
+  deleteBrand: Scalars['Boolean']['output'];
   deleteCategory: Scalars['Boolean']['output'];
   deleteColor: Scalars['Boolean']['output'];
   deleteCurrencyPreference: Scalars['Boolean']['output'];
@@ -279,8 +298,10 @@ export type Mutation = {
   setExchangeRate: ExchangeRate;
   setTranslation: Translation;
   setupPassword: User;
+  subscribeNewsletter: Scalars['Boolean']['output'];
   toggleSellerActive: SellerInfo;
   unarchiveProduct: Product;
+  updateBrand: Brand;
   updateCartItem: Cart;
   updateCategory: Category;
   updateColor: Color;
@@ -320,6 +341,12 @@ export type MutationBulkTranslateEntitiesArgs = {
 
 export type MutationCancelPendingZarinPalOrderArgs = {
   orderId: Scalars['String']['input'];
+};
+
+
+export type MutationCreateBrandArgs = {
+  input: CreateBrandInput;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -378,6 +405,11 @@ export type MutationCreateSiteLanguageArgs = {
 
 export type MutationCreateUserArgs = {
   createUserInput: CreateUserInput;
+};
+
+
+export type MutationDeleteBrandArgs = {
+  id: Scalars['Int']['input'];
 };
 
 
@@ -491,6 +523,11 @@ export type MutationSetupPasswordArgs = {
 };
 
 
+export type MutationSubscribeNewsletterArgs = {
+  email: Scalars['String']['input'];
+};
+
+
 export type MutationToggleSellerActiveArgs = {
   id: Scalars['Int']['input'];
 };
@@ -498,6 +535,12 @@ export type MutationToggleSellerActiveArgs = {
 
 export type MutationUnarchiveProductArgs = {
   id: Scalars['Int']['input'];
+};
+
+
+export type MutationUpdateBrandArgs = {
+  input: UpdateBrandInput;
+  name?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -660,6 +703,8 @@ export type PageInfo = {
 export type Product = {
   __typename?: 'Product';
   archived: Scalars['Boolean']['output'];
+  brand?: Maybe<Brand>;
+  brandId?: Maybe<Scalars['Int']['output']>;
   categories: Array<Category>;
   description?: Maybe<Scalars['String']['output']>;
   descriptions?: Maybe<Array<ProductDescription>>;
@@ -709,10 +754,13 @@ export type ProductEdge = {
 export type ProductFilterInput = {
   after?: InputMaybe<Scalars['String']['input']>;
   archivedStatus?: InputMaybe<ProductArchivedStatus>;
+  brand?: InputMaybe<Scalars['String']['input']>;
   category?: InputMaybe<Scalars['String']['input']>;
   categoryId?: InputMaybe<Scalars['Int']['input']>;
   categoryIds?: InputMaybe<Array<Scalars['Int']['input']>>;
+  categorySlugs?: InputMaybe<Array<Scalars['String']['input']>>;
   first?: InputMaybe<Scalars['Int']['input']>;
+  ids?: InputMaybe<Array<Scalars['Int']['input']>>;
   onlyInStock?: InputMaybe<Scalars['Boolean']['input']>;
   onlyWithSellers?: InputMaybe<Scalars['Boolean']['input']>;
   productInfoFilter?: InputMaybe<ProductInfoFilterInput>;
@@ -748,6 +796,8 @@ export type Query = {
   __typename?: 'Query';
   adminSellerOrders: OrdersConnection;
   allSellerOrders: OrdersConnection;
+  brand?: Maybe<Brand>;
+  brands: Array<Brand>;
   calculateShippingCost: ShippingCalculationResult;
   categories: Array<Category>;
   color?: Maybe<Color>;
@@ -797,6 +847,16 @@ export type QueryAllSellerOrdersArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: Scalars['Int']['input'];
   status?: InputMaybe<OrderStatus>;
+};
+
+
+export type QueryBrandArgs = {
+  id: Scalars['Int']['input'];
+};
+
+
+export type QueryBrandsArgs = {
+  onlyWithProducts?: InputMaybe<Scalars['Boolean']['input']>;
 };
 
 
@@ -1112,6 +1172,13 @@ export type TranslationInput = {
   value: Scalars['String']['input'];
 };
 
+export type UpdateBrandInput = {
+  id: Scalars['Int']['input'];
+  isActive?: InputMaybe<Scalars['Boolean']['input']>;
+  slug?: InputMaybe<Scalars['String']['input']>;
+  sortOrder?: InputMaybe<Scalars['Int']['input']>;
+};
+
 export type UpdateCartItemInput = {
   color?: InputMaybe<Scalars['String']['input']>;
   quantity?: InputMaybe<Scalars['Int']['input']>;
@@ -1184,6 +1251,7 @@ export type UpdateOrderStatusInput = {
 };
 
 export type UpdateProductInput = {
+  brandId?: InputMaybe<Scalars['Int']['input']>;
   categoryIds: Array<Scalars['Int']['input']>;
   description?: InputMaybe<Scalars['String']['input']>;
   descriptions?: InputMaybe<Array<ProductDescriptionInput>>;

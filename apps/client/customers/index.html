@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fa" dir="rtl">
   <head>
     <meta charset="utf-8" />
     <title>SAINTBALA</title>
@@ -13,18 +13,27 @@
     <link rel="icon" type="image/png" sizes="512x512" href="/favicon-512x512.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="shortcut icon" href="/favicon.ico" />
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600&family=Vazirmatn:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link rel="preload" as="image" href="/assets/hero/hero-center-jordan.jpg" fetchPriority="high" />
+
+    <script>
+      (function() {
+        try {
+          var mode = localStorage.getItem('kickzone-theme-mode');
+          if (!mode) {
+            mode = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+          }
+          document.documentElement.setAttribute('data-theme', mode);
+        } catch (e) {}
+      })();
+    </script>
     <link rel="stylesheet" href="/src/styles.css" />
-    <style>
-      html,
-      body {
-        background: #ffffff;
-        min-height: 100vh;
-        margin: 0;
-        padding: 0;
-      }
-    </style>
   </head>
   <body>
+    <a href="#main" class="skip-link">رفتن به محتوا</a>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

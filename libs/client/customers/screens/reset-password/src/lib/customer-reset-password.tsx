@@ -64,7 +64,7 @@ export function CustomerResetPassword() {
       showSnackbar(LL.authorization.passwordResetSuccess(), {
         severity: 'success',
       });
-      navigate(CUSTOMER_ROUTES.PRODUCTS);
+      navigate(CUSTOMER_ROUTES.HOME);
     } catch (error) {
       const { translationKey, rawMessage } = getErrorMessage(error as Error);
       const errorMessage = translationKey

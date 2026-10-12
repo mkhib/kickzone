@@ -3,6 +3,7 @@ import { LoggerModule } from 'nestjs-pino';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import {
+  Brand,
   Category,
   Product,
   ProductInfo,
@@ -26,6 +27,7 @@ import {
 } from '@kickzone-workspace/entities';
 import {
   AuthModule,
+  BrandModule,
   CategoryModule,
   ProductInfoModule,
   ProductModule,
@@ -83,6 +85,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
         Product,
         ProductInfo,
         Category,
+        Brand,
         SellerProduct,
         SellerInfo,
         Color,
@@ -145,6 +148,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
     UserModule,
     AuthModule,
     CategoryModule,
+    BrandModule,
     ProductModule,
     ProductInfoModule,
     SellerInfoModule,

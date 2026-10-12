@@ -227,7 +227,7 @@ export function CustomerOrders() {
                 mb: 0.5,
               }}
             >
-              SAINTBALA • ATELIER
+              SAINTBALA
             </Typography>
             <Typography
               variant="h4"

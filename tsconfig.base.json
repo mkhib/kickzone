@@ -79,6 +79,9 @@
       "@kickzone-workspace/apollo-provider-base": [
         "libs/client/shared/components/apollo-provider-base/src/index.ts"
       ],
+      "@kickzone-workspace/brands-hook": [
+        "libs/client/shared/hooks/brands/src/index.ts"
+      ],
       "@kickzone-workspace/categories-hook": [
         "libs/client/shared/hooks/categories/src/index.ts"
       ],
