@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { getCustomerProductDetailsRoute } from '@kickzone-workspace/customers-routes';
@@ -134,8 +134,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   const productDetailsUrl = to || getCustomerProductDetailsRoute(product.id);
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [isAddedRecently, setIsAddedRecently] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const cardRef = useRef<HTMLDivElement | null>(null);
   const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isCompact = variant === 'compact';
@@ -144,16 +142,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     return () => {
       if (addedTimerRef.current) clearTimeout(addedTimerRef.current);
     };
-  }, []);
-
-  // Pointer tracking for specular highlight
-  const handleMouseMove = useCallback((e: React.MouseEvent<HTMLDivElement>) => {
-    if (!cardRef.current) return;
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left;
-    const y = e.clientY - rect.top;
-    cardRef.current.style.setProperty('--mx', `${x}px`);
-    cardRef.current.style.setProperty('--my', `${y}px`);
   }, []);
 
   // Filter in-stock variants
@@ -338,19 +326,19 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 
   return (
     <Box
-      ref={cardRef}
-      className={`glass-card rv ${isCompact ? 'is-compact' : ''}`}
-      onMouseMove={handleMouseMove}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      onClick={handleCardClick}
+      className="rv"
       style={{ '--d': index % 4 } as React.CSSProperties}
-      sx={{
-        cursor: 'pointer',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
+      sx={{ width: '100%' }}
     >
+      <Box
+        className={`glass-card ${isCompact ? 'is-compact' : ''}`}
+        onClick={handleCardClick}
+        sx={{
+          cursor: 'pointer',
+          display: 'flex',
+          flexDirection: 'column',
+        }}
+      >
       {/* Hidden container for all categories so test queries find them */}
       <Box sx={{ display: 'none' }} aria-hidden="true">
         {product.categories?.map((c) => (
@@ -378,25 +366,27 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         >
           <Box
             component="img"
+            className="card-img-primary"
             src={primaryImage}
             alt={`${typeLabel || 'پوشاک'} ${brand} — ${firstColor?.name || ''}، روی مدل`}
             loading="lazy"
+            decoding="async"
             sx={{
               width: '100%',
               height: '100%',
               objectFit: 'cover',
               objectPosition: 'center',
-              transform: isHovered ? 'scale(1.035)' : 'scale(1)',
-              transition: 'transform 0.9s var(--ease)',
             }}
           />
 
           {secondaryImage && (
             <Box
               component="img"
+              className="card-img-secondary"
               src={secondaryImage}
               alt=""
               loading="lazy"
+              decoding="async"
               sx={{
                 position: 'absolute',
                 inset: 0,
@@ -404,8 +394,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 height: '100%',
                 objectFit: 'cover',
                 objectPosition: 'center',
-                opacity: isHovered ? 1 : 0,
-                transition: 'opacity 0.6s var(--ease)',
               }}
             />
           )}
@@ -724,6 +712,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             {isAddedRecently ? 'به سبد اضافه شد' : 'افزودن به سبد خرید'}
           </Button>
         )}
+      </Box>
       </Box>
     </Box>
   );

@@ -21,8 +21,8 @@
   --bar: rgba(246, 245, 242, 0.72);
   --bar-solid: rgba(246, 245, 242, 0.90);
   --focus: #0066d6;
-  --card-glass-bg: rgba(255, 255, 255, 0.30);
-  --card-glass-border: rgba(255, 255, 255, 0.65);
+  --card-glass-bg: var(--paper);
+  --card-glass-border: var(--hair);
 }
 
 [data-theme="dark"] {
@@ -43,8 +43,8 @@
   --bar: rgba(16, 16, 18, 0.66);
   --bar-solid: rgba(16, 16, 18, 0.86);
   --focus: #4da3ff;
-  --card-glass-bg: rgba(22, 22, 23, 0.45);
-  --card-glass-border: rgba(255, 255, 255, 0.14);
+  --card-glass-bg: var(--paper);
+  --card-glass-border: var(--hair);
 }
 
 :root {
@@ -202,42 +202,47 @@ html, body {
   display: inline-block;
 }
 
-/* Glass Card Component Styles */
+/* Product card — hover lives on .glass-card; scroll-reveal lives on outer .rv */
 .glass-card {
+  --card-ease: cubic-bezier(0.4, 0, 0.2, 1); /* ease-in-out */
   position: relative;
   overflow: hidden;
   border-radius: 32px;
   background: var(--card-glass-bg);
-  backdrop-filter: blur(26px) saturate(190%) brightness(1.04);
-  -webkit-backdrop-filter: blur(26px) saturate(190%) brightness(1.04);
   border: 1px solid var(--card-glass-border);
-  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.08), inset 0 1px 1.5px 0 rgba(255, 255, 255, 0.6);
-  transition: transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+  box-shadow: 0 8px 24px -12px rgba(0, 0, 0, 0.1);
+  transform: translate3d(0, 0, 0);
+  transition:
+    transform 0.35s var(--card-ease),
+    box-shadow 0.35s var(--card-ease);
   width: 100%;
 }
 
 .glass-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 24px 50px -16px rgba(0, 0, 0, 0.18), inset 0 1px 2px 0 rgba(255, 255, 255, 0.85);
-}
-
-.glass-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0;
-  transition: opacity 0.3s var(--ease);
-  background: radial-gradient(320px circle at var(--mx, -500px) var(--my, -500px), rgba(255, 255, 255, 0.22), transparent 70%);
-  z-index: 1;
-}
-
-.glass-card:hover::before {
-  opacity: 1;
+  transform: translate3d(0, -6px, 0);
+  box-shadow: 0 18px 36px -16px rgba(0, 0, 0, 0.18);
 }
 
 .glass-card.is-compact {
   border-radius: 22px;
+}
+
+.glass-card .card-img-primary {
+  transform: scale(1) translateZ(0);
+  transition: transform 0.35s var(--card-ease);
+}
+
+.glass-card:hover .card-img-primary {
+  transform: scale(1.04) translateZ(0);
+}
+
+.glass-card .card-img-secondary {
+  opacity: 0;
+  transition: opacity 0.35s var(--card-ease);
+}
+
+.glass-card:hover .card-img-secondary {
+  opacity: 1;
 }
 
 /* Card image fade mask for standard cards */
