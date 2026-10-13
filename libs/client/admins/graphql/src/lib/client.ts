@@ -2,10 +2,9 @@ import {
   ApolloClient,
   InMemoryCache,
   ApolloLink,
-  HttpLink,
 } from '@apollo/client';
 import { relayStylePagination } from '@apollo/client/utilities';
-import { onError } from '@apollo/client/link/error';
+import { createSilentRefreshAuthLink } from '@kickzone-workspace/apollo-provider-base';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 
 const csrfLink = new ApolloLink((operation, forward) => {
@@ -46,90 +45,16 @@ const graphqlUri = getGraphQLEndpoint();
 const httpLink = new UploadHttpLink({
   uri: graphqlUri,
   credentials: 'include',
-});
+}) as unknown as ApolloLink;
 
 export const createAdminsApolloClient = (onAuthError: () => void) => {
-  const authErrorLink = onError((errorContext: any) => {
-    const { graphQLErrors, networkError, error, result, operation } =
-      errorContext;
-
-    const operationName = operation?.operationName;
-
-    // Never treat login failures as "global auth errors" that trigger a full reload.
-    // The login screen should show a validation error instead of redirecting.
-    const isLoginOperation =
-      typeof operationName === 'string' &&
-      operationName.toLowerCase() === 'login';
-
-    // Check the main error object
-    if (error && error.message) {
-      if (
-        !isLoginOperation &&
-        (error.message.toLowerCase().includes('not authenticated') ||
-          error.message.toLowerCase().includes('unauthorized') ||
-          error.message.toLowerCase().includes('forbidden'))
-      ) {
-        onAuthError();
-        return;
-      }
-    }
-
-    // Check result.errors array
-    if (!isLoginOperation && result && result.errors) {
-      result.errors.forEach((err: { message?: string }) => {
-        if (
-          err.message?.toLowerCase().includes('not authenticated') ||
-          err.message?.toLowerCase().includes('unauthorized') ||
-          err.message?.toLowerCase().includes('forbidden')
-        ) {
-          onAuthError();
-          return;
-        }
-      });
-    }
-
-    if (!isLoginOperation && graphQLErrors) {
-      graphQLErrors.forEach(
-        ({
-          message,
-          extensions,
-        }: {
-          message: string;
-          extensions?: { code?: string } | null;
-        }) => {
-          console.warn('[Apollo][admins] GraphQL error', {
-            message,
-            extensions,
-          });
-          if (
-            message.toLowerCase().includes('not authenticated') ||
-            message.toLowerCase().includes('unauthorized') ||
-            (message.toLowerCase().includes('forbidden') &&
-              !isLoginOperation) ||
-            extensions?.code === 'UNAUTHENTICATED' ||
-            extensions?.code === 'FORBIDDEN'
-          ) {
-            onAuthError();
-          }
-        }
-      );
-    }
-
-    if (!isLoginOperation && networkError) {
-      console.warn('[Apollo][admins] Network error', networkError);
-      if (
-        networkError.message?.toLowerCase().includes('not authenticated') ||
-        networkError.message?.toLowerCase().includes('unauthorized') ||
-        networkError.statusCode === 401 ||
-        networkError.statusCode === 403
-      ) {
-        onAuthError();
-      }
-    }
+  const authErrorLink = createSilentRefreshAuthLink({
+    graphqlUri,
+    onAuthError,
   });
 
   return new ApolloClient({
-    link: csrfLink.concat(authErrorLink).concat(httpLink),
+    link: ApolloLink.from([csrfLink, authErrorLink, httpLink]),
     cache: new InMemoryCache({
       typePolicies: {
         Query: {
@@ -161,7 +86,7 @@ export const createAdminsApolloClient = (onAuthError: () => void) => {
 
 // Default client for backward compatibility (without error handling)
 const apolloClient = new ApolloClient({
-  link: csrfLink.concat(httpLink),
+  link: ApolloLink.from([csrfLink, httpLink]),
   cache: new InMemoryCache({
     typePolicies: {
       Query: {

@@ -1,7 +1,10 @@
-import { User, UserRole } from '@kickzone-workspace/entities';
-import { Injectable } from '@nestjs/common';
+import { RefreshToken, User, UserRole } from '@kickzone-workspace/entities';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 import * as bcrypt from 'bcryptjs';
+import { createHash, randomBytes } from 'crypto';
 import { UserService } from './user.service';
 import { EmailService } from './email.service';
 import { TokenService } from './token.service';
@@ -9,6 +12,9 @@ import {
   getPasswordSetupEmailTemplate,
   getPasswordResetEmailTemplate,
 } from '@kickzone-workspace/utils';
+
+export const ACCESS_TOKEN_MAX_AGE_MS = 15 * 60 * 1000; // 15 minutes
+export const REFRESH_TOKEN_MAX_AGE_MS = 2629800000; // ~30.4 days
 
 interface AdminCreateUserParams {
   name: string;
@@ -19,13 +25,20 @@ interface AdminCreateUserParams {
   role: UserRole;
 }
 
+export interface AuthTokens {
+  access_token: string;
+  refresh_token: string;
+}
+
 @Injectable()
 export class AuthService {
   constructor(
     private userService: UserService,
     private jwtService: JwtService,
     private emailService: EmailService,
-    private tokenService: TokenService
+    private tokenService: TokenService,
+    @InjectRepository(RefreshToken)
+    private refreshTokenRepository: Repository<RefreshToken>
   ) {}
 
   async validateUser(email: string, pass: string): Promise<User | null> {
@@ -42,15 +55,40 @@ export class AuthService {
     return null;
   }
 
-  async login(user: User) {
-    const payload = {
-      email: user.email,
-      sub: user.id,
-      role: user.role,
-    };
-    return {
-      access_token: this.jwtService.sign(payload),
-    };
+  async login(user: User): Promise<AuthTokens> {
+    const access_token = this.signAccessToken(user);
+    const refresh_token = await this.createRefreshToken(user.id);
+    return { access_token, refresh_token };
+  }
+
+  async refresh(rawRefreshToken: string): Promise<AuthTokens> {
+    const stored = await this.findValidRefreshToken(rawRefreshToken);
+    if (!stored) {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    const user = await this.userService.getUserById(stored.userId);
+    if (!user) {
+      await this.revokeRefreshToken(stored);
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
+
+    // Rotate: revoke old token before issuing a new pair
+    await this.revokeRefreshToken(stored);
+
+    const access_token = this.signAccessToken(user);
+    const refresh_token = await this.createRefreshToken(user.id);
+    return { access_token, refresh_token };
+  }
+
+  async revokeRefreshTokenByRaw(rawRefreshToken?: string | null): Promise<void> {
+    if (!rawRefreshToken) {
+      return;
+    }
+    const stored = await this.findRefreshTokenByRaw(rawRefreshToken);
+    if (stored && !stored.revokedAt) {
+      await this.revokeRefreshToken(stored);
+    }
   }
 
   async verifyToken(token: string): Promise<User | null> {
@@ -158,5 +196,60 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
     return this.userService.updateUser(user.id, { password: hashedPassword });
+  }
+
+  private signAccessToken(user: User): string {
+    const payload = {
+      email: user.email,
+      sub: user.id,
+      role: user.role,
+    };
+    return this.jwtService.sign(payload);
+  }
+
+  private hashRefreshToken(rawToken: string): string {
+    return createHash('sha256').update(rawToken).digest('hex');
+  }
+
+  private async createRefreshToken(userId: string): Promise<string> {
+    const rawToken = randomBytes(48).toString('base64url');
+    const tokenHash = this.hashRefreshToken(rawToken);
+    const expiresAt = new Date(Date.now() + REFRESH_TOKEN_MAX_AGE_MS);
+
+    await this.refreshTokenRepository.save(
+      this.refreshTokenRepository.create({
+        userId,
+        tokenHash,
+        expiresAt,
+      })
+    );
+
+    return rawToken;
+  }
+
+  private async findRefreshTokenByRaw(
+    rawToken: string
+  ): Promise<RefreshToken | null> {
+    const tokenHash = this.hashRefreshToken(rawToken);
+    return this.refreshTokenRepository.findOne({ where: { tokenHash } });
+  }
+
+  private async findValidRefreshToken(
+    rawToken: string
+  ): Promise<RefreshToken | null> {
+    const stored = await this.findRefreshTokenByRaw(rawToken);
+    if (!stored || stored.revokedAt) {
+      return null;
+    }
+    if (stored.expiresAt.getTime() <= Date.now()) {
+      await this.revokeRefreshToken(stored);
+      return null;
+    }
+    return stored;
+  }
+
+  private async revokeRefreshToken(stored: RefreshToken): Promise<void> {
+    stored.revokedAt = new Date();
+    await this.refreshTokenRepository.save(stored);
   }
 }

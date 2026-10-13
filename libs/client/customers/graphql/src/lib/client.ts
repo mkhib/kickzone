@@ -4,7 +4,9 @@ import {
   ApolloLink,
 } from '@apollo/client';
 
-import { onError } from '@apollo/client/link/error';
+import {
+  createSilentRefreshAuthLink,
+} from '@kickzone-workspace/apollo-provider-base';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 
@@ -46,7 +48,7 @@ const graphqlUri = getGraphQLEndpoint();
 const httpLink = new UploadHttpLink({
   uri: graphqlUri,
   credentials: 'include',
-});
+}) as unknown as ApolloLink;
 
 interface ProductConnectionCache {
   edges?: Array<{ node?: { id?: number | string }; cursor?: string }>;
@@ -97,93 +99,20 @@ export const productsPaginationPolicy = () => ({
   },
 });
 
+const isCartRoute = () => {
+  if (typeof window === 'undefined') return false;
+  const currentPath = window.location.pathname;
+  return (
+    currentPath === CUSTOMER_ROUTES.CART ||
+    currentPath.startsWith(`${CUSTOMER_ROUTES.CART}/`)
+  );
+};
+
 export const createCustomersApolloClient = (onAuthError: () => void) => {
-  const authErrorLink = onError((errorContext: any) => {
-    const { graphQLErrors, networkError, error, result, operation } =
-      errorContext;
-
-    const operationName = operation?.operationName;
-    const isLoginOperation =
-      typeof operationName === 'string' &&
-      operationName.toLowerCase() === 'login';
-
-    // Never treat login failures as global auth errors; the login page shows the message.
-    if (isLoginOperation) {
-      return;
-    }
-
-    // Don't redirect on auth errors for cart route - cart should be accessible to unauthenticated users
-    if (typeof window !== 'undefined') {
-      const currentPath = window.location.pathname;
-      if (
-        currentPath === CUSTOMER_ROUTES.CART ||
-        currentPath.startsWith(`${CUSTOMER_ROUTES.CART}/`)
-      ) {
-        // Allow cart page to handle auth errors gracefully without redirecting
-        return;
-      }
-    }
-
-    // Check the main error object
-    if (error && error.message) {
-      if (
-        error.message.toLowerCase().includes('not authenticated') ||
-        error.message.toLowerCase().includes('unauthorized')
-      ) {
-        onAuthError();
-        return;
-      }
-    }
-
-    // Check result.errors array
-    if (result && result.errors) {
-      result.errors.forEach((err: { message?: string }) => {
-        if (
-          err.message?.toLowerCase().includes('not authenticated') ||
-          err.message?.toLowerCase().includes('unauthorized')
-        ) {
-          onAuthError();
-          return;
-        }
-      });
-    }
-
-    if (graphQLErrors) {
-      graphQLErrors.forEach(
-        ({
-          message,
-          extensions,
-        }: {
-          message: string;
-          extensions?: { code?: string } | null;
-        }) => {
-          console.warn('[Apollo][customers] GraphQL error', {
-            message,
-            extensions,
-          });
-          if (
-            message.toLowerCase().includes('not authenticated') ||
-            message.toLowerCase().includes('unauthorized') ||
-            extensions?.code === 'UNAUTHENTICATED' ||
-            extensions?.code === 'FORBIDDEN'
-          ) {
-            onAuthError();
-          }
-        }
-      );
-    }
-
-    if (networkError) {
-      console.warn('[Apollo][customers] Network error', networkError);
-      if (
-        networkError.message?.toLowerCase().includes('not authenticated') ||
-        networkError.message?.toLowerCase().includes('unauthorized') ||
-        (networkError as { statusCode?: number }).statusCode === 401 ||
-        (networkError as { statusCode?: number }).statusCode === 403
-      ) {
-        onAuthError();
-      }
-    }
+  const authErrorLink = createSilentRefreshAuthLink({
+    graphqlUri,
+    onAuthError,
+    shouldSkipRedirect: isCartRoute,
   });
 
   return new ApolloClient({

@@ -3,6 +3,7 @@ import {
   SellerProduct,
   ProductInfo,
   User,
+  RefreshToken,
 } from '@kickzone-workspace/entities';
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -20,12 +21,18 @@ import { ConfigService } from '@nestjs/config';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([SellerInfo, SellerProduct, ProductInfo, User]),
+    TypeOrmModule.forFeature([
+      SellerInfo,
+      SellerProduct,
+      ProductInfo,
+      User,
+      RefreshToken,
+    ]),
     UserModule,
     ProductModule,
     JwtModule.register({
       secret: process.env['JWT_SECRET'] || 'defaultSecret',
-      signOptions: { expiresIn: '60m' },
+      signOptions: { expiresIn: '15m' },
     }),
     TokenModule,
   ],

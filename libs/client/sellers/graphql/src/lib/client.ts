@@ -2,10 +2,9 @@ import {
   ApolloClient,
   InMemoryCache,
   ApolloLink,
-  HttpLink,
 } from '@apollo/client';
 import { relayStylePagination } from '@apollo/client/utilities';
-import { onError } from '@apollo/client/link/error';
+import { createSilentRefreshAuthLink } from '@kickzone-workspace/apollo-provider-base';
 import UploadHttpLink from 'apollo-upload-client/UploadHttpLink.mjs';
 
 const csrfLink = new ApolloLink((operation, forward) => {
@@ -46,83 +45,12 @@ const graphqlUri = getGraphQLEndpoint();
 const httpLink = new UploadHttpLink({
   uri: graphqlUri,
   credentials: 'include',
-});
+}) as unknown as ApolloLink;
 
 export const createSellersApolloClient = (onAuthError: () => void) => {
-  const authErrorLink = onError((errorContext: any) => {
-    const { graphQLErrors, networkError, operation, error, result } =
-      errorContext;
-
-    const operationName = operation?.operationName;
-    const isLoginOperation =
-      typeof operationName === 'string' &&
-      operationName.toLowerCase() === 'login';
-
-    // Never treat login failures as global auth errors; let the login screen show the message.
-    if (isLoginOperation) {
-      return;
-    }
-
-    // Check the main error object
-    if (error && error.message) {
-      if (
-        error.message.toLowerCase().includes('not authenticated') ||
-        error.message.toLowerCase().includes('unauthorized')
-      ) {
-        onAuthError();
-        return;
-      }
-    }
-
-    // Check result.errors array
-    if (result && result.errors) {
-      result.errors.forEach((err: { message?: string }) => {
-        if (
-          err.message?.toLowerCase().includes('not authenticated') ||
-          err.message?.toLowerCase().includes('unauthorized')
-        ) {
-          onAuthError();
-          return;
-        }
-      });
-    }
-
-    if (graphQLErrors) {
-      graphQLErrors.forEach(
-        ({
-          message,
-          extensions,
-        }: {
-          message: string;
-          extensions?: { code?: string } | null;
-        }) => {
-          console.warn('[Apollo][sellers] GraphQL error', {
-            message,
-            extensions,
-          });
-
-          if (
-            message.toLowerCase().includes('not authenticated') ||
-            message.toLowerCase().includes('unauthorized') ||
-            extensions?.code === 'UNAUTHENTICATED'
-          ) {
-            onAuthError();
-          }
-        }
-      );
-    }
-
-    if (networkError) {
-      console.warn('[Apollo][sellers] Network error', networkError);
-      if (
-        networkError.message?.toLowerCase().includes('not authenticated') ||
-        networkError.message?.toLowerCase().includes('unauthorized') ||
-        (networkError as { statusCode?: number }).statusCode === 401 ||
-        (networkError as { statusCode?: number }).statusCode === 403
-      ) {
-        onAuthError();
-      }
-    }
+  const authErrorLink = createSilentRefreshAuthLink({
+    graphqlUri,
+    onAuthError,
   });
 
   return new ApolloClient({

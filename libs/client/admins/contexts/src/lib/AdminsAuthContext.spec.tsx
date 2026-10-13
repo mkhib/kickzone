@@ -163,6 +163,31 @@ describe('AdminsAuthContext', () => {
     });
   });
 
+  it('should clear admin when ME returns null after session expiry', async () => {
+    localStorageMock['admin_user'] = JSON.stringify({
+      id: '1',
+      name: 'John',
+      email: 'john@test.com',
+      role: 'ADMIN',
+    });
+    mockUseQuery.mockReturnValue({
+      loading: false,
+      data: { me: null },
+      error: null,
+    });
+
+    render(
+      <AdminsAuthProvider>
+        <TestComponent />
+      </AdminsAuthProvider>
+    );
+
+    await waitFor(() => {
+      expect(localStorage.removeItem).toHaveBeenCalledWith('admin_user');
+      expect(screen.getByTestId('admin-name')).toHaveTextContent('No Admin');
+    });
+  });
+
   it('should call logout mutation and clear admin', async () => {
     const adminData = {
       id: '1',

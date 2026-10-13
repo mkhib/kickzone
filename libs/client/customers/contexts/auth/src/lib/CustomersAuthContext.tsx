@@ -51,6 +51,7 @@ export const CustomersAuthProvider = ({
   const [user, setUser] = useState<CustomerUser | null>(null);
 
   // Check if user is already authenticated on mount
+  // Server `me` silently refreshes expired access tokens via refresh cookie
   const { data, loading } = useQuery<Pick<KickzoneGraphqlTypes.Query, 'me'>>(
     ME_QUERY,
     {

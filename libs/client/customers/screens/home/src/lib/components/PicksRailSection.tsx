@@ -51,12 +51,13 @@ export function PicksRailSection({
   const railRef = useRef<HTMLDivElement | null>(null);
   const [addedMap, setAddedMap] = useState<Record<number, boolean>>({});
 
-  const scrollByDir = (dir: 'prev' | 'next') => {
+  const scroll = (direction: 'left' | 'right') => {
     if (!railRef.current) return;
     const step = railRef.current.clientWidth * 0.75;
-    // In RTL, "next" content is toward negative scrollLeft
-    const sign = dir === 'next' ? (isRTL ? -1 : 1) : isRTL ? 1 : -1;
-    railRef.current.scrollBy({ left: sign * step, behavior: 'smooth' });
+    railRef.current.scrollBy({
+      left: direction === 'left' ? -step : step,
+      behavior: 'smooth',
+    });
   };
 
   const handleQuickAdd = (e: React.MouseEvent, product: KickzoneGraphqlTypes.Product) => {
@@ -134,12 +135,12 @@ export function PicksRailSection({
           sx={{
             display: 'flex',
             gap: 1.5,
-            flexDirection: isRTL ? 'row-reverse' : 'row',
+            direction: 'ltr',
           }}
         >
           <IconButton
-            onClick={() => scrollByDir('prev')}
-            aria-label={LL.home.picks.prev()}
+            onClick={() => scroll('left')}
+            aria-label={isRTL ? LL.home.picks.next() : LL.home.picks.prev()}
             sx={{
               width: 40,
               height: 40,
@@ -156,17 +157,12 @@ export function PicksRailSection({
               },
             }}
           >
-            <ArrowBackIcon
-              sx={{
-                fontSize: 18,
-                transform: isRTL ? 'scaleX(-1)' : 'none',
-              }}
-            />
+            <ArrowBackIcon sx={{ fontSize: 18 }} />
           </IconButton>
 
           <IconButton
-            onClick={() => scrollByDir('next')}
-            aria-label={LL.home.picks.next()}
+            onClick={() => scroll('right')}
+            aria-label={isRTL ? LL.home.picks.prev() : LL.home.picks.next()}
             sx={{
               width: 40,
               height: 40,
@@ -183,12 +179,7 @@ export function PicksRailSection({
               },
             }}
           >
-            <ArrowForwardIcon
-              sx={{
-                fontSize: 18,
-                transform: isRTL ? 'scaleX(-1)' : 'none',
-              }}
-            />
+            <ArrowForwardIcon sx={{ fontSize: 18 }} />
           </IconButton>
         </Box>
       </Box>

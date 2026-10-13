@@ -1,4 +1,5 @@
 export * from './lib/user.entity';
+export * from './lib/refresh-token.entity';
 export * from './lib/seller-info.entity';
 export * from './lib/product.entity';
 export * from './lib/product-info.entity';

@@ -5,7 +5,8 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
 import { CustomersHome } from './CustomersHomeScreen';
 import { CustomersShopScreen } from './CustomersShopScreen';
-import { HomePageData } from './home-selectors';
+import { HomePageData, selectHomePageData } from './home-selectors';
+import { NewArrivalsSection } from './components/NewArrivalsSection';
 
 const mockAddItem = vi.fn();
 const mockUseProductsQuery = vi.fn();
@@ -415,7 +416,7 @@ describe('CustomersHomeScreen - Campaign v4', () => {
       </MemoryRouter>
     );
 
-    expect(screen.getByText('اصل باش. اصل بپوش.')).toBeInTheDocument();
+    expect(screen.getByText('Rise Above')).toBeInTheDocument();
     expect(screen.getByText('۱۰۰٪ اورجینال')).toBeInTheDocument();
     expect(screen.queryByText('ضمانت تعویض ۷ روزه')).not.toBeInTheDocument();
     expect(
@@ -424,10 +425,8 @@ describe('CustomersHomeScreen - Campaign v4', () => {
 
     expect(screen.getByText('دسته‌بندی‌ها')).toBeInTheDocument();
     expect(screen.queryByText('جردن قرمز')).not.toBeInTheDocument();
-    expect(screen.getByText('برندهایی که می‌آوریم.')).toBeInTheDocument();
     expect(screen.getByText('انتخاب‌های SAINTBALA')).toBeInTheDocument();
     expect(screen.getByText('پرداخت امن')).toBeInTheDocument();
-    expect(screen.getByText('اولین نفر باش.')).toBeInTheDocument();
   });
 
   it('strictly contains no forbidden claims or terms', () => {
@@ -455,9 +454,13 @@ describe('CustomersHomeScreen - Campaign v4', () => {
   });
 
   it('filters new arrivals when tabs are clicked', async () => {
+    const pageData = selectHomePageData(mockHomePageData);
     render(
       <MemoryRouter initialEntries={['/']}>
-        <CustomersHome initialData={mockHomePageData} />
+        <NewArrivalsSection
+          products={pageData.newArrivals}
+          exchangeRate={pageData.exchangeRate}
+        />
       </MemoryRouter>
     );
 

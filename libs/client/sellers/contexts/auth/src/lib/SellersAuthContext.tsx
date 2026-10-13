@@ -35,6 +35,7 @@ export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
     return savedUser ? JSON.parse(savedUser) : null;
   });
 
+  // Server `me` silently refreshes expired access tokens via refresh cookie
   const { loading, data, error } = useQuery<
     Pick<KickzoneGraphqlTypes.Query, 'me'>
   >(ME_QUERY, {
@@ -64,7 +65,11 @@ export const SellersAuthProvider = ({ children }: { children: ReactNode }) => {
     if (data?.me && data.me.role === KickzoneGraphqlTypes.UserRole.Seller) {
       setUser(data.me);
       localStorage.setItem('seller_user', JSON.stringify(data.me));
-    } else if (error || (data?.me && data.me.role !== KickzoneGraphqlTypes.UserRole.Seller)) {
+    } else if (
+      error ||
+      data?.me === null ||
+      (data?.me && data.me.role !== KickzoneGraphqlTypes.UserRole.Seller)
+    ) {
       setUser(null);
       localStorage.removeItem('seller_user');
     }

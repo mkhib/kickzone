@@ -10,6 +10,7 @@ import {
   SellerInfo,
   SellerProduct,
   User,
+  RefreshToken,
   Color,
   ProductInfoColor,
   Order,
@@ -82,6 +83,7 @@ import { GraphqlContextModule } from '@kickzone-workspace/modules';
       database: process.env.DB_NAME,
       entities: [
         User,
+        RefreshToken,
         Product,
         ProductInfo,
         Category,

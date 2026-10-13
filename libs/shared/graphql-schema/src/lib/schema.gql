@@ -488,6 +488,7 @@ type Mutation {
   createUser(createUserInput: CreateUserInput!): User!
   adminCreateUser(createUserInput: CreateUserInput!): User!
   login(email: String!, password: String!): User!
+  refresh: Boolean!
   logout: Boolean!
   initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!
   setupPassword(token: String!, newPassword: String!): User!
