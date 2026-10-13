@@ -11,6 +11,7 @@ import {
   User,
   ProductDescription,
   SiteLanguage,
+  RefreshToken,
 } from '@kickzone-workspace/entities';
 import {
   AuthResolver,
@@ -48,6 +49,7 @@ import { ConfigService } from '@nestjs/config';
       OrderItem,
       ProductDescription,
       SiteLanguage,
+      RefreshToken,
     ]),
     JwtModule.register({
       secret: process.env['JWT_SECRET'] || 'defaultSecret',
