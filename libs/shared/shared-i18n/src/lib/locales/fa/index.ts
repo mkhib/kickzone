@@ -173,6 +173,19 @@ const fa = {
 
   // Product management
   products: {
+    card: {
+      men: 'مردانه',
+      women: 'زنانه',
+      productCode: 'کد محصول ',
+      size: 'سایز',
+      onlyOneLeft: 'تنها ۱ عدد باقی مانده',
+      addToCart: 'افزودن به سبد خرید',
+      addToCartShort: 'افزودن به سبد',
+      addedToCart: 'به سبد اضافه شد',
+      addFavorite: 'افزودن به علاقه‌مندی‌ها',
+      removeFavorite: 'حذف از علاقه‌مندی‌ها',
+      original: 'اورجینال',
+    },
     loadingProducts: 'در حال بارگذاری محصولات شما...',
     noProductsFound: 'محصولی یافت نشد',
     productVariants: 'انواع محصول',

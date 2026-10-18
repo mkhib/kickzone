@@ -1,0 +1,293 @@
+/* ==========================================================================
+   Liquid Glass Design System for SAINTBALA PDP (Desktop & Mobile)
+   ========================================================================== */
+
+/* 2.1 Colours, light */
+.pdp-lg {
+  --lg-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Manrope", "Segoe UI", Roboto, sans-serif;
+  --lg-canvas: #F9F9FA;
+  --lg-mesh:
+    radial-gradient(at 10% 12%, rgba(255,237,226,.70) 0, transparent 55%),
+    radial-gradient(at 90% 15%, rgba(232,238,255,.75) 0, transparent 60%),
+    radial-gradient(at 50% 45%, rgba(253,246,240,.80) 0, transparent 70%),
+    radial-gradient(at 15% 75%, rgba(243,234,255,.65) 0, transparent 60%),
+    radial-gradient(at 85% 85%, rgba(228,245,245,.60) 0, transparent 55%);
+  --lg-ink: #171717;          /* titles, price, primary labels */
+  --lg-ink-2: #262626;        /* body labels (Color:, Size, chip text) */
+  --lg-ink-3: #525252;        /* secondary text: values, nav, footer links, accordion body */
+  --lg-ink-4: #5c5c61;        /* tertiary: breadcrumb, trust subtitles, meta line */
+  --lg-ink-5: #6e6e73;        /* quietest: SKU lines, card meta, separators. Never lighter than this on light. */
+  --lg-hair: rgba(0,0,0,.08);
+
+  /* glass recipe: card (big surfaces) */
+  --lg-card-bg: rgba(255,255,255,.68);
+  --lg-card-border: rgba(255,255,255,.75);
+  --lg-card-shadow: 0 18px 45px -10px rgba(0,0,0,.035), inset 0 1.5px 1.5px rgba(255,255,255,.90);
+  --lg-card-shadow-hover: 0 26px 58px -10px rgba(0,0,0,.07), 0 2px 4px rgba(0,0,0,.03), inset 0 2px 2px #fff;
+  --lg-card-blur: blur(36px) saturate(190%);
+
+  /* glass recipe: pill (chips, secondary buttons, icon wells) */
+  --lg-pill-bg: rgba(255,255,255,.55);
+  --lg-pill-border: rgba(255,255,255,.80);
+  --lg-pill-shadow: 0 4px 16px -2px rgba(0,0,0,.04), inset 0 1px 1px rgba(255,255,255,.95);
+  --lg-pill-blur: blur(20px) saturate(180%);
+
+  /* glass recipe: icon buttons floating on the photo */
+  --lg-icon-bg: rgba(255,255,255,.75);
+  --lg-icon-border: rgba(255,255,255,.90);
+  --lg-icon-shadow: 0 4px 14px -1px rgba(0,0,0,.06), inset 0 1px 1px #fff;
+  --lg-icon-ink: #404040;
+  --lg-icon-ink-hover: #000;
+  --lg-icon-blur: blur(16px);
+
+  /* solid controls */
+  --lg-solid-bg: #171717;
+  --lg-solid-bg-hover: #000;
+  --lg-solid-ink: #fff;
+  --lg-photo-well: #f5f5f5;           /* behind product photos */
+
+  /* low stock (amber) */
+  --lg-stock-bg: rgba(255,251,235,.80);
+  --lg-stock-border: rgba(253,230,138,.60);
+  --lg-stock-dot: #f59e0b;
+  --lg-stock-ink: #78350f;
+  --lg-stock-ink-card: #92400e;
+
+  /* out of stock (keep existing red semantics) */
+  --lg-oos-bg: rgba(220,38,38,.10);
+  --lg-oos-border: rgba(220,38,38,.30);
+  --lg-oos-ink: #b91c1c;
+
+  /* accordions */
+  --lg-acc-open-bg: rgba(255,255,255,.50);
+  --lg-acc-open-border: rgba(255,255,255,.80);
+  --lg-acc-bg: rgba(255,255,255,.40);
+  --lg-acc-border: rgba(255,255,255,.70);
+  --lg-acc-bg-hover: rgba(255,255,255,.55);
+
+  /* related card colour chip */
+  --lg-chip-bg: rgba(255,255,255,.88);
+  --lg-chip-ink: #1d1d1f;
+  --lg-chip-border: rgba(0,0,0,.08);
+  --lg-chip-dot-ring: rgba(0,0,0,.15);
+
+  /* footer */
+  --lg-footer-bg: rgba(255,255,255,.45);
+  --lg-footer-border: rgba(255,255,255,.60);
+  --lg-footer-divider: rgba(229,229,229,.50);
+
+  /* ring for selected thumbnail / swatch */
+  --lg-ring: #171717;
+  --lg-ring-offset: #F9F9FA;
+}
+
+/* 2.2 Colours, dark */
+[data-theme=dark] .pdp-lg,
+.pdp-lg[data-mode=dark] {
+  --lg-canvas: #08090d;
+  --lg-mesh:
+    radial-gradient(at 12% 10%, rgba(56, 32, 85, 0.65) 0px, transparent 55%),
+    radial-gradient(at 88% 12%, rgba(26, 48, 92, 0.65) 0px, transparent 60%),
+    radial-gradient(at 50% 45%, rgba(18, 22, 42, 0.70) 0px, transparent 65%),
+    radial-gradient(at 15% 78%, rgba(48, 24, 76, 0.55) 0px, transparent 60%),
+    radial-gradient(at 85% 85%, rgba(20, 42, 72, 0.55) 0px, transparent 58%);
+  --lg-ink: #ffffff;
+  --lg-ink-2: #e5e5e5;
+  --lg-ink-3: #d4d4d4;
+  --lg-ink-4: #a8a8ae;
+  --lg-ink-5: #9a9aa0;
+  --lg-hair: rgba(255,255,255,.10);
+
+  --lg-card-bg: rgba(20,22,32,.65);
+  --lg-card-border: rgba(255,255,255,.12);
+  --lg-card-shadow: 0 18px 45px -10px rgba(0,0,0,.45), inset 0 1px 1.5px rgba(255,255,255,.25);
+  --lg-card-shadow-hover: 0 26px 58px -10px rgba(0,0,0,.65), inset 0 1.5px 2px rgba(255,255,255,.35);
+
+  --lg-pill-bg: rgba(255,255,255,.08);
+  --lg-pill-border: rgba(255,255,255,.16);
+  --lg-pill-shadow: 0 4px 16px -2px rgba(0,0,0,.30), inset 0 1px 1px rgba(255,255,255,.20);
+
+  /* icon buttons on photo: smoked glass with white glyph */
+  --lg-icon-bg: rgba(16,16,20,.62);
+  --lg-icon-border: rgba(255,255,255,.22);
+  --lg-icon-shadow: 0 4px 14px -1px rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.25);
+  --lg-icon-ink: #fff;
+  --lg-icon-ink-hover: #fff;
+
+  --lg-solid-bg: #ffffff;
+  --lg-solid-bg-hover: #f5f5f5;
+  --lg-solid-ink: #0a0a0c;
+  --lg-photo-well: #171717;
+
+  --lg-stock-bg: rgba(69,26,3,.40);
+  --lg-stock-border: rgba(245,158,11,.30);
+  --lg-stock-dot: #fbbf24;
+  --lg-stock-ink: #fde68a;
+  --lg-stock-ink-card: #fcd34d;
+  --lg-oos-bg: rgba(239,68,68,.14);
+  --lg-oos-border: rgba(239,68,68,.35);
+  --lg-oos-ink: #fca5a5;
+
+  --lg-acc-open-bg: rgba(255,255,255,.04);
+  --lg-acc-open-border: rgba(255,255,255,.12);
+  --lg-acc-bg: rgba(255,255,255,.02);
+  --lg-acc-border: rgba(255,255,255,.10);
+  --lg-acc-bg-hover: rgba(255,255,255,.06);
+
+  --lg-chip-bg: rgba(18,18,22,.72);
+  --lg-chip-ink: #f5f5f7;
+  --lg-chip-border: rgba(255,255,255,.18);
+  --lg-chip-dot-ring: rgba(255,255,255,.55);
+
+  --lg-footer-bg: #000000;
+  --lg-footer-border: #1a1a1e;
+  --lg-footer-divider: #1a1a1e;
+
+  --lg-ring: #ffffff;
+  --lg-ring-offset: #08090d;
+}
+
+/* ==========================================================================
+   Full Site Canvas Background & Section Architecture (No Outer Wrapper Card)
+   ========================================================================== */
+
+/* The whole background color of the site changes to super dark gradient color
+   with super luxury dark purple and super luxury dark blue */
+body.pdp-screen-active,
+[data-theme="dark"] body.pdp-screen-active,
+body.pdp-screen-active[data-theme="dark"] {
+  background:
+    radial-gradient(at 12% 10%, rgba(56, 32, 85, 0.65) 0px, transparent 55%),
+    radial-gradient(at 88% 12%, rgba(26, 48, 92, 0.65) 0px, transparent 60%),
+    radial-gradient(at 50% 45%, rgba(18, 22, 42, 0.70) 0px, transparent 65%),
+    radial-gradient(at 15% 78%, rgba(48, 24, 76, 0.55) 0px, transparent 60%),
+    radial-gradient(at 85% 85%, rgba(20, 42, 72, 0.55) 0px, transparent 58%),
+    #08090d !important;
+  background-attachment: fixed !important;
+}
+
+[data-theme="light"] body.pdp-screen-active {
+  background:
+    radial-gradient(at 10% 12%, rgba(255, 237, 226, 0.70) 0, transparent 55%),
+    radial-gradient(at 90% 15%, rgba(232, 238, 255, 0.75) 0, transparent 60%),
+    radial-gradient(at 50% 45%, rgba(253, 246, 240, 0.80) 0, transparent 70%),
+    radial-gradient(at 15% 75%, rgba(243, 234, 255, 0.65) 0, transparent 60%),
+    radial-gradient(at 85% 85%, rgba(228, 245, 245, 0.60) 0, transparent 55%),
+    #F9F9FA !important;
+  background-attachment: fixed !important;
+}
+
+/* No wrapper card for all items: .pdp-lg is purely transparent */
+.pdp-lg {
+  background: transparent !important;
+  color: var(--lg-ink);
+  min-height: 100vh;
+  position: relative;
+  width: 100%;
+}
+
+/* Only the footer has complete black background color in dark theme with a super dark grey top border line */
+body.pdp-screen-active footer,
+[data-theme="dark"] body.pdp-screen-active footer,
+body.pdp-screen-active[data-theme="dark"] footer {
+  background-color: #000000 !important;
+  background: #000000 !important;
+  background-image: none !important;
+  border-top: 1px solid #1a1a1e !important;
+}
+
+.lg-card {
+  background: var(--lg-card-bg);
+  -webkit-backdrop-filter: var(--lg-card-blur);
+  backdrop-filter: var(--lg-card-blur);
+  border: 1px solid var(--lg-card-border);
+  box-shadow: var(--lg-card-shadow);
+  transition: box-shadow 0.25s cubic-bezier(.2,.7,.1,1), border-color 0.25s cubic-bezier(.2,.7,.1,1);
+}
+
+.lg-pill {
+  background: var(--lg-pill-bg);
+  -webkit-backdrop-filter: var(--lg-pill-blur);
+  backdrop-filter: var(--lg-pill-blur);
+  border: 1px solid var(--lg-pill-border);
+  box-shadow: var(--lg-pill-shadow);
+  transition: all 0.2s cubic-bezier(.2,.7,.1,1);
+}
+
+.lg-icon {
+  background: var(--lg-icon-bg);
+  -webkit-backdrop-filter: var(--lg-icon-blur);
+  backdrop-filter: var(--lg-icon-blur);
+  border: 1px solid var(--lg-icon-border);
+  box-shadow: var(--lg-icon-shadow);
+  color: var(--lg-icon-ink);
+  transition: all 0.2s cubic-bezier(.2,.7,.1,1);
+}
+
+/* Mobile blur budget */
+@media (max-width: 599px) {
+  .pdp-lg {
+    --lg-card-blur: blur(28px) saturate(190%);
+  }
+}
+
+/* Fallback: no backdrop-filter support */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .pdp-lg {
+    --lg-card-bg: rgba(255,255,255,.94);
+    --lg-pill-bg: rgba(255,255,255,.90);
+    --lg-icon-bg: rgba(255,255,255,.95);
+  }
+  [data-theme=dark] .pdp-lg,
+  .pdp-lg[data-mode=dark] {
+    --lg-card-bg: rgba(20,22,32,.96);
+    --lg-pill-bg: rgba(40,42,54,.92);
+    --lg-icon-bg: rgba(16,16,20,.90);
+  }
+}
+
+/* Prefers-reduced-transparency */
+@media (prefers-reduced-transparency: reduce) {
+  .lg-card, .lg-pill, .lg-icon {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+  .pdp-lg {
+    --lg-card-bg: #fff;
+    --lg-pill-bg: #f4f4f5;
+    --lg-icon-bg: #fff;
+    background: var(--lg-canvas);
+  }
+  [data-theme=dark] .pdp-lg,
+  .pdp-lg[data-mode=dark] {
+    --lg-card-bg: #14161f;
+    --lg-pill-bg: #1f2230;
+    --lg-icon-bg: #14161f;
+  }
+}
+
+/* Prefers-contrast: more */
+@media (prefers-contrast: more) {
+  .pdp-lg {
+    --lg-card-border: rgba(0,0,0,.25);
+    --lg-ink-4: #404040;
+    --lg-ink-5: #525252;
+  }
+  [data-theme=dark] .pdp-lg,
+  .pdp-lg[data-mode=dark] {
+    --lg-card-border: rgba(255,255,255,.40);
+    --lg-ink-4: #d4d4d4;
+    --lg-ink-5: #c4c4c4;
+  }
+}
+
+/* Motion adjustments */
+@media (prefers-reduced-motion: reduce) {
+  .pdp-lg *,
+  .pdp-lg *::before,
+  .pdp-lg *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

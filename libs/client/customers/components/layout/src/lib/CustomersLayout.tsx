@@ -9,6 +9,9 @@ export interface CustomersLayoutProps {
   drawerItems?: React.ReactNode;
   handledInTabbarIds?: string[];
   disablePadding?: boolean;
+  variant?: 'default' | 'glass';
+  glassFooter?: boolean;
+  glassTabbar?: boolean;
 }
 
 export function CustomersLayout({
@@ -16,16 +19,28 @@ export function CustomersLayout({
   drawerItems,
   handledInTabbarIds,
   disablePadding = false,
+  variant = 'default',
+  glassFooter,
+  glassTabbar,
 }: CustomersLayoutProps) {
+  const isGlass = variant === 'glass';
+  const useGlassFooter = glassFooter ?? isGlass;
+  const useGlassTabbar = glassTabbar ?? isGlass;
+
   const header = (
     <Headerbar
       drawerItems={drawerItems}
       handledInTabbarIds={handledInTabbarIds}
     />
   );
-  const footer = <CustomersFooter />;
+  const footer = (
+    <CustomersFooter variant={useGlassFooter ? 'glass' : 'default'} />
+  );
   const bottomBar = (
-    <CustomersTabbar handledInTabbarIds={handledInTabbarIds} />
+    <CustomersTabbar
+      handledInTabbarIds={handledInTabbarIds}
+      variant={useGlassTabbar ? 'glass' : 'default'}
+    />
   );
 
   return (
@@ -40,3 +55,4 @@ export function CustomersLayout({
 }
 
 export default CustomersLayout;
+

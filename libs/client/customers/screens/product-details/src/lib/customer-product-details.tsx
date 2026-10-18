@@ -22,7 +22,6 @@ import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
-import Fade from '@mui/material/Fade';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
@@ -45,6 +44,7 @@ import ZoomOut from '@mui/icons-material/ZoomOut';
 import Close from '@mui/icons-material/Close';
 import RestartAlt from '@mui/icons-material/RestartAlt';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
+import Search from '@mui/icons-material/Search';
 
 // Project imports
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
@@ -80,6 +80,7 @@ import {
   farsiDisplayStack,
 } from '@kickzone-workspace/shared-i18n';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import '../styles/pdp-glass.css';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   'https://image-cdn.hypb.st/https%3A%2F%2Fhypebeast.com%2Fimage%2F2021%2F10%2Fair-jordan-1-high-og-rebellionaire-closer-look-release-info-555088-036-000.jpg?w=960&cbr=1&q=90&fit=max';
@@ -239,7 +240,9 @@ export function CustomerProductDetails() {
   const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
+    document.body.classList.add('pdp-screen-active');
     return () => {
+      document.body.classList.remove('pdp-screen-active');
       if (addedTimerRef.current) {
         clearTimeout(addedTimerRef.current);
       }
@@ -545,6 +548,28 @@ export function CustomerProductDetails() {
     return getProductAmbientTint(activeColorway?.colors);
   }, [activeColorway]);
 
+  // Preferred brand from product.brand.name falling back to extractBrand(name) per spec §10
+  const displayBrand = useMemo(() => {
+    return product?.brand?.name ?? brand;
+  }, [product?.brand?.name, brand]);
+
+  // Description binding order per spec §10:
+  // descriptions.find(d => d.language.code === currentLocale)?.description -> product.description -> fallback template
+  // TODO(content): fallback description is generic (see spec §10)
+  const localizedDescription = useMemo(() => {
+    if (!product) return '';
+    const match = product.descriptions?.find(
+      (d) => d.language?.code === currentLocale
+    )?.description;
+    if (match) return match;
+    if (product.description) return product.description;
+    return isRTL
+      ? `شلوار زنانه ${product.name} با طرح استایل فیل‌چاپ در رنگ ${
+          activeColorway?.name || 'زیتونی'
+        } — الهام‌گرفته از میراث شیکاگو جردن. برش راحت و آزاد با کمر کشی و بند تنظیم‌شونده در مچ، مناسب استایل روزمره و استریت.\n\nپارچه ریپ‌استاپ سبک و مقاوم در برابر پارگی، با جیب‌های کارگو کاربردی روی ران. این مدل اورجینال نایکی/جردن است و از تأمین‌کننده معتبر سنت‌بالا عرضه می‌شود.`
+      : `${product.name} delivers athletic style, relaxed comfort, and durable ripstop fabric. Engineered with adjustable waistband and cargo pockets for effortless everyday streetstyle.`;
+  }, [product, currentLocale, isRTL, activeColorway]);
+
   // Stock and Pricing calculations
   const pricingInfo = useMemo(() => {
     if (activeVariant) {
@@ -714,33 +739,73 @@ export function CustomerProductDetails() {
   // Loading Skeleton State
   if (loading) {
     return (
-      <CustomersLayout>
-        <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 } }}>
-          <Box sx={{ mb: 3 }}>
-            <Skeleton variant="text" width={240} height={28} />
-          </Box>
-          <Grid container spacing={{ xs: 3, md: 4 }}>
-            <Grid size={{ xs: 12, md: 6 }}>
+      <CustomersLayout disablePadding={true}>
+        <Box
+          className="pdp-lg"
+          data-mode={themeMode}
+          dir={isRTL ? 'rtl' : 'ltr'}
+          sx={{
+            minHeight: '100vh',
+            fontFamily: isRTL ? farsiDisplayStack : 'var(--lg-font)',
+            pt: { xs: '54px', sm: '60px', md: '64px' },
+          }}
+        >
+          <Container maxWidth="xl" sx={{ py: { xs: 3, md: 5 }, maxWidth: 1376 }}>
+            <Box sx={{ mb: 3 }}>
               <Skeleton
-                variant="rectangular"
-                height={540}
-                sx={{ borderRadius: '28px' }}
+                variant="text"
+                width={240}
+                height={28}
+                sx={{ bgcolor: 'var(--lg-pill-bg)' }}
               />
-              <Box sx={{ display: 'flex', gap: 2, mt: 2, justifyContent: 'center' }}>
-                <Skeleton variant="rounded" width={72} height={72} />
-                <Skeleton variant="rounded" width={72} height={72} />
-                <Skeleton variant="rounded" width={72} height={72} />
-              </Box>
+            </Box>
+            <Grid container spacing={{ xs: 2.5, md: 4 }}>
+              <Grid size={{ xs: 12, md: 6, lg: 7 }}>
+                <Box
+                  className="lg-card"
+                  sx={{
+                    borderRadius: '32px',
+                    p: { xs: '6px', sm: '12px' },
+                  }}
+                >
+                  <Skeleton
+                    variant="rectangular"
+                    sx={{
+                      borderRadius: { xs: '26px', sm: '24px' },
+                      aspectRatio: { xs: '4 / 3.8', sm: '1 / 1' },
+                      height: 'auto',
+                      bgcolor: 'var(--lg-photo-well)',
+                    }}
+                  />
+                </Box>
+                <Box sx={{ display: 'flex', gap: 2, mt: 2, justifyContent: 'center' }}>
+                  <Skeleton variant="rounded" width={72} height={72} sx={{ borderRadius: '16px', bgcolor: 'var(--lg-pill-bg)' }} />
+                  <Skeleton variant="rounded" width={72} height={72} sx={{ borderRadius: '16px', bgcolor: 'var(--lg-pill-bg)' }} />
+                  <Skeleton variant="rounded" width={72} height={72} sx={{ borderRadius: '16px', bgcolor: 'var(--lg-pill-bg)' }} />
+                </Box>
+              </Grid>
+              <Grid size={{ xs: 12, md: 6, lg: 5 }}>
+                <Box
+                  className="lg-card"
+                  sx={{
+                    borderRadius: '32px',
+                    p: { xs: 2.5, md: 4 },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: 2.5,
+                  }}
+                >
+                  <Skeleton variant="rounded" width={100} height={28} sx={{ borderRadius: '9999px', bgcolor: 'var(--lg-pill-bg)' }} />
+                  <Skeleton variant="text" width="80%" height={40} sx={{ bgcolor: 'var(--lg-pill-bg)' }} />
+                  <Skeleton variant="text" width="40%" height={24} sx={{ bgcolor: 'var(--lg-pill-bg)' }} />
+                  <Skeleton variant="text" width="30%" height={36} sx={{ bgcolor: 'var(--lg-pill-bg)' }} />
+                  <Skeleton variant="rounded" width="100%" height={48} sx={{ borderRadius: '9999px', bgcolor: 'var(--lg-pill-bg)' }} />
+                  <Skeleton variant="rounded" width="100%" height={48} sx={{ borderRadius: '9999px', bgcolor: 'var(--lg-pill-bg)' }} />
+                </Box>
+              </Grid>
             </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Skeleton
-                variant="rectangular"
-                height={540}
-                sx={{ borderRadius: '28px' }}
-              />
-            </Grid>
-          </Grid>
-        </Container>
+          </Container>
+        </Box>
       </CustomersLayout>
     );
   }
@@ -748,116 +813,134 @@ export function CustomerProductDetails() {
   // Not Found State
   if (error || !product) {
     return (
-      <CustomersLayout>
-        <Container
-          maxWidth="sm"
+      <CustomersLayout disablePadding={true}>
+        <Box
+          className="pdp-lg"
+          data-mode={themeMode}
           dir={isRTL ? 'rtl' : 'ltr'}
           sx={{
-            py: 12,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center',
+            minHeight: '100vh',
+            fontFamily: isRTL ? farsiDisplayStack : 'var(--lg-font)',
+            pt: { xs: '54px', sm: '60px', md: '64px' },
           }}
         >
-          <Box
+          <Container
+            maxWidth="sm"
+            dir={isRTL ? 'rtl' : 'ltr'}
             sx={{
-              p: 4,
-              borderRadius: '28px',
-              backdropFilter: 'blur(20px)',
-              background: isDark
-                ? 'rgba(26, 28, 36, 0.75)'
-                : 'rgba(255, 255, 255, 0.85)',
-              border: isDark
-                ? '1px solid rgba(255, 255, 255, 0.12)'
-                : '1px solid rgba(0, 0, 0, 0.08)',
-              width: '100%',
+              py: 12,
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              textAlign: 'center',
             }}
           >
-            <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.5 }}>
-              {isRTL ? 'محصول مورد نظر یافت نشد' : 'Product Not Found'}
-            </Typography>
-            <Typography
-              variant="body2"
-              color="text.secondary"
-              sx={{ mb: 3, lineHeight: 1.8 }}
+            <Box
+              className="lg-card"
+              sx={{
+                p: 4,
+                borderRadius: '32px',
+                width: '100%',
+                color: 'var(--lg-ink)',
+              }}
             >
-              {isRTL
-                ? 'ممکن است این محصول حذف شده یا آدرس وارد شده نادرست باشد.'
-                : 'The requested product might have been moved or is no longer available.'}
-            </Typography>
-            <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {error && (
+              <Typography variant="h5" sx={{ fontWeight: 800, mb: 1.5, color: 'var(--lg-ink)' }}>
+                {isRTL ? 'محصول مورد نظر یافت نشد' : 'Product Not Found'}
+              </Typography>
+              <Typography
+                variant="body2"
+                sx={{ mb: 3, lineHeight: 1.8, color: 'var(--lg-ink-4)' }}
+              >
+                {isRTL
+                  ? 'ممکن است این محصول حذف شده یا آدرس وارد شده نادرست باشد.'
+                  : 'The requested product might have been moved or is no longer available.'}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'center', flexWrap: 'wrap' }}>
+                {error && (
+                  <Button
+                    onClick={() => refetch()}
+                    className="lg-pill"
+                    sx={{
+                      borderRadius: '9999px',
+                      px: 3.5,
+                      py: 1.2,
+                      fontWeight: 600,
+                      color: 'var(--lg-ink)',
+                    }}
+                  >
+                    {isRTL ? 'تلاش مجدد' : 'Retry'}
+                  </Button>
+                )}
                 <Button
-                  variant="outlined"
-                  onClick={() => refetch()}
+                  component={RouterLink}
+                  to={CUSTOMER_ROUTES.HOME}
                   sx={{
                     borderRadius: '9999px',
                     px: 3.5,
                     py: 1.2,
-                    fontWeight: 700,
-                    borderColor: isDark ? 'rgba(255, 255, 255, 0.25)' : 'rgba(0, 0, 0, 0.2)',
-                    color: isDark ? '#ffffff' : '#121210',
+                    fontWeight: 600,
+                    background: 'var(--lg-solid-bg)',
+                    color: 'var(--lg-solid-ink)',
+                    '&:hover': {
+                      background: 'var(--lg-solid-bg-hover)',
+                    },
                   }}
                 >
-                  {isRTL ? 'تلاش مجدد' : 'Retry'}
+                  {isRTL ? 'بازگشت به فروشگاه' : 'Return to Shop'}
                 </Button>
-              )}
-              <Button
-                variant="contained"
-                component={RouterLink}
-                to={CUSTOMER_ROUTES.HOME}
-                sx={{
-                  borderRadius: '9999px',
-                  px: 3.5,
-                  py: 1.2,
-                  fontWeight: 700,
-                  background: isDark ? '#c5b89a' : '#1a1a19',
-                  color: isDark ? '#121210' : '#ffffff',
-                  '&:hover': {
-                    background: isDark ? '#ddd4bf' : '#333331',
-                  },
-                }}
-              >
-                {isRTL ? 'بازگشت به فروشگاه' : 'Return to Shop'}
-              </Button>
+              </Box>
             </Box>
-          </Box>
-        </Container>
+          </Container>
+        </Box>
       </CustomersLayout>
     );
   }
 
   return (
-    <CustomersLayout>
+    <CustomersLayout disablePadding={true}>
       <Box
+        className="pdp-lg"
+        data-mode={themeMode}
         dir={isRTL ? 'rtl' : 'ltr'}
         sx={{
           minHeight: '100vh',
-          pb: 10,
+          fontFamily: isRTL ? farsiDisplayStack : 'var(--lg-font)',
+          pt: { xs: '54px', sm: '60px', md: '64px' },
+          pb: { xs: 'calc(96px + env(safe-area-inset-bottom))', md: 8 },
           textAlign: isRTL ? 'right' : 'left',
-          background: isDark
-            ? `radial-gradient(ellipse at 80% 20%, rgba(${ambientRgb}, 0.16) 0%, transparent 55%), radial-gradient(ellipse at 20% 70%, rgba(138, 128, 205, 0.08) 0%, transparent 60%), #0f0f0e`
-            : `radial-gradient(ellipse at 80% 20%, rgba(${ambientRgb}, 0.12) 0%, transparent 55%), radial-gradient(ellipse at 20% 70%, rgba(215, 135, 160, 0.08) 0%, transparent 60%), #f5f4f1`,
         }}
       >
-        <Container maxWidth="xl" sx={{ pt: { xs: 2.5, md: 3.5 }, px: { xs: 2, sm: 3, md: 4 } }}>
+        <Box
+          component="main"
+          id="main"
+          sx={{
+            maxWidth: 1376,
+            mx: 'auto',
+            px: { xs: 2, sm: 3, md: 4 },
+            pt: { xs: 1.5, md: 2.5 },
+          }}
+        >
           {/* Breadcrumb Navigation */}
           <Box
-            dir={isRTL ? 'rtl' : 'ltr'}
+            component="nav"
+            aria-label="breadcrumb"
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'flex-start',
-              mb: { xs: 2.5, md: 3.5 },
+              pt: { xs: 1.25, md: 2 },
+              pb: { xs: 1.25, md: 2.5 },
+              overflowX: 'auto',
+              '&::-webkit-scrollbar': { display: 'none' },
+              msOverflowStyle: 'none',
+              scrollbarWidth: 'none',
             }}
           >
             <Breadcrumbs
               separator={
                 <Typography
                   sx={{
-                    color: isDark ? 'rgba(255,255,255,0.3)' : 'rgba(0,0,0,0.3)',
-                    fontSize: '0.8rem',
+                    color: 'var(--lg-ink-5)',
+                    opacity: isDark ? 0.45 : 1,
+                    mx: '8px',
+                    fontSize: '13px',
                     userSelect: 'none',
                   }}
                 >
@@ -870,12 +953,12 @@ export function CustomerProductDetails() {
                 component={RouterLink}
                 to={CUSTOMER_ROUTES.HOME}
                 sx={{
-                  color: isDark ? '#a8a69f' : '#6b7280',
+                  color: 'var(--lg-ink-4)',
+                  fontSize: { xs: '11.5px', md: '13px' },
+                  fontWeight: 400,
                   textDecoration: 'none',
-                  fontSize: '0.85rem',
-                  fontWeight: 500,
                   '&:hover': {
-                    color: isDark ? '#ffffff' : '#111827',
+                    color: 'var(--lg-ink)',
                   },
                 }}
               >
@@ -887,12 +970,12 @@ export function CustomerProductDetails() {
                   component={RouterLink}
                   to={CUSTOMER_ROUTES.HOME}
                   sx={{
-                    color: isDark ? '#a8a69f' : '#6b7280',
+                    color: 'var(--lg-ink-4)',
+                    fontSize: { xs: '11.5px', md: '13px' },
+                    fontWeight: 400,
                     textDecoration: 'none',
-                    fontSize: '0.85rem',
-                    fontWeight: 500,
                     '&:hover': {
-                      color: isDark ? '#ffffff' : '#111827',
+                      color: 'var(--lg-ink)',
                     },
                   }}
                 >
@@ -905,12 +988,12 @@ export function CustomerProductDetails() {
                   component={RouterLink}
                   to={CUSTOMER_ROUTES.HOME}
                   sx={{
-                    color: isDark ? '#a8a69f' : '#6b7280',
+                    color: 'var(--lg-ink-4)',
+                    fontSize: { xs: '11.5px', md: '13px' },
+                    fontWeight: 400,
                     textDecoration: 'none',
-                    fontSize: '0.85rem',
-                    fontWeight: 500,
                     '&:hover': {
-                      color: isDark ? '#ffffff' : '#111827',
+                      color: 'var(--lg-ink)',
                     },
                   }}
                 >
@@ -920,387 +1003,356 @@ export function CustomerProductDetails() {
 
               <Typography
                 sx={{
-                  color: isDark ? '#f0efeb' : '#1f2937',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  maxWidth: { xs: 180, sm: 300 },
+                  color: 'var(--lg-ink)',
+                  fontSize: { xs: '11.5px', md: '13px' },
+                  fontWeight: 500,
+                  maxWidth: { xs: 160, sm: 300 },
                   overflow: 'hidden',
                   textOverflow: 'ellipsis',
                   whiteSpace: 'nowrap',
                 }}
               >
-                {product.name}
+                <bdi dir={isRTL ? 'rtl' : 'ltr'}>{product.name}</bdi>
               </Typography>
             </Breadcrumbs>
           </Box>
 
-          {/* Main Hero Grid */}
+          {/* Main Product Hero Grid: Gallery (7/12 on lg) and Info Card (5/12 on lg) */}
           <Grid
             container
-            spacing={{ xs: 3, md: 4, lg: 5 }}
-            direction={{ xs: 'column', md: 'row' }}
-            sx={{
-              alignItems: 'flex-start',
-            }}
+            spacing={{ xs: 2.5, md: 4 }}
+            alignItems="flex-start"
           >
-            {/* COLUMN 1: Image Showcase (In RTL, this renders on the right in visual layout!) */}
-            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
-              {/* Main Showcase Card with Interactive Pan Zoom */}
-              <Box
-                onMouseEnter={() => setIsHoverZoom(true)}
-                onMouseLeave={() => {
-                  setIsHoverZoom(false);
-                  setZoomCoord({ x: 50, y: 50 });
-                }}
-                onMouseMove={(e) => {
-                  const rect = e.currentTarget.getBoundingClientRect();
-                  if (!rect.width || !rect.height) return;
-                  const x = ((e.clientX - rect.left) / rect.width) * 100;
-                  const y = ((e.clientY - rect.top) / rect.height) * 100;
-                  setZoomCoord({
-                    x: Math.max(0, Math.min(100, x)),
-                    y: Math.max(0, Math.min(100, y)),
-                  });
-                }}
-                onClick={() => setLightboxOpen(true)}
-                sx={{
-                  position: 'relative',
-                  width: '100%',
-                  height: { xs: 380, sm: 480, md: 580, lg: 640 },
-                  borderRadius: { xs: '24px', md: '32px' },
-                  overflow: 'hidden',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  cursor: isHoverZoom ? 'zoom-in' : 'pointer',
-                  backdropFilter: 'blur(28px) saturate(190%)',
-                  WebkitBackdropFilter: 'blur(28px) saturate(190%)',
-                  border: isDark
-                    ? '1px solid rgba(255, 255, 255, 0.14)'
-                    : '1px solid rgba(255, 255, 255, 0.85)',
-                  background: isDark
-                    ? `radial-gradient(circle at 50% 38%, rgba(${ambientRgb}, 0.28) 0%, transparent 68%), linear-gradient(180deg, rgba(28, 30, 38, 0.8) 0%, rgba(16, 17, 24, 0.9) 100%)`
-                    : `radial-gradient(circle at 50% 38%, rgba(${ambientRgb}, 0.2) 0%, transparent 68%), linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(246, 247, 252, 0.75) 100%)`,
-                  boxShadow: isDark
-                    ? '0 25px 60px -15px rgba(0, 0, 0, 0.65), inset 0 1px 1px 0 rgba(255, 255, 255, 0.2)'
-                    : '0 20px 50px -15px rgba(0, 0, 0, 0.08), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95)',
-                }}
-              >
-                {/* Floating Wishlist Button */}
-                <IconButton
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setIsFavorite(!isFavorite);
-                  }}
-                  size="small"
-                  aria-label="favorite"
+            {/* COLUMN 1: Image Gallery */}
+            <Grid size={{ xs: 12, md: 6, lg: 7 }}>
+              <Box component="section" aria-label={product.name}>
+                {/* Main Showcase Card */}
+                <Box
+                  className="lg-card"
                   sx={{
-                    position: 'absolute',
-                    top: 20,
-                    left: 20,
-                    zIndex: 10,
-                    width: 42,
-                    height: 42,
-                    borderRadius: '50%',
-                    background: isDark
-                      ? 'rgba(255, 255, 255, 0.12)'
-                      : 'rgba(255, 255, 255, 0.85)',
-                    backdropFilter: 'blur(16px)',
-                    border: isDark
-                      ? '1px solid rgba(255, 255, 255, 0.2)'
-                      : '1px solid rgba(255, 255, 255, 0.95)',
-                    boxShadow: isDark
-                      ? '0 4px 16px rgba(0, 0, 0, 0.4)'
-                      : '0 4px 14px rgba(0, 0, 0, 0.08)',
-                    transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                    '&:hover': {
-                      transform: 'scale(1.1)',
-                      background: isDark
-                        ? 'rgba(255, 255, 255, 0.22)'
-                        : 'rgba(255, 255, 255, 1)',
-                    },
+                    borderRadius: '32px',
+                    p: { xs: '6px', sm: '12px' },
+                    overflow: 'hidden',
                   }}
                 >
-                  {isFavorite ? (
-                    <Favorite sx={{ fontSize: 22, color: '#ef4444' }} />
-                  ) : (
-                    <FavoriteBorder
+                  <Box
+                    onMouseEnter={() => setIsHoverZoom(true)}
+                    onMouseLeave={() => {
+                      setIsHoverZoom(false);
+                      setZoomCoord({ x: 50, y: 50 });
+                    }}
+                    onMouseMove={(e) => {
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      if (!rect.width || !rect.height) return;
+                      const x = ((e.clientX - rect.left) / rect.width) * 100;
+                      const y = ((e.clientY - rect.top) / rect.height) * 100;
+                      setZoomCoord({ x, y });
+                    }}
+                    onClick={() => {
+                      setLightboxOpen(true);
+                      setLightboxZoom(1);
+                    }}
+                    sx={{
+                      position: 'relative',
+                      borderRadius: { xs: '26px', sm: '24px' },
+                      overflow: 'hidden',
+                      bgcolor: 'var(--lg-photo-well)',
+                      backgroundImage: `radial-gradient(circle at 50% 38%, rgba(${ambientRgb}, ${
+                        isDark ? 0.28 : 0.2
+                      }) 0%, transparent 68%)`,
+                      aspectRatio: { xs: '4 / 3.8', sm: '1 / 1' },
+                      cursor: 'zoom-in',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={activeMainImage}
+                      alt={product.name}
+                      loading="eager"
+                      fetchPriority="high"
                       sx={{
-                        fontSize: 22,
-                        color: isDark ? 'rgba(255, 255, 255, 0.85)' : '#475569',
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                        objectPosition: { xs: 'center 12%', sm: 'center 18%' },
+                        transformOrigin: isHoverZoom
+                          ? `${zoomCoord.x}% ${zoomCoord.y}%`
+                          : 'center center',
+                        transform: isHoverZoom ? 'scale(1.35)' : 'scale(1)',
+                        transition: isHoverZoom
+                          ? 'transform 0.1s ease-out'
+                          : 'transform 0.5s cubic-bezier(.2,.7,.1,1)',
+                        pointerEvents: 'none',
+                        userSelect: 'none',
                       }}
                     />
-                  )}
-                </IconButton>
 
-                {/* Floating Fullscreen / Lightbox Zoom Button */}
-                <Tooltip title={isRTL ? 'بزرگ‌نمایی تصویر (تمام‌صفحه)' : 'Full Zoom View'} arrow>
-                  <IconButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setLightboxOpen(true);
-                    }}
-                    size="small"
-                    aria-label="zoom image"
-                    sx={{
-                      position: 'absolute',
-                      top: 20,
-                      right: 20,
-                      zIndex: 10,
-                      width: 42,
-                      height: 42,
-                      borderRadius: '50%',
-                      background: isDark
-                        ? 'rgba(255, 255, 255, 0.12)'
-                        : 'rgba(255, 255, 255, 0.85)',
-                      backdropFilter: 'blur(16px)',
-                      border: isDark
-                        ? '1px solid rgba(255, 255, 255, 0.2)'
-                        : '1px solid rgba(255, 255, 255, 0.95)',
-                      boxShadow: isDark
-                        ? '0 4px 16px rgba(0, 0, 0, 0.4)'
-                        : '0 4px 14px rgba(0, 0, 0, 0.08)',
-                      color: isDark ? '#ffffff' : '#1a1a19',
-                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                      '&:hover': {
-                        transform: 'scale(1.1)',
-                        background: isDark
-                          ? 'rgba(255, 255, 255, 0.22)'
-                          : 'rgba(255, 255, 255, 1)',
-                      },
-                    }}
-                  >
-                    <ZoomIn sx={{ fontSize: 22 }} />
-                  </IconButton>
-                </Tooltip>
+                    {/* Overlay Button: Favorite Heart */}
+                    <IconButton
+                      className="lg-icon"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setIsFavorite(!isFavorite);
+                      }}
+                      aria-label={
+                        isFavorite
+                          ? isRTL
+                            ? 'حذف از علاقه‌مندی‌ها'
+                            : 'Remove from favorites'
+                          : isRTL
+                          ? 'افزودن به علاقه‌مندی‌ها'
+                          : 'Add to favorites'
+                      }
+                      aria-pressed={isFavorite}
+                      sx={{
+                        position: 'absolute',
+                        top: { xs: 12, sm: 16 },
+                        insetInlineStart: { xs: 12, sm: 16 },
+                        width: { xs: 36, sm: 40 },
+                        height: { xs: 36, sm: 40 },
+                        borderRadius: '9999px',
+                        color: isFavorite ? '#ef4444' : undefined,
+                        '&:hover': {
+                          transform: 'scale(1.05)',
+                          color: '#ef4444',
+                        },
+                        '&:active': { transform: 'scale(0.95)' },
+                      }}
+                    >
+                      {isFavorite ? (
+                        <Favorite sx={{ fontSize: { xs: 17, sm: 18 } }} />
+                      ) : (
+                        <FavoriteBorder sx={{ fontSize: { xs: 17, sm: 18 } }} />
+                      )}
+                    </IconButton>
 
-                {/* Main Product Image with Interactive Pan Zoom */}
-                <Fade in key={activeMainImage} timeout={400}>
-                  <Box
-                    component="img"
-                    src={activeMainImage}
-                    alt={product.name}
-                    sx={{
-                      width: '100%',
-                      height: '100%',
-                      objectFit: 'contain',
-                      p: { xs: 3, sm: 4, md: 5 },
-                      userSelect: 'none',
-                      pointerEvents: 'none',
-                      transformOrigin: `${zoomCoord.x}% ${zoomCoord.y}%`,
-                      transform: isHoverZoom ? 'scale(2.4)' : 'scale(1)',
-                      transition: isHoverZoom
-                        ? 'transform 0.08s ease-out'
-                        : 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                      willChange: 'transform',
-                    }}
-                  />
-                </Fade>
-
-                {/* Subtle Zoom Hint Pill */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    bottom: 16,
-                    left: '50%',
-                    transform: 'translateX(-50%)',
-                    pointerEvents: 'none',
-                    opacity: isHoverZoom ? 0 : 0.88,
-                    transition: 'opacity 0.25s ease',
-                    borderRadius: '9999px',
-                    px: 2,
-                    py: 0.6,
-                    backdropFilter: 'blur(14px)',
-                    background: isDark
-                      ? 'rgba(20, 22, 28, 0.72)'
-                      : 'rgba(255, 255, 255, 0.88)',
-                    border: isDark
-                      ? '1px solid rgba(255, 255, 255, 0.14)'
-                      : '1px solid rgba(0, 0, 0, 0.08)',
-                    boxShadow: '0 4px 14px rgba(0, 0, 0, 0.1)',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 0.8,
-                    zIndex: 6,
-                  }}
-                >
-                  <ZoomIn sx={{ fontSize: 16, color: isDark ? '#c5b89a' : '#8f8468' }} />
-                  <Typography
-                    sx={{
-                      fontSize: '0.75rem',
-                      fontWeight: 700,
-                      color: isDark ? '#f4f4f5' : '#18181b',
-                    }}
-                  >
-                    {isRTL ? 'حرکت نشانگر برای زوم یا کلیک برای نمایش بزرگ' : 'Hover to zoom • Click to expand'}
-                  </Typography>
-                </Box>
-
-                {/* Left Carousel Chevron */}
-                {galleryImages.length > 1 && (
-                  <IconButton
-                    onClick={handlePrevImage}
-                    aria-label="previous image"
-                    style={{ left: 18 }}
-                    sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      zIndex: 10,
-                      width: 44,
-                      height: 44,
-                      borderRadius: '50%',
-                      background: isDark
-                        ? 'rgba(28, 30, 38, 0.65)'
-                        : 'rgba(255, 255, 255, 0.75)',
-                      backdropFilter: 'blur(16px)',
-                      border: isDark
-                        ? '1px solid rgba(255, 255, 255, 0.16)'
-                        : '1px solid rgba(0, 0, 0, 0.06)',
-                      boxShadow: '0 4px 18px rgba(0, 0, 0, 0.15)',
-                      color: isDark ? '#ffffff' : '#1a1a19',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        transform: 'translateY(-50%) scale(1.1)',
-                        background: isDark
-                          ? 'rgba(255, 255, 255, 0.22)'
-                          : 'rgba(255, 255, 255, 0.95)',
-                      },
-                    }}
-                  >
-                    <ChevronLeft fontSize="medium" />
-                  </IconButton>
-                )}
-
-                {/* Right Carousel Chevron */}
-                {galleryImages.length > 1 && (
-                  <IconButton
-                    onClick={handleNextImage}
-                    aria-label="next image"
-                    style={{ right: 18 }}
-                    sx={{
-                      position: 'absolute',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      zIndex: 10,
-                      width: 44,
-                      height: 44,
-                      borderRadius: '50%',
-                      background: isDark
-                        ? 'rgba(28, 30, 38, 0.65)'
-                        : 'rgba(255, 255, 255, 0.75)',
-                      backdropFilter: 'blur(16px)',
-                      border: isDark
-                        ? '1px solid rgba(255, 255, 255, 0.16)'
-                        : '1px solid rgba(0, 0, 0, 0.06)',
-                      boxShadow: '0 4px 18px rgba(0, 0, 0, 0.15)',
-                      color: isDark ? '#ffffff' : '#1a1a19',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        transform: 'translateY(-50%) scale(1.1)',
-                        background: isDark
-                          ? 'rgba(255, 255, 255, 0.22)'
-                          : 'rgba(255, 255, 255, 0.95)',
-                      },
-                    }}
-                  >
-                    <ChevronRight fontSize="medium" />
-                  </IconButton>
-                )}
-              </Box>
-
-              {/* Thumbnails Row */}
-              {galleryImages.length > 1 && (
-                <Box
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: 1.5,
-                    mt: 2.5,
-                    px: 1,
-                    overflowX: 'auto',
-                    py: 0.5,
-                  }}
-                >
-                  {galleryImages.map((imgUrl, idx) => {
-                    const isSelected = idx === activeImageIndex;
-                    return (
-                      <Box
-                        key={`thumb-${idx}`}
-                        component="button"
-                        type="button"
-                        onClick={() => setActiveImageIndex(idx)}
-                        aria-label={`View photo ${idx + 1}`}
+                    {/* Overlay Button: Zoom */}
+                    <Tooltip
+                      title={
+                        isRTL
+                          ? 'بزرگ‌نمایی تصویر (تمام‌صفحه)'
+                          : 'Full Zoom View'
+                      }
+                      arrow
+                    >
+                      <IconButton
+                        className="lg-icon"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setLightboxOpen(true);
+                          setLightboxZoom(1);
+                        }}
+                        aria-label="zoom image"
                         sx={{
-                          width: { xs: 64, sm: 76 },
-                          height: { xs: 64, sm: 76 },
-                          borderRadius: '18px',
-                          overflow: 'hidden',
-                          p: 0.5,
-                          cursor: 'pointer',
-                          border: isSelected
-                            ? isDark
-                              ? '2px solid #c5b89a'
-                              : '2px solid #1a1a19'
-                            : isDark
-                            ? '1px solid rgba(255, 255, 255, 0.12)'
-                            : '1px solid rgba(0, 0, 0, 0.08)',
-                          background: isDark
-                            ? 'rgba(26, 28, 36, 0.65)'
-                            : 'rgba(255, 255, 255, 0.85)',
-                          backdropFilter: 'blur(12px)',
-                          boxShadow: isSelected
-                            ? isDark
-                              ? '0 0 16px rgba(197, 184, 154, 0.35)'
-                              : '0 4px 14px rgba(0, 0, 0, 0.12)'
-                            : 'none',
-                          transform: isSelected ? 'scale(1.05)' : 'scale(1)',
-                          transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                          '&:hover': {
-                            transform: 'scale(1.06)',
-                            border: isDark
-                              ? '1px solid rgba(255, 255, 255, 0.35)'
-                              : '1px solid rgba(0, 0, 0, 0.25)',
-                          },
+                          position: 'absolute',
+                          top: { xs: 12, sm: 16 },
+                          insetInlineEnd: { xs: 12, sm: 16 },
+                          width: { xs: 36, sm: 40 },
+                          height: { xs: 36, sm: 40 },
+                          borderRadius: '9999px',
+                          '&:hover': { transform: 'scale(1.05)' },
+                          '&:active': { transform: 'scale(0.95)' },
                         }}
                       >
-                        <Box
-                          component="img"
-                          src={imgUrl}
-                          alt=""
-                          sx={{
-                            width: '100%',
-                            height: '100%',
-                            objectFit: 'contain',
-                            borderRadius: '12px',
+                        <ZoomIn sx={{ fontSize: { xs: 18, sm: 20 } }} />
+                      </IconButton>
+                    </Tooltip>
+
+                    {/* Overlay Arrows (only if galleryImages.length > 1) */}
+                    {galleryImages.length > 1 && (
+                      <>
+                        <IconButton
+                          className="lg-icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            isRTL ? handleNextImage() : handlePrevImage();
                           }}
-                        />
-                      </Box>
-                    );
-                  })}
+                          aria-label={isRTL ? 'تصویر بعدی' : 'previous image'}
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            insetInlineStart: { xs: 10, sm: 16 },
+                            width: { xs: 32, sm: 40 },
+                            height: { xs: 32, sm: 40 },
+                            borderRadius: '9999px',
+                            boxShadow: {
+                              xs: '0 2px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.35)',
+                              sm: undefined,
+                            },
+                            '&:hover': {
+                              transform: 'translateY(-50%) scale(1.05)',
+                            },
+                            '&:active': {
+                              transform: 'translateY(-50%) scale(0.95)',
+                            },
+                          }}
+                        >
+                          {isRTL ? (
+                            <ChevronRight sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                          ) : (
+                            <ChevronLeft sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                          )}
+                        </IconButton>
+                        <IconButton
+                          className="lg-icon"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            isRTL ? handlePrevImage() : handleNextImage();
+                          }}
+                          aria-label={isRTL ? 'تصویر قبلی' : 'next image'}
+                          sx={{
+                            position: 'absolute',
+                            top: '50%',
+                            transform: 'translateY(-50%)',
+                            insetInlineEnd: { xs: 10, sm: 16 },
+                            width: { xs: 32, sm: 40 },
+                            height: { xs: 32, sm: 40 },
+                            borderRadius: '9999px',
+                            boxShadow: {
+                              xs: '0 2px 10px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.35)',
+                              sm: undefined,
+                            },
+                            '&:hover': {
+                              transform: 'translateY(-50%) scale(1.05)',
+                            },
+                            '&:active': {
+                              transform: 'translateY(-50%) scale(0.95)',
+                            },
+                          }}
+                        >
+                          {isRTL ? (
+                            <ChevronLeft sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                          ) : (
+                            <ChevronRight sx={{ fontSize: { xs: 16, sm: 20 } }} />
+                          )}
+                        </IconButton>
+                      </>
+                    )}
+
+                    {/* Hint Pill */}
+                    <Box
+                      className="lg-pill"
+                      sx={{
+                        position: 'absolute',
+                        bottom: { xs: 12, sm: 16 },
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        px: { xs: 1.5, sm: 2 },
+                        py: { xs: 0.75, sm: 1 },
+                        borderRadius: '9999px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 1,
+                        pointerEvents: 'none',
+                        whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <Search sx={{ fontSize: 14, color: 'var(--lg-ink-5)' }} />
+                      <Typography
+                        sx={{
+                          fontSize: { xs: '11px', sm: '12px' },
+                          fontWeight: 500,
+                          color: 'var(--lg-ink-2)',
+                          userSelect: 'none',
+                        }}
+                      >
+                        {isRTL
+                          ? 'حرکت نشانگر برای زوم یا کلیک برای نمایش بزرگ'
+                          : 'Hover to zoom • Click to expand'}
+                      </Typography>
+                    </Box>
+                  </Box>
                 </Box>
-              )}
+
+                {/* Thumbnails Row */}
+                {galleryImages.length > 1 && (
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      gap: { xs: 1.5, sm: 1.75 },
+                      justifyContent: 'center',
+                      mt: { xs: 1.5, sm: 2 },
+                      flexWrap: 'wrap',
+                    }}
+                  >
+                    {galleryImages.map((img, idx) => {
+                      const isSelected = idx === activeImageIndex;
+                      return (
+                        <Box
+                          component="button"
+                          key={`pdp-thumb-${idx}`}
+                          type="button"
+                          onClick={() => setActiveImageIndex(idx)}
+                          aria-label={
+                            isRTL
+                              ? `مشاهده تصویر ${idx + 1}`
+                              : `View photo ${idx + 1}`
+                          }
+                          aria-current={isSelected ? 'true' : undefined}
+                          sx={{
+                            width: { xs: 64, sm: 72, md: 80 },
+                            height: { xs: 64, sm: 72, md: 80 },
+                            borderRadius: { xs: '18px', sm: '16px' },
+                            p: '2px',
+                            cursor: 'pointer',
+                            border: 'none',
+                            background: isSelected
+                              ? 'transparent'
+                              : isDark
+                              ? 'rgba(255,255,255,0.05)'
+                              : 'rgba(255,255,255,0.5)',
+                            boxShadow: isSelected
+                              ? '0 0 0 2px var(--lg-ring-offset), 0 0 0 4px var(--lg-ring)'
+                              : 'none',
+                            outline: 'none',
+                            transition: 'all 0.2s cubic-bezier(.2,.7,.1,1)',
+                            '&:hover': {
+                              borderColor: 'var(--lg-ink-5)',
+                            },
+                            '&:focus-visible': {
+                              outline: '2px solid var(--focus)',
+                              outlineOffset: 3,
+                            },
+                          }}
+                        >
+                          <Box
+                            component="img"
+                            src={img}
+                            alt=""
+                            loading="lazy"
+                            decoding="async"
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              borderRadius: { xs: '14px', sm: '12px' },
+                              objectFit: 'cover',
+                              objectPosition: 'center 20%',
+                              display: 'block',
+                            }}
+                          />
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                )}
+              </Box>
             </Grid>
 
             {/* COLUMN 2: Product Information Card (In RTL, this renders on the left!) */}
-            <Grid size={{ xs: 12, md: 6, lg: 6 }}>
+            <Grid size={{ xs: 12, md: 6, lg: 5 }}>
               <Box
+                className="lg-card"
                 dir={isRTL ? 'rtl' : 'ltr'}
                 sx={{
                   borderRadius: { xs: '24px', md: '32px' },
                   p: { xs: 2.5, sm: 3.5, md: 4 },
-                  backdropFilter: 'blur(28px) saturate(190%)',
-                  WebkitBackdropFilter: 'blur(28px) saturate(190%)',
-                  border: isDark
-                    ? '1px solid rgba(255, 255, 255, 0.14)'
-                    : '1px solid rgba(255, 255, 255, 0.85)',
-                  background: isDark
-                    ? 'linear-gradient(180deg, rgba(28, 30, 38, 0.75) 0%, rgba(16, 17, 24, 0.85) 100%)'
-                    : 'linear-gradient(180deg, rgba(255, 255, 255, 0.85) 0%, rgba(246, 247, 252, 0.75) 100%)',
-                  boxShadow: isDark
-                    ? '0 25px 60px -15px rgba(0, 0, 0, 0.65), inset 0 1px 1px 0 rgba(255, 255, 255, 0.15)'
-                    : '0 20px 50px -15px rgba(0, 0, 0, 0.08), inset 0 1px 2px 0 rgba(255, 255, 255, 0.95)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: { xs: 2.5, md: 3 },
                   textAlign: isRTL ? 'right' : 'left',
                 }}
               >
@@ -1311,26 +1363,18 @@ export function CustomerProductDetails() {
                     alignItems: 'center',
                     gap: 1.25,
                     flexWrap: 'wrap',
-                    mb: 1.5,
                   }}
                 >
                   <Box
+                    className="lg-pill"
                     sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      borderRadius: '9999px',
-                      px: 1.3,
+                      px: 1.25,
                       py: 0.35,
-                      fontSize: '0.75rem',
+                      fontSize: '0.6875rem',
                       fontWeight: 700,
-                      backdropFilter: 'blur(16px)',
-                      background: isDark
-                        ? 'linear-gradient(180deg, rgba(197, 184, 154, 0.2) 0%, rgba(197, 184, 154, 0.06) 100%)'
-                        : 'linear-gradient(180deg, rgba(168, 152, 112, 0.2) 0%, rgba(168, 152, 112, 0.06) 100%)',
-                      border: isDark
-                        ? '1px solid rgba(197, 184, 154, 0.38)'
-                        : '1px solid rgba(143, 132, 104, 0.4)',
-                      color: isDark ? '#c5b89a' : '#7c6d48',
+                      letterSpacing: '0.12em',
+                      textTransform: 'uppercase',
+                      color: 'var(--lg-ink)',
                     }}
                   >
                     {isRTL ? 'جدید' : 'NEW'}
@@ -1339,90 +1383,67 @@ export function CustomerProductDetails() {
                   <Typography
                     variant="body2"
                     sx={{
-                      color: isDark ? '#d4d4d8' : '#4b5563',
+                      color: 'var(--lg-muted)',
                       fontWeight: 600,
-                      fontSize: '0.85rem',
+                      fontSize: '0.8125rem',
                     }}
                   >
-                    {brand}
+                    {displayBrand}
+                    {primaryCategory && ` · ${primaryCategory.name}`}
+                  </Typography>
+                </Box>
+
+                {/* Product Title & Code */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
+                  <Typography
+                    variant="h4"
+                    component="h1"
+                    sx={{
+                      fontFamily: isRTL ? farsiDisplayStack : 'inherit',
+                      fontWeight: 800,
+                      fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
+                      lineHeight: 1.2,
+                      color: 'var(--lg-ink)',
+                      letterSpacing: isRTL ? 'normal' : '-0.025em',
+                      textWrap: 'balance',
+                    }}
+                  >
+                    {product.name}
                   </Typography>
 
-                  {primaryCategory && (
-                    <>
-                      <Box
-                        component="span"
-                        sx={{
-                          opacity: 0.45,
-                          fontSize: '0.75rem',
-                          color: isDark ? '#ffffff' : '#000000',
-                        }}
-                      >
-                        •
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        sx={{
-                          color: isDark ? '#a1a1aa' : '#64748b',
-                          fontWeight: 500,
-                          fontSize: '0.85rem',
-                        }}
-                      >
-                        {primaryCategory.name}
-                      </Typography>
-                    </>
+                  {product.sku && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: 'var(--lg-muted)',
+                        fontSize: '0.75rem',
+                        fontWeight: 500,
+                        fontFamily: 'monospace',
+                        letterSpacing: '0.04em',
+                      }}
+                    >
+                      {isRTL ? `کد محصول: ${product.sku}` : `Product Code: ${product.sku}`}
+                    </Typography>
                   )}
                 </Box>
 
-                {/* Product Title */}
-                <Typography
-                  variant="h4"
-                  component="h1"
-                  sx={{
-                    fontFamily: isRTL ? farsiDisplayStack : 'inherit',
-                    fontWeight: 800,
-                    fontSize: { xs: '1.45rem', sm: '1.85rem', md: '2.1rem' },
-                    lineHeight: 1.25,
-                    color: isDark ? '#ffffff' : '#0f172a',
-                    letterSpacing: isRTL ? 0 : '-0.02em',
-                    mb: 0.75,
-                  }}
-                >
-                  {product.name}
-                </Typography>
-
-                {/* SKU Code */}
-                {product.sku && (
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      color: isDark ? '#9ca3af' : '#64748b',
-                      fontSize: '0.82rem',
-                      fontWeight: 500,
-                      mb: 2.5,
-                    }}
-                  >
-                    {isRTL ? `کد محصول: ${product.sku}` : `Product Code: ${product.sku}`}
-                  </Typography>
-                )}
-
-                {/* Price Display Block */}
+                {/* Price Display */}
                 {pricingInfo && (
                   <Box
                     sx={{
                       display: 'flex',
                       alignItems: 'baseline',
                       gap: 1.5,
-                      mb: 1.5,
                       flexWrap: 'wrap',
                     }}
                   >
                     <Typography
                       component="div"
                       sx={{
-                        fontSize: { xs: '1.75rem', sm: '2.1rem' },
+                        fontSize: { xs: '1.75rem', sm: '2rem' },
                         fontWeight: 800,
-                        color: isDark ? '#ffffff' : '#0f172a',
-                        letterSpacing: isRTL ? 0 : '-0.01em',
+                        color: 'var(--lg-ink)',
+                        letterSpacing: isRTL ? 'normal' : '-0.02em',
                       }}
                     >
                       <PriceDisplay
@@ -1437,8 +1458,8 @@ export function CustomerProductDetails() {
                           component="span"
                           sx={{
                             textDecoration: 'line-through',
-                            color: isDark ? '#71717a' : '#94a3b8',
-                            fontSize: '1.05rem',
+                            color: 'var(--lg-muted)',
+                            fontSize: '1rem',
                             fontWeight: 500,
                           }}
                         >
@@ -1449,30 +1470,13 @@ export function CustomerProductDetails() {
                         </Typography>
 
                         <Box
+                          className="lg-pill"
                           sx={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            borderRadius: '9999px',
                             px: 1.25,
                             py: 0.35,
                             fontSize: '0.75rem',
                             fontWeight: 800,
-                            letterSpacing: '0.025em',
-                            backdropFilter: 'blur(22px) saturate(200%)',
-                            WebkitBackdropFilter: 'blur(22px) saturate(200%)',
-                            background: isDark
-                              ? 'linear-gradient(135deg, rgba(235, 110, 55, 0.38) 0%, rgba(197, 135, 80, 0.22) 50%, rgba(245, 135, 65, 0.34) 100%)'
-                              : 'linear-gradient(135deg, rgba(255, 255, 255, 0.78) 0%, rgba(255, 238, 228, 0.62) 50%, rgba(255, 255, 255, 0.72) 100%)',
-                            border: isDark
-                              ? '1px solid rgba(255, 155, 110, 0.6)'
-                              : '1px solid rgba(235, 110, 55, 0.32)',
-                            color: isDark ? '#ffffff' : '#000000',
-                            textShadow: isDark
-                              ? '0 1px 3px rgba(0, 0, 0, 0.85), 0 0 8px rgba(235, 110, 55, 0.4)'
-                              : 'none',
-                            boxShadow: isDark
-                              ? '0 6px 18px -3px rgba(220, 75, 45, 0.4), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.65), inset 0 -1.5px 2px 0 rgba(0, 0, 0, 0.35)'
-                              : '0 4px 16px -2px rgba(220, 75, 45, 0.14), 0 2px 6px -1px rgba(0, 0, 0, 0.04), inset 0 1.5px 2px 0 rgba(255, 255, 255, 0.95), inset 0 -1px 2px 0 rgba(0, 0, 0, 0.03)',
+                            color: 'var(--lg-ink)',
                           }}
                         >
                           {isRTL
@@ -1484,47 +1488,30 @@ export function CustomerProductDetails() {
                   </Box>
                 )}
 
-                {/* Low Stock Indicator */}
+                {/* Stock Pill Badge */}
                 {isLowStock && (
                   <Box
+                    className="lg-stock-low"
                     sx={{
                       display: 'inline-flex',
                       alignItems: 'center',
-                      gap: 0.85,
-                      px: 1.5,
-                      py: 0.6,
+                      gap: 1,
+                      px: 1.75,
+                      py: 0.65,
                       borderRadius: '9999px',
-                      background: isDark
-                        ? 'rgba(245, 158, 11, 0.14)'
-                        : 'rgba(217, 119, 6, 0.1)',
-                      border: isDark
-                        ? '1px solid rgba(245, 158, 11, 0.35)'
-                        : '1px solid rgba(217, 119, 6, 0.3)',
-                      mb: 3,
+                      alignSelf: 'flex-start',
                     }}
                   >
                     <Box
+                      className="lg-stock-dot"
                       sx={{
                         width: 8,
                         height: 8,
                         borderRadius: '50%',
                         backgroundColor: '#f59e0b',
-                        boxShadow: '0 0 8px #f59e0b',
-                        animation: 'pulse 1.8s infinite',
-                        '@keyframes pulse': {
-                          '0%': { transform: 'scale(0.95)', opacity: 0.8 },
-                          '50%': { transform: 'scale(1.2)', opacity: 1 },
-                          '100%': { transform: 'scale(0.95)', opacity: 0.8 },
-                        },
                       }}
                     />
-                    <Typography
-                      sx={{
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        color: isDark ? '#fcd34d' : '#b45309',
-                      }}
-                    >
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
                       {isRTL
                         ? `تنها ${formatNumber(pricingInfo?.stockQuantity || 1)} عدد باقی مانده — همین حالا رزرو کنید`
                         : `Only ${pricingInfo?.stockQuantity} left in stock — Order now`}
@@ -1534,64 +1521,44 @@ export function CustomerProductDetails() {
 
                 {isOutOfStock && (
                   <Box
+                    className="lg-stock-oos"
                     sx={{
                       display: 'inline-flex',
                       alignItems: 'center',
                       gap: 0.85,
-                      px: 1.5,
-                      py: 0.6,
+                      px: 1.75,
+                      py: 0.65,
                       borderRadius: '9999px',
-                      background: isDark
-                        ? 'rgba(239, 68, 68, 0.14)'
-                        : 'rgba(220, 38, 38, 0.1)',
-                      border: isDark
-                        ? '1px solid rgba(239, 68, 68, 0.35)'
-                        : '1px solid rgba(220, 38, 38, 0.3)',
-                      mb: 3,
+                      alignSelf: 'flex-start',
                     }}
                   >
-                    <Typography
-                      sx={{
-                        fontSize: '0.8rem',
-                        fontWeight: 600,
-                        color: isDark ? '#fca5a5' : '#b91c1c',
-                      }}
-                    >
+                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
                       {isRTL ? 'ناموجود در انبار' : 'Out of Stock'}
                     </Typography>
                   </Box>
                 )}
 
-                {/* Color Selector */}
+                {/* Color Selector Section */}
                 {availableColorways.length > 0 && (
-                  <Box sx={{ mb: 3 }}>
-                    <Box
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+                    <Typography
                       sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        mb: 1.25,
+                        fontSize: '0.875rem',
+                        fontWeight: 600,
+                        color: 'var(--lg-ink)',
                       }}
                     >
-                      <Typography
+                      {isRTL ? 'رنگ:' : 'Color:'}{' '}
+                      <Box
+                        component="span"
                         sx={{
-                          fontSize: '0.88rem',
-                          fontWeight: 600,
-                          color: isDark ? '#e4e4e7' : '#374151',
+                          fontWeight: 400,
+                          color: 'var(--lg-muted)',
                         }}
                       >
-                        {isRTL ? 'رنگ:' : 'Color:'}{' '}
-                        <Box
-                          component="span"
-                          sx={{
-                            fontWeight: 700,
-                            color: isDark ? '#ffffff' : '#111827',
-                          }}
-                        >
-                          {activeColorway?.name}
-                        </Box>
-                      </Typography>
-                    </Box>
+                        {activeColorway?.name}
+                      </Box>
+                    </Typography>
 
                     {/* Circular Color Swatches */}
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
@@ -1607,29 +1574,23 @@ export function CustomerProductDetails() {
                               onClick={() => setSelectedColorwayKey(colway.key)}
                               aria-label={colway.name}
                               sx={{
-                                width: 38,
-                                height: 38,
+                                width: { xs: 28, sm: 32 },
+                                height: { xs: 28, sm: 32 },
                                 borderRadius: '50%',
-                                p: '3px',
+                                p: 0,
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
                                 cursor: 'pointer',
                                 background: 'transparent',
-                                border: isSelected
-                                  ? isDark
-                                    ? '2px solid #ffffff'
-                                    : '2px solid #1a1a19'
-                                  : isDark
-                                  ? '1px solid rgba(255, 255, 255, 0.2)'
-                                  : '1px solid rgba(0, 0, 0, 0.15)',
-                                transform: isSelected ? 'scale(1.1)' : 'scale(1)',
+                                border: 'none',
+                                boxShadow: isSelected
+                                  ? '0 0 0 2px var(--lg-ring-offset), 0 0 0 4px var(--lg-ring)'
+                                  : 'none',
+                                transform: isSelected ? 'scale(1.05)' : 'scale(1)',
                                 transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
                                 '&:hover': {
-                                  transform: 'scale(1.12)',
-                                  border: isDark
-                                    ? '2px solid rgba(255, 255, 255, 0.6)'
-                                    : '2px solid rgba(0, 0, 0, 0.5)',
+                                  transform: 'scale(1.1)',
                                 },
                               }}
                             >
@@ -1639,7 +1600,7 @@ export function CustomerProductDetails() {
                                   height: '100%',
                                   borderRadius: '50%',
                                   background: discBg,
-                                  boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.35)',
+                                  border: '1px solid var(--lg-card-border)',
                                 }}
                               />
                             </Box>
@@ -1650,21 +1611,20 @@ export function CustomerProductDetails() {
                   </Box>
                 )}
 
-                {/* Size Selector */}
-                <Box sx={{ mb: 3.5 }}>
+                {/* Size Selector Section */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
                   <Box
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'space-between',
-                      mb: 1.25,
                     }}
                   >
                     <Typography
                       sx={{
-                        fontSize: '0.88rem',
+                        fontSize: '0.875rem',
                         fontWeight: 600,
-                        color: isDark ? '#e4e4e7' : '#374151',
+                        color: 'var(--lg-ink)',
                       }}
                     >
                       {isRTL ? 'سایز' : 'Size'}
@@ -1677,14 +1637,14 @@ export function CustomerProductDetails() {
                       startIcon={<StraightenOutlined sx={{ fontSize: 16 }} />}
                       sx={{
                         textTransform: 'none',
-                        fontSize: '0.78rem',
-                        fontWeight: 600,
-                        color: isDark ? '#c5b89a' : '#8f8468',
+                        fontSize: '0.8125rem',
+                        fontWeight: 500,
+                        color: 'var(--lg-muted)',
                         p: 0,
                         minWidth: 0,
                         '&:hover': {
                           background: 'transparent',
-                          textDecoration: 'underline',
+                          color: 'var(--lg-ink)',
                         },
                       }}
                     >
@@ -1702,50 +1662,25 @@ export function CustomerProductDetails() {
                             key={size}
                             component="button"
                             type="button"
+                            className={isSelected ? undefined : 'lg-pill'}
                             onClick={() => setSelectedSize(size)}
                             sx={{
-                              minWidth: { xs: 44, sm: 52 },
-                              height: 42,
-                              px: 1.75,
+                              width: 48,
+                              height: 40,
                               borderRadius: '12px',
                               display: 'flex',
                               alignItems: 'center',
                               justifyContent: 'center',
                               cursor: 'pointer',
-                              fontWeight: 700,
-                              fontSize: '0.88rem',
-                              border: isSelected
-                                ? isDark
-                                  ? '1px solid #c5b89a'
-                                  : '1px solid #1a1a19'
-                                : isDark
-                                ? '1px solid rgba(255, 255, 255, 0.12)'
-                                : '1px solid rgba(0, 0, 0, 0.1)',
-                              background: isSelected
-                                ? isDark
-                                  ? '#c5b89a'
-                                  : '#1a1a19'
-                                : isDark
-                                ? 'rgba(255, 255, 255, 0.05)'
-                                : 'rgba(0, 0, 0, 0.03)',
-                              color: isSelected
-                                ? isDark
-                                  ? '#121210'
-                                  : '#ffffff'
-                                : isDark
-                                ? '#d4d4d8'
-                                : '#1f2937',
+                              fontWeight: isSelected ? 700 : 500,
+                              fontSize: '0.875rem',
+                              border: isSelected ? 'none' : undefined,
+                              background: isSelected ? 'var(--lg-solid-bg)' : undefined,
+                              color: isSelected ? 'var(--lg-solid-ink)' : 'var(--lg-ink)',
+                              boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.15)' : undefined,
                               transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
-                              boxShadow: isSelected
-                                ? isDark
-                                  ? '0 4px 14px rgba(197, 184, 154, 0.35)'
-                                  : '0 4px 12px rgba(0, 0, 0, 0.15)'
-                                : 'none',
                               '&:hover': {
-                                transform: 'translateY(-2px)',
-                                border: isDark
-                                  ? '1px solid rgba(255, 255, 255, 0.35)'
-                                  : '1px solid rgba(0, 0, 0, 0.3)',
+                                transform: 'translateY(-1px)',
                               },
                             }}
                           >
@@ -1757,8 +1692,7 @@ export function CustomerProductDetails() {
                   ) : (
                     <Typography
                       variant="body2"
-                      color="text.secondary"
-                      sx={{ fontSize: '0.82rem' }}
+                      sx={{ fontSize: '0.8125rem', color: 'var(--lg-muted)' }}
                     >
                       {isRTL
                         ? 'سایزی برای این رنگ موجود نیست'
@@ -1768,7 +1702,7 @@ export function CustomerProductDetails() {
                 </Box>
 
                 {/* Action Buttons (CTAs) */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, mb: 3 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, pt: 1 }}>
                   {/* Primary CTA: Add to cart */}
                   <Button
                     onClick={handleAddToCart}
@@ -1777,48 +1711,36 @@ export function CustomerProductDetails() {
                     fullWidth
                     startIcon={
                       isAddedRecently ? (
-                        <Check sx={{ fontSize: 20 }} />
+                        <Check sx={{ fontSize: 18 }} />
                       ) : (
-                        <ShoppingBagOutlined sx={{ fontSize: 20 }} />
+                        <ShoppingBagOutlined sx={{ fontSize: 18 }} />
                       )
                     }
                     sx={{
-                      height: 52,
+                      height: { xs: 48, sm: 50 },
                       borderRadius: '9999px',
                       textTransform: 'none',
-                      fontWeight: 700,
-                      fontSize: '1rem',
-                      letterSpacing: isRTL ? 0 : '0.02em',
-                      transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)',
+                      fontWeight: 600,
+                      fontSize: '0.9375rem',
+                      letterSpacing: isRTL ? 'normal' : '-0.01em',
+                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                       background: isAddedRecently
-                        ? '#10b981'
-                        : isDark
-                        ? 'linear-gradient(135deg, rgba(197, 184, 154, 0.32) 0%, rgba(197, 184, 154, 0.18) 100%)'
-                        : 'linear-gradient(135deg, #1a1a19 0%, #2b2b29 100%)',
-                      border: isDark
-                        ? '1px solid rgba(197, 184, 154, 0.45)'
-                        : '1px solid #1a1a19',
-                      color: isDark ? '#f0efeb' : '#ffffff',
-                      boxShadow: isDark
-                        ? '0 10px 30px -8px rgba(197, 184, 154, 0.25)'
-                        : '0 10px 25px -8px rgba(0, 0, 0, 0.25)',
+                        ? '#10b981 !important'
+                        : 'var(--lg-solid-bg) !important',
+                      color: isAddedRecently
+                        ? '#ffffff !important'
+                        : 'var(--lg-solid-ink) !important',
+                      boxShadow: '0 4px 14px rgba(0, 0, 0, 0.12)',
                       '&:hover': {
-                        transform: 'translateY(-2px)',
-                        background: isAddedRecently
-                          ? '#059669'
-                          : isDark
-                          ? 'linear-gradient(135deg, rgba(197, 184, 154, 0.45) 0%, rgba(197, 184, 154, 0.28) 100%)'
-                          : 'linear-gradient(135deg, #2e2e2c 0%, #3f3f3c 100%)',
-                        boxShadow: isDark
-                          ? '0 14px 35px -8px rgba(197, 184, 154, 0.35)'
-                          : '0 14px 30px -8px rgba(0, 0, 0, 0.35)',
+                        transform: 'translateY(-1px)',
+                        opacity: 0.94,
+                        boxShadow: '0 6px 20px rgba(0, 0, 0, 0.18)',
                       },
                       '&.Mui-disabled': {
-                        background: isDark
-                          ? 'rgba(255, 255, 255, 0.08)'
-                          : 'rgba(0, 0, 0, 0.08)',
-                        border: 'none',
-                        color: isDark ? '#71717a' : '#9ca3af',
+                        opacity: 0.4,
+                        background: 'var(--lg-pill-bg) !important',
+                        color: 'var(--lg-muted) !important',
+                        boxShadow: 'none',
                       },
                     }}
                   >
@@ -1839,31 +1761,24 @@ export function CustomerProductDetails() {
                   <Button
                     onClick={handleBuyNow}
                     disabled={isOutOfStock}
-                    variant="outlined"
                     fullWidth
+                    className="lg-pill"
                     sx={{
-                      height: 50,
+                      height: { xs: 46, sm: 48 },
                       borderRadius: '9999px',
                       textTransform: 'none',
-                      fontWeight: 700,
-                      fontSize: '0.98rem',
-                      letterSpacing: isRTL ? 0 : '0.02em',
-                      background: isDark
-                        ? 'rgba(255, 255, 255, 0.05)'
-                        : 'rgba(0, 0, 0, 0.03)',
-                      border: isDark
-                        ? '1px solid rgba(255, 255, 255, 0.16)'
-                        : '1px solid rgba(0, 0, 0, 0.12)',
-                      color: isDark ? '#ffffff' : '#1a1a19',
+                      fontWeight: 600,
+                      fontSize: '0.9375rem',
+                      letterSpacing: isRTL ? 'normal' : '-0.01em',
+                      color: 'var(--lg-ink)',
                       transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                       '&:hover': {
-                        transform: 'translateY(-2px)',
-                        background: isDark
-                          ? 'rgba(255, 255, 255, 0.1)'
-                          : 'rgba(0, 0, 0, 0.06)',
-                        border: isDark
-                          ? '1px solid rgba(255, 255, 255, 0.35)'
-                          : '1px solid rgba(0, 0, 0, 0.25)',
+                        transform: 'translateY(-1px)',
+                        background: 'var(--lg-pill-bg-hover)',
+                      },
+                      '&.Mui-disabled': {
+                        opacity: 0.4,
+                        color: 'var(--lg-muted)',
                       },
                     }}
                   >
@@ -1872,7 +1787,7 @@ export function CustomerProductDetails() {
                 </Box>
 
                 {/* Accordions Section */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25, pt: 1 }}>
                   {/* 1. Description Accordion */}
                   <Accordion
                     expanded={expandedAccordion === 'description'}
@@ -1884,40 +1799,31 @@ export function CustomerProductDetails() {
                     sx={{
                       borderRadius: '16px !important',
                       background: isDark
-                        ? 'rgba(255, 255, 255, 0.04)'
+                        ? 'rgba(255, 255, 255, 0.03)'
                         : 'rgba(0, 0, 0, 0.02)',
-                      border: isDark
-                        ? '1px solid rgba(255, 255, 255, 0.08)'
-                        : '1px solid rgba(0, 0, 0, 0.06)',
+                      border: '1px solid var(--lg-card-border)',
+                      overflow: 'hidden',
                       '&::before': { display: 'none' },
                     }}
                   >
                     <AccordionSummary
-                      expandIcon={
-                        <ExpandMore
-                          sx={{
-                            color: isDark ? '#ffffff' : '#1a1a19',
-                          }}
-                        />
-                      }
-                      sx={{ px: 2.5, minHeight: 52 }}
+                      expandIcon={<ExpandMore sx={{ color: 'var(--lg-ink)' }} />}
+                      sx={{ px: 2.5, minHeight: 48 }}
                     >
-                      <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>
+                      <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--lg-ink)' }}>
                         {isRTL ? 'توضیحات' : 'Description'}
                       </Typography>
                     </AccordionSummary>
                     <AccordionDetails sx={{ px: 2.5, pb: 2.5, pt: 0 }}>
                       <Typography
                         sx={{
-                          fontSize: '0.85rem',
-                          lineHeight: 1.85,
-                          color: isDark ? '#d4d4d8' : '#4b5563',
+                          fontSize: '0.8125rem',
+                          lineHeight: 1.7,
+                          color: 'var(--lg-muted)',
+                          whiteSpace: 'pre-line',
                         }}
                       >
-                        {product.description ||
-                          (isRTL
-                            ? `شلوار زنانه ${product.name} با طرح استایل فیل‌چاپ در رنگ ${activeColorway?.name || 'زیتونی'} — الهام‌گرفته از میراث شیکاگو جردن. برش راحت و آزاد با کمر کشی و بند تنظیم‌شونده در مچ، مناسب استایل روزمره و استریت.\n\nپارچه ریپ‌استاپ سبک و مقاوم در برابر پارگی، با جیب‌های کارگو کاربردی روی ران. این مدل اورجینال نایکی/جردن است و از تأمین‌کننده معتبر سنت‌بالا عرضه می‌شود.`
-                            : `${product.name} delivers athletic style, relaxed comfort, and durable ripstop fabric. Engineered with adjustable waistband and cargo pockets for effortless everyday streetstyle.`)}
+                        {localizedDescription}
                       </Typography>
                     </AccordionDetails>
                   </Accordion>
@@ -1933,63 +1839,58 @@ export function CustomerProductDetails() {
                     sx={{
                       borderRadius: '16px !important',
                       background: isDark
-                        ? 'rgba(255, 255, 255, 0.04)'
+                        ? 'rgba(255, 255, 255, 0.03)'
                         : 'rgba(0, 0, 0, 0.02)',
-                      border: isDark
-                        ? '1px solid rgba(255, 255, 255, 0.08)'
-                        : '1px solid rgba(0, 0, 0, 0.06)',
+                      border: '1px solid var(--lg-card-border)',
+                      overflow: 'hidden',
                       '&::before': { display: 'none' },
                     }}
                   >
                     <AccordionSummary
-                      expandIcon={
-                        <ExpandMore
-                          sx={{
-                            color: isDark ? '#ffffff' : '#1a1a19',
-                          }}
-                        />
-                      }
-                      sx={{ px: 2.5, minHeight: 52 }}
+                      expandIcon={<ExpandMore sx={{ color: 'var(--lg-ink)' }} />}
+                      sx={{ px: 2.5, minHeight: 48 }}
                     >
-                      <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>
+                      <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--lg-ink)' }}>
                         {isRTL ? 'جزئیات و جنس' : 'Details & Materials'}
                       </Typography>
                     </AccordionSummary>
                     <AccordionDetails sx={{ px: 2.5, pb: 2.5, pt: 0 }}>
                       <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" sx={{ color: 'var(--lg-muted)', fontSize: '0.8125rem' }}>
                             {isRTL ? 'برند:' : 'Brand:'}
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
-                            {brand}
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--lg-ink)', fontSize: '0.8125rem' }}>
+                            {displayBrand}
                           </Typography>
                         </Box>
                         {product.sku && (
                           <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                            <Typography variant="body2" color="text.secondary">
+                            <Typography variant="body2" sx={{ color: 'var(--lg-muted)', fontSize: '0.8125rem' }}>
                               {isRTL ? 'کد اختصاصی (SKU):' : 'SKU:'}
                             </Typography>
-                            <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--lg-ink)', fontSize: '0.8125rem', fontFamily: 'monospace' }}>
                               {product.sku}
                             </Typography>
                           </Box>
                         )}
+                        {/* TODO(content): Schema currently does not provide fabric composition; using fallback string per spec */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" sx={{ color: 'var(--lg-muted)', fontSize: '0.8125rem' }}>
                             {isRTL ? 'جنس پارچه:' : 'Material:'}
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--lg-ink)', fontSize: '0.8125rem' }}>
                             {isRTL
                               ? '۱۰۰٪ کتان ریپ‌استاپ تنفس‌پذیر'
                               : '100% Breathable Ripstop Cotton'}
                           </Typography>
                         </Box>
+                        {/* TODO(content): Schema currently does not provide care instructions; using fallback string per spec */}
                         <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                          <Typography variant="body2" color="text.secondary">
+                          <Typography variant="body2" sx={{ color: 'var(--lg-muted)', fontSize: '0.8125rem' }}>
                             {isRTL ? 'نحوه شستشو:' : 'Care:'}
                           </Typography>
-                          <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'var(--lg-ink)', fontSize: '0.8125rem' }}>
                             {isRTL
                               ? 'شستشو با ماشین در دمای ۳۰ درجه'
                               : 'Machine wash cold (30°C)'}
@@ -2010,34 +1911,27 @@ export function CustomerProductDetails() {
                     sx={{
                       borderRadius: '16px !important',
                       background: isDark
-                        ? 'rgba(255, 255, 255, 0.04)'
+                        ? 'rgba(255, 255, 255, 0.03)'
                         : 'rgba(0, 0, 0, 0.02)',
-                      border: isDark
-                        ? '1px solid rgba(255, 255, 255, 0.08)'
-                        : '1px solid rgba(0, 0, 0, 0.06)',
+                      border: '1px solid var(--lg-card-border)',
+                      overflow: 'hidden',
                       '&::before': { display: 'none' },
                     }}
                   >
                     <AccordionSummary
-                      expandIcon={
-                        <ExpandMore
-                          sx={{
-                            color: isDark ? '#ffffff' : '#1a1a19',
-                          }}
-                        />
-                      }
-                      sx={{ px: 2.5, minHeight: 52 }}
+                      expandIcon={<ExpandMore sx={{ color: 'var(--lg-ink)' }} />}
+                      sx={{ px: 2.5, minHeight: 48 }}
                     >
-                      <Typography sx={{ fontWeight: 700, fontSize: '0.92rem' }}>
+                      <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--lg-ink)' }}>
                         {isRTL ? 'راهنمای سایز' : 'Size Guide'}
                       </Typography>
                     </AccordionSummary>
                     <AccordionDetails sx={{ px: 2.5, pb: 2.5, pt: 0 }}>
                       <Typography
                         sx={{
-                          fontSize: '0.85rem',
-                          lineHeight: 1.85,
-                          color: isDark ? '#d4d4d8' : '#4b5563',
+                          fontSize: '0.8125rem',
+                          lineHeight: 1.7,
+                          color: 'var(--lg-muted)',
                           mb: 1.5,
                         }}
                       >
@@ -2047,17 +1941,16 @@ export function CustomerProductDetails() {
                       </Typography>
                       <Button
                         onClick={() => setSizeGuideOpen(true)}
-                        variant="outlined"
+                        className="lg-pill"
                         size="small"
-                        startIcon={<StraightenOutlined />}
+                        startIcon={<StraightenOutlined sx={{ fontSize: 16 }} />}
                         sx={{
-                          borderRadius: '8px',
                           textTransform: 'none',
-                          fontSize: '0.8rem',
-                          borderColor: isDark
-                            ? 'rgba(197, 184, 154, 0.4)'
-                            : 'rgba(143, 132, 104, 0.4)',
-                          color: isDark ? '#c5b89a' : '#7c6d48',
+                          fontSize: '0.78rem',
+                          fontWeight: 600,
+                          color: 'var(--lg-ink)',
+                          px: 2,
+                          py: 0.6,
                         }}
                       >
                         {isRTL ? 'مشاهده جدول ابعاد دقیق' : 'View Full Measurement Chart'}
@@ -2075,50 +1968,39 @@ export function CustomerProductDetails() {
               {/* Feature 1: Authenticity */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Box
+                  className="lg-card"
                   dir={isRTL ? 'rtl' : 'ltr'}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 2,
-                    p: 2.5,
-                    borderRadius: '20px',
-                    backdropFilter: 'blur(20px)',
-                    background: isDark
-                      ? 'rgba(26, 28, 36, 0.65)'
-                      : 'rgba(255, 255, 255, 0.75)',
-                    border: isDark
-                      ? '1px solid rgba(255, 255, 255, 0.12)'
-                      : '1px solid rgba(255, 255, 255, 0.85)',
-                    boxShadow: isDark
-                      ? '0 10px 30px rgba(0, 0, 0, 0.35)'
-                      : '0 8px 24px rgba(0, 0, 0, 0.05)',
+                    p: { xs: 2.5, sm: 3 },
+                    borderRadius: { xs: '20px', md: '28px' },
                     textAlign: isRTL ? 'right' : 'left',
                   }}
                 >
                   <Box
+                    className="lg-pill"
                     sx={{
                       width: 48,
                       height: 48,
-                      borderRadius: '14px',
+                      borderRadius: '16px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      background: isDark
-                        ? 'rgba(197, 184, 154, 0.18)'
-                        : 'rgba(168, 152, 112, 0.15)',
-                      color: isDark ? '#c5b89a' : '#8f8468',
+                      color: 'var(--lg-ink)',
                       flexShrink: 0,
                     }}
                   >
-                    <GppGoodOutlined />
+                    <GppGoodOutlined sx={{ fontSize: 24 }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 0.25 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem', mb: 0.25, color: 'var(--lg-ink)' }}>
                       {isRTL ? 'اصالت کالا' : 'Authentic Guarantee'}
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ color: isDark ? '#a1a1aa' : '#64748b', fontSize: '0.8rem' }}
+                      sx={{ color: 'var(--lg-muted)', fontSize: '0.8125rem' }}
                     >
                       {isRTL ? '۱۰۰٪ اورجینال نایک و جردن' : '100% Genuine Nike & Jordan'}
                     </Typography>
@@ -2129,50 +2011,39 @@ export function CustomerProductDetails() {
               {/* Feature 2: 7 Days Exchange */}
               <Grid size={{ xs: 12, sm: 6 }}>
                 <Box
+                  className="lg-card"
                   dir={isRTL ? 'rtl' : 'ltr'}
                   sx={{
                     display: 'flex',
                     alignItems: 'center',
                     gap: 2,
-                    p: 2.5,
-                    borderRadius: '20px',
-                    backdropFilter: 'blur(20px)',
-                    background: isDark
-                      ? 'rgba(26, 28, 36, 0.65)'
-                      : 'rgba(255, 255, 255, 0.75)',
-                    border: isDark
-                      ? '1px solid rgba(255, 255, 255, 0.12)'
-                      : '1px solid rgba(255, 255, 255, 0.85)',
-                    boxShadow: isDark
-                      ? '0 10px 30px rgba(0, 0, 0, 0.35)'
-                      : '0 8px 24px rgba(0, 0, 0, 0.05)',
+                    p: { xs: 2.5, sm: 3 },
+                    borderRadius: { xs: '20px', md: '28px' },
                     textAlign: isRTL ? 'right' : 'left',
                   }}
                 >
                   <Box
+                    className="lg-pill"
                     sx={{
                       width: 48,
                       height: 48,
-                      borderRadius: '14px',
+                      borderRadius: '16px',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
-                      background: isDark
-                        ? 'rgba(197, 184, 154, 0.18)'
-                        : 'rgba(168, 152, 112, 0.15)',
-                      color: isDark ? '#c5b89a' : '#8f8468',
+                      color: 'var(--lg-ink)',
                       flexShrink: 0,
                     }}
                   >
-                    <PublishedWithChangesOutlined />
+                    <PublishedWithChangesOutlined sx={{ fontSize: 24 }} />
                   </Box>
                   <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', mb: 0.25 }}>
+                    <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem', mb: 0.25, color: 'var(--lg-ink)' }}>
                       {isRTL ? 'ضمانت تعویض ۷ روزه' : '7-Day Size Exchange'}
                     </Typography>
                     <Typography
                       variant="body2"
-                      sx={{ color: isDark ? '#a1a1aa' : '#64748b', fontSize: '0.8rem' }}
+                      sx={{ color: 'var(--lg-muted)', fontSize: '0.8125rem' }}
                     >
                       {isRTL
                         ? 'امکان تعویض سریع سایز و مدل'
@@ -2200,10 +2071,11 @@ export function CustomerProductDetails() {
               >
                 <Typography
                   variant="h5"
+                  component="h2"
                   sx={{
                     fontWeight: 800,
                     fontFamily: isRTL ? farsiDisplayStack : 'inherit',
-                    color: isDark ? '#ffffff' : '#0f172a',
+                    color: 'var(--lg-ink)',
                     textAlign: isRTL ? 'right' : 'left',
                   }}
                 >
@@ -2222,13 +2094,13 @@ export function CustomerProductDetails() {
                   }
                   sx={{
                     textTransform: 'none',
-                    fontWeight: 700,
-                    fontSize: '0.88rem',
-                    color: isDark ? '#c5b89a' : '#8f8468',
+                    fontWeight: 600,
+                    fontSize: '0.875rem',
+                    color: 'var(--lg-muted)',
                     fontFamily: isRTL ? farsiDisplayStack : 'inherit',
                     '&:hover': {
                       background: 'transparent',
-                      textDecoration: 'underline',
+                      color: 'var(--lg-ink)',
                     },
                   }}
                 >
@@ -2240,6 +2112,7 @@ export function CustomerProductDetails() {
                 {similarProducts.map((simProd) => (
                   <Grid key={simProd.id} size={{ xs: 12, sm: 6, md: 4, lg: 3 }}>
                     <CustomersProductCard
+                      appearance="glass"
                       product={simProd}
                       onCardClick={() => {
                         navigate(getCustomerProductDetailsRoute(simProd.id));
@@ -2284,7 +2157,7 @@ export function CustomerProductDetails() {
               </Grid>
             </Box>
           )}
-        </Container>
+        </Box>
 
         {/* Size Guide Dialog */}
         <Dialog
@@ -2295,15 +2168,14 @@ export function CustomerProductDetails() {
           dir={isRTL ? 'rtl' : 'ltr'}
           PaperProps={{
             sx: {
-              borderRadius: '24px',
+              borderRadius: { xs: '24px', md: '28px' },
               p: { xs: 2, sm: 2.5 },
-              backdropFilter: 'blur(24px)',
+              backdropFilter: 'blur(32px)',
               background: isDark
-                ? 'rgba(24, 26, 34, 0.97)'
+                ? 'rgba(20, 22, 32, 0.96)'
                 : 'rgba(255, 255, 255, 0.98)',
-              border: isDark
-                ? '1px solid rgba(255, 255, 255, 0.16)'
-                : '1px solid rgba(0, 0, 0, 0.1)',
+              border: '1px solid var(--lg-card-border)',
+              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5)',
               fontFamily: isRTL ? farsiDisplayStack : 'inherit',
             },
           }}
@@ -2320,15 +2192,16 @@ export function CustomerProductDetails() {
             }}
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-              <StraightenOutlined sx={{ color: isDark ? '#c5b89a' : '#8f8468' }} />
-              <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+              <StraightenOutlined sx={{ color: 'var(--lg-ink)' }} />
+              <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--lg-ink)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                 {isRTL ? 'راهنمای جامع سایز' : 'Complete Size Guide'}
               </Typography>
             </Box>
             <IconButton
               size="small"
               onClick={() => setSizeGuideOpen(false)}
-              sx={{ color: isDark ? '#a1a1aa' : '#71717a' }}
+              className="lg-icon"
+              sx={{ width: 36, height: 36, color: 'var(--lg-ink)' }}
             >
               <Close fontSize="small" />
             </IconButton>
@@ -2337,8 +2210,7 @@ export function CustomerProductDetails() {
           <DialogContent sx={{ pt: 1 }}>
             <Typography
               variant="body2"
-              color="text.secondary"
-              sx={{ mb: 2, lineHeight: 1.8, fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}
+              sx={{ mb: 2, lineHeight: 1.8, color: 'var(--lg-muted)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}
             >
               {isRTL
                 ? 'برای اطمینان کامل از انتخاب سایز مناسب، لطفاً ابعاد جدول زیر را با اندازه‌های دقیق خود مقایسه فرمایید.'
@@ -2371,27 +2243,17 @@ export function CustomerProductDetails() {
                   fontFamily: isRTL ? farsiDisplayStack : 'inherit',
                   background:
                     sizeGuideTab === 'footwear'
-                      ? isDark
-                        ? '#c5b89a'
-                        : '#1a1a19'
+                      ? 'var(--lg-solid-bg)'
                       : 'transparent',
                   color:
                     sizeGuideTab === 'footwear'
-                      ? isDark
-                        ? '#121210'
-                        : '#ffffff'
-                      : isDark
-                      ? '#d4d4d8'
-                      : '#52525b',
+                      ? 'var(--lg-solid-ink)'
+                      : 'var(--lg-muted)',
                   '&:hover': {
                     background:
                       sizeGuideTab === 'footwear'
-                        ? isDark
-                          ? '#ddd4bf'
-                          : '#333331'
-                        : isDark
-                        ? 'rgba(255, 255, 255, 0.08)'
-                        : 'rgba(0, 0, 0, 0.06)',
+                        ? 'var(--lg-solid-bg)'
+                        : 'var(--lg-pill-bg-hover)',
                   },
                 }}
               >
@@ -2410,27 +2272,17 @@ export function CustomerProductDetails() {
                   fontFamily: isRTL ? farsiDisplayStack : 'inherit',
                   background:
                     sizeGuideTab === 'apparel'
-                      ? isDark
-                        ? '#c5b89a'
-                        : '#1a1a19'
+                      ? 'var(--lg-solid-bg)'
                       : 'transparent',
                   color:
                     sizeGuideTab === 'apparel'
-                      ? isDark
-                        ? '#121210'
-                        : '#ffffff'
-                      : isDark
-                      ? '#d4d4d8'
-                      : '#52525b',
+                      ? 'var(--lg-solid-ink)'
+                      : 'var(--lg-muted)',
                   '&:hover': {
                     background:
                       sizeGuideTab === 'apparel'
-                        ? isDark
-                          ? '#ddd4bf'
-                          : '#333331'
-                        : isDark
-                        ? 'rgba(255, 255, 255, 0.08)'
-                        : 'rgba(0, 0, 0, 0.06)',
+                        ? 'var(--lg-solid-bg)'
+                        : 'var(--lg-pill-bg-hover)',
                   },
                 }}
               >
@@ -2445,12 +2297,10 @@ export function CustomerProductDetails() {
                 elevation={0}
                 sx={{
                   background: isDark
-                    ? 'rgba(255, 255, 255, 0.04)'
+                    ? 'rgba(255, 255, 255, 0.03)'
                     : 'rgba(0, 0, 0, 0.02)',
                   borderRadius: '16px',
-                  border: isDark
-                    ? '1px solid rgba(255, 255, 255, 0.08)'
-                    : '1px solid rgba(0, 0, 0, 0.06)',
+                  border: '1px solid var(--lg-card-border)',
                   maxHeight: 340,
                   overflowY: 'auto',
                 }}
@@ -2458,16 +2308,16 @@ export function CustomerProductDetails() {
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                      <TableCell sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                         {isRTL ? 'سایز اروپا (EU)' : 'EU Size'}
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                         {isRTL ? 'طول پا (سانتی‌متر)' : 'Foot Length (CM)'}
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                         {isRTL ? 'آمریکا (US)' : 'US Size'}
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                         {isRTL ? 'انگلستان (UK)' : 'UK Size'}
                       </TableCell>
                     </TableRow>
@@ -2489,16 +2339,16 @@ export function CustomerProductDetails() {
                       { eu: '46', cm: '30.0', us: '12.0', uk: '11.0' },
                     ].map((row) => (
                       <TableRow key={row.eu} hover>
-                        <TableCell sx={{ fontWeight: 700, color: isDark ? '#c5b89a' : '#8f8468', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                        <TableCell sx={{ fontWeight: 700, color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                           {isRTL ? toFarsiDigits(row.eu) : row.eu}
                         </TableCell>
-                        <TableCell align="center" sx={{ fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                           {isRTL ? toFarsiDigits(row.cm) : row.cm}
                         </TableCell>
-                        <TableCell align="center" sx={{ fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                           {isRTL ? toFarsiDigits(row.us) : row.us}
                         </TableCell>
-                        <TableCell align="center" sx={{ fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                           {isRTL ? toFarsiDigits(row.uk) : row.uk}
                         </TableCell>
                       </TableRow>
@@ -2515,12 +2365,10 @@ export function CustomerProductDetails() {
                 elevation={0}
                 sx={{
                   background: isDark
-                    ? 'rgba(255, 255, 255, 0.04)'
+                    ? 'rgba(255, 255, 255, 0.03)'
                     : 'rgba(0, 0, 0, 0.02)',
                   borderRadius: '16px',
-                  border: isDark
-                    ? '1px solid rgba(255, 255, 255, 0.08)'
-                    : '1px solid rgba(0, 0, 0, 0.06)',
+                  border: '1px solid var(--lg-card-border)',
                   maxHeight: 340,
                   overflowY: 'auto',
                 }}
@@ -2528,19 +2376,19 @@ export function CustomerProductDetails() {
                 <Table size="small" stickyHeader>
                   <TableHead>
                     <TableRow>
-                      <TableCell sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                      <TableCell sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                         {isRTL ? 'سایز' : 'Size'}
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                         {isRTL ? 'دور سینه (cm)' : 'Chest (cm)'}
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                         {isRTL ? 'دور کمر (cm)' : 'Waist (cm)'}
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                         {isRTL ? 'دور باسن (cm)' : 'Hips (cm)'}
                       </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                         {isRTL ? 'قد شلوار (cm)' : 'Length (cm)'}
                       </TableCell>
                     </TableRow>
@@ -2555,19 +2403,19 @@ export function CustomerProductDetails() {
                       { size: 'XXL', chest: '112-118', waist: '96-102', hips: '116-122', len: '108' },
                     ].map((row) => (
                       <TableRow key={row.size} hover>
-                        <TableCell sx={{ fontWeight: 700, color: isDark ? '#c5b89a' : '#8f8468', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                        <TableCell sx={{ fontWeight: 700, color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                           {row.size}
                         </TableCell>
-                        <TableCell align="center" sx={{ fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                           {isRTL ? toFarsiDigits(row.chest) : row.chest}
                         </TableCell>
-                        <TableCell align="center" sx={{ fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                           {isRTL ? toFarsiDigits(row.waist) : row.waist}
                         </TableCell>
-                        <TableCell align="center" sx={{ fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                           {isRTL ? toFarsiDigits(row.hips) : row.hips}
                         </TableCell>
-                        <TableCell align="center" sx={{ fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                           {isRTL ? toFarsiDigits(row.len) : row.len}
                         </TableCell>
                       </TableRow>
@@ -2584,11 +2432,9 @@ export function CustomerProductDetails() {
                 p: 2,
                 borderRadius: '14px',
                 background: isDark
-                  ? 'rgba(197, 184, 154, 0.08)'
-                  : 'rgba(168, 152, 112, 0.08)',
-                border: isDark
-                  ? '1px solid rgba(197, 184, 154, 0.2)'
-                  : '1px solid rgba(143, 132, 104, 0.2)',
+                  ? 'rgba(255, 255, 255, 0.03)'
+                  : 'rgba(0, 0, 0, 0.02)',
+                border: '1px solid var(--lg-card-border)',
                 display: 'flex',
                 alignItems: 'flex-start',
                 gap: 1.5,
@@ -2597,9 +2443,9 @@ export function CustomerProductDetails() {
               <Typography
                 variant="body2"
                 sx={{
-                  fontSize: '0.82rem',
+                  fontSize: '0.8125rem',
                   lineHeight: 1.8,
-                  color: isDark ? '#e4e4e7' : '#334155',
+                  color: 'var(--lg-muted)',
                   fontFamily: isRTL ? farsiDisplayStack : 'inherit',
                 }}
               >
@@ -2618,12 +2464,12 @@ export function CustomerProductDetails() {
                 borderRadius: '9999px',
                 px: 3.5,
                 py: 1,
-                fontWeight: 700,
+                fontWeight: 600,
                 fontFamily: isRTL ? farsiDisplayStack : 'inherit',
-                background: isDark ? '#c5b89a' : '#1a1a19',
-                color: isDark ? '#121210' : '#ffffff',
+                background: 'var(--lg-solid-bg)',
+                color: 'var(--lg-solid-ink)',
                 '&:hover': {
-                  background: isDark ? '#ddd4bf' : '#333331',
+                  opacity: 0.92,
                 },
               }}
             >
@@ -2650,9 +2496,7 @@ export function CustomerProductDetails() {
               background: isDark
                 ? 'rgba(15, 17, 23, 0.96)'
                 : 'rgba(255, 255, 255, 0.98)',
-              border: isDark
-                ? '1px solid rgba(255, 255, 255, 0.16)'
-                : '1px solid rgba(0, 0, 0, 0.1)',
+              border: '1px solid var(--lg-card-border)',
               boxShadow: '0 30px 80px rgba(0, 0, 0, 0.5)',
               overflow: 'hidden',
               fontFamily: isRTL ? farsiDisplayStack : 'inherit',
@@ -2666,18 +2510,16 @@ export function CustomerProductDetails() {
               alignItems: 'center',
               justifyContent: 'space-between',
               pb: 2,
-              borderBottom: isDark
-                ? '1px solid rgba(255, 255, 255, 0.08)'
-                : '1px solid rgba(0, 0, 0, 0.06)',
+              borderBottom: '1px solid var(--lg-card-border)',
             }}
           >
             <Box>
-              <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+              <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--lg-ink)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
                 {product.name}
               </Typography>
               <Typography
                 variant="caption"
-                sx={{ color: isDark ? '#a1a1aa' : '#71717a', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}
+                sx={{ color: 'var(--lg-muted)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}
               >
                 {isRTL
                   ? `تصویر ${toFarsiDigits(activeImageIndex + 1)} از ${toFarsiDigits(galleryImages.length)}`
@@ -2687,28 +2529,15 @@ export function CustomerProductDetails() {
 
             {/* Lightbox Controls */}
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {/* Reset button appears on the other side of the buttons so ZoomIn, ZoomOut, and Close never shift position */}
+              {/* Reset button */}
               {lightboxZoom > 1 && (
                 <Tooltip title={isRTL ? 'اندازه اولیه' : 'Reset'} arrow>
                   <IconButton
                     size="small"
                     aria-label={isRTL ? 'اندازه اولیه' : 'Reset'}
                     onClick={handleResetLightbox}
-                    sx={{
-                      color: isDark ? '#c5b89a' : '#8f8468',
-                      background: isDark
-                        ? 'rgba(197, 184, 154, 0.16)'
-                        : 'rgba(143, 132, 104, 0.12)',
-                      border: isDark
-                        ? '1px solid rgba(197, 184, 154, 0.35)'
-                        : '1px solid rgba(143, 132, 104, 0.3)',
-                      transition: 'all 0.2s ease',
-                      '&:hover': {
-                        background: isDark
-                          ? 'rgba(197, 184, 154, 0.28)'
-                          : 'rgba(143, 132, 104, 0.22)',
-                      },
-                    }}
+                    className="lg-icon"
+                    sx={{ width: 36, height: 36, color: 'var(--lg-ink)' }}
                   >
                     <RestartAlt fontSize="small" />
                   </IconButton>
@@ -2720,10 +2549,8 @@ export function CustomerProductDetails() {
                   size="small"
                   aria-label={isRTL ? 'بزرگ‌نمایی' : 'Zoom In'}
                   onClick={() => setLightboxZoom((z) => Math.min(3, +(z + 0.5).toFixed(1)))}
-                  sx={{
-                    color: isDark ? '#ffffff' : '#1a1a19',
-                    background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                  }}
+                  className="lg-icon"
+                  sx={{ width: 36, height: 36, color: 'var(--lg-ink)' }}
                 >
                   <ZoomIn fontSize="small" />
                 </IconButton>
@@ -2739,10 +2566,8 @@ export function CustomerProductDetails() {
                       return next;
                     })
                   }
-                  sx={{
-                    color: isDark ? '#ffffff' : '#1a1a19',
-                    background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                  }}
+                  className="lg-icon"
+                  sx={{ width: 36, height: 36, color: 'var(--lg-ink)' }}
                 >
                   <ZoomOut fontSize="small" />
                 </IconButton>
@@ -2755,10 +2580,8 @@ export function CustomerProductDetails() {
                     setLightboxOpen(false);
                     handleResetLightbox();
                   }}
-                  sx={{
-                    color: isDark ? '#ffffff' : '#1a1a19',
-                    background: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
-                  }}
+                  className="lg-icon"
+                  sx={{ width: 36, height: 36, color: 'var(--lg-ink)' }}
                 >
                   <Close fontSize="small" />
                 </IconButton>
@@ -2799,18 +2622,16 @@ export function CustomerProductDetails() {
               <IconButton
                 onClick={handlePrevImage}
                 aria-label="previous image"
-                style={{ left: 8 }}
+                className="lg-icon"
+                style={{ left: 12 }}
                 sx={{
                   position: 'absolute',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   zIndex: 10,
-                  background: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(10px)',
-                  color: isDark ? '#ffffff' : '#18181b',
-                  '&:hover': {
-                    background: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)',
-                  },
+                  width: 44,
+                  height: 44,
+                  color: 'var(--lg-ink)',
                 }}
               >
                 <ChevronLeft />
@@ -2840,18 +2661,16 @@ export function CustomerProductDetails() {
               <IconButton
                 onClick={handleNextImage}
                 aria-label="next image"
-                style={{ right: 8 }}
+                className="lg-icon"
+                style={{ right: 12 }}
                 sx={{
                   position: 'absolute',
                   top: '50%',
                   transform: 'translateY(-50%)',
                   zIndex: 10,
-                  background: isDark ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.7)',
-                  backdropFilter: 'blur(10px)',
-                  color: isDark ? '#ffffff' : '#18181b',
-                  '&:hover': {
-                    background: isDark ? 'rgba(0,0,0,0.8)' : 'rgba(255,255,255,0.95)',
-                  },
+                  width: 44,
+                  height: 44,
+                  color: 'var(--lg-ink)',
                 }}
               >
                 <ChevronRight />
@@ -2861,6 +2680,7 @@ export function CustomerProductDetails() {
             {/* Pan guide hint when zoomed */}
             {lightboxZoom > 1 && (
               <Box
+                className="lg-pill"
                 sx={{
                   position: 'absolute',
                   bottom: 14,
@@ -2869,11 +2689,6 @@ export function CustomerProductDetails() {
                   zIndex: 9,
                   px: 2,
                   py: 0.6,
-                  borderRadius: '9999px',
-                  backdropFilter: 'blur(16px)',
-                  background: isDark ? 'rgba(0, 0, 0, 0.68)' : 'rgba(255, 255, 255, 0.88)',
-                  border: isDark ? '1px solid rgba(255, 255, 255, 0.15)' : '1px solid rgba(0, 0, 0, 0.08)',
-                  boxShadow: '0 4px 16px rgba(0, 0, 0, 0.25)',
                   pointerEvents: 'none',
                   display: 'flex',
                   alignItems: 'center',
@@ -2884,7 +2699,7 @@ export function CustomerProductDetails() {
                   sx={{
                     fontSize: '0.75rem',
                     fontWeight: 600,
-                    color: isDark ? '#e4e4e7' : '#1f2937',
+                    color: 'var(--lg-ink)',
                     fontFamily: isRTL ? farsiDisplayStack : 'inherit',
                   }}
                 >
@@ -2914,21 +2729,21 @@ export function CustomerProductDetails() {
                     setActiveImageIndex(idx);
                     setLightboxZoom(1);
                   }}
+                  className={idx === activeImageIndex ? undefined : 'lg-card'}
                   sx={{
                     width: 56,
                     height: 56,
                     borderRadius: '12px',
                     p: 0.5,
                     cursor: 'pointer',
-                    border:
+                    boxShadow:
                       idx === activeImageIndex
-                        ? '2px solid #c5b89a'
-                        : isDark
-                        ? '1px solid rgba(255, 255, 255, 0.12)'
-                        : '1px solid rgba(0, 0, 0, 0.08)',
-                    background: isDark
-                      ? 'rgba(255, 255, 255, 0.04)'
-                      : 'rgba(0, 0, 0, 0.02)',
+                        ? '0 0 0 2px var(--lg-ring-offset), 0 0 0 4px var(--lg-ring)'
+                        : 'none',
+                    background:
+                      idx === activeImageIndex
+                        ? 'var(--lg-card-bg)'
+                        : undefined,
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -2961,22 +2776,20 @@ export function CustomerProductDetails() {
             dir={isRTL ? 'rtl' : 'ltr'}
             icon={<CheckCircleOutline sx={{ color: '#34d399 !important', fontSize: 22 }} />}
             sx={{
-              borderRadius: '20px',
-              px: 2.8,
+              borderRadius: '9999px',
+              px: 3,
               py: 1.2,
-              fontWeight: 700,
-              fontSize: '0.92rem',
+              fontWeight: 600,
+              fontSize: '0.875rem',
               backdropFilter: 'blur(24px)',
               background: '#18181b !important',
               color: '#ffffff !important',
-              border: isDark
-                ? '1px solid rgba(197, 184, 154, 0.35)'
-                : '1px solid rgba(255, 255, 255, 0.15)',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
               boxShadow: '0 20px 45px rgba(0, 0, 0, 0.45)',
               '& .MuiAlert-message': {
                 color: '#ffffff !important',
-                fontWeight: 700,
-                fontSize: '0.92rem',
+                fontWeight: 600,
+                fontSize: '0.875rem',
                 fontFamily: isRTL ? farsiDisplayStack : 'inherit',
               },
               '& .MuiAlert-action': {

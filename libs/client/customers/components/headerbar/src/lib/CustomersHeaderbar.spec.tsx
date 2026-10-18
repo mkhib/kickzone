@@ -19,8 +19,17 @@ vi.mock('@kickzone-workspace/customer-cart-store', () => ({
 }));
 
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
+  SITE_NAME: 'SAINTBALA',
   useI18nContext: () => ({
     LL: {
+      home: {
+        nav: {
+          mainAria: () => 'Main navigation',
+          women: () => 'Women',
+          men: () => 'Men',
+        },
+        searchPlaceholder: () => 'Search...',
+      },
       appNames: {
         siteName: () => 'KickZone',
       },

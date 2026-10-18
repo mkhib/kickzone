@@ -9,6 +9,8 @@ import ShoppingCartIcon from '@mui/icons-material/ShoppingCart';
 import ReceiptIcon from '@mui/icons-material/Receipt';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import Paper from '@mui/material/Paper';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import BottomNavigation from '@mui/material/BottomNavigation';
 import BottomNavigationAction from '@mui/material/BottomNavigationAction';
 import Badge from '@mui/material/Badge';
@@ -27,11 +29,13 @@ export interface CustomerTabItem {
 export interface CustomersTabbarProps {
   handledInTabbarIds?: string[];
   tabItems?: CustomerTabItem[];
+  variant?: 'default' | 'glass';
 }
 
 export function CustomersTabbar({
   handledInTabbarIds,
   tabItems,
+  variant = 'default',
 }: CustomersTabbarProps = {}) {
   const { user } = useCustomersAuth();
   const totalItems = useCartItemCount();
@@ -40,6 +44,7 @@ export function CustomersTabbar({
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isDark = theme.palette.mode === 'dark';
 
   const defaultTabs: CustomerTabItem[] = useMemo(() => {
     if (user) {
@@ -139,6 +144,124 @@ export function CustomersTabbar({
 
   if (!isMobile) {
     return null;
+  }
+
+  if (variant === 'glass') {
+    return (
+      <Box
+        component="nav"
+        aria-label="Mobile Bottom Tabbar"
+        sx={{
+          display: { xs: 'flex', sm: 'none' },
+          position: 'fixed',
+          insetInline: 0,
+          marginInline: 'auto',
+          bottom: 'calc(12px + env(safe-area-inset-bottom, 0px))',
+          width: 'calc(100% - 32px)',
+          maxWidth: '358px',
+          zIndex: (currentTheme) => currentTheme.zIndex.appBar,
+          borderRadius: '28px',
+          padding: '10px 24px',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          background: isDark
+            ? 'rgba(16, 18, 27, 0.86)'
+            : 'rgba(255, 255, 255, 0.82)',
+          backdropFilter: 'blur(40px) saturate(210%)',
+          WebkitBackdropFilter: 'blur(40px) saturate(210%)',
+          border: isDark
+            ? '1px solid rgba(255, 255, 255, 0.18)'
+            : '1px solid rgba(255, 255, 255, 0.7)',
+          boxShadow: isDark
+            ? 'inset 0 1.5px 2px rgba(255, 255, 255, 0.25), 0 20px 45px -8px rgba(0, 0, 0, 0.8), 0 1px 3px rgba(0, 0, 0, 0.6)'
+            : 'inset 0 1.5px 2px rgba(255, 255, 255, 0.95), 0 20px 40px -10px rgba(0, 0, 0, 0.12), 0 1px 3px rgba(0, 0, 0, 0.04)',
+          pointerEvents: 'auto',
+        }}
+      >
+        {activeTabs.map((tab) => {
+          const isActive = currentTabId === tab.id;
+          const actionIcon =
+            tab.badge !== undefined && tab.badge > 0 ? (
+              <Badge
+                badgeContent={tab.badge}
+                sx={{
+                  '& .MuiBadge-badge': {
+                    bgcolor: isDark ? '#ffffff' : '#171717',
+                    color: isDark ? '#171717' : '#ffffff',
+                    fontSize: '9px',
+                    fontWeight: 700,
+                    minWidth: '14px',
+                    height: '14px',
+                    padding: '0 3px',
+                  },
+                }}
+              >
+                {tab.icon}
+              </Badge>
+            ) : (
+              tab.icon
+            );
+
+          return (
+            <Box
+              key={tab.id}
+              component="button"
+              type="button"
+              onClick={() => {
+                if (location.pathname === tab.path) {
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                } else {
+                  navigate(tab.path);
+                }
+              }}
+              aria-current={isActive ? 'page' : undefined}
+              aria-label={tab.label}
+              sx={{
+                background: 'transparent',
+                border: 'none',
+                outline: 'none',
+                cursor: 'pointer',
+                p: 0,
+                minWidth: 48,
+                minHeight: 44,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '4px',
+                color: isActive
+                  ? 'var(--lg-ink, #ffffff)'
+                  : isDark
+                  ? '#a1a1a6'
+                  : 'var(--lg-ink-5, #6e6e73)',
+                transition: 'transform 0.15s ease, color 0.15s ease',
+                '&:hover, &:active': {
+                  color: 'var(--lg-ink, #ffffff)',
+                  transform: 'scale(0.95)',
+                },
+                '& .MuiSvgIcon-root': {
+                  fontSize: 22,
+                },
+              }}
+            >
+              {actionIcon}
+              <Typography
+                component="span"
+                sx={{
+                  fontSize: '10px',
+                  fontWeight: 500,
+                  lineHeight: 1,
+                  letterSpacing: '0.01em',
+                  fontFamily: 'inherit',
+                }}
+              >
+                {tab.label}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+    );
   }
 
   return (

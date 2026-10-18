@@ -605,6 +605,52 @@ type RootTranslation = {
 		paymentInitializationFailed: string
 	}
 	products: {
+		card: {
+			/**
+			 * M​e​n
+			 */
+			men: string
+			/**
+			 * W​o​m​e​n
+			 */
+			women: string
+			/**
+			 * P​r​o​d​u​c​t​ ​C​o​d​e​:
+			 */
+			productCode: string
+			/**
+			 * S​i​z​e
+			 */
+			size: string
+			/**
+			 * O​n​l​y​ ​1​ ​l​e​f​t​ ​i​n​ ​s​t​o​c​k
+			 */
+			onlyOneLeft: string
+			/**
+			 * A​d​d​ ​t​o​ ​C​a​r​t
+			 */
+			addToCart: string
+			/**
+			 * A​d​d​ ​t​o​ ​C​a​r​t
+			 */
+			addToCartShort: string
+			/**
+			 * A​d​d​e​d​ ​t​o​ ​C​a​r​t
+			 */
+			addedToCart: string
+			/**
+			 * A​d​d​ ​t​o​ ​f​a​v​o​r​i​t​e​s
+			 */
+			addFavorite: string
+			/**
+			 * R​e​m​o​v​e​ ​f​r​o​m​ ​f​a​v​o​r​i​t​e​s
+			 */
+			removeFavorite: string
+			/**
+			 * O​r​i​g​i​n​a​l
+			 */
+			original: string
+		}
 		/**
 		 * L​o​a​d​i​n​g​ ​y​o​u​r​ ​p​r​o​d​u​c​t​s​.​.​.
 		 */
@@ -4033,6 +4079,52 @@ export type TranslationFunctions = {
 		paymentInitializationFailed: () => LocalizedString
 	}
 	products: {
+		card: {
+			/**
+			 * Men
+			 */
+			men: () => LocalizedString
+			/**
+			 * Women
+			 */
+			women: () => LocalizedString
+			/**
+			 * Product Code:
+			 */
+			productCode: () => LocalizedString
+			/**
+			 * Size
+			 */
+			size: () => LocalizedString
+			/**
+			 * Only 1 left in stock
+			 */
+			onlyOneLeft: () => LocalizedString
+			/**
+			 * Add to Cart
+			 */
+			addToCart: () => LocalizedString
+			/**
+			 * Add to Cart
+			 */
+			addToCartShort: () => LocalizedString
+			/**
+			 * Added to Cart
+			 */
+			addedToCart: () => LocalizedString
+			/**
+			 * Add to favorites
+			 */
+			addFavorite: () => LocalizedString
+			/**
+			 * Remove from favorites
+			 */
+			removeFavorite: () => LocalizedString
+			/**
+			 * Original
+			 */
+			original: () => LocalizedString
+		}
 		/**
 		 * Loading your products...
 		 */

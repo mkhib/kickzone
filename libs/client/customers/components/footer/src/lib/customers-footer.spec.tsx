@@ -16,7 +16,29 @@ vi.mock('@kickzone-workspace/shared-i18n', async () => {
         appNames: {
           siteName: () => actual.SITE_NAME,
         },
+        home: {
+          footer: {
+            tagline: () => 'Authentic sportswear',
+            store: () => 'Store',
+            women: () => 'Women',
+            men: () => 'Men',
+            hoodies: () => 'Hoodies',
+            pants: () => 'Pants',
+            brands: () => 'Brands',
+            guide: () => 'Guide',
+            authenticity: () => 'Authenticity',
+            sizeGuide: () => 'Size Guide',
+            payment: () => 'Payment',
+            account: () => 'Account',
+            loginWithEmail: () => 'Login',
+            cart: () => 'Cart',
+            favorites: () => 'Favorites',
+            copyright: () => '© SAINTBALA',
+            paymentOnline: () => 'Online payment',
+          },
+        },
         navigation: {
+          home: () => 'Home',
           languageSettings: () => 'Language Settings',
         },
         form: {

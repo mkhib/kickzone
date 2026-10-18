@@ -173,6 +173,19 @@ const en = {
 
   // Product management
   products: {
+    card: {
+      men: 'Men',
+      women: 'Women',
+      productCode: 'Product Code:',
+      size: 'Size',
+      onlyOneLeft: 'Only 1 left in stock',
+      addToCart: 'Add to Cart',
+      addToCartShort: 'Add to Cart',
+      addedToCart: 'Added to Cart',
+      addFavorite: 'Add to favorites',
+      removeFavorite: 'Remove from favorites',
+      original: 'Original',
+    },
     loadingProducts: 'Loading your products...',
     noProductsFound: 'No products found',
     productVariants: 'Product Variants',

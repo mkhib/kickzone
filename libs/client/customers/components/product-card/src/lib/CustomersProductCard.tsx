@@ -101,6 +101,7 @@ export interface ProductCardProps {
   product: KickzoneGraphqlTypes.Product;
   to?: string;
   variant?: 'standard' | 'compact';
+  appearance?: 'default' | 'glass';
   onAddToCart?: (product: KickzoneGraphqlTypes.Product) => void;
   onAddVariantToCart?: (variant: {
     product: KickzoneGraphqlTypes.Product;
@@ -123,6 +124,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   product,
   to,
   variant = 'standard',
+  appearance = 'default',
   onAddToCart,
   onAddVariantToCart,
   onCardClick,
@@ -135,6 +137,10 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   const [selectedSize, setSelectedSize] = useState<string | null>(null);
   const [isAddedRecently, setIsAddedRecently] = useState(false);
   const addedTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const { LL } = useI18nContext();
+  const { currentLocale } = useLanguageContext();
+  const isEn = currentLocale === 'en';
 
   const isCompact = variant === 'compact';
 
@@ -255,9 +261,9 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       const slug = (c.slug || '').toLowerCase();
       const name = (c.name || '').toLowerCase();
       if (slug === 'women' || name.includes('زنانه')) {
-        g = 'زنانه';
+        g = isEn ? (LL?.products?.card?.women ? LL.products.card.women() : 'Women') : 'زنانه';
       } else if (slug === 'men' || name.includes('مردانه')) {
-        g = 'مردانه';
+        g = isEn ? (LL?.products?.card?.men ? LL.products.card.men() : 'Men') : 'مردانه';
       }
 
       for (const [key, val] of Object.entries(TYPE_MAP)) {
@@ -267,17 +273,23 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       }
     }
     return { typeLabel: t, genderLabel: g };
-  }, [product.categories]);
+  }, [product.categories, isEn, LL]);
 
   const eyebrowText = useMemo(() => {
     const parts = [brand];
-    if (typeLabel || genderLabel) {
-      parts.push(`${typeLabel} ${genderLabel}`.trim());
+    if (isEn) {
+      if (genderLabel) {
+        parts.push(genderLabel);
+      }
+    } else {
+      if (typeLabel || genderLabel) {
+        parts.push(`${typeLabel} ${genderLabel}`.trim());
+      }
     }
     return parts.join(' · ');
-  }, [brand, typeLabel, genderLabel]);
+  }, [brand, typeLabel, genderLabel, isEn]);
 
-  // Color Swatch: First color's hex disc & Persian name
+  // Color Swatch: First color's hex disc & name
   const firstColor = useMemo(() => {
     const colors = activeVariant?.productInfo?.colors || product.productInfos?.[0]?.colors;
     if (colors && colors.length > 0) {
@@ -324,6 +336,406 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     }
   };
 
+  const cardColorName =
+    firstColor?.name ||
+    (isEn
+      ? LL?.products?.card?.original
+        ? LL.products.card.original()
+        : 'Original'
+      : 'اورجینال');
+
+  const productCodeLabel = isEn
+    ? LL?.products?.card?.productCode
+      ? LL.products.card.productCode()
+      : 'Product Code:'
+    : 'کد محصول ';
+
+  const sizeLabel = isEn
+    ? LL?.products?.card?.size
+      ? LL.products.card.size()
+      : 'Size'
+    : 'سایز';
+
+  const singleStockLabel = isEn
+    ? LL?.products?.card?.onlyOneLeft
+      ? LL.products.card.onlyOneLeft()
+      : 'Only 1 left in stock'
+    : 'تنها ۱ عدد باقی مانده';
+
+  const favoriteAriaLabel = isFavorite
+    ? isEn
+      ? LL?.products?.card?.removeFavorite
+        ? LL.products.card.removeFavorite()
+        : 'Remove from favorites'
+      : 'حذف از علاقه‌مندی‌ها'
+    : isEn
+    ? LL?.products?.card?.addFavorite
+      ? LL.products.card.addFavorite()
+      : 'Add to favorites'
+    : 'افزودن به علاقه‌مندی‌ها';
+
+  const imgAlt = isEn
+    ? `${brand} ${product.name}`
+    : `${typeLabel || 'پوشاک'} ${brand} — ${firstColor?.name || ''}، روی مدل`;
+
+  const cartButtonAriaLabel = isEn
+    ? LL?.products?.card?.addToCartShort
+      ? LL.products.card.addToCartShort()
+      : 'Add to cart'
+    : 'افزودن به سبد';
+
+  if (appearance === 'glass') {
+    return (
+      <Box
+        className="rv"
+        style={{ '--d': index % 4 } as React.CSSProperties}
+        sx={{ width: '100%', height: '100%' }}
+      >
+        <Box
+          className="lg-card"
+          onClick={handleCardClick}
+          sx={{
+            cursor: 'pointer',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            height: '100%',
+            borderRadius: { xs: '32px', sm: '28px' },
+            p: { xs: '12px', sm: '16px' },
+            position: 'relative',
+            transition: 'box-shadow 0.3s cubic-bezier(.2,.7,.1,1), transform 0.3s cubic-bezier(.2,.7,.1,1)',
+            '@media (hover: hover)': {
+              '&:hover': {
+                boxShadow: 'var(--lg-card-shadow-hover)',
+                '& .card-glass-img': {
+                  transform: 'scale(1.05)',
+                },
+              },
+            },
+          }}
+        >
+          {/* Hidden categories for testing/a11y */}
+          <Box sx={{ display: 'none' }} aria-hidden="true">
+            {product.categories?.map((c) => (
+              <span key={c.id || c.name}>{c.name}</span>
+            ))}
+          </Box>
+
+          <Box sx={{ width: '100%' }}>
+            {/* Photo well */}
+            <Box
+              sx={{
+                position: 'relative',
+                width: '100%',
+                aspectRatio: { xs: '4 / 4.2', sm: '1 / 1' },
+                borderRadius: { xs: '22px', sm: '16px' },
+                overflow: 'hidden',
+                backgroundColor: 'var(--lg-photo-well)',
+              }}
+            >
+              <RouterLink
+                to={productDetailsUrl}
+                aria-label={product.name}
+                style={{ display: 'block', width: '100%', height: '100%' }}
+              >
+                <Box
+                  component="img"
+                  className="card-glass-img"
+                  src={primaryImage}
+                  alt={imgAlt}
+                  loading="lazy"
+                  decoding="async"
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition: 'center',
+                    transition: 'transform 0.3s cubic-bezier(.2,.7,.1,1)',
+                  }}
+                />
+              </RouterLink>
+
+              {/* Color Chip pinned at top-end corner */}
+              {firstColor && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: 10,
+                    insetInlineEnd: 10,
+                    zIndex: 2,
+                    pointerEvents: 'none',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    px: '10px',
+                    py: '4px',
+                    borderRadius: '9999px',
+                    background: 'var(--lg-chip-bg)',
+                    color: 'var(--lg-chip-ink)',
+                    border: '1px solid var(--lg-chip-border)',
+                    backdropFilter: 'blur(14px) saturate(160%)',
+                    WebkitBackdropFilter: 'blur(14px) saturate(160%)',
+                    fontSize: '11px',
+                    fontWeight: 500,
+                    lineHeight: 1,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      width: 10,
+                      height: 10,
+                      borderRadius: '50%',
+                      backgroundColor: firstColor.hexCode || '#111',
+                      boxShadow: '0 0 0 1px var(--lg-chip-dot-ring)',
+                      flexShrink: 0,
+                    }}
+                  />
+                  <Typography
+                    component="span"
+                    sx={{
+                      fontSize: '11px',
+                      fontWeight: 500,
+                      color: 'inherit',
+                      lineHeight: 1,
+                    }}
+                  >
+                    {cardColorName}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+
+            {/* Text block */}
+            <Box
+              sx={{
+                mt: '14px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '4px',
+                px: { xs: '4px', sm: 0 },
+              }}
+            >
+              {/* Meta line */}
+              <Typography
+                sx={{
+                  fontSize: '12px',
+                  fontWeight: 500,
+                  color: 'var(--lg-ink-5)',
+                  lineHeight: 1.3,
+                }}
+              >
+                {eyebrowText}
+              </Typography>
+
+              {/* Title */}
+              <Typography
+                component={RouterLink}
+                to={productDetailsUrl}
+                onClick={handleCardClick}
+                title={product.name}
+                sx={{
+                  fontSize: '14px',
+                  fontWeight: 700,
+                  color: 'var(--lg-ink)',
+                  textDecoration: 'none',
+                  lineHeight: 1.35,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: { xs: 'normal', sm: 'nowrap' },
+                  display: { xs: '-webkit-box', sm: 'block' },
+                  WebkitLineClamp: { xs: 2, sm: 'unset' },
+                  WebkitBoxOrient: { xs: 'vertical', sm: 'unset' },
+                  transition: 'opacity 0.2s',
+                  '&:hover': { opacity: 0.8 },
+                }}
+              >
+                <bdi dir="ltr">{product.name}</bdi>
+              </Typography>
+
+              {/* SKU line */}
+              {product.sku && (
+                <Typography
+                  sx={{
+                    fontSize: '11px',
+                    fontWeight: { xs: 500, sm: 400 },
+                    color: 'var(--lg-ink-5)',
+                    fontFamily: { xs: 'inherit', sm: 'ui-monospace, SFMono-Regular, Menlo, monospace' },
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {productCodeLabel} <bdi dir="ltr">{product.sku}</bdi>
+                </Typography>
+              )}
+
+              {/* Price & Size Row */}
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  mt: '12px',
+                  gap: 1,
+                }}
+              >
+                <Box
+                  sx={{
+                    fontSize: { xs: '18px', sm: '16px' },
+                    fontWeight: { xs: 800, sm: 700 },
+                    color: 'var(--lg-ink)',
+                    letterSpacing: '-0.01em',
+                    lineHeight: 1,
+                  }}
+                >
+                  {exchangeRate ? (
+                    <span data-testid="price-display">
+                      {formatToman(unitPriceUSD, exchangeRate, discountPercent)}
+                    </span>
+                  ) : (
+                    <PriceDisplay priceInUSD={finalPriceUSD} />
+                  )}
+                </Box>
+
+                {availableSizes.length > 0 && (
+                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                    <Typography
+                      sx={{
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        color: 'var(--lg-ink-4)',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {sizeLabel}
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: '4px' }}>
+                      {availableSizes.slice(0, 2).map((sz) => {
+                        const isSelected = sz === selectedSize;
+                        return (
+                          <Box
+                            key={sz}
+                            component="button"
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              e.preventDefault();
+                              setSelectedSize(sz);
+                            }}
+                            sx={{
+                              minWidth: 24,
+                              height: 20,
+                              px: '6px',
+                              borderRadius: '6px',
+                              background: isSelected
+                                ? 'var(--lg-solid-bg)'
+                                : 'var(--lg-pill-bg)',
+                              color: isSelected
+                                ? 'var(--lg-solid-ink)'
+                                : 'var(--lg-ink-2)',
+                              border: '1px solid var(--lg-pill-border)',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              lineHeight: 1,
+                              p: 0,
+                            }}
+                          >
+                            <bdi dir="ltr">{sz}</bdi>
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                  </Box>
+                )}
+              </Box>
+
+              {/* Stock note (or 18px reserved space) */}
+              <Box sx={{ minHeight: '18px', mt: '8px', display: 'flex', alignItems: 'center' }}>
+                {isSingleStock && (
+                  <Box
+                    sx={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      borderRadius: { xs: '9999px', sm: 0 },
+                      px: { xs: '10px', sm: 0 },
+                      py: { xs: '4px', sm: 0 },
+                      background: { xs: 'rgba(245, 158, 11, 0.10)', sm: 'transparent' },
+                      border: { xs: '1px solid rgba(245, 158, 11, 0.20)', sm: 'none' },
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        width: 6,
+                        height: 6,
+                        borderRadius: '50%',
+                        backgroundColor: 'var(--lg-stock-dot)',
+                        flexShrink: 0,
+                      }}
+                    />
+                    <Typography
+                      sx={{
+                        fontSize: '11px',
+                        fontWeight: 500,
+                        color: 'var(--lg-stock-ink-card)',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {singleStockLabel}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            </Box>
+          </Box>
+
+          {/* Add to Cart button */}
+          <Button
+            className="lg-pill"
+            onClick={handleAddToCartClick}
+            aria-label={cartButtonAriaLabel}
+            startIcon={
+              isAddedRecently ? (
+                <CheckCircleOutline sx={{ fontSize: 16 }} />
+              ) : (
+                <ShoppingBagOutlined sx={{ fontSize: 16 }} />
+              )
+            }
+            sx={{
+              mt: { xs: '12px', sm: '16px' },
+              height: 40,
+              width: '100%',
+              borderRadius: '9999px',
+              fontWeight: { xs: 600, sm: 500 },
+              fontSize: { xs: '12px', sm: '13px' },
+              textTransform: 'none',
+              background: isAddedRecently ? '#10b981 !important' : 'var(--lg-pill-bg)',
+              color: isAddedRecently ? '#ffffff !important' : 'var(--lg-ink)',
+              border: isAddedRecently ? '1px solid #10b981' : '1px solid var(--lg-pill-border)',
+              boxShadow: 'var(--lg-pill-shadow)',
+              '&:hover': {
+                background: isAddedRecently
+                  ? '#059669 !important'
+                  : 'var(--lg-solid-bg)',
+                color: isAddedRecently ? '#ffffff !important' : 'var(--lg-solid-ink)',
+              },
+            }}
+          >
+            {isAddedRecently
+              ? isEn
+                ? 'Added to Cart'
+                : 'به سبد اضافه شد'
+              : isEn
+              ? 'Add to Cart'
+              : 'افزودن به سبد خرید'}
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
   return (
     <Box
       className="rv"
@@ -368,7 +780,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             component="img"
             className="card-img-primary"
             src={primaryImage}
-            alt={`${typeLabel || 'پوشاک'} ${brand} — ${firstColor?.name || ''}، روی مدل`}
+            alt={imgAlt}
             loading="lazy"
             decoding="async"
             sx={{
@@ -416,7 +828,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           {/* Heart toggle (only rendered if onToggleFavorite is passed) */}
           {Boolean(onToggleFavorite) ? (
             <IconButton
-              aria-label={isFavorite ? 'حذف از علاقه‌مندی‌ها' : 'افزودن به علاقه‌مندی‌ها'}
+              aria-label={favoriteAriaLabel}
               aria-pressed={isFavorite}
               onClick={(e) => {
                 e.stopPropagation();
@@ -446,7 +858,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             <div />
           )}
 
-          {/* Color swatch chip (first colour hexCode + Persian name) */}
+          {/* Color swatch chip (first colour hexCode + name) */}
           {firstColor && (
             <Box
               sx={{
@@ -481,7 +893,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   lineHeight: 1,
                 }}
               >
-                {firstColor.name || 'اورجینال'}
+                {cardColorName}
               </Typography>
             </Box>
           )}
@@ -548,7 +960,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               fontFamily: 'monospace',
             }}
           >
-            کد محصول <bdi dir="ltr">{product.sku}</bdi>
+            {productCodeLabel} <bdi dir="ltr">{product.sku}</bdi>
           </Typography>
         )}
 
@@ -580,7 +992,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           {/* Compact CTA button at end of price row */}
           {isCompact && (
             <IconButton
-              aria-label="افزودن به سبد"
+              aria-label={cartButtonAriaLabel}
               onClick={handleAddToCartClick}
               sx={{
                 width: 40,
@@ -619,7 +1031,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           >
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
               <Typography sx={{ fontSize: '12px', color: 'var(--ink-3)' }}>
-                سایز
+                {sizeLabel}
               </Typography>
               <Box sx={{ display: 'flex', gap: 0.5 }}>
                 {availableSizes.map((sz) => {
@@ -672,7 +1084,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                   }}
                 />
                 <Typography sx={{ fontSize: '11px', color: 'var(--stock)' }}>
-                  تنها ۱ عدد باقی مانده
+                  {singleStockLabel}
                 </Typography>
               </Box>
             )}
@@ -684,7 +1096,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           <Button
             className="btn-cta-bronze"
             onClick={handleAddToCartClick}
-            aria-label="افزودن به سبد"
+            aria-label={cartButtonAriaLabel}
             startIcon={
               isAddedRecently ? (
                 <CheckCircleOutline sx={{ fontSize: 18 }} />
@@ -709,7 +1121,13 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               },
             }}
           >
-            {isAddedRecently ? 'به سبد اضافه شد' : 'افزودن به سبد خرید'}
+            {isAddedRecently
+              ? isEn
+                ? 'Added to Cart'
+                : 'به سبد اضافه شد'
+              : isEn
+              ? 'Add to Cart'
+              : 'افزودن به سبد خرید'}
           </Button>
         )}
       </Box>
