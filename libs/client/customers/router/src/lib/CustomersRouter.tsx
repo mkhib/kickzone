@@ -17,11 +17,14 @@ import { CustomerPaymentCallback } from '@kickzone-workspace/customer-payment';
 import { LanguageComponents } from '@kickzone-workspace/language-components';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
+import { ScrollToTop } from './ScrollToTop';
 
 export function CustomersRouter() {
   return (
     <BrowserRouter>
+      <ScrollToTop />
       <Routes>
+
         <Route path={CUSTOMER_ROUTES.HOME} element={<CustomersHome />} />
         <Route
           path={CUSTOMER_ROUTES.PRODUCTS}

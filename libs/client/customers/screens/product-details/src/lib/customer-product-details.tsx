@@ -2238,7 +2238,6 @@ export function CustomerProductDetails() {
                       product={simProd}
                       onCardClick={() => {
                         navigate(getCustomerProductDetailsRoute(simProd.id));
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
                       }}
                       onAddToCart={(prod) => {
                         const firstInfo = prod.productInfos?.[0];
@@ -2272,7 +2271,6 @@ export function CustomerProductDetails() {
                           setSnackbarOpen(true);
                         } else {
                           navigate(getCustomerProductDetailsRoute(prod.id));
-                          window.scrollTo({ top: 0, behavior: 'smooth' });
                         }
                       }}
                     />
