@@ -84,13 +84,17 @@
 /* 2.2 Colours, dark */
 [data-theme=dark] .pdp-lg,
 .pdp-lg[data-mode=dark] {
-  --lg-canvas: #08090d;
+  --lg-canvas: #06070a;
   --lg-mesh:
-    radial-gradient(at 12% 10%, rgba(56, 32, 85, 0.65) 0px, transparent 55%),
-    radial-gradient(at 88% 12%, rgba(26, 48, 92, 0.65) 0px, transparent 60%),
-    radial-gradient(at 50% 45%, rgba(18, 22, 42, 0.70) 0px, transparent 65%),
-    radial-gradient(at 15% 78%, rgba(48, 24, 76, 0.55) 0px, transparent 60%),
-    radial-gradient(at 85% 85%, rgba(20, 42, 72, 0.55) 0px, transparent 58%);
+    /* Specular Warm Champagne Gold Shimmer (#d4af37 at subtle 6% opacity) */
+    radial-gradient(circle at 50% 12%, rgba(212, 175, 55, 0.06) 0%, transparent 45%),
+    /* Upper Left: Deep imperial amethyst & velvet violet (#15102a transitioning to #08090e) */
+    radial-gradient(at 10% 12%, #15102a 0%, #08090e 55%, transparent 75%),
+    /* Upper Right (Behind Product Info): Deep midnight cobalt & electric cyan undertones (#0e1a38 blending into #07080d) */
+    radial-gradient(at 88% 14%, #0e1a38 0%, rgba(2, 132, 199, 0.14) 30%, #07080d 60%, transparent 80%),
+    /* Lower Canvas (Behind Recommendations & Trust Cards): Deep royal indigo and twilight plum (#170d2b blending seamlessly into #06070a) */
+    radial-gradient(at 20% 80%, #170d2b 0%, #06070a 65%, transparent 85%),
+    radial-gradient(at 85% 85%, #0c1228 0%, #06070a 60%, transparent 80%);
   --lg-ink: #ffffff;
   --lg-ink-2: #e5e5e5;
   --lg-ink-3: #d4d4d4;
@@ -98,26 +102,26 @@
   --lg-ink-5: #9a9aa0;
   --lg-hair: rgba(255,255,255,.10);
 
-  --lg-card-bg: rgba(20,22,32,.65);
-  --lg-card-border: rgba(255,255,255,.12);
-  --lg-card-shadow: 0 18px 45px -10px rgba(0,0,0,.45), inset 0 1px 1.5px rgba(255,255,255,.25);
-  --lg-card-shadow-hover: 0 26px 58px -10px rgba(0,0,0,.65), inset 0 1.5px 2px rgba(255,255,255,.35);
+  --lg-card-bg: rgba(13,14,20,.72);
+  --lg-card-border: rgba(255,255,255,.10);
+  --lg-card-shadow: 0 18px 45px -10px rgba(0,0,0,.60), inset 0 1px 1.5px rgba(255,255,255,.20);
+  --lg-card-shadow-hover: 0 26px 58px -10px rgba(0,0,0,.80), inset 0 1.5px 2px rgba(255,255,255,.30);
 
-  --lg-pill-bg: rgba(255,255,255,.08);
-  --lg-pill-border: rgba(255,255,255,.16);
-  --lg-pill-shadow: 0 4px 16px -2px rgba(0,0,0,.30), inset 0 1px 1px rgba(255,255,255,.20);
+  --lg-pill-bg: rgba(255,255,255,.07);
+  --lg-pill-border: rgba(255,255,255,.14);
+  --lg-pill-shadow: 0 4px 16px -2px rgba(0,0,0,.40), inset 0 1px 1px rgba(255,255,255,.18);
 
   /* icon buttons on photo: smoked glass with white glyph */
-  --lg-icon-bg: rgba(16,16,20,.62);
-  --lg-icon-border: rgba(255,255,255,.22);
-  --lg-icon-shadow: 0 4px 14px -1px rgba(0,0,0,.35), inset 0 1px 1px rgba(255,255,255,.25);
+  --lg-icon-bg: rgba(12,12,16,.70);
+  --lg-icon-border: rgba(255,255,255,.20);
+  --lg-icon-shadow: 0 4px 14px -1px rgba(0,0,0,.45), inset 0 1px 1px rgba(255,255,255,.22);
   --lg-icon-ink: #fff;
   --lg-icon-ink-hover: #fff;
 
   --lg-solid-bg: #ffffff;
   --lg-solid-bg-hover: #f5f5f5;
   --lg-solid-ink: #0a0a0c;
-  --lg-photo-well: #171717;
+  --lg-photo-well: #111114;
 
   --lg-stock-bg: rgba(69,26,3,.40);
   --lg-stock-border: rgba(245,158,11,.30);
@@ -134,9 +138,9 @@
   --lg-acc-border: rgba(255,255,255,.10);
   --lg-acc-bg-hover: rgba(255,255,255,.06);
 
-  --lg-chip-bg: rgba(18,18,22,.72);
+  --lg-chip-bg: rgba(14,14,18,.80);
   --lg-chip-ink: #f5f5f7;
-  --lg-chip-border: rgba(255,255,255,.18);
+  --lg-chip-border: rgba(255,255,255,.16);
   --lg-chip-dot-ring: rgba(255,255,255,.55);
 
   --lg-footer-bg: #000000;
@@ -144,26 +148,61 @@
   --lg-footer-divider: #1a1a1e;
 
   --lg-ring: #ffffff;
-  --lg-ring-offset: #08090d;
+  --lg-ring-offset: #06070a;
 }
 
 /* ==========================================================================
    Full Site Canvas Background & Section Architecture (No Outer Wrapper Card)
    ========================================================================== */
 
-/* The whole background color of the site changes to super dark gradient color
-   with super luxury dark purple and super luxury dark blue */
+/* Multi-Point Midnight Mesh Gradient on Deep Cosmic Obsidian Canvas */
 body.pdp-screen-active,
 [data-theme="dark"] body.pdp-screen-active,
 body.pdp-screen-active[data-theme="dark"] {
   background:
-    radial-gradient(at 12% 10%, rgba(56, 32, 85, 0.65) 0px, transparent 55%),
-    radial-gradient(at 88% 12%, rgba(26, 48, 92, 0.65) 0px, transparent 60%),
-    radial-gradient(at 50% 45%, rgba(18, 22, 42, 0.70) 0px, transparent 65%),
-    radial-gradient(at 15% 78%, rgba(48, 24, 76, 0.55) 0px, transparent 60%),
-    radial-gradient(at 85% 85%, rgba(20, 42, 72, 0.55) 0px, transparent 58%),
-    #08090d !important;
+    /* Specular Warm Champagne Gold Shimmer (#d4af37 at subtle 6% opacity) */
+    radial-gradient(circle at 50% 12%, rgba(212, 175, 55, 0.06) 0%, transparent 45%),
+    /* Upper Left: Deep imperial amethyst & velvet violet (#15102a transitioning to #08090e) */
+    radial-gradient(at 10% 12%, #15102a 0%, #08090e 55%, transparent 75%),
+    /* Upper Right (Behind Product Info): Deep midnight cobalt & electric cyan undertones (#0e1a38 blending into #07080d) */
+    radial-gradient(at 88% 14%, #0e1a38 0%, rgba(2, 132, 199, 0.14) 30%, #07080d 60%, transparent 80%),
+    /* Lower Canvas (Behind Recommendations & Trust Cards): Deep royal indigo and twilight plum (#170d2b blending seamlessly into #06070a) */
+    radial-gradient(at 20% 80%, #170d2b 0%, #06070a 65%, transparent 85%),
+    radial-gradient(at 85% 85%, #0c1228 0%, #06070a 60%, transparent 80%),
+    #06070a !important;
   background-attachment: fixed !important;
+}
+
+/* Atmospheric Fluid Neon Glow Orbs */
+.lg-ambient-aura-container {
+  will-change: transform;
+}
+
+.lg-ambient-orb {
+  pointer-events: none;
+  transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .lg-orb-violet {
+    animation: lg-pulse-violet 14s ease-in-out infinite alternate;
+  }
+  .lg-orb-cyan {
+    animation: lg-pulse-cyan 16s ease-in-out infinite alternate;
+  }
+}
+
+@keyframes lg-pulse-violet {
+  0% { transform: scale(1) translate3d(0, 0, 0); }
+  50% { transform: scale(1.08) translate3d(15px, -10px, 0); }
+  100% { transform: scale(0.96) translate3d(-10px, 12px, 0); }
+}
+
+@keyframes lg-pulse-cyan {
+  0% { transform: scale(1) translate3d(0, 0, 0); }
+  50% { transform: scale(1.06) translate3d(-15px, 12px, 0); }
+  100% { transform: scale(0.95) translate3d(12px, -8px, 0); }
 }
 
 [data-theme="light"] body.pdp-screen-active {

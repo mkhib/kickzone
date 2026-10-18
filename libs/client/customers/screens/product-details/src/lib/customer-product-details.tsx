@@ -908,8 +908,89 @@ export function CustomerProductDetails() {
           pt: { xs: '54px', sm: '60px', md: '64px' },
           pb: { xs: 'calc(96px + env(safe-area-inset-bottom))', md: 8 },
           textAlign: isRTL ? 'right' : 'left',
+          position: 'relative',
         }}
       >
+        {/* Atmospheric Fluid Neon Glow Orbs (Fixed High-Blur Ambient Aura Pools) */}
+        <Box
+          aria-hidden="true"
+          className="lg-ambient-aura-container"
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            pointerEvents: 'none',
+            overflow: 'hidden',
+            zIndex: 0,
+          }}
+        >
+          {/* Electric Royal Violet / Nebula Purple (#4c1d95 / #3b0764) highlighting gallery card */}
+          <Box
+            className="lg-ambient-orb lg-orb-violet"
+            sx={{
+              position: 'absolute',
+              top: { xs: '60px', md: '100px' },
+              left: isRTL ? { xs: 'auto', md: '50%' } : { xs: '-10%', md: '2%' },
+              right: isRTL ? { xs: '-10%', md: '2%' } : { xs: 'auto', md: '50%' },
+              width: { xs: 320, md: 540 },
+              height: { xs: 320, md: 540 },
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #4c1d95 0%, #3b0764 55%, transparent 75%)',
+              opacity: isDark ? 0.38 : 0.20,
+              filter: 'blur(120px)',
+            }}
+          />
+
+          {/* Deep Ocean Sapphire & Horizon Cyan (#1d4ed8 / #0284c7) behind purchase controls */}
+          <Box
+            className="lg-ambient-orb lg-orb-cyan"
+            sx={{
+              position: 'absolute',
+              top: { xs: '240px', md: '120px' },
+              right: isRTL ? { xs: 'auto', md: '50%' } : { xs: '-10%', md: '2%' },
+              left: isRTL ? { xs: '-10%', md: '2%' } : { xs: 'auto', md: '50%' },
+              width: { xs: 300, md: 500 },
+              height: { xs: 300, md: 500 },
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #1d4ed8 0%, #0284c7 48%, transparent 75%)',
+              opacity: isDark ? 0.32 : 0.16,
+              filter: 'blur(130px)',
+            }}
+          />
+
+          {/* Specular Warm Champagne Gold Shimmer (#d4af37 at subtle 6% opacity) */}
+          <Box
+            className="lg-ambient-orb lg-orb-gold"
+            sx={{
+              position: 'absolute',
+              top: '50px',
+              left: '50%',
+              marginLeft: { xs: '-130px', md: '-210px' },
+              width: { xs: 260, md: 420 },
+              height: { xs: 260, md: 420 },
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #d4af37 0%, transparent 68%)',
+              opacity: isDark ? 0.06 : 0.035,
+              filter: 'blur(100px)',
+            }}
+          />
+
+          {/* Deep Royal Indigo and Twilight Plum (#170d2b) behind recommendations & trust cards */}
+          <Box
+            className="lg-ambient-orb lg-orb-plum"
+            sx={{
+              position: 'absolute',
+              bottom: '10%',
+              left: { xs: '5%', md: '18%' },
+              width: { xs: 360, md: 600 },
+              height: { xs: 360, md: 600 },
+              borderRadius: '50%',
+              background: 'radial-gradient(circle, #170d2b 0%, #2e1065 52%, transparent 75%)',
+              opacity: isDark ? 0.42 : 0.16,
+              filter: 'blur(140px)',
+            }}
+          />
+        </Box>
+
         <Box
           component="main"
           id="main"
@@ -918,6 +999,8 @@ export function CustomerProductDetails() {
             mx: 'auto',
             px: { xs: 2, sm: 3, md: 4 },
             pt: { xs: 1.5, md: 2.5 },
+            position: 'relative',
+            zIndex: 1,
           }}
         >
           {/* Breadcrumb Navigation */}
