@@ -6,7 +6,9 @@ import { MemoryRouter } from 'react-router-dom';
 import { CustomersHome } from './CustomersHomeScreen';
 import { CustomersShopScreen } from './CustomersShopScreen';
 import { HomePageData, selectHomePageData } from './home-selectors';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { NewArrivalsSection } from './components/NewArrivalsSection';
+import { PicksRailSection } from './components/PicksRailSection';
 
 const mockAddItem = vi.fn();
 const mockUseProductsQuery = vi.fn();
@@ -200,42 +202,44 @@ const createMockProduct = (
   sku: string,
   name: string,
   category: 'women' | 'men' | 'hoodies' | 'pants' = 'men'
-) => ({
-  id,
-  sku,
-  name,
-  categories: [
-    {
-      id: category === 'women' ? 1 : category === 'men' ? 2 : 3,
-      slug: category,
-      name:
-        category === 'women'
-          ? 'زنانه'
-          : category === 'men'
-          ? 'مردانه'
-          : category,
-    },
-  ],
-  productInfos: [
-    {
-      id: id * 10,
-      size: 'L',
-      sizeKind: 'ALPHA',
-      images: ['/images/sample.jpg'],
-      colors: [{ id: 1, name: 'مشکی', hexCode: '#000000' }],
-    },
-  ],
-  sellerProducts: [
-    {
-      id: id * 100,
-      productInfoId: id * 10,
-      price: 100,
-      discount: 0,
-      stockQuantity: 5,
-      seller: { id: 1, shippingFee: 0 },
-    },
-  ],
-});
+): KickzoneGraphqlTypes.Product =>
+  ({
+    id,
+    sku,
+    name,
+    archived: false,
+    categories: [
+      {
+        id: category === 'women' ? 1 : category === 'men' ? 2 : 3,
+        slug: category,
+        name:
+          category === 'women'
+            ? 'زنانه'
+            : category === 'men'
+            ? 'مردانه'
+            : category,
+      },
+    ],
+    productInfos: [
+      {
+        id: id * 10,
+        size: 'L',
+        sizeKind: 'ALPHA',
+        images: ['/images/sample.jpg'],
+        colors: [{ id: 1, name: 'مشکی', hexCode: '#000000' }],
+      },
+    ],
+    sellerProducts: [
+      {
+        id: id * 100,
+        productInfoId: id * 10,
+        price: 100,
+        discount: 0,
+        stockQuantity: 5,
+        seller: { id: 1, shippingFee: 0 },
+      },
+    ],
+  } as unknown as KickzoneGraphqlTypes.Product);
 
 const mockHomePageData: HomePageData = {
   rate: { rate: 270000 },
@@ -495,5 +499,53 @@ describe('CustomersHomeScreen - Campaign v4', () => {
     );
     expect(screen.getByRole('heading', { name: /محصولات زنانه/ })).toBeInTheDocument();
     expect(screen.queryByText('فروشگاه SAINTBALA')).not.toBeInTheDocument();
+  });
+
+  it('renders PicksRailSection with shared glass cards and verifies RTL scroll behavior', () => {
+    const pageData = selectHomePageData(mockHomePageData);
+    const mockOnAddItem = vi.fn();
+
+    const { container } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <PicksRailSection
+          products={pageData.picks}
+          exchangeRate={pageData.exchangeRate}
+          onAddItem={mockOnAddItem}
+        />
+      </MemoryRouter>
+    );
+
+    // Verify shared glass cards are used
+    const glassCards = container.querySelectorAll('.lg-card');
+    expect(glassCards.length).toBeGreaterThan(0);
+
+    // Verify scroll buttons
+    const prevBtn = screen.getByRole('button', { name: 'قبلی' });
+    const nextBtn = screen.getByRole('button', { name: 'بعدی' });
+    expect(prevBtn).toBeInTheDocument();
+    expect(nextBtn).toBeInTheDocument();
+
+    // Mock scrollBy on the rail container
+    const railRegion = screen.getByTestId('picks-rail');
+    const scrollBySpy = vi.fn();
+    railRegion.scrollBy = scrollBySpy;
+    Object.defineProperty(railRegion, 'clientWidth', { value: 1000, configurable: true });
+
+    // In RTL: prev should scroll positive (towards start/right), next should scroll negative (towards subsequent/left)
+    fireEvent.click(prevBtn);
+    expect(scrollBySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        left: 750,
+        behavior: 'smooth',
+      })
+    );
+
+    fireEvent.click(nextBtn);
+    expect(scrollBySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        left: -750,
+        behavior: 'smooth',
+      })
+    );
   });
 });

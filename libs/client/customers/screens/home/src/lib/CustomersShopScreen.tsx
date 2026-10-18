@@ -118,9 +118,9 @@ function toProductsSort(selectedSort: string): {
 
 export function CustomersShopScreen() {
   const { LL } = useI18nContext();
-  const { currentLocale, isRTL } = useLanguageContext();
+  const { isRTL } = useLanguageContext();
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams] = useSearchParams();
   const { brandSlug: brandSlugParam } = useParams<{ brandSlug?: string }>();
 
   const categoryParam = searchParams.get('category') || '';
@@ -290,7 +290,7 @@ export function CustomersShopScreen() {
       categories,
       fallbackMap[categoryParam.toLowerCase()] || categoryParam
     );
-  }, [categoryParam, categories, LL, currentLocale]);
+  }, [categoryParam, categories, LL]);
 
   const brandLabel = useMemo(() => {
     if (!brandParam) return '';

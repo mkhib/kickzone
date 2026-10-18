@@ -23,6 +23,48 @@
   --focus: #0066d6;
   --card-glass-bg: var(--paper);
   --card-glass-border: var(--hair);
+
+  /* Liquid Glass tokens (Light) */
+  --lg-ink: #171717;
+  --lg-ink-2: #262626;
+  --lg-ink-3: #525252;
+  --lg-ink-4: #5c5c61;
+  --lg-ink-5: #6e6e73;
+  --lg-hair: rgba(0, 0, 0, 0.08);
+
+  --lg-card-bg: rgba(255, 255, 255, 0.68);
+  --lg-card-border: rgba(255, 255, 255, 0.75);
+  --lg-card-shadow: 0 18px 45px -10px rgba(0, 0, 0, 0.035), inset 0 1.5px 1.5px rgba(255, 255, 255, 0.90);
+  --lg-card-shadow-hover: 0 26px 58px -10px rgba(0, 0, 0, 0.07), 0 2px 4px rgba(0, 0, 0, 0.03), inset 0 2px 2px #fff;
+  --lg-card-blur: blur(36px) saturate(190%);
+
+  --lg-pill-bg: rgba(255, 255, 255, 0.55);
+  --lg-pill-border: rgba(255, 255, 255, 0.80);
+  --lg-pill-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(255, 255, 255, 0.95);
+  --lg-pill-blur: blur(20px) saturate(180%);
+
+  --lg-icon-bg: rgba(255, 255, 255, 0.75);
+  --lg-icon-border: rgba(255, 255, 255, 0.90);
+  --lg-icon-shadow: 0 4px 14px -1px rgba(0, 0, 0, 0.06), inset 0 1px 1px #fff;
+  --lg-icon-ink: #404040;
+  --lg-icon-ink-hover: #000;
+  --lg-icon-blur: blur(16px);
+
+  --lg-solid-bg: #171717;
+  --lg-solid-bg-hover: #000;
+  --lg-solid-ink: #fff;
+  --lg-photo-well: #f5f5f5;
+
+  --lg-stock-bg: rgba(255, 251, 235, 0.80);
+  --lg-stock-border: rgba(253, 230, 138, 0.60);
+  --lg-stock-dot: #f59e0b;
+  --lg-stock-ink: #78350f;
+  --lg-stock-ink-card: #92400e;
+
+  --lg-chip-bg: rgba(255, 255, 255, 0.88);
+  --lg-chip-ink: #1d1d1f;
+  --lg-chip-border: rgba(0, 0, 0, 0.08);
+  --lg-chip-dot-ring: rgba(0, 0, 0, 0.15);
 }
 
 [data-theme="dark"] {
@@ -45,6 +87,77 @@
   --focus: #4da3ff;
   --card-glass-bg: var(--paper);
   --card-glass-border: var(--hair);
+
+  /* Liquid Glass tokens (Dark) */
+  --lg-ink: #ffffff;
+  --lg-ink-2: #e5e5e5;
+  --lg-ink-3: #d4d4d4;
+  --lg-ink-4: #a8a8ae;
+  --lg-ink-5: #9a9aa0;
+  --lg-hair: rgba(255, 255, 255, 0.10);
+
+  --lg-card-bg: rgba(13, 14, 20, 0.72);
+  --lg-card-border: rgba(255, 255, 255, 0.10);
+  --lg-card-shadow: 0 18px 45px -10px rgba(0, 0, 0, 0.60), inset 0 1px 1.5px rgba(255, 255, 255, 0.20);
+  --lg-card-shadow-hover: 0 26px 58px -10px rgba(0, 0, 0, 0.80), inset 0 1.5px 2px rgba(255, 255, 255, 0.30);
+  --lg-card-blur: blur(36px) saturate(190%);
+
+  --lg-pill-bg: rgba(255, 255, 255, 0.07);
+  --lg-pill-border: rgba(255, 255, 255, 0.14);
+  --lg-pill-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.40), inset 0 1px 1px rgba(255, 255, 255, 0.18);
+  --lg-pill-blur: blur(20px) saturate(180%);
+
+  --lg-icon-bg: rgba(12, 12, 16, 0.70);
+  --lg-icon-border: rgba(255, 255, 255, 0.20);
+  --lg-icon-shadow: 0 4px 14px -1px rgba(0, 0, 0, 0.45), inset 0 1px 1px rgba(255, 255, 255, 0.22);
+  --lg-icon-ink: #fff;
+  --lg-icon-ink-hover: #fff;
+  --lg-icon-blur: blur(16px);
+
+  --lg-solid-bg: #ffffff;
+  --lg-solid-bg-hover: #f5f5f5;
+  --lg-solid-ink: #0a0a0c;
+  --lg-photo-well: #111114;
+
+  --lg-stock-bg: rgba(69, 26, 3, 0.40);
+  --lg-stock-border: rgba(245, 158, 11, 0.30);
+  --lg-stock-dot: #fbbf24;
+  --lg-stock-ink: #fde68a;
+  --lg-stock-ink-card: #fcd34d;
+
+  --lg-chip-bg: rgba(14, 14, 18, 0.80);
+  --lg-chip-ink: #f5f5f7;
+  --lg-chip-border: rgba(255, 255, 255, 0.16);
+  --lg-chip-dot-ring: rgba(255, 255, 255, 0.55);
+}
+
+/* Liquid Glass Utility Classes */
+.lg-card {
+  background: var(--lg-card-bg);
+  -webkit-backdrop-filter: var(--lg-card-blur);
+  backdrop-filter: var(--lg-card-blur);
+  border: 1px solid var(--lg-card-border);
+  box-shadow: var(--lg-card-shadow);
+  transition: box-shadow 0.25s cubic-bezier(.2, .7, .1, 1), border-color 0.25s cubic-bezier(.2, .7, .1, 1);
+}
+
+.lg-pill {
+  background: var(--lg-pill-bg);
+  -webkit-backdrop-filter: var(--lg-pill-blur);
+  backdrop-filter: var(--lg-pill-blur);
+  border: 1px solid var(--lg-pill-border);
+  box-shadow: var(--lg-pill-shadow);
+  transition: all 0.2s cubic-bezier(.2, .7, .1, 1);
+}
+
+.lg-icon {
+  background: var(--lg-icon-bg);
+  -webkit-backdrop-filter: var(--lg-icon-blur);
+  backdrop-filter: var(--lg-icon-blur);
+  border: 1px solid var(--lg-icon-border);
+  box-shadow: var(--lg-icon-shadow);
+  color: var(--lg-icon-ink);
+  transition: all 0.2s cubic-bezier(.2, .7, .1, 1);
 }
 
 :root {
