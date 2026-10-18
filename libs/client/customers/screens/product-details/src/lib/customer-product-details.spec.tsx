@@ -67,6 +67,7 @@ vi.mock('@kickzone-workspace/client-shared-graphql', () => ({
 vi.mock('@kickzone-workspace/product-sizes', () => ({
   sortSizeCodes: (_kind: string, sizes: string[]) => sizes,
   isFootwearSizeKind: () => false,
+  isApparelSizeKind: () => false,
   SizeKind: { Apparel: 'apparel', Footwear: 'footwear' },
 }));
 

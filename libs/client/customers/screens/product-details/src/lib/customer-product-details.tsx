@@ -70,6 +70,7 @@ import {
 import {
   sortSizeCodes,
   isFootwearSizeKind,
+  isApparelSizeKind,
   SizeKind,
 } from '@kickzone-workspace/product-sizes';
 import {
@@ -430,7 +431,7 @@ export function CustomerProductDetails() {
   const isFootwear = useMemo(() => {
     const firstKind = activeColorwayVariants[0]?.productInfo.sizeKind;
     if (isFootwearSizeKind(firstKind)) return true;
-    if (firstKind === SizeKind.Apparel || firstKind === 'apparel') return false;
+    if (isApparelSizeKind(firstKind)) return false;
 
     const catName = (product?.categories?.[0]?.name || '').toLowerCase();
     if (
@@ -582,11 +583,15 @@ export function CustomerProductDetails() {
 
   // Add to cart handler
   const handleAddToCart = useCallback(() => {
-    if (!product || !activeVariant || !activeVariant.sellerProduct.seller) {
+    if (!product || !activeVariant) {
       return;
     }
 
     const { productInfo, sellerProduct, finalPrice } = activeVariant;
+    const seller = sellerProduct.seller;
+    if (!seller) {
+      return;
+    }
 
     addItem({
       productId: product.id.toString(),
@@ -596,9 +601,9 @@ export function CustomerProductDetails() {
       unitPrice: finalPrice,
       color: serializeVariantColorHexes(productInfo.colors),
       size: productInfo.size || null,
-      sellerId: sellerProduct.seller.id.toString(),
-      sellerName: sellerProduct.seller.storeName || '',
-      sellerShippingFee: sellerProduct.seller.shippingFee || 0,
+      sellerId: seller.id.toString(),
+      sellerName: seller.storeName || '',
+      sellerShippingFee: seller.shippingFee || 0,
       productInfoId: productInfo.id.toString(),
       sellerProductId: sellerProduct.id.toString(),
       availableStock: sellerProduct.stockQuantity,
