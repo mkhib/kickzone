@@ -94,7 +94,6 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
     isRTL: true,
   }),
   usePageTitle: vi.fn(),
-  farsiDisplayStack: 'Vazirmatn, sans-serif',
   saintbalaBrand: {
     dark: { background: '#0f0f0e' },
     light: { background: '#f2f1ef' },
@@ -245,17 +244,17 @@ describe('CustomerProductDetails Screen', () => {
 
     // Action buttons
     expect(screen.getByText('افزودن به سبد خرید')).toBeInTheDocument();
-    expect(screen.getByText('خرید فوری')).toBeInTheDocument();
+    expect(screen.queryByText('خرید فوری')).not.toBeInTheDocument();
 
     // Value propositions (Fast delivery removed, Authenticity and Exchange remain)
     expect(screen.getByText('اصالت کالا')).toBeInTheDocument();
     expect(screen.queryByText('ارسال سریع')).not.toBeInTheDocument();
     expect(screen.getByText('ضمانت تعویض ۷ روزه')).toBeInTheDocument();
 
-    // Accordions (Shipping & exchange removed per requirements)
+    // Accordions (Shipping, exchange, and size guide removed)
     expect(screen.getByText('توضیحات')).toBeInTheDocument();
     expect(screen.getByText('جزئیات و جنس')).toBeInTheDocument();
-    expect(screen.getAllByText('راهنمای سایز').length).toBeGreaterThan(0);
+    expect(screen.queryByText('راهنمای سایز')).not.toBeInTheDocument();
     expect(screen.queryByText('ارسال و شرایط تعویض')).not.toBeInTheDocument();
   });
 
@@ -281,36 +280,6 @@ describe('CustomerProductDetails Screen', () => {
     // Temporary success text
     await waitFor(() => {
       expect(screen.getByText('به سبد خرید افزوده شد')).toBeInTheDocument();
-    });
-  });
-
-  it('handles Buy Now by adding item and navigating to cart', () => {
-    render(<CustomerProductDetails />);
-
-    const buyNowButton = screen.getByText('خرید فوری');
-    fireEvent.click(buyNowButton);
-
-    expect(mockAddItem).toHaveBeenCalled();
-    expect(mockNavigate).toHaveBeenCalledWith('/cart');
-  });
-
-  it('opens and closes the size guide modal', async () => {
-    render(<CustomerProductDetails />);
-
-    // Find the Size Guide button next to size header
-    const sizeGuideButtons = screen.getAllByText('راهنمای سایز');
-    fireEvent.click(sizeGuideButtons[0]);
-
-    // Modal should now be open
-    expect(screen.getByText('راهنمای جامع سایز')).toBeInTheDocument();
-    expect(screen.getByText('دور کمر (cm)')).toBeInTheDocument();
-
-    // Close modal
-    const closeButton = screen.getByText('متوجه شدم');
-    fireEvent.click(closeButton);
-
-    await waitFor(() => {
-      expect(screen.queryByText('دور کمر (cm)')).not.toBeInTheDocument();
     });
   });
 

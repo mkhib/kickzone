@@ -2,7 +2,6 @@ import React from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
-import { useTheme } from '@mui/material/styles';
 import {
   useI18nContext,
   useLanguageContext,
@@ -15,10 +14,11 @@ import {
 } from '@kickzone-workspace/customers-routes';
 
 const linkStyle: React.CSSProperties = {
-  color: 'var(--ink-2)',
+  color: '#ffffff',
   textDecoration: 'none',
   fontSize: '14px',
   fontFamily: 'var(--font-sans)',
+  transition: 'color 0.2s ease',
 };
 
 export interface CustomersFooterProps {
@@ -28,8 +28,6 @@ export interface CustomersFooterProps {
 export function CustomersFooter({
   variant = 'default',
 }: CustomersFooterProps = {}) {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
   const isEn = currentLocale === 'en';
@@ -42,9 +40,10 @@ export function CustomersFooter({
 
   if (variant === 'glass') {
     const glassLinkStyle: React.CSSProperties = {
-      color: 'var(--lg-ink-3)',
+      color: '#ffffff',
       textDecoration: 'none',
       fontSize: '14px',
+      fontFamily: 'var(--font-sans)',
       transition: 'color 0.2s ease',
     };
 
@@ -53,15 +52,15 @@ export function CustomersFooter({
         component="footer"
         sx={{
           width: '100%',
-          bgcolor: isDark ? '#000000' : 'var(--lg-footer-bg, rgba(255,255,255,.45))',
-          backdropFilter: isDark ? 'none' : 'blur(40px)',
-          WebkitBackdropFilter: isDark ? 'none' : 'blur(40px)',
-          borderTop: isDark ? '1px solid #1a1a1e' : '1px solid var(--lg-footer-border, rgba(255,255,255,.60))',
+          bgcolor: '#000000',
+          background: '#000000',
+          borderTop: '1px solid #1a1a1e',
           pt: { xs: 4, sm: 6, md: 8 },
           pb: { xs: 3, sm: 4.5, md: 6 },
           px: { xs: 2, sm: 3, md: 4 },
-          color: isDark ? '#ffffff' : 'var(--lg-ink)',
+          color: '#ffffff',
           position: 'relative',
+          fontFamily: 'var(--font-sans)',
         }}
       >
         <Box
@@ -80,7 +79,7 @@ export function CustomersFooter({
               },
               gap: { xs: '24px 20px', md: '40px' },
               pb: { xs: 3, md: 7 },
-              borderBottom: isDark ? '1px solid #1a1a1e' : '1px solid var(--lg-footer-divider, rgba(229,229,229,.50))',
+              borderBottom: '1px solid #1a1a1e',
             }}
           >
             {/* Brand Block */}
@@ -103,7 +102,7 @@ export function CustomersFooter({
                   fontWeight: 700,
                   fontSize: '28px',
                   letterSpacing: '0.34em',
-                  color: 'var(--lg-ink)',
+                  color: '#ffffff',
                   textDecoration: 'none',
                   mb: 1.5,
                   lineHeight: 1,
@@ -115,10 +114,11 @@ export function CustomersFooter({
               <Typography
                 sx={{
                   fontSize: '14px',
-                  color: 'var(--lg-ink-4)',
+                  color: '#ffffff',
                   lineHeight: 1.7,
                   maxWidth: 320,
                   mt: 1.5,
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 {LL.home.footer.tagline()}
@@ -132,10 +132,11 @@ export function CustomersFooter({
                 sx={{
                   fontSize: '13px',
                   fontWeight: 700,
-                  color: 'var(--lg-ink)',
+                  color: '#ffffff',
                   mb: 2,
                   textTransform: isEn ? 'uppercase' : 'none',
                   letterSpacing: isEn ? '0.05em' : 'normal',
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 {LL.home.footer.store()}
@@ -198,10 +199,11 @@ export function CustomersFooter({
                 sx={{
                   fontSize: '13px',
                   fontWeight: 700,
-                  color: 'var(--lg-ink)',
+                  color: '#ffffff',
                   mb: 2,
                   textTransform: isEn ? 'uppercase' : 'none',
                   letterSpacing: isEn ? '0.05em' : 'normal',
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 {LL.home.footer.brands()}
@@ -242,10 +244,11 @@ export function CustomersFooter({
                 sx={{
                   fontSize: '13px',
                   fontWeight: 700,
-                  color: 'var(--lg-ink)',
+                  color: '#ffffff',
                   mb: 2,
                   textTransform: isEn ? 'uppercase' : 'none',
                   letterSpacing: isEn ? '0.05em' : 'normal',
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 {LL.home.footer.guide()}
@@ -286,10 +289,11 @@ export function CustomersFooter({
                 sx={{
                   fontSize: '13px',
                   fontWeight: 700,
-                  color: 'var(--lg-ink)',
+                  color: '#ffffff',
                   mb: 2,
                   textTransform: isEn ? 'uppercase' : 'none',
                   letterSpacing: isEn ? '0.05em' : 'normal',
+                  fontFamily: 'var(--font-sans)',
                 }}
               >
                 {LL.home.footer.account()}
@@ -339,7 +343,8 @@ export function CustomersFooter({
             <Typography
               sx={{
                 fontSize: { xs: '11px', md: '13px' },
-                color: 'var(--lg-ink-4)',
+                color: '#ffffff',
+                fontFamily: 'var(--font-sans)',
               }}
             >
               {LL.home.footer.copyright({ year })}
@@ -347,7 +352,8 @@ export function CustomersFooter({
             <Typography
               sx={{
                 fontSize: { xs: '11px', md: '13px' },
-                color: 'var(--lg-ink-4)',
+                color: '#ffffff',
+                fontFamily: 'var(--font-sans)',
               }}
             >
               {LL.home.footer.paymentOnline()}
@@ -362,10 +368,11 @@ export function CustomersFooter({
     <Box
       component="footer"
       sx={{
-        bgcolor: isDark ? '#000000' : 'var(--paper)',
-        borderTop: isDark ? '1px solid #1a1a1e' : '1px solid var(--hair)',
+        bgcolor: '#000000',
+        background: '#000000',
+        borderTop: '1px solid #1a1a1e',
         pt: { xs: 6, md: 8 },
-        color: 'var(--ink)',
+        color: '#ffffff',
         overflow: 'hidden',
         position: 'relative',
         fontFamily: 'var(--font-sans)',
@@ -410,7 +417,7 @@ export function CustomersFooter({
                 fontWeight: 700,
                 fontSize: '28px',
                 letterSpacing: '0.34em',
-                color: 'var(--ink)',
+                color: '#ffffff',
                 textDecoration: 'none',
                 mb: 1.5,
                 lineHeight: 1,
@@ -422,7 +429,7 @@ export function CustomersFooter({
             <Typography
               sx={{
                 fontSize: '14.5px',
-                color: 'var(--ink-2)',
+                color: '#ffffff',
                 lineHeight: 1.8,
                 maxWidth: 340,
                 fontFamily: 'var(--font-sans)',
@@ -438,9 +445,9 @@ export function CustomersFooter({
               sx={{
                 fontSize: '15px',
                 fontWeight: 700,
-                color: 'var(--ink)',
-                mb: 2,
+                color: '#ffffff',
                 fontFamily: 'var(--font-sans)',
+                mb: 2,
               }}
             >
               {LL.home.footer.store()}
@@ -502,7 +509,7 @@ export function CustomersFooter({
               sx={{
                 fontSize: '15px',
                 fontWeight: 700,
-                color: 'var(--ink)',
+                color: '#ffffff',
                 mb: 2,
                 fontFamily: 'var(--font-sans)',
               }}
@@ -550,7 +557,7 @@ export function CustomersFooter({
               sx={{
                 fontSize: '15px',
                 fontWeight: 700,
-                color: 'var(--ink)',
+                color: '#ffffff',
                 mb: 2,
                 fontFamily: 'var(--font-sans)',
               }}
@@ -592,7 +599,7 @@ export function CustomersFooter({
               sx={{
                 fontSize: '15px',
                 fontWeight: 700,
-                color: 'var(--ink)',
+                color: '#ffffff',
                 mb: 2,
                 fontFamily: 'var(--font-sans)',
               }}
@@ -631,7 +638,7 @@ export function CustomersFooter({
 
         <Box
           sx={{
-            borderTop: isDark ? '1px solid #1a1a1e' : '1px solid var(--hair)',
+            borderTop: '1px solid #1a1a1e',
             py: 3,
             display: 'flex',
             flexDirection: { xs: 'column', sm: 'row' },
@@ -643,7 +650,7 @@ export function CustomersFooter({
           <Typography
             sx={{
               fontSize: '13px',
-              color: 'var(--ink-3)',
+              color: '#ffffff',
               fontFamily: 'var(--font-sans)',
             }}
           >
@@ -652,7 +659,7 @@ export function CustomersFooter({
           <Typography
             sx={{
               fontSize: '13px',
-              color: 'var(--ink-3)',
+              color: '#ffffff',
               fontFamily: 'var(--font-sans)',
             }}
           >

@@ -11,16 +11,6 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Dialog from '@mui/material/Dialog';
-import DialogTitle from '@mui/material/DialogTitle';
-import DialogContent from '@mui/material/DialogContent';
-import DialogActions from '@mui/material/DialogActions';
-import Table from '@mui/material/Table';
-import TableBody from '@mui/material/TableBody';
-import TableCell from '@mui/material/TableCell';
-import TableContainer from '@mui/material/TableContainer';
-import TableHead from '@mui/material/TableHead';
-import TableRow from '@mui/material/TableRow';
-import Paper from '@mui/material/Paper';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -36,7 +26,6 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import Check from '@mui/icons-material/Check';
 import GppGoodOutlined from '@mui/icons-material/GppGoodOutlined';
 import PublishedWithChangesOutlined from '@mui/icons-material/PublishedWithChangesOutlined';
-import StraightenOutlined from '@mui/icons-material/StraightenOutlined';
 import ArrowForward from '@mui/icons-material/ArrowForward';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import ZoomIn from '@mui/icons-material/ZoomIn';
@@ -70,14 +59,12 @@ import {
 import {
   sortSizeCodes,
   isFootwearSizeKind,
-  isApparelSizeKind,
   SizeKind,
 } from '@kickzone-workspace/product-sizes';
 import {
   useI18nContext,
   useLanguageContext,
   usePageTitle,
-  farsiDisplayStack,
 } from '@kickzone-workspace/shared-i18n';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
 import '../styles/pdp-glass.css';
@@ -221,8 +208,6 @@ export function CustomerProductDetails() {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isFavorite, setIsFavorite] = useState(false);
   const [isAddedRecently, setIsAddedRecently] = useState(false);
-  const [sizeGuideOpen, setSizeGuideOpen] = useState(false);
-  const [sizeGuideTab, setSizeGuideTab] = useState<'footwear' | 'apparel'>('footwear');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [expandedAccordion, setExpandedAccordion] = useState<string | false>(
     'description'
@@ -430,53 +415,6 @@ export function CustomerProductDetails() {
     return sortSizeCodes(kind, rawSizes);
   }, [activeColorwayVariants]);
 
-  // Determine if product is footwear or apparel
-  const isFootwear = useMemo(() => {
-    const firstKind = activeColorwayVariants[0]?.productInfo.sizeKind;
-    if (isFootwearSizeKind(firstKind)) return true;
-    if (isApparelSizeKind(firstKind)) return false;
-
-    const catName = (product?.categories?.[0]?.name || '').toLowerCase();
-    if (
-      catName.includes('شلوار') ||
-      catName.includes('pant') ||
-      catName.includes('لباس') ||
-      catName.includes('هودی') ||
-      catName.includes('hoodie') ||
-      catName.includes('تیشرت') ||
-      catName.includes('shirt') ||
-      catName.includes('apparel')
-    ) {
-      return false;
-    }
-
-    const prodName = (product?.name || '').toLowerCase();
-    if (
-      prodName.includes('pant') ||
-      prodName.includes('شلوار') ||
-      prodName.includes('hoodie') ||
-      prodName.includes('هودی') ||
-      prodName.includes('jacket') ||
-      prodName.includes('کاپشن')
-    ) {
-      return false;
-    }
-
-    return (
-      catName.includes('کفش') ||
-      catName.includes('کتونی') ||
-      catName.includes('shoe') ||
-      catName.includes('sneaker') ||
-      /jordan\s*\d|dunk|air\s*max|yeezy|blazer|pegasus|vomero|samba|gazelle/i.test(prodName)
-    );
-  }, [activeColorwayVariants, product]);
-
-  // Sync size guide default tab when dialog opens
-  useEffect(() => {
-    if (sizeGuideOpen) {
-      setSizeGuideTab(isFootwear ? 'footwear' : 'apparel');
-    }
-  }, [sizeGuideOpen, isFootwear]);
 
   // Default selected size
   useEffect(() => {
@@ -644,12 +582,6 @@ export function CustomerProductDetails() {
     }, 2400);
   }, [product, activeVariant, addItem]);
 
-  // Instant purchase / Buy now handler
-  const handleBuyNow = useCallback(() => {
-    handleAddToCart();
-    navigate(CUSTOMER_ROUTES.CART);
-  }, [handleAddToCart, navigate]);
-
   const handleResetLightbox = useCallback(() => {
     setLightboxZoom(1);
     setLightboxPan({ x: 0, y: 0 });
@@ -746,7 +678,7 @@ export function CustomerProductDetails() {
           dir={isRTL ? 'rtl' : 'ltr'}
           sx={{
             minHeight: '100vh',
-            fontFamily: isRTL ? farsiDisplayStack : 'var(--lg-font)',
+            fontFamily: isRTL ? 'var(--font-sans)' : 'var(--lg-font)',
             pt: { xs: '54px', sm: '60px', md: '64px' },
           }}
         >
@@ -820,7 +752,7 @@ export function CustomerProductDetails() {
           dir={isRTL ? 'rtl' : 'ltr'}
           sx={{
             minHeight: '100vh',
-            fontFamily: isRTL ? farsiDisplayStack : 'var(--lg-font)',
+            fontFamily: isRTL ? 'var(--font-sans)' : 'var(--lg-font)',
             pt: { xs: '54px', sm: '60px', md: '64px' },
           }}
         >
@@ -904,7 +836,7 @@ export function CustomerProductDetails() {
         dir={isRTL ? 'rtl' : 'ltr'}
         sx={{
           minHeight: '100vh',
-          fontFamily: isRTL ? farsiDisplayStack : 'var(--lg-font)',
+          fontFamily: isRTL ? 'var(--font-sans)' : 'var(--lg-font)',
           pt: { xs: '54px', sm: '60px', md: '64px' },
           pb: { xs: 'calc(96px + env(safe-area-inset-bottom))', md: 8 },
           textAlign: isRTL ? 'right' : 'left',
@@ -1482,7 +1414,7 @@ export function CustomerProductDetails() {
                     variant="h4"
                     component="h1"
                     sx={{
-                      fontFamily: isRTL ? farsiDisplayStack : 'inherit',
+                      fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                       fontWeight: 800,
                       fontSize: { xs: '1.5rem', sm: '1.75rem', md: '2rem' },
                       lineHeight: 1.2,
@@ -1708,31 +1640,11 @@ export function CustomerProductDetails() {
                         fontSize: '0.875rem',
                         fontWeight: 600,
                         color: 'var(--lg-ink)',
+                        fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                       }}
                     >
                       {isRTL ? 'سایز' : 'Size'}
                     </Typography>
-
-                    {/* Size Guide Trigger */}
-                    <Button
-                      onClick={() => setSizeGuideOpen(true)}
-                      size="small"
-                      startIcon={<StraightenOutlined sx={{ fontSize: 16 }} />}
-                      sx={{
-                        textTransform: 'none',
-                        fontSize: '0.8125rem',
-                        fontWeight: 500,
-                        color: 'var(--lg-muted)',
-                        p: 0,
-                        minWidth: 0,
-                        '&:hover': {
-                          background: 'transparent',
-                          color: 'var(--lg-ink)',
-                        },
-                      }}
-                    >
-                      {isRTL ? 'راهنمای سایز' : 'Size Guide'}
-                    </Button>
                   </Box>
 
                   {/* Size Pills */}
@@ -1762,12 +1674,15 @@ export function CustomerProductDetails() {
                               color: isSelected ? 'var(--lg-solid-ink)' : 'var(--lg-ink)',
                               boxShadow: isSelected ? '0 2px 8px rgba(0,0,0,0.15)' : undefined,
                               transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                              fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                               '&:hover': {
                                 transform: 'translateY(-1px)',
                               },
                             }}
                           >
-                            {size}
+                            <bdi dir={isRTL ? 'rtl' : 'ltr'}>
+                              {isRTL && /\d/.test(size) ? toFarsiDigits(size) : size}
+                            </bdi>
                           </Box>
                         );
                       })}
@@ -1775,7 +1690,11 @@ export function CustomerProductDetails() {
                   ) : (
                     <Typography
                       variant="body2"
-                      sx={{ fontSize: '0.8125rem', color: 'var(--lg-muted)' }}
+                      sx={{
+                        fontSize: '0.8125rem',
+                        color: 'var(--lg-muted)',
+                        fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                      }}
                     >
                       {isRTL
                         ? 'سایزی برای این رنگ موجود نیست'
@@ -1806,6 +1725,7 @@ export function CustomerProductDetails() {
                       fontWeight: 600,
                       fontSize: '0.9375rem',
                       letterSpacing: isRTL ? 'normal' : '-0.01em',
+                      fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                       transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
                       background: isAddedRecently
                         ? '#10b981 !important'
@@ -1838,34 +1758,6 @@ export function CustomerProductDetails() {
                       : isRTL
                       ? 'افزودن به سبد خرید'
                       : 'Add to Cart'}
-                  </Button>
-
-                  {/* Secondary CTA: Instant Checkout / Buy Now */}
-                  <Button
-                    onClick={handleBuyNow}
-                    disabled={isOutOfStock}
-                    fullWidth
-                    className="lg-pill"
-                    sx={{
-                      height: { xs: 46, sm: 48 },
-                      borderRadius: '9999px',
-                      textTransform: 'none',
-                      fontWeight: 600,
-                      fontSize: '0.9375rem',
-                      letterSpacing: isRTL ? 'normal' : '-0.01em',
-                      color: 'var(--lg-ink)',
-                      transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
-                      '&:hover': {
-                        transform: 'translateY(-1px)',
-                        background: 'var(--lg-pill-bg-hover)',
-                      },
-                      '&.Mui-disabled': {
-                        opacity: 0.4,
-                        color: 'var(--lg-muted)',
-                      },
-                    }}
-                  >
-                    {isRTL ? 'خرید فوری' : 'Buy Now'}
                   </Button>
                 </Box>
 
@@ -1983,63 +1875,6 @@ export function CustomerProductDetails() {
                     </AccordionDetails>
                   </Accordion>
 
-                  {/* 3. Size Guide Accordion */}
-                  <Accordion
-                    expanded={expandedAccordion === 'sizing'}
-                    onChange={(_, isExpanded) =>
-                      setExpandedAccordion(isExpanded ? 'sizing' : false)
-                    }
-                    disableGutters
-                    elevation={0}
-                    sx={{
-                      borderRadius: '16px !important',
-                      background: isDark
-                        ? 'rgba(255, 255, 255, 0.03)'
-                        : 'rgba(0, 0, 0, 0.02)',
-                      border: '1px solid var(--lg-card-border)',
-                      overflow: 'hidden',
-                      '&::before': { display: 'none' },
-                    }}
-                  >
-                    <AccordionSummary
-                      expandIcon={<ExpandMore sx={{ color: 'var(--lg-ink)' }} />}
-                      sx={{ px: 2.5, minHeight: 48 }}
-                    >
-                      <Typography sx={{ fontWeight: 600, fontSize: '0.875rem', color: 'var(--lg-ink)' }}>
-                        {isRTL ? 'راهنمای سایز' : 'Size Guide'}
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails sx={{ px: 2.5, pb: 2.5, pt: 0 }}>
-                      <Typography
-                        sx={{
-                          fontSize: '0.8125rem',
-                          lineHeight: 1.7,
-                          color: 'var(--lg-muted)',
-                          mb: 1.5,
-                        }}
-                      >
-                        {isRTL
-                          ? 'قالب این مدل کاملاً استاندارد (True to Size) است. اگر تمایل به استایل بگ و لش دارید، یک سایز بزرگ‌تر انتخاب نمایید.'
-                          : 'Standard fit (True to Size). Choose your regular athletic size for a relaxed comfortable silhouette.'}
-                      </Typography>
-                      <Button
-                        onClick={() => setSizeGuideOpen(true)}
-                        className="lg-pill"
-                        size="small"
-                        startIcon={<StraightenOutlined sx={{ fontSize: 16 }} />}
-                        sx={{
-                          textTransform: 'none',
-                          fontSize: '0.78rem',
-                          fontWeight: 600,
-                          color: 'var(--lg-ink)',
-                          px: 2,
-                          py: 0.6,
-                        }}
-                      >
-                        {isRTL ? 'مشاهده جدول ابعاد دقیق' : 'View Full Measurement Chart'}
-                      </Button>
-                    </AccordionDetails>
-                  </Accordion>
                 </Box>
               </Box>
             </Grid>
@@ -2157,7 +1992,7 @@ export function CustomerProductDetails() {
                   component="h2"
                   sx={{
                     fontWeight: 800,
-                    fontFamily: isRTL ? farsiDisplayStack : 'inherit',
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                     color: 'var(--lg-ink)',
                     textAlign: isRTL ? 'right' : 'left',
                   }}
@@ -2180,7 +2015,7 @@ export function CustomerProductDetails() {
                     fontWeight: 600,
                     fontSize: '0.875rem',
                     color: 'var(--lg-muted)',
-                    fontFamily: isRTL ? farsiDisplayStack : 'inherit',
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                     '&:hover': {
                       background: 'transparent',
                       color: 'var(--lg-ink)',
@@ -2242,324 +2077,6 @@ export function CustomerProductDetails() {
           )}
         </Box>
 
-        {/* Size Guide Dialog */}
-        <Dialog
-          open={sizeGuideOpen}
-          onClose={() => setSizeGuideOpen(false)}
-          maxWidth="md"
-          fullWidth
-          dir={isRTL ? 'rtl' : 'ltr'}
-          PaperProps={{
-            sx: {
-              borderRadius: { xs: '24px', md: '28px' },
-              p: { xs: 2, sm: 2.5 },
-              backdropFilter: 'blur(32px)',
-              background: isDark
-                ? 'rgba(20, 22, 32, 0.96)'
-                : 'rgba(255, 255, 255, 0.98)',
-              border: '1px solid var(--lg-card-border)',
-              boxShadow: '0 25px 60px -15px rgba(0, 0, 0, 0.5)',
-              fontFamily: isRTL ? farsiDisplayStack : 'inherit',
-            },
-          }}
-        >
-          <DialogTitle
-            sx={{
-              fontWeight: 800,
-              fontSize: '1.25rem',
-              pb: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontFamily: isRTL ? farsiDisplayStack : 'inherit',
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.2 }}>
-              <StraightenOutlined sx={{ color: 'var(--lg-ink)' }} />
-              <Typography sx={{ fontWeight: 800, fontSize: '1.2rem', color: 'var(--lg-ink)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                {isRTL ? 'راهنمای جامع سایز' : 'Complete Size Guide'}
-              </Typography>
-            </Box>
-            <IconButton
-              size="small"
-              onClick={() => setSizeGuideOpen(false)}
-              className="lg-icon"
-              sx={{ width: 36, height: 36, color: 'var(--lg-ink)' }}
-            >
-              <Close fontSize="small" />
-            </IconButton>
-          </DialogTitle>
-
-          <DialogContent sx={{ pt: 1 }}>
-            <Typography
-              variant="body2"
-              sx={{ mb: 2, lineHeight: 1.8, color: 'var(--lg-muted)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}
-            >
-              {isRTL
-                ? 'برای اطمینان کامل از انتخاب سایز مناسب، لطفاً ابعاد جدول زیر را با اندازه‌های دقیق خود مقایسه فرمایید.'
-                : 'Compare dimensions below with your measurements for an optimal athletic fit.'}
-            </Typography>
-
-            {/* Category Toggle Buttons: Footwear vs Apparel */}
-            <Box
-              sx={{
-                display: 'inline-flex',
-                p: 0.5,
-                borderRadius: '14px',
-                background: isDark
-                  ? 'rgba(255, 255, 255, 0.06)'
-                  : 'rgba(0, 0, 0, 0.04)',
-                mb: 2.5,
-                gap: 0.5,
-              }}
-            >
-              <Button
-                size="small"
-                onClick={() => setSizeGuideTab('footwear')}
-                sx={{
-                  borderRadius: '10px',
-                  px: 2.5,
-                  py: 0.7,
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  textTransform: 'none',
-                  fontFamily: isRTL ? farsiDisplayStack : 'inherit',
-                  background:
-                    sizeGuideTab === 'footwear'
-                      ? 'var(--lg-solid-bg)'
-                      : 'transparent',
-                  color:
-                    sizeGuideTab === 'footwear'
-                      ? 'var(--lg-solid-ink)'
-                      : 'var(--lg-muted)',
-                  '&:hover': {
-                    background:
-                      sizeGuideTab === 'footwear'
-                        ? 'var(--lg-solid-bg)'
-                        : 'var(--lg-pill-bg-hover)',
-                  },
-                }}
-              >
-                {isRTL ? 'کفش و کتونی' : 'Footwear'}
-              </Button>
-              <Button
-                size="small"
-                onClick={() => setSizeGuideTab('apparel')}
-                sx={{
-                  borderRadius: '10px',
-                  px: 2.5,
-                  py: 0.7,
-                  fontSize: '0.85rem',
-                  fontWeight: 700,
-                  textTransform: 'none',
-                  fontFamily: isRTL ? farsiDisplayStack : 'inherit',
-                  background:
-                    sizeGuideTab === 'apparel'
-                      ? 'var(--lg-solid-bg)'
-                      : 'transparent',
-                  color:
-                    sizeGuideTab === 'apparel'
-                      ? 'var(--lg-solid-ink)'
-                      : 'var(--lg-muted)',
-                  '&:hover': {
-                    background:
-                      sizeGuideTab === 'apparel'
-                        ? 'var(--lg-solid-bg)'
-                        : 'var(--lg-pill-bg-hover)',
-                  },
-                }}
-              >
-                {isRTL ? 'پوشاک و هودی' : 'Apparel'}
-              </Button>
-            </Box>
-
-            {/* Footwear Table */}
-            {sizeGuideTab === 'footwear' && (
-              <TableContainer
-                component={Paper}
-                elevation={0}
-                sx={{
-                  background: isDark
-                    ? 'rgba(255, 255, 255, 0.03)'
-                    : 'rgba(0, 0, 0, 0.02)',
-                  borderRadius: '16px',
-                  border: '1px solid var(--lg-card-border)',
-                  maxHeight: 340,
-                  overflowY: 'auto',
-                }}
-              >
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                        {isRTL ? 'سایز اروپا (EU)' : 'EU Size'}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                        {isRTL ? 'طول پا (سانتی‌متر)' : 'Foot Length (CM)'}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                        {isRTL ? 'آمریکا (US)' : 'US Size'}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                        {isRTL ? 'انگلستان (UK)' : 'UK Size'}
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {[
-                      { eu: '38.5', cm: '24.0', us: '6.0', uk: '5.5' },
-                      { eu: '39', cm: '24.5', us: '6.5', uk: '6.0' },
-                      { eu: '40', cm: '25.0', us: '7.0', uk: '6.0' },
-                      { eu: '40.5', cm: '25.5', us: '7.5', uk: '6.5' },
-                      { eu: '41', cm: '26.0', us: '8.0', uk: '7.0' },
-                      { eu: '42', cm: '26.5', us: '8.5', uk: '7.5' },
-                      { eu: '42.5', cm: '27.0', us: '9.0', uk: '8.0' },
-                      { eu: '43', cm: '27.5', us: '9.5', uk: '8.5' },
-                      { eu: '44', cm: '28.0', us: '10.0', uk: '9.0' },
-                      { eu: '44.5', cm: '28.5', us: '10.5', uk: '9.5' },
-                      { eu: '45', cm: '29.0', us: '11.0', uk: '10.0' },
-                      { eu: '45.5', cm: '29.5', us: '11.5', uk: '10.5' },
-                      { eu: '46', cm: '30.0', us: '12.0', uk: '11.0' },
-                    ].map((row) => (
-                      <TableRow key={row.eu} hover>
-                        <TableCell sx={{ fontWeight: 700, color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                          {isRTL ? toFarsiDigits(row.eu) : row.eu}
-                        </TableCell>
-                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                          {isRTL ? toFarsiDigits(row.cm) : row.cm}
-                        </TableCell>
-                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                          {isRTL ? toFarsiDigits(row.us) : row.us}
-                        </TableCell>
-                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                          {isRTL ? toFarsiDigits(row.uk) : row.uk}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-
-            {/* Apparel Table */}
-            {sizeGuideTab === 'apparel' && (
-              <TableContainer
-                component={Paper}
-                elevation={0}
-                sx={{
-                  background: isDark
-                    ? 'rgba(255, 255, 255, 0.03)'
-                    : 'rgba(0, 0, 0, 0.02)',
-                  borderRadius: '16px',
-                  border: '1px solid var(--lg-card-border)',
-                  maxHeight: 340,
-                  overflowY: 'auto',
-                }}
-              >
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                        {isRTL ? 'سایز' : 'Size'}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                        {isRTL ? 'دور سینه (cm)' : 'Chest (cm)'}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                        {isRTL ? 'دور کمر (cm)' : 'Waist (cm)'}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                        {isRTL ? 'دور باسن (cm)' : 'Hips (cm)'}
-                      </TableCell>
-                      <TableCell align="center" sx={{ fontWeight: 800, background: isDark ? '#1a1c24' : '#f8f8fa', color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                        {isRTL ? 'قد شلوار (cm)' : 'Length (cm)'}
-                      </TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {[
-                      { size: 'XS', chest: '82-87', waist: '66-71', hips: '86-91', len: '98' },
-                      { size: 'S', chest: '88-93', waist: '72-77', hips: '92-97', len: '100' },
-                      { size: 'M', chest: '94-99', waist: '78-83', hips: '98-103', len: '102' },
-                      { size: 'L', chest: '100-105', waist: '84-89', hips: '104-109', len: '104' },
-                      { size: 'XL', chest: '106-111', waist: '90-95', hips: '110-115', len: '106' },
-                      { size: 'XXL', chest: '112-118', waist: '96-102', hips: '116-122', len: '108' },
-                    ].map((row) => (
-                      <TableRow key={row.size} hover>
-                        <TableCell sx={{ fontWeight: 700, color: 'var(--lg-ink)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                          {row.size}
-                        </TableCell>
-                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                          {isRTL ? toFarsiDigits(row.chest) : row.chest}
-                        </TableCell>
-                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                          {isRTL ? toFarsiDigits(row.waist) : row.waist}
-                        </TableCell>
-                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                          {isRTL ? toFarsiDigits(row.hips) : row.hips}
-                        </TableCell>
-                        <TableCell align="center" sx={{ color: 'var(--lg-muted)', borderBottom: '1px solid var(--lg-card-border)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
-                          {isRTL ? toFarsiDigits(row.len) : row.len}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            )}
-
-            {/* Measurement Hint Tip */}
-            <Box
-              sx={{
-                mt: 2.5,
-                p: 2,
-                borderRadius: '14px',
-                background: isDark
-                  ? 'rgba(255, 255, 255, 0.03)'
-                  : 'rgba(0, 0, 0, 0.02)',
-                border: '1px solid var(--lg-card-border)',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: 1.5,
-              }}
-            >
-              <Typography
-                variant="body2"
-                sx={{
-                  fontSize: '0.8125rem',
-                  lineHeight: 1.8,
-                  color: 'var(--lg-muted)',
-                  fontFamily: isRTL ? farsiDisplayStack : 'inherit',
-                }}
-              >
-                {isRTL
-                  ? '💡 راهنمای اندازه‌گیری: برای انتخاب دقیق‌ترین سایز کفش، پاشنه تا نوک بلندترین انگشت را روی یک برگه اندازه بگیرید. در صورت تردید بین دو سایز، انتخاب نیم‌سایز بزرگ‌تر برای راحتی بیشتر پیشنهاد می‌شود.'
-                  : '💡 Pro Tip: Measure your foot from heel to longest toe on paper. If in between two sizes, we recommend sizing up half a size for athletic comfort.'}
-              </Typography>
-            </Box>
-          </DialogContent>
-
-          <DialogActions sx={{ p: 2, px: 3 }}>
-            <Button
-              onClick={() => setSizeGuideOpen(false)}
-              variant="contained"
-              sx={{
-                borderRadius: '9999px',
-                px: 3.5,
-                py: 1,
-                fontWeight: 600,
-                fontFamily: isRTL ? farsiDisplayStack : 'inherit',
-                background: 'var(--lg-solid-bg)',
-                color: 'var(--lg-solid-ink)',
-                '&:hover': {
-                  opacity: 0.92,
-                },
-              }}
-            >
-              {isRTL ? 'متوجه شدم' : 'Close'}
-            </Button>
-          </DialogActions>
-        </Dialog>
 
         {/* Fullscreen / High-Res Lightbox Zoom Dialog */}
         <Dialog
@@ -2582,7 +2099,7 @@ export function CustomerProductDetails() {
               border: '1px solid var(--lg-card-border)',
               boxShadow: '0 30px 80px rgba(0, 0, 0, 0.5)',
               overflow: 'hidden',
-              fontFamily: isRTL ? farsiDisplayStack : 'inherit',
+              fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
             },
           }}
         >
@@ -2597,12 +2114,12 @@ export function CustomerProductDetails() {
             }}
           >
             <Box>
-              <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--lg-ink)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}>
+              <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--lg-ink)', fontFamily: isRTL ? 'var(--font-sans)' : 'inherit' }}>
                 {product.name}
               </Typography>
               <Typography
                 variant="caption"
-                sx={{ color: 'var(--lg-muted)', fontFamily: isRTL ? farsiDisplayStack : 'inherit' }}
+                sx={{ color: 'var(--lg-muted)', fontFamily: isRTL ? 'var(--font-sans)' : 'inherit' }}
               >
                 {isRTL
                   ? `تصویر ${toFarsiDigits(activeImageIndex + 1)} از ${toFarsiDigits(galleryImages.length)}`
@@ -2783,7 +2300,7 @@ export function CustomerProductDetails() {
                     fontSize: '0.75rem',
                     fontWeight: 600,
                     color: 'var(--lg-ink)',
-                    fontFamily: isRTL ? farsiDisplayStack : 'inherit',
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                   }}
                 >
                   {isRTL
@@ -2873,7 +2390,7 @@ export function CustomerProductDetails() {
                 color: '#ffffff !important',
                 fontWeight: 600,
                 fontSize: '0.875rem',
-                fontFamily: isRTL ? farsiDisplayStack : 'inherit',
+                fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
               },
               '& .MuiAlert-action': {
                 color: '#a1a1aa !important',
@@ -2881,7 +2398,7 @@ export function CustomerProductDetails() {
               '& .MuiAlert-action button': {
                 color: '#d4d4d8 !important',
               },
-              fontFamily: isRTL ? farsiDisplayStack : 'inherit',
+              fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
             }}
           >
             {isRTL

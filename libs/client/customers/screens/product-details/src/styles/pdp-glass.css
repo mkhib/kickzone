@@ -4,7 +4,7 @@
 
 /* 2.1 Colours, light */
 .pdp-lg {
-  --lg-font: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", "Manrope", "Segoe UI", Roboto, sans-serif;
+  --lg-font: "Vazirmatn", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --lg-canvas: #F9F9FA;
   --lg-mesh:
     radial-gradient(at 10% 12%, rgba(255,237,226,.70) 0, transparent 55%),
@@ -72,9 +72,9 @@
   --lg-chip-dot-ring: rgba(0,0,0,.15);
 
   /* footer */
-  --lg-footer-bg: rgba(255,255,255,.45);
-  --lg-footer-border: rgba(255,255,255,.60);
-  --lg-footer-divider: rgba(229,229,229,.50);
+  --lg-footer-bg: #000000;
+  --lg-footer-border: #1a1a1e;
+  --lg-footer-divider: #1a1a1e;
 
   /* ring for selected thumbnail / swatch */
   --lg-ring: #171717;
@@ -225,14 +225,33 @@ body.pdp-screen-active[data-theme="dark"] {
   width: 100%;
 }
 
-/* Only the footer has complete black background color in dark theme with a super dark grey top border line */
+/* Only the footer has complete black background color in dark and light theme with a super dark grey top border line */
 body.pdp-screen-active footer,
 [data-theme="dark"] body.pdp-screen-active footer,
-body.pdp-screen-active[data-theme="dark"] footer {
+body.pdp-screen-active[data-theme="dark"] footer,
+[data-theme="light"] body.pdp-screen-active footer,
+body.pdp-screen-active[data-theme="light"] footer {
   background-color: #000000 !important;
   background: #000000 !important;
   background-image: none !important;
   border-top: 1px solid #1a1a1e !important;
+  color: #ffffff !important;
+}
+
+body.pdp-screen-active footer,
+body.pdp-screen-active footer a,
+body.pdp-screen-active footer p,
+body.pdp-screen-active footer span,
+body.pdp-screen-active footer h4,
+body.pdp-screen-active footer h5,
+body.pdp-screen-active footer div,
+body.pdp-screen-active footer small,
+body.pdp-screen-active footer li {
+  color: #ffffff !important;
+}
+
+body.pdp-screen-active footer a:hover {
+  color: #e2e8f0 !important;
 }
 
 .lg-card {

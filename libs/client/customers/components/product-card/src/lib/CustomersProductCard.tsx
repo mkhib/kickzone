@@ -75,6 +75,11 @@ export function formatToman(priceUSD: number, rate = 270000, discount = 0): stri
   return `${new Intl.NumberFormat('fa-IR').format(toman)} تومان`;
 }
 
+export const toFarsiDigits = (val: string | number): string => {
+  const farsiDigits = ['۰', '۱', '۲', '۳', '۴', '۵', '۶', '۷', '۸', '۹'];
+  return String(val).replace(/\d/g, (d) => farsiDigits[parseInt(d, 10)]);
+};
+
 // Category type mapping to Persian from §4
 const TYPE_MAP: Record<string, string> = {
   hoodies: 'هودی',
@@ -141,6 +146,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
   const isEn = currentLocale === 'en';
+  const isRTL = currentLocale === 'fa';
 
   const isCompact = variant === 'compact';
 
@@ -403,6 +409,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             borderRadius: { xs: '32px', sm: '28px' },
             p: { xs: '12px', sm: '16px' },
             position: 'relative',
+            fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
             transition: 'box-shadow 0.3s cubic-bezier(.2,.7,.1,1), transform 0.3s cubic-bezier(.2,.7,.1,1)',
             '@media (hover: hover)': {
               '&:hover': {
@@ -603,6 +610,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                         fontWeight: 500,
                         color: 'var(--lg-ink-4)',
                         lineHeight: 1,
+                        fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                       }}
                     >
                       {sizeLabel}
@@ -639,10 +647,10 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                               alignItems: 'center',
                               justifyContent: 'center',
                               lineHeight: 1,
-                              p: 0,
+                              fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                             }}
                           >
-                            <bdi dir="ltr">{sz}</bdi>
+                            <bdi dir={isRTL ? 'rtl' : 'ltr'}>{isRTL && /\d/.test(sz) ? toFarsiDigits(sz) : sz}</bdi>
                           </Box>
                         );
                       })}
@@ -826,7 +834,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           }}
         >
           {/* Heart toggle (only rendered if onToggleFavorite is passed) */}
-          {Boolean(onToggleFavorite) ? (
+          {onToggleFavorite ? (
             <IconButton
               aria-label={favoriteAriaLabel}
               aria-pressed={isFavorite}
@@ -1058,6 +1066,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                         color: isSelected ? 'var(--ink)' : 'var(--ink-3)',
                         fontSize: '11px',
                         fontWeight: isSelected ? 700 : 500,
+                        fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                         cursor: 'pointer',
                         transition: 'all 0.2s',
                         '&:hover': {
@@ -1065,7 +1074,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                         },
                       }}
                     >
-                      <bdi dir="ltr">{sz}</bdi>
+                      <bdi dir={isRTL ? 'rtl' : 'ltr'}>{isRTL && /\d/.test(sz) ? toFarsiDigits(sz) : sz}</bdi>
                     </Box>
                   );
                 })}
