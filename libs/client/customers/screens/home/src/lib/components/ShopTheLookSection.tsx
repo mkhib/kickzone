@@ -162,7 +162,8 @@ export function ShopTheLookSection({
                     objectPosition:
                       idx === 1 ? '50% 70%' : '50% 25%',
                     transform: isHighlighted ? 'scale(1.035)' : 'scale(1)',
-                    transition: 'transform 0.8s var(--ease)',
+                    filter: 'brightness(1.08) contrast(1.02)',
+                    transition: 'transform 0.8s var(--ease), filter 0.3s ease',
                   }}
                 />
 

@@ -161,7 +161,8 @@ export function BrandBlocksSection({ blocks, exchangeRate }: BrandBlocksSectionP
                     height: '100%',
                     objectFit: 'cover',
                     display: 'block',
-                    transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1)',
+                    filter: 'brightness(1.10) contrast(1.02)',
+                    transition: 'transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.3s ease',
                   }}
                 />
 
@@ -171,7 +172,7 @@ export function BrandBlocksSection({ blocks, exchangeRate }: BrandBlocksSectionP
                     position: 'absolute',
                     inset: 0,
                     background:
-                      'linear-gradient(to top, rgba(10, 10, 12, 0.72) 0%, rgba(10, 10, 12, 0.35) 38%, transparent 65%)',
+                      'linear-gradient(to top, rgba(10, 10, 12, 0.40) 0%, rgba(10, 10, 12, 0.16) 35%, transparent 60%)',
                     pointerEvents: 'none',
                   }}
                 />

@@ -79,8 +79,8 @@ export function HeroSection({
         inset: 0,
         background:
           themeMode === 'dark'
-            ? 'linear-gradient(to top, rgba(0,0,0,0.78) 0%, rgba(0,0,0,0.4) 32%, transparent 58%), linear-gradient(rgba(0,0,0,0.28), transparent 22%)'
-            : 'linear-gradient(to top, rgba(0,0,0,0.68) 0%, rgba(0,0,0,0.3) 32%, transparent 58%), linear-gradient(rgba(0,0,0,0.14), transparent 22%)',
+            ? 'linear-gradient(to top, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0.15) 28%, transparent 52%), linear-gradient(rgba(0,0,0,0.08), transparent 18%)'
+            : 'linear-gradient(to top, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.10) 28%, transparent 52%), linear-gradient(rgba(0,0,0,0.04), transparent 18%)',
         pointerEvents: 'none',
       }}
     />
@@ -128,7 +128,7 @@ export function HeroSection({
                 textDecoration: 'none',
                 filter:
                   hoveredPanel && hoveredPanel !== 'right'
-                    ? 'brightness(0.82) saturate(0.9)'
+                    ? 'brightness(0.95) saturate(0.96)'
                     : 'none',
                 transition: 'filter 0.4s var(--ease)',
               }}
@@ -164,7 +164,7 @@ export function HeroSection({
               textDecoration: 'none',
               filter:
                 hoveredPanel && hoveredPanel !== 'center'
-                  ? 'brightness(0.82) saturate(0.9)'
+                  ? 'brightness(0.95) saturate(0.96)'
                   : 'none',
               transition: 'filter 0.4s var(--ease)',
             }}
@@ -201,7 +201,7 @@ export function HeroSection({
                 textDecoration: 'none',
                 filter:
                   hoveredPanel && hoveredPanel !== 'left'
-                    ? 'brightness(0.82) saturate(0.9)'
+                    ? 'brightness(0.95) saturate(0.96)'
                     : 'none',
                 transition: 'filter 0.4s var(--ease)',
               }}
@@ -306,7 +306,9 @@ export function HeroSection({
                 position: 'absolute',
                 inset: 0,
                 background:
-                  'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)',
+                  themeMode === 'dark'
+                    ? 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 55%)'
+                    : 'linear-gradient(to top, rgba(0,0,0,0.24) 0%, transparent 55%)',
               }}
             />
           </Box>
@@ -340,7 +342,9 @@ export function HeroSection({
                 position: 'absolute',
                 inset: 0,
                 background:
-                  'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 60%)',
+                  themeMode === 'dark'
+                    ? 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 55%)'
+                    : 'linear-gradient(to top, rgba(0,0,0,0.24) 0%, transparent 55%)',
               }}
             />
           </Box>

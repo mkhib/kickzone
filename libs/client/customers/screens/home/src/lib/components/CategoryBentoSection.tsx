@@ -94,6 +94,7 @@ function BentoTile({
     >
       <Box
         component="img"
+        className="bento-tile-img"
         src={image}
         alt=""
         loading="lazy"
@@ -104,7 +105,8 @@ function BentoTile({
           height: '100%',
           objectFit: 'cover',
           objectPosition: '50% 22%',
-          transition: 'transform 0.9s var(--ease)',
+          filter: 'brightness(1.12) contrast(1.02)',
+          transition: 'transform 0.9s var(--ease), filter 0.35s var(--ease)',
         }}
       />
 
@@ -113,8 +115,8 @@ function BentoTile({
           position: 'absolute',
           inset: 0,
           background: isBig
-            ? 'linear-gradient(to top, rgba(0,0,0,0.75) 0%, rgba(0,0,0,0.3) 40%, transparent 65%)'
-            : 'linear-gradient(to top, rgba(0,0,0,0.65) 0%, transparent 55%)',
+            ? 'linear-gradient(to top, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.16) 32%, transparent 58%)'
+            : 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 50%)',
           pointerEvents: 'none',
         }}
       />
@@ -136,9 +138,10 @@ function BentoTile({
                 fontSize: '12px',
                 fontWeight: 700,
                 letterSpacing: '0.22em',
-                color: 'rgba(255, 255, 255, 0.85)',
+                color: 'rgba(255, 255, 255, 0.95)',
                 mb: 1,
                 fontFamily: 'var(--font-sans)',
+                textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)',
               }}
             >
               {kicker}
@@ -154,6 +157,7 @@ function BentoTile({
               color: '#ffffff',
               mb: 0.5,
               fontFamily: 'var(--font-sans)',
+              textShadow: '0 2px 14px rgba(0, 0, 0, 0.75)',
             }}
           >
             {title}
@@ -164,9 +168,10 @@ function BentoTile({
               sx={{
                 fontSize: '16px',
                 fontWeight: 400,
-                color: 'rgba(255, 255, 255, 0.9)',
+                color: 'rgba(255, 255, 255, 0.95)',
                 mb: 1,
                 fontFamily: 'var(--font-sans)',
+                textShadow: '0 2px 10px rgba(0, 0, 0, 0.65)',
               }}
             >
               {tagline}
@@ -177,8 +182,9 @@ function BentoTile({
             sx={{
               fontSize: '13px',
               fontWeight: 500,
-              color: 'rgba(255, 255, 255, 0.85)',
+              color: 'rgba(255, 255, 255, 0.9)',
               fontFamily: 'var(--font-sans)',
+              textShadow: '0 1px 6px rgba(0, 0, 0, 0.6)',
             }}
           >
             {countLabel}

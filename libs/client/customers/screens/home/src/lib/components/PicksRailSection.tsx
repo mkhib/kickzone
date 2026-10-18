@@ -285,7 +285,8 @@ export function PicksRailSection({
                     width: '100%',
                     height: '100%',
                     objectFit: 'cover',
-                    transition: 'transform 0.4s ease, opacity 0.4s ease',
+                    filter: 'brightness(1.09) contrast(1.02)',
+                    transition: 'transform 0.4s ease, opacity 0.4s ease, filter 0.3s ease',
                   }}
                 />
 
@@ -304,7 +305,8 @@ export function PicksRailSection({
                       height: '100%',
                       objectFit: 'cover',
                       opacity: 0,
-                      transition: 'opacity 0.4s ease',
+                      filter: 'brightness(1.09) contrast(1.02)',
+                      transition: 'opacity 0.4s ease, filter 0.3s ease',
                     }}
                   />
                 )}

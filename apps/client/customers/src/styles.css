@@ -17,7 +17,7 @@
   --cta-tint: rgba(176, 138, 82, 0.12);
   --cta-tint-hover: rgba(176, 138, 82, 0.20);
   --cta-tint-active: rgba(176, 138, 82, 0.28);
-  --frame: #e9e8e5;
+  --frame: #f2f1ec;
   --bar: rgba(246, 245, 242, 0.72);
   --bar-solid: rgba(246, 245, 242, 0.90);
   --focus: #0066d6;
@@ -39,7 +39,7 @@
   --cta-tint: rgba(216, 188, 140, 0.10);
   --cta-tint-hover: rgba(216, 188, 140, 0.17);
   --cta-tint-active: rgba(216, 188, 140, 0.24);
-  --frame: #161617;
+  --frame: #1d1d1f;
   --bar: rgba(16, 16, 18, 0.66);
   --bar-solid: rgba(16, 16, 18, 0.86);
   --focus: #4da3ff;
@@ -63,28 +63,55 @@ html[data-locale="fa"] {
   --font-sans: "Vazirmatn", system-ui, -apple-system, "Segoe UI", Tahoma, sans-serif;
 }
 
-/* Hero theme adaptation: brighter panels in light, deeper in dark */
+/* Hero theme adaptation: luminous panels in both light and dark themes */
 [data-theme="light"] .hero-campaign {
   background-color: #1a1917;
   color: #ffffff;
 }
 [data-theme="light"] .hero-campaign .hero-panel-img {
-  filter: brightness(1.08) contrast(1.02) saturate(1.04);
+  filter: brightness(1.16) contrast(1.02) saturate(1.04);
 }
 [data-theme="light"] .hero-campaign .hero-copy {
   color: #ffffff;
-  text-shadow: 0 2px 28px rgba(0, 0, 0, 0.35);
+  text-shadow: 0 2px 32px rgba(0, 0, 0, 0.65), 0 4px 16px rgba(0, 0, 0, 0.45);
 }
 [data-theme="dark"] .hero-campaign {
   background-color: #0a0a0a;
   color: #f5f5f7;
 }
 [data-theme="dark"] .hero-campaign .hero-panel-img {
-  filter: brightness(0.9) contrast(1.04) saturate(0.96);
+  filter: brightness(1.15) contrast(1.03) saturate(1.03);
 }
 [data-theme="dark"] .hero-campaign .hero-copy {
   color: #f5f5f7;
-  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.45);
+  text-shadow: 0 2px 40px rgba(0, 0, 0, 0.75), 0 4px 20px rgba(0, 0, 0, 0.55);
+}
+
+/* Home screen image brightness enhancements */
+.bento-tile-img {
+  filter: brightness(1.12) contrast(1.02) saturate(1.04);
+  transition: transform 0.9s var(--ease), filter 0.35s var(--ease);
+}
+[data-theme="dark"] .bento-tile-img {
+  filter: brightness(1.14) contrast(1.03) saturate(1.04);
+}
+
+.picks-img-primary,
+.picks-img-secondary {
+  filter: brightness(1.09) contrast(1.02);
+  transition: transform 0.4s ease, opacity 0.4s ease, filter 0.35s ease;
+}
+[data-theme="dark"] .picks-img-primary,
+[data-theme="dark"] .picks-img-secondary {
+  filter: brightness(1.12) contrast(1.02);
+}
+
+.brand-media-img {
+  filter: brightness(1.10) contrast(1.02);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
+}
+[data-theme="dark"] .brand-media-img {
+  filter: brightness(1.12) contrast(1.02);
 }
 
 @property --t {
@@ -229,7 +256,12 @@ html, body {
 
 .glass-card .card-img-primary {
   transform: scale(1) translateZ(0);
-  transition: transform 0.35s var(--card-ease);
+  filter: brightness(1.08) contrast(1.01);
+  transition: transform 0.35s var(--card-ease), filter 0.35s var(--card-ease);
+}
+
+[data-theme="dark"] .glass-card .card-img-primary {
+  filter: brightness(1.10) contrast(1.01);
 }
 
 .glass-card:hover .card-img-primary {
@@ -238,7 +270,12 @@ html, body {
 
 .glass-card .card-img-secondary {
   opacity: 0;
-  transition: opacity 0.35s var(--card-ease);
+  filter: brightness(1.08) contrast(1.01);
+  transition: opacity 0.35s var(--card-ease), filter 0.35s var(--card-ease);
+}
+
+[data-theme="dark"] .glass-card .card-img-secondary {
+  filter: brightness(1.10) contrast(1.01);
 }
 
 .glass-card:hover .card-img-secondary {
@@ -247,8 +284,8 @@ html, body {
 
 /* Card image fade mask for standard cards */
 .card-media-fade {
-  mask-image: linear-gradient(to bottom, #000 46%, transparent 99%);
-  -webkit-mask-image: linear-gradient(to bottom, #000 46%, transparent 99%);
+  mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to bottom, #000 80%, transparent 100%);
 }
 
 /* Bronze CTA pill */
