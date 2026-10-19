@@ -219,6 +219,9 @@
       "@kickzone-workspace/lottie-empty-cart": [
         "libs/client/shared/lottie/empty-cart/src/index.ts"
       ],
+      "@kickzone-workspace/lottie-loading": [
+        "libs/client/shared/lottie/loading/src/index.ts"
+      ],
       "@kickzone-workspace/lottie-success-check": [
         "libs/client/shared/lottie/success-check/src/index.ts"
       ],

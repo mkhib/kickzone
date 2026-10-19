@@ -1,7 +1,6 @@
 import React, { useMemo, useCallback } from 'react';
 import { useQuery } from '@apollo/client/react';
 import Box from '@mui/material/Box';
-import CircularProgress from '@mui/material/CircularProgress';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
@@ -17,6 +16,7 @@ import { HeroSection } from './components/HeroSection';
 import { CategoryBentoSection } from './components/CategoryBentoSection';
 import { PicksRailSection } from './components/PicksRailSection';
 import { TrustStripSection } from './components/TrustStripSection';
+import { HomeLoadingScreen } from './components/HomeLoadingScreen';
 
 export interface CustomersHomeProps {
   initialData?: HomePageData;
@@ -80,54 +80,47 @@ export function CustomersHome({
   const pageData = useMemo(() => selectHomePageData(data), [data]);
 
   return (
-    <CustomersLayout disablePadding={true}>
-      <Box
-        component="main"
-        id="main"
-        sx={{
-          bgcolor: 'var(--page)',
-          color: 'var(--ink)',
-          minHeight: '100vh',
-          width: '100%',
-          overflowX: 'clip',
-          position: 'relative',
-          fontFamily: 'var(--font-sans)',
-        }}
-      >
-        {loading && (
-          <Box
-            sx={{
-              display: 'flex',
-              justifyContent: 'center',
-              alignItems: 'center',
-              py: 20,
-              minHeight: '60vh',
-            }}
-          >
-            <CircularProgress sx={{ color: 'var(--accent)' }} />
-          </Box>
-        )}
+    <>
+      {loading && <HomeLoadingScreen />}
+      <CustomersLayout disablePadding={true}>
+        <Box
+          component="main"
+          id="main"
+          sx={{
+            bgcolor: 'var(--page)',
+            color: 'var(--ink)',
+            minHeight: '100vh',
+            width: '100%',
+            overflowX: 'clip',
+            position: 'relative',
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          {!loading && (
+            <>
+              <HeroSection
+                rightProduct={pageData.hero.right}
+                centerProduct={pageData.hero.center}
+                leftProduct={pageData.hero.left}
+              />
 
-        <HeroSection
-          rightProduct={pageData.hero.right}
-          centerProduct={pageData.hero.center}
-          leftProduct={pageData.hero.left}
-        />
+              <CategoryBentoSection
+                bento={pageData.bento}
+                categories={pageData.categories}
+              />
 
-        <CategoryBentoSection
-          bento={pageData.bento}
-          categories={pageData.categories}
-        />
+              <PicksRailSection
+                products={pageData.picks}
+                exchangeRate={pageData.exchangeRate}
+                onAddItem={handleAddToCart}
+              />
 
-        <PicksRailSection
-          products={pageData.picks}
-          exchangeRate={pageData.exchangeRate}
-          onAddItem={handleAddToCart}
-        />
-
-        <TrustStripSection />
-      </Box>
-    </CustomersLayout>
+              <TrustStripSection />
+            </>
+          )}
+        </Box>
+      </CustomersLayout>
+    </>
   );
 }
 

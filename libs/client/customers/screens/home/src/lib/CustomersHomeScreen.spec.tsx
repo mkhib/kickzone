@@ -413,13 +413,39 @@ describe('CustomersHomeScreen - Campaign v4', () => {
     });
   });
 
-  it('renders all primary sections of the Campaign v4 design', () => {
+  it('shows Lottie loading animation and hides hero and other sections when site is not loaded', () => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <CustomersHome mockLoading={true} />
+      </MemoryRouter>
+    );
+
+    // Beautiful loading screen must be present
+    expect(screen.getByTestId('home-loading-screen')).toBeInTheDocument();
+    expect(screen.getByTestId('lottie-loading')).toBeInTheDocument();
+    expect(screen.getByText('در حال آماده‌سازی کلکسیون...')).toBeInTheDocument();
+
+    // Body scroll must be locked
+    expect(document.body.style.overflow).toBe('hidden');
+
+    // Hero section and page content MUST NOT be rendered
+    expect(screen.queryByText('Rise Above')).not.toBeInTheDocument();
+    expect(screen.queryByText('دسته‌بندی‌ها')).not.toBeInTheDocument();
+    expect(screen.queryByText('انتخاب‌های SAINTBALA')).not.toBeInTheDocument();
+
+    // Cleanup restores body overflow
+    unmount();
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('renders all primary sections of the Campaign v4 design when loaded', () => {
     render(
       <MemoryRouter initialEntries={['/']}>
         <CustomersHome initialData={mockHomePageData} />
       </MemoryRouter>
     );
 
+    expect(screen.queryByTestId('home-loading-screen')).not.toBeInTheDocument();
     expect(screen.getByText('Rise Above')).toBeInTheDocument();
     expect(screen.getByText('۱۰۰٪ اورجینال')).toBeInTheDocument();
     expect(screen.queryByText('ضمانت تعویض ۷ روزه')).not.toBeInTheDocument();
