@@ -70,7 +70,8 @@ export const ZARINPAL_SANDBOX_GATEWAY_URL =
  * Server sandbox is controlled by ZARINPAL_SANDBOX / NODE_ENV.
  */
 export function isZarinPalSandbox(): boolean {
-  const sandboxEnv = import.meta.env.VITE_ZARINPAL_SANDBOX;
+  const metaEnv = (import.meta as unknown as { env?: Record<string, string | undefined> }).env;
+  const sandboxEnv = metaEnv?.VITE_ZARINPAL_SANDBOX;
   if (sandboxEnv === undefined || sandboxEnv === '') {
     return true;
   }

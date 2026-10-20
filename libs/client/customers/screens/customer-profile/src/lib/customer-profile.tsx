@@ -209,7 +209,7 @@ export function CustomerProfile() {
   const handleCopyEmail = () => {
     if (isLoggedIn && displayEmail !== '—') {
       navigator.clipboard.writeText(displayEmail);
-      showSnackbar(LL.customerProfile.emailCopied(), 'success');
+      showSnackbar(LL.customerProfile.emailCopied(), { severity: 'success' });
     }
   };
 
@@ -248,10 +248,10 @@ export function CustomerProfile() {
       });
       refetchProfile();
       setEditAddressOpen(false);
-      showSnackbar(LL.customerProfile.saveSuccess(), 'success');
+      showSnackbar(LL.customerProfile.saveSuccess(), { severity: 'success' });
     } catch (err) {
       console.error('Error updating address:', err);
-      showSnackbar(LL.customerProfile.saveError(), 'error');
+      showSnackbar(LL.customerProfile.saveError(), { severity: 'error' });
     }
   };
 
@@ -269,10 +269,10 @@ export function CustomerProfile() {
       });
       refetchProfile();
       setEditProfileOpen(false);
-      showSnackbar(LL.customerProfile.saveSuccess(), 'success');
+      showSnackbar(LL.customerProfile.saveSuccess(), { severity: 'success' });
     } catch (err) {
       console.error('Error updating profile:', err);
-      showSnackbar(LL.customerProfile.saveError(), 'error');
+      showSnackbar(LL.customerProfile.saveError(), { severity: 'error' });
     }
   };
 
@@ -300,10 +300,10 @@ export function CustomerProfile() {
       });
       refetchProfile();
       setEditPreferencesOpen(false);
-      showSnackbar(LL.customerProfile.saveSuccess(), 'success');
+      showSnackbar(LL.customerProfile.saveSuccess(), { severity: 'success' });
     } catch (err) {
       console.error('Error updating sizing preferences:', err);
-      showSnackbar(LL.customerProfile.saveError(), 'error');
+      showSnackbar(LL.customerProfile.saveError(), { severity: 'error' });
     }
   };
 

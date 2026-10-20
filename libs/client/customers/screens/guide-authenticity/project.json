@@ -1,0 +1,9 @@
+{
+  "name": "customer-guide-authenticity",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/guide-authenticity/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-guide-authenticity --web",
+  "targets": {}
+}

@@ -502,11 +502,11 @@ export function CustomerShoppingCart() {
         await updateProfileMutation({
           variables: {
             input: {
-              phone: toEnglishDigits(shippingInfo.customerPhone),
+              phone: toEnglishDigits(shippingInfo.customerPhone || ''),
               address: shippingInfo.shippingAddress,
               city: shippingInfo.city,
               state: shippingInfo.state,
-              zipCode: toEnglishDigits(shippingInfo.zipCode),
+              zipCode: toEnglishDigits(shippingInfo.zipCode || ''),
               country: shippingInfo.country,
             },
           },
@@ -733,7 +733,7 @@ export function CustomerShoppingCart() {
             severity: 'error',
           }
         );
-        setAuthDialogOpen(true);
+        openAuthDialog();
         setIsCreatingOrder(false);
         return;
       }

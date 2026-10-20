@@ -15,6 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "strictPropertyInitialization": false,
+    "resolveJsonModule": true,
     "paths": {
       "@kickzone-workspace/admin-customer-management": [
         "libs/client/admins/screens/customer-management/src/index.ts"
@@ -113,11 +114,23 @@
       "@kickzone-workspace/customer-checkout-store": [
         "libs/client/customers/zustand/customer-checkout-store/src/index.ts"
       ],
+      "@kickzone-workspace/customer-favorites": [
+        "libs/client/customers/screens/customer-favorites/src/index.ts"
+      ],
       "@kickzone-workspace/customer-forgot-password": [
         "libs/client/customers/screens/forgot-password/src/index.ts"
       ],
+      "@kickzone-workspace/customer-guide-authenticity": [
+        "libs/client/customers/screens/guide-authenticity/src/index.ts"
+      ],
+      "@kickzone-workspace/customer-guide-payment": [
+        "libs/client/customers/screens/guide-payment/src/index.ts"
+      ],
       "@kickzone-workspace/customer-login": [
         "libs/client/customers/screens/customer-login/src/index.ts"
+      ],
+      "@kickzone-workspace/customer-not-found": [
+        "libs/client/customers/screens/not-found/src/index.ts"
       ],
       "@kickzone-workspace/customer-order-confirmation": [
         "libs/client/customers/screens/customer-order-confirmation/src/index.ts"
@@ -202,6 +215,9 @@
       ],
       "@kickzone-workspace/decorators": ["libs/server/decorators/src/index.ts"],
       "@kickzone-workspace/entities": ["libs/server/entities/src/index.ts"],
+      "@kickzone-workspace/error-boundary": [
+        "libs/client/shared/components/error-boundary/src/index.ts"
+      ],
       "@kickzone-workspace/glassmorphism-container": [
         "libs/client/shared/components/glassmorphism-container/src/index.ts"
       ],

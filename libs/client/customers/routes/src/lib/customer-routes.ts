@@ -16,6 +16,9 @@ export const CUSTOMER_ROUTES = {
   UNAUTHORIZED: '/unauthorized',
   ORDER_CONFIRMATION: '/order-confirmation',
   PAYMENT_CALLBACK: '/payment-callback',
+  FAVORITES: '/favorites',
+  GUIDE_AUTHENTICITY: '/guide/authenticity',
+  GUIDE_PAYMENT: '/guide/payment',
 } as const;
 
 export type CustomerRouteKey = keyof typeof CUSTOMER_ROUTES;
