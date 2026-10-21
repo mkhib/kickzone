@@ -251,26 +251,77 @@ describe('SellersProducts', () => {
     expect(mockSetSearch).toHaveBeenCalledWith('');
   });
 
+  const createMockCategory = (
+    id: number,
+    name: string
+  ): KickzoneGraphqlTypes.Category => ({
+    id,
+    name,
+    slug: name.toLowerCase(),
+    sortOrder: 0,
+    isActive: true,
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+  });
+
+  const createMockColor = (
+    id: number,
+    name: string,
+    hexCode: string
+  ): KickzoneGraphqlTypes.Color => ({
+    id,
+    name,
+    hexCode,
+    isActive: true,
+    sortOrder: 0,
+    createdAt: '2026-01-01',
+    updatedAt: '2026-01-01',
+  });
+
+  const createMockProductInfo = (
+    id: number,
+    size: string,
+    colors: KickzoneGraphqlTypes.Color[] = [],
+    images: string[] = []
+  ): KickzoneGraphqlTypes.ProductInfo => ({
+    id,
+    size,
+    sizeKind: KickzoneGraphqlTypes.SizeKind.Footwear,
+    colors,
+    weight: 1,
+    images,
+    product: {} as KickzoneGraphqlTypes.Product,
+  });
+
+  const createMockSellerProduct = (
+    id: string,
+    price: number,
+    discount: number,
+    stockQuantity: number,
+    productInfo: KickzoneGraphqlTypes.ProductInfo
+  ): KickzoneGraphqlTypes.SellerProduct => ({
+    id,
+    price,
+    discount,
+    stockQuantity,
+    productInfoId: productInfo.id,
+    boxLess: false,
+    recommended: false,
+    productInfo,
+    product: {} as KickzoneGraphqlTypes.Product,
+  });
+
   it('renders products and keeps layout stable during subsequent search/loading', () => {
+    const info = createMockProductInfo(1, '42', [], ['https://example.com/shoe.jpg']);
     mockHookState.sellersProducts = [
       {
         id: 1,
         name: 'Nike Mercurial',
+        archived: false,
+        productInfos: [info],
         description: 'Football shoes',
-        categories: [{ id: 1, name: 'Shoes' }],
-        sellerProducts: [
-          {
-            id: 'sp-1',
-            price: 150,
-            discount: 10,
-            stockQuantity: 5,
-            productInfo: {
-              id: 1,
-              size: '42',
-              images: ['https://example.com/shoe.jpg'],
-            },
-          },
-        ],
+        categories: [createMockCategory(1, 'Shoes')],
+        sellerProducts: [createMockSellerProduct('sp-1', 150, 10, 5, info)],
       },
     ];
 
@@ -278,5 +329,36 @@ describe('SellersProducts', () => {
 
     expect(screen.getByText('Nike Mercurial')).toBeInTheDocument();
     expect(screen.getByLabelText('Search products')).toBeInTheDocument();
+  });
+
+  it('renders deduplicated color swatches and does not render "No color" when variants have colors', () => {
+    const grayColor = createMockColor(1, 'Gray', '#808080');
+    const blackColor = createMockColor(2, 'Black', '#000000');
+    const info1 = createMockProductInfo(1, '42', [grayColor, blackColor], ['https://example.com/shoe.jpg']);
+    const info2 = createMockProductInfo(2, '43', [grayColor, blackColor], ['https://example.com/shoe2.jpg']);
+
+    mockHookState.sellersProducts = [
+      {
+        id: 1,
+        name: 'Nike Mercurial',
+        archived: false,
+        productInfos: [info1, info2],
+        description: 'Football shoes',
+        categories: [createMockCategory(1, 'Shoes')],
+        sellerProducts: [
+          createMockSellerProduct('sp-1', 150, 10, 5, info1),
+          createMockSellerProduct('sp-2', 160, 0, 3, info2),
+        ],
+      },
+    ];
+
+    renderComponent();
+
+    // Both "Gray" and "Black" swatches render exactly once (deduplicated)
+    expect(screen.getAllByText('Gray')).toHaveLength(1);
+    expect(screen.getAllByText('Black')).toHaveLength(1);
+
+    // The "No color" text is NOT rendered
+    expect(screen.queryByText(/No Color/i)).not.toBeInTheDocument();
   });
 });

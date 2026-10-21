@@ -4,7 +4,7 @@ import react from '@vitejs/plugin-react';
 import { nxViteTsPaths } from '@nx/vite/plugins/nx-tsconfig-paths.plugin';
 import { nxCopyAssetsPlugin } from '@nx/vite/plugins/nx-copy-assets.plugin';
 
-export default defineConfig({
+export default defineConfig(() => ({
   root: __dirname,
   cacheDir:
     '../../../../../node_modules/.vite/libs/client/admins/screens/product-editor',
@@ -27,4 +27,4 @@ export default defineConfig({
       provider: 'v8',
     },
   },
-});
+}));

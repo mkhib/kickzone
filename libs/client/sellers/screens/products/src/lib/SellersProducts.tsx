@@ -631,17 +631,18 @@ export const SellersProducts = () => {
                               <strong>{LL.products.colors()}:</strong>{' '}
                             </Typography>
                             {sellerProducts
-                              .map((sp) => sp.productInfo?.color)
-                              .filter(Boolean)
+                              .flatMap((sp) => sp.productInfo?.colors ?? [])
                               .filter(
                                 (color, index, arr) =>
-                                  arr.findIndex(
-                                    (c) => c?.name === color?.name
+                                  arr.findIndex((c) =>
+                                    c.id != null && color.id != null
+                                      ? c.id === color.id
+                                      : c.name === color.name
                                   ) === index
-                              ) // Remove duplicates by color name
+                              )
                               .map((color, index) => (
                                 <Box
-                                  key={index}
+                                  key={color.id ?? color.name ?? index}
                                   sx={{
                                     display: 'flex',
                                     alignItems: 'center',
@@ -654,7 +655,7 @@ export const SellersProducts = () => {
                                       display: 'inline-block',
                                       width: 12,
                                       height: 12,
-                                      backgroundColor: color?.hexCode || '#ccc',
+                                      backgroundColor: color.hexCode || '#ccc',
                                       borderRadius: '50%',
                                       border: '1px solid #ccc',
                                     }}
@@ -664,12 +665,12 @@ export const SellersProducts = () => {
                                     color="text.secondary"
                                     component="span"
                                   >
-                                    {color?.name}
+                                    {color.name}
                                   </Typography>
                                 </Box>
                               ))}
                             {sellerProducts.filter(
-                              (sp) => !sp.productInfo?.color
+                              (sp) => !sp.productInfo?.colors?.length
                             ).length > 0 && (
                               <Typography
                                 variant="body2"
@@ -679,7 +680,7 @@ export const SellersProducts = () => {
                                 {LL.products.noColor()} (
                                 {formatNumber(
                                   sellerProducts.filter(
-                                    (sp) => !sp.productInfo?.color
+                                    (sp) => !sp.productInfo?.colors?.length
                                   ).length
                                 )}
                                 )
