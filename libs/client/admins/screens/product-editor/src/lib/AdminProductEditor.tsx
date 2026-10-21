@@ -1046,7 +1046,8 @@ export function AdminProductEditor({
   );
   const { id } = useParams<{ id?: string }>();
   const productIdNum = id ? Number(id) : undefined;
-  const { product: loadedProduct } = useProductById(productIdNum);
+  const { product: loadedProduct, refetch: refetchProduct } =
+    useProductById(productIdNum);
   const { siteLanguages } = useSiteLanguages();
 
   const languagesToDisplay = React.useMemo(() => {
@@ -1198,10 +1199,9 @@ export function AdminProductEditor({
   useEffect(() => {
     if (productIdNum && loadedProduct) {
       const descMap: Record<string, string> = {};
-      const productAny = loadedProduct as any;
-      if (productAny.descriptions && productAny.descriptions.length > 0) {
-        productAny.descriptions.forEach((d: any) => {
-          if (d.language?.code) {
+      if (loadedProduct.descriptions && loadedProduct.descriptions.length > 0) {
+        loadedProduct.descriptions.forEach((d) => {
+          if (d?.language?.code && d?.description) {
             descMap[d.language.code] = d.description;
           }
         });
@@ -1367,7 +1367,20 @@ export function AdminProductEditor({
 
         if (productIdNum) {
           // Editing existing product
-          await updateProduct({
+          const variantsPayload: KickzoneGraphqlTypes.ProductVariantInput[] =
+            productInfos.map((info) => ({
+              id: info.createdId || undefined,
+              size: info.size,
+              sizeKind: info.sizeKind,
+              colorIds: info.colors.map((c) => c.id),
+              weight: Number(info.weight),
+              images:
+                info.uploadedImageUrls && info.uploadedImageUrls.length > 0
+                  ? info.uploadedImageUrls
+                  : undefined,
+            }));
+
+          const updated = await updateProduct({
             id: productIdNum,
             name: product.name,
             sku: product.sku.trim(),
@@ -1375,7 +1388,46 @@ export function AdminProductEditor({
             brandId: product.brandId,
             description: primaryDesc,
             descriptions: descriptionList,
+            variants: variantsPayload,
           });
+
+          // Upload new images for any variants
+          if (updated?.productInfos) {
+            for (let i = 0; i < productInfos.length; i++) {
+              const info = productInfos[i];
+              const serverInfo = updated.productInfos[i];
+              const variantId = serverInfo?.id || info.createdId;
+              if (variantId && info.newImages && info.newImages.length > 0) {
+                try {
+                  await uploadProductInfoImages(variantId, info.newImages);
+                } catch (imgErr) {
+                  console.error('Failed to upload variant images:', imgErr);
+                }
+              }
+            }
+          }
+
+          // Invalidate and refetch product query to ensure synchronized state
+          await refetchProduct?.();
+
+          // Sync state with server response
+          if (updated?.productInfos) {
+            setCreatedProductInfoIds(updated.productInfos.map((pi) => pi.id));
+            setProductInfos((prev) =>
+              prev.map((info, i) => {
+                const serverInfo = updated.productInfos[i];
+                return {
+                  ...info,
+                  createdId: serverInfo?.id ?? info.createdId,
+                  uploadedImageUrls:
+                    serverInfo?.images ?? info.uploadedImageUrls,
+                  newImages: [],
+                  newImagePreviews: [],
+                };
+              })
+            );
+          }
+
           showSnackbar('Product updated successfully', { severity: 'success' });
         } else {
           // Create product and all product infos
@@ -1452,9 +1504,14 @@ export function AdminProductEditor({
       productInfos,
       createProductWithInfos,
       updateProduct,
+      uploadProductInfoImages,
+      refetchProduct,
       showSnackbar,
       productIdNum,
       onCreated,
+      languagesToDisplay,
+      descriptions,
+      activeDescTab,
     ]
   );
 

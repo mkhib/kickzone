@@ -101,9 +101,13 @@ export class ProductResolver {
   @Mutation(() => Product)
   @UseGuards(CatalogGuard)
   async createProduct(
-    @Args('input') input: CreateProductInput
+    @Args('input') input: CreateProductInput,
+    @Context() context?: { req: { user?: User } }
   ): Promise<Product> {
-    const product = await this.productService.createProduct(input);
+    const product = await this.productService.createProduct(
+      input,
+      context?.req?.user
+    );
     if (!product.productInfos) {
       product.productInfos = [];
     }
@@ -259,9 +263,10 @@ export class ProductResolver {
   @Mutation(() => Product)
   @UseGuards(CatalogGuard)
   async updateProduct(
-    @Args('input') input: UpdateProductInput
+    @Args('input') input: UpdateProductInput,
+    @Context() context?: { req: { user?: User } }
   ): Promise<Product> {
-    return this.productService.updateProduct(input);
+    return this.productService.updateProduct(input, context?.req?.user);
   }
 
   @ResolveField(() => String, { nullable: true })

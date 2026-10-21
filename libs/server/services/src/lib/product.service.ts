@@ -1,4 +1,11 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, In, MoreThan } from 'typeorm';
 import * as fs from 'fs';
@@ -11,9 +18,12 @@ import {
   Category,
   Color,
   SellerProduct,
+  SellerInfo,
   OrderItem,
   ProductDescription,
   SiteLanguage,
+  User,
+  UserRole,
 } from '@kickzone-workspace/entities';
 import {
   CreateProductInput,
@@ -22,6 +32,7 @@ import {
   UpdateCategoryInput,
   ProductFilterInput,
   UpdateProductInput,
+  ProductVariantInput,
 } from '@kickzone-workspace/inputs';
 import {
   inferSizeKindFromRaw,
@@ -30,6 +41,7 @@ import {
 } from '@kickzone-workspace/product-sizes';
 import { parseOffset } from '@kickzone-workspace/utils';
 import { TranslationService } from './translation.service';
+import { orderedColorsFromLinks } from './product-info-colors.util';
 
 @Injectable()
 export class ProductService implements OnModuleInit {
@@ -50,6 +62,8 @@ export class ProductService implements OnModuleInit {
     private readonly colorRepository: Repository<Color>,
     @InjectRepository(SellerProduct)
     private readonly sellerProductRepository: Repository<SellerProduct>,
+    @InjectRepository(SellerInfo)
+    private readonly sellerInfoRepository: Repository<SellerInfo>,
     @InjectRepository(OrderItem)
     private readonly orderItemRepository: Repository<OrderItem>,
     @InjectRepository(ProductDescription)
@@ -324,21 +338,27 @@ export class ProductService implements OnModuleInit {
     return [processedProducts, totalCount];
   }
 
-  async createProduct(input: CreateProductInput) {
-    const sku = input.sku.trim();
+  async createProduct(
+    input: CreateProductInput,
+    currentUser?: User
+  ): Promise<Product> {
+    const sku = input.sku?.trim();
     if (!sku) {
-      throw new Error('SKU is required.');
+      throw new BadRequestException('SKU is required.');
+    }
+    if (!input.name || !input.name.trim()) {
+      throw new BadRequestException('Product name is required.');
     }
     // Check for duplicate product name
     const existing = await this.productRepository.findOneBy({
-      name: input.name,
+      name: input.name.trim(),
     });
     if (existing) {
-      throw new Error('A product with this name already exists.');
+      throw new BadRequestException('A product with this name already exists.');
     }
     const existingSku = await this.productRepository.findOneBy({ sku });
     if (existingSku) {
-      throw new Error('A product with this SKU already exists.');
+      throw new BadRequestException('A product with this SKU already exists.');
     }
     const categories = await this.categoryRepository.findBy({
       id: In(input.categoryIds),
@@ -347,7 +367,9 @@ export class ProductService implements OnModuleInit {
     if (input.brandId != null) {
       brand = await this.brandRepository.findOneBy({ id: input.brandId });
       if (!brand) {
-        throw new Error(`Brand with ID ${input.brandId} not found`);
+        throw new BadRequestException(
+          `Brand with ID ${input.brandId} not found`
+        );
       }
     }
     let fallbackDescription =
@@ -363,13 +385,26 @@ export class ProductService implements OnModuleInit {
         null;
     }
 
+    let sellerId: number | null = null;
+    let currentSeller: SellerInfo | null = null;
+    if (currentUser?.role === UserRole.SELLER) {
+      currentSeller = await this.sellerInfoRepository.findOne({
+        where: { user: { id: currentUser.id } },
+      });
+      if (currentSeller) {
+        sellerId = currentSeller.id;
+      }
+    }
+
     const product = this.productRepository.create({
-      name: input.name,
+      name: input.name.trim(),
       sku,
       categories,
       brand: brand ?? undefined,
       brandId: brand?.id ?? null,
       description: fallbackDescription,
+      sellerId,
+      seller: currentSeller ?? undefined,
     });
     const savedProduct = await this.productRepository.save(product);
 
@@ -387,6 +422,36 @@ export class ProductService implements OnModuleInit {
             description: input.description.trim(),
           })
         );
+      }
+    }
+
+    if (input.variants && input.variants.length > 0) {
+      for (const variant of input.variants) {
+        await this.validateVariantInput(variant);
+        const sizeKind = variant.sizeKind ?? SizeKind.Apparel;
+        const normalizedSize = normalizeSizeCode(sizeKind, variant.size)!;
+        const colors = await this.resolveOrderedColors(variant.colorIds);
+
+        const newInfo = this.productInfoRepository.create({
+          product: savedProduct,
+          size: normalizedSize,
+          sizeKind,
+          weight: variant.weight,
+          images: variant.images || [],
+        });
+        const savedInfo = await this.productInfoRepository.save(newInfo);
+        await this.replaceProductInfoColors(savedInfo, colors);
+
+        if (
+          currentSeller &&
+          (variant.price != null || variant.stockQuantity != null)
+        ) {
+          await this.upsertSellerProductListing(
+            currentSeller.id,
+            savedInfo,
+            variant
+          );
+        }
       }
     }
 
@@ -561,36 +626,173 @@ export class ProductService implements OnModuleInit {
     return this.productInfoRepository.save(productInfo);
   }
 
-  async updateProduct(input: UpdateProductInput): Promise<Product> {
+  private async validateVariantInput(
+    variant: ProductVariantInput
+  ): Promise<void> {
+    if (!variant.size || !variant.size.trim()) {
+      throw new BadRequestException('Variant size is required.');
+    }
+    const sizeKind = variant.sizeKind ?? SizeKind.Apparel;
+    const normalizedSize = normalizeSizeCode(sizeKind, variant.size);
+    if (!normalizedSize) {
+      throw new BadRequestException(
+        sizeKind === SizeKind.Apparel
+          ? 'Invalid apparel size. Use XS–XXXL.'
+          : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'
+      );
+    }
+    if (!variant.colorIds || variant.colorIds.length === 0) {
+      throw new BadRequestException('Variant must have at least one color.');
+    }
+    if (variant.weight == null || Number(variant.weight) <= 0) {
+      throw new BadRequestException('Variant weight must be greater than 0.');
+    }
+    if (variant.stockQuantity != null && variant.stockQuantity < 0) {
+      throw new BadRequestException('Stock quantity cannot be negative.');
+    }
+    if (variant.price != null && variant.price < 0) {
+      throw new BadRequestException('Price cannot be negative.');
+    }
+    if (variant.costPrice != null && variant.costPrice < 0) {
+      throw new BadRequestException('Cost price cannot be negative.');
+    }
+    if (
+      variant.discount != null &&
+      (variant.discount < 0 || variant.discount > 100)
+    ) {
+      throw new BadRequestException('Discount must be between 0 and 100.');
+    }
+  }
+
+  private async upsertSellerProductListing(
+    sellerId: number,
+    productInfo: ProductInfo,
+    variant: ProductVariantInput
+  ) {
+    const seller = await this.sellerInfoRepository.findOneBy({ id: sellerId });
+    if (!seller) return;
+
+    let sellerProduct = await this.sellerProductRepository.findOne({
+      where: {
+        seller: { id: sellerId },
+        productInfoId: productInfo.id,
+      },
+    });
+
+    if (sellerProduct) {
+      if (variant.price != null) sellerProduct.price = variant.price;
+      if (variant.costPrice != null) sellerProduct.costPrice = variant.costPrice;
+      if (variant.discount != null) sellerProduct.discount = variant.discount;
+      if (variant.stockQuantity != null)
+        sellerProduct.stockQuantity = variant.stockQuantity;
+      if (variant.boxLess != null) sellerProduct.boxLess = variant.boxLess;
+      await this.sellerProductRepository.save(sellerProduct);
+    } else if (variant.price != null || variant.stockQuantity != null) {
+      sellerProduct = this.sellerProductRepository.create({
+        seller,
+        product: productInfo.product,
+        productInfo,
+        productInfoId: productInfo.id,
+        price: variant.price ?? 0,
+        costPrice: variant.costPrice ?? 0,
+        discount: variant.discount ?? 0,
+        stockQuantity: variant.stockQuantity ?? 0,
+        boxLess: variant.boxLess ?? false,
+      });
+      await this.sellerProductRepository.save(sellerProduct);
+    }
+  }
+
+  async updateProduct(
+    input: UpdateProductInput,
+    currentUser?: User
+  ): Promise<Product> {
     const product = await this.productRepository.findOne({
       where: { id: input.id },
+      relations: [
+        'productInfos',
+        'productInfos.colorLinks',
+        'productInfos.colorLinks.color',
+        'sellerProducts',
+        'sellerProducts.seller',
+        'categories',
+        'brand',
+        'seller',
+      ],
     });
     if (!product) {
-      throw new Error(`Product with ID ${input.id} not found`);
+      throw new NotFoundException(`Product with ID ${input.id} not found`);
     }
-    const sku = input.sku.trim();
+
+    // Role-based authorization: Sellers can only modify their own products
+    let currentSeller: SellerInfo | null = null;
+    if (currentUser && currentUser.role === UserRole.SELLER) {
+      currentSeller = await this.sellerInfoRepository.findOne({
+        where: { user: { id: currentUser.id } },
+      });
+      if (!currentSeller) {
+        throw new ForbiddenException('Seller profile not found');
+      }
+
+      // Check product ownership
+      const productSellerId =
+        product.sellerId ?? (product.seller ? product.seller.id : null);
+      if (productSellerId != null && productSellerId !== currentSeller.id) {
+        throw new ForbiddenException(
+          'You do not have permission to modify a product owned by another seller.'
+        );
+      }
+
+      // Check if product is associated with other sellers' listings
+      if (
+        productSellerId == null &&
+        product.sellerProducts &&
+        product.sellerProducts.length > 0 &&
+        !product.sellerProducts.some(
+          (sp) => sp.seller && sp.seller.id === currentSeller?.id
+        )
+      ) {
+        throw new ForbiddenException(
+          'You do not have permission to modify a product owned by another seller.'
+        );
+      }
+
+      if (product.sellerId == null) {
+        product.sellerId = currentSeller.id;
+        product.seller = currentSeller;
+      }
+    }
+
+    const sku = input.sku?.trim();
     if (!sku) {
-      throw new Error('SKU is required.');
+      throw new BadRequestException('SKU is required.');
     }
+    if (!input.name || !input.name.trim()) {
+      throw new BadRequestException('Product name is required.');
+    }
+
     // Check for duplicate name (excluding current product)
     const existing = await this.productRepository.findOne({
-      where: { name: input.name },
+      where: { name: input.name.trim() },
     });
     if (existing && existing.id !== input.id) {
-      throw new Error('A product with this name already exists.');
+      throw new BadRequestException('A product with this name already exists.');
     }
     const existingSku = await this.productRepository.findOne({
       where: { sku },
     });
     if (existingSku && existingSku.id !== input.id) {
-      throw new Error('A product with this SKU already exists.');
+      throw new BadRequestException('A product with this SKU already exists.');
     }
-    const categories = await this.categoryRepository.findBy({
-      id: In(input.categoryIds),
-    });
-    product.name = input.name;
+
+    if (input.categoryIds) {
+      const categories = await this.categoryRepository.findBy({
+        id: In(input.categoryIds),
+      });
+      product.categories = categories;
+    }
+    product.name = input.name.trim();
     product.sku = sku;
-    product.categories = categories;
 
     if (input.brandId !== undefined) {
       if (input.brandId == null) {
@@ -601,7 +803,9 @@ export class ProductService implements OnModuleInit {
           id: input.brandId,
         });
         if (!brand) {
-          throw new Error(`Brand with ID ${input.brandId} not found`);
+          throw new BadRequestException(
+            `Brand with ID ${input.brandId} not found`
+          );
         }
         product.brand = brand;
         product.brandId = brand.id;
@@ -646,7 +850,93 @@ export class ProductService implements OnModuleInit {
       }
     }
 
+    // Save product basic info
     await this.productRepository.save(product);
+
+    // Handle variant updates / creation / deletion if input.variants provided
+    if (input.variants !== undefined) {
+      // Validate all variants first
+      for (const variant of input.variants) {
+        await this.validateVariantInput(variant);
+      }
+
+      const retainedIds = new Set<number>();
+
+      for (const variant of input.variants) {
+        const sizeKind = variant.sizeKind ?? SizeKind.Apparel;
+        const normalizedSize =
+          normalizeSizeCode(sizeKind, variant.size) ?? variant.size;
+        const colors = await this.resolveOrderedColors(variant.colorIds);
+
+        if (variant.id) {
+          // Existing variant to update
+          const existingInfo = product.productInfos?.find(
+            (pi) => pi.id === variant.id
+          );
+          if (existingInfo) {
+            existingInfo.size = normalizedSize;
+            existingInfo.sizeKind = sizeKind;
+            existingInfo.weight = variant.weight;
+            if (variant.images) {
+              existingInfo.images = variant.images;
+            }
+            await this.productInfoRepository.save(existingInfo);
+            await this.replaceProductInfoColors(existingInfo, colors);
+            retainedIds.add(existingInfo.id);
+
+            if (
+              currentSeller &&
+              (variant.price != null || variant.stockQuantity != null)
+            ) {
+              await this.upsertSellerProductListing(
+                currentSeller.id,
+                existingInfo,
+                variant
+              );
+            }
+          }
+        } else {
+          // New variant to create
+          const newInfo = this.productInfoRepository.create({
+            product,
+            size: normalizedSize,
+            sizeKind,
+            weight: variant.weight,
+            images: variant.images || [],
+          });
+          const savedInfo = await this.productInfoRepository.save(newInfo);
+          await this.replaceProductInfoColors(savedInfo, colors);
+          retainedIds.add(savedInfo.id);
+
+          if (
+            currentSeller &&
+            (variant.price != null || variant.stockQuantity != null)
+          ) {
+            await this.upsertSellerProductListing(
+              currentSeller.id,
+              savedInfo,
+              variant
+            );
+          }
+        }
+      }
+
+      // Remove deleted variants
+      if (product.productInfos) {
+        for (const existingInfo of product.productInfos) {
+          if (!retainedIds.has(existingInfo.id)) {
+            await this.productInfoColorRepository.delete({
+              productInfo: { id: existingInfo.id },
+            });
+            await this.sellerProductRepository.delete({
+              productInfoId: existingInfo.id,
+            });
+            await this.productInfoRepository.delete({ id: existingInfo.id });
+          }
+        }
+      }
+    }
+
     return (await this.getProductById(product.id)) || product;
   }
 
@@ -659,6 +949,7 @@ export class ProductService implements OnModuleInit {
         'productInfos',
         'categories',
         'brand',
+        'seller',
         'productInfos.colorLinks',
         'productInfos.colorLinks.color',
         'sellerProducts',
@@ -676,6 +967,12 @@ export class ProductService implements OnModuleInit {
     });
 
     if (!product) return null;
+
+    if (product.productInfos) {
+      for (const info of product.productInfos) {
+        info.colors = orderedColorsFromLinks(info.colorLinks);
+      }
+    }
 
     if (product.sellerProducts) {
       product.sellerProducts = product.sellerProducts.filter(

@@ -157,7 +157,6 @@ export class OrderResolver {
   }
 
   @Mutation(() => Order)
-  @UseGuards(GraphqlAuthGuard)
   async createOrder(
     @Args('createOrderInput') createOrderInput: CreateOrderInput
   ) {

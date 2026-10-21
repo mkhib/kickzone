@@ -210,6 +210,10 @@ export const UPDATE_PRODUCT = gql`
         }
         description
       }
+      productInfos {
+        ...ProductInfoFields
+      }
     }
   }
+  ${PRODUCT_INFO_FRAGMENT}
 `;

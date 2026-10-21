@@ -15,6 +15,7 @@ import { Brand } from './brand.entity';
 import { Category } from './category.entity';
 import { ProductInfo } from './product-info.entity';
 import { SellerProduct } from './seller-product.entity';
+import { SellerInfo } from './seller-info.entity';
 import { ProductDescription } from './product-description.entity';
 
 @ObjectType()
@@ -33,7 +34,9 @@ export class Product {
   sku?: string | null;
 
   @Field(() => [ProductInfo])
-  @OneToMany(() => ProductInfo, (productInfo) => productInfo.product)
+  @OneToMany(() => ProductInfo, (productInfo) => productInfo.product, {
+    cascade: true,
+  })
   productInfos: ProductInfo[];
 
   @Field(() => [Category])
@@ -52,6 +55,15 @@ export class Product {
   @Field(() => Int, { nullable: true })
   @Column({ type: 'int', nullable: true })
   brandId?: number | null;
+
+  @Field(() => SellerInfo, { nullable: true })
+  @ManyToOne(() => SellerInfo, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'sellerId' })
+  seller?: SellerInfo | null;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ type: 'int', nullable: true })
+  sellerId?: number | null;
 
   @Field({ nullable: true })
   @Column({ type: 'text', nullable: true })

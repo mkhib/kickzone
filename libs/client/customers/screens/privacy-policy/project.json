@@ -1,0 +1,9 @@
+{
+  "name": "customer-privacy-policy",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/privacy-policy/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-privacy-policy --web",
+  "targets": {}
+}

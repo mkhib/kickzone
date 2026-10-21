@@ -114,6 +114,9 @@
       "@kickzone-workspace/customer-checkout-store": [
         "libs/client/customers/zustand/customer-checkout-store/src/index.ts"
       ],
+      "@kickzone-workspace/customer-contact": [
+        "libs/client/customers/screens/contact/src/index.ts"
+      ],
       "@kickzone-workspace/customer-favorites": [
         "libs/client/customers/screens/customer-favorites/src/index.ts"
       ],
@@ -141,6 +144,9 @@
       "@kickzone-workspace/customer-payment": [
         "libs/client/customers/screens/customer-payment/src/index.ts"
       ],
+      "@kickzone-workspace/customer-privacy-policy": [
+        "libs/client/customers/screens/privacy-policy/src/index.ts"
+      ],
       "@kickzone-workspace/customer-product-details": [
         "libs/client/customers/screens/product-details/src/index.ts"
       ],
@@ -152,6 +158,9 @@
       ],
       "@kickzone-workspace/customer-reset-password": [
         "libs/client/customers/screens/reset-password/src/index.ts"
+      ],
+      "@kickzone-workspace/customer-shipping-returns": [
+        "libs/client/customers/screens/shipping-returns/src/index.ts"
       ],
       "@kickzone-workspace/customer-shopping-cart": [
         "libs/client/customers/screens/customer-shopping-cart/src/index.ts"

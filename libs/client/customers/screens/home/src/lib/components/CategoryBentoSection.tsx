@@ -264,7 +264,11 @@ export function CategoryBentoSection({
 
   const formatCount = (count: number) => {
     const n =
-      currentLocale === 'fa' ? toPersianDigits(count) : String(formatNumber(count));
+      currentLocale === 'fa'
+        ? toPersianDigits(count)
+        : typeof formatNumber === 'function'
+        ? String(formatNumber(count))
+        : String(count);
     return LL.home.categories.productCount({ count: n });
   };
 

@@ -273,9 +273,17 @@ export const useProducts = () => {
       const { data } = await updateProductMutation({
         variables: { input },
       });
+      if (input.id) {
+        client.cache.evict({
+          id: client.cache.identify({ __typename: 'Product', id: input.id }),
+        });
+      }
+      client.cache.evict({ fieldName: 'products' });
+      client.cache.evict({ fieldName: 'product' });
+      client.cache.gc();
       return data?.updateProduct;
     },
-    [updateProductMutation]
+    [updateProductMutation, client]
   );
 
   return {

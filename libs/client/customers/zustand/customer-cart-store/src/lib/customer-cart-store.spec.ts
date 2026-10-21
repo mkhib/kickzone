@@ -91,4 +91,37 @@ describe('useCartStore', () => {
       useCartStore.getState().getItemByProductInfo('missing', 'x')
     ).toBeUndefined();
   });
+
+  it('keeps distinct line items for different size or color variants of the same product', () => {
+    useCartStore.getState().addItem({ ...baseItem, size: '42', color: 'Black' });
+    useCartStore.getState().addItem({ ...baseItem, size: '43', color: 'Black' });
+    useCartStore.getState().addItem({ ...baseItem, size: '42', color: 'White' });
+
+    const items = useCartStore.getState().items;
+    expect(items).toHaveLength(3);
+    expect(items.map((i) => `${i.size}-${i.color}`)).toEqual([
+      '42-Black',
+      '43-Black',
+      '42-White',
+    ]);
+  });
+
+  it('removes only the specified item when removing by id without affecting other items', () => {
+    useCartStore.getState().addItem({ ...baseItem, size: '42' });
+    useCartStore.getState().addItem({ ...baseItem, size: '43' });
+    useCartStore.getState().addItem({ ...baseItem, size: '44' });
+
+    const items = useCartStore.getState().items;
+    expect(items).toHaveLength(3);
+
+    const secondItemId = items[1].id;
+    useCartStore.getState().removeItem(secondItemId);
+
+    const remaining = useCartStore.getState().items;
+    expect(remaining).toHaveLength(2);
+    expect(remaining.find((i) => i.id === secondItemId)).toBeUndefined();
+    expect(remaining[0].size).toBe('42');
+    expect(remaining[1].size).toBe('44');
+  });
 });
+

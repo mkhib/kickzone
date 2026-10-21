@@ -55,7 +55,10 @@ export interface CartActions {
   getItemById: (itemId: string) => CartItem | undefined;
   getItemByProductInfo: (
     productId: string,
-    productInfoId: string
+    productInfoId: string,
+    size?: string | null,
+    color?: string | null,
+    sellerProductId?: string | null
   ) => CartItem | undefined;
   getTotalItems: () => number;
   getTotalPrice: () => number;
@@ -90,7 +93,10 @@ export const useCartStore = create<CartStore>()(
       addItem: (itemData) => {
         const existingItem = get().getItemByProductInfo(
           itemData.productId,
-          itemData.productInfoId
+          itemData.productInfoId,
+          itemData.size,
+          itemData.color,
+          itemData.sellerProductId
         );
 
         const maxStock =
@@ -139,11 +145,25 @@ export const useCartStore = create<CartStore>()(
         }
       },
 
-      removeItem: (itemId) => {
-        set((state) => ({
-          items: state.items.filter((item) => item.id !== itemId),
-          lastUpdated: new Date().toISOString(),
-        }));
+      removeItem: (itemId: string) => {
+        set((state) => {
+          const hasDirectIdMatch = state.items.some((item) => item.id === itemId);
+          if (hasDirectIdMatch) {
+            return {
+              items: state.items.filter((item) => item.id !== itemId),
+              lastUpdated: new Date().toISOString(),
+            };
+          }
+          return {
+            items: state.items.filter(
+              (item) =>
+                item.id !== itemId &&
+                item.sellerProductId !== itemId &&
+                item.productId !== itemId
+            ),
+            lastUpdated: new Date().toISOString(),
+          };
+        });
       },
 
       updateItemQuantity: (itemId, quantity) => {
@@ -291,11 +311,28 @@ export const useCartStore = create<CartStore>()(
         return get().items.find((item) => item.id === itemId);
       },
 
-      getItemByProductInfo: (productId, productInfoId) => {
-        return get().items.find(
-          (item) =>
-            item.productId === productId && item.productInfoId === productInfoId
-        );
+      getItemByProductInfo: (
+        productId,
+        productInfoId,
+        size,
+        color,
+        sellerProductId
+      ) => {
+        return get().items.find((item) => {
+          const matchBase =
+            item.productId === productId && item.productInfoId === productInfoId;
+          if (!matchBase) return false;
+          if (sellerProductId !== undefined && item.sellerProductId !== sellerProductId) {
+            return false;
+          }
+          if (size !== undefined && item.size !== size) {
+            return false;
+          }
+          if (color !== undefined && item.color !== color) {
+            return false;
+          }
+          return true;
+        });
       },
 
       getTotalItems: () => {

@@ -3,7 +3,7 @@ import type { TranslationFunctions } from '@kickzone-workspace/shared-i18n';
 
 export type ShippingInfoFormData = {
   customerName: string;
-  customerEmail: string;
+  customerEmail?: string;
   customerPhone: string;
   shippingAddress: string;
   city: string;
@@ -30,16 +30,23 @@ export const createShippingInfoSchema = (LL: TranslationFunctions) =>
 
     customerEmail: z
       .string()
-      .min(1, LL.validation.email.required())
       .max(255, LL.validation.email.maxLength())
-      .refine((email) => z.email().safeParse(email).success, {
-        message: LL.validation.email.invalid(),
-      }),
+      .optional()
+      .or(z.literal(''))
+      .refine(
+        (email) => {
+          if (!email || email.trim() === '') return true;
+          return z.string().email().safeParse(email.trim()).success;
+        },
+        {
+          message: LL.validation.email.invalid(),
+        }
+      ),
 
     customerPhone: z
       .string()
       .min(1, LL.validation.phone.required())
-      .regex(/^[+]?[\d\s\-\(\)]{7,15}$/, {
+      .regex(/^[+]?[\d\s\-()]{7,15}$/, {
         message: LL.validation.phone.invalid(),
       }),
 

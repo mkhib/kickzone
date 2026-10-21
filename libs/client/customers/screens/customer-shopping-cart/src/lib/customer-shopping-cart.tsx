@@ -11,6 +11,7 @@ import {
   useIsCheckoutDialogOpen,
   useIsAuthDialogOpen,
   useCheckoutActiveStep,
+  useCheckoutShippingMethod,
   useCheckoutShippingInfo,
   useCheckoutValidationErrors,
   useIsCreatingOrder,
@@ -23,6 +24,7 @@ import {
   useSetCheckoutStep,
   useNextCheckoutStep,
   usePrevCheckoutStep,
+  useSetShippingMethod,
   useSetShippingInfo,
   useUpdateShippingField,
   useSetValidationErrors,
@@ -32,6 +34,7 @@ import {
   useSetPaymentAuthority,
   useResetCheckout,
   type ShippingInfo,
+  type ShippingMethod,
 } from '@kickzone-workspace/customer-checkout-store';
 import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
@@ -46,7 +49,6 @@ import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { parseColorHexes } from '@kickzone-workspace/client-shared-graphql';
 import {
-  saintbalaBrand,
   useI18nContext,
   useLanguageContext,
   usePageTitle,
@@ -68,6 +70,8 @@ import Button from '@mui/material/Button';
 import { LottieEmptyCart } from '@kickzone-workspace/lottie-empty-cart';
 import Card from '@mui/material/Card';
 import CardMedia from '@mui/material/CardMedia';
+import Chip from '@mui/material/Chip';
+import Radio from '@mui/material/Radio';
 import { useTheme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import CircularProgress from '@mui/material/CircularProgress';
@@ -108,6 +112,226 @@ const isItemRecommended = (
   return Boolean(item.isRecommended ?? item.recommended);
 };
 
+interface ShippingMethodSelectorProps {
+  currentMethod: ShippingMethod;
+  onSelect: (method: ShippingMethod) => void;
+  vipCost: number;
+  expressCost: number;
+  pickupCost: number;
+  locale: string;
+  isDark: boolean;
+}
+
+function ShippingMethodSelector({
+  currentMethod,
+  onSelect,
+  vipCost,
+  expressCost,
+  pickupCost,
+  locale,
+  isDark,
+}: ShippingMethodSelectorProps) {
+  const isRTL = locale === 'fa';
+  const options: Array<{
+    id: ShippingMethod;
+    title: string;
+    badge?: string;
+    description: React.ReactNode;
+    cost: number;
+  }> = [
+    {
+      id: 'vip',
+      title: isRTL
+        ? 'پیک اختصاصی و بیمه مرسوله (VIP)'
+        : 'VIP & Insured Courier',
+      badge: isRTL ? 'پیشنهادی' : 'RECOMMENDED',
+      description: isRTL
+        ? 'تحویل اکسپرس در بسته‌بندی لوکس اختصاصی با پوشش کامل خسارت و بیمه'
+        : 'White-glove fast delivery, signature luxury packaging & full insurance',
+      cost: vipCost,
+    },
+    {
+      id: 'express',
+      title: isRTL ? 'ارسال پیشتاز سراسری' : 'Standard Express',
+      description: isRTL
+        ? 'تحویل مطمئن با پست پیشتاز سراسری طی ۲ الی ۴ روز کاری'
+        : 'Reliable nationwide courier delivery within 2–4 business days',
+      cost: expressCost,
+    },
+    {
+      id: 'pickup',
+      title: isRTL ? 'تحویل حضوری در بوتیک' : 'Showroom Pickup',
+      badge: isRTL ? 'رایگان' : 'FREE',
+      description: isRTL ? (
+        <>
+          تحویل حضوری و مستقیم در بوتیک مرکزی <bdi>SAINTBALA</bdi>
+        </>
+      ) : (
+        'Complimentary collection at the SAINTBALA Flagship Boutique'
+      ),
+      cost: pickupCost,
+    },
+  ];
+
+  return (
+    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+      {options.map((option) => {
+        const isSelected = currentMethod === option.id;
+        return (
+          <Box
+            key={option.id}
+            role="radio"
+            aria-checked={isSelected}
+            tabIndex={0}
+            onClick={() => onSelect(option.id)}
+            onKeyDown={(e) => {
+              if (e.key === ' ' || e.key === 'Enter') {
+                e.preventDefault();
+                onSelect(option.id);
+              }
+            }}
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 1.25,
+              p: 1.5,
+              borderRadius: '16px',
+              cursor: 'pointer',
+              userSelect: 'none',
+              transition: 'all 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+              background: isSelected
+                ? isDark
+                  ? 'linear-gradient(145deg, rgba(197, 184, 154, 0.16) 0%, rgba(181, 171, 147, 0.08) 100%)'
+                  : 'linear-gradient(145deg, rgba(230, 215, 185, 0.35) 0%, rgba(245, 238, 222, 0.25) 100%)'
+                : isDark
+                ? 'rgba(255, 255, 255, 0.03)'
+                : 'rgba(0, 0, 0, 0.02)',
+              border: isSelected
+                ? isDark
+                  ? '1.5px solid #c5b89a'
+                  : '1.5px solid #7c6d48'
+                : '1px solid',
+              borderColor: isSelected
+                ? isDark
+                  ? '#c5b89a'
+                  : '#7c6d48'
+                : 'divider',
+              boxShadow: isSelected
+                ? isDark
+                  ? '0 6px 18px -4px rgba(0, 0, 0, 0.4), inset 0 1px 1px 0 rgba(255, 255, 255, 0.1)'
+                  : '0 6px 16px -4px rgba(180, 165, 140, 0.25), inset 0 1px 2px 0 rgba(255, 255, 255, 0.8)'
+                : 'none',
+              '&:hover': {
+                transform: 'translateY(-1px)',
+                borderColor: isDark
+                  ? 'rgba(197, 184, 154, 0.6)'
+                  : 'rgba(124, 109, 72, 0.6)',
+              },
+            }}
+          >
+            <Radio
+              checked={isSelected}
+              onChange={() => onSelect(option.id)}
+              value={option.id}
+              size="small"
+              sx={{
+                p: 0.5,
+                color: isDark ? 'rgba(197, 184, 154, 0.6)' : 'rgba(124, 109, 72, 0.6)',
+                '&.Mui-checked': {
+                  color: isDark ? '#c5b89a' : '#7c6d48',
+                },
+              }}
+            />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: 1,
+                  flexWrap: 'wrap',
+                  mb: 0.25,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography
+                    variant="subtitle2"
+                    sx={{
+                      fontWeight: 700,
+                      fontSize: '0.9rem',
+                      color: isDark ? '#f4f4f2' : '#181816',
+                    }}
+                  >
+                    {option.title}
+                  </Typography>
+                  {option.badge && (
+                    <Chip
+                      size="small"
+                      label={option.badge}
+                      sx={{
+                        height: 20,
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.04em',
+                        borderRadius: '6px',
+                        background:
+                          option.id === 'vip'
+                            ? isDark
+                              ? 'rgba(197, 184, 154, 0.25)'
+                              : 'rgba(124, 109, 72, 0.2)'
+                            : isDark
+                            ? 'rgba(76, 175, 80, 0.2)'
+                            : 'rgba(56, 142, 60, 0.15)',
+                        color:
+                          option.id === 'vip'
+                            ? isDark
+                              ? '#f0e6d2'
+                              : '#5a4d2e'
+                            : isDark
+                            ? '#a5d6a7'
+                            : '#2e7d32',
+                      }}
+                    />
+                  )}
+                </Box>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    fontWeight: 700,
+                    color: isDark ? '#c5b89a' : '#7c6d48',
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {option.cost === 0 ? (
+                    locale === 'fa' ? 'رایگان' : 'Free'
+                  ) : (
+                    <PriceDisplay
+                      priceInUSD={option.cost}
+                      showSymbol={true}
+                      showOriginal={false}
+                    />
+                  )}
+                </Typography>
+              </Box>
+              <Typography
+                variant="caption"
+                sx={{
+                  display: 'block',
+                  color: 'text.secondary',
+                  fontSize: '0.78rem',
+                  lineHeight: 1.4,
+                }}
+              >
+                {option.description}
+              </Typography>
+            </Box>
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
 export function CustomerShoppingCart() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -120,6 +344,7 @@ export function CustomerShoppingCart() {
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.shoppingCart());
   const { currentLocale } = useLanguageContext();
+  const isRTL = currentLocale === 'fa';
   // ZarinPal is Iran-only; use it for Farsi checkout. Other locales place a
   // pending order and are contacted for payment (see checkout.demoCheckout).
   const usesZarinPal = currentLocale === 'fa';
@@ -132,6 +357,7 @@ export function CustomerShoppingCart() {
 
   // Use checkout store (Zustand)
   const activeStep = useCheckoutActiveStep();
+  const shippingMethod = useCheckoutShippingMethod();
   const createdOrder = useCreatedOrder();
   const paymentAuthority = usePaymentAuthority();
   const isCreatingOrder = useIsCreatingOrder();
@@ -147,6 +373,7 @@ export function CustomerShoppingCart() {
   const setActiveStep = useSetCheckoutStep();
   const nextStep = useNextCheckoutStep();
   const prevStep = usePrevCheckoutStep();
+  const setShippingMethod = useSetShippingMethod();
   const setShippingInfo = useSetShippingInfo();
   const updateShippingField = useUpdateShippingField();
   const setValidationErrors = useSetValidationErrors();
@@ -214,8 +441,8 @@ export function CustomerShoppingCart() {
     }
   );
 
-  // Get calculated shipping costs
-  const totalShippingCost = useMemo(() => {
+  // Base calculated shipping costs (VIP Courier)
+  const baseShippingCost = useMemo(() => {
     const fallbackTotal = sellerShippingFees.reduce(
       (sum, seller) => sum + seller.shippingFee,
       0
@@ -228,9 +455,23 @@ export function CustomerShoppingCart() {
       return queryTotal > 0 ? queryTotal : fallbackTotal;
     }
 
-    // Fallback: sum all shipping fees (old behavior)
+    // Fallback: sum all shipping fees
     return fallbackTotal;
   }, [shippingData, sellerShippingFees]);
+
+  const vipShippingCost = baseShippingCost > 0 ? baseShippingCost : 1.2;
+  const expressShippingCost = Math.round(vipShippingCost * 0.45 * 100) / 100;
+  const pickupShippingCost = 0;
+
+  const totalShippingCost = useMemo(() => {
+    if (shippingMethod === 'pickup') {
+      return pickupShippingCost;
+    }
+    if (shippingMethod === 'express') {
+      return expressShippingCost;
+    }
+    return vipShippingCost;
+  }, [shippingMethod, pickupShippingCost, expressShippingCost, vipShippingCost]);
 
   // Create a map of sellerId -> calculated shipping cost for order creation
   const shippingCostsBySeller = useMemo(() => {
@@ -238,16 +479,28 @@ export function CustomerShoppingCart() {
       shippingData?.calculateShippingCost?.shippingBreakdown || [];
     const map: Record<string, number> = {};
     breakdown.forEach((item) => {
-      map[String(item.sellerId)] = item.appliedFee || 0;
+      const baseFee = item.appliedFee || 0;
+      map[String(item.sellerId)] =
+        shippingMethod === 'pickup'
+          ? 0
+          : shippingMethod === 'express'
+          ? Math.round(baseFee * 0.45 * 100) / 100
+          : baseFee;
     });
     // Fallback: use original fees if breakdown not available
     sellerShippingFees.forEach((seller) => {
       if (!(seller.sellerId in map)) {
-        map[seller.sellerId] = seller.shippingFee;
+        const baseFee = seller.shippingFee;
+        map[seller.sellerId] =
+          shippingMethod === 'pickup'
+            ? 0
+            : shippingMethod === 'express'
+            ? Math.round(baseFee * 0.45 * 100) / 100
+            : baseFee;
       }
     });
     return map;
-  }, [shippingData, sellerShippingFees]);
+  }, [shippingData, sellerShippingFees, shippingMethod]);
 
   const grandTotal = cartTotal + totalShippingCost;
 
@@ -346,16 +599,18 @@ export function CustomerShoppingCart() {
     // Validate positive quantity
     if (newQuantity <= 0) {
       try {
-        // Only call server mutation if user is logged in
         if (user) {
-          await removeFromCartMutation(itemId);
+          await removeFromCartMutation(itemId).catch((err) => {
+            console.warn('[Cart] Server removeFromCart failed:', err);
+          });
         }
+      } catch (err) {
+        console.warn('[Cart] Server update failed:', err);
+      } finally {
         removeItem(itemId);
         showSnackbar(LL.checkout.itemRemovedMessage(), {
           severity: 'success',
         });
-      } catch {
-        showSnackbar(LL.checkout.removeFailedMessage(), { severity: 'error' });
       }
       return;
     }
@@ -389,18 +644,23 @@ export function CustomerShoppingCart() {
     }
   };
 
-  const handleRemoveItem = async (itemId: string) => {
+  const handleRemoveItem = async (itemId: string, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    e?.preventDefault();
     try {
       // Only call server mutation if user is logged in
       if (user) {
-        await removeFromCartMutation(itemId);
+        await removeFromCartMutation(itemId).catch((err) => {
+          console.warn('[Cart] Server removeFromCart failed:', err);
+        });
       }
+    } catch (err) {
+      console.warn('[Cart] Server removeFromCart threw:', err);
+    } finally {
       removeItem(itemId);
       showSnackbar(LL.checkout.itemRemovedMessage(), {
         severity: 'success',
       });
-    } catch {
-      showSnackbar(LL.checkout.removeFailedMessage(), { severity: 'error' });
     }
   };
 
@@ -424,11 +684,7 @@ export function CustomerShoppingCart() {
   };
 
   const handleCheckout = () => {
-    // Check if user is authenticated
-    if (!user) {
-      openAuthDialog();
-      return;
-    }
+    // Both authenticated users and guests can proceed to checkout
     openCheckoutDialog();
   };
 
@@ -874,7 +1130,7 @@ export function CustomerShoppingCart() {
                 mb: 0.5,
               }}
             >
-              SAINTBALA
+              {isRTL ? <bdi>SAINTBALA</bdi> : 'SAINTBALA'}
             </Typography>
             <Typography
               variant="h4"
@@ -1145,14 +1401,21 @@ export function CustomerShoppingCart() {
                           >
                             <IconButton
                               size="small"
-                              onClick={() =>
+                              aria-label="Decrease quantity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
                                 handleQuantityChange(
                                   item.id,
                                   item.quantity - 1,
                                   item.availableStock
-                                )
-                              }
+                                );
+                              }}
                               sx={{
+                                minWidth: 44,
+                                minHeight: 44,
+                                width: 44,
+                                height: 44,
                                 color: 'text.primary',
                                 '&:hover': {
                                   background: 'action.hover',
@@ -1174,15 +1437,22 @@ export function CustomerShoppingCart() {
                             </Typography>
                             <IconButton
                               size="small"
-                              onClick={() =>
+                              aria-label="Increase quantity"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                e.preventDefault();
                                 handleQuantityChange(
                                   item.id,
                                   item.quantity + 1,
                                   item.availableStock
-                                )
-                              }
+                                );
+                              }}
                               disabled={item.quantity >= item.availableStock}
                               sx={{
+                                minWidth: 44,
+                                minHeight: 44,
+                                width: 44,
+                                height: 44,
                                 color: 'text.primary',
                                 '&:hover': {
                                   background: 'action.hover',
@@ -1220,8 +1490,13 @@ export function CustomerShoppingCart() {
                             </Typography>
 
                             <IconButton
-                              onClick={() => handleRemoveItem(item.id)}
+                              aria-label="Remove item"
+                              onClick={(e) => handleRemoveItem(item.id, e)}
                               sx={{
+                                minWidth: 44,
+                                minHeight: 44,
+                                width: 44,
+                                height: 44,
                                 color: 'error.main',
                                 '&:hover': {
                                   background: 'action.hover',
@@ -1323,6 +1598,35 @@ export function CustomerShoppingCart() {
                 </Typography>
                 <Divider sx={{ my: 2 }} />
 
+                {/* Shipping Method Selector */}
+                <Box sx={{ mb: 2.5 }}>
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      display: 'block',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.18em',
+                      fontWeight: 700,
+                      fontSize: '0.72rem',
+                      color: isDark ? '#c5b89a' : '#7c6d48',
+                      mb: 1.25,
+                    }}
+                  >
+                    {currentLocale === 'fa' ? 'انتخاب روش ارسال' : 'SHIPPING METHOD'}
+                  </Typography>
+                  <ShippingMethodSelector
+                    currentMethod={shippingMethod}
+                    onSelect={setShippingMethod}
+                    vipCost={vipShippingCost}
+                    expressCost={expressShippingCost}
+                    pickupCost={pickupShippingCost}
+                    locale={currentLocale}
+                    isDark={isDark}
+                  />
+                </Box>
+
+                <Divider sx={{ my: 2 }} />
+
                 <Box
                   sx={{
                     display: 'flex',
@@ -1363,9 +1667,30 @@ export function CustomerShoppingCart() {
                     gap: { xs: 0.5, lg: 1 },
                   }}
                 >
-                  <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0, color: 'text.secondary' }}>
-                    {LL.checkout.shipping()}:
-                  </Typography>
+                  <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                    <Typography sx={{ whiteSpace: 'nowrap', flexShrink: 0, color: 'text.secondary' }}>
+                      {LL.checkout.shipping()}:
+                    </Typography>
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        color: isDark ? '#c5b89a' : '#7c6d48',
+                        fontWeight: 600,
+                      }}
+                    >
+                      {shippingMethod === 'vip'
+                        ? currentLocale === 'fa'
+                          ? 'پیک اختصاصی و بیمه (VIP)'
+                          : 'VIP Courier & Insurance'
+                        : shippingMethod === 'express'
+                        ? currentLocale === 'fa'
+                          ? 'پیشتاز استاندارد'
+                          : 'Standard Express'
+                        : currentLocale === 'fa'
+                        ? 'تحویل حضوری در بوتیک'
+                        : 'Showroom Pickup'}
+                    </Typography>
+                  </Box>
                   <Typography
                     sx={{
                       textAlign: { xs: 'left', lg: 'right' },
@@ -1374,11 +1699,15 @@ export function CustomerShoppingCart() {
                       flex: { xs: 'none', lg: '1 1 auto' },
                     }}
                   >
-                    <PriceDisplay
-                      priceInUSD={totalShippingCost}
-                      showSymbol={true}
-                      showOriginal={false}
-                    />
+                    {totalShippingCost === 0 ? (
+                      currentLocale === 'fa' ? 'رایگان' : 'Free'
+                    ) : (
+                      <PriceDisplay
+                        priceInUSD={totalShippingCost}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
+                    )}
                   </Typography>
                 </Box>
 
@@ -1566,6 +1895,61 @@ export function CustomerShoppingCart() {
               overflowX: 'hidden',
             }}
           >
+            {/* Guest Checkout Notice / Sign In Trigger */}
+            {!user && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  p: 1.5,
+                  mb: 2.5,
+                  borderRadius: 2.5,
+                  backgroundColor: isDark
+                    ? 'rgba(197, 184, 154, 0.08)'
+                    : 'rgba(143, 132, 104, 0.08)',
+                  border: '1px solid',
+                  borderColor: isDark
+                    ? 'rgba(197, 184, 154, 0.25)'
+                    : 'rgba(143, 132, 104, 0.2)',
+                }}
+              >
+                <Typography variant="body2" sx={{ color: 'text.secondary', fontSize: '0.85rem' }}>
+                  {currentLocale === 'fa'
+                    ? 'حساب کاربری دارید؟ برای دسترسی به آدرس‌های ذخیره‌شده وارد شوید.'
+                    : 'Already have an account? Sign in to use saved addresses.'}
+                </Typography>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  onClick={() => {
+                    closeCheckoutDialog();
+                    navigate(CUSTOMER_ROUTES.LOGIN, {
+                      state: { from: CUSTOMER_ROUTES.CART },
+                    });
+                  }}
+                  sx={{
+                    ml: 1.5,
+                    whiteSpace: 'nowrap',
+                    fontWeight: 700,
+                    borderRadius: 2,
+                    fontSize: '0.8rem',
+                    textTransform: 'none',
+                    borderColor: isDark ? '#c5b89a' : '#7c6d48',
+                    color: isDark ? '#c5b89a' : '#7c6d48',
+                    '&:hover': {
+                      borderColor: isDark ? '#e2d7be' : '#5d5134',
+                      backgroundColor: isDark
+                        ? 'rgba(197, 184, 154, 0.1)'
+                        : 'rgba(143, 132, 104, 0.08)',
+                    },
+                  }}
+                >
+                  {currentLocale === 'fa' ? 'ورود به حساب' : 'Sign In'}
+                </Button>
+              </Box>
+            )}
+
             {/* Desktop / tablet Stepper */}
             <Stepper
               activeStep={activeStep}
@@ -1799,14 +2183,30 @@ export function CustomerShoppingCart() {
                   }}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    {LL.checkout.shipping()}:
+                    {LL.checkout.shipping()} (
+                    {shippingMethod === 'vip'
+                      ? currentLocale === 'fa'
+                        ? 'پیک VIP'
+                        : 'VIP Courier'
+                      : shippingMethod === 'express'
+                      ? currentLocale === 'fa'
+                        ? 'پیشتاز'
+                        : 'Express'
+                      : currentLocale === 'fa'
+                      ? 'حضوری'
+                      : 'Pickup'}
+                    ):
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    <PriceDisplay
-                      priceInUSD={totalShippingCost}
-                      showSymbol={true}
-                      showOriginal={false}
-                    />
+                    {totalShippingCost === 0 ? (
+                      currentLocale === 'fa' ? 'رایگان' : 'Free'
+                    ) : (
+                      <PriceDisplay
+                        priceInUSD={totalShippingCost}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
+                    )}
                   </Typography>
                 </Box>
 
@@ -1873,9 +2273,13 @@ export function CustomerShoppingCart() {
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
                       fullWidth
-                      required
+                      required={false}
                       size={isMobile ? 'small' : 'medium'}
-                      label={LL.form.email()}
+                      label={
+                        currentLocale === 'fa'
+                          ? `${LL.form.email()} (اختیاری)`
+                          : `${LL.form.email()} (Optional)`
+                      }
                       type="email"
                       value={shippingInfo.customerEmail || ''}
                       onChange={(e) =>
@@ -2032,6 +2436,32 @@ export function CustomerShoppingCart() {
                           borderRadius: 2,
                         },
                       }}
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12 }}>
+                    <Divider sx={{ my: 1.5 }} />
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        display: 'block',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.18em',
+                        fontWeight: 700,
+                        fontSize: '0.72rem',
+                        color: isDark ? '#c5b89a' : '#7c6d48',
+                        mb: 1.25,
+                      }}
+                    >
+                      {currentLocale === 'fa' ? 'انتخاب روش ارسال' : 'SHIPPING METHOD'}
+                    </Typography>
+                    <ShippingMethodSelector
+                      currentMethod={shippingMethod}
+                      onSelect={setShippingMethod}
+                      vipCost={vipShippingCost}
+                      expressCost={expressShippingCost}
+                      pickupCost={pickupShippingCost}
+                      locale={currentLocale}
+                      isDark={isDark}
                     />
                   </Grid>
                 </Grid>
@@ -2270,14 +2700,30 @@ export function CustomerShoppingCart() {
                   }}
                 >
                   <Typography variant="body2" color="text.secondary">
-                    {LL.checkout.shipping()}:
+                    {LL.checkout.shipping()} (
+                    {shippingMethod === 'vip'
+                      ? currentLocale === 'fa'
+                        ? 'پیک VIP'
+                        : 'VIP Courier'
+                      : shippingMethod === 'express'
+                      ? currentLocale === 'fa'
+                        ? 'پیشتاز'
+                        : 'Express'
+                      : currentLocale === 'fa'
+                      ? 'حضوری'
+                      : 'Pickup'}
+                    ):
                   </Typography>
                   <Typography variant="body2" fontWeight={600}>
-                    <PriceDisplay
-                      priceInUSD={totalShippingCost}
-                      showSymbol={true}
-                      showOriginal={false}
-                    />
+                    {totalShippingCost === 0 ? (
+                      currentLocale === 'fa' ? 'رایگان' : 'Free'
+                    ) : (
+                      <PriceDisplay
+                        priceInUSD={totalShippingCost}
+                        showSymbol={true}
+                        showOriginal={false}
+                      />
+                    )}
                   </Typography>
                 </Box>
 

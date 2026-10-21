@@ -18,6 +18,8 @@ export interface CreatedOrder {
   orderNumber: string;
 }
 
+export type ShippingMethod = 'vip' | 'express' | 'pickup';
+
 export interface CheckoutState {
   // Modal visibility
   isCheckoutDialogOpen: boolean;
@@ -25,6 +27,9 @@ export interface CheckoutState {
 
   // Stepper
   activeStep: number;
+
+  // Shipping Method
+  shippingMethod: ShippingMethod;
 
   // Shipping Form Data
   shippingInfo: Partial<ShippingInfo>;
@@ -47,6 +52,9 @@ export interface CheckoutActions {
   setActiveStep: (step: number) => void;
   nextStep: () => void;
   prevStep: () => void;
+
+  // Shipping method controls
+  setShippingMethod: (method: ShippingMethod) => void;
 
   // Shipping form controls
   setShippingInfo: (
@@ -89,6 +97,7 @@ export const useCheckoutStore = create<CheckoutStore>()(
       isCheckoutDialogOpen: false,
       isAuthDialogOpen: false,
       activeStep: 0,
+      shippingMethod: 'vip',
       shippingInfo: initialShippingInfo,
       validationErrors: {},
       isCreatingOrder: false,
@@ -108,6 +117,9 @@ export const useCheckoutStore = create<CheckoutStore>()(
         set((state) => ({
           activeStep: Math.max(0, state.activeStep - 1),
         })),
+
+      // Shipping method controls
+      setShippingMethod: (method) => set({ shippingMethod: method }),
 
       // Shipping form controls
       setShippingInfo: (info) =>
@@ -146,6 +158,7 @@ export const useCheckoutStore = create<CheckoutStore>()(
           isCheckoutDialogOpen: false,
           isAuthDialogOpen: false,
           activeStep: 0,
+          shippingMethod: 'vip',
           validationErrors: {},
           isCreatingOrder: false,
           createdOrder: null,
@@ -154,9 +167,10 @@ export const useCheckoutStore = create<CheckoutStore>()(
     }),
     {
       name: 'customer-checkout-storage',
-      // Persist only shippingInfo across sessions so user doesn't re-type address
+      // Persist shippingInfo and shippingMethod across sessions
       partialize: (state) => ({
         shippingInfo: state.shippingInfo,
+        shippingMethod: state.shippingMethod,
       }),
     }
   )
@@ -169,6 +183,8 @@ export const useIsAuthDialogOpen = () =>
   useCheckoutStore((state) => state.isAuthDialogOpen);
 export const useCheckoutActiveStep = () =>
   useCheckoutStore((state) => state.activeStep);
+export const useCheckoutShippingMethod = () =>
+  useCheckoutStore((state) => state.shippingMethod);
 export const useCheckoutShippingInfo = () =>
   useCheckoutStore((state) => state.shippingInfo);
 export const useCheckoutValidationErrors = () =>
@@ -195,6 +211,8 @@ export const useNextCheckoutStep = () =>
   useCheckoutStore((state) => state.nextStep);
 export const usePrevCheckoutStep = () =>
   useCheckoutStore((state) => state.prevStep);
+export const useSetShippingMethod = () =>
+  useCheckoutStore((state) => state.setShippingMethod);
 export const useSetShippingInfo = () =>
   useCheckoutStore((state) => state.setShippingInfo);
 export const useUpdateShippingField = () =>

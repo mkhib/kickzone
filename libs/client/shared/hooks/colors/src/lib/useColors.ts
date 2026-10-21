@@ -11,8 +11,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 export function useColors() {
   const { data, loading, error, refetch } = useQuery<
-    Pick<KickzoneGraphqlTypes.Query, 'colors'>,
-    KickzoneGraphqlTypes.QueryColorArgs
+    Pick<KickzoneGraphqlTypes.Query, 'colors'>
   >(GET_COLORS);
 
   const [createColorMutation, { loading: createLoading, error: createError }] =

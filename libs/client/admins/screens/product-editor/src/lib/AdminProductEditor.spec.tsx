@@ -16,8 +16,9 @@ const mockUpdateProduct = vi.fn();
 const mockCreateColor = vi.fn();
 const mockUpdateColor = vi.fn();
 const mockDeleteColor = vi.fn();
+const mockRefetchProduct = vi.fn();
 const mockUseParams = vi.fn<[], { id?: string }>(() => ({ id: undefined }));
-const mockUseProductById = vi.fn(() => ({ product: null }));
+const mockUseProductById = vi.fn(() => ({ product: null, refetch: mockRefetchProduct }));
 
 vi.mock('@kickzone-workspace/admins-layout', () => ({
   AdminsLayout: ({ children }: { children: React.ReactNode }) => (
@@ -52,6 +53,25 @@ vi.mock('@kickzone-workspace/categories-hook', () => ({
       { id: 2, name: 'Category 2' },
     ],
     getCategoriesLoading: false,
+  }),
+}));
+
+vi.mock('@kickzone-workspace/brands-hook', () => ({
+  useBrandsQuery: () => ({
+    brands: [
+      { id: 1, name: 'Brand 1', slug: 'brand-1' },
+      { id: 2, name: 'Brand 2', slug: 'brand-2' },
+    ],
+    getBrandsLoading: false,
+    refetchBrands: vi.fn(),
+  }),
+  useBrands: () => ({
+    createBrand: vi.fn(),
+    updateBrand: vi.fn(),
+    deleteBrand: vi.fn(),
+    isCreatingBrand: false,
+    isUpdatingBrand: false,
+    isDeletingBrand: false,
   }),
 }));
 
@@ -145,6 +165,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         sku: () => 'SKU',
         category: () => 'Category',
         categoryName: () => 'Category Name',
+        brand: () => 'Brand',
         description: () => 'Description',
         color: () => 'Color',
       },
@@ -231,7 +252,7 @@ describe('AdminProductEditor', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockUseParams.mockReturnValue({ id: undefined });
-    mockUseProductById.mockReturnValue({ product: null });
+    mockUseProductById.mockReturnValue({ product: null, refetch: mockRefetchProduct });
   });
 
   it('renders the editor shell and main fields', () => {
@@ -525,6 +546,163 @@ describe('AdminProductEditor', () => {
         ]),
       }),
       expect.any(Array)
+    );
+  });
+
+  it('dispatches the correct variant payload when adding a new variant to an existing product, calls refetch, and only shows success on confirmed server response', async () => {
+    mockUseParams.mockReturnValue({ id: '10' });
+    const existingProduct = {
+      id: 10,
+      name: 'SAINTBALA Luxury Hoodie',
+      sku: 'SB-HOOD-LUX',
+      categories: [{ id: 1, name: 'Category 1' }],
+      description: 'Existing Description',
+      productInfos: [
+        {
+          id: 101,
+          size: 'M',
+          sizeKind: 'APPAREL',
+          colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
+          weight: 500,
+          images: ['https://cdn.saintbala.com/existing.jpg'],
+        },
+      ],
+    };
+    mockUseProductById.mockReturnValue({
+      product: existingProduct,
+      refetch: mockRefetchProduct,
+    });
+
+    mockUpdateProduct.mockResolvedValueOnce({
+      id: 10,
+      name: 'SAINTBALA Luxury Hoodie',
+      sku: 'SB-HOOD-LUX',
+      productInfos: [
+        {
+          id: 101,
+          size: 'M',
+          sizeKind: 'APPAREL',
+          colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
+          weight: 500,
+          images: ['https://cdn.saintbala.com/existing.jpg'],
+        },
+        {
+          id: 202,
+          size: 'L',
+          sizeKind: 'APPAREL',
+          colors: [{ id: 2, name: 'Blue', hexCode: '#0000ff' }],
+          weight: 550,
+          images: [],
+        },
+      ],
+    });
+
+    renderEditor();
+
+    await waitFor(() => {
+      expect(
+        screen.getByDisplayValue('SAINTBALA Luxury Hoodie')
+      ).toBeInTheDocument();
+    });
+
+    // Add a new variant row
+    const addVariant = screen.getByRole('button', { name: 'Add Variant' });
+    fireEvent.click(addVariant);
+
+    // Find all size selects (should now be 2)
+    const sizeSelects = screen.getAllByRole('combobox', { name: /^Size$/i });
+    expect(sizeSelects).toHaveLength(2);
+    fireEvent.mouseDown(sizeSelects[1]);
+    const sizeOption = await screen.findByRole('option', { name: 'L' });
+    fireEvent.click(sizeOption);
+
+    // Select color for the second variant
+    const colorInputs = screen.getAllByLabelText(/Color/i);
+    fireEvent.focus(colorInputs[1]);
+    fireEvent.keyDown(colorInputs[1], { key: 'ArrowDown' });
+    const blueOption = await screen.findByText('Blue');
+    fireEvent.click(blueOption);
+
+    // Fill weight for the second variant
+    const weightInputs = screen.getAllByLabelText(/Weight/i);
+    fireEvent.change(weightInputs[1], {
+      target: { value: '550' },
+    });
+
+    // Submit form
+    fireEvent.submit(screen.getByLabelText('Product Editor Form'));
+
+    await waitFor(() => {
+      expect(mockUpdateProduct).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockUpdateProduct).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: 10,
+        name: 'SAINTBALA Luxury Hoodie',
+        sku: 'SB-HOOD-LUX',
+        variants: [
+          expect.objectContaining({
+            id: 101,
+            size: 'M',
+            colorIds: [1],
+            weight: 500,
+          }),
+          expect.objectContaining({
+            id: undefined, // New variant has no server ID yet
+            size: 'L',
+            colorIds: [2],
+            weight: 550,
+          }),
+        ],
+      })
+    );
+
+    // Verify refetch was invoked and success notification was shown
+    expect(mockRefetchProduct).toHaveBeenCalledTimes(1);
+    expect(mockShowSnackbar).toHaveBeenCalledWith(
+      'Product updated successfully',
+      { severity: 'success' }
+    );
+  });
+
+  it('displays an error notification when server updateProduct rejects and does not falsely report success', async () => {
+    mockUseParams.mockReturnValue({ id: '10' });
+    mockUseProductById.mockReturnValue({
+      product: {
+        id: 10,
+        name: 'SAINTBALA Luxury Hoodie',
+        sku: 'SB-HOOD-LUX',
+        categories: [{ id: 1, name: 'Category 1' }],
+        productInfos: [],
+      },
+      refetch: mockRefetchProduct,
+    });
+
+    mockUpdateProduct.mockRejectedValueOnce(
+      new Error('Stock quantity cannot be negative.')
+    );
+
+    renderEditor();
+
+    await waitFor(() => {
+      expect(
+        screen.getByDisplayValue('SAINTBALA Luxury Hoodie')
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.submit(screen.getByLabelText('Product Editor Form'));
+
+    await waitFor(() => {
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'Stock quantity cannot be negative.',
+        { severity: 'error' }
+      );
+    });
+
+    expect(mockShowSnackbar).not.toHaveBeenCalledWith(
+      'Product updated successfully',
+      expect.anything()
     );
   });
 });

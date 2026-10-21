@@ -20,6 +20,9 @@ import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { CustomerFavorites } from '@kickzone-workspace/customer-favorites';
 import { CustomerGuideAuthenticity } from '@kickzone-workspace/customer-guide-authenticity';
 import { CustomerGuidePayment } from '@kickzone-workspace/customer-guide-payment';
+import { CustomerContact } from '@kickzone-workspace/customer-contact';
+import { CustomerShippingReturns } from '@kickzone-workspace/customer-shipping-returns';
+import { CustomerPrivacyPolicy } from '@kickzone-workspace/customer-privacy-policy';
 import { CustomerNotFound } from '@kickzone-workspace/customer-not-found';
 import { ErrorBoundary } from '@kickzone-workspace/error-boundary';
 import { ScrollToTop } from './ScrollToTop';
@@ -84,6 +87,18 @@ export function CustomersRouter() {
           <Route
             path={CUSTOMER_ROUTES.GUIDE_PAYMENT}
             element={<CustomerGuidePayment />}
+          />
+          <Route
+            path={CUSTOMER_ROUTES.CONTACT}
+            element={<CustomerContact />}
+          />
+          <Route
+            path={CUSTOMER_ROUTES.SHIPPING_RETURNS}
+            element={<CustomerShippingReturns />}
+          />
+          <Route
+            path={CUSTOMER_ROUTES.PRIVACY_POLICY}
+            element={<CustomerPrivacyPolicy />}
           />
 
           {/* Wildcard 404 Route */}

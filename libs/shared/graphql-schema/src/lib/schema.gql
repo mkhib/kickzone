@@ -585,6 +585,21 @@ input CreateProductInput {
   brandId: Int
   description: String
   descriptions: [ProductDescriptionInput!]
+  variants: [ProductVariantInput!]
+}
+
+input ProductVariantInput {
+  id: Int
+  size: String!
+  sizeKind: SizeKind
+  colorIds: [Int!]!
+  weight: Float!
+  images: [String!]
+  price: Float
+  costPrice: Float
+  discount: Float
+  stockQuantity: Int
+  boxLess: Boolean
 }
 
 input ProductDescriptionInput {
@@ -612,6 +627,7 @@ input UpdateProductInput {
   brandId: Int
   description: String
   descriptions: [ProductDescriptionInput!]
+  variants: [ProductVariantInput!]
 }
 
 input TranslationInput {

@@ -19,6 +19,8 @@ export const CUSTOMER_ROUTES = {
   FAVORITES: '/favorites',
   GUIDE_AUTHENTICITY: '/guide/authenticity',
   GUIDE_PAYMENT: '/guide/payment',
+  SHIPPING_RETURNS: '/shipping-returns',
+  PRIVACY_POLICY: '/privacy-policy',
 } as const;
 
 export type CustomerRouteKey = keyof typeof CUSTOMER_ROUTES;

@@ -115,7 +115,7 @@ export function resolveCategoryLabel(
   const match = categories?.find(
     (c) => (c.slug || '').toLowerCase() === slug.toLowerCase()
   );
-  if (match?.name && match.name.toLowerCase() !== match.slug?.toLowerCase()) {
+  if (match?.name) {
     return match.name;
   }
   return fallback;
@@ -136,23 +136,38 @@ export function isProductInStock(product: KickzoneGraphqlTypes.Product): boolean
  */
 export function isWomenProduct(product: KickzoneGraphqlTypes.Product): boolean {
   const cats = product.categories || [];
-  return cats.some(
-    (c) =>
-      (c.slug || '').toLowerCase() === 'women' ||
-      (c.name || '').includes('زنانه')
-  );
+  return cats.some((c) => {
+    const slug = (c.slug || '').toLowerCase();
+    const name = (c.name || '').toLowerCase();
+    return (
+      slug === 'women' ||
+      slug === 'womens' ||
+      slug.includes('women') ||
+      name.includes('زنانه') ||
+      name.includes('women')
+    );
+  });
 }
 
 /**
  * Check if product belongs to men category
  */
 export function isMenProduct(product: KickzoneGraphqlTypes.Product): boolean {
+  if (isWomenProduct(product)) {
+    return false;
+  }
   const cats = product.categories || [];
-  return cats.some(
-    (c) =>
-      (c.slug || '').toLowerCase() === 'men' ||
-      (c.name || '').includes('مردانه')
-  );
+  return cats.some((c) => {
+    const slug = (c.slug || '').toLowerCase();
+    const name = (c.name || '').toLowerCase();
+    return (
+      slug === 'men' ||
+      slug === 'mens' ||
+      /\bmen\b/i.test(slug) ||
+      name.includes('مردانه') ||
+      /\bmen\b/i.test(name)
+    );
+  });
 }
 
 /**
@@ -239,14 +254,56 @@ export function selectHomePageData(data?: HomePageData | null) {
     if (brandName === 'jordan' || p.brand?.slug === 'jordan') jordanCount++;
 
     const cats = p.categories || [];
+    let isPWomen = false;
+    let isPHoodie = false;
+    let isPPant = false;
+
     cats.forEach((c) => {
       const slug = (c.slug || '').toLowerCase();
       const name = (c.name || '').toLowerCase();
-      if (slug === 'women' || name.includes('زنانه')) womenCount++;
-      if (slug === 'men' || name.includes('مردانه')) menCount++;
-      if (slug.includes('hoodie') || name.includes('هودی')) hoodiesCount++;
-      if (slug.includes('pant') || name.includes('شلوار')) pantsCount++;
+      if (
+        slug === 'women' ||
+        slug === 'womens' ||
+        slug.includes('women') ||
+        name.includes('زنانه') ||
+        name.includes('women')
+      ) {
+        isPWomen = true;
+      }
+      if (
+        slug.includes('hoodie') ||
+        name.includes('hoodie') ||
+        name.includes('هودی')
+      ) {
+        isPHoodie = true;
+      }
+      if (
+        slug.includes('pant') ||
+        name.includes('pant') ||
+        name.includes('شلوار')
+      ) {
+        isPPant = true;
+      }
     });
+
+    const isPMen =
+      !isPWomen &&
+      cats.some((c) => {
+        const slug = (c.slug || '').toLowerCase();
+        const name = (c.name || '').toLowerCase();
+        return (
+          slug === 'men' ||
+          slug === 'mens' ||
+          /\bmen\b/i.test(slug) ||
+          name.includes('مردانه') ||
+          /\bmen\b/i.test(name)
+        );
+      });
+
+    if (isPWomen) womenCount++;
+    if (isPMen) menCount++;
+    if (isPHoodie) hoodiesCount++;
+    if (isPPant) pantsCount++;
   });
 
   const bentoData = {

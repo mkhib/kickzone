@@ -1,0 +1,9 @@
+{
+  "name": "customer-contact",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/contact/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-contact --web",
+  "targets": {}
+}

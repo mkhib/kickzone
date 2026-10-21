@@ -159,6 +159,21 @@ export type CreateProductInput = {
   descriptions?: InputMaybe<Array<ProductDescriptionInput>>;
   name: Scalars['String']['input'];
   sku: Scalars['String']['input'];
+  variants?: InputMaybe<Array<ProductVariantInput>>;
+};
+
+export type ProductVariantInput = {
+  boxLess?: InputMaybe<Scalars['Boolean']['input']>;
+  colorIds: Array<Scalars['Int']['input']>;
+  costPrice?: InputMaybe<Scalars['Float']['input']>;
+  discount?: InputMaybe<Scalars['Float']['input']>;
+  id?: InputMaybe<Scalars['Int']['input']>;
+  images?: InputMaybe<Array<Scalars['String']['input']>>;
+  price?: InputMaybe<Scalars['Float']['input']>;
+  size: Scalars['String']['input'];
+  sizeKind?: InputMaybe<SizeKind>;
+  stockQuantity?: InputMaybe<Scalars['Int']['input']>;
+  weight: Scalars['Float']['input'];
 };
 
 export type CreateSellerInput = {
@@ -1258,6 +1273,7 @@ export type UpdateProductInput = {
   id: Scalars['Int']['input'];
   name: Scalars['String']['input'];
   sku: Scalars['String']['input'];
+  variants?: InputMaybe<Array<ProductVariantInput>>;
 };
 
 export type UpdateSellerInput = {

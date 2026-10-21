@@ -51,4 +51,37 @@ describe('ShippingValidation', () => {
     expect(result.validatedData?.zipCode).toBe('1987654321');
     expect(result.validatedData?.customerPhone).toBe('09123456789');
   });
+
+  it('validateShippingInfo allows guest checkout with empty or omitted customerEmail', () => {
+    const mockLL = {
+      validation: {
+        name: { required: () => '', minLength: () => '', maxLength: () => '', invalidCharacters: () => '' },
+        email: { required: () => '', maxLength: () => '', invalid: () => 'Invalid email' },
+        phone: { required: () => '', invalid: () => '' },
+        address: { required: () => '', minLength: () => '', maxLength: () => '' },
+        city: { required: () => '', minLength: () => '', maxLength: () => '', invalidCharacters: () => '' },
+        state: { required: () => '', minLength: () => '', maxLength: () => '', invalidCharacters: () => '' },
+        zipCode: { required: () => '', minLength: () => '', maxLength: () => '', invalidCharacters: () => '' },
+        country: { required: () => '', minLength: () => '', maxLength: () => '', invalidCharacters: () => '' },
+        notes: { maxLength: () => '' },
+        general: { error: () => '' },
+      },
+    };
+
+    const result = validateShippingInfo(
+      {
+        customerName: 'Guest User',
+        customerPhone: '+989123456789',
+        shippingAddress: 'Tehran Valiasr St',
+        city: 'Tehran',
+        state: 'Tehran',
+        zipCode: '1234567890',
+        country: 'Iran',
+      },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      mockLL as any
+    );
+
+    expect(result.isValid).toBe(true);
+  });
 });

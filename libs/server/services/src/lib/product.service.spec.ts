@@ -1,21 +1,29 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, In } from 'typeorm';
+import { Repository, In, FindOneOptions } from 'typeorm';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import { ProductService } from './product.service';
 import {
+  Brand,
   Category,
   Color,
   OrderItem,
   Product,
   ProductInfo,
   ProductInfoColor,
+  SellerInfo,
   SellerProduct,
   ProductDescription,
   SiteLanguage,
+  User,
+  UserRole,
 } from '@kickzone-workspace/entities';
 import { TranslationService } from './translation.service';
 import { SizeKind } from '@kickzone-workspace/product-sizes';
-import { CreateProductInfoInput } from '@kickzone-workspace/inputs';
+import {
+  CreateProductInfoInput,
+  UpdateProductInput,
+} from '@kickzone-workspace/inputs';
 
 describe('ProductService - Color Handling', () => {
   let service: ProductService;
@@ -23,9 +31,8 @@ describe('ProductService - Color Handling', () => {
   let productInfoRepo: jest.Mocked<Repository<ProductInfo>>;
   let productInfoColorRepo: jest.Mocked<Repository<ProductInfoColor>>;
   let colorRepo: jest.Mocked<Repository<Color>>;
-  let categoryRepo: jest.Mocked<Repository<Category>>;
   let sellerProductRepo: jest.Mocked<Repository<SellerProduct>>;
-  let orderItemRepo: jest.Mocked<Repository<OrderItem>>;
+  let sellerInfoRepo: jest.Mocked<Repository<SellerInfo>>;
 
   const mockColors: Color[] = [
     { id: 1, name: 'Red', hexCode: '#ff0000', translations: [] } as unknown as Color,
@@ -73,6 +80,24 @@ describe('ProductService - Color Handling', () => {
       findOne: jest.fn(),
       find: jest.fn(),
       count: jest.fn(),
+      create: jest.fn().mockImplementation((dto) => dto),
+      save: jest.fn().mockImplementation((dto) => Promise.resolve(dto)),
+      delete: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
+
+    const mockBrandRepo = {
+      findOneBy: jest.fn(),
+      findOne: jest.fn(),
+      findBy: jest.fn(),
+      create: jest.fn().mockImplementation((dto) => dto),
+      save: jest.fn().mockImplementation((dto) => Promise.resolve(dto)),
+    };
+
+    const mockSellerInfoRepo = {
+      findOne: jest.fn(),
+      findOneBy: jest.fn(),
+      create: jest.fn().mockImplementation((dto) => dto),
+      save: jest.fn().mockImplementation((dto) => Promise.resolve(dto)),
     };
 
     const mockOrderItemRepo = {
@@ -107,8 +132,16 @@ describe('ProductService - Color Handling', () => {
           useValue: mockCategoryRepo,
         },
         {
+          provide: getRepositoryToken(Brand),
+          useValue: mockBrandRepo,
+        },
+        {
           provide: getRepositoryToken(SellerProduct),
           useValue: mockSellerProductRepo,
+        },
+        {
+          provide: getRepositoryToken(SellerInfo),
+          useValue: mockSellerInfoRepo,
         },
         {
           provide: getRepositoryToken(OrderItem),
@@ -143,9 +176,8 @@ describe('ProductService - Color Handling', () => {
     productInfoRepo = module.get(getRepositoryToken(ProductInfo));
     productInfoColorRepo = module.get(getRepositoryToken(ProductInfoColor));
     colorRepo = module.get(getRepositoryToken(Color));
-    categoryRepo = module.get(getRepositoryToken(Category));
     sellerProductRepo = module.get(getRepositoryToken(SellerProduct));
-    orderItemRepo = module.get(getRepositoryToken(OrderItem));
+    sellerInfoRepo = module.get(getRepositoryToken(SellerInfo));
   });
 
   describe('createProductInfo with multiple colors', () => {
@@ -415,6 +447,398 @@ describe('ProductService - Color Handling', () => {
           expect.objectContaining({ color: mockColors[1], position: 1 }),
         ])
       );
+    });
+  });
+
+  describe('updateProduct with variants (Seller and Admin persistence & security)', () => {
+    it('allows a SELLER to add a new variant to their owned product and persists it with a generated ID', async () => {
+      const sellerUser = {
+        id: 10,
+        role: UserRole.SELLER,
+        username: 'seller_saintbala',
+      } as unknown as User;
+
+      const sellerInfo = {
+        id: 1,
+        user: { id: 10 },
+        storeName: 'SAINTBALA Flagship',
+      } as unknown as SellerInfo;
+
+      const initialProduct: Product = {
+        id: 100,
+        name: 'SAINTBALA Heavyweight Hoodie',
+        sku: 'SB-HOOD-01',
+        sellerId: 1,
+        seller: sellerInfo,
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      } as unknown as Product;
+
+      sellerInfoRepo.findOne.mockResolvedValue(sellerInfo);
+      sellerInfoRepo.findOneBy.mockResolvedValue(sellerInfo);
+      colorRepo.findBy.mockResolvedValue([mockColors[0]]);
+
+      const createdVariant: ProductInfo = {
+        id: 501,
+        size: 'L',
+        sizeKind: SizeKind.Apparel,
+        weight: 650,
+        images: ['https://cdn.saintbala.com/hoodie-l.jpg'],
+        product: initialProduct,
+        colorLinks: [
+          {
+            id: 1,
+            position: 0,
+            color: mockColors[0],
+            productInfo: null as unknown as ProductInfo,
+          } as ProductInfoColor,
+        ],
+        colors: [mockColors[0]],
+      };
+
+      productInfoRepo.create.mockReturnValue(createdVariant);
+      productInfoRepo.save.mockResolvedValue(createdVariant);
+      productRepo.save.mockResolvedValue(initialProduct);
+
+      // getProductById mock after update
+      const refreshedProduct: Product = {
+        ...initialProduct,
+        productInfos: [createdVariant],
+      };
+
+      productRepo.findOne.mockImplementation(
+        async (options?: FindOneOptions<Product>) => {
+          const relations = options?.relations as string[] | undefined;
+          const where = options?.where as { id?: number } | undefined;
+          if (relations?.includes('descriptions')) {
+            return refreshedProduct;
+          }
+          if (where?.id === 100) {
+            return initialProduct;
+          }
+          return null;
+        }
+      );
+
+      const updateInput: UpdateProductInput = {
+        id: 100,
+        name: 'SAINTBALA Heavyweight Hoodie',
+        sku: 'SB-HOOD-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'L',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 650,
+            images: ['https://cdn.saintbala.com/hoodie-l.jpg'],
+            stockQuantity: 20,
+            price: 280,
+            costPrice: 100,
+            discount: 0,
+          },
+        ],
+      };
+
+      const result = await service.updateProduct(updateInput, sellerUser);
+
+      // Assert variant has been generated with server ID
+      expect(result.productInfos).toHaveLength(1);
+      expect(result.productInfos[0].id).toBe(501);
+      expect(result.productInfos[0].size).toBe('L');
+      expect(result.productInfos[0].colors).toContainEqual(mockColors[0]);
+
+      // Assert database persistence
+      expect(productInfoRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          size: 'L',
+          sizeKind: SizeKind.Apparel,
+          weight: 650,
+        })
+      );
+      expect(productInfoRepo.save).toHaveBeenCalledWith(createdVariant);
+      expect(sellerProductRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          seller: sellerInfo,
+          price: 280,
+          stockQuantity: 20,
+        })
+      );
+      expect(sellerProductRepo.save).toHaveBeenCalled();
+    });
+
+    it('rejects with 403 Forbidden when a SELLER attempts to add a variant to a product owned by another seller', async () => {
+      const unauthorizedSellerUser = {
+        id: 20,
+        role: UserRole.SELLER,
+        username: 'intruder_seller',
+      } as unknown as User;
+
+      const unauthorizedSellerInfo = {
+        id: 2,
+        user: { id: 20 },
+        storeName: 'Other Store',
+      } as unknown as SellerInfo;
+
+      const productOwnedByOtherSeller: Product = {
+        id: 200,
+        name: 'SAINTBALA Leather Jacket',
+        sku: 'SB-JKT-01',
+        sellerId: 1, // Owned by seller ID 1!
+        seller: { id: 1 } as SellerInfo,
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      } as unknown as Product;
+
+      sellerInfoRepo.findOne.mockResolvedValue(unauthorizedSellerInfo);
+      productRepo.findOne.mockImplementation(
+        async (options?: FindOneOptions<Product>) => {
+          const where = options?.where as { id?: number } | undefined;
+          if (where?.id === 200) {
+            return productOwnedByOtherSeller;
+          }
+          return null;
+        }
+      );
+
+      const updateInput: UpdateProductInput = {
+        id: 200,
+        name: 'SAINTBALA Leather Jacket',
+        sku: 'SB-JKT-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'M',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 800,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(updateInput, unauthorizedSellerUser)
+      ).rejects.toThrow(ForbiddenException);
+
+      // Verify ZERO database modifications occurred
+      expect(productRepo.save).not.toHaveBeenCalled();
+      expect(productInfoRepo.create).not.toHaveBeenCalled();
+      expect(productInfoRepo.save).not.toHaveBeenCalled();
+      expect(sellerProductRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('allows an ADMIN to add a new variant to any product and persists relational data cleanly', async () => {
+      const adminUser = {
+        id: 1,
+        role: UserRole.ADMIN,
+        username: 'admin',
+      } as unknown as User;
+
+      const productOwnedBySeller: Product = {
+        id: 300,
+        name: 'SAINTBALA Oversized Tee',
+        sku: 'SB-TEE-01',
+        sellerId: 99,
+        seller: { id: 99 } as SellerInfo,
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      } as unknown as Product;
+
+      colorRepo.findBy.mockResolvedValue([mockColors[1]]);
+
+      const adminCreatedVariant: ProductInfo = {
+        id: 701,
+        size: 'XL',
+        sizeKind: SizeKind.Apparel,
+        weight: 300,
+        images: ['https://cdn.saintbala.com/tee-xl.jpg'],
+        product: productOwnedBySeller,
+        colorLinks: [
+          {
+            id: 2,
+            position: 0,
+            color: mockColors[1],
+            productInfo: null as unknown as ProductInfo,
+          } as ProductInfoColor,
+        ],
+        colors: [mockColors[1]],
+      };
+
+      productInfoRepo.create.mockReturnValue(adminCreatedVariant);
+      productInfoRepo.save.mockResolvedValue(adminCreatedVariant);
+      productRepo.save.mockResolvedValue(productOwnedBySeller);
+
+      const refreshedProduct: Product = {
+        ...productOwnedBySeller,
+        productInfos: [adminCreatedVariant],
+      };
+
+      productRepo.findOne.mockImplementation(
+        async (options?: FindOneOptions<Product>) => {
+          const relations = options?.relations as string[] | undefined;
+          const where = options?.where as { id?: number } | undefined;
+          if (relations?.includes('descriptions')) {
+            return refreshedProduct;
+          }
+          if (where?.id === 300) {
+            return productOwnedBySeller;
+          }
+          return null;
+        }
+      );
+
+      const updateInput: UpdateProductInput = {
+        id: 300,
+        name: 'SAINTBALA Oversized Tee',
+        sku: 'SB-TEE-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'XL',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [2],
+            weight: 300,
+            images: ['https://cdn.saintbala.com/tee-xl.jpg'],
+          },
+        ],
+      };
+
+      const result = await service.updateProduct(updateInput, adminUser);
+
+      // Verify admin update succeeded and variant persisted with generated ID
+      expect(result.productInfos).toHaveLength(1);
+      expect(result.productInfos[0].id).toBe(701);
+      expect(result.productInfos[0].size).toBe('XL');
+      expect(result.productInfos[0].colors).toContainEqual(mockColors[1]);
+      expect(productInfoRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          size: 'XL',
+          weight: 300,
+        })
+      );
+      expect(productInfoRepo.save).toHaveBeenCalledWith(adminCreatedVariant);
+    });
+
+    it('rejects with 400 Bad Request when submitting an invalid variant and does not persist', async () => {
+      const adminUser = {
+        id: 1,
+        role: UserRole.ADMIN,
+        username: 'admin',
+      } as unknown as User;
+
+      const targetProduct: Product = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      } as unknown as Product;
+
+      productRepo.findOne.mockImplementation(
+        async (options?: FindOneOptions<Product>) => {
+          const where = options?.where as { id?: number } | undefined;
+          if (where?.id === 400) {
+            return targetProduct;
+          }
+          return null;
+        }
+      );
+
+      // 1. Negative stock quantity
+      const negativeStockInput: UpdateProductInput = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'M',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 400,
+            stockQuantity: -5,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(negativeStockInput, adminUser)
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateProduct(negativeStockInput, adminUser)
+      ).rejects.toThrow('Stock quantity cannot be negative.');
+
+      // 2. Missing colors
+      const missingColorsInput: UpdateProductInput = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'M',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [],
+            weight: 400,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(missingColorsInput, adminUser)
+      ).rejects.toThrow('Variant must have at least one color.');
+
+      // 3. Negative price
+      const negativePriceInput: UpdateProductInput = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'M',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 400,
+            price: -50,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(negativePriceInput, adminUser)
+      ).rejects.toThrow('Price cannot be negative.');
+
+      // 4. Invalid size
+      const invalidSizeInput: UpdateProductInput = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'NON_EXISTENT_SIZE',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 400,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(invalidSizeInput, adminUser)
+      ).rejects.toThrow('Invalid apparel size. Use XS–XXXL.');
+
+      // Assert no variant was persisted
+      expect(productInfoRepo.save).not.toHaveBeenCalled();
     });
   });
 });

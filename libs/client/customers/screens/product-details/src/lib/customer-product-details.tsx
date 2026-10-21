@@ -15,6 +15,9 @@ import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
 import Tooltip from '@mui/material/Tooltip';
+import Rating from '@mui/material/Rating';
+import LinearProgress from '@mui/material/LinearProgress';
+import TextField from '@mui/material/TextField';
 
 // Icons
 import ShoppingBagOutlined from '@mui/icons-material/ShoppingBagOutlined';
@@ -34,6 +37,10 @@ import Close from '@mui/icons-material/Close';
 import RestartAlt from '@mui/icons-material/RestartAlt';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import Search from '@mui/icons-material/Search';
+import RateReviewOutlined from '@mui/icons-material/RateReviewOutlined';
+import ThumbUpOutlined from '@mui/icons-material/ThumbUpOutlined';
+import VerifiedOutlined from '@mui/icons-material/VerifiedOutlined';
+import Star from '@mui/icons-material/Star';
 
 // Project imports
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
@@ -71,6 +78,50 @@ import '../styles/pdp-glass.css';
 
 const PRODUCT_IMAGE_PLACEHOLDER =
   'https://image-cdn.hypb.st/https%3A%2F%2Fhypebeast.com%2Fimage%2F2021%2F10%2Fair-jordan-1-high-og-rebellionaire-closer-look-release-info-555088-036-000.jpg?w=960&cbr=1&q=90&fit=max';
+
+export interface ProductReview {
+  id: string;
+  author: string;
+  verified: boolean;
+  rating: number;
+  title: string;
+  comment: string;
+  date: string;
+  sizePurchased?: string;
+  fitFeedback?: 'runs_small' | 'true_to_size' | 'runs_large';
+  helpfulCount: number;
+}
+
+export const DEFAULT_PRODUCT_REVIEWS: Record<number, ProductReview[]> = {
+  101: [
+    {
+      id: 'rev-101-1',
+      author: 'Kaveh R.',
+      verified: true,
+      rating: 5,
+      title: 'Exceptional drape and heavyweight craftsmanship',
+      comment:
+        'The silhouette and fabric density exceed expectations. The customized hardware and stitching align with true haute couture streetwear standards.',
+      date: '2026-09-14',
+      sizePurchased: 'M',
+      fitFeedback: 'true_to_size',
+      helpfulCount: 8,
+    },
+    {
+      id: 'rev-101-2',
+      author: 'Elena S.',
+      verified: true,
+      rating: 5,
+      title: 'Flawless fit with authentic tag seal',
+      comment:
+        'The piece arrived packaged securely with the serialized SAINTBALA security tag intact. Fits true to size with a refined, relaxed taper.',
+      date: '2026-09-28',
+      sizePurchased: 'S',
+      fitFeedback: 'true_to_size',
+      helpfulCount: 5,
+    },
+  ],
+};
 
 // Extract brand name from product name
 function extractBrand(productName: string, fallback = 'Nike'): string {
@@ -212,6 +263,130 @@ export function CustomerProductDetails() {
   const [expandedAccordion, setExpandedAccordion] = useState<string | false>(
     'description'
   );
+
+  // Reviews State
+  const [reviews, setReviews] = useState<ProductReview[]>(() => {
+    if (typeof window === 'undefined' || !productId) return [];
+    try {
+      const stored = localStorage.getItem(`saintbala_reviews_${productId}`);
+      if (stored !== null) {
+        return JSON.parse(stored) as ProductReview[];
+      }
+    } catch {
+      // ignore
+    }
+    return DEFAULT_PRODUCT_REVIEWS[productId] || [];
+  });
+
+  useEffect(() => {
+    if (!productId) return;
+    try {
+      const stored = localStorage.getItem(`saintbala_reviews_${productId}`);
+      if (stored !== null) {
+        setReviews(JSON.parse(stored) as ProductReview[]);
+        return;
+      }
+    } catch {
+      // ignore
+    }
+    setReviews(DEFAULT_PRODUCT_REVIEWS[productId] || []);
+  }, [productId]);
+
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [newRating, setNewRating] = useState<number>(5);
+  const [newAuthor, setNewAuthor] = useState('');
+  const [newTitle, setNewTitle] = useState('');
+  const [newComment, setNewComment] = useState('');
+  const [newFitFeedback, setNewFitFeedback] = useState<
+    'runs_small' | 'true_to_size' | 'runs_large'
+  >('true_to_size');
+  const [newSizePurchased, setNewSizePurchased] = useState(selectedSize || 'M');
+  const [reviewSuccessSnackbar, setReviewSuccessSnackbar] = useState(false);
+  const [helpfulVotes, setHelpfulVotes] = useState<Record<string, boolean>>({});
+
+  useEffect(() => {
+    if (selectedSize) {
+      setNewSizePurchased(selectedSize);
+    }
+  }, [selectedSize]);
+
+  const reviewSummary = useMemo(() => {
+    if (!reviews || reviews.length === 0) {
+      return {
+        average: 0,
+        total: 0,
+        breakdown: { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 } as Record<number, number>,
+        trueToSizePercentage: 100,
+      };
+    }
+    const total = reviews.length;
+    const sum = reviews.reduce((acc, r) => acc + r.rating, 0);
+    const average = +(sum / total).toFixed(1);
+
+    const breakdown: Record<number, number> = { 5: 0, 4: 0, 3: 0, 2: 0, 1: 0 };
+    let trueToSizeCount = 0;
+    reviews.forEach((r) => {
+      const star = Math.min(5, Math.max(1, Math.round(r.rating)));
+      breakdown[star] = (breakdown[star] || 0) + 1;
+      if (r.fitFeedback === 'true_to_size') {
+        trueToSizeCount += 1;
+      }
+    });
+
+    const trueToSizePercentage = Math.round((trueToSizeCount / total) * 100);
+
+    return { average, total, breakdown, trueToSizePercentage };
+  }, [reviews]);
+
+  const handleSubmitReview = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newAuthor.trim() || !newComment.trim() || newRating < 1) return;
+
+    const newReviewItem: ProductReview = {
+      id: `rev-${Date.now()}`,
+      author: newAuthor.trim(),
+      verified: true,
+      rating: newRating,
+      title:
+        newTitle.trim() ||
+        (isRTL ? 'دیدگاه تأیید شده' : 'Verified Collector Review'),
+      comment: newComment.trim(),
+      date: new Date().toISOString().split('T')[0],
+      sizePurchased: newSizePurchased || selectedSize || undefined,
+      fitFeedback: newFitFeedback,
+      helpfulCount: 0,
+    };
+
+    const updated = [newReviewItem, ...reviews];
+    setReviews(updated);
+    if (productId) {
+      try {
+        localStorage.setItem(
+          `saintbala_reviews_${productId}`,
+          JSON.stringify(updated)
+        );
+      } catch {
+        // ignore
+      }
+    }
+
+    setReviewModalOpen(false);
+    setNewAuthor('');
+    setNewTitle('');
+    setNewComment('');
+    setNewRating(5);
+    setReviewSuccessSnackbar(true);
+  };
+
+  const handleToggleHelpful = (reviewId: string) => {
+    if (helpfulVotes[reviewId]) return;
+    setHelpfulVotes((prev) => ({ ...prev, [reviewId]: true }));
+    setReviews((prev) =>
+      prev.map((r) =>
+        r.id === reviewId ? { ...r, helpfulCount: r.helpfulCount + 1 } : r
+      )
+    );
+  };
 
   // Image Zoom & Lightbox State
   const [isHoverZoom, setIsHoverZoom] = useState(false);
@@ -1973,6 +2148,598 @@ export function CustomerProductDetails() {
             </Grid>
           </Box>
 
+          {/* Customer Reviews Section */}
+          <Box
+            data-testid="customer-reviews-section"
+            sx={{
+              mt: { xs: 7, md: 9 },
+              pt: { xs: 5, md: 6 },
+              borderTop: '1px solid var(--lg-card-border)',
+            }}
+          >
+            {/* Header with Title and "Write a Review" button if reviews exist */}
+            <Box
+              dir={isRTL ? 'rtl' : 'ltr'}
+              sx={{
+                display: 'flex',
+                alignItems: { xs: 'flex-start', sm: 'center' },
+                justifyContent: 'space-between',
+                flexDirection: { xs: 'column', sm: 'row' },
+                gap: 2,
+                mb: 4,
+              }}
+            >
+              <Box>
+                <Typography
+                  variant="h5"
+                  component="h2"
+                  sx={{
+                    fontWeight: 800,
+                    letterSpacing: '-0.02em',
+                    color: 'var(--lg-ink)',
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                  }}
+                >
+                  {isRTL
+                    ? 'دیدگاه‌های خریداران و ارزیابی کیفیت'
+                    : 'Customer Reviews & Verified Impressions'}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: 'var(--lg-muted)',
+                    mt: 0.5,
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                  }}
+                >
+                  {isRTL ? (
+                    <>
+                      نظرات مستند و معتبر خریداران دارای برچسب اصالت{' '}
+                      <bdi>SAINTBALA</bdi>
+                    </>
+                  ) : (
+                    'Verified collector feedback on silhouette, fabric drape, and authentic craftsmanship.'
+                  )}
+                </Typography>
+              </Box>
+
+              {reviews.length > 0 && (
+                <Button
+                  variant="contained"
+                  data-testid="write-review-btn"
+                  onClick={() => setReviewModalOpen(true)}
+                  startIcon={<RateReviewOutlined sx={{ fontSize: 18 }} />}
+                  sx={{
+                    borderRadius: '9999px',
+                    px: 3,
+                    py: 1,
+                    background: isDark ? '#ffffff' : '#000000',
+                    color: isDark ? '#000000' : '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.8125rem',
+                    textTransform: 'none',
+                    letterSpacing: '0.04em',
+                    boxShadow: 'none',
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                    '&:hover': {
+                      background: isDark
+                        ? 'rgba(255, 255, 255, 0.88)'
+                        : 'rgba(0, 0, 0, 0.88)',
+                      boxShadow: 'none',
+                    },
+                  }}
+                >
+                  {isRTL ? 'ثبت دیدگاه' : 'Write a Review'}
+                </Button>
+              )}
+            </Box>
+
+            {reviews.length === 0 ? (
+              /* High-Trust Empty State */
+              <Box
+                data-testid="reviews-empty-state"
+                dir={isRTL ? 'rtl' : 'ltr'}
+                sx={{
+                  p: { xs: 4, sm: 6 },
+                  textAlign: 'center',
+                  borderRadius: '24px',
+                  background: isDark
+                    ? 'linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)'
+                    : 'linear-gradient(180deg, rgba(0, 0, 0, 0.02) 0%, rgba(0, 0, 0, 0.04) 100%)',
+                  border: '1px dashed var(--lg-card-border)',
+                  my: 3,
+                }}
+              >
+                <Box
+                  sx={{
+                    width: 60,
+                    height: 60,
+                    borderRadius: '50%',
+                    mx: 'auto',
+                    mb: 2.5,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    background: isDark
+                      ? 'rgba(201, 167, 116, 0.12)'
+                      : 'rgba(201, 167, 116, 0.15)',
+                    color: '#c9a774',
+                  }}
+                >
+                  <RateReviewOutlined sx={{ fontSize: 30 }} />
+                </Box>
+                <Typography
+                  variant="h6"
+                  sx={{
+                    fontWeight: 800,
+                    color: 'var(--lg-ink)',
+                    mb: 1,
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                  }}
+                >
+                  {isRTL
+                    ? 'اولین نفری باشید که نظر خود را درباره این اثر ثبت می‌کند'
+                    : 'Be the first to review this piece'}
+                </Typography>
+                <Typography
+                  sx={{
+                    color: 'var(--lg-muted)',
+                    maxWidth: 500,
+                    mx: 'auto',
+                    mb: 3,
+                    fontSize: '0.9375rem',
+                    lineHeight: 1.7,
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                  }}
+                >
+                  {isRTL ? (
+                    <>
+                      تجربه ارزشمند خود را در مورد قواره، کیفیت متریال و ایستایی لباس با سایر خریداران{' '}
+                      <bdi>SAINTBALA</bdi> به اشتراک بگذارید.
+                    </>
+                  ) : (
+                    'Share your experience regarding sizing, fabric drape, and craftsmanship with fellow collectors.'
+                  )}
+                </Typography>
+                <Button
+                  variant="contained"
+                  data-testid="write-review-empty-btn"
+                  onClick={() => setReviewModalOpen(true)}
+                  startIcon={<RateReviewOutlined sx={{ fontSize: 18 }} />}
+                  sx={{
+                    borderRadius: '9999px',
+                    px: 3.5,
+                    py: 1.2,
+                    background: isDark ? '#ffffff' : '#000000',
+                    color: isDark ? '#000000' : '#ffffff',
+                    fontWeight: 700,
+                    fontSize: '0.875rem',
+                    textTransform: 'none',
+                    letterSpacing: '0.04em',
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                    '&:hover': {
+                      background: isDark
+                        ? 'rgba(255, 255, 255, 0.88)'
+                        : 'rgba(0, 0, 0, 0.88)',
+                    },
+                  }}
+                >
+                  {isRTL ? 'ثبت دیدگاه' : 'Write a Review'}
+                </Button>
+              </Box>
+            ) : (
+              /* Populated State */
+              <Box>
+                {/* Rating Summary Card */}
+                <Box
+                  dir={isRTL ? 'rtl' : 'ltr'}
+                  sx={{
+                    p: { xs: 3, md: 4 },
+                    borderRadius: '24px',
+                    background: 'var(--lg-card-bg)',
+                    border: '1px solid var(--lg-card-border)',
+                    boxShadow: 'var(--lg-card-shadow)',
+                    backdropFilter: 'blur(16px)',
+                    mb: 4,
+                  }}
+                >
+                  <Grid container spacing={4} alignItems="center">
+                    {/* Overall Score */}
+                    <Grid size={{ xs: 12, md: 4 }}>
+                      <Box sx={{ textAlign: { xs: 'center', md: isRTL ? 'right' : 'left' } }}>
+                        <Typography
+                          sx={{
+                            fontSize: { xs: '2.5rem', sm: '3rem' },
+                            fontWeight: 900,
+                            lineHeight: 1,
+                            color: 'var(--lg-ink)',
+                            fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                          }}
+                        >
+                          {isRTL
+                            ? toFarsiDigits(reviewSummary.average.toFixed(1))
+                            : reviewSummary.average.toFixed(1)}
+                          <Typography
+                            component="span"
+                            sx={{
+                              fontSize: '1.25rem',
+                              fontWeight: 500,
+                              color: 'var(--lg-muted)',
+                              ml: 0.5,
+                            }}
+                          >
+                            {isRTL ? ' از ۵' : ' / 5'}
+                          </Typography>
+                        </Typography>
+
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: { xs: 'center', md: isRTL ? 'flex-end' : 'flex-start' },
+                            gap: 0.5,
+                            my: 1,
+                          }}
+                        >
+                          <Rating
+                            value={reviewSummary.average}
+                            readOnly
+                            precision={0.1}
+                            sx={{
+                              color: '#c9a774',
+                              fontSize: '1.35rem',
+                              '& .MuiRating-iconEmpty': {
+                                color: isDark ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.2)',
+                              },
+                            }}
+                          />
+                        </Box>
+
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            color: 'var(--lg-muted)',
+                            fontSize: '0.8125rem',
+                            fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                          }}
+                        >
+                          {isRTL
+                            ? `بر اساس ${toFarsiDigits(reviewSummary.total)} دیدگاه تأیید شده`
+                            : `Based on ${reviewSummary.total} verified ${
+                                reviewSummary.total === 1 ? 'review' : 'reviews'
+                              }`}
+                        </Typography>
+
+                        {/* Fit Meter Tag */}
+                        <Box
+                          sx={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: 0.75,
+                            mt: 1.5,
+                            px: 1.5,
+                            py: 0.5,
+                            borderRadius: '9999px',
+                            background: isDark
+                              ? 'rgba(201, 167, 116, 0.1)'
+                              : 'rgba(201, 167, 116, 0.15)',
+                            border: '1px solid rgba(201, 167, 116, 0.25)',
+                          }}
+                        >
+                          <CheckCircleOutline sx={{ fontSize: 14, color: '#c9a774' }} />
+                          <Typography
+                            sx={{
+                              fontSize: '0.75rem',
+                              fontWeight: 700,
+                              color: '#c9a774',
+                              fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                            }}
+                          >
+                            {isRTL
+                              ? `${toFarsiDigits(reviewSummary.trueToSizePercentage)}٪ مطابق با سایز استاندارد`
+                              : `${reviewSummary.trueToSizePercentage}% True to Size`}
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+
+                    {/* Breakdown Bars */}
+                    <Grid size={{ xs: 12, md: 8 }}>
+                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        {[5, 4, 3, 2, 1].map((star) => {
+                          const count = reviewSummary.breakdown[star] || 0;
+                          const pct =
+                            reviewSummary.total > 0
+                              ? Math.round((count / reviewSummary.total) * 100)
+                              : 0;
+                          return (
+                            <Box
+                              key={star}
+                              sx={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1.5,
+                                fontSize: '0.8125rem',
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: 0.4,
+                                  width: 48,
+                                  flexShrink: 0,
+                                  justifyContent: 'flex-end',
+                                }}
+                              >
+                                <Typography
+                                  sx={{
+                                    fontWeight: 700,
+                                    color: 'var(--lg-ink)',
+                                    fontSize: '0.8125rem',
+                                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                                  }}
+                                >
+                                  {isRTL ? toFarsiDigits(star) : star}
+                                </Typography>
+                                <Star sx={{ fontSize: 14, color: '#c9a774' }} />
+                              </Box>
+
+                              <LinearProgress
+                                variant="determinate"
+                                value={pct}
+                                sx={{
+                                  flex: 1,
+                                  height: 6,
+                                  borderRadius: 3,
+                                  backgroundColor: isDark
+                                    ? 'rgba(255, 255, 255, 0.08)'
+                                    : 'rgba(0, 0, 0, 0.08)',
+                                  '& .MuiLinearProgress-bar': {
+                                    backgroundColor: '#c9a774',
+                                    borderRadius: 3,
+                                  },
+                                }}
+                              />
+
+                              <Typography
+                                sx={{
+                                  width: 40,
+                                  textAlign: isRTL ? 'left' : 'right',
+                                  fontWeight: 600,
+                                  color: 'var(--lg-muted)',
+                                  fontSize: '0.75rem',
+                                  fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                                }}
+                              >
+                                {isRTL ? `${toFarsiDigits(pct)}٪` : `${pct}%`}
+                              </Typography>
+                            </Box>
+                          );
+                        })}
+                      </Box>
+                    </Grid>
+                  </Grid>
+                </Box>
+
+                {/* Individual Review Cards */}
+                <Grid container spacing={2.5}>
+                  {reviews.map((rev) => (
+                    <Grid key={rev.id} size={{ xs: 12 }}>
+                      <Box
+                        data-testid={`review-card-${rev.id}`}
+                        dir={isRTL ? 'rtl' : 'ltr'}
+                        sx={{
+                          p: { xs: 2.5, sm: 3.5 },
+                          borderRadius: '20px',
+                          background: 'var(--lg-card-bg)',
+                          border: '1px solid var(--lg-card-border)',
+                          backdropFilter: 'blur(12px)',
+                          transition: 'all 0.2s ease',
+                          '&:hover': {
+                            borderColor: isDark
+                              ? 'rgba(255, 255, 255, 0.15)'
+                              : 'rgba(0, 0, 0, 0.12)',
+                          },
+                        }}
+                      >
+                        {/* Top row: Rating, Author, Verified badge, Date */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: { xs: 'flex-start', sm: 'center' },
+                            justifyContent: 'space-between',
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            gap: 1.5,
+                            mb: 2,
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                            <Rating
+                              value={rev.rating}
+                              readOnly
+                              size="small"
+                              sx={{
+                                color: '#c9a774',
+                                '& .MuiRating-iconEmpty': {
+                                  color: isDark
+                                    ? 'rgba(255, 255, 255, 0.2)'
+                                    : 'rgba(0, 0, 0, 0.2)',
+                                },
+                              }}
+                            />
+                            <Typography
+                              sx={{
+                                fontWeight: 700,
+                                color: 'var(--lg-ink)',
+                                fontSize: '0.9375rem',
+                                fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                              }}
+                            >
+                              {rev.author}
+                            </Typography>
+                            {rev.verified && (
+                              <Box
+                                sx={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: 0.5,
+                                  px: 1,
+                                  py: 0.25,
+                                  borderRadius: '9999px',
+                                  background: isDark
+                                    ? 'rgba(16, 185, 129, 0.12)'
+                                    : 'rgba(16, 185, 129, 0.1)',
+                                  color: '#10b981',
+                                }}
+                              >
+                                <VerifiedOutlined sx={{ fontSize: 13 }} />
+                                <Typography
+                                  sx={{
+                                    fontSize: '0.6875rem',
+                                    fontWeight: 700,
+                                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                                  }}
+                                >
+                                  {isRTL ? 'خریدار تأیید شده' : 'Verified Buyer'}
+                                </Typography>
+                              </Box>
+                            )}
+                          </Box>
+
+                          <Typography
+                            variant="caption"
+                            sx={{
+                              color: 'var(--lg-muted)',
+                              fontSize: '0.75rem',
+                              fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                            }}
+                          >
+                            {isRTL ? toFarsiDigits(rev.date) : rev.date}
+                          </Typography>
+                        </Box>
+
+                        {/* Middle: Size & Fit Info */}
+                        {(rev.sizePurchased || rev.fitFeedback) && (
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 1.5,
+                              mb: 1.5,
+                            }}
+                          >
+                            {rev.sizePurchased && (
+                              <Typography
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  color: 'var(--lg-muted)',
+                                  background: isDark
+                                    ? 'rgba(255, 255, 255, 0.05)'
+                                    : 'rgba(0, 0, 0, 0.04)',
+                                  px: 1.2,
+                                  py: 0.3,
+                                  borderRadius: '6px',
+                                }}
+                              >
+                                {isRTL
+                                  ? `سایز: ${rev.sizePurchased}`
+                                  : `Size: ${rev.sizePurchased}`}
+                              </Typography>
+                            )}
+                            {rev.fitFeedback && (
+                              <Typography
+                                sx={{
+                                  fontSize: '0.75rem',
+                                  fontWeight: 600,
+                                  color: 'var(--lg-muted)',
+                                  fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                                }}
+                              >
+                                •{' '}
+                                {rev.fitFeedback === 'runs_small'
+                                  ? isRTL
+                                    ? 'کوچک‌تر از سایز استاندارد'
+                                    : 'Runs Small'
+                                  : rev.fitFeedback === 'runs_large'
+                                  ? isRTL
+                                    ? 'بزرگ‌تر از سایز استاندارد'
+                                    : 'Runs Large'
+                                  : isRTL
+                                  ? 'مطابق با سایز استاندارد'
+                                  : 'True to Size'}
+                              </Typography>
+                            )}
+                          </Box>
+                        )}
+
+                        {/* Title & Comment */}
+                        <Typography
+                          sx={{
+                            fontWeight: 700,
+                            fontSize: '0.9375rem',
+                            color: 'var(--lg-ink)',
+                            mb: 0.75,
+                            fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                          }}
+                        >
+                          {rev.title}
+                        </Typography>
+                        <Typography
+                          sx={{
+                            color: 'var(--lg-muted)',
+                            fontSize: '0.875rem',
+                            lineHeight: 1.7,
+                            fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                          }}
+                        >
+                          {rev.comment}
+                        </Typography>
+
+                        {/* Footer: Helpful button */}
+                        <Box
+                          sx={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'flex-end',
+                            mt: 2,
+                            pt: 1.5,
+                            borderTop: '1px solid var(--lg-card-border)',
+                          }}
+                        >
+                          <Button
+                            size="small"
+                            data-testid={`helpful-btn-${rev.id}`}
+                            onClick={() => handleToggleHelpful(rev.id)}
+                            startIcon={<ThumbUpOutlined sx={{ fontSize: 14 }} />}
+                            sx={{
+                              textTransform: 'none',
+                              fontSize: '0.75rem',
+                              fontWeight: 600,
+                              color: helpfulVotes[rev.id]
+                                ? '#10b981'
+                                : 'var(--lg-muted)',
+                              fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                              '&:hover': {
+                                background: 'transparent',
+                                color: 'var(--lg-ink)',
+                              },
+                            }}
+                          >
+                            {isRTL
+                              ? `مفید بود (${toFarsiDigits(rev.helpfulCount)})`
+                              : `Helpful (${rev.helpfulCount})`}
+                          </Button>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  ))}
+                </Grid>
+              </Box>
+            )}
+          </Box>
+
           {/* Similar Products Section */}
           {similarProducts.length > 0 && (
             <Box sx={{ mt: { xs: 6, md: 8 } }}>
@@ -2363,6 +3130,371 @@ export function CustomerProductDetails() {
             </Box>
           )}
         </Dialog>
+
+        {/* Write a Review Modal */}
+        <Dialog
+          open={reviewModalOpen}
+          onClose={() => setReviewModalOpen(false)}
+          maxWidth="sm"
+          fullWidth
+          dir={isRTL ? 'rtl' : 'ltr'}
+          PaperProps={{
+            sx: {
+              borderRadius: '24px',
+              p: { xs: 2.5, sm: 3.5 },
+              backdropFilter: 'blur(32px)',
+              background: isDark
+                ? 'rgba(15, 17, 23, 0.96)'
+                : 'rgba(255, 255, 255, 0.98)',
+              border: '1px solid var(--lg-card-border)',
+              boxShadow: '0 30px 80px rgba(0, 0, 0, 0.5)',
+              fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+            },
+          }}
+        >
+          <Box
+            component="form"
+            onSubmit={handleSubmitReview}
+            sx={{ display: 'flex', flexDirection: 'column', gap: 2.5 }}
+          >
+            {/* Header */}
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                pb: 1.5,
+                borderBottom: '1px solid var(--lg-card-border)',
+              }}
+            >
+              <Box>
+                <Typography
+                  sx={{
+                    fontWeight: 800,
+                    fontSize: '1.125rem',
+                    color: 'var(--lg-ink)',
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                  }}
+                >
+                  {isRTL ? 'ثبت دیدگاه خریدار' : 'Write a Product Review'}
+                </Typography>
+                <Typography
+                  variant="caption"
+                  sx={{
+                    color: 'var(--lg-muted)',
+                    fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                  }}
+                >
+                  {product.name}
+                </Typography>
+              </Box>
+              <IconButton
+                size="small"
+                onClick={() => setReviewModalOpen(false)}
+                sx={{ color: 'var(--lg-muted)' }}
+                aria-label={isRTL ? 'بستن' : 'Close'}
+              >
+                <Close fontSize="small" />
+              </IconButton>
+            </Box>
+
+            {/* Rating Input */}
+            <Box>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  color: 'var(--lg-ink)',
+                  mb: 1,
+                  fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                }}
+              >
+                {isRTL ? 'امتیاز کلی شما' : 'Overall Rating'} *
+              </Typography>
+              <Rating
+                name="user-product-rating"
+                value={newRating}
+                onChange={(_, val) => {
+                  if (val) setNewRating(val);
+                }}
+                size="large"
+                sx={{
+                  color: '#c9a774',
+                  fontSize: '2rem',
+                  '& .MuiRating-iconEmpty': {
+                    color: isDark
+                      ? 'rgba(255, 255, 255, 0.2)'
+                      : 'rgba(0, 0, 0, 0.2)',
+                  },
+                }}
+              />
+            </Box>
+
+            {/* Fit Feedback Selector */}
+            <Box>
+              <Typography
+                sx={{
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  color: 'var(--lg-ink)',
+                  mb: 1,
+                  fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                }}
+              >
+                {isRTL ? 'نحوه قرارگیری روی بدن (قواره)' : 'Fit Assessment'}
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                {[
+                  {
+                    id: 'runs_small',
+                    en: 'Runs Small',
+                    fa: 'کوچک‌تر از سایز',
+                  },
+                  {
+                    id: 'true_to_size',
+                    en: 'True to Size',
+                    fa: 'مطابق سایز استاندارد',
+                  },
+                  {
+                    id: 'runs_large',
+                    en: 'Runs Large',
+                    fa: 'بزرگ‌تر از سایز',
+                  },
+                ].map((fitOpt) => {
+                  const isSelected = newFitFeedback === fitOpt.id;
+                  return (
+                    <Button
+                      key={fitOpt.id}
+                      type="button"
+                      onClick={() =>
+                        setNewFitFeedback(
+                          fitOpt.id as
+                            | 'runs_small'
+                            | 'true_to_size'
+                            | 'runs_large'
+                        )
+                      }
+                      sx={{
+                        borderRadius: '9999px',
+                        px: 2,
+                        py: 0.5,
+                        fontSize: '0.8125rem',
+                        fontWeight: 600,
+                        textTransform: 'none',
+                        border: isSelected
+                          ? '1px solid #c9a774'
+                          : '1px solid var(--lg-card-border)',
+                        background: isSelected
+                          ? isDark
+                            ? 'rgba(201, 167, 116, 0.15)'
+                            : 'rgba(201, 167, 116, 0.2)'
+                          : 'transparent',
+                        color: isSelected ? '#c9a774' : 'var(--lg-muted)',
+                        fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                      }}
+                    >
+                      {isRTL ? fitOpt.fa : fitOpt.en}
+                    </Button>
+                  );
+                })}
+              </Box>
+            </Box>
+
+            {/* Author and Size Grid */}
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 8 }}>
+                <TextField
+                  fullWidth
+                  required
+                  label={isRTL ? 'نام یا نام مستعار' : 'Your Name / Handle'}
+                  value={newAuthor}
+                  onChange={(e) => setNewAuthor(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  inputProps={{ 'data-testid': 'review-author-input' }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      color: 'var(--lg-ink)',
+                      background: isDark
+                        ? 'rgba(255, 255, 255, 0.03)'
+                        : 'rgba(0, 0, 0, 0.02)',
+                    },
+                  }}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth
+                  label={isRTL ? 'سایز خریداری شده' : 'Purchased Size'}
+                  value={newSizePurchased}
+                  onChange={(e) => setNewSizePurchased(e.target.value)}
+                  variant="outlined"
+                  size="small"
+                  inputProps={{ 'data-testid': 'review-size-input' }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '12px',
+                      color: 'var(--lg-ink)',
+                      background: isDark
+                        ? 'rgba(255, 255, 255, 0.03)'
+                        : 'rgba(0, 0, 0, 0.02)',
+                    },
+                  }}
+                />
+              </Grid>
+            </Grid>
+
+            {/* Headline / Title */}
+            <TextField
+              fullWidth
+              label={isRTL ? 'عنوان دیدگاه' : 'Headline / Summary'}
+              value={newTitle}
+              onChange={(e) => setNewTitle(e.target.value)}
+              variant="outlined"
+              size="small"
+              inputProps={{ 'data-testid': 'review-title-input' }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  color: 'var(--lg-ink)',
+                  background: isDark
+                    ? 'rgba(255, 255, 255, 0.03)'
+                    : 'rgba(0, 0, 0, 0.02)',
+                },
+              }}
+            />
+
+            {/* Comment */}
+            <TextField
+              fullWidth
+              required
+              multiline
+              rows={3}
+              label={
+                isRTL
+                  ? 'دیدگاه شما در مورد متریال، دوخت و استایل'
+                  : 'Review Comments'
+              }
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              variant="outlined"
+              size="small"
+              inputProps={{ 'data-testid': 'review-comment-input' }}
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  borderRadius: '12px',
+                  color: 'var(--lg-ink)',
+                  background: isDark
+                    ? 'rgba(255, 255, 255, 0.03)'
+                    : 'rgba(0, 0, 0, 0.02)',
+                },
+              }}
+            />
+
+            {/* Trust disclaimer */}
+            <Typography
+              variant="caption"
+              sx={{
+                color: 'var(--lg-muted)',
+                fontSize: '0.75rem',
+                fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+              }}
+            >
+              {isRTL ? (
+                <>
+                  تمامی نظرات قبل از انتشار توسط تیم کانسیرژ{' '}
+                  <bdi>SAINTBALA</bdi> بررسی و با سوابق خرید تطبیق داده می‌شوند.
+                </>
+              ) : (
+                'All reviews are authenticated by the SAINTBALA concierge before public indexing.'
+              )}
+            </Typography>
+
+            {/* Actions */}
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: 'flex-end',
+                gap: 1.5,
+                mt: 1,
+              }}
+            >
+              <Button
+                type="button"
+                onClick={() => setReviewModalOpen(false)}
+                sx={{
+                  color: 'var(--lg-muted)',
+                  textTransform: 'none',
+                  fontWeight: 600,
+                  fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                }}
+              >
+                {isRTL ? 'انصراف' : 'Cancel'}
+              </Button>
+              <Button
+                type="submit"
+                variant="contained"
+                data-testid="submit-review-btn"
+                disabled={!newAuthor.trim() || !newComment.trim()}
+                sx={{
+                  borderRadius: '9999px',
+                  px: 3.5,
+                  py: 1,
+                  background: isDark ? '#ffffff' : '#000000',
+                  color: isDark ? '#000000' : '#ffffff',
+                  fontWeight: 700,
+                  fontSize: '0.875rem',
+                  textTransform: 'none',
+                  fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+                  '&:hover': {
+                    background: isDark
+                      ? 'rgba(255, 255, 255, 0.88)'
+                      : 'rgba(0, 0, 0, 0.88)',
+                  },
+                }}
+              >
+                {isRTL ? 'ثبت دیدگاه' : 'Submit Review'}
+              </Button>
+            </Box>
+          </Box>
+        </Dialog>
+
+        {/* Review Submission Toast */}
+        <Snackbar
+          open={reviewSuccessSnackbar}
+          autoHideDuration={3500}
+          onClose={() => setReviewSuccessSnackbar(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert
+            onClose={() => setReviewSuccessSnackbar(false)}
+            dir={isRTL ? 'rtl' : 'ltr'}
+            icon={<CheckCircleOutline sx={{ color: '#34d399 !important', fontSize: 22 }} />}
+            sx={{
+              borderRadius: '9999px',
+              px: 3,
+              py: 1.2,
+              fontWeight: 600,
+              fontSize: '0.875rem',
+              backdropFilter: 'blur(24px)',
+              background: '#18181b !important',
+              color: '#ffffff !important',
+              border: '1px solid rgba(255, 255, 255, 0.15)',
+              boxShadow: '0 20px 45px rgba(0, 0, 0, 0.45)',
+              '& .MuiAlert-message': {
+                color: '#ffffff !important',
+                fontWeight: 600,
+                fontSize: '0.875rem',
+                fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
+              },
+            }}
+          >
+            {isRTL
+              ? 'دیدگاه شما با موفقیت ثبت شد.'
+              : 'Your review has been submitted successfully.'}
+          </Alert>
+        </Snackbar>
 
         {/* Feedback Snackbar - Fixed high-contrast dark glass pill in both light & dark mode */}
         <Snackbar

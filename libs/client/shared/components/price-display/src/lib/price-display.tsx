@@ -2,6 +2,7 @@ import {
   useCurrencyForLocale,
   useConvertPrice,
 } from '@kickzone-workspace/currency-hook';
+import Skeleton from '@mui/material/Skeleton';
 
 export interface PriceDisplayProps {
   /** Price in USD (base currency) */
@@ -40,7 +41,21 @@ export function PriceDisplay({
   });
 
   if (currencyLoading || conversionLoading) {
-    return <span className={className}>...</span>;
+    return (
+      <Skeleton
+        component="span"
+        variant="text"
+        animation="wave"
+        width={56}
+        sx={{
+          display: 'inline-block',
+          verticalAlign: 'middle',
+          opacity: 0.6,
+        }}
+        className={className}
+        data-testid="price-display-skeleton"
+      />
+    );
   }
 
   // Format the number with proper decimal places

@@ -11,8 +11,17 @@ describe('customer-checkout-store', () => {
     expect(state.isCheckoutDialogOpen).toBe(false);
     expect(state.isAuthDialogOpen).toBe(false);
     expect(state.activeStep).toBe(0);
+    expect(state.shippingMethod).toBe('vip');
     expect(state.shippingInfo.customerName).toBe('');
     expect(state.createdOrder).toBeNull();
+  });
+
+  it('should update shipping method', () => {
+    expect(useCheckoutStore.getState().shippingMethod).toBe('vip');
+    useCheckoutStore.getState().setShippingMethod('express');
+    expect(useCheckoutStore.getState().shippingMethod).toBe('express');
+    useCheckoutStore.getState().setShippingMethod('pickup');
+    expect(useCheckoutStore.getState().shippingMethod).toBe('pickup');
   });
 
   it('should handle dialog controls', () => {

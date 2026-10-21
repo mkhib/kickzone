@@ -1,0 +1,9 @@
+{
+  "name": "customer-shipping-returns",
+  "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
+  "sourceRoot": "libs/client/customers/screens/shipping-returns/src",
+  "projectType": "library",
+  "tags": [],
+  "// targets": "to see all targets run: nx show project customer-shipping-returns --web",
+  "targets": {}
+}

@@ -25,5 +25,6 @@ describe('PriceDisplay', () => {
       </LanguageProvider>
     );
     expect(baseElement).toBeTruthy();
+    expect(baseElement.textContent).not.toContain('...');
   });
 });

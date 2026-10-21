@@ -98,9 +98,7 @@ export class PaymentResolver {
   ) {}
 
   @Mutation(() => ZarinPalPaymentResponse)
-  @UseGuards(GraphqlAuthGuard)
   async requestZarinPalPayment(
-    @CurrentUser() user: { id: string },
     @Args('input') input: ZarinPalPaymentRequestInput
   ) {
     if (!input.order_id) {
@@ -145,9 +143,7 @@ export class PaymentResolver {
   }
 
   @Mutation(() => ZarinPalVerificationResponse)
-  @UseGuards(GraphqlAuthGuard)
   async verifyZarinPalPayment(
-    @CurrentUser() _user: { id: string },
     @Args('input') input: ZarinPalVerificationRequestInput
   ) {
     if (!input.order_id) {

@@ -91,6 +91,28 @@ vi.mock('@kickzone-workspace/customer-guide-payment', () => ({
   ),
 }));
 
+vi.mock('@kickzone-workspace/customer-contact', () => ({
+  CustomerContact: () => (
+    <div data-testid="mock-customer-contact">SAINTBALA Contact Screen</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/customer-shipping-returns', () => ({
+  CustomerShippingReturns: () => (
+    <div data-testid="mock-customer-shipping-returns">
+      SAINTBALA Shipping Returns Screen
+    </div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/customer-privacy-policy', () => ({
+  CustomerPrivacyPolicy: () => (
+    <div data-testid="mock-customer-privacy-policy">
+      SAINTBALA Privacy Policy Screen
+    </div>
+  ),
+}));
+
 vi.mock('@kickzone-workspace/customer-not-found', () => ({
   CustomerNotFound: () => (
     <div data-testid="mock-customer-not-found">SAINTBALA 404 Screen</div>
@@ -128,6 +150,31 @@ describe('CustomersRouter Integration', () => {
     render(<CustomersRouter />);
 
     expect(screen.getByTestId('mock-guide-payment')).toBeInTheDocument();
+  });
+
+  it('routes to /contact without crashing', () => {
+    window.history.pushState({}, 'Contact Concierge', '/contact');
+    render(<CustomersRouter />);
+
+    expect(screen.getByTestId('mock-customer-contact')).toBeInTheDocument();
+  });
+
+  it('routes to /shipping-returns without crashing', () => {
+    window.history.pushState({}, 'Shipping & Returns', '/shipping-returns');
+    render(<CustomersRouter />);
+
+    expect(
+      screen.getByTestId('mock-customer-shipping-returns')
+    ).toBeInTheDocument();
+  });
+
+  it('routes to /privacy-policy without crashing', () => {
+    window.history.pushState({}, 'Privacy Policy', '/privacy-policy');
+    render(<CustomersRouter />);
+
+    expect(
+      screen.getByTestId('mock-customer-privacy-policy')
+    ).toBeInTheDocument();
   });
 
   it('routes unknown URLs to the wildcard CustomerNotFound 404 screen', () => {
