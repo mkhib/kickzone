@@ -18,7 +18,12 @@ const mockUpdateColor = vi.fn();
 const mockDeleteColor = vi.fn();
 const mockRefetchProduct = vi.fn();
 const mockUseParams = vi.fn<[], { id?: string }>(() => ({ id: undefined }));
-const mockUseProductById = vi.fn(() => ({ product: null, refetch: mockRefetchProduct }));
+const mockUseProductById = vi.fn(
+  (..._args: unknown[]): { product: any; refetch?: any; loading?: boolean; error?: any } => ({
+    product: null,
+    refetch: mockRefetchProduct,
+  })
+);
 
 vi.mock('@kickzone-workspace/admins-layout', () => ({
   AdminsLayout: ({ children }: { children: React.ReactNode }) => (
@@ -354,6 +359,7 @@ describe('AdminProductEditor', () => {
           },
         ],
       },
+      refetch: mockRefetchProduct,
     });
 
     renderEditor();
