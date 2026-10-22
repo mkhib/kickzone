@@ -211,7 +211,7 @@ describe('CustomersProductCard', () => {
     }
   });
 
-  it('does not render the favorite button as the feature is not yet available', () => {
+  it('renders the favorite button and allows toggling favorites', () => {
     render(
       <MemoryRouter>
         <CustomersProductCard
@@ -221,8 +221,8 @@ describe('CustomersProductCard', () => {
       </MemoryRouter>
     );
 
-    const favoriteButton = screen.queryByLabelText(/نشان کردن|افزودن به علاقه‌مندی‌ها|favorite/i);
-    expect(favoriteButton).not.toBeInTheDocument();
+    const favoriteButton = screen.getByLabelText(/نشان کردن|افزودن به علاقه‌مندی‌ها|favorite/i);
+    expect(favoriteButton).toBeInTheDocument();
   });
 
   it('displays all categories on the card item when multiple categories are present', () => {

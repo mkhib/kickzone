@@ -13,6 +13,7 @@ import SecurityIcon from '@mui/icons-material/Security';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VerifiedIcon from '@mui/icons-material/Verified';
 import CreditCardIcon from '@mui/icons-material/CreditCard';
+import { ShetabBadgeSvg, ShaparakBadgeSvg, SslBadgeSvg } from './TrustBadgeIcons';
 import {
   useI18nContext,
   useLanguageContext,
@@ -123,21 +124,7 @@ export function CustomersFooter({
             },
           }}
         >
-          <Box
-            sx={{
-              width: 42,
-              height: 42,
-              borderRadius: '10px',
-              bgcolor: 'rgba(201, 167, 116, 0.12)',
-              color: '#c9a774',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <CreditCardIcon sx={{ fontSize: 24 }} />
-          </Box>
+          <ShetabBadgeSvg size={42} />
           <Box>
             <Typography
               sx={{
@@ -178,21 +165,7 @@ export function CustomersFooter({
             },
           }}
         >
-          <Box
-            sx={{
-              width: 42,
-              height: 42,
-              borderRadius: '10px',
-              bgcolor: 'rgba(201, 167, 116, 0.12)',
-              color: '#c9a774',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <SecurityIcon sx={{ fontSize: 24 }} />
-          </Box>
+          <ShaparakBadgeSvg size={42} />
           <Box>
             <Typography
               sx={{
@@ -211,7 +184,7 @@ export function CustomersFooter({
                 color: 'rgba(255, 255, 255, 0.55)',
               }}
             >
-              {isEn ? 'Central Bank Certified' : 'تاییدیه بانک مرکزی و زرین‌پال'}
+              {isEn ? 'Central Bank Certified' : 'تاییدیه بانک مرکزی و شاپرک'}
             </Typography>
           </Box>
         </Box>
@@ -233,21 +206,7 @@ export function CustomersFooter({
             },
           }}
         >
-          <Box
-            sx={{
-              width: 42,
-              height: 42,
-              borderRadius: '10px',
-              bgcolor: 'rgba(201, 167, 116, 0.12)',
-              color: '#c9a774',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              flexShrink: 0,
-            }}
-          >
-            <LockOutlinedIcon sx={{ fontSize: 24 }} />
-          </Box>
+          <SslBadgeSvg size={42} />
           <Box>
             <Typography
               sx={{
@@ -712,11 +671,6 @@ export function CustomersFooter({
                   data-testid="footer-link-privacy-policy"
                 >
                   {isEn ? 'Privacy Policy' : 'سیاست حفظ حریم خصوصی'}
-                </RouterLink>
-              </li>
-              <li>
-                <RouterLink to="/guide/size-guide" style={currentLinkStyle}>
-                  {LL.home.footer.sizeGuide()}
                 </RouterLink>
               </li>
             </Box>

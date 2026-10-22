@@ -31,6 +31,9 @@ export class UpdateCustomerProfileInput {
 
   @Field({ nullable: true })
   shoeSize?: string;
+
+  @Field({ nullable: true })
+  favorites?: string;
 }
 
 @Resolver(() => CustomerProfile)

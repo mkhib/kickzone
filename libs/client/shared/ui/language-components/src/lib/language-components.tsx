@@ -2,10 +2,10 @@ import { colors } from '@kickzone-workspace/colors';
 import {
   useI18nContext,
   useLanguageContext,
+  usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import { LottieSuccessCheck } from '@kickzone-workspace/lottie-success-check';
 import Box from '@mui/material/Box';
-import Card from '@mui/material/Card';
 import CardContent from '@mui/material/CardContent';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControl from '@mui/material/FormControl';
@@ -13,7 +13,7 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
-import React from 'react';
+import React, { useEffect } from 'react';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 
 interface LanguageComponentsProps {
@@ -26,9 +26,21 @@ export function LanguageComponents({
   const { currentLocale, setLocale, availableLocales, isLoading } =
     useLanguageContext();
   const { LL } = useI18nContext();
+
+  usePageTitle(() =>
+    currentLocale === 'en'
+      ? 'Language Settings — SAINTBALA'
+      : 'تنظیمات زبان — SAINTBALA'
+  );
+
   const [selectedLanguage, setSelectedLanguage] =
     React.useState<typeof currentLocale>(currentLocale);
   const [showSuccess, setShowSuccess] = React.useState(false);
+
+  // Keep combobox synchronized with active locale/cookie state
+  useEffect(() => {
+    setSelectedLanguage(currentLocale);
+  }, [currentLocale]);
 
   const handleLanguageChange = (event: {
     target: { value: typeof currentLocale };
@@ -37,6 +49,9 @@ export function LanguageComponents({
     setSelectedLanguage(newLocale);
 
     try {
+      if (typeof document !== 'undefined') {
+        document.cookie = `kickzone-language-preference=${newLocale}; path=/; max-age=31536000; SameSite=Lax`;
+      }
       setLocale(newLocale);
       setShowSuccess(true);
     } catch (error) {

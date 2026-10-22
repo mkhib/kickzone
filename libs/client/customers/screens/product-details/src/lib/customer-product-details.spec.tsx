@@ -49,6 +49,7 @@ vi.mock('@kickzone-workspace/customers-cart-hook', () => ({
   useCustomersCartService: () => ({
     addItem: mockAddItem,
   }),
+  useWishlistSync: vi.fn(),
 }));
 
 vi.mock('@kickzone-workspace/price-display', () => ({

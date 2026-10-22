@@ -29,6 +29,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useI18nContext,
   useLanguageContext,
+  usePageTitle,
 } from '@kickzone-workspace/shared-i18n';
 import {
   CUSTOMER_ROUTES,
@@ -118,7 +119,16 @@ function toProductsSort(selectedSort: string): {
 
 export function CustomersShopScreen() {
   const { LL } = useI18nContext();
-  const { isRTL } = useLanguageContext();
+  const { isRTL, currentLocale } = useLanguageContext();
+  const isEn = currentLocale === 'en';
+
+  usePageTitle(
+    useCallback(
+      () => (isEn ? 'Shop & Catalog' : 'فروشگاه و محصولات'),
+      [isEn]
+    )
+  );
+
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { brandSlug: brandSlugParam } = useParams<{ brandSlug?: string }>();

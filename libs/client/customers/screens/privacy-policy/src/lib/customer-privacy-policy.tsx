@@ -41,7 +41,7 @@ const PRIVACY_PILLARS: PrivacyPillar[] = [
     titleEn: 'Zero Card Data Retention & Banking Gateway Isolation',
     titleFa: 'عدم ذخیره‌سازی اطلاعات بانکی و ایزولاسیون کامل درگاه',
     descEn:
-      'All monetary transactions are processed directly via certified Central Bank Shaparak (شاپرک) & Zarinpal gateway tunnels protected by TLS 1.3 and 256-bit encryption. SAINTBALA never receives, logs, or stores debit card numbers, expiration dates, or dynamic SMS OTPs.',
+      'All monetary transactions are processed directly via certified Central Bank Shaparak & Zarinpal gateway tunnels protected by TLS 1.3 and 256-bit encryption. SAINTBALA never receives, logs, or stores debit card numbers, expiration dates, or dynamic SMS OTPs.',
     descFa:
       'تمامی تراکنش‌های مالی منحصراً از طریق بستر رمزنگاری‌شده TLS 1.3 شبکه شاپرک و درگاه امن زرین‌پال انجام می‌شوند. سرورهای SAINTBALA به هیچ‌عنوان شماره کارت، تاریخ انقضا، CVV2 یا رمز پویای پیامکی را پردازش، ذخیره یا مشاهده نمی‌کنند.',
     commitmentsEn: [

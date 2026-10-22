@@ -52,29 +52,29 @@ interface LanguageProviderProps {
 }
 
 export function LanguageProvider({ children }: LanguageProviderProps) {
-  const [currentLocale, setCurrentLocale] = useState<Locales>(DEFAULT_LOCALE);
-  const [isLoading, setIsLoading] = useState(true);
+  const [currentLocale, setCurrentLocale] = useState<Locales>(getInitialLocale);
+  const [isLoading, setIsLoading] = useState(false);
   const i18nContext = useContext(I18nContext);
 
-  // Initialize language from localStorage or browser detection
+  // Initialize language and keep document attributes in sync
   useEffect(() => {
     const initializeLanguage = async () => {
       try {
         const localeToUse = getInitialLocale();
-        const storedLanguage = localStorage.getItem(LANGUAGE_STORAGE_KEY);
-
         await loadLocaleAsync(localeToUse);
         setCurrentLocale(localeToUse);
 
-        if (!storedLanguage) {
-          localStorage.setItem(LANGUAGE_STORAGE_KEY, localeToUse);
+        if (typeof document !== 'undefined') {
+          document.documentElement.lang = localeToUse;
+          document.documentElement.dir = localeToUse === 'fa' ? 'rtl' : 'ltr';
+          const skipLink = document.querySelector('.skip-link');
+          if (skipLink) {
+            skipLink.textContent =
+              localeToUse === 'fa' ? 'رفتن به محتوا' : 'Skip to content';
+          }
         }
       } catch (error) {
         console.error('Failed to initialize language:', error);
-        // Fallback to Farsi
-        setCurrentLocale(DEFAULT_LOCALE);
-      } finally {
-        setIsLoading(false);
       }
     };
 
@@ -87,6 +87,17 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
       await loadLocaleAsync(locale);
       setCurrentLocale(locale);
       localStorage.setItem(LANGUAGE_STORAGE_KEY, locale);
+
+      if (typeof document !== 'undefined') {
+        document.cookie = `kickzone-language-preference=${locale}; path=/; max-age=31536000; SameSite=Lax`;
+        document.documentElement.lang = locale;
+        document.documentElement.dir = locale === 'fa' ? 'rtl' : 'ltr';
+        const skipLink = document.querySelector('.skip-link');
+        if (skipLink) {
+          skipLink.textContent =
+            locale === 'fa' ? 'رفتن به محتوا' : 'Skip to content';
+        }
+      }
 
       // Update the i18n context if available
       if (i18nContext && i18nContext.setLocale) {

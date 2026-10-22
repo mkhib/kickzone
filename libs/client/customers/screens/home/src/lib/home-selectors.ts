@@ -279,12 +279,31 @@ export function selectHomePageData(data?: HomePageData | null) {
       }
       if (
         slug.includes('pant') ||
+        slug.includes('jogger') ||
+        slug.includes('trouser') ||
+        slug.includes('sweatpant') ||
         name.includes('pant') ||
-        name.includes('شلوار')
+        name.includes('jogger') ||
+        name.includes('trouser') ||
+        name.includes('sweatpant') ||
+        name.includes('شلوار') ||
+        name.includes('اسلش')
       ) {
         isPPant = true;
       }
     });
+
+    const productNameLower = (p.name || '').toLowerCase();
+    if (
+      productNameLower.includes('pant') ||
+      productNameLower.includes('jogger') ||
+      productNameLower.includes('trouser') ||
+      productNameLower.includes('sweatpant') ||
+      p.name?.includes('شلوار') ||
+      p.name?.includes('اسلش')
+    ) {
+      isPPant = true;
+    }
 
     const isPMen =
       !isPWomen &&

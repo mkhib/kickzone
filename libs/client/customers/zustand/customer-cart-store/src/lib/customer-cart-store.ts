@@ -368,6 +368,19 @@ export const useCartStore = create<CartStore>()(
   )
 );
 
+// Cross-tab synchronization via storage events
+if (typeof window !== 'undefined') {
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'cart-storage' && event.newValue) {
+      try {
+        useCartStore.persist?.rehydrate();
+      } catch (err) {
+        console.error('Failed to rehydrate cart from cross-tab storage event:', err);
+      }
+    }
+  });
+}
+
 // Selector hooks for better performance
 export const useCartItems = () => useCartStore((state) => state.items);
 export const useCartLoading = () => useCartStore((state) => state.isLoading);

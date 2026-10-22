@@ -3,6 +3,7 @@ import { Layout } from '@kickzone-workspace/layout';
 import { Headerbar } from '@kickzone-workspace/customers-headerbar';
 import { CustomersFooter } from '@kickzone-workspace/customers-footer';
 import { CustomersTabbar } from './CustomersTabbar';
+import { useWishlistSync } from '@kickzone-workspace/customers-cart-hook';
 
 export interface CustomersLayoutProps {
   children: React.ReactNode;
@@ -23,6 +24,7 @@ export function CustomersLayout({
   glassFooter,
   glassTabbar,
 }: CustomersLayoutProps) {
+  useWishlistSync();
   const isGlass = variant === 'glass';
   const useGlassFooter = glassFooter ?? isGlass;
   const useGlassTabbar = glassTabbar ?? isGlass;

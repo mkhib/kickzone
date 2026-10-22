@@ -52,7 +52,7 @@ const fa = {
     customers: 'مشتریان',
     adminPanel: 'پنل مدیریت',
     sellersPortal: 'پورتال فروشندگان',
-    languageSettings: 'تنظیمات زبان/Language Settings',
+    languageSettings: 'تنظیمات زبان',
     translations: 'مدیریت ترجمه‌ها',
     catalogManagement: 'مدیریت کاتالوگ',
   },
@@ -598,7 +598,7 @@ const fa = {
     signup: 'ثبت نام',
     forgotPassword: 'فراموشی رمز عبور',
     resetPassword: 'بازیابی رمز عبور',
-    languageSettings: 'تنظیمات زبان/Language Settings',
+    languageSettings: 'تنظیمات زبان',
     unauthorized: 'غیرمجاز',
     // Seller pages
     sellerProducts: 'محصولات من',

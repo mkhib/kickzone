@@ -2,7 +2,8 @@ import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { Link as RouterLink, useLocation, useNavigate } from 'react-router-dom';
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { useCartItemCount } from '@kickzone-workspace/customer-cart-store';
-import { useI18nContext, SITE_NAME } from '@kickzone-workspace/shared-i18n';
+import { useWishlistCount } from '@kickzone-workspace/customer-wishlist-store';
+import { useI18nContext, useLanguageContext, SITE_NAME } from '@kickzone-workspace/shared-i18n';
 import {
   CUSTOMER_ROUTES,
   getCustomerShopRoute,
@@ -33,6 +34,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import MenuIcon from '@mui/icons-material/Menu';
 import LocalMallRoundedIcon from '@mui/icons-material/LocalMallRounded';
+import FavoriteBorderRoundedIcon from '@mui/icons-material/FavoriteBorderRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
@@ -43,7 +45,7 @@ import LoginRoundedIcon from '@mui/icons-material/LoginRounded';
 import SearchIcon from '@mui/icons-material/Search';
 import CloseIcon from '@mui/icons-material/Close';
 
-type DrawerIconTone = 'home' | 'cart' | 'profile' | 'orders' | 'logout' | 'login';
+type DrawerIconTone = 'home' | 'cart' | 'favorites' | 'profile' | 'orders' | 'logout' | 'login';
 
 const DRAWER_ICON_TONES: Record<
   DrawerIconTone,
@@ -60,6 +62,12 @@ const DRAWER_ICON_TONES: Record<
     lightFg: '#2a5f5f',
     darkBg: 'rgba(91, 179, 179, 0.16)',
     darkFg: '#8fd4d4',
+  },
+  favorites: {
+    lightBg: 'rgba(180, 80, 100, 0.12)',
+    lightFg: '#993344',
+    darkBg: 'rgba(230, 120, 140, 0.16)',
+    darkFg: '#f099aa',
   },
   profile: {
     lightBg: 'rgba(92, 107, 138, 0.12)',
@@ -158,7 +166,10 @@ export function Headerbar({
   const location = useLocation();
   const navigate = useNavigate();
   const totalItems = useCartItemCount();
+  const wishlistCount = useWishlistCount();
   const { LL } = useI18nContext();
+  const { currentLocale } = useLanguageContext();
+  const isEn = currentLocale === 'en';
   const themeMode = useUIStore((s) => s.theme.mode);
   const toggleTheme = useUIStore((s) => s.toggleTheme);
   const theme = useTheme();
@@ -251,6 +262,18 @@ export function Headerbar({
         visible: true,
       },
       {
+        id: 'favorites',
+        label: isEn ? 'Favorites' : 'علاقه‌مندی‌ها',
+        path: CUSTOMER_ROUTES.FAVORITES,
+        icon: (
+          <DrawerNavIcon tone="favorites" isDark={isDark}>
+            <FavoriteBorderRoundedIcon />
+          </DrawerNavIcon>
+        ),
+        badge: wishlistCount,
+        visible: true,
+      },
+      {
         id: 'profile',
         label: LL.navigation.profile(),
         path: CUSTOMER_ROUTES.PROFILE,
@@ -295,7 +318,7 @@ export function Headerbar({
         visible: !user,
       },
     ],
-    [LL, totalItems, user, handleLogout, isDark]
+    [LL, totalItems, wishlistCount, user, handleLogout, isDark]
   );
 
   const unhandledNavItems = useMemo(
@@ -577,6 +600,28 @@ export function Headerbar({
                 {LL.button.login()}
               </Button>
             )}
+
+            {/* Favorites Icon with badge */}
+            <IconButton
+              component={RouterLink}
+              to={CUSTOMER_ROUTES.FAVORITES}
+              aria-label="favorites"
+              sx={{
+                width: 36,
+                height: 36,
+                p: 0,
+                color: 'inherit',
+                borderRadius: '50%',
+                '& svg': { fontSize: 17 },
+                '&:hover': {
+                  background: hoverBg,
+                },
+              }}
+            >
+              <Badge badgeContent={wishlistCount} color="error">
+                <FavoriteBorderRoundedIcon />
+              </Badge>
+            </IconButton>
 
             {/* Cart Icon with badge */}
             <IconButton

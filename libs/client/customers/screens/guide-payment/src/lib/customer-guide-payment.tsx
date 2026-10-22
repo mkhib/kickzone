@@ -38,7 +38,7 @@ const PAYMENT_PILLARS: PaymentPillar[] = [
     titleEn: 'Supported Payment Methods',
     titleFa: 'روش‌های پرداخت پشتیبانی‌شده',
     descEn:
-      'Seamless online checkout via our official Zarinpal gateway. Supports all Iranian banking cards on the Shetab (شتاب) and Shaparak network with dynamic SMS OTP (رمز پویا).',
+      'Seamless online checkout via our official Zarinpal gateway. Supports all Iranian banking cards on the Shetab and Shaparak network with dynamic SMS OTP.',
     descFa:
       'پرداخت آنلاین سریع و بدون واسطه از طریق درگاه رسمی زرین‌پال. پشتیبانی از تمامی کارت‌های بانکی عضو شبکه شتاب با رمز پویای پیامکی.',
     icon: <CreditCardIcon sx={{ fontSize: 28 }} />,

@@ -9,6 +9,8 @@ import {
 } from '@kickzone-workspace/customers-graphql';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
+import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
+
 export function useCustomersCart() {
   const { data, loading, error, refetch } = useQuery<
     Pick<KickzoneGraphqlTypes.Query, 'myCart'>
@@ -25,40 +27,42 @@ export function useCustomersCart() {
 }
 
 export function useCustomersCartMutations() {
+  const { user } = useCustomersAuth();
+
   const [addToCartMutation, { loading: addLoading }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'addToCart'>,
     KickzoneGraphqlTypes.MutationAddToCartArgs
   >(ADD_TO_CART_MUTATION, {
-    refetchQueries: [{ query: GET_MY_CART_QUERY }],
+    refetchQueries: user ? [{ query: GET_MY_CART_QUERY }] : [],
   });
 
   const [updateCartItemMutation, { loading: updateLoading }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateCartItem'>,
     KickzoneGraphqlTypes.MutationUpdateCartItemArgs
   >(UPDATE_CART_ITEM_MUTATION, {
-    refetchQueries: [{ query: GET_MY_CART_QUERY }],
+    refetchQueries: user ? [{ query: GET_MY_CART_QUERY }] : [],
   });
 
   const [removeFromCartMutation, { loading: removeLoading }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'removeFromCart'>,
     KickzoneGraphqlTypes.MutationRemoveFromCartArgs
   >(REMOVE_FROM_CART_MUTATION, {
-    refetchQueries: [{ query: GET_MY_CART_QUERY }],
+    refetchQueries: user ? [{ query: GET_MY_CART_QUERY }] : [],
   });
 
   const [clearCartMutation, { loading: clearLoading }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'clearCart'>
   >(CLEAR_CART_MUTATION, {
-    refetchQueries: [{ query: GET_MY_CART_QUERY }],
-    awaitRefetchQueries: true,
+    refetchQueries: user ? [{ query: GET_MY_CART_QUERY }] : [],
+    awaitRefetchQueries: Boolean(user),
   });
 
   const [createOrderMutation, { loading: orderLoading }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'createOrder'>,
     KickzoneGraphqlTypes.MutationCreateOrderArgs
   >(CREATE_ORDER_MUTATION, {
-    refetchQueries: [{ query: GET_MY_CART_QUERY }],
-    awaitRefetchQueries: true,
+    refetchQueries: user ? [{ query: GET_MY_CART_QUERY }] : [],
+    awaitRefetchQueries: Boolean(user),
   });
 
   const addToCart = async (input: KickzoneGraphqlTypes.AddToCartInput) => {

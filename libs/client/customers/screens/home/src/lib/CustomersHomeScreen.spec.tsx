@@ -17,6 +17,7 @@ vi.mock('@kickzone-workspace/customers-cart-hook', () => ({
   useCustomersCartService: () => ({
     addItem: mockAddItem,
   }),
+  useWishlistSync: vi.fn(),
 }));
 
 vi.mock('@kickzone-workspace/snackbar-hook', () => ({
@@ -183,6 +184,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
     formatNumber: (n: number | string) => String(n),
     isRTL: true,
   }),
+  usePageTitle: vi.fn(),
 }));
 
 vi.mock('@kickzone-workspace/products-hook', () => ({

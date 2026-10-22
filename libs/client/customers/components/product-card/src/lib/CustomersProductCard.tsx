@@ -8,10 +8,17 @@ import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
 import Button from '@mui/material/Button';
+import Skeleton from '@mui/material/Skeleton';
+import Chip from '@mui/material/Chip';
+import { useTheme } from '@mui/material/styles';
 import ShoppingBagOutlined from '@mui/icons-material/ShoppingBagOutlined';
 import CheckCircleOutline from '@mui/icons-material/CheckCircleOutline';
 import FavoriteBorderIcon from '@mui/icons-material/FavoriteBorder';
 import FavoriteIcon from '@mui/icons-material/Favorite';
+import {
+  useIsFavorite,
+  useToggleFavorite,
+} from '@kickzone-workspace/customer-wishlist-store';
 
 const API_BASE_URL =
   (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '';
@@ -145,10 +152,19 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
 
   const { LL } = useI18nContext();
   const { currentLocale } = useLanguageContext();
+  const theme = useTheme();
+  const isDark = theme.palette.mode === 'dark';
   const isEn = currentLocale === 'en';
   const isRTL = currentLocale === 'fa';
 
   const isCompact = variant === 'compact';
+
+  const wishlistIsFav = useIsFavorite(product.id);
+  const toggleWishlist = useToggleFavorite();
+  const effectiveIsFavorite =
+    isFavorite !== undefined && isFavorite !== false
+      ? isFavorite
+      : wishlistIsFav;
 
   useEffect(() => {
     return () => {
@@ -250,8 +266,29 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     return list;
   }, [activeVariant, product.productInfos]);
 
-  const primaryImage = images[0] || 'https://via.placeholder.com/600';
-  const secondaryImage = images.length > 1 ? images[1] : null;
+  const isCamoPants = useMemo(() => {
+    const n = (product.name || '').toLowerCase();
+    return (
+      (n.includes('tech fleece') && n.includes('camo')) ||
+      (n.includes('camo') && (n.includes('pant') || n.includes('شلوار')))
+    );
+  }, [product.name]);
+
+  const primaryImage = useMemo(() => {
+    if (isCamoPants) {
+      return '/assets/hero/hero-left-men.jpg';
+    }
+    const first = images[0];
+    if (first && !first.includes('placeholder.com')) {
+      return first;
+    }
+    return null;
+  }, [isCamoPants, images]);
+
+  const secondaryImage =
+    images.length > 1 && !images[1].includes('placeholder.com')
+      ? images[1]
+      : null;
 
   // Eyebrow Brand & Category
   const brand = useMemo(
@@ -307,10 +344,40 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
   // Stock indicator: if variant stock is 1
   const isSingleStock = activeVariant ? activeVariant.stockQuantity === 1 : false;
 
-  // Prices
-  const unitPriceUSD = activeVariant?.price ?? 0;
-  const discountPercent = activeVariant?.discount ?? 0;
-  const finalPriceUSD = discountPercent > 0 ? unitPriceUSD * (1 - discountPercent / 100) : unitPriceUSD;
+  // Fallback pricing from sellerProducts or productInfos for products without active variant
+  const fallbackSeller = useMemo(() => {
+    if (!product.sellerProducts || product.sellerProducts.length === 0) return null;
+    return (
+      product.sellerProducts.find((sp) => (sp.price || 0) > 0) ||
+      product.sellerProducts[0]
+    );
+  }, [product.sellerProducts]);
+
+  // Prices with fallback to seller product
+  const unitPriceUSD =
+    activeVariant?.price ?? fallbackSeller?.price ?? 0;
+  const discountPercent =
+    activeVariant?.discount ?? fallbackSeller?.discount ?? 0;
+  const finalPriceUSD =
+    discountPercent > 0 ? unitPriceUSD * (1 - discountPercent / 100) : unitPriceUSD;
+
+  const handleToggleFav = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (onToggleFavorite) {
+      onToggleFavorite(product.id);
+    } else {
+      toggleWishlist({
+        id: product.id,
+        name: product.name,
+        brand,
+        primaryImage: primaryImage || undefined,
+        price: finalPriceUSD || unitPriceUSD,
+        discount: discountPercent,
+        slug: (product as { slug?: string }).slug || String(product.id),
+      });
+    }
+  };
 
   // Handle Add to Cart
   const handleAddToCartClick = (e: React.MouseEvent) => {
@@ -445,22 +512,65 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                 aria-label={product.name}
                 style={{ display: 'block', width: '100%', height: '100%' }}
               >
-                <Box
-                  component="img"
-                  className="card-glass-img"
-                  src={primaryImage}
-                  alt={imgAlt}
-                  loading="lazy"
-                  decoding="async"
-                  sx={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'cover',
-                    objectPosition: 'center',
-                    transition: 'transform 0.3s cubic-bezier(.2,.7,.1,1)',
-                  }}
-                />
+                {primaryImage ? (
+                  <Box
+                    component="img"
+                    className="card-glass-img"
+                    src={primaryImage}
+                    alt={imgAlt}
+                    loading="lazy"
+                    decoding="async"
+                    sx={{
+                      width: '100%',
+                      height: '100%',
+                      objectFit: 'cover',
+                      objectPosition: 'center',
+                      transition: 'transform 0.3s cubic-bezier(.2,.7,.1,1)',
+                    }}
+                  />
+                ) : (
+                  <Skeleton
+                    variant="rectangular"
+                    width="100%"
+                    height="100%"
+                    animation="wave"
+                    sx={{ bgcolor: 'var(--lg-photo-well)' }}
+                  />
+                )}
               </RouterLink>
+
+              {/* Heart Favorite Toggle Button */}
+              <IconButton
+                aria-label={favoriteAriaLabel}
+                aria-pressed={effectiveIsFavorite}
+                onClick={handleToggleFav}
+                sx={{
+                  position: 'absolute',
+                  top: 10,
+                  insetInlineStart: 10,
+                  zIndex: 3,
+                  width: 32,
+                  height: 32,
+                  borderRadius: '50%',
+                  background: 'var(--lg-chip-bg, rgba(255, 255, 255, 0.65))',
+                  backdropFilter: 'blur(14px)',
+                  WebkitBackdropFilter: 'blur(14px)',
+                  border: '1px solid var(--lg-chip-border, rgba(255, 255, 255, 0.8))',
+                  color: effectiveIsFavorite ? '#ef4444' : 'var(--lg-ink-2)',
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
+                  transition: 'all 0.2s',
+                  '&:hover': {
+                    transform: 'scale(1.1)',
+                    color: '#ef4444',
+                  },
+                }}
+              >
+                {effectiveIsFavorite ? (
+                  <FavoriteIcon sx={{ fontSize: 16 }} />
+                ) : (
+                  <FavoriteBorderIcon sx={{ fontSize: 16 }} />
+                )}
+              </IconButton>
 
               {/* Color Chip pinned at top-end corner */}
               {firstColor && (
@@ -593,7 +703,20 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                     lineHeight: 1,
                   }}
                 >
-                  {exchangeRate ? (
+                  {unitPriceUSD <= 0 ? (
+                    <Chip
+                      label={isEn ? 'Out of Stock' : 'ناموجود'}
+                      size="small"
+                      sx={{
+                        height: 22,
+                        fontSize: '11px',
+                        fontWeight: 600,
+                        backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                        color: isDark ? '#f87171' : '#dc2626',
+                        border: '1px solid rgba(239, 68, 68, 0.25)',
+                      }}
+                    />
+                  ) : exchangeRate ? (
                     <span data-testid="price-display">
                       {formatToman(unitPriceUSD, exchangeRate, discountPercent)}
                     </span>
@@ -784,20 +907,29 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
           aria-label={product.name}
           style={{ display: 'block', width: '100%', height: '100%' }}
         >
-          <Box
-            component="img"
-            className="card-img-primary"
-            src={primaryImage}
-            alt={imgAlt}
-            loading="lazy"
-            decoding="async"
-            sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: 'cover',
-              objectPosition: 'center',
-            }}
-          />
+          {primaryImage ? (
+            <Box
+              component="img"
+              className="card-img-primary"
+              src={primaryImage}
+              alt={imgAlt}
+              loading="lazy"
+              decoding="async"
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+              }}
+            />
+          ) : (
+            <Skeleton
+              variant="rectangular"
+              width="100%"
+              height="100%"
+              animation="wave"
+            />
+          )}
 
           {secondaryImage && (
             <Box
@@ -833,38 +965,34 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             zIndex: 3,
           }}
         >
-          {/* Heart toggle (only rendered if onToggleFavorite is passed) */}
-          {onToggleFavorite ? (
-            <IconButton
-              aria-label={favoriteAriaLabel}
-              aria-pressed={isFavorite}
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onToggleFavorite?.(product.id);
-              }}
-              sx={{
-                pointerEvents: 'auto',
-                width: 38,
-                height: 38,
-                borderRadius: '50%',
-                background: 'rgba(255, 255, 255, 0.55)',
-                backdropFilter: 'blur(14px)',
-                WebkitBackdropFilter: 'blur(14px)',
-                border: '1px solid rgba(255, 255, 255, 0.7)',
-                color: isFavorite ? '#d32f2f' : 'var(--ink)',
-                boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                '&:hover': {
-                  background: 'rgba(255, 255, 255, 0.85)',
-                  transform: 'scale(1.06)',
-                },
-              }}
-            >
-              {isFavorite ? <FavoriteIcon fontSize="small" /> : <FavoriteBorderIcon fontSize="small" />}
-            </IconButton>
-          ) : (
-            <div />
-          )}
+          {/* Heart toggle */}
+          <IconButton
+            aria-label={favoriteAriaLabel}
+            aria-pressed={effectiveIsFavorite}
+            onClick={handleToggleFav}
+            sx={{
+              pointerEvents: 'auto',
+              width: 38,
+              height: 38,
+              borderRadius: '50%',
+              background: 'rgba(255, 255, 255, 0.55)',
+              backdropFilter: 'blur(14px)',
+              WebkitBackdropFilter: 'blur(14px)',
+              border: '1px solid rgba(255, 255, 255, 0.7)',
+              color: effectiveIsFavorite ? '#d32f2f' : 'var(--ink)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+              '&:hover': {
+                background: 'rgba(255, 255, 255, 0.85)',
+                transform: 'scale(1.06)',
+              },
+            }}
+          >
+            {effectiveIsFavorite ? (
+              <FavoriteIcon fontSize="small" />
+            ) : (
+              <FavoriteBorderIcon fontSize="small" />
+            )}
+          </IconButton>
 
           {/* Color swatch chip (first colour hexCode + name) */}
           {firstColor && (
@@ -988,7 +1116,20 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               color: 'var(--ink)',
             }}
           >
-            {exchangeRate ? (
+            {unitPriceUSD <= 0 ? (
+              <Chip
+                label={isEn ? 'Out of Stock' : 'ناموجود'}
+                size="small"
+                sx={{
+                  height: 22,
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                  color: isDark ? '#f87171' : '#dc2626',
+                  border: '1px solid rgba(239, 68, 68, 0.25)',
+                }}
+              />
+            ) : exchangeRate ? (
               <span data-testid="price-display">
                 {formatToman(unitPriceUSD, exchangeRate, discountPercent)}
               </span>

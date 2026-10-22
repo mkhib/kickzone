@@ -33,6 +33,16 @@ export interface WishlistActions {
 
 export type WishlistStore = WishlistState & WishlistActions;
 
+const notifyWishlistSync = () => {
+  if (typeof window !== 'undefined') {
+    try {
+      window.dispatchEvent(new CustomEvent('saintbala-wishlist-sync'));
+    } catch (e) {
+      // Ignore if CustomEvent not supported
+    }
+  }
+};
+
 export const useWishlistStore = create<WishlistStore>()(
   persist(
     (set, get) => ({
@@ -57,6 +67,7 @@ export const useWishlistStore = create<WishlistStore>()(
             lastUpdated: new Date().toISOString(),
           };
         });
+        notifyWishlistSync();
       },
 
       removeItem: (itemId) => {
@@ -69,6 +80,7 @@ export const useWishlistStore = create<WishlistStore>()(
             lastUpdated: new Date().toISOString(),
           };
         });
+        notifyWishlistSync();
       },
 
       toggleItem: (item) => {
@@ -87,6 +99,7 @@ export const useWishlistStore = create<WishlistStore>()(
           items: [],
           lastUpdated: new Date().toISOString(),
         }));
+        notifyWishlistSync();
       },
 
       setItems: (items) => {
@@ -95,6 +108,7 @@ export const useWishlistStore = create<WishlistStore>()(
           items: Array.isArray(items) ? items : [],
           lastUpdated: new Date().toISOString(),
         }));
+        notifyWishlistSync();
       },
 
       isItemFavorite: (itemId) => {
@@ -138,6 +152,27 @@ export const useWishlistStore = create<WishlistStore>()(
     }
   )
 );
+
+// Cross-tab synchronization via storage events & custom event
+if (typeof window !== 'undefined') {
+  const syncWishlist = () => {
+    try {
+      useWishlistStore.persist?.rehydrate();
+    } catch (err) {
+      console.error('Failed to rehydrate wishlist:', err);
+    }
+  };
+
+  window.addEventListener('storage', (event) => {
+    if (event.key === 'saintbala-customer-wishlist') {
+      syncWishlist();
+    }
+  });
+
+  window.addEventListener('saintbala-wishlist-sync', () => {
+    syncWishlist();
+  });
+}
 
 // Defensive selectors & hooks
 export const useWishlistItems = (): WishlistItem[] => {

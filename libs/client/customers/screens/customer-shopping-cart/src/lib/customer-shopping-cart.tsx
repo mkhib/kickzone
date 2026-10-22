@@ -87,6 +87,7 @@ import StepLabel from '@mui/material/StepLabel';
 import Stepper from '@mui/material/Stepper';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import Skeleton from '@mui/material/Skeleton';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 import { useEffect, useMemo } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
@@ -788,11 +789,29 @@ export function CustomerShoppingCart() {
         } order(s) for ${cartItems.length} item(s)`
       );
 
+      // Process shipping information with a guest session / temporary guest checkout token
+      let guestToken =
+        typeof window !== 'undefined'
+          ? sessionStorage.getItem('guest_checkout_token')
+          : null;
+      if (!user && !guestToken) {
+        guestToken = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('guest_checkout_token', guestToken);
+        }
+      }
+
       const orderPromises = Object.entries(itemsBySeller || {}).map(
         ([sellerId, items]) => {
           console.log(
             `[Checkout] 📝 Creating order for seller ${sellerId} with ${items.length} item(s)`
           );
+          const orderNotes = shippingInfo.notes
+            ? `${shippingInfo.notes}${guestToken ? ` [GuestToken: ${guestToken}]` : ''}`
+            : guestToken
+            ? `[GuestToken: ${guestToken}]`
+            : '';
+
           return createOrderMutation({
             customerName: shippingInfo.customerName || '',
             customerEmail: shippingInfo.customerEmail || '',
@@ -802,7 +821,7 @@ export function CustomerShoppingCart() {
             state: shippingInfo.state || '',
             zipCode: toEnglishDigits(shippingInfo.zipCode || ''),
             country: shippingInfo.country || '',
-            notes: shippingInfo.notes || '',
+            notes: orderNotes,
             sellerId: parseInt(sellerId, 10),
             // Pass calculated shipping cost (from smart shipping logic)
             shippingCost: shippingCostsBySeller[sellerId] || 0,
@@ -938,6 +957,11 @@ export function CustomerShoppingCart() {
           orderId: firstOrder.id,
           orderNumber: firstOrder.orderNumber,
           amount: amountInToman,
+          isGuest: !user,
+          guestEmail: shippingInfo.customerEmail || '',
+          guestName: shippingInfo.customerName || '',
+          guestPhone: shippingInfo.customerPhone || '',
+          guestToken: guestToken || undefined,
         })
       );
 
@@ -977,11 +1001,13 @@ export function CustomerShoppingCart() {
           );
         });
 
+      // Only trigger auth dialog for logged-in user session expiration; never block guest checkout
       if (
-        errorMessage.includes('not authenticated') ||
-        errorMessage.includes('unauthorized') ||
-        errorMessage.includes('User not authenticated') ||
-        isAuthGraphQlError
+        user &&
+        (errorMessage.includes('not authenticated') ||
+          errorMessage.includes('unauthorized') ||
+          errorMessage.includes('User not authenticated') ||
+          isAuthGraphQlError)
       ) {
         showSnackbar(
           LL.errors.unauthorized?.() || 'Please log in to proceed with payment',
@@ -1038,12 +1064,81 @@ export function CustomerShoppingCart() {
     return (
       <CustomersLayout>
         <Box
-          display="flex"
-          justifyContent="center"
-          alignItems="center"
-          minHeight="400px"
+          data-testid="cart-skeleton-loading"
+          sx={{
+            minHeight: '80vh',
+            width: '100%',
+            py: { xs: 3, md: 5 },
+            px: { xs: 2, sm: 3, md: 4 },
+            maxWidth: '1400px',
+            mx: 'auto',
+          }}
         >
-          <CircularProgress />
+          <Skeleton
+            variant="text"
+            width={220}
+            height={48}
+            animation="wave"
+            sx={{ mb: 4, borderRadius: 2 }}
+          />
+          <Grid container spacing={4}>
+            <Grid size={{ xs: 12, lg: 8 }}>
+              {[1, 2].map((key) => (
+                <Box
+                  key={key}
+                  sx={{
+                    display: 'flex',
+                    gap: 3,
+                    p: 3,
+                    mb: 2.5,
+                    borderRadius: '24px',
+                    border: '1px solid rgba(255, 255, 255, 0.1)',
+                    background: isDark
+                      ? 'rgba(255, 255, 255, 0.03)'
+                      : 'rgba(255, 255, 255, 0.7)',
+                  }}
+                >
+                  <Skeleton
+                    variant="rectangular"
+                    width={110}
+                    height={110}
+                    animation="wave"
+                    sx={{ borderRadius: '16px', flexShrink: 0 }}
+                  />
+                  <Box sx={{ flex: 1 }}>
+                    <Skeleton variant="text" width="60%" height={28} animation="wave" />
+                    <Skeleton variant="text" width="40%" height={22} animation="wave" sx={{ mt: 1 }} />
+                    <Skeleton variant="text" width="25%" height={22} animation="wave" sx={{ mt: 2 }} />
+                  </Box>
+                </Box>
+              ))}
+            </Grid>
+            <Grid size={{ xs: 12, lg: 4 }}>
+              <Box
+                sx={{
+                  p: 3.5,
+                  borderRadius: '24px',
+                  border: '1px solid rgba(255, 255, 255, 0.12)',
+                  background: isDark
+                    ? 'rgba(255, 255, 255, 0.04)'
+                    : 'rgba(255, 255, 255, 0.8)',
+                }}
+              >
+                <Skeleton variant="text" width="50%" height={32} animation="wave" sx={{ mb: 3 }} />
+                <Skeleton variant="text" width="100%" height={24} animation="wave" sx={{ mb: 1.5 }} />
+                <Skeleton variant="text" width="100%" height={24} animation="wave" sx={{ mb: 1.5 }} />
+                <Divider sx={{ my: 2 }} />
+                <Skeleton variant="text" width="100%" height={36} animation="wave" sx={{ mb: 3 }} />
+                <Skeleton
+                  variant="rectangular"
+                  width="100%"
+                  height={48}
+                  animation="wave"
+                  sx={{ borderRadius: '9999px' }}
+                />
+              </Box>
+            </Grid>
+          </Grid>
         </Box>
       </CustomersLayout>
     );

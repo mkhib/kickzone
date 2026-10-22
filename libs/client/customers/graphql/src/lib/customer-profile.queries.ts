@@ -13,6 +13,7 @@ export const GET_MY_PROFILE = gql`
       country
       clothingSize
       shoeSize
+      favorites
     }
   }
 `;
@@ -30,6 +31,7 @@ export const UPDATE_MY_PROFILE = gql`
       country
       clothingSize
       shoeSize
+      favorites
     }
   }
 `;

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import { LottieLoading } from '@kickzone-workspace/lottie-loading';
+import { useLanguageContext } from '@kickzone-workspace/shared-i18n';
 
 export interface HomeLoadingScreenProps {
   message?: string;
@@ -9,9 +10,20 @@ export interface HomeLoadingScreenProps {
 }
 
 export function HomeLoadingScreen({
-  message = 'در حال آماده‌سازی کلکسیون...',
+  message,
   brandTitle = 'SAINTBALA',
 }: HomeLoadingScreenProps) {
+  const { currentLocale } = useLanguageContext();
+  const isEn = currentLocale === 'en';
+
+  const displayMessage =
+    message ??
+    (isEn
+      ? 'Preparing collections...'
+      : 'در حال آماده‌سازی کلکسیون...');
+
+  const ariaLabel = isEn ? 'Loading site' : 'در حال بارگذاری سایت';
+
   useEffect(() => {
     // Lock scrolling on document body while the loading screen is active
     const originalOverflow = document.body.style.overflow;
@@ -27,7 +39,7 @@ export function HomeLoadingScreen({
       data-testid="home-loading-screen"
       role="status"
       aria-live="polite"
-      aria-label="در حال بارگذاری سایت"
+      aria-label={ariaLabel}
       sx={{
         position: 'fixed',
         inset: 0,
@@ -98,7 +110,7 @@ export function HomeLoadingScreen({
         {brandTitle}
       </Typography>
 
-      {/* Persian Subtitle / Status */}
+      {/* Subtitle / Status */}
       <Typography
         component="div"
         sx={{
@@ -108,7 +120,7 @@ export function HomeLoadingScreen({
           color: 'var(--ink-3, #8e8e93)',
           textAlign: 'center',
           mt: 1,
-          direction: 'rtl',
+          direction: isEn ? 'ltr' : 'rtl',
           animation: 'kz-text-breathe 2s infinite ease-in-out',
           '@keyframes kz-text-breathe': {
             '0%, 100%': { opacity: 0.65 },
@@ -116,7 +128,7 @@ export function HomeLoadingScreen({
           },
         }}
       >
-        {message}
+        {displayMessage}
       </Typography>
 
       {/* Shimmering Progress Accent Line */}

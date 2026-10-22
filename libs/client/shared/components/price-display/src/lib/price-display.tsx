@@ -64,9 +64,14 @@ export function PriceDisplay({
     maximumFractionDigits: decimalPlaces,
   });
 
-  const displayPrice = showSymbol
-    ? `${formattedPrice} ${currencySymbol}`
-    : formattedPrice;
+  let displayPrice = formattedPrice;
+  if (showSymbol) {
+    if (currencyCode === 'USD' || (locale && locale.startsWith('en'))) {
+      displayPrice = `${currencySymbol || '$'}${formattedPrice}`;
+    } else {
+      displayPrice = `${formattedPrice} ${currencySymbol || 'تومان'}`;
+    }
+  }
 
   return (
     <span className={className}>

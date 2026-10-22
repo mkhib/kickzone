@@ -647,9 +647,13 @@ export function CustomerContact() {
                       mb: 3,
                     }}
                   >
-                    {isEn
-                      ? `Follow ${SITE_NAME} for private drop announcements, lookbooks, and verified provenance updates.`
-                      : `کانال‌های رسمی ${brandWordmark} برای اطلاع از دراپ‌های ویژه، آلبوم‌های استایل و اخبار کارهای اورجینال.`}
+                    {isEn ? (
+                      `Follow ${SITE_NAME} for private drop announcements, lookbooks, and verified provenance updates.`
+                    ) : (
+                      <>
+                        کانال‌های رسمی {brandWordmark} برای اطلاع از دراپ‌های ویژه، آلبوم‌های استایل و اخبار کارهای اورجینال.
+                      </>
+                    )}
                   </Typography>
 
                   <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5 }}>

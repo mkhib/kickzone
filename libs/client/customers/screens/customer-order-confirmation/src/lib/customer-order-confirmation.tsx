@@ -20,7 +20,9 @@ import ReceiptLongOutlined from '@mui/icons-material/ReceiptLongOutlined';
 import EmailOutlined from '@mui/icons-material/EmailOutlined';
 import PhoneOutlined from '@mui/icons-material/PhoneOutlined';
 import PlaceOutlined from '@mui/icons-material/PlaceOutlined';
+import PersonAddOutlined from '@mui/icons-material/PersonAddOutlined';
 import { useTheme } from '@mui/material/styles';
+import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
@@ -66,6 +68,7 @@ export function CustomerOrderConfirmation() {
   const orderData = location.state?.orderData as OrderData | undefined;
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
+  const { user } = useCustomersAuth();
 
   // If no order data, redirect to home
   React.useEffect(() => {
@@ -718,6 +721,70 @@ export function CustomerOrderConfirmation() {
             >
               {LL.orderConfirmation.emailConfirmation()}
             </Alert>
+
+            {/* Optional Guest Account Creation Prompt */}
+            {!user && (
+              <Box
+                sx={{
+                  mb: 4,
+                  p: 3,
+                  borderRadius: '20px',
+                  background: isDark
+                    ? 'rgba(197, 184, 154, 0.08)'
+                    : 'rgba(240, 235, 225, 0.6)',
+                  border: isDark
+                    ? '1px solid rgba(197, 184, 154, 0.3)'
+                    : '1px solid rgba(143, 132, 104, 0.25)',
+                  textAlign: 'center',
+                }}
+              >
+                <Typography
+                  variant="subtitle1"
+                  sx={{
+                    fontWeight: 700,
+                    color: isDark ? '#f4f4f2' : '#181816',
+                    mb: 1,
+                  }}
+                >
+                  {LL.orderConfirmation.createAccountPrompt?.() ||
+                    'برای پیگیری سریع‌تر سفارش و دسترسی به تاریخچه خرید، حساب کاربری بسازید'}
+                </Typography>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    color: isDark ? 'rgba(255,255,255,0.7)' : 'rgba(0,0,0,0.65)',
+                    mb: 2.5,
+                  }}
+                >
+                  {LL.orderConfirmation.createAccountDescription?.() ||
+                    'اطلاعات شما از سفارش فعلی ذخیره خواهد شد و نیازی به وارد کردن مجدد اطلاعات در خریدهای بعدی نخواهد بود.'}
+                </Typography>
+                <Button
+                  variant="outlined"
+                  component={RouterLink}
+                  to={`${CUSTOMER_ROUTES.SIGNUP}?email=${encodeURIComponent(
+                    orderData.customerEmail || ''
+                  )}&name=${encodeURIComponent(orderData.customerName || '')}`}
+                  startIcon={<PersonAddOutlined />}
+                  sx={{
+                    borderRadius: '9999px',
+                    px: 3.5,
+                    py: 1,
+                    fontWeight: 600,
+                    borderColor: isDark ? '#c5b89a' : '#7c6d48',
+                    color: isDark ? '#c5b89a' : '#7c6d48',
+                    '&:hover': {
+                      borderColor: isDark ? '#dfd6c0' : '#5a4e32',
+                      background: isDark
+                        ? 'rgba(197, 184, 154, 0.12)'
+                        : 'rgba(143, 132, 104, 0.1)',
+                    },
+                  }}
+                >
+                  {LL.button.signUp()}
+                </Button>
+              </Box>
+            )}
 
             {/* Action Buttons */}
             <Box
