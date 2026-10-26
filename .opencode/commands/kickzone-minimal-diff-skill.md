@@ -47,7 +47,7 @@ When invoked:
      - Backend API (`apps/kickzone-api`)
      - Frontends (`apps/client/customers`, `apps/client/sellers`, `apps/client/admins`)
    - Output targeted, surgical code diffs only. Never rewrite entire files when a small diff suffices.
-     </instructions>
+</instructions>
 
 <constraints>
 - DO NOT invent unnecessary new database tables, microservices, or complex abstraction layers.
@@ -86,3 +86,4 @@ Step-by-step evaluation of the index data from .ai-context/, schema trade-offs, 
 
 - `path/to/file`: [Specific surgical diff]
   </output_format>
+
