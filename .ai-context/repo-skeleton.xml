@@ -1,0 +1,3251 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: libs/shared/graphql-schema/src/lib/schema.gql, libs/server/entities/src/lib/product.entity.ts, libs/server/entities/src/lib/order.entity.ts, libs/server/entities/src/lib/user.entity.ts, libs/server/entities/src/lib/cart.entity.ts, libs/server/entities/src/lib/seller-product.entity.ts, libs/server/entities/src/lib/seller-info.entity.ts, libs/server/entities/src/lib/category.entity.ts, libs/server/entities/src/lib/brand.entity.ts, libs/server/entities/src/lib/color.entity.ts, libs/server/entities/src/lib/product-info.entity.ts, libs/server/entities/src/lib/product-description.entity.ts, libs/server/entities/src/lib/order-item.entity.ts, libs/server/entities/src/lib/cart-item.entity.ts, libs/server/modules/src/lib/*.module.ts, libs/server/inputs/src/lib/product.input.ts, libs/server/inputs/src/lib/order.inputs.ts, libs/server/inputs/src/lib/seller.input.ts, libs/server/inputs/src/lib/user.input.ts, libs/server/inputs/src/lib/brand.input.ts, libs/server/inputs/src/lib/category.input.ts, libs/server/inputs/src/lib/color.input.ts, libs/server/inputs/src/lib/cart.inputs.ts, libs/shared/graphql-schema/src/lib/schema.gql
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+libs/
+  server/
+    entities/
+      src/
+        lib/
+          brand.entity.ts
+          cart.entity.ts
+          category.entity.ts
+          color.entity.ts
+          order.entity.ts
+          product-description.entity.ts
+          product-info.entity.ts
+          product.entity.ts
+          seller-info.entity.ts
+          seller-product.entity.ts
+          user.entity.ts
+    inputs/
+      src/
+        lib/
+          brand.input.ts
+          cart.inputs.ts
+          category.input.ts
+          color.input.ts
+          order.inputs.ts
+          product.input.ts
+          seller.input.ts
+          user.input.ts
+    modules/
+      src/
+        lib/
+          auth.module.ts
+          brand.module.ts
+          cart.module.ts
+          catalog-guard.module.ts
+          category.module.ts
+          color.module.ts
+          currency.module.ts
+          customer-profile.module.ts
+          email.module.ts
+          graphql-context.module.ts
+          order.module.ts
+          payment.module.ts
+          platform-settings.module.ts
+          product-info.module.ts
+          product.module.ts
+          seller-info.module.ts
+          seller-products.module.ts
+          site-language.module.ts
+          token.module.ts
+          translation.module.ts
+          user.module.ts
+  shared/
+    graphql-schema/
+      src/
+        lib/
+          schema.gql
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="libs/server/entities/src/lib/cart.entity.ts">
+import { Field, ObjectType, ID, Int, Float } from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+  JoinColumn,
+} from 'typeorm';
+import { User } from './user.entity';
+import { Product } from './product.entity';
+
+@ObjectType()
+@Entity('carts')
+export class Cart {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Field(() => String)
+  @Column()
+  userId: string;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  subtotal: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  total: number;
+
+  @Field(() => Date)
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Field(() => Date)
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @ManyToOne(() => User, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'userId' })
+  user: User;
+
+  @OneToMany(() => CartItem, (cartItem) => cartItem.cart, { cascade: true })
+  items: CartItem[];
+}
+
+@ObjectType()
+@Entity('cart_items')
+export class CartItem {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Field(() => String)
+  @Column()
+  cartId: string;
+
+  @Field(() => String)
+  @Column()
+  productId: string;
+
+  @Field(() => String)
+  @Column()
+  productName: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  productImage?: string;
+
+  @Field(() => Int)
+  @Column()
+  quantity: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  unitPrice: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  totalPrice: number;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  color?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  size?: string;
+
+  @Field(() => String)
+  @Column()
+  sellerId: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerName?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  productInfoId?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerProductId?: string;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  availableStock?: number;
+
+  @ManyToOne(() => Cart, (cart) => cart.items, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'cartId' })
+  cart: Cart;
+
+  @ManyToOne(() => Product, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'productId' })
+  product: Product;
+}
+</file>
+
+<file path="libs/server/entities/src/lib/category.entity.ts">
+import { ObjectType, Field, Int } from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Product } from './product.entity';
+
+@ObjectType()
+@Entity('categories')
+export class Category {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field()
+  @Column({ unique: true })
+  slug: string; // URL-friendly identifier: "electronics", "clothing"
+
+  @Field()
+  @Column({ default: 0 })
+  sortOrder: number;
+
+  @Field()
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Field()
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Field()
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @ManyToMany(() => Product, (product) => product.categories)
+  products: Product[];
+
+  // Virtual field - resolved via GraphQL resolver
+  @Field()
+  name: string;
+}
+</file>
+
+<file path="libs/server/entities/src/lib/color.entity.ts">
+import { ObjectType, Field, Int } from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+
+@ObjectType()
+@Entity('colors')
+export class Color {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field()
+  @Column({ unique: true })
+  hexCode: string; // Storing as hex code string: #FF0000
+
+  @Field()
+  @Column({ default: 0 })
+  sortOrder: number;
+
+  @Field()
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Field()
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Field()
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  // Virtual field - resolved via GraphQL resolver
+  @Field()
+  name: string;
+}
+</file>
+
+<file path="libs/server/entities/src/lib/order.entity.ts">
+import {
+  Field,
+  Float,
+  ID,
+  Int,
+  ObjectType,
+  registerEnumType,
+} from '@nestjs/graphql';
+import {
+  Column,
+  CreateDateColumn,
+  Entity,
+  JoinColumn,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Product } from './product.entity';
+import { SellerInfo } from './seller-info.entity';
+
+export enum OrderStatus {
+  PENDING = 'PENDING',
+  CONFIRMED = 'CONFIRMED',
+  PROCESSING = 'PROCESSING',
+  SHIPPED = 'SHIPPED',
+  DELIVERED = 'DELIVERED',
+  CANCELLED = 'CANCELLED',
+  REFUNDED = 'REFUNDED',
+}
+
+registerEnumType(OrderStatus, {
+  name: 'OrderStatus',
+});
+
+@ObjectType()
+@Entity('orders')
+export class Order {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Field(() => String)
+  @Column()
+  orderNumber: string;
+
+  @Field(() => String)
+  @Column()
+  customerEmail: string;
+
+  @Field(() => String)
+  @Column()
+  customerPhone: string;
+
+  @Field(() => String)
+  @Column()
+  customerName: string;
+
+  @Field(() => String)
+  @Column()
+  shippingAddress: string;
+
+  @Field(() => String)
+  @Column()
+  city: string;
+
+  @Field(() => String)
+  @Column()
+  state: string;
+
+  @Field(() => String)
+  @Column()
+  zipCode: string;
+
+  @Field(() => String)
+  @Column()
+  country: string;
+
+  @Field(() => OrderStatus)
+  @Column({
+    type: 'enum',
+    enum: OrderStatus,
+    default: OrderStatus.PENDING,
+  })
+  status: OrderStatus;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  subtotal: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  shippingCost: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  total: number;
+
+// Payment metadata for verification
+@Field(() => Float, { nullable: true })
+@Column('decimal', { precision: 12, scale: 2, nullable: true })
+paymentAmount?: number | null;
+
+@Field(() => String, { nullable: true })
+@Column({ nullable: true })
+paymentCurrency?: string | null;
+
+@Field(() => String, { nullable: true })
+@Column({ nullable: true })
+paymentAuthority?: string | null;
+
+  // Seller snapshot fields - preserve seller info at order time
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerStoreName?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerPhone?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerAddress?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  notes?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  trackingNumber?: string;
+
+  @Field(() => Date)
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Field(() => Date)
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @Field(() => Int)
+  @Column()
+  sellerId: number;
+
+  @ManyToOne(() => SellerInfo, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'sellerId' })
+  seller: SellerInfo;
+
+  @OneToMany(() => OrderItem, (orderItem) => orderItem.order, { cascade: true })
+  items: OrderItem[];
+}
+
+@ObjectType()
+@Entity('order_items')
+export class OrderItem {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Field(() => String)
+  @Column()
+  orderId: string;
+
+  @Field(() => String)
+  @Column()
+  productId: string;
+
+  @Field(() => String)
+  @Column()
+  productName: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  productImage?: string;
+
+  @Field(() => Int)
+  @Column()
+  quantity: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  unitPrice: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  totalPrice: number;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  color?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  size?: string;
+
+  @Field(() => String, { nullable: true })
+  @Column({ nullable: true })
+  sellerProductId?: string;
+
+  // Product pricing snapshot fields - preserve pricing details at order time
+  @Field(() => Float, { nullable: true })
+  @Column('decimal', { precision: 10, scale: 2, nullable: true })
+  originalPrice?: number;
+
+  @Field(() => Float, { nullable: true })
+  @Column('decimal', { precision: 5, scale: 2, nullable: true })
+  discountPercentage?: number;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ nullable: true })
+  productInfoId?: number;
+
+  @ManyToOne(() => Order, (order) => order.items, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'orderId' })
+  order: Order;
+
+  @ManyToOne(() => Product, { onDelete: 'CASCADE' })
+  @JoinColumn({ name: 'productId' })
+  product: Product;
+}
+</file>
+
+<file path="libs/server/entities/src/lib/user.entity.ts">
+import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
+import { ObjectType, Field, ID, registerEnumType, Int } from '@nestjs/graphql';
+import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
+
+export enum UserRole {
+  ADMIN = 'ADMIN',
+  SELLER = 'SELLER',
+  CUSTOMER = 'CUSTOMER',
+}
+
+registerEnumType(UserRole, {
+  name: 'UserRole',
+});
+
+@ObjectType()
+@Entity()
+export class User {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Field()
+  @Column()
+  @Index()
+  name: string;
+
+  @Field()
+  @Column()
+  @Index()
+  lastName: string;
+
+  @Field()
+  @Column({ unique: true })
+  @Index()
+  username: string;
+
+  @Field()
+  @Column({ unique: true })
+  @Index()
+  email: string;
+
+  @Column()
+  password: string;
+
+  @Field(() => UserRole)
+  @Column({
+    type: 'enum',
+    enum: UserRole,
+    default: UserRole.CUSTOMER,
+  })
+  role: UserRole;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true, default: 'en' })
+  locale?: string;
+}
+
+@ObjectType()
+export class UserEdge implements Edge<User> {
+  @Field(() => User)
+  node: User;
+
+  @Field()
+  cursor: string;
+}
+
+@ObjectType()
+export class UserConnection implements Connection<User> {
+  @Field(() => [UserEdge])
+  edges: UserEdge[];
+
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+
+  @Field(() => Int)
+  totalCount: number;
+}
+
+export type UserWithoutPassword = Omit<User, 'password'>;
+</file>
+
+<file path="libs/server/inputs/src/lib/cart.inputs.ts">
+import { InputType, Field, Int } from '@nestjs/graphql';
+
+@InputType()
+export class AddToCartInput {
+  @Field(() => String)
+  sellerProductId: string;
+
+  @Field(() => Int)
+  quantity: number;
+}
+
+@InputType()
+export class UpdateCartItemInput {
+  @Field(() => Int, { nullable: true })
+  quantity?: number;
+
+  @Field(() => String, { nullable: true })
+  color?: string;
+
+  @Field(() => String, { nullable: true })
+  size?: string;
+}
+</file>
+
+<file path="libs/server/inputs/src/lib/category.input.ts">
+import { InputType, Field, Int } from '@nestjs/graphql';
+
+@InputType()
+export class CreateCategoryInput {
+  @Field()
+  slug: string;
+
+  @Field(() => Int, { nullable: true, defaultValue: 0 })
+  sortOrder?: number;
+}
+
+@InputType()
+export class UpdateCategoryInput {
+  @Field(() => Int)
+  id: number;
+
+  @Field({ nullable: true })
+  slug?: string;
+
+  @Field(() => Int, { nullable: true })
+  sortOrder?: number;
+
+  @Field({ nullable: true })
+  isActive?: boolean;
+}
+</file>
+
+<file path="libs/server/inputs/src/lib/color.input.ts">
+import { InputType, Field, Int } from '@nestjs/graphql';
+
+@InputType()
+export class CreateColorInput {
+  @Field()
+  hexCode: string;
+
+  @Field(() => Int, { nullable: true, defaultValue: 0 })
+  sortOrder?: number;
+}
+
+@InputType()
+export class UpdateColorInput {
+  @Field()
+  hexCode: string;
+
+  @Field(() => Int, { nullable: true })
+  sortOrder?: number;
+
+  @Field({ nullable: true })
+  isActive?: boolean;
+}
+</file>
+
+<file path="libs/server/inputs/src/lib/order.inputs.ts">
+import { InputType, Field, Int, Float } from '@nestjs/graphql';
+import { OrderStatus } from '@kickzone-workspace/entities';
+
+@InputType()
+export class CreateOrderItemInput {
+  @Field(() => String)
+  productId: string;
+
+  @Field(() => String, { nullable: true })
+  sellerProductId?: string;
+
+  @Field(() => String)
+  productName: string;
+
+  @Field(() => String, { nullable: true })
+  productImage?: string;
+
+  @Field(() => Int)
+  quantity: number;
+
+  @Field(() => Float)
+  unitPrice: number;
+
+  @Field(() => Float)
+  totalPrice: number;
+
+  @Field(() => String, { nullable: true })
+  color?: string;
+
+  @Field(() => String, { nullable: true })
+  size?: string;
+}
+
+@InputType()
+export class CreateOrderInput {
+  @Field(() => String)
+  customerEmail: string;
+
+  @Field(() => String)
+  customerPhone: string;
+
+  @Field(() => String)
+  customerName: string;
+
+  @Field(() => String)
+  shippingAddress: string;
+
+  @Field(() => String)
+  city: string;
+
+  @Field(() => String)
+  state: string;
+
+  @Field(() => String)
+  zipCode: string;
+
+  @Field(() => String)
+  country: string;
+
+  @Field(() => Int)
+  sellerId: number;
+
+  @Field(() => [CreateOrderItemInput])
+  items: CreateOrderItemInput[];
+
+  @Field(() => String, { nullable: true })
+  notes?: string;
+
+  // Optional: Override shipping cost (calculated by smart shipping logic)
+  // If not provided, will use seller's shippingFee
+  @Field(() => Float, { nullable: true })
+  shippingCost?: number;
+}
+
+@InputType()
+export class UpdateOrderItemInput {
+  @Field(() => String, { nullable: true })
+  id?: string;
+
+  @Field(() => String)
+  productId: string;
+
+  @Field(() => String, { nullable: true })
+  sellerProductId?: string;
+
+  @Field(() => String)
+  productName: string;
+
+  @Field(() => String, { nullable: true })
+  productImage?: string;
+
+  @Field(() => Int)
+  quantity: number;
+
+  @Field(() => Float)
+  unitPrice: number;
+
+  @Field(() => Float)
+  totalPrice: number;
+
+  @Field(() => String, { nullable: true })
+  color?: string;
+
+  @Field(() => String, { nullable: true })
+  size?: string;
+}
+
+@InputType()
+export class UpdateOrderInput {
+  @Field(() => String, { nullable: true })
+  customerEmail?: string;
+
+  @Field(() => String, { nullable: true })
+  customerPhone?: string;
+
+  @Field(() => String, { nullable: true })
+  customerName?: string;
+
+  @Field(() => String, { nullable: true })
+  shippingAddress?: string;
+
+  @Field(() => String, { nullable: true })
+  city?: string;
+
+  @Field(() => String, { nullable: true })
+  state?: string;
+
+  @Field(() => String, { nullable: true })
+  zipCode?: string;
+
+  @Field(() => String, { nullable: true })
+  country?: string;
+
+  @Field(() => [UpdateOrderItemInput], { nullable: true })
+  items?: UpdateOrderItemInput[];
+
+  @Field(() => String, { nullable: true })
+  notes?: string;
+
+  @Field(() => String, { nullable: true })
+  trackingNumber?: string;
+}
+
+@InputType()
+export class UpdateOrderStatusInput {
+  @Field(() => String)
+  id: string;
+
+  @Field(() => OrderStatus)
+  status: OrderStatus;
+}
+
+@InputType()
+export class OrdersFilterInput {
+  @Field(() => String, { nullable: true })
+  sellerId?: string;
+
+  @Field(() => OrderStatus, { nullable: true })
+  status?: OrderStatus;
+
+  @Field(() => String, { nullable: true })
+  customerEmail?: string;
+
+  @Field(() => String, { nullable: true })
+  orderNumber?: string;
+}
+
+@InputType()
+export class OrdersPaginationInput {
+  @Field(() => Int, { defaultValue: 10 })
+  first: number;
+
+  @Field(() => String, { nullable: true })
+  after?: string;
+}
+</file>
+
+<file path="libs/server/inputs/src/lib/user.input.ts">
+import { InputType, Field } from '@nestjs/graphql';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { UserRole } from '@kickzone-workspace/entities';
+
+@InputType()
+export class CreateUserInput {
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  lastName: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+
+  @Field(() => UserRole)
+  @IsNotEmpty()
+  role: UserRole;
+}
+
+@InputType()
+export class UpdateUserInput {
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  lastName?: string;
+
+  @Field({ nullable: true })
+  email?: string;
+
+  @Field({ nullable: true })
+  password?: string;
+
+  @Field(() => UserRole, { nullable: true })
+  role?: UserRole;
+}
+</file>
+
+<file path="libs/server/modules/src/lib/cart.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Cart, CartItem, SellerProduct } from '@kickzone-workspace/entities';
+import { CartService } from '@kickzone-workspace/services';
+import { CartResolver, ShippingResolver } from '@kickzone-workspace/resolvers';
+import { PlatformSettingsModule } from './platform-settings.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Cart, CartItem, SellerProduct]),
+    PlatformSettingsModule,
+  ],
+  providers: [CartService, CartResolver, ShippingResolver],
+  exports: [CartService],
+})
+export class CartModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/currency.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import {
+  Currency,
+  ExchangeRate,
+  CurrencyPreference,
+} from '@kickzone-workspace/entities';
+import { CurrencyService } from '@kickzone-workspace/services';
+import { CurrencyResolver } from '@kickzone-workspace/resolvers';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Currency, ExchangeRate, CurrencyPreference]),
+  ],
+  providers: [CurrencyService, CurrencyResolver],
+  exports: [CurrencyService],
+})
+export class CurrencyModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/customer-profile.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { CustomerProfile } from '@kickzone-workspace/entities';
+import { CustomerProfileService } from '@kickzone-workspace/services';
+import { CustomerProfileResolver } from '@kickzone-workspace/resolvers';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([CustomerProfile])],
+  providers: [CustomerProfileService, CustomerProfileResolver],
+  exports: [CustomerProfileService],
+})
+export class CustomerProfileModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/email.module.ts">
+import { Module } from '@nestjs/common';
+import { EmailService } from '@kickzone-workspace/services';
+import { ConfigModule } from '@nestjs/config';
+
+@Module({
+  imports: [ConfigModule],
+  providers: [EmailService],
+  exports: [EmailService],
+})
+export class EmailModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/order.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import {
+  Order,
+  OrderItem,
+  SellerProduct,
+  SellerInfo,
+} from '@kickzone-workspace/entities';
+import { OrderService } from '@kickzone-workspace/services';
+import { OrderResolver } from '@kickzone-workspace/resolvers';
+import { OrderController } from '@kickzone-workspace/controllers';
+import { SellerInfoModule } from './seller-info.module';
+import { PlatformSettingsModule } from './platform-settings.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Order, OrderItem, SellerProduct, SellerInfo]),
+    SellerInfoModule,
+    PlatformSettingsModule,
+  ],
+  providers: [OrderService, OrderResolver],
+  controllers: [OrderController],
+  exports: [OrderService],
+})
+export class OrderModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/payment.module.ts">
+import { Module } from '@nestjs/common';
+import { PaymentService, PaymentLogger } from '@kickzone-workspace/services';
+import { PaymentResolver } from '@kickzone-workspace/resolvers';
+import { OrderModule } from './order.module';
+
+@Module({
+  imports: [OrderModule], // Import OrderModule to access OrderService
+  providers: [PaymentService, PaymentResolver, PaymentLogger],
+  exports: [PaymentService],
+})
+export class PaymentModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/platform-settings.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { PlatformSettings } from '@kickzone-workspace/entities';
+import { ShippingCalculationService } from '@kickzone-workspace/services';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([PlatformSettings])],
+  providers: [ShippingCalculationService],
+  exports: [ShippingCalculationService],
+})
+export class PlatformSettingsModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/seller-products.module.ts">
+import { SellerProduct } from '@kickzone-workspace/entities';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SellerInfoModule } from './seller-info.module';
+import { UserModule } from './user.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([SellerProduct]),
+    SellerInfoModule,
+    UserModule,
+  ],
+})
+export class SellerProductsModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/token.module.ts">
+import { Module, Global } from '@nestjs/common';
+import { TokenService } from '@kickzone-workspace/services';
+
+@Global()
+@Module({
+  providers: [TokenService],
+  exports: [TokenService],
+})
+export class TokenModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/translation.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Translation } from '@kickzone-workspace/entities';
+import { TranslationService } from '@kickzone-workspace/services';
+import { TranslationResolver } from '@kickzone-workspace/resolvers';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Translation])],
+  providers: [TranslationService, TranslationResolver],
+  exports: [TranslationService],
+})
+export class TranslationModule {}
+</file>
+
+<file path="libs/server/entities/src/lib/brand.entity.ts">
+import { ObjectType, Field, Int } from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Product } from './product.entity';
+
+@ObjectType()
+@Entity('brands')
+export class Brand {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field()
+  @Column({ unique: true })
+  slug: string;
+
+  @Field()
+  @Column({ default: 0 })
+  sortOrder: number;
+
+  @Field()
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Field()
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Field()
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @OneToMany(() => Product, (product) => product.brand)
+  products: Product[];
+
+  // Virtual field - resolved via GraphQL resolver
+  @Field()
+  name: string;
+}
+</file>
+
+<file path="libs/server/entities/src/lib/product-description.entity.ts">
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  CreateDateColumn,
+  UpdateDateColumn,
+  Index,
+  ManyToOne,
+  JoinColumn,
+  Relation,
+} from 'typeorm';
+import { ObjectType, Field, ID, Int } from '@nestjs/graphql';
+import { Product } from './product.entity';
+import { SiteLanguage } from './site-language.entity';
+
+@ObjectType()
+@Entity('product_descriptions')
+@Index(['productId', 'languageId'], { unique: true })
+@Index(['productId'])
+@Index(['languageId'])
+export class ProductDescription {
+  @Field(() => ID)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @ManyToOne(() => Product, (product) => product.descriptions, {
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'productId' })
+  product: Relation<Product>;
+
+  @Field(() => Int)
+  @Column()
+  productId: number;
+
+  @Field(() => SiteLanguage)
+  @ManyToOne(() => SiteLanguage, (lang) => lang.productDescriptions, {
+    eager: true,
+    onDelete: 'CASCADE',
+  })
+  @JoinColumn({ name: 'languageId' })
+  language: Relation<SiteLanguage>;
+
+  @Field(() => Int)
+  @Column()
+  languageId: number;
+
+  @Field()
+  @Column({ type: 'text' })
+  description: string;
+
+  @Field(() => Date)
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Field(() => Date)
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
+</file>
+
+<file path="libs/server/inputs/src/lib/brand.input.ts">
+import { InputType, Field, Int } from '@nestjs/graphql';
+
+@InputType()
+export class CreateBrandInput {
+  @Field()
+  slug: string;
+
+  @Field(() => Int, { nullable: true, defaultValue: 0 })
+  sortOrder?: number;
+}
+
+@InputType()
+export class UpdateBrandInput {
+  @Field(() => Int)
+  id: number;
+
+  @Field({ nullable: true })
+  slug?: string;
+
+  @Field(() => Int, { nullable: true })
+  sortOrder?: number;
+
+  @Field({ nullable: true })
+  isActive?: boolean;
+}
+</file>
+
+<file path="libs/server/modules/src/lib/auth.module.ts">
+import { AuthController } from '@kickzone-workspace/controllers';
+import { AuthService } from '@kickzone-workspace/services';
+import { LocalStrategy } from '@kickzone-workspace/strategies';
+import { Module, forwardRef } from '@nestjs/common';
+import { PassportModule } from '@nestjs/passport';
+import { UserModule } from './user.module';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthResolver } from '@kickzone-workspace/resolvers';
+import { EmailModule } from './email.module';
+import { TokenModule } from './token.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RefreshToken } from '@kickzone-workspace/entities';
+
+@Module({
+  imports: [
+    forwardRef(() => UserModule),
+    PassportModule,
+    EmailModule,
+    TokenModule,
+    TypeOrmModule.forFeature([RefreshToken]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+  ],
+  providers: [AuthService, LocalStrategy, AuthResolver],
+  controllers: [AuthController],
+  exports: [AuthService],
+})
+export class AuthModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/brand.module.ts">
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Brand, Product } from '@kickzone-workspace/entities';
+import { BrandService } from '@kickzone-workspace/services';
+import { BrandResolver } from '@kickzone-workspace/resolvers';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Brand, Product]),
+    TranslationModule,
+    CatalogGuardModule,
+  ],
+  providers: [BrandService, BrandResolver],
+  exports: [BrandService, TypeOrmModule.forFeature([Brand])],
+})
+export class BrandModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/category.module.ts">
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Category, Product } from '@kickzone-workspace/entities';
+import { ProductService, CategoryService } from '@kickzone-workspace/services';
+import { CategoryResolver } from '@kickzone-workspace/resolvers';
+import { ProductModule } from './product.module';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Category, Product]),
+    ProductModule,
+    TranslationModule,
+    CatalogGuardModule,
+  ],
+  providers: [ProductService, CategoryResolver, CategoryService],
+  exports: [ProductService, CategoryService],
+})
+export class CategoryModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/color.module.ts">
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Color } from '@kickzone-workspace/entities';
+import { ColorService } from '@kickzone-workspace/services';
+import { ColorResolver } from '@kickzone-workspace/resolvers';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Color]), TranslationModule, CatalogGuardModule],
+  providers: [ColorService, ColorResolver],
+  exports: [ColorService, TypeOrmModule.forFeature([Color])],
+})
+export class ColorModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/graphql-context.module.ts">
+import { Module } from '@nestjs/common';
+import { AuthService } from '@kickzone-workspace/services';
+import { UserModule } from './user.module';
+import { JwtModule } from '@nestjs/jwt';
+import { EmailModule } from './email.module';
+import { TokenModule } from './token.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RefreshToken } from '@kickzone-workspace/entities';
+
+@Module({
+  imports: [
+    UserModule,
+    EmailModule,
+    TokenModule,
+    TypeOrmModule.forFeature([RefreshToken]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+  ],
+  providers: [AuthService],
+  exports: [AuthService],
+})
+export class GraphqlContextModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/product-info.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProductInfo, ProductInfoColor } from '@kickzone-workspace/entities';
+import { ProductService } from '@kickzone-workspace/services';
+import { ProductModule } from './product.module';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([ProductInfo, ProductInfoColor]),
+    ProductModule,
+    TranslationModule,
+  ],
+  providers: [ProductService],
+  exports: [ProductService],
+})
+export class ProductInfoModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/seller-info.module.ts">
+import {
+  SellerInfo,
+  SellerProduct,
+  ProductInfo,
+  User,
+  RefreshToken,
+} from '@kickzone-workspace/entities';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from './user.module';
+import {
+  AuthService,
+  EmailService,
+  SellerService,
+} from '@kickzone-workspace/services';
+import { TokenModule } from './token.module';
+import { SellerResolver } from '@kickzone-workspace/resolvers';
+import { ProductModule } from './product.module';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      SellerInfo,
+      SellerProduct,
+      ProductInfo,
+      User,
+      RefreshToken,
+    ]),
+    UserModule,
+    ProductModule,
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+    TokenModule,
+  ],
+  providers: [
+    SellerService,
+    SellerResolver,
+    AuthService,
+    EmailService,
+    ConfigService,
+  ],
+  exports: [SellerService],
+})
+export class SellerInfoModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/site-language.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SiteLanguage } from '@kickzone-workspace/entities';
+import { SiteLanguageService } from '@kickzone-workspace/services';
+import { SiteLanguageResolver } from '@kickzone-workspace/resolvers';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([SiteLanguage])],
+  providers: [SiteLanguageService, SiteLanguageResolver],
+  exports: [SiteLanguageService, TypeOrmModule],
+})
+export class SiteLanguageModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/user.module.ts">
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '@kickzone-workspace/entities';
+import { UserService } from '@kickzone-workspace/services';
+import { UserResolver } from '@kickzone-workspace/resolvers';
+import { AuthModule } from './auth.module';
+import { CustomerProfileModule } from './customer-profile.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    forwardRef(() => AuthModule),
+    CustomerProfileModule,
+  ],
+  providers: [UserService, UserResolver],
+  exports: [UserService],
+})
+export class UserModule {}
+</file>
+
+<file path="libs/server/entities/src/lib/product-info.entity.ts">
+import { ObjectType, Field, Int, Float, registerEnumType } from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  Relation,
+} from 'typeorm';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
+import { Product } from './product.entity';
+import { Color } from './color.entity';
+import { ProductInfoColor } from './product-info-color.entity';
+
+registerEnumType(SizeKind, {
+  name: 'SizeKind',
+});
+
+@ObjectType()
+@Entity()
+export class ProductInfo {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  /** Canonical size code: apparel letter or EU footwear number. */
+  @Field()
+  @Column()
+  size: string;
+
+  @Field(() => SizeKind)
+  @Column({ type: 'varchar', default: SizeKind.Apparel })
+  sizeKind: SizeKind;
+
+  @OneToMany(() => ProductInfoColor, (link) => link.productInfo, {
+    cascade: true,
+    eager: true,
+  })
+  colorLinks: Relation<ProductInfoColor>[];
+
+  /** Ordered colors for this variant (resolved from colorLinks). */
+  @Field(() => [Color])
+  colors: Color[];
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  weight: number;
+
+  @Field(() => Product)
+  @ManyToOne(() => Product, (product) => product.productInfos)
+  product: Product;
+
+  @Field(() => [String], { nullable: true })
+  @Column('simple-array', { nullable: true, default: '' })
+  images: string[];
+}
+</file>
+
+<file path="libs/server/entities/src/lib/seller-info.entity.ts">
+import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  Relation,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
+import { User } from './user.entity';
+import { SellerProduct } from './seller-product.entity';
+import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
+
+@ObjectType()
+@Entity()
+export class SellerInfo {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field()
+  @Column()
+  storeName: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  phone?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  address?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  city?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  state?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  zipCode?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  country?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  businessName?: string;
+
+  @Field({ defaultValue: true })
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Field({ defaultValue: false })
+  @Column({ default: false })
+  canManageCatalog: boolean;
+
+  @Field(() => Float, { defaultValue: 0 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  shippingFee: number;
+
+  @Field(() => User)
+  @OneToOne(() => User)
+  @JoinColumn()
+  user: Relation<User>;
+
+  @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.seller)
+  sellerProducts: SellerProduct[];
+}
+
+@ObjectType()
+export class SellerEdge implements Edge<SellerInfo> {
+  @Field(() => SellerInfo)
+  node: SellerInfo;
+
+  @Field()
+  cursor: string;
+}
+
+@ObjectType()
+export class SellerConnection implements Connection<SellerInfo> {
+  @Field(() => [SellerEdge])
+  edges: SellerEdge[];
+
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+
+  @Field(() => Int)
+  totalCount: number;
+}
+</file>
+
+<file path="libs/server/entities/src/lib/seller-product.entity.ts">
+// src/entities/seller-product.entity.ts
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  Column,
+  Relation,
+  BeforeInsert,
+  BeforeUpdate,
+  Index,
+} from 'typeorm';
+import { SellerInfo } from './seller-info.entity';
+import { Product } from './product.entity';
+import { ProductInfo } from './product-info.entity';
+import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+
+@ObjectType()
+@Entity()
+@Index(['seller', 'productInfoId'], { unique: true })
+export class SellerProduct {
+  @Field(() => String)
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Field(() => SellerInfo, { nullable: true })
+  @ManyToOne(() => SellerInfo, (seller) => seller.sellerProducts)
+  seller: SellerInfo;
+
+  @Field(() => Product)
+  @ManyToOne(() => Product, (product) => product.sellerProducts)
+  product: Relation<Product>;
+
+  @Field(() => ProductInfo)
+  @ManyToOne(() => ProductInfo, { nullable: false })
+  productInfo: ProductInfo;
+
+  @Field(() => Int)
+  @Column({ nullable: false })
+  productInfoId: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  price: number;
+
+  @Field(() => Float, { nullable: true })
+  @Column('decimal', { precision: 10, scale: 2 })
+  costPrice: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 5, scale: 2, default: 0 })
+  discount: number;
+
+  @Field(() => Int)
+  @Column()
+  stockQuantity: number;
+
+  @Field(() => Boolean, { defaultValue: false })
+  @Column({ type: 'boolean', default: false })
+  recommended: boolean;
+
+  @Field(() => Boolean, { defaultValue: false })
+  @Column({ type: 'boolean', default: false })
+  boxLess: boolean;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  setProductInfoId() {
+    // If productInfo relation is set but productInfoId is not, set it from the relation
+    if (this.productInfo && !this.productInfoId) {
+      this.productInfoId = this.productInfo.id;
+      console.log(
+        '🔧 Setting productInfoId:',
+        this.productInfoId,
+        'from productInfo:',
+        this.productInfo.id
+      );
+    }
+    // If productInfoId is set but productInfo relation is not, this is handled in the service layer
+  }
+}
+</file>
+
+<file path="libs/server/modules/src/lib/catalog-guard.module.ts">
+import { Global, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SellerInfo } from '@kickzone-workspace/entities';
+import { CatalogGuard } from '@kickzone-workspace/guards';
+
+@Global()
+@Module({
+  imports: [TypeOrmModule.forFeature([SellerInfo])],
+  providers: [CatalogGuard],
+  exports: [CatalogGuard, TypeOrmModule],
+})
+export class CatalogGuardModule {}
+</file>
+
+<file path="libs/server/entities/src/lib/product.entity.ts">
+import { ConnectionType, EdgeType } from '@kickzone-workspace/utils';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Relation,
+} from 'typeorm';
+import { Brand } from './brand.entity';
+import { Category } from './category.entity';
+import { ProductInfo } from './product-info.entity';
+import { SellerProduct } from './seller-product.entity';
+import { SellerInfo } from './seller-info.entity';
+import { ProductDescription } from './product-description.entity';
+
+@ObjectType()
+@Entity()
+export class Product {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field()
+  @Column({ unique: true })
+  name: string;
+
+  @Field({ nullable: true })
+  @Column({ unique: true, nullable: true })
+  sku?: string | null;
+
+  @Field(() => [ProductInfo])
+  @OneToMany(() => ProductInfo, (productInfo) => productInfo.product, {
+    cascade: true,
+  })
+  productInfos: ProductInfo[];
+
+  @Field(() => [Category])
+  @ManyToMany(() => Category, (category) => category.products)
+  @JoinTable()
+  categories: Category[];
+
+  @Field(() => Brand, { nullable: true })
+  @ManyToOne(() => Brand, (brand) => brand.products, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'brandId' })
+  brand?: Brand | null;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ type: 'int', nullable: true })
+  brandId?: number | null;
+
+  @Field(() => SellerInfo, { nullable: true })
+  @ManyToOne(() => SellerInfo, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'sellerId' })
+  seller?: SellerInfo | null;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ type: 'int', nullable: true })
+  sellerId?: number | null;
+
+  @Field({ nullable: true })
+  @Column({ type: 'text', nullable: true })
+  description?: string | null;
+
+  @Field(() => [ProductDescription], { nullable: true })
+  @OneToMany(
+    () => ProductDescription,
+    (productDescription) => productDescription.product,
+    { cascade: true }
+  )
+  descriptions?: Relation<ProductDescription>[];
+
+  @Field(() => [SellerProduct], { nullable: true })
+  @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
+  sellerProducts: Relation<SellerProduct>[];
+
+  @Field({ defaultValue: false })
+  @Column({
+    type: 'boolean',
+    default: false,
+    nullable: false,
+    comment: 'For partitioning',
+  })
+  archived: boolean;
+}
+
+@ObjectType()
+export class ProductEdge extends EdgeType<Product> {
+  @Field(() => Product)
+  node: Product;
+}
+
+@ObjectType()
+export class ProductConnection extends ConnectionType<Product> {
+  @Field(() => [ProductEdge])
+  edges: ProductEdge[];
+}
+</file>
+
+<file path="libs/server/inputs/src/lib/seller.input.ts">
+import { Field, InputType, Int, Float } from '@nestjs/graphql';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsPositive,
+  Min,
+} from 'class-validator';
+
+@InputType()
+export class CreateSellerInput {
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  lastName: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  storeName: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  shippingFee?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  canManageCatalog?: boolean;
+}
+
+@InputType()
+export class UpdateSellerInput {
+  @Field(() => Int)
+  @IsNotEmpty()
+  id: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  username?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  storeName?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  shippingFee?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  isActive?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  canManageCatalog?: boolean;
+}
+
+@InputType()
+export class CreateSellerProductInput {
+  @Field(() => Int)
+  @IsNotEmpty()
+  @IsNumber()
+  @IsPositive()
+  productInfoId: number;
+
+  @Field(() => Float)
+  @IsNotEmpty()
+  @IsNumber()
+  price: number;
+
+  @Field(() => Float)
+  @IsNotEmpty()
+  @IsNumber()
+  costPrice: number;
+
+  @Field(() => Float)
+  @IsNotEmpty()
+  @IsNumber()
+  discount: number;
+
+  @Field(() => Int)
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  stockQuantity: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  recommended?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  boxLess?: boolean;
+}
+
+@InputType()
+export class UpdateSellerProductInput {
+  @Field(() => String)
+  @IsNotEmpty()
+  id: string;
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  productInfoId?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  price?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  costPrice?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  discount?: number;
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  stockQuantity?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  recommended?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  boxLess?: boolean;
+}
+
+@InputType()
+export class SellerFilterInput {
+  @Field({ nullable: true })
+  searchTerm?: string;
+
+  @Field({ nullable: true })
+  isActive?: boolean;
+
+  @Field(() => [Int], { nullable: true })
+  ids?: number[];
+
+  @Field(() => Int, { nullable: true })
+  first?: number;
+
+  @Field({ nullable: true })
+  after?: string;
+}
+</file>
+
+<file path="libs/server/inputs/src/lib/product.input.ts">
+import {
+  InputType,
+  Field,
+  Int,
+  Float,
+  registerEnumType,
+} from '@nestjs/graphql';
+import { Type } from 'class-transformer';
+import {
+  IsArray,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsPositive,
+  IsString,
+  Min,
+  ValidateNested,
+} from 'class-validator';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
+import { ProductInfoFilterInput } from './product-info-filter.input';
+
+export enum ProductArchivedStatus {
+  ALL = 'ALL',
+  ACTIVE = 'ACTIVE',
+  ARCHIVED = 'ARCHIVED',
+}
+
+registerEnumType(ProductArchivedStatus, {
+  name: 'ProductArchivedStatus',
+});
+
+@InputType()
+export class ProductDescriptionInput {
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  languageId?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  languageCode?: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  description: string;
+}
+
+@InputType()
+export class ProductVariantInput {
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  id?: number;
+
+  @Field()
+  @IsNotEmpty({ message: 'Variant size is required' })
+  @IsString()
+  size: string;
+
+  @Field(() => SizeKind, { nullable: true })
+  @IsOptional()
+  @IsEnum(SizeKind)
+  sizeKind?: SizeKind;
+
+  @Field(() => [Int])
+  @IsArray()
+  @IsNotEmpty({ message: 'Variant colors are required' })
+  colorIds: number[];
+
+  @Field(() => Float)
+  @IsNumber()
+  @IsPositive({ message: 'Weight must be greater than 0' })
+  weight: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  sku?: string;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0, { message: 'Price cannot be negative' })
+  price?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0, { message: 'Cost price cannot be negative' })
+  costPrice?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0, { message: 'Discount cannot be negative' })
+  discount?: number;
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0, { message: 'Stock quantity cannot be negative' })
+  stockQuantity?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  boxLess?: boolean;
+
+  @Field(() => [String], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  images?: string[];
+}
+
+@InputType()
+export class CreateProductInput {
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  sku: string;
+
+  @Field(() => [Int])
+  @IsArray()
+  categoryIds: number[];
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  brandId?: number | null;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @Field(() => [ProductDescriptionInput], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductDescriptionInput)
+  descriptions?: ProductDescriptionInput[];
+
+  @Field(() => [ProductVariantInput], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductVariantInput)
+  variants?: ProductVariantInput[];
+}
+
+@InputType()
+export class UpdateProductInput {
+  @Field(() => Int)
+  @IsNotEmpty()
+  @IsNumber()
+  id: number;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  sku: string;
+
+  @Field(() => [Int])
+  @IsArray()
+  categoryIds: number[];
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  brandId?: number | null;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @Field(() => [ProductDescriptionInput], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductDescriptionInput)
+  descriptions?: ProductDescriptionInput[];
+
+  @Field(() => [ProductVariantInput], { nullable: true })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductVariantInput)
+  variants?: ProductVariantInput[];
+}
+
+@InputType()
+export class CreateProductInfoInput {
+  @Field(() => Int)
+  productId: number;
+
+  @Field()
+  size: string;
+
+  @Field(() => SizeKind)
+  sizeKind: SizeKind;
+
+  @Field(() => [Int])
+  colorIds: number[];
+
+  @Field(() => Float)
+  weight: number;
+}
+
+@InputType()
+export class ProductFilterInput {
+  @Field({ nullable: true })
+  category?: string;
+
+  @Field(() => [String], { nullable: true })
+  categorySlugs?: string[];
+
+  @Field({ nullable: true })
+  brand?: string;
+
+  @Field(() => [Int], { nullable: true })
+  ids?: number[];
+
+  @Field({ nullable: true })
+  searchTerm?: string;
+
+  @Field(() => ProductInfoFilterInput, { nullable: true })
+  productInfoFilter?: ProductInfoFilterInput;
+
+  @Field(() => [Int], { nullable: true })
+  categoryIds?: number[];
+
+  @Field({ nullable: true })
+  first?: number;
+
+  @Field({ nullable: true })
+  after?: string;
+
+  @Field(() => Int, { nullable: true })
+  categoryId?: number;
+
+  @Field({ nullable: true })
+  sort?: string;
+
+  @Field({ nullable: true })
+  sortOrder?: 'asc' | 'desc';
+
+  @Field(() => ProductArchivedStatus, { nullable: true })
+  archivedStatus?: ProductArchivedStatus;
+
+  @Field(() => Int, { nullable: true })
+  sellerId?: number;
+
+  @Field({ nullable: true })
+  onlyWithSellers?: boolean;
+
+  @Field({ nullable: true })
+  onlyInStock?: boolean;
+}
+</file>
+
+<file path="libs/server/modules/src/lib/product.module.ts">
+import {
+  Brand,
+  Category,
+  Color,
+  OrderItem,
+  Product,
+  ProductInfo,
+  ProductInfoColor,
+  SellerProduct,
+  SellerInfo,
+  User,
+  ProductDescription,
+  SiteLanguage,
+  RefreshToken,
+} from '@kickzone-workspace/entities';
+import {
+  AuthResolver,
+  ProductResolver,
+  ProductInfoResolver,
+  SellerProductResolver,
+} from '@kickzone-workspace/resolvers';
+import {
+  AuthService,
+  EmailService,
+  ProductService,
+  SellerService,
+  UserService,
+} from '@kickzone-workspace/services';
+import { TokenModule } from './token.module';
+import { TranslationModule } from './translation.module';
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      Product,
+      ProductInfo,
+      ProductInfoColor,
+      Category,
+      Brand,
+      SellerProduct,
+      Color,
+      SellerInfo,
+      OrderItem,
+      ProductDescription,
+      SiteLanguage,
+      RefreshToken,
+    ]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+    TokenModule,
+    TranslationModule,
+    CatalogGuardModule,
+  ],
+  providers: [
+    ProductService,
+    ProductResolver,
+    ProductInfoResolver,
+    SellerProductResolver,
+    SellerService,
+    UserService,
+    AuthService,
+    AuthResolver,
+    EmailService,
+    ConfigService,
+  ],
+  exports: [ProductService, TypeOrmModule.forFeature([Product])],
+})
+export class ProductModule {}
+</file>
+
+<file path="libs/shared/graphql-schema/src/lib/schema.gql">
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
+
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
+}
+
+type User {
+  id: ID!
+  name: String!
+  lastName: String!
+  username: String!
+  email: String!
+  role: UserRole!
+  locale: String
+  customerProfile: CustomerProfile
+}
+
+enum UserRole {
+  ADMIN
+  SELLER
+  CUSTOMER
+}
+
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Brand {
+  id: Int!
+  slug: String!
+  sortOrder: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Category {
+  id: Int!
+  slug: String!
+  sortOrder: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+}
+
+type Color {
+  id: Int!
+  hexCode: String!
+  sortOrder: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+}
+
+type ProductInfo {
+  id: Int!
+  size: String!
+  sizeKind: SizeKind!
+  colors: [Color!]!
+  weight: Float!
+  product: Product!
+  images: [String!]
+}
+
+enum SizeKind {
+  Apparel
+  Footwear
+}
+
+type SiteLanguage {
+  id: ID!
+  code: String!
+  name: String!
+  nativeName: String!
+  isRTL: Boolean!
+  isActive: Boolean!
+  isDefault: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ProductDescription {
+  id: ID!
+  productId: Int!
+  language: SiteLanguage!
+  languageId: Int!
+  description: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Product {
+  id: Int!
+  name: String!
+  sku: String
+  productInfos: [ProductInfo!]!
+  categories: [Category!]!
+  brand: Brand
+  brandId: Int
+  description: String
+  descriptions: [ProductDescription!]
+  sellerProducts: [SellerProduct!]
+  archived: Boolean!
+}
+
+type ProductEdge {
+  cursor: String!
+  node: Product!
+}
+
+type ProductConnection {
+  pageInfo: PageInfo!
+  totalCount: Int!
+  edges: [ProductEdge!]!
+}
+
+type SellerProduct {
+  id: String!
+  seller: SellerInfo
+  product: Product!
+  productInfo: ProductInfo!
+  productInfoId: Int!
+  price: Float!
+  costPrice: Float
+  discount: Float!
+  stockQuantity: Int!
+  recommended: Boolean!
+  boxLess: Boolean!
+}
+
+type SellerInfo {
+  id: Int!
+  storeName: String!
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  businessName: String
+  isActive: Boolean!
+  canManageCatalog: Boolean!
+  shippingFee: Float!
+  user: User!
+  sellerProducts: [SellerProduct!]!
+}
+
+type SellerEdge {
+  node: SellerInfo!
+  cursor: String!
+}
+
+type SellerConnection {
+  edges: [SellerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Order {
+  id: ID!
+  orderNumber: String!
+  customerEmail: String!
+  customerPhone: String!
+  customerName: String!
+  shippingAddress: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String!
+  status: OrderStatus!
+  subtotal: Float!
+  shippingCost: Float!
+  total: Float!
+  paymentAmount: Float
+  paymentCurrency: String
+  paymentAuthority: String
+  sellerStoreName: String
+  sellerPhone: String
+  sellerAddress: String
+  notes: String
+  trackingNumber: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  sellerId: Int!
+  items: [OrderItem!]!
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+type OrderItem {
+  id: ID!
+  orderId: String!
+  productId: String!
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+  sellerProductId: String
+  originalPrice: Float
+  discountPercentage: Float
+  productInfoId: Int
+}
+
+type Cart {
+  id: ID!
+  userId: String!
+  subtotal: Float!
+  total: Float!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  items: [CartItem!]!
+}
+
+type CartItem {
+  id: ID!
+  cartId: String!
+  productId: String!
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+  sellerId: String!
+  sellerName: String
+  productInfoId: String
+  sellerProductId: String
+  availableStock: Int
+}
+
+type CustomerProfile {
+  id: ID!
+  userId: String!
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  clothingSize: String
+  shoeSize: String
+}
+
+type Translation {
+  id: Int!
+  entityType: String!
+  entityId: Int!
+  locale: String!
+  fieldName: String!
+  value: String!
+  isAutoTranslated: Boolean!
+  translatedBy: Int
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Currency {
+  id: ID!
+  code: String!
+  name: String!
+  symbol: String!
+  decimalPlaces: Int!
+  isActive: Boolean!
+  isBaseCurrency: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ExchangeRate {
+  id: ID!
+  fromCurrency: Currency!
+  toCurrency: Currency!
+  rate: Float!
+  effectiveDate: DateTime!
+  createdBy: User
+  createdAt: DateTime!
+  notes: String
+}
+
+type CurrencyPreference {
+  id: ID!
+  locale: String!
+  currency: Currency!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SellerOrder {
+  id: ID!
+  orderNumber: String!
+  status: OrderStatus!
+  subtotal: Float!
+  shippingCost: Float!
+  total: Float!
+  notes: String
+  trackingNumber: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  sellerId: Int!
+  sellerStoreName: String
+  sellerPhone: String
+  sellerAddress: String
+  items: [OrderItem!]!
+}
+
+type OrderEdge {
+  node: Order!
+  cursor: String!
+}
+
+type OrdersConnection {
+  edges: [OrderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type SellerOrderEdge {
+  node: SellerOrder!
+  cursor: String!
+}
+
+type SellerOrdersConnection {
+  edges: [SellerOrderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ShippingCalculationResult {
+  totalShippingCost: Float!
+  freeShippingApplied: Boolean!
+  strategyUsed: String!
+  shippingBreakdown: [SellerShippingBreakdown!]
+}
+
+type SellerShippingBreakdown {
+  sellerId: String!
+  sellerName: String
+  originalFee: Float!
+  appliedFee: Float!
+}
+
+type ZarinPalPaymentResponse {
+  code: Int!
+  message: String!
+  authority: String!
+  fee_type: String
+  fee: Int
+}
+
+type ZarinPalVerificationResponse {
+  code: Int!
+  message: String!
+  ref_id: Int
+  card_pan: String
+  card_hash: String
+  fee_type: String
+  fee: Int
+}
+
+type GatewayUrlResponse {
+  url: String!
+}
+
+type Query {
+  users(first: Int, after: String, searchTerm: String, role: UserRole): UserConnection!
+  customers(first: Int, after: String, searchTerm: String): UserConnection!
+  me: User
+  myProfile: CustomerProfile!
+  products(filter: ProductFilterInput): ProductConnection!
+  distinctProductSizes(sizeKind: SizeKind): [String!]!
+  sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
+  categories: [Category!]!
+  product(id: Int!): Product
+  sellerProductsByProduct(productId: Int!): [SellerProduct!]!
+  getTranslation(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String): String!
+  getEntityTranslations(entityType: String!, entityId: Int!): [Translation!]!
+  getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
+  brands(onlyWithProducts: Boolean): [Brand!]!
+  brand(id: Int!): Brand
+  sellers(filter: SellerFilterInput, first: Int! = 100, after: String): SellerConnection!
+  findOne(id: Int!): SellerInfo
+  mySellerInfo: SellerInfo
+  mySellerProductById(id: String!): SellerProduct
+  colors: [Color!]!
+  color(id: Int!): Color
+  orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): OrdersConnection!
+  order(id: String!): Order!
+  myOrders(first: Int! = 10, after: String): [Order!]!
+  mySellerOrders(first: Int! = 10, after: String): SellerOrdersConnection!
+  adminSellerOrders(sellerId: String!, first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
+  allSellerOrders(first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
+  myCart: Cart!
+  calculateShippingCost(cartSubtotal: Float!, sellerShippingFees: [SellerShippingInfoInput!]!): ShippingCalculationResult!
+  currencies: [Currency!]!
+  currency(id: Int!): Currency
+  currencyByCode(code: String!): Currency
+  currentExchangeRate(fromCurrencyCode: String!, toCurrencyCode: String!): ExchangeRate
+  exchangeRateHistory(fromCurrencyCode: String!, toCurrencyCode: String!, limit: Int): [ExchangeRate!]!
+  currencyPreferences: [CurrencyPreference!]!
+  currencyPreferenceByLocale(locale: String!): CurrencyPreference
+  siteLanguages(activeOnly: Boolean): [SiteLanguage!]!
+  siteLanguage(code: String!): SiteLanguage
+}
+
+input ProductFilterInput {
+  category: String
+  categorySlugs: [String!]
+  brand: String
+  ids: [Int!]
+  searchTerm: String
+  productInfoFilter: ProductInfoFilterInput
+  categoryIds: [Int!]
+  first: Int
+  after: String
+  categoryId: Int
+  sort: String
+  sortOrder: String
+  archivedStatus: ProductArchivedStatus
+  sellerId: Int
+  onlyWithSellers: Boolean
+  onlyInStock: Boolean
+}
+
+input ProductInfoFilterInput {
+  size: [String!]
+  sizeKind: SizeKind
+  price: [Float!]
+  costPrice: [Float!]
+  colorId: [Int!]
+  weight: [Float!]
+  discount: [Float!]
+  stockQuantity: [Int!]
+}
+
+enum ProductArchivedStatus {
+  ALL
+  ACTIVE
+  ARCHIVED
+}
+
+input SellerFilterInput {
+  searchTerm: String
+  isActive: Boolean
+  ids: [Int!]
+  first: Int
+  after: String
+}
+
+input SellerShippingInfoInput {
+  sellerId: String!
+  shippingFee: Float!
+  sellerName: String
+}
+
+type Mutation {
+  createUser(createUserInput: CreateUserInput!): User!
+  adminCreateUser(createUserInput: CreateUserInput!): User!
+  login(email: String!, password: String!): User!
+  refresh: Boolean!
+  logout: Boolean!
+  initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!
+  setupPassword(token: String!, newPassword: String!): User!
+  register(name: String!, email: String!, password: String!): User!
+  forgotPassword(email: String!, baseUrl: String!): Boolean!
+  resetPassword(token: String!, newPassword: String!): User!
+  updateMyProfile(input: UpdateCustomerProfileInput!): CustomerProfile!
+  createCategory(input: CreateCategoryInput!, name: String): Category!
+  updateCategory(input: UpdateCategoryInput!, name: String): Category!
+  deleteCategory(id: Int!): Boolean!
+  createProduct(input: CreateProductInput!): Product!
+  createProductInfo(input: CreateProductInfoInput!): Product!
+  uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
+  removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
+  archiveProduct(id: Int!): Product!
+  unarchiveProduct(id: Int!): Product!
+  deleteProduct(id: Int!): Boolean!
+  updateProduct(input: UpdateProductInput!): Product!
+  subscribeNewsletter(email: String!): Boolean!
+  setTranslation(input: TranslationInput!): Translation!
+  bulkTranslateEntities(input: BulkTranslationInput!): Boolean!
+  deleteEntityTranslations(entityType: String!, entityId: Int!): Boolean!
+  createBrand(input: CreateBrandInput!, name: String): Brand!
+  updateBrand(input: UpdateBrandInput!, name: String): Brand!
+  deleteBrand(id: Int!): Boolean!
+  createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
+  updateSeller(updateSellerInput: UpdateSellerInput!): SellerInfo!
+  toggleSellerActive(id: Int!): SellerInfo!
+  createSellerProduct(sellerId: Int!, input: CreateSellerProductInput!): SellerProduct!
+  updateSellerProduct(sellerId: Int!, input: UpdateSellerProductInput!): SellerProduct!
+  createMySellerProduct(input: CreateSellerProductInput!): SellerProduct!
+  updateMySellerProduct(input: UpdateSellerProductInput!): SellerProduct!
+  createColor(input: CreateColorInput!, name: String): Color!
+  updateColor(id: Int!, input: UpdateColorInput!, name: String): Color!
+  deleteColor(id: Int!): Boolean!
+  createOrder(createOrderInput: CreateOrderInput!): Order!
+  updateOrder(id: String!, updateOrderInput: UpdateOrderInput!): Order!
+  updateOrderStatus(updateOrderStatusInput: UpdateOrderStatusInput!): Order!
+  deleteOrder(id: String!): Boolean!
+  addToCart(addToCartInput: AddToCartInput!): Cart!
+  updateCartItem(itemId: String!, updateInput: UpdateCartItemInput!): Cart!
+  removeFromCart(itemId: String!): Cart!
+  clearCart: Cart!
+  createCurrency(input: CreateCurrencyInput!): Currency!
+  updateCurrency(id: Int!, input: UpdateCurrencyInput!): Currency!
+  setExchangeRate(input: SetExchangeRateInput!): ExchangeRate!
+  setCurrencyPreference(locale: String!, currencyCode: String!): CurrencyPreference!
+  deleteCurrencyPreference(id: Int!): Boolean!
+  requestZarinPalPayment(input: ZarinPalPaymentRequestInput!): ZarinPalPaymentResponse!
+  verifyZarinPalPayment(input: ZarinPalVerificationRequestInput!): ZarinPalVerificationResponse!
+  getZarinPalGatewayUrl(authority: String!): GatewayUrlResponse!
+  cancelPendingZarinPalOrder(orderId: String!): Boolean!
+  createSiteLanguage(input: CreateSiteLanguageInput!): SiteLanguage!
+  updateSiteLanguage(id: Int!, input: UpdateSiteLanguageInput!): SiteLanguage!
+  deleteSiteLanguage(id: Int!): Boolean!
+}
+
+input CreateUserInput {
+  name: String!
+  lastName: String!
+  username: String!
+  email: String!
+  password: String!
+  role: UserRole!
+}
+
+input UpdateCustomerProfileInput {
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  clothingSize: String
+  shoeSize: String
+}
+
+input CreateCategoryInput {
+  slug: String!
+  sortOrder: Int = 0
+}
+
+input UpdateCategoryInput {
+  id: Int!
+  slug: String
+  sortOrder: Int
+  isActive: Boolean
+}
+
+input CreateProductInput {
+  name: String!
+  sku: String!
+  categoryIds: [Int!]!
+  brandId: Int
+  description: String
+  descriptions: [ProductDescriptionInput!]
+  variants: [ProductVariantInput!]
+}
+
+input ProductVariantInput {
+  id: Int
+  size: String!
+  sizeKind: SizeKind
+  colorIds: [Int!]!
+  weight: Float!
+  images: [String!]
+  price: Float
+  costPrice: Float
+  discount: Float
+  stockQuantity: Int
+  boxLess: Boolean
+}
+
+input ProductDescriptionInput {
+  languageId: Int
+  languageCode: String
+  description: String!
+}
+
+input CreateProductInfoInput {
+  productId: Int!
+  size: String!
+  sizeKind: SizeKind!
+  colorIds: [Int!]!
+  weight: Float!
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+input UpdateProductInput {
+  id: Int!
+  name: String!
+  sku: String!
+  categoryIds: [Int!]!
+  brandId: Int
+  description: String
+  descriptions: [ProductDescriptionInput!]
+  variants: [ProductVariantInput!]
+}
+
+input TranslationInput {
+  entityType: String!
+  entityId: Int!
+  locale: String!
+  fieldName: String!
+  value: String!
+  isAutoTranslated: Boolean = false
+  translatedBy: Int
+}
+
+input BulkTranslationInput {
+  entityType: String!
+  entityIds: [Int!]!
+  sourceLocale: String!
+  targetLocales: [String!]!
+}
+
+input CreateBrandInput {
+  slug: String!
+  sortOrder: Int = 0
+}
+
+input UpdateBrandInput {
+  id: Int!
+  slug: String
+  sortOrder: Int
+  isActive: Boolean
+}
+
+input CreateSellerInput {
+  name: String!
+  lastName: String!
+  username: String!
+  email: String!
+  password: String!
+  storeName: String!
+  phone: String
+  address: String
+  shippingFee: Float
+  canManageCatalog: Boolean
+}
+
+input UpdateSellerInput {
+  id: Int!
+  name: String
+  lastName: String
+  username: String
+  email: String
+  storeName: String
+  phone: String
+  address: String
+  shippingFee: Float
+  isActive: Boolean
+  canManageCatalog: Boolean
+}
+
+input CreateSellerProductInput {
+  productInfoId: Int!
+  price: Float!
+  costPrice: Float!
+  discount: Float!
+  stockQuantity: Int!
+  recommended: Boolean
+  boxLess: Boolean
+}
+
+input UpdateSellerProductInput {
+  id: String!
+  productInfoId: Int
+  price: Float
+  costPrice: Float
+  discount: Float
+  stockQuantity: Int
+  recommended: Boolean
+  boxLess: Boolean
+}
+
+input CreateColorInput {
+  hexCode: String!
+  sortOrder: Int = 0
+}
+
+input UpdateColorInput {
+  hexCode: String!
+  sortOrder: Int
+  isActive: Boolean
+}
+
+input CreateOrderInput {
+  customerEmail: String!
+  customerPhone: String!
+  customerName: String!
+  shippingAddress: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String!
+  sellerId: Int!
+  items: [CreateOrderItemInput!]!
+  notes: String
+  shippingCost: Float
+}
+
+input CreateOrderItemInput {
+  productId: String!
+  sellerProductId: String
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+}
+
+input UpdateOrderInput {
+  customerEmail: String
+  customerPhone: String
+  customerName: String
+  shippingAddress: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  items: [UpdateOrderItemInput!]
+  notes: String
+  trackingNumber: String
+}
+
+input UpdateOrderItemInput {
+  id: String
+  productId: String!
+  sellerProductId: String
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+}
+
+input UpdateOrderStatusInput {
+  id: String!
+  status: OrderStatus!
+}
+
+input AddToCartInput {
+  sellerProductId: String!
+  quantity: Int!
+}
+
+input UpdateCartItemInput {
+  quantity: Int
+  color: String
+  size: String
+}
+
+input CreateCurrencyInput {
+  code: String!
+  name: String!
+  symbol: String!
+  decimalPlaces: Int!
+  isActive: Boolean
+  isBaseCurrency: Boolean
+}
+
+input UpdateCurrencyInput {
+  code: String
+  name: String
+  symbol: String
+  decimalPlaces: Int
+  isActive: Boolean
+  isBaseCurrency: Boolean
+}
+
+input SetExchangeRateInput {
+  fromCurrencyCode: String!
+  toCurrencyCode: String!
+  rate: Float!
+  effectiveDate: DateTime
+  notes: String
+}
+
+input ZarinPalPaymentRequestInput {
+  amount: Int!
+  callback_url: String!
+  description: String!
+  currency: String
+  mobile: String
+  email: String
+  order_id: String
+}
+
+input ZarinPalVerificationRequestInput {
+  amount: Int!
+  authority: String!
+  order_id: String
+}
+
+input CreateSiteLanguageInput {
+  code: String!
+  name: String!
+  nativeName: String!
+  isRTL: Boolean = false
+  isActive: Boolean = true
+  isDefault: Boolean = false
+}
+
+input UpdateSiteLanguageInput {
+  name: String
+  nativeName: String
+  isRTL: Boolean
+  isActive: Boolean
+  isDefault: Boolean
+}
+</file>
+
+</files>
