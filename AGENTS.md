@@ -11,3 +11,23 @@
 - If the user needs help with an Nx configuration or project graph error, use the `nx_workspace` tool to get any errors
 
 <!-- nx configuration end-->
+
+## AI Context Index
+
+Before scanning or reading raw source files across the monorepo, check `.ai-context/` for pre-computed indexes:
+
+- `.ai-context/ARCHITECTURE_MAP.md` — High-level domain topology, database entities, API contract flows, and blast-radius hotspots.
+- `.ai-context/repo-skeleton.xml` — Tree-sitter compressed AST signatures (interfaces, types, classes, GraphQL/DTO schemas, exported function signatures without implementation bodies).
+- `.ai-context/dependency-graph.md` — Mermaid file-level dependency graph (cross-module and entity-to-UI import chains).
+- `.ai-context/nx-project-graph.json` — Nx project-level topology and workspace library boundaries.
+
+**Regenerate on demand:** `yarn ai:sync`  
+**Auto-regenerates on commit** via `husky` + `lint-staged` pre-commit hooks.
+
+## Workspace Architecture Reference
+
+- **API (NestJS)**: `apps/kickzone-api`
+- **Customer Storefront (React / Vite)**: `apps/client/customers`
+- **Seller Portal (React / Vite)**: `apps/client/sellers`
+- **Admin Dashboard (React / Vite)**: `apps/client/admins`
+- **Shared Contracts & Libraries**: `libs/`

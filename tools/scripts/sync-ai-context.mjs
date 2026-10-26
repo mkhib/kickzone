@@ -61,16 +61,14 @@ function main() {
 
   mkdirSync(AI_CONTEXT, { recursive: true });
 
-  const repomix = runCmd(`npx repomix --config repomix.config.json`);
+  const repomix = runCmd(`npx repomix --config repomix.config.json --output .ai-context/repo-skeleton.xml`);
   if (!repomix.ok) {
     process.stderr.write(`[ai:sync] repomix failed:\n${repomix.out}\n`);
     process.exit(1);
   }
 
   const depcruise = runCmd(
-    `npx depcruise --include-only '^(apps|libs)/' ` +
-    `--exclude '(^|/)node_modules|dist|tmp|coverage|\\\\.spec\\\\.|\\\\.test\\\\.|jest\\\\.config|vite\\\\.config|webpack\\\\.config|tsconfig|eslint\\\\.config' ` +
-    `--output-type mermaid --output-to .ai-context/dependency-graph.md 'apps/**' 'libs/**'`
+    `npx depcruise -I "\\.(tsx?)$" --output-type mermaid --output-to .ai-context/dependency-graph.md apps/kickzone-api/src libs/server libs/shared libs/client`
   );
   if (!depcruise.ok) {
     process.stderr.write(`[ai:sync] depcruise failed:\n${depcruise.out}\n`);
