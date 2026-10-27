@@ -54,9 +54,34 @@ import {
   APPAREL_SIZES,
   euToUs,
   FOOTWEAR_EU_SIZES,
+  isFootwearSizeKind,
   isPantsSizeKind,
+  parsePantsSize,
+  formatPantsSize,
+  SizeKind,
 } from '@kickzone-workspace/product-sizes';
-import SizeKind = KickzoneGraphqlTypes.SizeKind;
+
+/** Normalize API / GraphQL casing (Apparel vs APPAREL) to product-sizes enum values. */
+function resolveSizeKind(kind?: string | SizeKind | null): SizeKind {
+  if (isPantsSizeKind(kind)) return SizeKind.Pants;
+  if (isFootwearSizeKind(kind)) return SizeKind.Footwear;
+  return SizeKind.Apparel;
+}
+
+/** Convert product-sizes SizeKind (Apparel/Footwear/Pants) to GraphQL SizeKind (APPAREL/FOOTWEAR/PANTS). */
+function toGraphQLSizeKind(kind: SizeKind): KickzoneGraphqlTypes.SizeKind {
+  return kind.toUpperCase() as KickzoneGraphqlTypes.SizeKind;
+}
+
+/** Convert GraphQL SizeKind (APPAREL/FOOTWEAR/PANTS) to product-sizes SizeKind (Apparel/Footwear/Pants). */
+function fromGraphQLSizeKind(kind: string | undefined): SizeKind | undefined {
+  if (!kind) return undefined;
+  const lower = kind.toLowerCase();
+  if (lower === 'apparel') return SizeKind.Apparel;
+  if (lower === 'footwear') return SizeKind.Footwear;
+  if (lower === 'pants') return SizeKind.Pants;
+  return undefined;
+}
 
 /** Keep multi-select Autocomplete open after picks; avoid mobile blur closing it mid-selection. */
 function useMultiSelectAutocompleteOpen() {
@@ -270,8 +295,8 @@ const ImagePreviewContainer = styled(Box)(({ theme }) => ({
   marginTop: theme.spacing(2),
 }));
 
-// Define ProductInfoState independently
-export type ProductInfoState = {
+// Base state without waist/inseam (for type safety)
+interface ProductInfoStateBase {
   productId: number;
   size: string;
   sizeKind: SizeKind;
@@ -284,6 +309,12 @@ export type ProductInfoState = {
   isUploading: boolean;
   newImages: File[];
   newImagePreviews: { file: File; url: string }[];
+}
+
+// Extended state for pants sizing (waist + inseam) - UI only, not sent to backend
+export type ProductInfoState = ProductInfoStateBase & {
+  waist?: number;
+  inseam?: number;
 };
 
 interface ProductInfoCardProps {
@@ -506,9 +537,11 @@ const ProductInfoCard = React.memo(
               label={LL.products.sizeKind()}
               value={info.sizeKind}
               onChange={(e: SelectChangeEvent) => {
-                const nextKind = e.target.value as SizeKind;
+                const nextKind = resolveSizeKind(e.target.value);
                 onChange(idx, 'sizeKind', nextKind);
                 onChange(idx, 'size', '');
+                onChange(idx, 'waist', undefined);
+                onChange(idx, 'inseam', undefined);
               }}
             >
               <MenuItem value={SizeKind.Apparel}>
@@ -522,38 +555,94 @@ const ProductInfoCard = React.memo(
               </MenuItem>
             </Select>
           </FormControl>
-          <FormControl
-            required
-            sx={{
-              flex: 1,
-              minWidth: 120,
-              width: isMobile ? '100%' : undefined,
-            }}
-          >
-            <InputLabel id={`size-value-${idx}`}>
-              {LL.products.size()}
-            </InputLabel>
-            {isPantsSizeKind(info.sizeKind) ? (
-              // Pants: free-text input for "waist x length" (e.g., 32x34)
+          {isPantsSizeKind(info.sizeKind) ? (
+            // Pants: standalone waist/inseam fields (avoid nesting under Size FormControl label)
+            <Box
+              sx={{
+                display: 'flex',
+                gap: { xs: 1, sm: 2 },
+                flex: 1,
+                minWidth: { xs: '100%', sm: 280 },
+                width: isMobile ? '100%' : undefined,
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+              }}
+            >
               <TextField
-                name="size"
-                type="text"
-                value={info.size}
-                onChange={(e) => onChange(idx, 'size', e.target.value)}
-                placeholder="32x34"
-                helperText={LL.products.pantsSizeHint?.() || 'Format: waist x length (e.g., 32x34)'}
+                name="waist"
+                type="number"
+                required
+                label={LL.products.waist?.() || 'Waist'}
+                value={info.waist ?? ''}
+                onChange={(e) => {
+                  const waist =
+                    e.target.value === '' ? undefined : Number(e.target.value);
+                  onChange(idx, 'waist', waist);
+                  if (waist !== undefined && info.inseam !== undefined) {
+                    onChange(idx, 'size', formatPantsSize(waist, info.inseam));
+                  } else {
+                    onChange(idx, 'size', '');
+                  }
+                }}
+                placeholder={LL.products.waistPlaceholder?.() || '32'}
+                inputProps={{ min: 0, max: 100, step: 1 }}
                 {...getLtrTextFieldProps({
                   flex: 1,
-                  minWidth: 120,
-                  width: isMobile ? '100%' : undefined,
+                  minWidth: { xs: '100%', sm: 130 },
+                  sx: {
+                    '& .MuiInputLabel-root': {
+                      whiteSpace: 'nowrap',
+                    },
+                  },
                 })}
-                inputProps={{
-                  pattern: '\\d+[xX]\\d+',
-                  title: 'Format: waist x length (e.g., 32x34)',
-                }}
               />
-            ) : (
-              // Apparel / Footwear: dropdown select
+              <TextField
+                name="inseam"
+                type="number"
+                required
+                label={LL.products.inseam?.() || 'Inseam'}
+                value={info.inseam ?? ''}
+                onChange={(e) => {
+                  const inseam =
+                    e.target.value === '' ? undefined : Number(e.target.value);
+                  onChange(idx, 'inseam', inseam);
+                  if (inseam !== undefined && info.waist !== undefined) {
+                    onChange(idx, 'size', formatPantsSize(info.waist, inseam));
+                  } else {
+                    onChange(idx, 'size', '');
+                  }
+                }}
+                placeholder={LL.products.inseamPlaceholder?.() || '34'}
+                inputProps={{ min: 0, max: 100, step: 1 }}
+                {...getLtrTextFieldProps({
+                  flex: 1,
+                  minWidth: { xs: '100%', sm: 130 },
+                  sx: {
+                    '& .MuiInputLabel-root': {
+                      whiteSpace: 'nowrap',
+                    },
+                  },
+                })}
+              />
+              {/* Hidden composite size for form/tests — synced from waist/inseam */}
+              <input
+                type="hidden"
+                name="size"
+                value={info.size}
+                data-testid="hidden-size-input"
+              />
+            </Box>
+          ) : (
+            <FormControl
+              required
+              sx={{
+                flex: 1,
+                minWidth: 120,
+                width: isMobile ? '100%' : undefined,
+              }}
+            >
+              <InputLabel id={`size-value-${idx}`}>
+                {LL.products.size()}
+              </InputLabel>
               <Select
                 labelId={`size-value-${idx}`}
                 label={LL.products.size()}
@@ -564,19 +653,21 @@ const ProductInfoCard = React.memo(
               >
                 {/* Keeps empty value valid without showing a closed-select placeholder */}
                 <MenuItem value="" sx={{ display: 'none' }} />
-                {(info.sizeKind === SizeKind.Footwear
+                {(isFootwearSizeKind(info.sizeKind)
                   ? FOOTWEAR_EU_SIZES
                   : APPAREL_SIZES
                 ).map((code) => (
                   <MenuItem key={code} value={code}>
-                    {info.sizeKind === SizeKind.Footwear
-                      ? `EU ${code}${euToUs(code) ? ` (US ${euToUs(code)})` : ''}`
+                    {isFootwearSizeKind(info.sizeKind)
+                      ? `EU ${code}${
+                          euToUs(code) ? ` (US ${euToUs(code)})` : ''
+                        }`
                       : code}
                   </MenuItem>
                 ))}
               </Select>
-            )}
-          </FormControl>
+            </FormControl>
+          )}
           <TextField
             label={LL.products.weight()}
             name="weight"
@@ -1245,20 +1336,31 @@ export function AdminProductEditor({
         description: loadedProduct.description || '',
       });
       setProductInfos(
-        loadedProduct.productInfos.map((info) => ({
-          productId: loadedProduct.id,
-          size: info.size,
-          sizeKind: info.sizeKind ?? SizeKind.Apparel,
-          colors: info.colors || [],
-          weight: info.weight,
-          images: [],
-          imagePreviews: [],
-          uploadedImageUrls: info.images || [],
-          createdId: info.id,
-          isUploading: false,
-          newImages: [],
-          newImagePreviews: [],
-        }))
+        loadedProduct.productInfos.map((info) => {
+          const sizeKind = resolveSizeKind(info.sizeKind);
+          const base = {
+            productId: loadedProduct.id,
+            size: info.size,
+            sizeKind,
+            colors: info.colors || [],
+            weight: info.weight,
+            images: [],
+            imagePreviews: [],
+            uploadedImageUrls: info.images || [],
+            createdId: info.id,
+            isUploading: false,
+            newImages: [],
+            newImagePreviews: [],
+          };
+          // Parse pants composite size for waist/inseam fields
+          if (isPantsSizeKind(sizeKind) && info.size) {
+            const parsed = parsePantsSize(info.size);
+            if (parsed) {
+              return { ...base, waist: parsed.waist, inseam: parsed.inseam };
+            }
+          }
+          return base;
+        })
       );
       setCreatedProductInfoIds(
         loadedProduct.productInfos.map((info) => info.id)
@@ -1332,6 +1434,8 @@ export function AdminProductEditor({
         productId: 0,
         size: '',
         sizeKind: SizeKind.Apparel,
+        waist: undefined,
+        inseam: undefined,
         colors: [],
         weight: 0,
         images: [],
@@ -1369,7 +1473,12 @@ export function AdminProductEditor({
           return;
         }
         for (const info of productInfos) {
-          if (!info.size || !info.colors.length || !info.weight) {
+          // For pants, require both waist and inseam (which ensures size is set)
+          const isPants = isPantsSizeKind(info.sizeKind);
+          const sizeValid = isPants
+            ? info.waist !== undefined && info.inseam !== undefined
+            : !!info.size;
+          if (!sizeValid || !info.colors.length || !info.weight) {
             showSnackbar('Please fill in all product variant fields', {
               severity: 'error',
             });
@@ -1397,7 +1506,7 @@ export function AdminProductEditor({
             productInfos.map((info) => ({
               id: info.createdId || undefined,
               size: info.size,
-              sizeKind: info.sizeKind,
+              sizeKind: toGraphQLSizeKind(info.sizeKind),
               colorIds: info.colors.map((c) => c.id),
               weight: Number(info.weight),
               images:
@@ -1469,7 +1578,7 @@ export function AdminProductEditor({
             },
             productInfos.map((info) => ({
               size: info.size,
-              sizeKind: info.sizeKind,
+              sizeKind: toGraphQLSizeKind(info.sizeKind),
               colorIds: info.colors.map((c) => c.id),
               weight: Number(info.weight),
             }))
@@ -1485,7 +1594,10 @@ export function AdminProductEditor({
           if (onCreated) {
             onCreated({
               product: created.product,
-              productInfos: created.productInfos,
+              productInfos: created.productInfos.map((pi) => ({
+                ...pi,
+                sizeKind: fromGraphQLSizeKind(pi.sizeKind),
+              })),
             });
             return;
           }

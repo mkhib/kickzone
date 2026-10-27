@@ -17943,12 +17943,12 @@
         },
         {
           "source": "sellers-headerbar",
-          "target": "sellers-routes",
+          "target": "shared-i18n",
           "type": "static"
         },
         {
           "source": "sellers-headerbar",
-          "target": "shared-i18n",
+          "target": "sellers-routes",
           "type": "static"
         },
         {
@@ -17992,22 +17992,22 @@
         },
         {
           "source": "admins-headerbar",
-          "target": "admins-routes",
-          "type": "static"
-        },
-        {
-          "source": "admins-headerbar",
           "target": "shared-i18n",
           "type": "static"
         },
         {
           "source": "admins-headerbar",
-          "target": "shared-ui-store",
+          "target": "admins-routes",
           "type": "static"
         },
         {
           "source": "admins-headerbar",
           "target": "styled-drawer",
+          "type": "static"
+        },
+        {
+          "source": "admins-headerbar",
+          "target": "shared-ui-store",
           "type": "static"
         }
       ],
@@ -18129,6 +18129,11 @@
         },
         {
           "source": "sellers-footer",
+          "target": "customers-footer",
+          "type": "static"
+        },
+        {
+          "source": "sellers-footer",
           "target": "sellers-routes",
           "type": "static"
         }
@@ -18148,9 +18153,29 @@
           "source": "sellers-layout",
           "target": "sellers-footer",
           "type": "static"
+        },
+        {
+          "source": "sellers-layout",
+          "target": "sellers-auth-context",
+          "type": "static"
+        },
+        {
+          "source": "sellers-layout",
+          "target": "shared-i18n",
+          "type": "static"
+        },
+        {
+          "source": "sellers-layout",
+          "target": "sellers-routes",
+          "type": "static"
         }
       ],
       "admins-footer": [
+        {
+          "source": "admins-footer",
+          "target": "customers-footer",
+          "type": "static"
+        },
         {
           "source": "admins-footer",
           "target": "shared-i18n",
@@ -18176,6 +18201,21 @@
         {
           "source": "admins-layout",
           "target": "admins-footer",
+          "type": "static"
+        },
+        {
+          "source": "admins-layout",
+          "target": "admins-contexts",
+          "type": "static"
+        },
+        {
+          "source": "admins-layout",
+          "target": "shared-i18n",
+          "type": "static"
+        },
+        {
+          "source": "admins-layout",
+          "target": "admins-routes",
           "type": "static"
         }
       ],

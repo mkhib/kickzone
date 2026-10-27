@@ -800,6 +800,26 @@ type RootTranslation = {
 		 */
 		sizeKindPants: string
 		/**
+		 * F​o​r​m​a​t​:​ ​w​a​i​s​t​ ​x​ ​l​e​n​g​t​h​ ​(​e​.​g​.​,​ ​3​2​x​3​4​)
+		 */
+		pantsSizeHint: string
+		/**
+		 * W​a​i​s​t
+		 */
+		waist: string
+		/**
+		 * I​n​s​e​a​m
+		 */
+		inseam: string
+		/**
+		 * 3​2
+		 */
+		waistPlaceholder: string
+		/**
+		 * 3​4
+		 */
+		inseamPlaceholder: string
+		/**
 		 * S​e​l​e​c​t​ ​s​i​z​e
 		 */
 		selectSize: string
@@ -4277,6 +4297,26 @@ export type TranslationFunctions = {
 		 * Pants
 		 */
 		sizeKindPants: () => LocalizedString
+		/**
+		 * Format: waist x length (e.g., 32x34)
+		 */
+		pantsSizeHint: () => LocalizedString
+		/**
+		 * Waist
+		 */
+		waist: () => LocalizedString
+		/**
+		 * Inseam
+		 */
+		inseam: () => LocalizedString
+		/**
+		 * 32
+		 */
+		waistPlaceholder: () => LocalizedString
+		/**
+		 * 34
+		 */
+		inseamPlaceholder: () => LocalizedString
 		/**
 		 * Select size
 		 */

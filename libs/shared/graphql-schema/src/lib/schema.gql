@@ -84,6 +84,7 @@ type ProductInfo {
 enum SizeKind {
   Apparel
   Footwear
+  Pants
 }
 
 type SiteLanguage {
@@ -116,6 +117,8 @@ type Product {
   categories: [Category!]!
   brand: Brand
   brandId: Int
+  seller: SellerInfo
+  sellerId: Int
   description: String
   descriptions: [ProductDescription!]
   sellerProducts: [SellerProduct!]
@@ -270,6 +273,7 @@ type CustomerProfile {
   country: String
   clothingSize: String
   shoeSize: String
+  favorites: String
 }
 
 type Translation {
@@ -564,6 +568,7 @@ input UpdateCustomerProfileInput {
   country: String
   clothingSize: String
   shoeSize: String
+  favorites: String
 }
 
 input CreateCategoryInput {
@@ -588,24 +593,25 @@ input CreateProductInput {
   variants: [ProductVariantInput!]
 }
 
+input ProductDescriptionInput {
+  languageId: Int
+  languageCode: String
+  description: String!
+}
+
 input ProductVariantInput {
   id: Int
   size: String!
   sizeKind: SizeKind
   colorIds: [Int!]!
   weight: Float!
-  images: [String!]
+  sku: String
   price: Float
   costPrice: Float
   discount: Float
   stockQuantity: Int
   boxLess: Boolean
-}
-
-input ProductDescriptionInput {
-  languageId: Int
-  languageCode: String
-  description: String!
+  images: [String!]
 }
 
 input CreateProductInfoInput {

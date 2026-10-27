@@ -158,6 +158,10 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         sizeKindFootwear: () => 'Footwear',
         sizeKindPants: () => 'Pants',
         pantsSizeHint: () => 'Format: waist x length (e.g., 32x34)',
+        waist: () => 'Waist',
+        inseam: () => 'Inseam',
+        waistPlaceholder: () => '32',
+        inseamPlaceholder: () => '34',
         selectSize: () => 'Select size',
         weight: () => 'Weight',
         selectImages: () => 'Select Images',
@@ -712,6 +716,187 @@ describe('AdminProductEditor', () => {
       'Product updated successfully',
       expect.anything()
     );
+  });
+
+  it('shows Apparel as the initial size type selection', () => {
+    renderEditor();
+
+    const sizeKindSelect = screen.getByRole('combobox', { name: /Size type/i });
+    expect(sizeKindSelect).toHaveTextContent(/Apparel/i);
+  });
+
+  it('shows Waist and Inseam number inputs when Pants size kind is selected', async () => {
+    renderEditor();
+
+    // Select Pants size kind
+    const sizeKindSelect = screen.getByRole('combobox', { name: /Size type/i });
+    fireEvent.mouseDown(sizeKindSelect);
+    const pantsOption = await screen.findByRole('option', { name: /Pants/i });
+    fireEvent.click(pantsOption);
+
+    // Should show two number inputs instead of single text/select
+    expect(screen.getByLabelText(/Waist/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Inseam/i)).toBeInTheDocument();
+    expect(screen.queryByRole('combobox', { name: /^Size$/i })).not.toBeInTheDocument();
+    expect(screen.queryByRole('textbox', { name: /^Size$/i })).not.toBeInTheDocument();
+    // Outer Size FormControl label must not linger over waist/inseam fields
+    expect(screen.queryByLabelText(/^Size$/i)).not.toBeInTheDocument();
+  });
+
+  it('preserves partial waist selection when only waist is entered for pants', async () => {
+    renderEditor();
+
+    // Select Pants size kind
+    const sizeKindSelect = screen.getByRole('combobox', { name: /Size type/i });
+    fireEvent.mouseDown(sizeKindSelect);
+    const pantsOption = await screen.findByRole('option', { name: /Pants/i });
+    fireEvent.click(pantsOption);
+
+    // Enter waist only - the input is a spinbutton (number type)
+    const waistInput = screen.getByRole('spinbutton', { name: /Waist/i });
+    fireEvent.change(waistInput, { target: { value: '32' } });
+    expect(waistInput).toHaveValue(32);
+
+    // Inseam should still be empty (null for number input)
+    const inseamInput = screen.getByRole('spinbutton', { name: /Inseam/i });
+    expect(inseamInput).toHaveValue(null);
+  });
+
+  it('computes composite size when both waist and inseam are entered', async () => {
+    renderEditor();
+
+    // Select Pants size kind
+    const sizeKindSelect = screen.getByRole('combobox', { name: /Size type/i });
+    fireEvent.mouseDown(sizeKindSelect);
+    const pantsOption = await screen.findByRole('option', { name: /Pants/i });
+    fireEvent.click(pantsOption);
+
+    // Enter waist
+    const waistInput = screen.getByRole('spinbutton', { name: /Waist/i });
+    fireEvent.change(waistInput, { target: { value: '32' } });
+
+    // Enter inseam
+    const inseamInput = screen.getByRole('spinbutton', { name: /Inseam/i });
+    fireEvent.change(inseamInput, { target: { value: '34' } });
+
+    // The hidden size input should now have composite value
+    // Find it by name attribute since it's a hidden input
+    const hiddenSize = screen.getByTestId('hidden-size-input');
+    expect(hiddenSize).toHaveValue('32x34');
+  });
+
+  it('hydrates waist and inseam from existing pants composite size when editing', async () => {
+    mockUseParams.mockReturnValue({ id: '1' });
+    mockUseProductById.mockReturnValue({
+      product: {
+        id: 1,
+        name: 'Pants Product',
+        sku: 'PANTS-001',
+        categories: [{ id: 1, name: 'Category 1' }],
+        description: 'Existing Description',
+        productInfos: [
+          {
+            id: 10,
+            size: '32x34',
+            sizeKind: 'PANTS',
+            colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
+            weight: 500,
+            images: [],
+          },
+        ],
+      },
+      refetch: mockRefetchProduct,
+    });
+
+    renderEditor();
+
+    await waitFor(() => {
+      expect(screen.getByDisplayValue('Pants Product')).toBeInTheDocument();
+    });
+
+    // Should show Pants size kind selected - the native select is inside
+    const sizeKindSelect = screen.getByRole('combobox', { name: /Size type/i });
+    // The MUI Select uses a native select - find it
+    const nativeSelect = sizeKindSelect.querySelector('select');
+    if (nativeSelect) {
+      expect(nativeSelect).toHaveValue('PANTS');
+    } else {
+      // Fallback - just check waist/inseam are populated correctly
+      expect(screen.getByRole('spinbutton', { name: /Waist/i })).toHaveValue(32);
+      expect(screen.getByRole('spinbutton', { name: /Inseam/i })).toHaveValue(34);
+    }
+
+    // Should have waist=32 and inseam=34 populated
+    expect(screen.getByRole('spinbutton', { name: /Waist/i })).toHaveValue(32);
+    expect(screen.getByRole('spinbutton', { name: /Inseam/i })).toHaveValue(34);
+  });
+
+  it('validates that both waist and inseam are required for pants variants', async () => {
+    renderEditor();
+
+    // Select Pants size kind
+    const sizeKindSelect = screen.getByRole('combobox', { name: /Size type/i });
+    fireEvent.mouseDown(sizeKindSelect);
+    const pantsOption = await screen.findByRole('option', { name: /Pants/i });
+    fireEvent.click(pantsOption);
+
+    // Enter only waist
+    const waistInput = screen.getByRole('spinbutton', { name: /Waist/i });
+    fireEvent.change(waistInput, { target: { value: '32' } });
+
+    // Select color
+    const colorInput = screen.getByLabelText(/Color/i);
+    fireEvent.focus(colorInput);
+    fireEvent.keyDown(colorInput, { key: 'ArrowDown' });
+    const redOption = await screen.findByText('Red');
+    fireEvent.click(redOption);
+
+    // Fill weight
+    const weightInput = screen.getByLabelText(/Weight/i);
+    fireEvent.change(weightInput, { target: { value: '300' } });
+
+    // Fill product name, sku, category - find by input id directly
+    const nameInput = screen.getByRole('textbox', { name: 'Product Name' });
+    fireEvent.change(nameInput, { target: { value: 'Test Pants' } });
+    const skuInput = screen.getByRole('textbox', { name: 'SKU' });
+    fireEvent.change(skuInput, { target: { value: 'TEST-PANTS' } });
+    // Find the category autocomplete by its test id / id
+    const categoryInput = screen.getByRole('combobox', { name: /Category/i });
+    fireEvent.focus(categoryInput);
+    fireEvent.keyDown(categoryInput, { key: 'ArrowDown' });
+    const categoryOption = await screen.findByText('Category 1');
+    fireEvent.click(categoryOption);
+
+    // Submit should fail with validation error
+    fireEvent.submit(screen.getByLabelText('Product Editor Form'));
+
+    await waitFor(() => {
+      expect(mockShowSnackbar).toHaveBeenCalledWith(
+        'Please fill in all product variant fields',
+        { severity: 'error' }
+      );
+    });
+
+    // Now enter inseam and try again
+    const inseamInput = screen.getByRole('spinbutton', { name: /Inseam/i });
+    fireEvent.change(inseamInput, { target: { value: '34' } });
+
+    mockCreateProductWithInfos.mockResolvedValue({
+      product: { id: 1, name: 'Test Pants' },
+      productInfos: [{ id: 10, size: '32x34', colors: [{ id: 1 }], weight: 300 }],
+    });
+
+    fireEvent.submit(screen.getByLabelText('Product Editor Form'));
+
+    await waitFor(() => {
+      expect(mockCreateProductWithInfos).toHaveBeenCalledTimes(1);
+      expect(mockCreateProductWithInfos).toHaveBeenCalledWith(
+        expect.any(Object),
+        expect.arrayContaining([
+          expect.objectContaining({ size: '32x34' })
+        ])
+      );
+    });
   });
 });
 
