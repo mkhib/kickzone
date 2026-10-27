@@ -54,6 +54,7 @@ import {
   APPAREL_SIZES,
   euToUs,
   FOOTWEAR_EU_SIZES,
+  isPantsSizeKind,
 } from '@kickzone-workspace/product-sizes';
 import SizeKind = KickzoneGraphqlTypes.SizeKind;
 
@@ -516,6 +517,9 @@ const ProductInfoCard = React.memo(
               <MenuItem value={SizeKind.Footwear}>
                 {LL.products.sizeKindFootwear()}
               </MenuItem>
+              <MenuItem value={SizeKind.Pants}>
+                {LL.products.sizeKindPants()}
+              </MenuItem>
             </Select>
           </FormControl>
           <FormControl
@@ -529,27 +533,49 @@ const ProductInfoCard = React.memo(
             <InputLabel id={`size-value-${idx}`}>
               {LL.products.size()}
             </InputLabel>
-            <Select
-              labelId={`size-value-${idx}`}
-              label={LL.products.size()}
-              value={info.size}
-              onChange={(e: SelectChangeEvent) =>
-                onChange(idx, 'size', e.target.value)
-              }
-            >
-              {/* Keeps empty value valid without showing a closed-select placeholder */}
-              <MenuItem value="" sx={{ display: 'none' }} />
-              {(info.sizeKind === SizeKind.Footwear
-                ? FOOTWEAR_EU_SIZES
-                : APPAREL_SIZES
-              ).map((code) => (
-                <MenuItem key={code} value={code}>
-                  {info.sizeKind === SizeKind.Footwear
-                    ? `EU ${code}${euToUs(code) ? ` (US ${euToUs(code)})` : ''}`
-                    : code}
-                </MenuItem>
-              ))}
-            </Select>
+            {isPantsSizeKind(info.sizeKind) ? (
+              // Pants: free-text input for "waist x length" (e.g., 32x34)
+              <TextField
+                name="size"
+                type="text"
+                value={info.size}
+                onChange={(e) => onChange(idx, 'size', e.target.value)}
+                placeholder="32x34"
+                helperText={LL.products.pantsSizeHint?.() || 'Format: waist x length (e.g., 32x34)'}
+                {...getLtrTextFieldProps({
+                  flex: 1,
+                  minWidth: 120,
+                  width: isMobile ? '100%' : undefined,
+                })}
+                inputProps={{
+                  pattern: '\\d+[xX]\\d+',
+                  title: 'Format: waist x length (e.g., 32x34)',
+                }}
+              />
+            ) : (
+              // Apparel / Footwear: dropdown select
+              <Select
+                labelId={`size-value-${idx}`}
+                label={LL.products.size()}
+                value={info.size}
+                onChange={(e: SelectChangeEvent) =>
+                  onChange(idx, 'size', e.target.value)
+                }
+              >
+                {/* Keeps empty value valid without showing a closed-select placeholder */}
+                <MenuItem value="" sx={{ display: 'none' }} />
+                {(info.sizeKind === SizeKind.Footwear
+                  ? FOOTWEAR_EU_SIZES
+                  : APPAREL_SIZES
+                ).map((code) => (
+                  <MenuItem key={code} value={code}>
+                    {info.sizeKind === SizeKind.Footwear
+                      ? `EU ${code}${euToUs(code) ? ` (US ${euToUs(code)})` : ''}`
+                      : code}
+                  </MenuItem>
+                ))}
+              </Select>
+            )}
           </FormControl>
           <TextField
             label={LL.products.weight()}

@@ -42,6 +42,7 @@ import {
   formatSizeLabel,
   FootwearSizeSystem,
   isFootwearSizeKind,
+  isPantsSizeKind,
   SizeKind,
   sortSizeCodes,
 } from '@kickzone-workspace/product-sizes';
@@ -366,9 +367,12 @@ export function CustomerProducts() {
             <ToggleButton value={SizeKind.Footwear}>
               {LL.products.sizeKindFootwear()}
             </ToggleButton>
+            <ToggleButton value={SizeKind.Pants}>
+              {LL.products.sizeKindPants()}
+            </ToggleButton>
           </ToggleButtonGroup>
 
-          {sizeFilterKind === SizeKind.Footwear ? (
+          {(sizeFilterKind === SizeKind.Footwear || sizeFilterKind === SizeKind.Pants) ? (
             <ToggleButtonGroup
               exclusive
               size="small"

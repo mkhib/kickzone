@@ -222,6 +222,8 @@ const fa = {
     sizeKind: 'نوع اندازه',
     sizeKindApparel: 'پوشاک',
     sizeKindFootwear: 'کفش',
+    sizeKindPants: 'شلوار',
+    pantsSizeHint: 'فرمت: کمر × طول (مثال: 32x34)',
     selectSize: 'انتخاب اندازه',
     sizeSystemEu: 'اروپایی',
     sizeSystemUs: 'آمریکایی',

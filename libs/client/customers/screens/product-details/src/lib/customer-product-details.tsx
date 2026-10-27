@@ -66,6 +66,7 @@ import {
 import {
   sortSizeCodes,
   isFootwearSizeKind,
+  isPantsSizeKind,
   SizeKind,
 } from '@kickzone-workspace/product-sizes';
 import {
@@ -584,9 +585,11 @@ export function CustomerProductDetails() {
     }
 
     const firstKind = activeColorwayVariants[0]?.productInfo.sizeKind;
-    const kind = isFootwearSizeKind(firstKind)
-      ? SizeKind.Footwear
-      : SizeKind.Apparel;
+    const kind = isPantsSizeKind(firstKind)
+      ? SizeKind.Pants
+      : isFootwearSizeKind(firstKind)
+        ? SizeKind.Footwear
+        : SizeKind.Apparel;
     return sortSizeCodes(kind, rawSizes);
   }, [activeColorwayVariants]);
 

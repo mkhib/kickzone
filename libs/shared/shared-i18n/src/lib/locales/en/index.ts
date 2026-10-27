@@ -222,6 +222,8 @@ const en = {
     sizeKind: 'Size type',
     sizeKindApparel: 'Apparel',
     sizeKindFootwear: 'Footwear',
+    sizeKindPants: 'Pants',
+    pantsSizeHint: 'Format: waist x length (e.g., 32x34)',
     selectSize: 'Select size',
     sizeSystemEu: 'EU',
     sizeSystemUs: 'US',

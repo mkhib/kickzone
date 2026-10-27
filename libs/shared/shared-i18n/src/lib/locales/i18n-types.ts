@@ -796,6 +796,10 @@ type RootTranslation = {
 		 */
 		sizeKindFootwear: string
 		/**
+		 * P​a​n​t​s
+		 */
+		sizeKindPants: string
+		/**
 		 * S​e​l​e​c​t​ ​s​i​z​e
 		 */
 		selectSize: string
@@ -4269,6 +4273,10 @@ export type TranslationFunctions = {
 		 * Footwear
 		 */
 		sizeKindFootwear: () => LocalizedString
+		/**
+		 * Pants
+		 */
+		sizeKindPants: () => LocalizedString
 		/**
 		 * Select size
 		 */

@@ -1,6 +1,7 @@
 export enum SizeKind {
   Apparel = 'APPAREL',
   Footwear = 'FOOTWEAR',
+  Pants = 'PANTS',
 }
 
 export enum FootwearSizeSystem {
@@ -92,6 +93,33 @@ export function normalizeFootwearEuCode(raw: string): string {
   return rounded.toFixed(1);
 }
 
+/** Parse a pants composite size such as "32x34", "32 X 34", "W32/L34", "32/34", "W32L34". */
+export function parsePantsSize(
+  raw: string
+): { waist: number; inseam: number } | null {
+  let cleaned = String(raw).trim();
+  // Remove optional leading "W" marker
+  cleaned = cleaned.replace(/^W/i, '');
+  // Treat L, x, X, and / as separators between waist and inseam
+  cleaned = cleaned.replace(/L/g, '/');
+  cleaned = cleaned.replace(/[xX]/g, '/');
+  const parts = cleaned.split('/').filter((p) => p.trim() !== '');
+  if (parts.length !== 2) {
+    return null;
+  }
+  const waist = Number(parts[0].trim());
+  const inseam = Number(parts[1].trim());
+  if (!Number.isFinite(waist) || !Number.isFinite(inseam)) {
+    return null;
+  }
+  return { waist, inseam };
+}
+
+/** Canonical pants composite: "waistxinseam" e.g. "32x34". */
+export function formatPantsSize(waist: number, inseam: number): string {
+  return `${waist}x${inseam}`;
+}
+
 export function isApparelSizeCode(code: string): code is ApparelSizeCode {
   return (APPAREL_SIZES as readonly string[]).includes(code.toUpperCase());
 }
@@ -108,6 +136,10 @@ export function isFootwearSizeKind(kind?: SizeKind | string | null): boolean {
   return String(kind ?? '').trim().toUpperCase() === SizeKind.Footwear;
 }
 
+export function isPantsSizeKind(kind?: SizeKind | string | null): boolean {
+  return String(kind ?? '').trim().toUpperCase() === SizeKind.Pants;
+}
+
 export function normalizeSizeCode(
   kind: SizeKind | string,
   raw: string
@@ -119,6 +151,10 @@ export function normalizeSizeCode(
   if (isApparelSizeKind(kind)) {
     const upper = trimmed.toUpperCase();
     return isApparelSizeCode(upper) ? upper : null;
+  }
+  if (isPantsSizeKind(kind)) {
+    const parsed = parsePantsSize(trimmed);
+    return parsed ? formatPantsSize(parsed.waist, parsed.inseam) : null;
   }
   const eu = normalizeFootwearEuCode(trimmed);
   return isFootwearEuCode(eu) ? eu : null;
@@ -148,6 +184,10 @@ export function formatSizeLabel(
   if (isApparelSizeKind(kind)) {
     return canonicalCode;
   }
+  if (isPantsSizeKind(kind)) {
+    const parsed = parsePantsSize(canonicalCode);
+    return parsed ? `W${parsed.waist}/L${parsed.inseam}` : canonicalCode;
+  }
   if (system === FootwearSizeSystem.Us) {
     const us = euToUs(canonicalCode);
     return us ? `US ${us}` : `EU ${canonicalCode}`;
@@ -171,6 +211,11 @@ export function expandFilterSizes(
   if (isApparelSizeKind(kind)) {
     return selected
       .map((s) => normalizeSizeCode(SizeKind.Apparel, s))
+      .filter((s): s is string => !!s);
+  }
+  if (isPantsSizeKind(kind)) {
+    return selected
+      .map((s) => normalizeSizeCode(SizeKind.Pants, s))
       .filter((s): s is string => !!s);
   }
   if (system === FootwearSizeSystem.Eu) {
@@ -203,6 +248,13 @@ export function inferSizeKindFromRaw(raw: string): {
   if (footwear) {
     return { sizeKind: SizeKind.Footwear, size: footwear };
   }
+  const pants = parsePantsSize(trimmed);
+  if (pants) {
+    return {
+      sizeKind: SizeKind.Pants,
+      size: formatPantsSize(pants.waist, pants.inseam),
+    };
+  }
   // Numeric-ish → treat as footwear raw; otherwise apparel raw
   if (/^\d+([.,]\d+)?$/.test(trimmed)) {
     return {
@@ -220,6 +272,19 @@ export function sortSizeCodes(kind: SizeKind | string, codes: string[]): string[
         APPAREL_SIZES.indexOf(a as ApparelSizeCode) -
         APPAREL_SIZES.indexOf(b as ApparelSizeCode)
     );
+  }
+  if (isPantsSizeKind(kind)) {
+    return [...codes].sort((a, b) => {
+      const pa = parsePantsSize(a);
+      const pb = parsePantsSize(b);
+      if (!pa || !pb) {
+        return 0;
+      }
+      if (pa.waist !== pb.waist) {
+        return pa.waist - pb.waist;
+      }
+      return pa.inseam - pb.inseam;
+    });
   }
   return [...codes].sort(
     (a, b) => Number(normalizeFootwearEuCode(a)) - Number(normalizeFootwearEuCode(b))
