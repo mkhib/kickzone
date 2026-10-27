@@ -13,3 +13,14 @@ export const SELLER_ROUTES = {
 } as const;
 
 export type SellerRouteKey = keyof typeof SELLER_ROUTES;
+
+export const getSellerProductRoute = (opts?: {
+  tab?: 'manage' | 'define' | 'variants';
+  search?: string;
+}) => {
+  const params = new URLSearchParams();
+  if (opts?.search) params.set('search', opts.search);
+  if (opts?.tab) params.set('tab', opts.tab);
+  const qs = params.toString();
+  return `${SELLER_ROUTES.PRODUCTS}${qs ? `?${qs}` : ''}`;
+};

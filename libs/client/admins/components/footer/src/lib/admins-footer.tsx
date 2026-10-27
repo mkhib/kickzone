@@ -1,86 +1,752 @@
 import React from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import PhoneInTalkOutlinedIcon from '@mui/icons-material/PhoneInTalkOutlined';
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
+import AccessTimeOutlinedIcon from '@mui/icons-material/AccessTimeOutlined';
+import InstagramIcon from '@mui/icons-material/Instagram';
+import TelegramIcon from '@mui/icons-material/Telegram';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
+import TwitterIcon from '@mui/icons-material/Twitter';
+import SecurityIcon from '@mui/icons-material/Security';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import VerifiedIcon from '@mui/icons-material/Verified';
+import CreditCardIcon from '@mui/icons-material/CreditCard';
+import { ShetabBadgeSvg, ShaparakBadgeSvg, SslBadgeSvg } from '@kickzone-workspace/customers-footer';
 import {
   useI18nContext,
   useLanguageContext,
+  SITE_NAME,
 } from '@kickzone-workspace/shared-i18n';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import Button from '@mui/material/Button';
-import LanguageIcon from '@mui/icons-material/Language';
-import { Link as RouterLink } from 'react-router-dom';
 import { ADMIN_ROUTES } from '@kickzone-workspace/admins-routes';
 
-export function AdminsFooter() {
+const linkStyle: React.CSSProperties = {
+  color: '#ffffff',
+  textDecoration: 'none',
+  fontSize: '14px',
+  fontFamily: 'var(--font-sans)',
+  transition: 'color 0.2s ease',
+};
+
+export interface AdminsFooterProps {
+  variant?: 'default' | 'glass';
+}
+
+const SOCIAL_LINKS = [
+  {
+    name: 'Instagram',
+    ariaLabel: 'SAINTBALA Instagram',
+    href: 'https://instagram.com/saintbala',
+    icon: <InstagramIcon sx={{ fontSize: 20 }} />,
+  },
+  {
+    name: 'Telegram',
+    ariaLabel: 'SAINTBALA Telegram',
+    href: 'https://t.me/saintbala_official',
+    icon: <TelegramIcon sx={{ fontSize: 20 }} />,
+  },
+  {
+    name: 'WhatsApp',
+    ariaLabel: 'SAINTBALA Concierge WhatsApp',
+    href: 'https://wa.me/989120008888',
+    icon: <WhatsAppIcon sx={{ fontSize: 20 }} />,
+  },
+  {
+    name: 'Twitter / X',
+    ariaLabel: 'SAINTBALA Twitter / X',
+    href: 'https://twitter.com/saintbala',
+    icon: <TwitterIcon sx={{ fontSize: 20 }} />,
+  },
+];
+
+export function AdminsFooter({
+  variant = 'default',
+}: AdminsFooterProps = {}) {
   const { LL } = useI18nContext();
-  const { currentLocale, availableLocales } = useLanguageContext();
-  const currentLanguage = availableLocales.find(
-    (lang) => lang.code === currentLocale
+  const { currentLocale } = useLanguageContext();
+  const isEn = currentLocale === 'en';
+  const isRTL = currentLocale === 'fa';
+  const year =
+    currentLocale === 'fa'
+      ? new Intl.DateTimeFormat('fa-IR-u-ca-persian', {
+          year: 'numeric',
+        }).format(new Date())
+      : String(new Date().getFullYear());
+
+  const brandWordmark = isRTL ? (
+    <bdi>{SITE_NAME}</bdi>
+  ) : (
+    SITE_NAME
   );
+
+  // Trust Badges Component
+  const renderTrustBadges = () => (
+    <Box
+      data-testid="footer-trust-badges"
+      sx={{
+        py: 3.5,
+        borderTop: '1px solid #1a1a1e',
+        borderBottom: '1px solid #1a1a1e',
+        my: { xs: 4, md: 5 },
+      }}
+    >
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(2, 1fr)',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(4, 1fr)',
+          },
+          gap: { xs: 2, sm: 2.5, md: 3 },
+          alignItems: 'stretch',
+        }}
+      >
+        {/* Badge 1: Shetab Bank Card Network */}
+        <Box
+          data-testid="badge-shetab"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: '14px',
+            bgcolor: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            transition: 'border-color 0.2s ease',
+            '&:hover': {
+              borderColor: '#c9a774',
+            },
+          }}
+        >
+          <ShetabBadgeSvg size={42} />
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.8125rem',
+                color: '#ffffff',
+                lineHeight: 1.2,
+                mb: 0.25,
+              }}
+            >
+              {isEn ? 'Shetab Bank Cards' : 'شبکه کارت‌های شتاب'}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.6875rem',
+                color: 'rgba(255, 255, 255, 0.55)',
+              }}
+            >
+              {isEn ? 'All Banking Cards Supported' : 'پشتیبانی از تمامی بانک‌ها'}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Badge 2: Shaparak Certified Electronic Gateway */}
+        <Box
+          data-testid="badge-shaparak"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: '14px',
+            bgcolor: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            transition: 'border-color 0.2s ease',
+            '&:hover': {
+              borderColor: '#c9a774',
+            },
+          }}
+        >
+          <ShaparakBadgeSvg size={42} />
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.8125rem',
+                color: '#ffffff',
+                lineHeight: 1.2,
+                mb: 0.25,
+              }}
+            >
+              {isEn ? 'Shaparak Gateway' : 'درگاه رسمی شاپرک'}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.6875rem',
+                color: 'rgba(255, 255, 255, 0.55)',
+              }}
+            >
+              {isEn ? 'Central Bank Certified' : 'تاییدیه بانک مرکزی و شاپرک'}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Badge 3: 256-Bit SSL Encryption */}
+        <Box
+          data-testid="badge-ssl"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: '14px',
+            bgcolor: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            transition: 'border-color 0.2s ease',
+            '&:hover': {
+              borderColor: '#c9a774',
+            },
+          }}
+        >
+          <SslBadgeSvg size={42} />
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.8125rem',
+                color: '#ffffff',
+                lineHeight: 1.2,
+                mb: 0.25,
+              }}
+            >
+              {isEn ? '256-Bit SSL Security' : 'رمزنگاری ۲۵۶ بیتی SSL'}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.6875rem',
+                color: 'rgba(255, 255, 255, 0.55)',
+              }}
+            >
+              {isEn ? 'Encrypted Checkout Pipeline' : 'پرداخت کاملاً ایزوله و امن'}
+            </Typography>
+          </Box>
+        </Box>
+
+        {/* Badge 4: 100% Authenticity Guarantee */}
+        <Box
+          data-testid="badge-authenticity"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: '14px',
+            bgcolor: 'rgba(255, 255, 255, 0.03)',
+            border: '1px solid rgba(255, 255, 255, 0.08)',
+            transition: 'border-color 0.2s ease',
+            '&:hover': {
+              borderColor: '#c9a774',
+            },
+          }}
+        >
+          <Box
+            sx={{
+              width: 42,
+              height: 42,
+              borderRadius: '10px',
+              bgcolor: 'rgba(201, 167, 116, 0.12)',
+              color: '#c9a774',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexShrink: 0,
+            }}
+          >
+            <VerifiedIcon sx={{ fontSize: 24 }} />
+          </Box>
+          <Box>
+            <Typography
+              sx={{
+                fontWeight: 700,
+                fontSize: '0.8125rem',
+                color: '#ffffff',
+                lineHeight: 1.2,
+                mb: 0.25,
+              }}
+            >
+              {isEn ? '100% Authentic Guarantee' : 'ضمانت قطعی اصالت'}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '0.6875rem',
+                color: 'rgba(255, 255, 255, 0.55)',
+              }}
+            >
+              {isEn ? 'Tamper-Evident Security Seal' : 'همراه با پلمپ امنیتی سریال‌دار'}
+            </Typography>
+          </Box>
+        </Box>
+      </Box>
+    </Box>
+  );
+
+  // Direct Contact & Social Component for Brand Column
+  const renderContactAndSocials = () => (
+    <Box sx={{ mt: 3, display: 'flex', flexDirection: 'column', gap: 1.25 }}>
+      {/* Phone */}
+      <Box
+        component="a"
+        href="tel:+982191008888"
+        data-testid="footer-contact-phone"
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 1.25,
+          color: 'rgba(255, 255, 255, 0.85)',
+          textDecoration: 'none',
+          fontSize: '13px',
+          transition: 'color 0.2s ease',
+          '&:hover': { color: '#c9a774' },
+        }}
+      >
+        <PhoneInTalkOutlinedIcon sx={{ fontSize: 17, color: '#c9a774' }} />
+        <span>
+          <bdi>+98 21 9100 8888</bdi>
+        </span>
+      </Box>
+
+      {/* Email */}
+      <Box
+        component="a"
+        href="mailto:concierge@saintbala.com"
+        data-testid="footer-contact-email"
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 1.25,
+          color: 'rgba(255, 255, 255, 0.85)',
+          textDecoration: 'none',
+          fontSize: '13px',
+          transition: 'color 0.2s ease',
+          '&:hover': { color: '#c9a774' },
+        }}
+      >
+        <EmailOutlinedIcon sx={{ fontSize: 17, color: '#c9a774' }} />
+        <span>
+          <bdi>concierge@saintbala.com</bdi>
+        </span>
+      </Box>
+
+      {/* Working Hours */}
+      <Box
+        sx={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: 1.25,
+          color: 'rgba(255, 255, 255, 0.65)',
+          fontSize: '12.5px',
+        }}
+      >
+        <AccessTimeOutlinedIcon sx={{ fontSize: 17, color: '#c9a774' }} />
+        <span>
+          {isEn
+            ? 'Sat – Thu: 10:00 – 21:00 (IRDT)'
+            : 'شنبه تا پنج‌شنبه: ۱۰:۰۰ الی ۲۱:۰۰'}
+        </span>
+      </Box>
+
+      {/* Social Links Row */}
+      <Box
+        data-testid="footer-social-links"
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1.5,
+          mt: 1.5,
+        }}
+      >
+        {SOCIAL_LINKS.map((soc) => (
+          <Box
+            key={soc.name}
+            component="a"
+            href={soc.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={soc.ariaLabel}
+            sx={{
+              width: 36,
+              height: 36,
+              borderRadius: '10px',
+              bgcolor: 'rgba(255, 255, 255, 0.05)',
+              border: '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'rgba(255, 255, 255, 0.75)',
+              textDecoration: 'none',
+              transition: 'all 0.2s ease',
+              '&:hover': {
+                bgcolor: 'rgba(201, 167, 116, 0.15)',
+                borderColor: '#c9a774',
+                color: '#c9a774',
+                transform: 'translateY(-2px)',
+              },
+            }}
+          >
+            {soc.icon}
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+
+  const glassLinkStyle: React.CSSProperties = {
+    color: '#ffffff',
+    textDecoration: 'none',
+    fontSize: '14px',
+    fontFamily: 'var(--font-sans)',
+    transition: 'color 0.2s ease',
+  };
+
+  const currentLinkStyle = variant === 'glass' ? glassLinkStyle : linkStyle;
 
   return (
     <Box
-      sx={(theme) => {
-        const isDark = theme.palette.mode === 'dark';
-        return {
-          backgroundColor: isDark ? '#0b0b0f' : '#f5f5f5',
-          borderTop: isDark
-            ? '1px solid rgba(255, 255, 255, 0.12)'
-            : '1px solid #e0e0e0',
-          color: isDark ? '#f5f5f5' : 'inherit',
-          padding: 2,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: 2,
-        };
+      component="footer"
+      sx={{
+        width: '100%',
+        bgcolor: '#000000',
+        background: '#000000',
+        borderTop: '1px solid #1a1a1e',
+        pt: { xs: 5, sm: 6, md: 8 },
+        pb: { xs: 3, sm: 4.5, md: 6 },
+        px: { xs: 2.5, sm: 4, md: 6 },
+        color: '#ffffff',
+        position: 'relative',
+        fontFamily: 'var(--font-sans)',
       }}
     >
-      <Typography
-        variant="body2"
-        sx={(theme) => ({
-          color: theme.palette.mode === 'dark' ? '#f5f5f5' : 'text.secondary',
-        })}
+      <Box
+        sx={{
+          maxWidth: 1376,
+          mx: 'auto',
+        }}
       >
-        © {new Date().getFullYear()} {LL.appNames.siteName()}{' '}
-        {LL.navigation.adminPanel()}
-      </Typography>
-
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-        <Typography
-          variant="body2"
-          sx={(theme) => ({
-            color: theme.palette.mode === 'dark' ? '#f5f5f5' : 'text.secondary',
-          })}
-        >
-          {LL.form.currentLanguage()}:{' '}
-          <strong>{currentLanguage?.nativeName}</strong>
-        </Typography>
-
-        <Button
-          variant="outlined"
-          size="small"
-          startIcon={<LanguageIcon />}
-          component={RouterLink}
-          to={ADMIN_ROUTES.LANGUAGE_SETTINGS}
-          sx={(theme) => ({
-            textTransform: 'none',
-            fontSize: '0.875rem',
-            color: theme.palette.mode === 'dark' ? '#f5f5f5' : undefined,
-            borderColor:
-              theme.palette.mode === 'dark'
-                ? 'rgba(255, 255, 255, 0.3)'
-                : undefined,
-            '&:hover': {
-              borderColor:
-                theme.palette.mode === 'dark'
-                  ? 'rgba(255, 255, 255, 0.5)'
-                  : undefined,
+        {/* Main Footer Grid */}
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: 'repeat(2, 1fr)',
+              sm: 'repeat(2, 1fr)',
+              md: '3.5fr repeat(4, 2fr)',
             },
-          })}
+            gap: { xs: '32px 20px', md: '36px' },
+            pb: { xs: 3, md: 5 },
+          }}
         >
-          {LL.navigation.languageSettings()}
-        </Button>
+          {/* Brand Block */}
+          <Box
+            sx={{
+              gridColumn: {
+                xs: 'span 2',
+                md: 'span 1',
+              },
+              pr: { md: 3 },
+            }}
+          >
+            <Typography
+              component={RouterLink}
+              to={ADMIN_ROUTES.HOME}
+              className="font-saintbala"
+              sx={{
+                display: 'inline-block',
+                fontFamily: 'var(--font-serif)',
+                fontWeight: 700,
+                fontSize: '28px',
+                letterSpacing: '0.34em',
+                color: '#ffffff',
+                textDecoration: 'none',
+                mb: 1.5,
+                lineHeight: 1,
+                direction: 'ltr',
+              }}
+            >
+              {brandWordmark}
+            </Typography>
+            <Typography
+              sx={{
+                fontSize: '14px',
+                color: 'rgba(255, 255, 255, 0.75)',
+                lineHeight: 1.7,
+                maxWidth: 320,
+                mt: 1,
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              {LL.home.footer.tagline()}
+            </Typography>
+
+            {/* Concierge Details & Social Links */}
+            {renderContactAndSocials()}
+          </Box>
+
+          {/* Dashboard Column */}
+          <Box>
+            <Typography
+              component="h4"
+              sx={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#ffffff',
+                mb: 2,
+                textTransform: isEn ? 'uppercase' : 'none',
+                letterSpacing: isEn ? '0.05em' : 'normal',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              {LL.navigation.adminPanel()}
+            </Typography>
+            <Box
+              component="ul"
+              sx={{
+                listStyle: 'none',
+                p: 0,
+                m: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.25,
+              }}
+            >
+              <li>
+                <RouterLink to={ADMIN_ROUTES.HOME} style={currentLinkStyle}>
+                  {LL.navigation.home()}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink to={ADMIN_ROUTES.PRODUCTS} style={currentLinkStyle}>
+                  {LL.navigation.products()}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink to={ADMIN_ROUTES.ORDERS} style={currentLinkStyle}>
+                  {LL.orders.allSellerOrders()}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink to={ADMIN_ROUTES.SELLERS} style={currentLinkStyle}>
+                  {LL.navigation.sellers()}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink to={ADMIN_ROUTES.CUSTOMERS} style={currentLinkStyle}>
+                  {LL.navigation.customers()}
+                </RouterLink>
+              </li>
+            </Box>
+          </Box>
+
+          {/* Catalog Management Column */}
+          <Box>
+            <Typography
+              component="h4"
+              sx={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#ffffff',
+                mb: 2,
+                textTransform: isEn ? 'uppercase' : 'none',
+                letterSpacing: isEn ? '0.05em' : 'normal',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              {isEn ? 'Catalog Management' : 'مدیریت کاتالوگ'}
+            </Typography>
+            <Box
+              component="ul"
+              sx={{
+                listStyle: 'none',
+                p: 0,
+                m: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.25,
+              }}
+            >
+              <li>
+                <RouterLink
+                  to={ADMIN_ROUTES.PRODUCTS_NEW}
+                  style={currentLinkStyle}
+                >
+                  {LL.button.addNewProduct()}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink
+                  to={ADMIN_ROUTES.PRODUCTS}
+                  style={currentLinkStyle}
+                >
+                  {isEn ? 'Product Catalog' : 'کاتالوگ محصولات'}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink
+                  to={ADMIN_ROUTES.TRANSLATIONS}
+                  style={currentLinkStyle}
+                >
+                  {LL.navigation.translations()}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink
+                  to={ADMIN_ROUTES.CURRENCY}
+                  style={currentLinkStyle}
+                >
+                  {LL.currency.title()}
+                </RouterLink>
+              </li>
+            </Box>
+          </Box>
+
+          {/* Help & Policies Column */}
+          <Box>
+            <Typography
+              component="h4"
+              sx={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#ffffff',
+                mb: 2,
+                textTransform: isEn ? 'uppercase' : 'none',
+                letterSpacing: isEn ? '0.05em' : 'normal',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              {isEn ? 'Client Services' : 'خدمات و قوانین'}
+            </Typography>
+            <Box
+              component="ul"
+              sx={{
+                listStyle: 'none',
+                p: 0,
+                m: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.25,
+              }}
+            >
+              <li>
+                <RouterLink
+                  to={ADMIN_ROUTES.HOME + '#/contact'}
+                  style={currentLinkStyle}
+                  data-testid="footer-link-contact"
+                >
+                  {isEn ? 'Contact Support' : 'تماس با پشتیبانی'}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink
+                  to={ADMIN_ROUTES.HOME + '#/shipping-returns'}
+                  style={currentLinkStyle}
+                  data-testid="footer-link-shipping-returns"
+                >
+                  {isEn ? 'Shipping & Returns' : 'ارسال و بازگشت کالا'}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink
+                  to={ADMIN_ROUTES.HOME + '#/payment-guide'}
+                  style={currentLinkStyle}
+                  data-testid="footer-link-payment"
+                >
+                  {isEn ? 'Payment Guide' : 'راهنمای پرداخت'}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink
+                  to={ADMIN_ROUTES.HOME + '#/privacy-policy'}
+                  style={currentLinkStyle}
+                  data-testid="footer-link-privacy-policy"
+                >
+                  {isEn ? 'Privacy Policy' : 'سیاست حفظ حریم خصوصی'}
+                </RouterLink>
+              </li>
+            </Box>
+          </Box>
+
+          {/* Settings Column */}
+          <Box>
+            <Typography
+              component="h4"
+              sx={{
+                fontSize: '13px',
+                fontWeight: 700,
+                color: '#ffffff',
+                mb: 2,
+                textTransform: isEn ? 'uppercase' : 'none',
+                letterSpacing: isEn ? '0.05em' : 'normal',
+                fontFamily: 'var(--font-sans)',
+              }}
+            >
+              {LL.navigation.languageSettings()}
+            </Typography>
+            <Box
+              component="ul"
+              sx={{
+                listStyle: 'none',
+                p: 0,
+                m: 0,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 1.25,
+              }}
+            >
+              <li>
+                <RouterLink to={ADMIN_ROUTES.CURRENCY} style={currentLinkStyle}>
+                  {LL.currency.title()}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink to={ADMIN_ROUTES.TRANSLATIONS} style={currentLinkStyle}>
+                  {LL.navigation.translations()}
+                </RouterLink>
+              </li>
+              <li>
+                <RouterLink to={ADMIN_ROUTES.LANGUAGE_SETTINGS} style={currentLinkStyle}>
+                  {LL.navigation.languageSettings()}
+                </RouterLink>
+              </li>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Payment & Security Trust Badges Bar */}
+        {renderTrustBadges()}
+
+        {/* Bottom Row */}
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            textAlign: { xs: 'center', md: 'left' },
+            gap: 1.5,
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: { xs: '11px', md: '13px' },
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            {LL.home.footer.copyright({ year })}
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: { xs: '11px', md: '13px' },
+              color: 'rgba(255, 255, 255, 0.7)',
+              fontFamily: 'var(--font-sans)',
+            }}
+          >
+            {LL.home.footer.paymentOnline()}
+          </Typography>
+        </Box>
       </Box>
     </Box>
   );
