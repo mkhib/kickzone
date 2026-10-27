@@ -68,19 +68,26 @@ function resolveSizeKind(kind?: string | SizeKind | null): SizeKind {
   return SizeKind.Apparel;
 }
 
-/** Convert product-sizes SizeKind (Apparel/Footwear/Pants) to GraphQL SizeKind (APPAREL/FOOTWEAR/PANTS). */
+/**
+ * Convert product-sizes SizeKind values (APPAREL/FOOTWEAR/PANTS) to GraphQL
+ * SizeKind enum names (Apparel/Footwear/Pants) from schema.gql.
+ * Sending uppercase values makes GraphQL reject the mutation, so create/update
+ * never persists variants (product shell saved, variants missing / wiped).
+ */
 function toGraphQLSizeKind(kind: SizeKind): KickzoneGraphqlTypes.SizeKind {
-  return kind.toUpperCase() as KickzoneGraphqlTypes.SizeKind;
+  if (isPantsSizeKind(kind)) {
+    return KickzoneGraphqlTypes.SizeKind.Pants;
+  }
+  if (isFootwearSizeKind(kind)) {
+    return KickzoneGraphqlTypes.SizeKind.Footwear;
+  }
+  return KickzoneGraphqlTypes.SizeKind.Apparel;
 }
 
-/** Convert GraphQL SizeKind (APPAREL/FOOTWEAR/PANTS) to product-sizes SizeKind (Apparel/Footwear/Pants). */
+/** Convert GraphQL SizeKind (Apparel/Footwear/Pants) to product-sizes SizeKind. */
 function fromGraphQLSizeKind(kind: string | undefined): SizeKind | undefined {
   if (!kind) return undefined;
-  const lower = kind.toLowerCase();
-  if (lower === 'apparel') return SizeKind.Apparel;
-  if (lower === 'footwear') return SizeKind.Footwear;
-  if (lower === 'pants') return SizeKind.Pants;
-  return undefined;
+  return resolveSizeKind(kind);
 }
 
 /** Keep multi-select Autocomplete open after picks; avoid mobile blur closing it mid-selection. */
@@ -1505,7 +1512,12 @@ export function AdminProductEditor({
           const variantsPayload: KickzoneGraphqlTypes.ProductVariantInput[] =
             productInfos.map((info) => ({
               id: info.createdId || undefined,
-              size: info.size,
+              size:
+                isPantsSizeKind(info.sizeKind) &&
+                info.waist != null &&
+                info.inseam != null
+                  ? formatPantsSize(info.waist, info.inseam)
+                  : info.size,
               sizeKind: toGraphQLSizeKind(info.sizeKind),
               colorIds: info.colors.map((c) => c.id),
               weight: Number(info.weight),
@@ -1577,7 +1589,12 @@ export function AdminProductEditor({
                 descriptionList.length > 0 ? descriptionList : undefined,
             },
             productInfos.map((info) => ({
-              size: info.size,
+              size:
+                isPantsSizeKind(info.sizeKind) &&
+                info.waist != null &&
+                info.inseam != null
+                  ? formatPantsSize(info.waist, info.inseam)
+                  : info.size,
               sizeKind: toGraphQLSizeKind(info.sizeKind),
               colorIds: info.colors.map((c) => c.id),
               weight: Number(info.weight),

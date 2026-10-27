@@ -1160,7 +1160,8 @@ export type SiteLanguage = {
 
 export enum SizeKind {
   Apparel = 'Apparel',
-  Footwear = 'Footwear'
+  Footwear = 'Footwear',
+  Pants = 'Pants'
 }
 
 export type Translation = {

@@ -657,12 +657,15 @@ describe('AdminProductEditor', () => {
           expect.objectContaining({
             id: 101,
             size: 'M',
+            // GraphQL schema.gql enum is Apparel/Footwear/Pants — NOT APPAREL
+            sizeKind: 'Apparel',
             colorIds: [1],
             weight: 500,
           }),
           expect.objectContaining({
             id: undefined, // New variant has no server ID yet
             size: 'L',
+            sizeKind: 'Apparel',
             colorIds: [2],
             weight: 550,
           }),
@@ -893,10 +896,79 @@ describe('AdminProductEditor', () => {
       expect(mockCreateProductWithInfos).toHaveBeenCalledWith(
         expect.any(Object),
         expect.arrayContaining([
-          expect.objectContaining({ size: '32x34' })
+          expect.objectContaining({
+            size: '32x34',
+            // Must match schema.gql SizeKind.Pants — uppercase PANTS is rejected by GraphQL
+            sizeKind: 'Pants',
+          }),
         ])
       );
     });
+  });
+
+  it('sends GraphQL SizeKind enum names (Apparel), not product-sizes values (APPAREL), on create', async () => {
+    mockCreateProductWithInfos.mockResolvedValue({
+      product: { id: 99, name: 'Wire Format Shoe' },
+      productInfos: [
+        {
+          id: 990,
+          size: 'M',
+          sizeKind: 'Apparel',
+          colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
+          weight: 300,
+        },
+      ],
+    });
+
+    const { container } = renderEditor();
+
+    const nameInput = container.querySelector('#product-name') as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: 'Wire Format Shoe' } });
+    const skuInput = container.querySelector('#product-sku') as HTMLInputElement;
+    fireEvent.change(skuInput, { target: { value: 'WIRE-01' } });
+
+    const categoryInput = container.querySelector(
+      '#categories-autocomplete'
+    ) as HTMLInputElement;
+    fireEvent.focus(categoryInput);
+    fireEvent.keyDown(categoryInput, { key: 'ArrowDown' });
+    fireEvent.click(await screen.findByText('Category 1'));
+
+    const sizeSelect = screen.getByRole('combobox', { name: /^Size$/i });
+    fireEvent.mouseDown(sizeSelect);
+    fireEvent.click(await screen.findByRole('option', { name: 'M' }));
+
+    const colorInput = screen.getByLabelText(/Color/i);
+    fireEvent.focus(colorInput);
+    fireEvent.keyDown(colorInput, { key: 'ArrowDown' });
+    fireEvent.click(await screen.findByText('Red'));
+
+    const weightInput = container.querySelector(
+      'input[name="weight"]'
+    ) as HTMLInputElement;
+    fireEvent.change(weightInput, { target: { value: '300' } });
+
+    fireEvent.submit(screen.getByLabelText('Product Editor Form'));
+
+    await waitFor(() => {
+      expect(mockCreateProductWithInfos).toHaveBeenCalledTimes(1);
+    });
+
+    expect(mockCreateProductWithInfos).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Wire Format Shoe', sku: 'WIRE-01' }),
+      [
+        expect.objectContaining({
+          size: 'M',
+          sizeKind: 'Apparel',
+          colorIds: [1],
+          weight: 300,
+        }),
+      ]
+    );
+    // Regression: uppercase APPAREL is invalid against schema.gql and drops variants
+    expect(mockCreateProductWithInfos.mock.calls[0][1][0].sizeKind).not.toBe(
+      'APPAREL'
+    );
   });
 });
 
