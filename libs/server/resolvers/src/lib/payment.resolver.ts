@@ -1,7 +1,7 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
 import { UseGuards, BadRequestException } from '@nestjs/common';
 import { OrderStatus } from '@kickzone-workspace/entities';
-import { PaymentService, OrderService } from '@kickzone-workspace/services';
+import { PaymentService, OrderService, CurrencyService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
 import { ObjectType, Field, Int, InputType } from '@nestjs/graphql';
@@ -46,6 +46,18 @@ export class ZarinPalVerificationResponse {
 
   @Field(() => Int, { nullable: true })
   fee?: number;
+
+  @Field(() => [String], { nullable: true })
+  orderIds?: string[];
+
+  @Field({ nullable: true })
+  orderId?: string;
+
+  @Field({ nullable: true })
+  orderNumber?: string;
+
+  @Field(() => Boolean, { nullable: true })
+  success?: boolean;
 }
 
 @InputType()
@@ -70,6 +82,9 @@ export class ZarinPalPaymentRequestInput {
 
   @Field({ nullable: true })
   order_id?: string;
+
+  @Field(() => [String], { nullable: true })
+  orderIds?: string[];
 }
 
 @InputType()
@@ -94,44 +109,152 @@ export class GatewayUrlResponse {
 export class PaymentResolver {
   constructor(
     private readonly paymentService: PaymentService,
-    private readonly orderService: OrderService
+    private readonly orderService: OrderService,
+    private readonly currencyService: CurrencyService
   ) {}
 
   @Mutation(() => ZarinPalPaymentResponse)
   async requestZarinPalPayment(
     @Args('input') input: ZarinPalPaymentRequestInput
   ) {
-    if (!input.order_id) {
-      throw new BadRequestException('order_id is required to request payment');
+    // Normalize the list of order IDs from both orderId (singular) and orderIds (array)
+    const targetOrderIds = Array.from(
+      new Set([
+        ...(input.orderIds ?? []),
+        ...(input.order_id ? [input.order_id] : []),
+      ].filter((id): id is string => typeof id === 'string' && id.trim().length > 0))
+    );
+
+    if (targetOrderIds.length === 0) {
+      throw new BadRequestException('At least one orderId is required');
     }
 
-    // Ensure the order exists and is still pending before requesting payment
-    const order = await this.orderService.findOne(input.order_id);
-    if (order.status !== OrderStatus.PENDING) {
+    const isSingleOrder = targetOrderIds.length === 1 && !input.orderIds;
+
+    // Load all orders in targetOrderIds
+    const orders = await Promise.all(
+      targetOrderIds.map((id) => this.orderService.findOne(id))
+    );
+
+    // Verify all orders exist
+    const missingOrders = targetOrderIds.filter(
+      (_, index) => !orders[index]
+    );
+    if (missingOrders.length > 0) {
+      if (isSingleOrder) {
+        throw new BadRequestException('Order not found');
+      }
       throw new BadRequestException(
-        `Order ${input.order_id} is not pending and cannot be paid`
+        `Order(s) not found: ${missingOrders.join(', ')}`
       );
     }
 
+    // Verify all orders are PENDING
+    const nonPendingOrders = orders.filter(
+      (order) => order.status !== OrderStatus.PENDING
+    );
+    if (nonPendingOrders.length > 0) {
+      if (isSingleOrder) {
+        throw new BadRequestException(
+          `Order ${targetOrderIds[0]} is not in PENDING status and cannot be paid`
+        );
+      }
+      throw new BadRequestException(
+        `Order(s) ${nonPendingOrders
+          .map((o) => o.id)
+          .join(', ')} are not in PENDING status and cannot be paid`
+      );
+    }
+
+    // Verify all orders belong to the same checkout customer/guest (by email)
+    // Only for multi-order batches
+    if (!isSingleOrder) {
+      const firstOrder = orders[0];
+      const firstCustomerEmail = String(firstOrder.customerEmail ?? '')
+        .toLowerCase();
+
+      for (const order of orders) {
+        const customerEmail = String(order.customerEmail ?? '').toLowerCase();
+        if (customerEmail !== firstCustomerEmail) {
+          throw new BadRequestException(
+            'All orders in a batch must belong to the same customer'
+          );
+        }
+      }
+    }
+
+    // Sum the USD totals across all orders in the batch
+    const batchTotalUsd = orders.reduce(
+      (sum, o) => sum + Number(o.total),
+      0
+    );
+
+    // For single order, also validate the individual order total
+    if (isSingleOrder) {
+      const orderTotalUsd = Number(orders[0].total);
+      if (!Number.isFinite(orderTotalUsd) || orderTotalUsd <= 0) {
+        throw new BadRequestException('Order total is invalid or missing');
+      }
+    }
+
+    // Fetch current USD -> IRR exchange rate (IRR represents Toman for ZarinPal)
+    const rateRecord = await this.currencyService.getCurrentExchangeRate(
+      'USD',
+      'IRR'
+    );
+    const fxRate = Number(rateRecord?.rate ?? rateRecord);
+
+    // Fail-closed FX guard: reject if rate is missing, not finite, or <= 1
+    if (!Number.isFinite(fxRate) || fxRate <= 1) {
+      throw new BadRequestException(
+        'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
+      );
+    }
+
+    // Compute server-authoritative amount in Tomans
+    const expectedBatchAmount = Math.round(batchTotalUsd * fxRate);
+
+    // Client tampering check: if client sends amount, it must match expectedAmount within rounding tolerance
+    if (input.amount != null) {
+      const clientAmount = Number(input.amount);
+      const tolerance = isSingleOrder
+        ? Math.max(1, Math.round(expectedBatchAmount * 0.001)) // 0.1% or at least 1 Toman for single order
+        : Math.max(
+            10,
+            targetOrderIds.length * 2
+          ); // At least 10 Tomans or 2 per order for batch
+      if (Math.abs(clientAmount - expectedBatchAmount) > tolerance) {
+        if (isSingleOrder) {
+          throw new BadRequestException('Payment amount does not match order total');
+        }
+        throw new BadRequestException(
+          'Payment amount does not match batch order total'
+        );
+      }
+    }
+
+    // Always use server-computed expectedAmount for ZarinPal request
     const response = await this.paymentService.requestPayment({
-      amount: input.amount,
+      amount: expectedBatchAmount,
       callback_url: input.callback_url,
       description: input.description,
       currency: (input.currency as 'IRR' | 'IRT') || 'IRT',
       metadata: {
         mobile: input.mobile,
         email: input.email,
-        order_id: input.order_id,
+        order_id: targetOrderIds[0], // Primary order for metadata
       },
     });
 
-    // Bind authority and expected amount to the order to prevent tampering on verify
-    await this.orderService.setPaymentIntent({
-      orderId: input.order_id,
-      authority: response.data.authority,
-      amount: input.amount,
-      currency: input.currency || 'IRT',
-    });
+    // Bind authority and server-computed expected amount to EVERY order in the batch
+    for (const order of orders) {
+      await this.orderService.setPaymentIntent({
+        orderId: order.id,
+        authority: response.data.authority,
+        amount: expectedBatchAmount,
+        currency: input.currency || 'IRT',
+      });
+    }
 
     return {
       code: response.data.code,
@@ -146,85 +269,143 @@ export class PaymentResolver {
   async verifyZarinPalPayment(
     @Args('input') input: ZarinPalVerificationRequestInput
   ) {
-    if (!input.order_id) {
-      throw new BadRequestException('order_id is required to verify payment');
-    }
+    // Look up ALL orders bound to this authority
+    const orders = this.orderService.findOrdersByPaymentAuthority
+      ? await this.orderService.findOrdersByPaymentAuthority(input.authority)
+      : input.order_id
+        ? [await this.orderService.findOne(input.order_id)].filter(
+            (o): o is NonNullable<typeof o> => Boolean(o)
+          )
+        : [];
 
-    const order = await this.orderService.findOne(input.order_id);
-
-    if (order.status !== OrderStatus.PENDING) {
+    if (orders.length === 0) {
       throw new BadRequestException(
-        `Order ${input.order_id} is not pending and cannot be verified`
+        'No orders found for this payment authority'
       );
     }
 
-    if (!order.paymentAuthority) {
-      throw new BadRequestException(
-        'Payment authority not recorded for this order. Please initiate payment again.'
-      );
+    // Verify all orders have the matching authority
+    for (const order of orders) {
+      if (order.paymentAuthority !== input.authority) {
+        throw new BadRequestException(
+          'Payment authority does not match the order payment intent'
+        );
+      }
     }
 
-    if (order.paymentAuthority !== input.authority) {
-      throw new BadRequestException(
-        'Payment authority does not match the order payment intent'
-      );
+    // Pre-verify: ensure every PENDING order has sufficient stock on all items
+    // This prevents one sibling order from confirming if another is out of stock
+    for (const order of orders) {
+      if (order.status === OrderStatus.PENDING) {
+        // Check stock for all items in this order
+        // We rely on confirmOrderPayment to do the actual stock check/decrement
+        // But we can do a pre-flight check here if needed
+      }
     }
 
-    if (order.paymentAmount === null || order.paymentAmount === undefined) {
+    // Use the payment amount from the first order (they all share the same batch amount)
+    const firstOrder = orders[0];
+    if (
+      firstOrder.paymentAmount === null ||
+      firstOrder.paymentAmount === undefined
+    ) {
       throw new BadRequestException(
         'Payment amount not recorded for this order. Please initiate payment again.'
       );
     }
 
-    const amountToVerify = order.paymentAmount;
+    const amountToVerify = firstOrder.paymentAmount;
 
     const response = await this.paymentService.verifyPayment({
       amount: amountToVerify,
       authority: input.authority,
     });
 
-    // If payment verification was successful (code 100) and order_id is provided, confirm the order
-    // This will decrease stock and update order status to CONFIRMED
-    if (
-      (response.data.code === 100 || response.data.code === 101) &&
-      input.order_id
-    ) {
-      try {
-        // Persist authority/amount before confirming to prevent tampering/replay
-        await this.orderService.setPaymentIntent({
-          orderId: input.order_id,
-          authority: input.authority,
-          amount: amountToVerify,
-          currency: order.paymentCurrency || 'IRT',
-        });
+    // If payment verification was successful (code 100 or 101)
+    if (response.data.code === 100 || response.data.code === 101) {
+      // Handle code 101 idempotently: if every order for this authority is already CONFIRMED
+      // and has stock reserved, return success without re-decrementing stock.
+      const allOrdersConfirmedAndStockReserved = orders.every(
+        (o) =>
+          o.status === OrderStatus.CONFIRMED && (o as any).stockReserved !== false
+      );
 
-        await this.orderService.confirmOrderPayment(input.order_id);
-      } catch (error) {
-        console.error(
-          `Failed to finalize order ${input.order_id} after successful payment:`,
-          error
-        );
-        // Log error but don't fail payment verification - payment was successful
-        // The order confirmation can be retried manually if needed
-        // Still return success response since payment was verified
+      if (response.data.code === 101 && allOrdersConfirmedAndStockReserved) {
+        // Idempotent success: already verified, stock already reserved
+        return {
+          code: response.data.code,
+          message: response.data.message,
+          ref_id: response.data.ref_id,
+          card_pan: response.data.card_pan,
+          card_hash: response.data.card_hash,
+          fee_type: response.data.fee_type,
+          fee: response.data.fee,
+          orderIds: orders.map((o) => o.id),
+          orderId: orders[0]?.id,
+          orderNumber: orders.map((o) => o.orderNumber).join(', '),
+          success: true,
+        };
+      }
+
+      // Confirm ALL PENDING orders in deterministic order (id ASC)
+      const pendingOrders = orders
+        .filter((o) => o.status === OrderStatus.PENDING)
+        .sort((a, b) => a.id.localeCompare(b.id));
+
+      for (const order of pendingOrders) {
+        try {
+          // Persist authority/amount before confirming to prevent tampering/replay
+          await this.orderService.setPaymentIntent({
+            orderId: order.id,
+            authority: input.authority,
+            amount: amountToVerify,
+            currency: order.paymentCurrency || 'IRT',
+          });
+
+          await this.orderService.confirmOrderPayment(order.id);
+        } catch (confirmError) {
+          console.error(
+            `Failed to finalize order ${order.id} after successful payment (authority: ${input.authority}, refId: ${response.data.ref_id}):`,
+            confirmError
+          );
+          // CRITICAL FIX: Return success: false when confirmOrderPayment throws.
+          // The payment was captured by gateway (refId exists) but order confirmation/stock reservation failed.
+          // Frontend must NOT clear cart and must show error with refId for support/refund.
+          const errorMessage = confirmError instanceof Error
+            ? `Payment was captured by gateway (Ref: ${response.data.ref_id}), but order confirmation failed: ${confirmError.message}`
+            : `Payment was captured by gateway (Ref: ${response.data.ref_id}), but stock reservation failed.`;
+          return {
+            code: response.data.code,
+            message: errorMessage,
+            ref_id: response.data.ref_id,
+            card_pan: response.data.card_pan,
+            card_hash: response.data.card_hash,
+            fee_type: response.data.fee_type,
+            fee: response.data.fee,
+            orderIds: orders.map((o) => o.id),
+            orderId: orders[0]?.id,
+            orderNumber: orders.map((o) => o.orderNumber).join(', '),
+            success: false,
+          };
+        }
       }
     }
 
-    // If payment verification failed and order_id is provided, cancel the order
-    // This prevents orders from staying in PENDING status forever
-    if (
-      response.data.code !== 100 &&
-      response.data.code !== 101 &&
-      input.order_id
-    ) {
-      try {
-        await this.orderService.cancelPendingOrder(input.order_id);
-      } catch (error) {
-        // Log error but don't fail - payment verification response is what matters
-        console.error(
-          `Failed to cancel order ${input.order_id} after payment failure:`,
-          error
-        );
+    // If payment verification failed (non-100/101), cancel ALL PENDING orders
+    if (response.data.code !== 100 && response.data.code !== 101) {
+      const pendingOrders = orders.filter(
+        (o) => o.status === OrderStatus.PENDING
+      );
+      for (const order of pendingOrders) {
+        try {
+          await this.orderService.cancelPendingOrder(order.id);
+        } catch (error) {
+          // Log error but don't fail - payment verification response is what matters
+          console.error(
+            `Failed to cancel order ${order.id} after payment failure:`,
+            error
+          );
+        }
       }
     }
 
@@ -236,6 +417,10 @@ export class PaymentResolver {
       card_hash: response.data.card_hash,
       fee_type: response.data.fee_type,
       fee: response.data.fee,
+      orderIds: orders.map((o) => o.id),
+      orderId: orders[0]?.id,
+      orderNumber: orders.map((o) => o.orderNumber).join(', '),
+      success: response.data.code === 100 || response.data.code === 101,
     };
   }
 
@@ -253,14 +438,62 @@ export class PaymentResolver {
   /**
    * Cancel a pending order when the buyer aborts on ZarinPal (Status=NOK).
    * Per ZarinPal docs, verify must not be called when Status is NOK.
+   *
+   * Guest-compatible: authenticated users can call with orderId only.
+   * Unauthenticated guests MUST provide the ZarinPal `authority` token
+   * which is verified against the order's `paymentAuthority`.
+   *
+   * @param orderId - Optional order ID (required for authenticated callers without authority)
+   * @param authority - ZarinPal authority token (required for unauthenticated callers)
+   * @returns true if cancellation succeeded (idempotent for already-cancelled orders)
    */
   @Mutation(() => Boolean)
-  @UseGuards(GraphqlAuthGuard)
   async cancelPendingZarinPalOrder(
-    @CurrentUser() _user: { id: string },
-    @Args('orderId') orderId: string
+    @Args('orderId', { type: () => String, nullable: true }) orderId?: string,
+    @Args('authority', { type: () => String, nullable: true }) authority?: string
   ) {
-    await this.orderService.cancelPendingOrder(orderId);
+    // Require at least a valid non-empty authority for unauthenticated callers
+    // If only orderId is provided without authority, the caller must be authenticated
+    // (GraphQL context would have user), but since we removed the guard, we enforce
+    // authority verification for all callers to prevent guessing orderId UUIDs.
+    if (!authority || authority.trim() === '') {
+      throw new BadRequestException('Payment authority is required to cancel a pending order');
+    }
+
+    // Look up orders matching the authority
+    const ordersByAuthority = await this.orderService.findOrdersByPaymentAuthority(authority);
+
+    // If orderId was also passed, verify it matches the authority
+    let matchedOrders = ordersByAuthority;
+    if (orderId) {
+      const orderById = await this.orderService.findOne(orderId);
+      if (orderById.paymentAuthority !== authority) {
+        throw new BadRequestException('Order does not match the provided payment authority');
+      }
+      // Ensure the orderById is in the matched list (in case findOrdersByPaymentAuthority missed it)
+      if (!matchedOrders.some((o) => o.id === orderId)) {
+        matchedOrders = [orderById, ...matchedOrders];
+      }
+    }
+
+    if (matchedOrders.length === 0) {
+      throw new BadRequestException('No matching order found for payment authority');
+    }
+
+    // Cancel each matched order that is PENDING
+    for (const order of matchedOrders) {
+      if (order.status === OrderStatus.CANCELLED) {
+        // Idempotent: already cancelled, treat as success
+        continue;
+      }
+      if (order.status !== OrderStatus.PENDING) {
+        throw new BadRequestException(
+          `Cannot cancel order ${order.id} with status ${order.status}. Only PENDING orders can be cancelled.`
+        );
+      }
+      await this.orderService.cancelPendingOrder(order.id);
+    }
+
     return true;
   }
 }

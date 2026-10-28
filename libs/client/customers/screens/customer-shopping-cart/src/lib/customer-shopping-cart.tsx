@@ -92,7 +92,7 @@ import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 import { useEffect, useMemo } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
-import { useZarinPalPayment } from '@kickzone-workspace/customer-payment';
+import { useZarinPalPayment, type CancelPendingOrderVariables } from '@kickzone-workspace/customer-payment';
 import { useConvertPrice } from '@kickzone-workspace/currency-hook';
 
 // Import types from cart store
@@ -445,22 +445,26 @@ export function CustomerShoppingCart() {
   // Base calculated shipping costs (VIP Courier)
   const baseShippingCost = useMemo(() => {
     const fallbackTotal = sellerShippingFees.reduce(
-      (sum, seller) => sum + seller.shippingFee,
+      (sum, seller) => sum + (seller.shippingFee || 0),
       0
     );
 
     if (shippingData?.calculateShippingCost) {
       const queryTotal =
         shippingData.calculateShippingCost.totalShippingCost ?? 0;
-      // Use query result if it's valid (> 0), otherwise use fallback
-      return queryTotal > 0 ? queryTotal : fallbackTotal;
+      // Use query result if it's a valid finite number (>= 0), otherwise use fallback
+      const hasValidServerShipping =
+        typeof queryTotal === 'number' &&
+        Number.isFinite(queryTotal) &&
+        queryTotal >= 0;
+      return hasValidServerShipping ? queryTotal : fallbackTotal;
     }
 
     // Fallback: sum all shipping fees
     return fallbackTotal;
   }, [shippingData, sellerShippingFees]);
 
-  const vipShippingCost = baseShippingCost > 0 ? baseShippingCost : 1.2;
+  const vipShippingCost = baseShippingCost >= 0 ? baseShippingCost : 0;
   const expressShippingCost = Math.round(vipShippingCost * 0.45 * 100) / 100;
   const pickupShippingCost = 0;
 
@@ -479,27 +483,30 @@ export function CustomerShoppingCart() {
     const breakdown =
       shippingData?.calculateShippingCost?.shippingBreakdown || [];
     const map: Record<string, number> = {};
-    breakdown.forEach((item) => {
-      const baseFee = item.appliedFee || 0;
-      map[String(item.sellerId)] =
-        shippingMethod === 'pickup'
-          ? 0
-          : shippingMethod === 'express'
-          ? Math.round(baseFee * 0.45 * 100) / 100
-          : baseFee;
-    });
-    // Fallback: use original fees if breakdown not available
-    sellerShippingFees.forEach((seller) => {
-      if (!(seller.sellerId in map)) {
-        const baseFee = seller.shippingFee;
+
+    // Always use server breakdown when available - it includes 0 for free shipping
+    if (breakdown.length > 0) {
+      breakdown.forEach((item) => {
+        const baseFee = Number(item.appliedFee) || 0;
+        map[String(item.sellerId)] =
+          shippingMethod === 'pickup'
+            ? 0
+            : shippingMethod === 'express'
+              ? Math.round(baseFee * 0.45 * 100) / 100
+              : baseFee;
+      });
+    } else {
+      // Fallback: only use original fees if NO breakdown available from server
+      sellerShippingFees.forEach((seller) => {
+        const baseFee = seller.shippingFee || 0;
         map[seller.sellerId] =
           shippingMethod === 'pickup'
             ? 0
             : shippingMethod === 'express'
-            ? Math.round(baseFee * 0.45 * 100) / 100
-            : baseFee;
-      }
-    });
+              ? Math.round(baseFee * 0.45 * 100) / 100
+              : baseFee;
+      });
+    }
     return map;
   }, [shippingData, sellerShippingFees, shippingMethod]);
 
@@ -507,7 +514,7 @@ export function CustomerShoppingCart() {
 
   // Convert USD → IRR. Our IRR rates/symbol are stored as Toman (تومان),
   // matching ZarinPal IRT — do not divide by 10 when sending to the gateway.
-  const { convertedAmount: totalInToman, loading: conversionLoading } =
+  const { convertedAmount: totalInToman, loading: conversionLoading, rate } =
     useConvertPrice({
       amount: grandTotal,
       fromCurrency: 'USD',
@@ -515,7 +522,7 @@ export function CustomerShoppingCart() {
     });
 
   // Payment hook (Farsi / ZarinPal only)
-  const { requestPayment, redirectToGateway } = useZarinPalPayment({
+  const { requestPayment, redirectToGateway, cancelPendingOrder: cancelPendingOrderHook } = useZarinPalPayment({
     onError: (error) => {
       showSnackbar(`خطا در پرداخت: ${error}`, { severity: 'error' });
     },
@@ -722,6 +729,9 @@ export function CustomerShoppingCart() {
   };
 
   const handleCreateOrderAndInitiatePayment = async () => {
+    // Declare orderResults outside try block for access in catch
+    let orderResults: Awaited<ReturnType<typeof createOrderMutation>>[] = [];
+
     try {
       console.log('[Checkout] 🛒 Starting order creation and payment process');
       setIsCreatingOrder(true);
@@ -841,17 +851,18 @@ export function CustomerShoppingCart() {
         }
       );
 
-      const orderResults = await Promise.all(orderPromises);
+      orderResults = await Promise.all(orderPromises);
 
-      // Get the first order for payment
+      // Get all order IDs for multi-seller batch payment
+      const allOrderIds = orderResults.map((o) => o!.id);
       const firstOrder = orderResults[0];
       if (!firstOrder) {
         throw new Error('No order was created');
       }
 
       console.log(`[Checkout] ✅ Order created successfully:`, {
-        orderId: firstOrder.id,
-        orderNumber: firstOrder.orderNumber,
+        orderIds: allOrderIds,
+        orderNumbers: orderResults.map((o) => o!.orderNumber).join(', '),
         totalOrders: orderResults.length,
       });
 
@@ -894,6 +905,14 @@ export function CustomerShoppingCart() {
         conversionRate: grandTotal > 0 ? totalInToman / grandTotal : 0,
       });
 
+      // Block ZarinPal checkout if exchange rate is invalid (<= 1 or falsy)
+      // ZarinPal requires valid IRT rate (Toman per USD)
+      if (!rate || rate <= 1) {
+        throw new Error(
+          'Invalid exchange rate: cannot process payment without valid USD→IRT rate'
+        );
+      }
+
       // Validate amount is reasonable (not too large or too small)
       if (amountInToman <= 0) {
         throw new Error(
@@ -908,23 +927,24 @@ export function CustomerShoppingCart() {
         );
       }
 
-      // Build callback URL with order ID
-      const callbackUrl = `${window.location.origin}${CUSTOMER_ROUTES.PAYMENT_CALLBACK}?orderId=${firstOrder.id}`;
+      // Build callback URL with all order IDs
+      const callbackUrl = `${window.location.origin}${CUSTOMER_ROUTES.PAYMENT_CALLBACK}?orderId=${firstOrder.id}&orderIds=${allOrderIds.join(',')}`;
 
       console.log(`[Checkout] 💳 Requesting payment from ZarinPal:`, {
-        orderId: firstOrder.id,
-        orderNumber: firstOrder.orderNumber,
+        orderIds: allOrderIds,
+        orderNumbers: orderResults.map((o) => o!.orderNumber).join(', '),
         amountInToman,
         amountInUSD: grandTotal,
         callbackUrl,
       });
 
-      // Request payment from ZarinPal (v4 request.json)
+      // Request payment from ZarinPal (v4 request.json) with all order IDs
       const authority = await requestPayment({
         amount: amountInToman,
         callback_url: callbackUrl,
-        description: `پرداخت سفارش ${firstOrder.orderNumber}`,
+        description: `پرداخت سفارش ${orderResults.map((o) => o!.orderNumber).join(', ')}`,
         currency: 'IRT', // Toman per ZarinPal currency docs
+        orderIds: allOrderIds,
         metadata: {
           mobile: shippingInfo.customerPhone || undefined,
           email: shippingInfo.customerEmail || undefined,
@@ -936,7 +956,17 @@ export function CustomerShoppingCart() {
         console.error(
           '[Checkout] ❌ Payment request failed - no authority returned'
         );
-        // Error already handled by hook
+        // If payment initiation fails, cancel all created orders to avoid orphan PENDING orders
+        for (const orderId of allOrderIds) {
+          try {
+            await cancelPendingOrderHook({ orderId, authority: '' });
+          } catch (cancelError) {
+            console.error(
+              `[Checkout] Failed to cancel order ${orderId} after payment initiation failure:`,
+              cancelError
+            );
+          }
+        }
         setIsCreatingOrder(false);
         return;
       }
@@ -950,12 +980,14 @@ export function CustomerShoppingCart() {
 
       setPaymentAuthority(authority);
 
-      // Store order data in sessionStorage for callback
+      // Store all order data in sessionStorage for callback
       sessionStorage.setItem(
         `order_${firstOrder.id}`,
         JSON.stringify({
           orderId: firstOrder.id,
+          orderIds: allOrderIds,
           orderNumber: firstOrder.orderNumber,
+          orderNumbers: orderResults.map((o) => o!.orderNumber).join(', '),
           amount: amountInToman,
           isGuest: !user,
           guestEmail: shippingInfo.customerEmail || '',
@@ -985,12 +1017,26 @@ export function CustomerShoppingCart() {
       console.error('Error creating order:', error);
       const errorMessage = (error as Error).message;
 
-      // Check for authentication errors
+      // Extract GraphQL errors for auth checking
       const graphQLErrors =
         typeof error === 'object' && error !== null && 'graphQLErrors' in error
           ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
             (error as any).graphQLErrors
           : undefined;
+
+      // If order creation succeeded but something else failed, cancel created orders
+      if (orderResults && orderResults.length > 0) {
+        for (const order of orderResults) {
+          try {
+            await cancelPendingOrderHook({ orderId: order!.id, authority: '' });
+          } catch (cancelError) {
+            console.error(
+              `[Checkout] Failed to cancel order ${order!.id} after error:`,
+              cancelError
+            );
+          }
+        }
+      }
 
       const isAuthGraphQlError =
         Array.isArray(graphQLErrors) &&

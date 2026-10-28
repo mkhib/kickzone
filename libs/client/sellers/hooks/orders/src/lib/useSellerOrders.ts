@@ -16,11 +16,14 @@ export function useSellerOrders({
   after?: string;
   status?: KickzoneGraphqlTypes.OrderStatus;
 } = {}) {
+  // Normalize status: 'ALL' or undefined means no server-side filter
+  const statusVariable = status && status !== 'ALL' ? status : undefined;
+
   const { data, loading, error, refetch, fetchMore } = useQuery<
     Pick<KickzoneGraphqlTypes.Query, 'mySellerOrders'>,
     KickzoneGraphqlTypes.QueryMySellerOrdersArgs
   >(GET_MY_ORDERS_QUERY, {
-    variables: { first, after },
+    variables: { first, after, ...(statusVariable ? { status: statusVariable } : {}) },
     notifyOnNetworkStatusChange: true,
     fetchPolicy: 'cache-and-network',
   });
@@ -37,14 +40,24 @@ export function useSellerOrders({
       Pick<KickzoneGraphqlTypes.Mutation, 'updateOrderStatus'>,
       KickzoneGraphqlTypes.MutationUpdateOrderStatusArgs
     >(UPDATE_ORDER_STATUS_MUTATION, {
-      refetchQueries: [{ query: GET_MY_ORDERS_QUERY, variables: { first } }],
+      refetchQueries: [
+        {
+          query: GET_MY_ORDERS_QUERY,
+          variables: { first, ...(statusVariable ? { status: statusVariable } : {}) },
+        },
+      ],
     });
 
   const [updateOrderMutation, { loading: updateOrderLoading }] = useMutation<
     Pick<KickzoneGraphqlTypes.Mutation, 'updateOrder'>,
     KickzoneGraphqlTypes.MutationUpdateOrderArgs
   >(UPDATE_ORDER_MUTATION, {
-    refetchQueries: [{ query: GET_MY_ORDERS_QUERY, variables: { first } }],
+    refetchQueries: [
+      {
+        query: GET_MY_ORDERS_QUERY,
+        variables: { first, ...(statusVariable ? { status: statusVariable } : {}) },
+      },
+    ],
   });
 
   const updateOrderStatus = async (
@@ -83,6 +96,7 @@ export function useSellerOrders({
     return fetchMore({
       variables: {
         after: endCursor,
+        ...(statusVariable ? { status: statusVariable } : {}),
       },
     });
   };

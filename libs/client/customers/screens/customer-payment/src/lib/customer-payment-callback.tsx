@@ -8,11 +8,9 @@ import Button from '@mui/material/Button';
 import CheckCircle from '@mui/icons-material/CheckCircle';
 import ErrorOutline from '@mui/icons-material/ErrorOutline';
 import { useTheme } from '@mui/material/styles';
-import { useMutation } from '@apollo/client/react';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
-import { CANCEL_PENDING_ZARINPAL_ORDER_MUTATION } from '@kickzone-workspace/customers-graphql';
 import { useZarinPalPayment } from './use-zarinpal-payment';
 import { useCustomersCartMutations } from '@kickzone-workspace/customers-cart-hook';
 import { useCartStore } from '@kickzone-workspace/customer-cart-store';
@@ -38,10 +36,12 @@ export function CustomerPaymentCallback() {
   const authority = searchParams.get('Authority');
   const status = searchParams.get('Status');
   const orderIdFromUrl = searchParams.get('orderId');
+  const orderIdsFromUrl = searchParams.get('orderIds');
 
   // Get order data from sessionStorage
   const [orderData, setOrderData] = useState<{
     orderId: string;
+    orderIds?: string[];
     orderNumber: string;
     amount: number;
   } | null>(null);
@@ -70,27 +70,14 @@ export function CustomerPaymentCallback() {
   const { clearCart } = useCustomersCartMutations();
   const clearCartAction = useCartStore((state) => state.clearCart);
 
-  const [cancelPendingOrder] = useMutation(
-    CANCEL_PENDING_ZARINPAL_ORDER_MUTATION
-  );
-
-  const { verifyPayment } = useZarinPalPayment({
+  const { verifyPayment, cancelPendingOrder: cancelPendingOrderHook } = useZarinPalPayment({
     onSuccess: async (refId) => {
+      // Note: This callback is invoked when the GraphQL mutation succeeds.
+      // The actual success/failure is determined by the `success` field in the response.
+      // We set a preliminary refId and status here; the component will verify `result.success`
+      // after `verifyPayment` returns and update accordingly.
       setRefId(refId);
       setVerificationStatus('success');
-
-      // Clear cart only once after successful payment verification
-      // This ensures items are removed only after payment is confirmed
-      if (!cartClearedRef.current) {
-        cartClearedRef.current = true;
-        try {
-          await clearCart();
-          clearCartAction();
-        } catch (error) {
-          // Log error but don't fail - payment was successful
-          console.error('Failed to clear cart after payment:', error);
-        }
-      }
     },
     onError: (error) => {
       setErrorMessage(error);
@@ -110,12 +97,27 @@ export function CustomerPaymentCallback() {
       verificationAttemptedRef.current = true;
       setVerificationStatus('cancelled');
       const orderIdToCancel = orderIdFromUrl || orderData?.orderId;
-      if (orderIdToCancel) {
-        cancelPendingOrder({ variables: { orderId: orderIdToCancel } }).catch(
-          (err) => {
+      const orderIdsToCancel = orderData?.orderIds || (orderIdToCancel ? [orderIdToCancel] : []);
+      // Per ZarinPal docs, when Status=NOK, the Authority param is still present
+      // Pass authority so guest users without sessionStorage orderId can still cancel
+      if (authority || orderIdToCancel) {
+        cancelPendingOrderHook({ orderId: orderIdToCancel ?? null, authority: authority! })
+          .then((success) => {
+            if (!success) {
+              console.error('Failed to cancel pending order after NOK - mutation returned false');
+            }
+            // Clean up sessionStorage for all order IDs after successful cancellation
+            for (const oid of orderIdsToCancel) {
+              sessionStorage.removeItem(`order_${oid}`);
+            }
+            if (orderIdFromUrl) {
+              sessionStorage.removeItem(`order_${orderIdFromUrl}`);
+            }
+          })
+          .catch((err) => {
             console.error('Failed to cancel pending order after NOK:', err);
-          }
-        );
+            // Don't clear sessionStorage on failure so user can retry
+          });
       }
       return;
     }
@@ -150,8 +152,47 @@ export function CustomerPaymentCallback() {
           return;
         }
 
-        // Payment verified successfully
-        // The onSuccess callback will be called by the hook
+        // CRITICAL: Check the `success` field from the resolver response.
+        // Only clear cart and show success when `success === true`.
+        // If `success === false` (e.g., gateway captured payment but stock reservation failed),
+        // do NOT clear cart, show error state, and display the refId for support/refund.
+        if (result.success === true) {
+          // Clear cart only once after successful payment verification AND order confirmation
+          if (!cartClearedRef.current) {
+            cartClearedRef.current = true;
+            try {
+              await clearCart();
+              clearCartAction();
+            } catch (error) {
+              // Log error but don't fail - payment was successful
+              console.error('Failed to clear cart after payment:', error);
+            }
+          }
+
+          // Clean up sessionStorage for all order IDs after successful payment
+          if (orderData?.orderIds) {
+            for (const oid of orderData.orderIds) {
+              sessionStorage.removeItem(`order_${oid}`);
+            }
+          }
+          if (orderIdFromUrl) {
+            sessionStorage.removeItem(`order_${orderIdFromUrl}`);
+          }
+
+          // onSuccess callback already set status to 'success' and refId
+        } else {
+          // Payment was captured by gateway (refId exists) but order confirmation failed
+          // Do NOT clear cart. Show error with refId for customer support.
+          const errorMsg =
+            result.message ||
+            `Payment was captured by gateway (Ref: ${result.ref_id}), but order confirmation failed. Please contact support with this reference ID.`;
+          setErrorMessage(errorMsg);
+          setVerificationStatus('error');
+          // Ensure refId is set for display
+          if (result.ref_id) {
+            setRefId(result.ref_id);
+          }
+        }
       } catch (err) {
         // Error already handled by hook's onError callback
         console.error('Payment verification error:', err);
@@ -165,7 +206,7 @@ export function CustomerPaymentCallback() {
     orderData,
     orderIdFromUrl,
     verifyPayment,
-    cancelPendingOrder,
+    cancelPendingOrderHook,
   ]);
 
   const handleContinue = () => {
@@ -477,6 +518,28 @@ export function CustomerPaymentCallback() {
                     }}
                   >
                     {errorMessage}
+                  </Alert>
+                )}
+                {refId && (
+                  <Alert
+                    severity="info"
+                    sx={{
+                      mb: 2.5,
+                      borderRadius: '20px',
+                      background: isDark
+                        ? 'rgba(197, 184, 154, 0.08)'
+                        : 'rgba(143, 132, 104, 0.08)',
+                      border: isDark
+                        ? '1px solid rgba(197, 184, 154, 0.25)'
+                        : '1px solid rgba(143, 132, 104, 0.2)',
+                    }}
+                  >
+                    <Typography variant="body2" sx={{ fontWeight: 600, fontFamily: 'monospace' }}>
+                      شماره مرجع تراکنش: {refId}
+                    </Typography>
+                    <Typography variant="body2" sx={{ mt: 1, color: 'text.secondary' }}>
+                      این شماره را برای پیگیری و استرداد وجه به پشتیبانی ارائه دهید.
+                    </Typography>
                   </Alert>
                 )}
                 <Typography

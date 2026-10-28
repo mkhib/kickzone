@@ -18,6 +18,7 @@ export interface ZarinPalPaymentRequest {
     mobile?: string;
     email?: string;
     order_id?: string;
+    order_ids?: string;
   };
   /** IRR = Rial, IRT = Toman. Kickzone uses IRT. */
   currency?: 'IRR' | 'IRT';
@@ -118,4 +119,12 @@ export function getZarinPalErrorMessage(code: number): string {
   };
 
   return errorMessages[code] || `خطای نامشخص با کد ${code}`;
+}
+
+/**
+ * Variables for cancelPendingZarinPalOrder mutation
+ */
+export interface CancelPendingOrderVariables {
+  orderId?: string | null;
+  authority: string;
 }

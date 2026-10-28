@@ -84,6 +84,10 @@ export class Order {
   })
   status: OrderStatus;
 
+  @Field(() => Boolean, { defaultValue: false })
+  @Column({ type: 'boolean', default: false })
+  stockReserved!: boolean;
+
   @Field(() => Float)
   @Column('decimal', { precision: 10, scale: 2 })
   subtotal: number;
@@ -129,6 +133,10 @@ paymentAuthority?: string | null;
   @Field(() => String, { nullable: true })
   @Column({ nullable: true })
   trackingNumber?: string;
+
+  @Field(() => Date, { nullable: true })
+  @Column({ type: 'timestamp', nullable: true })
+  paymentVerifiedAt?: Date | null;
 
   @Field(() => Date)
   @CreateDateColumn()

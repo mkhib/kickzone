@@ -63,7 +63,7 @@ export class ShippingCalculationService {
         shippingBreakdown: sellerShippingFees.map((seller) => ({
           sellerId: seller.sellerId,
           sellerName: seller.sellerName,
-          originalFee: seller.shippingFee,
+          originalFee: Number(seller.shippingFee) || 0,
           appliedFee: 0,
         })),
         freeShippingApplied: true,
@@ -81,11 +81,11 @@ export class ShippingCalculationService {
         shippingBreakdown = sellerShippingFees.map((seller) => ({
           sellerId: seller.sellerId,
           sellerName: seller.sellerName,
-          originalFee: seller.shippingFee,
-          appliedFee: seller.shippingFee,
+          originalFee: Number(seller.shippingFee) || 0,
+          appliedFee: Number(seller.shippingFee) || 0,
         }));
         totalShippingCost = sellerShippingFees.reduce(
-          (sum, seller) => sum + seller.shippingFee,
+          (sum, seller) => sum + (Number(seller.shippingFee) || 0),
           0
         );
         break;
@@ -93,23 +93,24 @@ export class ShippingCalculationService {
       case ShippingStrategy.TIERED_DISCOUNT:
         // First seller: full fee, others: discounted
         shippingBreakdown = sellerShippingFees.map((seller, index) => {
+          const originalFee = Number(seller.shippingFee) || 0;
           if (index === 0) {
             // First seller pays full fee
             return {
               sellerId: seller.sellerId,
               sellerName: seller.sellerName,
-              originalFee: seller.shippingFee,
-              appliedFee: seller.shippingFee,
+              originalFee,
+              appliedFee: originalFee,
             };
           } else {
             // Additional sellers get discount
             const discount = settings.additionalSellerDiscount || 0;
-            const appliedFee = seller.shippingFee * (1 - discount);
+            const appliedFee = originalFee * (1 - discount);
             return {
               sellerId: seller.sellerId,
               sellerName: seller.sellerName,
-              originalFee: seller.shippingFee,
-              appliedFee: Math.max(0, appliedFee),
+              originalFee,
+              appliedFee: Math.max(0, Math.round(appliedFee * 100) / 100),
             };
           }
         });
@@ -121,21 +122,22 @@ export class ShippingCalculationService {
 
       case ShippingStrategy.TIERED_FIXED: {
         // First seller: full fee, others: fixed fee
-        const fixedFee = settings.additionalSellerFixedFee || 0;
+        const fixedFee = Number(settings.additionalSellerFixedFee) || 0;
         shippingBreakdown = sellerShippingFees.map((seller, index) => {
+          const originalFee = Number(seller.shippingFee) || 0;
           if (index === 0) {
             return {
               sellerId: seller.sellerId,
               sellerName: seller.sellerName,
-              originalFee: seller.shippingFee,
-              appliedFee: seller.shippingFee,
+              originalFee,
+              appliedFee: originalFee,
             };
           } else {
             return {
               sellerId: seller.sellerId,
               sellerName: seller.sellerName,
-              originalFee: seller.shippingFee,
-              appliedFee: fixedFee,
+              originalFee,
+              appliedFee: Math.round(fixedFee * 100) / 100,
             };
           }
         });
@@ -148,31 +150,37 @@ export class ShippingCalculationService {
 
       case ShippingStrategy.HIGHEST_ONLY: {
         // Charge only the highest shipping fee
-        const highestFee = Math.max(
-          ...sellerShippingFees.map((s) => s.shippingFee)
-        );
-        shippingBreakdown = sellerShippingFees.map((seller, index) => ({
-          sellerId: seller.sellerId,
-          sellerName: seller.sellerName,
-          originalFee: seller.shippingFee,
-          appliedFee: index === 0 ? highestFee : 0, // Only first seller pays
-        }));
-        totalShippingCost = highestFee;
+        const fees = sellerShippingFees.map((s) => Number(s.shippingFee) || 0);
+        const highestFee = Math.max(...fees, 0);
+        shippingBreakdown = sellerShippingFees.map((seller, index) => {
+          const originalFee = Number(seller.shippingFee) || 0;
+          return {
+            sellerId: seller.sellerId,
+            sellerName: seller.sellerName,
+            originalFee,
+            appliedFee: index === 0 ? Math.round(highestFee * 100) / 100 : 0,
+          };
+        });
+        totalShippingCost = Math.round(highestFee * 100) / 100;
         break;
       }
 
       case ShippingStrategy.AVERAGE: {
         // Charge average of all shipping fees
+        const fees = sellerShippingFees.map((s) => Number(s.shippingFee) || 0);
         const averageFee =
-          sellerShippingFees.reduce((sum, s) => sum + s.shippingFee, 0) /
-          sellerShippingFees.length;
-        shippingBreakdown = sellerShippingFees.map((seller, index) => ({
-          sellerId: seller.sellerId,
-          sellerName: seller.sellerName,
-          originalFee: seller.shippingFee,
-          appliedFee: index === 0 ? averageFee : 0, // Only first seller pays
-        }));
-        totalShippingCost = averageFee;
+          fees.reduce((sum, fee) => sum + fee, 0) / (fees.length || 1);
+        const roundedAverage = Math.round(averageFee * 100) / 100;
+        shippingBreakdown = sellerShippingFees.map((seller, index) => {
+          const originalFee = Number(seller.shippingFee) || 0;
+          return {
+            sellerId: seller.sellerId,
+            sellerName: seller.sellerName,
+            originalFee,
+            appliedFee: index === 0 ? roundedAverage : 0,
+          };
+        });
+        totalShippingCost = roundedAverage;
         break;
       }
     }
@@ -186,14 +194,18 @@ export class ShippingCalculationService {
       const capRatio = settings.maxShippingCap / totalShippingCost;
       shippingBreakdown = shippingBreakdown.map((item) => ({
         ...item,
-        appliedFee: item.appliedFee * capRatio,
+        appliedFee: Math.round(item.appliedFee * capRatio * 100) / 100,
       }));
-      totalShippingCost = settings.maxShippingCap;
+      totalShippingCost = Math.round(settings.maxShippingCap * 100) / 100;
     }
 
     return {
       totalShippingCost: Math.round(totalShippingCost * 100) / 100, // Round to 2 decimals
-      shippingBreakdown,
+      shippingBreakdown: shippingBreakdown.map((item) => ({
+        ...item,
+        originalFee: Math.round(item.originalFee * 100) / 100,
+        appliedFee: Math.round(item.appliedFee * 100) / 100,
+      })),
       freeShippingApplied: false,
       strategyUsed: settings.shippingStrategy,
     };

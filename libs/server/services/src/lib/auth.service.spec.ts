@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { createHash } from 'crypto';
 import {
   AuthService,
@@ -25,6 +25,11 @@ describe('AuthService', () => {
     create: jest.Mock;
     save: jest.Mock;
     findOne: jest.Mock;
+    update: jest.Mock;
+  };
+  let tokenService: {
+    generateToken: jest.Mock;
+    validateToken: jest.Mock;
   };
 
   const mockUser = {
@@ -55,6 +60,11 @@ describe('AuthService', () => {
         ...entity,
       })),
       findOne: jest.fn(),
+      update: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
+    tokenService = {
+      generateToken: jest.fn().mockResolvedValue('reset-token-123'),
+      validateToken: jest.fn(),
     };
 
     const module: TestingModule = await Test.createTestingModule({
@@ -62,8 +72,8 @@ describe('AuthService', () => {
         AuthService,
         { provide: UserService, useValue: userService },
         { provide: JwtService, useValue: jwtService },
-        { provide: EmailService, useValue: {} },
-        { provide: TokenService, useValue: {} },
+        { provide: EmailService, useValue: { sendEmail: jest.fn().mockResolvedValue(undefined) } },
+        { provide: TokenService, useValue: tokenService },
         {
           provide: getRepositoryToken(RefreshToken),
           useValue: refreshTokenRepository,
@@ -232,6 +242,17 @@ describe('AuthService', () => {
     });
   });
 
+  describe('revokeAllUserRefreshTokens', () => {
+    it('revokes all non-revoked refresh tokens for a user', async () => {
+      await service.revokeAllUserRefreshTokens('user-1');
+
+      expect(refreshTokenRepository.update).toHaveBeenCalledWith(
+        { userId: 'user-1', revokedAt: undefined },
+        { revokedAt: expect.any(Date) }
+      );
+    });
+  });
+
   describe('verifyToken', () => {
     it('returns user when JWT is valid', async () => {
       jwtService.verify.mockReturnValue({ sub: mockUser.id });
@@ -246,6 +267,210 @@ describe('AuthService', () => {
       });
 
       await expect(service.verifyToken('bad')).resolves.toBeNull();
+    });
+  });
+
+  describe('initiatePasswordSetup', () => {
+    it('generates token and sends email', async () => {
+      userService.findByEmail.mockResolvedValue(mockUser);
+      tokenService.generateToken.mockReturnValue('setup-token-abc');
+
+      await service.initiatePasswordSetup('user@test.com', 'https://app.example.com');
+
+      expect(tokenService.generateToken).toHaveBeenCalledWith(
+        mockUser.id,
+        mockUser.email,
+        mockUser.role,
+        'password_setup'
+      );
+    });
+
+    it('throws when user not found', async () => {
+      userService.findByEmail.mockResolvedValue(null);
+
+      await expect(service.initiatePasswordSetup('unknown@test.com', 'https://app.example.com'))
+        .rejects.toBeInstanceOf(BadRequestException);
+    });
+  });
+
+  describe('setupPassword', () => {
+    it('validates token, updates password, and revokes all refresh tokens', async () => {
+      const tokenData = {
+        userId: 'user-1',
+        email: 'user@test.com',
+        userType: 'CUSTOMER',
+        tokenType: 'password_setup',
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+      tokenService.validateToken.mockResolvedValue(tokenData);
+      userService.findByEmail.mockResolvedValue(mockUser);
+      userService.updateUser.mockResolvedValue({ ...mockUser, password: 'new-hashed' });
+
+      const result = await service.setupPassword('valid-token', 'NewPass123!');
+
+      expect(tokenService.validateToken).toHaveBeenCalledWith('valid-token');
+      expect(userService.updateUser).toHaveBeenCalledWith('user-1', {
+        password: expect.any(String),
+      });
+      expect(refreshTokenRepository.update).toHaveBeenCalledWith(
+        { userId: 'user-1', revokedAt: undefined },
+        { revokedAt: expect.any(Date) }
+      );
+      expect(result.password).toBe('new-hashed');
+    });
+
+    it('throws BadRequestException for invalid/expired token', async () => {
+      tokenService.validateToken.mockResolvedValue(null);
+
+      await expect(service.setupPassword('invalid-token', 'NewPass123!'))
+        .rejects.toBeInstanceOf(BadRequestException);
+
+      expect(userService.updateUser).not.toHaveBeenCalled();
+      expect(refreshTokenRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException for wrong token type', async () => {
+      tokenService.validateToken.mockResolvedValue({
+        userId: 'user-1',
+        email: 'user@test.com',
+        userType: 'CUSTOMER',
+        tokenType: 'password_reset', // Wrong type
+        expiresAt: new Date(Date.now() + 3600000),
+      });
+
+      await expect(service.setupPassword('wrong-type-token', 'NewPass123!'))
+        .rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('throws BadRequestException when user not found', async () => {
+      tokenService.validateToken.mockResolvedValue({
+        userId: 'user-1',
+        email: 'user@test.com',
+        userType: 'CUSTOMER',
+        tokenType: 'password_setup',
+        expiresAt: new Date(Date.now() + 3600000),
+      });
+      userService.findByEmail.mockResolvedValue(null);
+
+      await expect(service.setupPassword('valid-token', 'NewPass123!'))
+        .rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('does not revoke tokens or change password when token is invalid', async () => {
+      tokenService.validateToken.mockResolvedValue(null);
+
+      await expect(service.setupPassword('invalid-token', 'NewPass123!'))
+        .rejects.toBeInstanceOf(BadRequestException);
+
+      expect(userService.updateUser).not.toHaveBeenCalled();
+      expect(refreshTokenRepository.update).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('initiateForgotPassword', () => {
+    it('generates token and sends email when user exists', async () => {
+      userService.findByEmail.mockResolvedValue(mockUser);
+      tokenService.generateToken.mockReturnValue('reset-token-xyz');
+
+      await service.initiateForgotPassword('user@test.com', 'https://app.example.com');
+
+      expect(tokenService.generateToken).toHaveBeenCalledWith(
+        mockUser.id,
+        mockUser.email,
+        mockUser.role,
+        'password_reset'
+      );
+    });
+
+    it('silently returns when user does not exist (security)', async () => {
+      userService.findByEmail.mockResolvedValue(null);
+
+      await expect(service.initiateForgotPassword('unknown@test.com', 'https://app.example.com'))
+        .resolves.toBeUndefined();
+    });
+  });
+
+  describe('resetPassword', () => {
+    it('validates token, updates password, revokes all refresh tokens, and consumes token', async () => {
+      const tokenData = {
+        userId: 'user-1',
+        email: 'user@test.com',
+        userType: 'CUSTOMER',
+        tokenType: 'password_reset',
+        expiresAt: new Date(Date.now() + 3600000),
+      };
+      tokenService.validateToken.mockResolvedValue(tokenData);
+      userService.findByEmail.mockResolvedValue(mockUser);
+      userService.updateUser.mockResolvedValue({ ...mockUser, password: 'new-hashed' });
+
+      const result = await service.resetPassword('valid-reset-token', 'NewPass123!');
+
+      expect(tokenService.validateToken).toHaveBeenCalledWith('valid-reset-token');
+      expect(userService.updateUser).toHaveBeenCalledWith('user-1', {
+        password: expect.any(String),
+      });
+      expect(refreshTokenRepository.update).toHaveBeenCalledWith(
+        { userId: 'user-1', revokedAt: undefined },
+        { revokedAt: expect.any(Date) }
+      );
+      expect(result.password).toBe('new-hashed');
+    });
+
+    it('throws BadRequestException for invalid/expired reset token', async () => {
+      tokenService.validateToken.mockResolvedValue(null);
+
+      await expect(service.resetPassword('invalid-token', 'NewPass123!'))
+        .rejects.toBeInstanceOf(BadRequestException);
+
+      expect(userService.updateUser).not.toHaveBeenCalled();
+      expect(refreshTokenRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException for wrong token type', async () => {
+      tokenService.validateToken.mockResolvedValue({
+        userId: 'user-1',
+        email: 'user@test.com',
+        userType: 'CUSTOMER',
+        tokenType: 'password_setup', // Wrong type
+        expiresAt: new Date(Date.now() + 3600000),
+      });
+
+      await expect(service.resetPassword('wrong-type-token', 'NewPass123!'))
+        .rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('throws BadRequestException when user not found', async () => {
+      tokenService.validateToken.mockResolvedValue({
+        userId: 'user-1',
+        email: 'user@test.com',
+        userType: 'CUSTOMER',
+        tokenType: 'password_reset',
+        expiresAt: new Date(Date.now() + 3600000),
+      });
+      userService.findByEmail.mockResolvedValue(null);
+
+      await expect(service.resetPassword('valid-token', 'NewPass123!'))
+        .rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it('does not revoke tokens or change password when reset token is invalid', async () => {
+      tokenService.validateToken.mockResolvedValue(null);
+
+      await expect(service.resetPassword('invalid-token', 'NewPass123!'))
+        .rejects.toBeInstanceOf(BadRequestException);
+
+      expect(userService.updateUser).not.toHaveBeenCalled();
+      expect(refreshTokenRepository.update).not.toHaveBeenCalled();
+    });
+
+    it('does not revoke tokens or change password when reset token is expired', async () => {
+      tokenService.validateToken.mockResolvedValue(null); // Expired tokens return null
+
+      await expect(service.resetPassword('expired-token', 'NewPass123!'))
+        .rejects.toBeInstanceOf(BadRequestException);
+
+      expect(userService.updateUser).not.toHaveBeenCalled();
+      expect(refreshTokenRepository.update).not.toHaveBeenCalled();
     });
   });
 });

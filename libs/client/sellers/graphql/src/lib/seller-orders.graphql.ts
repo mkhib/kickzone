@@ -5,8 +5,8 @@ import { gql } from '@apollo/client';
  * Security: Sellers should NOT see customer personal information
  */
 export const GET_MY_ORDERS_QUERY = gql`
-  query GetMySellerOrders($first: Int = 10, $after: String) {
-    mySellerOrders(first: $first, after: $after) {
+  query GetMySellerOrders($first: Int = 10, $after: String, $status: OrderStatus) {
+    mySellerOrders(first: $first, after: $after, status: $status) {
       edges {
         cursor
         node {

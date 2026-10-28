@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import '@testing-library/jest-dom';
@@ -33,7 +33,6 @@ if (typeof window !== 'undefined' && window.HTMLCanvasElement) {
       rotate: vi.fn(),
       arc: vi.fn(),
       fill: vi.fn(),
-      measureText: vi.fn(() => ({ width: 0 })),
       transform: vi.fn(),
       rect: vi.fn(),
       clip: vi.fn(),
@@ -102,6 +101,18 @@ const mockUpdateShippingField = vi.fn();
 const mockSetValidationErrors = vi.fn();
 const mockClearAllValidationErrors = vi.fn();
 const mockShowSnackbar = vi.fn();
+
+// Default shipping data for tests
+let mockShippingData = {
+  calculateShippingCost: {
+    totalShippingCost: 1.2,
+    freeShippingApplied: false,
+    strategyUsed: 'TIERED_DISCOUNT',
+    shippingBreakdown: [
+      { sellerId: '1', originalFee: 1.2, appliedFee: 1.2 },
+    ],
+  },
+};
 
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
   SITE_NAME: 'SAINTBALA',
@@ -250,6 +261,7 @@ vi.mock('@kickzone-workspace/customer-payment', () => ({
   useZarinPalPayment: () => ({
     requestPayment: vi.fn().mockResolvedValue('AUTH123456'),
     redirectToGateway: vi.fn(),
+    cancelPendingOrder: vi.fn().mockResolvedValue(true),
   }),
 }));
 
@@ -270,16 +282,7 @@ vi.mock('@kickzone-workspace/snackbar-hook', () => ({
 
 vi.mock('@apollo/client/react', () => ({
   useQuery: () => ({
-    data: {
-      calculateShippingCost: {
-        totalShippingCost: 1.2,
-        freeShippingApplied: false,
-        strategyUsed: 'TIERED_DISCOUNT',
-        shippingBreakdown: [
-          { sellerId: '1', originalFee: 1.2, appliedFee: 1.2 },
-        ],
-      },
-    },
+    data: mockShippingData,
     loading: false,
   }),
   useMutation: () => [vi.fn().mockResolvedValue({}), { loading: false }],
@@ -316,6 +319,11 @@ function renderWithProviders() {
       </BrowserRouter>
     </ThemeProvider>
   );
+}
+
+// Helper to set shipping data for a test
+function setShippingData(data: typeof mockShippingData) {
+  mockShippingData = data;
 }
 
 describe('CustomerShoppingCart Component', () => {
@@ -363,6 +371,17 @@ describe('CustomerShoppingCart Component', () => {
         size: 'M',
       },
     ];
+    // Reset to default shipping data
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 1.2,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 1.2, appliedFee: 1.2 },
+        ],
+      },
+    });
   });
 
   it('renders cart items and brand wordmark', () => {
@@ -467,5 +486,168 @@ describe('CustomerShoppingCart Component', () => {
     expect(
       screen.getByRole('button', { name: /sign in/i })
     ).toBeInTheDocument();
+  });
+});
+
+describe('Free Shipping and Zero Fee Handling', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLocale = 'en';
+    mockUser = null;
+    mockShippingMethod = 'vip';
+    mockIsCheckoutDialogOpen = false;
+    mockIsAuthDialogOpen = false;
+    mockActiveStep = 0;
+    mockCartItems = [
+      {
+        id: 'cart-item-1',
+        productId: 'prod-1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '1',
+        sellerName: 'SAINTBALA',
+        sellerShippingFee: 0, // Zero shipping fee
+        productName: 'Test Free Ship Item', // Changed from 'SAINTBALA Free Ship Item' to avoid 'Free' in product name
+        productImage: '/hoodie.jpg',
+        quantity: 1,
+        unitPrice: 150,
+        totalPrice: 150,
+        availableStock: 5,
+        color: '#121212',
+        size: 'L',
+      },
+    ];
+  });
+
+  it('displays free/$0 shipping when calculateShipping returns totalShippingCost: 0 and isFreeShipping: true', () => {
+    // Mock the GraphQL query to return free shipping
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: true,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 0, appliedFee: 0 },
+        ],
+      },
+    });
+
+    renderWithProviders();
+
+    // The shipping cost should be displayed as Free/$0 - use getAllByText to handle multiple
+    const freeElements = screen.getAllByText(/Free|0\.00/i);
+    expect(freeElements.length).toBeGreaterThan(0);
+    
+    // Total should equal subtotal (no shipping added)
+    // Subtotal is 150, shipping is 0, so total should be 150
+    const totalElements = screen.getAllByText(/\$150\.00/);
+    expect(totalElements.length).toBeGreaterThan(0);
+  });
+
+  it('does NOT charge $1.20 or raw seller fee when server returns totalShippingCost: 0', () => {
+    // This test ensures the bug is fixed: previously 0 was treated as falsy
+    // and would fall back to 1.2 or raw seller fees
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: true,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 5.0, appliedFee: 0 }, // Seller has $5 fee but free shipping applies
+        ],
+      },
+    });
+
+    renderWithProviders();
+
+    // Should show Free (multiple times is OK)
+    const freeElements = screen.getAllByText(/Free/i);
+    expect(freeElements.length).toBeGreaterThan(0);
+    
+    // Should NOT show $1.20 (the old fallback)
+    expect(screen.queryByText(/\$1\.20/)).not.toBeInTheDocument();
+    
+    // Should NOT show $5.00 (raw seller fee)
+    expect(screen.queryByText(/\$5\.00/)).not.toBeInTheDocument();
+  });
+
+  it('shows $0 shipping for VIP customer when seller has shippingFee = 0 (no $1.20 fallback)', () => {
+    // Seller has $0 shipping fee, VIP customer
+    // Should NOT fall back to $1.20
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 0, appliedFee: 0 },
+        ],
+      },
+    });
+
+    renderWithProviders();
+
+    // Should show Free/$0 shipping (multiple times is OK)
+    const freeElements = screen.getAllByText(/Free|0\.00/i);
+    expect(freeElements.length).toBeGreaterThan(0);
+    
+    // Should NOT show $1.20 (the old VIP fallback)
+    expect(screen.queryByText(/\$1\.20/)).not.toBeInTheDocument();
+  });
+
+  it('uses server breakdown for per-seller shipping costs when available (including 0)', () => {
+    // This tests the shippingCostsBySeller logic
+    // When server returns appliedFee: 0, it should be used as 0, not the original fee
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: true,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 10, appliedFee: 0 }, // Free shipping overrides
+          { sellerId: '2', originalFee: 5, appliedFee: 0 },   // Free shipping overrides
+        ],
+      },
+    });
+
+    mockCartItems = [
+      {
+        id: 'cart-item-1',
+        productId: 'prod-1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '1',
+        sellerName: 'Seller 1',
+        sellerShippingFee: 10,
+        productName: 'Item 1',
+        productImage: '/item1.jpg',
+        quantity: 1,
+        unitPrice: 100,
+        totalPrice: 100,
+        availableStock: 5,
+      },
+      {
+        id: 'cart-item-2',
+        productId: 'prod-2',
+        productInfoId: 'pi-2',
+        sellerProductId: '22222222-2222-2222-2222-222222222222',
+        sellerId: '2',
+        sellerName: 'Seller 2',
+        sellerShippingFee: 5,
+        productName: 'Item 2',
+        productImage: '/item2.jpg',
+        quantity: 1,
+        unitPrice: 50,
+        totalPrice: 50,
+        availableStock: 3,
+      },
+    ];
+
+    renderWithProviders();
+
+    // Both should show Free shipping (0)
+    // The total should be 150 (subtotal only) - use getAllByText since there are multiple
+    const totalElements = screen.getAllByText(/\$150\.00/);
+    expect(totalElements.length).toBeGreaterThan(0);
   });
 });

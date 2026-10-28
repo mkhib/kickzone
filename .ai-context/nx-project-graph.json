@@ -6255,6 +6255,18 @@
               "executor": "nx:run-commands",
               "configurations": {},
               "parallelism": true
+            },
+            "test": {
+              "executor": "@nx/jest:jest",
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/client/sellers/screens/seller-orders"
+              ],
+              "options": {
+                "jestConfig": "libs/client/sellers/screens/seller-orders/jest.config.ts",
+                "passWithNoTests": true
+              },
+              "configurations": {},
+              "parallelism": true
             }
           },
           "name": "seller-orders-screen",
@@ -11528,10 +11540,6 @@
           "targets": {
             "lint": {
               "cache": true,
-              "options": {
-                "cwd": "libs/client/customers/hooks/cart",
-                "command": "eslint ."
-              },
               "inputs": [
                 "default",
                 "^default",
@@ -11549,6 +11557,7 @@
               ],
               "metadata": {
                 "technologies": [
+                  "eslint",
                   "eslint"
                 ],
                 "description": "Runs ESLint on project",
@@ -11562,6 +11571,47 @@
                 }
               },
               "executor": "nx:run-commands",
+              "options": {
+                "cwd": "libs/client/customers/hooks/cart",
+                "command": "eslint ."
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "metadata": {
+                "technologies": [
+                  "jest",
+                  "jest"
+                ],
+                "description": "Run Jest Tests",
+                "help": {
+                  "command": "yarn jest --help",
+                  "example": {
+                    "options": {
+                      "coverage": true
+                    }
+                  }
+                }
+              },
+              "cache": true,
+              "inputs": [
+                "default",
+                "^production",
+                "{workspaceRoot}/jest.preset.js"
+              ],
+              "outputs": [
+                "{workspaceRoot}/coverage/libs/client/customers/hooks/cart"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "cwd": "libs/client/customers/hooks/cart",
+                "env": {
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}",
+                  "NODE_OPTIONS": "--no-experimental-strip-types"
+                },
+                "command": "jest"
+              },
               "configurations": {},
               "parallelism": true
             }
@@ -17185,6 +17235,11 @@
       "customer-payment": [
         {
           "source": "customer-payment",
+          "target": "customers-graphql",
+          "type": "static"
+        },
+        {
+          "source": "customer-payment",
           "target": "customers-layout",
           "type": "static"
         },
@@ -17196,11 +17251,6 @@
         {
           "source": "customer-payment",
           "target": "customers-routes",
-          "type": "static"
-        },
-        {
-          "source": "customer-payment",
-          "target": "customers-graphql",
           "type": "static"
         },
         {
@@ -17901,7 +17951,7 @@
       "seller-orders-screen": [
         {
           "source": "seller-orders-screen",
-          "target": "sellers-layout",
+          "target": "codegen",
           "type": "static"
         },
         {
@@ -17911,7 +17961,7 @@
         },
         {
           "source": "seller-orders-screen",
-          "target": "codegen",
+          "target": "sellers-layout",
           "type": "static"
         },
         {

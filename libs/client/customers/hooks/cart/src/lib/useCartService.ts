@@ -235,14 +235,23 @@ export function useCustomersCartService() {
           },
         });
       } catch (error) {
-        console.error('Failed to sync to server:', error);
-        // Optionally revert local change or show error
+        // Revert local change on server failure to maintain consistency
+        useCartStore.getState().removeItem(itemData.sellerProductId);
+        const structuredError = new Error(
+          `Failed to add item to server cart: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        console.error('[useCartService] addItem server sync failed:', structuredError);
+        throw structuredError;
       }
     }
   };
 
   // Update item quantity (both local and server)
   const updateItemQuantity = async (itemId: string, quantity: number) => {
+    // Capture previous state for potential rollback
+    const previousState = useCartStore.getState().items.find((item) => item.id === itemId);
+    const previousQuantity = previousState?.quantity ?? 0;
+
     // Update local store immediately
     useCartStore.getState().updateItemQuantity(itemId, quantity);
 
@@ -256,13 +265,26 @@ export function useCustomersCartService() {
           },
         });
       } catch (error) {
-        console.error('Failed to sync to server:', error);
+        // Rollback local change on server failure
+        if (previousState) {
+          useCartStore.getState().updateItemQuantity(itemId, previousQuantity);
+        } else {
+          useCartStore.getState().removeItem(itemId);
+        }
+        const structuredError = new Error(
+          `Failed to update item quantity on server: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        console.error('[useCartService] updateItemQuantity server sync failed:', structuredError);
+        throw structuredError;
       }
     }
   };
 
   // Remove item from cart (both local and server)
   const removeItem = async (itemId: string) => {
+    // Capture removed item for potential rollback
+    const removedItem = useCartStore.getState().items.find((item) => item.id === itemId);
+
     // Update local store immediately
     useCartStore.getState().removeItem(itemId);
 
@@ -273,13 +295,38 @@ export function useCustomersCartService() {
           variables: { itemId },
         });
       } catch (error) {
-        console.error('Failed to sync to server:', error);
+        // Rollback local change on server failure
+        if (removedItem) {
+          useCartStore.getState().addItem({
+            productId: removedItem.productId,
+            productName: removedItem.productName,
+            productImage: removedItem.productImage,
+            quantity: removedItem.quantity,
+            unitPrice: removedItem.unitPrice,
+            color: removedItem.color,
+            size: removedItem.size,
+            sellerId: removedItem.sellerId,
+            sellerName: removedItem.sellerName,
+            sellerShippingFee: removedItem.sellerShippingFee,
+            productInfoId: removedItem.productInfoId,
+            sellerProductId: removedItem.sellerProductId,
+            availableStock: removedItem.availableStock,
+          });
+        }
+        const structuredError = new Error(
+          `Failed to remove item from server cart: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        console.error('[useCartService] removeItem server sync failed:', structuredError);
+        throw structuredError;
       }
     }
   };
 
   // Clear cart (both local and server)
   const clearCart = async () => {
+    // Capture current items for potential rollback
+    const currentItems = [...useCartStore.getState().items];
+
     // Update local store immediately
     useCartStore.getState().clearCart();
 
@@ -288,7 +335,15 @@ export function useCustomersCartService() {
       try {
         await clearCartMutation();
       } catch (error) {
-        console.error('Failed to sync to server:', error);
+        // Rollback local change on server failure
+        if (currentItems.length > 0) {
+          useCartStore.getState().setItems(currentItems);
+        }
+        const structuredError = new Error(
+          `Failed to clear server cart: ${error instanceof Error ? error.message : 'Unknown error'}`
+        );
+        console.error('[useCartService] clearCart server sync failed:', structuredError);
+        throw structuredError;
       }
     }
   };

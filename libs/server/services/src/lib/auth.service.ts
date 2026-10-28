@@ -1,5 +1,5 @@
 import { RefreshToken, User, UserRole } from '@kickzone-workspace/entities';
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, BadRequestException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -16,7 +16,7 @@ import {
 export const ACCESS_TOKEN_MAX_AGE_MS = 15 * 60 * 1000; // 15 minutes
 export const REFRESH_TOKEN_MAX_AGE_MS = 2629800000; // ~30.4 days
 
-interface AdminCreateUserParams {
+export interface AdminCreateUserParams {
   name: string;
   lastName: string;
   username: string;
@@ -91,6 +91,13 @@ export class AuthService {
     }
   }
 
+  async revokeAllUserRefreshTokens(userId: string): Promise<void> {
+    await this.refreshTokenRepository.update(
+      { userId, revokedAt: undefined },
+      { revokedAt: new Date() }
+    );
+  }
+
   async verifyToken(token: string): Promise<User | null> {
     try {
       const decoded = this.jwtService.verify(token);
@@ -104,10 +111,15 @@ export class AuthService {
   async initiatePasswordSetup(email: string, baseUrl: string): Promise<void> {
     const user = await this.userService.findByEmail(email);
     if (!user) {
-      throw new Error('User not found');
+      throw new BadRequestException('User not found');
     }
 
-    const token = this.tokenService.generateToken(email);
+    const token = await this.tokenService.generateToken(
+      user.id,
+      email,
+      user.role,
+      'password_setup'
+    );
     const setupLink = `${baseUrl}/setup-password/${token}`;
     const locale = (user.locale as 'en' | 'fa') || 'en';
     const { subject, html } = getPasswordSetupEmailTemplate(setupLink, locale);
@@ -116,25 +128,34 @@ export class AuthService {
   }
 
   async setupPassword(token: string, newPassword: string): Promise<User> {
-    const email = this.tokenService.validateToken(token);
-    if (!email) {
-      throw new Error('Invalid or expired token');
+    const tokenData = await this.tokenService.validateToken(token);
+    if (!tokenData) {
+      throw new BadRequestException('Invalid or expired token');
     }
 
-    const user = await this.userService.findByEmail(email);
+    if (tokenData.tokenType !== 'password_setup') {
+      throw new BadRequestException('Invalid token type');
+    }
+
+    const user = await this.userService.findByEmail(tokenData.email);
     if (!user) {
-      throw new Error('User not found');
+      throw new BadRequestException('User not found');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    return this.userService.updateUser(user.id, { password: hashedPassword });
+    const updatedUser = await this.userService.updateUser(user.id, { password: hashedPassword });
+
+    // Revoke all existing refresh tokens for this user
+    await this.revokeAllUserRefreshTokens(user.id);
+
+    return updatedUser;
   }
 
   async register(name: string, email: string, password: string): Promise<User> {
     // Check if user already exists
     const existingUser = await this.userService.findByEmail(email);
     if (existingUser) {
-      throw new Error('Email already exists');
+      throw new BadRequestException('Email already exists');
     }
 
     // Create new customer user
@@ -155,7 +176,7 @@ export class AuthService {
   async adminCreateUser(params: AdminCreateUserParams): Promise<User> {
     const existingUser = await this.userService.findByEmail(params.email);
     if (existingUser) {
-      throw new Error('Email already exists');
+      throw new BadRequestException('Email already exists');
     }
 
     const hashedPassword = await bcrypt.hash(params.password, 10);
@@ -175,7 +196,12 @@ export class AuthService {
       return;
     }
 
-    const token = this.tokenService.generateToken(email);
+    const token = await this.tokenService.generateToken(
+      user.id,
+      email,
+      user.role,
+      'password_reset'
+    );
     const resetLink = `${baseUrl}/reset-password/${token}`;
     const locale = (user.locale as 'en' | 'fa') || 'en';
     const { subject, html } = getPasswordResetEmailTemplate(resetLink, locale);
@@ -184,18 +210,27 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string): Promise<User> {
-    const email = this.tokenService.validateToken(token);
-    if (!email) {
-      throw new Error('Invalid or expired token');
+    const tokenData = await this.tokenService.validateToken(token);
+    if (!tokenData) {
+      throw new BadRequestException('Invalid or expired token');
     }
 
-    const user = await this.userService.findByEmail(email);
+    if (tokenData.tokenType !== 'password_reset') {
+      throw new BadRequestException('Invalid token type');
+    }
+
+    const user = await this.userService.findByEmail(tokenData.email);
     if (!user) {
-      throw new Error('User not found');
+      throw new BadRequestException('User not found');
     }
 
     const hashedPassword = await bcrypt.hash(newPassword, 10);
-    return this.userService.updateUser(user.id, { password: hashedPassword });
+    const updatedUser = await this.userService.updateUser(user.id, { password: hashedPassword });
+
+    // Revoke all existing refresh tokens for this user
+    await this.revokeAllUserRefreshTokens(user.id);
+
+    return updatedUser;
   }
 
   private signAccessToken(user: User): string {

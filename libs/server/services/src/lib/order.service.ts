@@ -1,10 +1,6 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Optional, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, DataSource, EntityManager } from 'typeorm';
 import {
   Order,
   OrderItem,
@@ -21,6 +17,28 @@ import {
 
 @Injectable()
 export class OrderService {
+  private static readonly ALLOWED_STATUS_TRANSITIONS: Record<
+    OrderStatus,
+    OrderStatus[]
+  > = {
+    [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+    [OrderStatus.CONFIRMED]: [
+      OrderStatus.PROCESSING,
+      OrderStatus.SHIPPED,
+      OrderStatus.CANCELLED,
+      OrderStatus.REFUNDED,
+    ],
+    [OrderStatus.PROCESSING]: [
+      OrderStatus.SHIPPED,
+      OrderStatus.CANCELLED,
+      OrderStatus.REFUNDED,
+    ],
+    [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED, OrderStatus.REFUNDED],
+    [OrderStatus.DELIVERED]: [OrderStatus.REFUNDED],
+    [OrderStatus.CANCELLED]: [],
+    [OrderStatus.REFUNDED]: [],
+  };
+
   constructor(
     @InjectRepository(Order)
     private orderRepository: Repository<Order>,
@@ -29,104 +47,158 @@ export class OrderService {
     @InjectRepository(SellerProduct)
     private sellerProductRepository: Repository<SellerProduct>,
     @InjectRepository(SellerInfo)
-    private sellerInfoRepository: Repository<SellerInfo>
+    private sellerInfoRepository: Repository<SellerInfo>,
+    @Optional()
+    @Inject(DataSource)
+    private readonly dataSource?: DataSource,
   ) {}
 
+  private async runInTransaction<T>(
+    fn: (manager?: EntityManager) => Promise<T>,
+  ): Promise<T> {
+    if (this.dataSource?.transaction) {
+      return this.dataSource.transaction(fn);
+    }
+    return fn(undefined);
+  }
+
   async createOrder(createOrderInput: CreateOrderInput): Promise<Order> {
-    const order = this.orderRepository.create(createOrderInput);
+    const { items: inputItems, ...orderData } = createOrderInput;
 
-    // Generate unique order number
+    const order = this.orderRepository.create(orderData);
+
     order.orderNumber = this.generateOrderNumber();
-
-    // Generate unique tracking number
     order.trackingNumber = this.generateTrackingNumber();
 
-    // Get seller's information to preserve snapshot
     const seller = await this.sellerInfoRepository.findOne({
       where: { id: createOrderInput.sellerId },
     });
 
     if (!seller) {
       throw new NotFoundException(
-        `Seller with ID ${createOrderInput.sellerId} not found`
+        `Seller with ID ${createOrderInput.sellerId} not found`,
       );
     }
 
-    // Preserve seller snapshot at order time
     order.sellerStoreName = seller.storeName;
     order.sellerPhone = seller.phone || undefined;
     order.sellerAddress = seller.address || undefined;
 
-    // Calculate totals
-    order.subtotal = order.items.reduce(
-      (sum, item) => sum + item.totalPrice,
-      0
-    );
-
-    // Use provided shipping cost (from smart calculation) or fallback to seller's fee
-    // This allows frontend to pass calculated shipping cost from smart shipping logic
-    order.shippingCost =
-      createOrderInput.shippingCost !== undefined
-        ? createOrderInput.shippingCost
-        : seller.shippingFee || 0;
-
-    order.total = order.subtotal + order.shippingCost;
-
-    // Fetch seller products to get pricing details for snapshot
-    const orderItemsWithSnapshots = await Promise.all(
-      order.items.map(async (item) => {
-        if (item.sellerProductId) {
-          const sellerProduct = await this.sellerProductRepository.findOne({
-            where: { id: item.sellerProductId },
-            relations: ['productInfo'],
-          });
-
-          if (sellerProduct) {
-            // Preserve product pricing snapshot
-            return {
-              ...item,
-              originalPrice: sellerProduct.price,
-              discountPercentage: sellerProduct.discount,
-              productInfoId: sellerProduct.productInfoId || undefined,
-            };
-          }
+    // Validate and compute prices from catalog
+    const validatedItems = await Promise.all(
+      inputItems.map(async (item) => {
+        // Validate quantity
+        if (!Number.isInteger(Number(item.quantity)) || Number(item.quantity) <= 0) {
+          throw new BadRequestException(
+            `Quantity must be a positive integer for product ${item.productId}`,
+          );
         }
-        // If sellerProduct not found, keep item as is
-        return item;
-      })
+
+        if (!item.sellerProductId) {
+          throw new BadRequestException(
+            `sellerProductId is required for product ${item.productId}`,
+          );
+        }
+
+        const sellerProduct = await this.sellerProductRepository.findOne({
+          where: { id: item.sellerProductId },
+          relations: ['seller', 'productInfo'],
+        });
+
+        if (!sellerProduct) {
+          throw new NotFoundException(
+            `SellerProduct with ID ${item.sellerProductId} not found`,
+          );
+        }
+
+        // Ownership check: sellerProduct must belong to the order's seller
+        if (Number(sellerProduct.seller.id) !== createOrderInput.sellerId) {
+          throw new BadRequestException(
+            `Product ${item.sellerProductId} does not belong to seller ${createOrderInput.sellerId}`,
+          );
+        }
+
+        // Stock check
+        if (sellerProduct.stockQuantity < item.quantity) {
+          throw new BadRequestException(
+            `Insufficient stock for product ${item.sellerProductId}. Available: ${sellerProduct.stockQuantity}, Requested: ${item.quantity}`,
+          );
+        }
+
+        // Compute catalog price: price * (1 - discount/100)
+        const catalogUnitPrice = Number(
+          (sellerProduct.price * (1 - (sellerProduct.discount || 0) / 100)).toFixed(2),
+        );
+        const catalogTotalPrice = Number((catalogUnitPrice * item.quantity).toFixed(2));
+
+        return {
+          ...item,
+          sellerProduct,
+          catalogUnitPrice,
+          catalogTotalPrice,
+          originalPrice: sellerProduct.price,
+          discountPercentage: sellerProduct.discount,
+          productInfoId: sellerProduct.productInfoId || undefined,
+        };
+      }),
     );
 
-    // NOTE: Stock is NOT decreased here to prevent stock loss if payment fails
-    // Stock will be decreased only when payment is verified (order status changes to CONFIRMED)
-    // See confirmOrderPayment() method
+    // Compute server-side totals from catalog prices
+    order.subtotal = Number(
+      validatedItems.reduce((sum, item) => sum + item.catalogTotalPrice, 0).toFixed(2),
+    );
+
+    // Validate shipping cost (must be non-negative if provided)
+    const shippingCost = createOrderInput.shippingCost !== undefined
+      ? createOrderInput.shippingCost
+      : seller.shippingFee || 0;
+
+    if (shippingCost < 0) {
+      throw new BadRequestException('Shipping cost cannot be negative');
+    }
+
+    order.shippingCost = shippingCost;
+    order.total = Number((order.subtotal + order.shippingCost).toFixed(2));
 
     const savedOrder = await this.orderRepository.save(order);
 
-    // Save order items with snapshot data
-    const orderItems = orderItemsWithSnapshots.map((item) => ({
-      ...item,
+    const orderItemsToCreate = validatedItems.map((item) => ({
       orderId: savedOrder.id,
+      productId: item.productId,
+      sellerProductId: item.sellerProductId,
+      productName: item.productName,
+      productImage: item.productImage,
+      quantity: item.quantity,
+      unitPrice: item.catalogUnitPrice,
+      totalPrice: item.catalogTotalPrice,
+      color: item.color,
+      size: item.size,
+      originalPrice: item.originalPrice,
+      discountPercentage: item.discountPercentage,
+      productInfoId: item.productInfoId,
     }));
 
-    await this.orderItemRepository.save(orderItems);
+    const savedItems = await this.orderItemRepository.save(orderItemsToCreate);
 
-    return this.findOne(savedOrder.id);
+    savedOrder.items = savedItems;
+
+    return savedOrder;
   }
 
   async findAll(
     first = 10,
     after?: string,
     sellerId?: string,
-    status?: OrderStatus
+    status?: OrderStatus,
   ): Promise<OrdersConnection> {
     const queryBuilder = this.orderRepository
       .createQueryBuilder('order')
       .leftJoinAndSelect('order.items', 'items')
       .leftJoinAndSelect('order.seller', 'seller')
-      .orderBy('order.createdAt', 'DESC');
+      .orderBy('order.createdAt', 'DESC')
+      .addOrderBy('order.id', 'DESC');
 
     if (sellerId) {
-      // Parse sellerId as integer since the database column is an integer
       const sellerIdInt = parseInt(sellerId, 10);
       if (isNaN(sellerIdInt)) {
         throw new BadRequestException('Invalid sellerId');
@@ -179,14 +251,13 @@ export class OrderService {
 
   async updateOrder(
     id: string,
-    updateOrderInput: UpdateOrderInput
+    updateOrderInput: UpdateOrderInput,
   ): Promise<Order> {
     const order = await this.findOne(id);
 
     Object.assign(order, updateOrderInput);
 
     if (updateOrderInput.items) {
-      // Update order items
       await this.orderItemRepository.delete({ orderId: id });
 
       const orderItems = updateOrderInput.items.map((item) => ({
@@ -196,10 +267,9 @@ export class OrderService {
 
       await this.orderItemRepository.save(orderItems);
 
-      // Recalculate totals
       order.subtotal = orderItems.reduce(
         (sum, item) => sum + item.totalPrice,
-        0
+        0,
       );
       order.total = order.subtotal + order.shippingCost;
     }
@@ -208,39 +278,97 @@ export class OrderService {
   }
 
   async updateOrderStatus(id: string, status: OrderStatus): Promise<Order> {
-    const order = await this.findOne(id);
-    const previousStatus = order.status;
+    return this.runInTransaction(async (manager) => {
+      const orderRepo = manager
+        ? manager.getRepository(Order)
+        : this.orderRepository;
+      const sellerProductRepo = manager
+        ? manager.getRepository(SellerProduct)
+        : this.sellerProductRepository;
 
-    // If order is being cancelled or rejected, restore stock
-    if (
-      (status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED) &&
-      previousStatus !== OrderStatus.CANCELLED &&
-      previousStatus !== OrderStatus.REFUNDED
-    ) {
-      await this.restoreStock(order.items);
-    }
+      const order = await orderRepo.findOne({
+        where: { id },
+        relations: ['items'],
+        lock: manager ? { mode: 'pessimistic_write' } : undefined,
+      });
 
-    order.status = status;
-    return this.orderRepository.save(order);
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${id} not found`);
+      }
+
+      if (order.status === status) {
+        return order;
+      }
+
+      const allowedTransitions =
+        OrderService.ALLOWED_STATUS_TRANSITIONS[order.status] || [];
+      if (!allowedTransitions.includes(status)) {
+        throw new BadRequestException(
+          `Invalid status transition from ${order.status} to ${status}`,
+        );
+      }
+
+      if (
+        order.status === OrderStatus.PENDING &&
+        status === OrderStatus.CONFIRMED &&
+        !order.stockReserved
+      ) {
+        await this.decreaseStock(order, sellerProductRepo);
+        order.stockReserved = true;
+      }
+
+      if (
+        (status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED) &&
+        order.stockReserved
+      ) {
+        await this.restoreStock(order, sellerProductRepo);
+        order.stockReserved = false;
+      }
+
+      order.status = status;
+      return orderRepo.save(order);
+    });
   }
 
   async deleteOrder(id: string): Promise<void> {
-    const order = await this.findOne(id);
-    await this.orderRepository.remove(order);
+    return this.runInTransaction(async (manager) => {
+      const orderRepo = manager
+        ? manager.getRepository(Order)
+        : this.orderRepository;
+      const sellerProductRepo = manager
+        ? manager.getRepository(SellerProduct)
+        : this.sellerProductRepository;
+
+      const order = await orderRepo.findOne({
+        where: { id },
+        relations: ['items'],
+      });
+
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${id} not found`);
+      }
+
+      if (order.stockReserved) {
+        await this.restoreStock(order, sellerProductRepo);
+      }
+
+      await orderRepo.remove(order);
+    });
   }
 
   async getOrdersBySeller(
     sellerId: string,
     first = 10,
-    after?: string
+    after?: string,
+    status?: OrderStatus,
   ): Promise<OrdersConnection> {
-    return this.findAll(first, after, sellerId);
+    return this.findAll(first, after, sellerId, status);
   }
 
   async getOrdersByStatus(
     status: OrderStatus,
     first = 10,
-    after?: string
+    after?: string,
   ): Promise<OrdersConnection> {
     return this.findAll(first, after, undefined, status);
   }
@@ -248,7 +376,7 @@ export class OrderService {
   async getOrdersByCustomerEmail(
     customerEmail: string,
     first = 10,
-    after?: string
+    after?: string,
   ): Promise<OrdersConnection> {
     const queryBuilder = this.orderRepository
       .createQueryBuilder('order')
@@ -290,7 +418,6 @@ export class OrderService {
   }
 
   private generateTrackingNumber(): string {
-    // Generate a tracking number in format: KZ-YYYYMMDD-XXXXXX
     const now = new Date();
     const year = now.getFullYear();
     const month = String(now.getMonth() + 1).padStart(2, '0');
@@ -314,12 +441,11 @@ export class OrderService {
 
   private async getTotalCount(
     sellerId?: string,
-    status?: OrderStatus
+    status?: OrderStatus,
   ): Promise<number> {
     const queryBuilder = this.orderRepository.createQueryBuilder('order');
 
     if (sellerId) {
-      // Parse sellerId as integer since the database column is an integer
       const sellerIdInt = parseInt(sellerId, 10);
       if (!isNaN(sellerIdInt)) {
         queryBuilder.andWhere('order.sellerId = :sellerId', {
@@ -335,82 +461,110 @@ export class OrderService {
     return queryBuilder.getCount();
   }
 
-  /**
-   * Decrease stock quantity for ordered items
-   * Best practice: This ensures inventory is reserved when order is placed
-   */
   private async decreaseStock(
-    items: {
-      productId: string;
-      productName: string;
-      quantity: number;
-      sellerProductId?: string;
-    }[]
+    order: Order,
+    sellerProductRepo: Repository<SellerProduct>,
   ): Promise<void> {
-    for (const item of items) {
-      // Use sellerProductId directly as UUID string (no parsing needed)
-      const sellerProductId = item.sellerProductId || item.productId;
+    if (order.stockReserved) {
+      return;
+    }
 
-      const sellerProduct = await this.sellerProductRepository.findOne({
+    for (const item of order.items) {
+      if (
+        !Number.isInteger(Number(item.quantity)) ||
+        Number(item.quantity) <= 0
+      ) {
+        throw new BadRequestException(
+          'Order item quantity must be a positive integer',
+        );
+      }
+    }
+
+    const qtyBySellerProduct = new Map<string, number>();
+    for (const item of order.items) {
+      const sellerProductId = item.sellerProductId || item.productId;
+      const existing = qtyBySellerProduct.get(sellerProductId) || 0;
+      qtyBySellerProduct.set(sellerProductId, existing + Number(item.quantity));
+    }
+
+    const sortedSellerProductIds = Array.from(qtyBySellerProduct.keys()).sort();
+
+    for (const sellerProductId of sortedSellerProductIds) {
+      const requiredQty = qtyBySellerProduct.get(sellerProductId)!;
+
+      const sellerProduct = await sellerProductRepo.findOne({
         where: { id: sellerProductId },
+        lock: { mode: 'pessimistic_write' },
       });
 
       if (!sellerProduct) {
         throw new NotFoundException(
-          `SellerProduct with ID ${sellerProductId} not found for ${item.productName}`
+          `SellerProduct with ID ${sellerProductId} not found`,
         );
       }
 
-      if (sellerProduct.stockQuantity < item.quantity) {
+      if (sellerProduct.stockQuantity < requiredQty) {
         throw new BadRequestException(
-          `Insufficient stock for product ${item.productName}. Available: ${sellerProduct.stockQuantity}, Requested: ${item.quantity}`
+          `Insufficient stock for product ${sellerProductId}. Available: ${sellerProduct.stockQuantity}, Requested: ${requiredQty}`,
+        );
+      }
+    }
+
+    for (const sellerProductId of sortedSellerProductIds) {
+      const requiredQty = qtyBySellerProduct.get(sellerProductId)!;
+
+      const sellerProduct = await sellerProductRepo.findOne({
+        where: { id: sellerProductId },
+        lock: { mode: 'pessimistic_write' },
+      });
+
+      if (sellerProduct) {
+        sellerProduct.stockQuantity -= requiredQty;
+        await sellerProductRepo.save(sellerProduct);
+      }
+    }
+  }
+
+  async confirmOrderPayment(
+    orderId: string,
+    refId?: string,
+  ): Promise<Order> {
+    return this.runInTransaction(async (manager) => {
+      const orderRepo = manager
+        ? manager.getRepository(Order)
+        : this.orderRepository;
+      const sellerProductRepo = manager
+        ? manager.getRepository(SellerProduct)
+        : this.sellerProductRepository;
+
+      const order = await orderRepo.findOne({
+        where: { id: orderId },
+        relations: ['items'],
+        lock: manager ? { mode: 'pessimistic_write' } : undefined,
+      });
+
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${orderId} not found`);
+      }
+
+      if (order.status === OrderStatus.CONFIRMED && order.stockReserved) {
+        return order;
+      }
+
+      if (order.status !== OrderStatus.PENDING) {
+        throw new BadRequestException(
+          `Cannot confirm payment for order in status ${order.status}`,
         );
       }
 
-      sellerProduct.stockQuantity -= item.quantity;
-      await this.sellerProductRepository.save(sellerProduct);
-    }
+      await this.decreaseStock(order, sellerProductRepo);
+      order.stockReserved = true;
+      order.status = OrderStatus.CONFIRMED;
+
+      return orderRepo.save(order);
+    });
   }
 
-  /**
-   * Confirm order payment - decreases stock and updates order status to CONFIRMED
-   * This should be called ONLY after payment is successfully verified
-   */
-  async confirmOrderPayment(orderId: string): Promise<Order> {
-    const order = await this.findOne(orderId);
-
-    // Prevent double confirmation
-    if (order.status === OrderStatus.CONFIRMED) {
-      return order; // Already confirmed
-    }
-
-    // Can only confirm PENDING orders
-    if (order.status !== OrderStatus.PENDING) {
-      throw new BadRequestException(
-        `Cannot confirm order with status ${order.status}. Only PENDING orders can be confirmed.`
-      );
-    }
-
-    // Convert OrderItems to format expected by decreaseStock
-    const itemsToDecrease = order.items.map((item) => ({
-      productId: item.productId,
-      productName: item.productName,
-      quantity: item.quantity,
-      sellerProductId: item.sellerProductId || item.productId,
-    }));
-
-    // Decrease stock when payment is confirmed
-    await this.decreaseStock(itemsToDecrease);
-
-    // Update order status to CONFIRMED
-    order.status = OrderStatus.CONFIRMED;
-    return this.orderRepository.save(order);
-  }
-
-  /**
-   * Persist payment intent metadata on the order to bind gateway authority and expected amount
-   * This prevents clients from later verifying with a different amount/authority.
-   */
   async setPaymentIntent(params: {
     orderId: string;
     authority: string;
@@ -421,7 +575,7 @@ export class OrderService {
 
     if (order.status !== OrderStatus.PENDING) {
       throw new BadRequestException(
-        `Cannot create payment intent for order with status ${order.status}`
+        `Cannot create payment intent for order with status ${order.status}`,
       );
     }
 
@@ -432,38 +586,82 @@ export class OrderService {
     return this.orderRepository.save(order);
   }
 
-  /**
-   * Cancel pending order - restores stock if order was already confirmed
-   * Should be called when payment fails or user cancels
-   */
-  async cancelPendingOrder(orderId: string): Promise<Order> {
-    const order = await this.findOne(orderId);
-
-    // If order was already confirmed, restore stock
-    if (order.status === OrderStatus.CONFIRMED) {
-      await this.restoreStock(order.items);
-    }
-
-    // Update order status to CANCELLED
-    order.status = OrderStatus.CANCELLED;
-    return this.orderRepository.save(order);
+  async findOrdersByPaymentAuthority(authority: string): Promise<Order[]> {
+    if (!authority) return [];
+    return this.orderRepository.find({
+      where: { paymentAuthority: authority },
+      relations: ['items', 'items.sellerProduct', 'customer', 'seller'],
+      order: { id: 'ASC' },
+    });
   }
 
-  /**
-   * Restore stock quantity for cancelled/rejected orders
-   * Best practice: Return items to inventory when orders are cancelled
-   */
-  private async restoreStock(items: OrderItem[]): Promise<void> {
-    for (const item of items) {
-      // Use sellerProductId if available, otherwise use productId
+  async cancelPendingOrder(orderId: string): Promise<Order> {
+    return this.runInTransaction(async (manager) => {
+      const orderRepo = manager
+        ? manager.getRepository(Order)
+        : this.orderRepository;
+      const sellerProductRepo = manager
+        ? manager.getRepository(SellerProduct)
+        : this.sellerProductRepository;
+
+      const order = await orderRepo.findOne({
+        where: { id: orderId },
+        relations: ['items'],
+      });
+
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${orderId} not found`);
+      }
+
+      if (order.status !== OrderStatus.PENDING) {
+        throw new BadRequestException('Only PENDING orders can be cancelled');
+      }
+
+      if (order.stockReserved) {
+        await this.restoreStock(order, sellerProductRepo);
+      }
+
+      order.status = OrderStatus.CANCELLED;
+      return orderRepo.save(order);
+    });
+  }
+
+  private async restoreStock(
+    order: Order,
+    sellerProductRepo: Repository<SellerProduct>,
+  ): Promise<void> {
+    if (!order.stockReserved) {
+      return;
+    }
+
+    for (const item of order.items) {
+      if (!Number.isInteger(Number(item.quantity)) || Number(item.quantity) <= 0) {
+        throw new BadRequestException(
+          'Order item quantity must be a positive integer',
+        );
+      }
+    }
+
+    const qtyBySellerProduct = new Map<string, number>();
+    for (const item of order.items) {
       const sellerProductId = item.sellerProductId || item.productId;
-      const sellerProduct = await this.sellerProductRepository.findOne({
+      const existing = qtyBySellerProduct.get(sellerProductId) || 0;
+      qtyBySellerProduct.set(sellerProductId, existing + Number(item.quantity));
+    }
+
+    const sortedSellerProductIds = Array.from(qtyBySellerProduct.keys()).sort();
+
+    for (const sellerProductId of sortedSellerProductIds) {
+      const requiredQty = qtyBySellerProduct.get(sellerProductId)!;
+
+      const sellerProduct = await sellerProductRepo.findOne({
         where: { id: sellerProductId },
+        lock: { mode: 'pessimistic_write' },
       });
 
       if (sellerProduct) {
-        sellerProduct.stockQuantity += item.quantity;
-        await this.sellerProductRepository.save(sellerProduct);
+        sellerProduct.stockQuantity += requiredQty;
+        await sellerProductRepo.save(sellerProduct);
       }
     }
   }

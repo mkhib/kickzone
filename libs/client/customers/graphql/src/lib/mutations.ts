@@ -203,6 +203,9 @@ export const VERIFY_ZARINPAL_PAYMENT_MUTATION = gql`
       card_hash
       fee_type
       fee
+      orderIds
+      orderId
+      orderNumber
     }
   }
 `;
@@ -216,7 +219,7 @@ export const GET_ZARINPAL_GATEWAY_URL_MUTATION = gql`
 `;
 
 export const CANCEL_PENDING_ZARINPAL_ORDER_MUTATION = gql`
-  mutation CancelPendingZarinPalOrder($orderId: String!) {
-    cancelPendingZarinPalOrder(orderId: $orderId)
+  mutation CancelPendingZarinPalOrder($orderId: String, $authority: String!) {
+    cancelPendingZarinPalOrder(orderId: $orderId, authority: $authority)
   }
 `;

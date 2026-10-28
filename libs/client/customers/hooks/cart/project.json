@@ -4,6 +4,51 @@
   "sourceRoot": "libs/client/customers/hooks/cart/src",
   "projectType": "library",
   "tags": [],
-  "// targets": "to see all targets run: nx show project customers-cart-hook --web",
-  "targets": {}
+  "targets": {
+    "lint": {
+      "cache": true,
+      "options": {
+        "cwd": "libs/client/customers/hooks/cart",
+        "command": "eslint ."
+      },
+      "inputs": [
+        "default",
+        "^default",
+        "{workspaceRoot}/eslint.config.mjs",
+        "{workspaceRoot}/libs/client/customers/hooks/cart/eslint.config.mjs",
+        "{workspaceRoot}/tools/eslint-rules/**/*",
+        { "externalDependencies": ["eslint"] }
+      ],
+      "outputs": ["{options.outputFile}"],
+      "metadata": {
+        "technologies": ["eslint"],
+        "description": "Runs ESLint on project",
+        "help": {
+          "command": "yarn eslint --help",
+          "example": { "options": { "max-warnings": 0 } }
+        }
+      },
+      "executor": "nx:run-commands",
+      "configurations": {},
+      "parallelism": true
+    },
+    "test": {
+      "cache": true,
+      "options": {
+        "cwd": "libs/client/customers/hooks/cart",
+        "command": "jest"
+      },
+      "inputs": [
+        "default",
+        "^production",
+        "{workspaceRoot}/jest.preset.js"
+      ],
+      "outputs": ["{workspaceRoot}/coverage/libs/client/customers/hooks/cart"],
+      "metadata": {
+        "technologies": ["jest"],
+        "description": "Run Jest Tests"
+      },
+      "executor": "nx:run-commands"
+    }
+  }
 }

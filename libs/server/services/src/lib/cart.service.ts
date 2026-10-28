@@ -19,6 +19,23 @@ export class CartService {
     private sellerProductRepository: Repository<SellerProduct>
   ) {}
 
+  /**
+   * Safely coerces any value (including Postgres numeric strings) to a finite number.
+   * Returns 0 for non-finite values (NaN, Infinity, null, undefined, non-numeric strings).
+   */
+  private toDecimalNumber(value: unknown): number {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+
+  /**
+   * Rounds a monetary value to 2 decimal places to avoid floating-point drift.
+   * Uses the standard "round half up" with Number.EPSILON correction.
+   */
+  private roundMoney(value: number): number {
+    return Math.round((value + Number.EPSILON) * 100) / 100;
+  }
+
   async getOrCreateCart(userId: string): Promise<Cart> {
     let cart = await this.cartRepository.findOne({
       where: { userId },
@@ -76,17 +93,27 @@ export class CartService {
       );
     }
 
-    // Calculate final price after discount
-    const finalPrice =
-      sellerProduct.discount > 0
-        ? sellerProduct.price -
-          (sellerProduct.price * sellerProduct.discount) / 100
-        : sellerProduct.price;
+    // Calculate final price after discount - coerce Postgres numeric strings to numbers
+    const price = this.toDecimalNumber(sellerProduct.price);
+    const discount = this.toDecimalNumber(sellerProduct.discount);
+    const finalPrice = this.roundMoney(
+      discount > 0 ? price - (price * discount) / 100 : price
+    );
 
     if (existingItem) {
-      // Update quantity
-      existingItem.quantity += addToCartInput.quantity;
-      existingItem.totalPrice = existingItem.quantity * existingItem.unitPrice;
+      // Update quantity - coerce existing values
+      existingItem.quantity = Math.max(
+        0,
+        Math.trunc(this.toDecimalNumber(existingItem.quantity)) +
+          Math.max(0, Math.trunc(this.toDecimalNumber(addToCartInput.quantity)))
+      );
+      existingItem.unitPrice = this.roundMoney(
+        this.toDecimalNumber(existingItem.unitPrice)
+      );
+      existingItem.totalPrice = this.roundMoney(
+        this.toDecimalNumber(existingItem.quantity) *
+          this.toDecimalNumber(existingItem.unitPrice)
+      );
       await this.cartItemRepository.save(existingItem);
     } else {
       // Add new item with data from database
@@ -95,9 +122,11 @@ export class CartService {
       cartItem.productId = sellerProduct.product.id.toString();
       cartItem.productName = sellerProduct.product.name;
       cartItem.productImage = sellerProduct.productInfo?.images?.[0];
-      cartItem.quantity = addToCartInput.quantity;
+      cartItem.quantity = Math.max(0, Math.trunc(this.toDecimalNumber(addToCartInput.quantity)));
       cartItem.unitPrice = finalPrice;
-      cartItem.totalPrice = addToCartInput.quantity * finalPrice;
+      cartItem.totalPrice = this.roundMoney(
+        this.toDecimalNumber(cartItem.quantity) * finalPrice
+      );
       cartItem.color = serializeProductInfoColorHexes(
         sellerProduct.productInfo?.colorLinks
       );
@@ -136,15 +165,19 @@ export class CartService {
         });
         if (
           sellerProduct &&
-          updateInput.quantity > sellerProduct.stockQuantity
+          updateInput.quantity > this.toDecimalNumber(sellerProduct.stockQuantity)
         ) {
           throw new NotFoundException(
-            `Insufficient stock. Available: ${sellerProduct.stockQuantity}, Requested: ${updateInput.quantity}`
+            `Insufficient stock. Available: ${this.toDecimalNumber(sellerProduct.stockQuantity)}, Requested: ${updateInput.quantity}`
           );
         }
       }
-      cartItem.quantity = updateInput.quantity;
-      cartItem.totalPrice = cartItem.quantity * cartItem.unitPrice;
+      cartItem.quantity = Math.max(0, Math.trunc(this.toDecimalNumber(updateInput.quantity)));
+      cartItem.unitPrice = this.roundMoney(this.toDecimalNumber(cartItem.unitPrice));
+      cartItem.totalPrice = this.roundMoney(
+        this.toDecimalNumber(cartItem.quantity) *
+          this.toDecimalNumber(cartItem.unitPrice)
+      );
     }
 
     await this.cartItemRepository.save(cartItem);
@@ -203,8 +236,20 @@ export class CartService {
 
     if (!cart) return;
 
-    cart.subtotal = cart.items.reduce((sum, item) => sum + item.totalPrice, 0);
-    cart.total = cart.subtotal; // No shipping cost for cart
+    const totalAmount = this.roundMoney(
+      cart.items.reduce(
+        (sum, item) => sum + this.toDecimalNumber(item.totalPrice),
+        0
+      )
+    );
+    const totalItems = cart.items.reduce(
+      (sum, item) =>
+        sum + Math.max(0, Math.trunc(this.toDecimalNumber(item.quantity))),
+      0
+    );
+
+    cart.subtotal = totalAmount;
+    cart.total = totalAmount; // No shipping cost for cart
 
     await this.cartRepository.save(cart);
   }

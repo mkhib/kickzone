@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, EntityManager, DataSource, FindOptionsWhere } from 'typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { OrderService } from './order.service';
 import {
@@ -18,6 +18,13 @@ describe('OrderService', () => {
   let orderItemRepository: jest.Mocked<Repository<OrderItem>>;
   let sellerProductRepository: jest.Mocked<Repository<SellerProduct>>;
   let sellerInfoRepository: jest.Mocked<Repository<SellerInfo>>;
+  let dataSource: { transaction: jest.Mock };
+  let mockTransactionManager: {
+    getRepository: jest.Mock;
+    findOne: jest.Mock;
+    save: jest.Mock;
+    remove: jest.Mock;
+  };
 
   const mockOrderRepository = {
     create: jest.fn(),
@@ -26,6 +33,7 @@ describe('OrderService', () => {
     remove: jest.fn(),
     createQueryBuilder: jest.fn(),
     count: jest.fn(),
+    find: jest.fn(),
   };
 
   const mockOrderItemRepository = {
@@ -47,12 +55,30 @@ describe('OrderService', () => {
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     orderBy: jest.fn().mockReturnThis(),
+    addOrderBy: jest.fn().mockReturnThis(),
     take: jest.fn().mockReturnThis(),
     getMany: jest.fn(),
     getCount: jest.fn(),
   };
 
   beforeEach(async () => {
+    mockTransactionManager = {
+      getRepository: jest.fn(),
+      findOne: jest.fn(),
+      save: jest.fn(),
+      remove: jest.fn(),
+    };
+
+    dataSource = {
+      transaction: jest.fn((fn) => fn(mockTransactionManager)),
+    };
+
+    mockTransactionManager.getRepository.mockImplementation((entity: any) => {
+      if (entity === Order) return orderRepository;
+      if (entity === SellerProduct) return sellerProductRepository;
+      return mockOrderRepository;
+    });
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         OrderService,
@@ -72,6 +98,10 @@ describe('OrderService', () => {
           provide: getRepositoryToken(SellerInfo),
           useValue: mockSellerInfoRepository,
         },
+        {
+          provide: DataSource,
+          useValue: dataSource,
+        },
       ],
     }).compile();
 
@@ -81,10 +111,11 @@ describe('OrderService', () => {
     sellerProductRepository = module.get(getRepositoryToken(SellerProduct));
     sellerInfoRepository = module.get(getRepositoryToken(SellerInfo));
 
-    // Setup default query builder mock
     orderRepository.createQueryBuilder = jest
       .fn()
       .mockReturnValue(mockQueryBuilder);
+
+    jest.clearAllMocks();
   });
 
   afterEach(() => {
@@ -129,9 +160,10 @@ describe('OrderService', () => {
       discount: 0,
       productInfoId: 1,
       stockQuantity: 100,
+      seller: { id: 1 } as any,
     } as SellerProduct;
 
-    const mockOrder: Order = {
+    const mockSavedOrder = {
       id: 'order-1',
       orderNumber: 'ORD-123',
       trackingNumber: 'KZ-20240101-ABC123',
@@ -145,17 +177,18 @@ describe('OrderService', () => {
       country: createOrderInput.country,
       sellerId: createOrderInput.sellerId,
       status: OrderStatus.PENDING,
+      stockReserved: false,
       subtotal: 100,
       shippingCost: 10,
       total: 110,
       sellerStoreName: mockSeller.storeName,
       sellerPhone: mockSeller.phone,
       sellerAddress: mockSeller.address,
-      items: [],
+      items: undefined,
       seller: mockSeller,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as Order;
+    } as any;
 
     const mockOrderItem: OrderItem = {
       id: 'item-1',
@@ -171,65 +204,78 @@ describe('OrderService', () => {
       productInfoId: 1,
     } as OrderItem;
 
-    it('should create an order successfully', async () => {
-      orderRepository.create.mockReturnValue(mockOrder);
+    it('should create an order successfully with stockReserved = false', async () => {
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
-      orderRepository.save.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue({ ...orderWithoutItems } as any);
       orderItemRepository.save.mockResolvedValue([mockOrderItem] as any);
-      orderRepository.findOne.mockResolvedValue({
-        ...mockOrder,
-        items: [mockOrderItem],
-      });
 
       const result = await service.createOrder(createOrderInput);
 
-      expect(orderRepository.create).toHaveBeenCalledWith(createOrderInput);
+      expect(orderRepository.create).toHaveBeenCalledWith(
+        expect.not.objectContaining({ items: expect.any(Array) }),
+      );
       expect(sellerInfoRepository.findOne).toHaveBeenCalledWith({
         where: { id: createOrderInput.sellerId },
       });
+      expect(orderRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ items: undefined }),
+      );
+      expect(orderItemRepository.save).toHaveBeenCalledTimes(1);
       expect(result).toBeDefined();
       expect(result.orderNumber).toBeDefined();
       expect(result.trackingNumber).toBeDefined();
       expect(result.status).toBe(OrderStatus.PENDING);
+      expect(result.stockReserved).toBe(false);
+      expect(result.items).toHaveLength(1);
     });
 
     it('should throw NotFoundException if seller does not exist', async () => {
-      orderRepository.create.mockReturnValue(mockOrder);
+      orderRepository.create.mockReturnValue(mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(null);
 
       await expect(service.createOrder(createOrderInput)).rejects.toThrow(
-        NotFoundException
+        NotFoundException,
       );
       await expect(service.createOrder(createOrderInput)).rejects.toThrow(
-        `Seller with ID ${createOrderInput.sellerId} not found`
+        `Seller with ID ${createOrderInput.sellerId} not found`,
       );
     });
 
     it('should calculate subtotal and total correctly', async () => {
-      const orderWithItems = {
-        ...mockOrder,
-        items: [{ totalPrice: 100 }, { totalPrice: 50 }] as OrderItem[],
+      const inputWithTwoItems = {
+        ...createOrderInput,
+        items: [
+          { ...createOrderInput.items[0], sellerProductId: 'seller-product-1', totalPrice: 100 },
+          { ...createOrderInput.items[0], productId: 'product-2', sellerProductId: 'seller-product-2', totalPrice: 50 },
+        ],
       };
-      orderRepository.create.mockReturnValue(orderWithItems);
+      // Catalog prices: product-1 = 50, product-2 = 25 (different from client prices)
+      const sellerProduct1 = { ...mockSellerProduct, id: 'seller-product-1', price: 50, discount: 0, seller: { id: 1 } as any } as SellerProduct;
+      const sellerProduct2 = { ...mockSellerProduct, id: 'seller-product-2', price: 25, discount: 0, seller: { id: 1 } as any } as SellerProduct;
+      const mockOrderItem1 = { ...mockOrderItem, totalPrice: 100, id: 'item-1', unitPrice: 50 } as OrderItem;
+      const mockOrderItem2 = { ...mockOrderItem, productId: 'product-2', totalPrice: 50, id: 'item-2', unitPrice: 25 } as OrderItem;
+      const orderWithoutItems = {
+        ...mockSavedOrder,
+        items: undefined,
+        subtotal: 150, // 50*2 + 25*2 = 100 + 50 = 150
+        total: 160,
+      } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
-      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
-      orderRepository.save.mockResolvedValue({
-        ...orderWithItems,
-        subtotal: 150,
-        total: 160,
-      });
-      orderItemRepository.save.mockResolvedValue([] as any);
-      orderRepository.findOne.mockResolvedValue({
-        ...orderWithItems,
-        subtotal: 150,
-        total: 160,
-      });
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(sellerProduct1)
+        .mockResolvedValueOnce(sellerProduct2);
+      orderRepository.save.mockResolvedValue(orderWithoutItems);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem1, mockOrderItem2] as any);
 
-      const result = await service.createOrder(createOrderInput);
+      const result = await service.createOrder(inputWithTwoItems);
 
       expect(result.subtotal).toBe(150);
       expect(result.total).toBe(160);
+      expect(result.items).toHaveLength(2);
     });
 
     it('should use provided shipping cost over seller shipping fee', async () => {
@@ -237,20 +283,16 @@ describe('OrderService', () => {
         ...createOrderInput,
         shippingCost: 20,
       };
-      orderRepository.create.mockReturnValue(mockOrder);
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
+        ...orderWithoutItems,
         shippingCost: 20,
         total: 120,
       });
-      orderItemRepository.save.mockResolvedValue([] as any);
-      orderRepository.findOne.mockResolvedValue({
-        ...mockOrder,
-        shippingCost: 20,
-        total: 120,
-      });
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as any);
 
       const result = await service.createOrder(inputWithShipping);
 
@@ -263,20 +305,16 @@ describe('OrderService', () => {
         ...createOrderInput,
         shippingCost: undefined,
       };
-      orderRepository.create.mockReturnValue(mockOrder);
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
       orderRepository.save.mockResolvedValue({
-        ...mockOrder,
-        shippingCost: 15, // seller.shippingFee
-        total: 115,
-      });
-      orderItemRepository.save.mockResolvedValue([] as any);
-      orderRepository.findOne.mockResolvedValue({
-        ...mockOrder,
+        ...orderWithoutItems,
         shippingCost: 15,
         total: 115,
       });
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as any);
 
       const result = await service.createOrder(inputWithoutShipping);
 
@@ -285,12 +323,12 @@ describe('OrderService', () => {
     });
 
     it('should preserve seller snapshot information', async () => {
-      orderRepository.create.mockReturnValue(mockOrder);
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
-      orderRepository.save.mockResolvedValue(mockOrder);
-      orderItemRepository.save.mockResolvedValue([] as any);
-      orderRepository.findOne.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(orderWithoutItems);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as any);
 
       const result = await service.createOrder(createOrderInput);
 
@@ -300,16 +338,15 @@ describe('OrderService', () => {
     });
 
     it('should NOT decrease stock when creating order', async () => {
-      orderRepository.create.mockReturnValue(mockOrder);
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
-      orderRepository.save.mockResolvedValue(mockOrder);
+      orderRepository.save.mockResolvedValue(orderWithoutItems);
       orderItemRepository.save.mockResolvedValue([] as any);
-      orderRepository.findOne.mockResolvedValue(mockOrder);
 
       await service.createOrder(createOrderInput);
 
-      // Verify stock was NOT decreased (decreaseStock is private but we can verify save wasn't called to decrease stock)
       expect(sellerProductRepository.save).not.toHaveBeenCalled();
       expect(mockSellerProduct.stockQuantity).toBe(100);
     });
@@ -319,46 +356,277 @@ describe('OrderService', () => {
         ...mockSellerProduct,
         price: 60,
         discount: 10,
+        seller: { id: 1 } as any,
       } as SellerProduct;
-      // Create order with items that will be processed
-      const orderWithItems = {
-        ...mockOrder,
-        items: [
-          {
-            ...createOrderInput.items[0],
-            originalPrice: undefined,
-            discountPercentage: undefined,
-          } as any,
-        ],
-      } as Order;
-      orderRepository.create.mockReturnValue(orderWithItems);
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(
-        sellerProductWithDiscount
+        sellerProductWithDiscount,
       );
-      orderRepository.save.mockResolvedValue(orderWithItems);
+      orderRepository.save.mockResolvedValue(orderWithoutItems);
       orderItemRepository.save.mockImplementation(((items: any[]) =>
         Promise.resolve(items)) as any);
-      orderRepository.findOne.mockResolvedValue({
-        ...orderWithItems,
-        items: [
-          {
-            ...mockOrderItem,
-            originalPrice: 60,
-            discountPercentage: 10,
-          },
-        ],
-      });
 
       await service.createOrder(createOrderInput);
 
-      expect(orderItemRepository.save).toHaveBeenCalled();
+      expect(orderItemRepository.save).toHaveBeenCalledTimes(1);
       const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
       expect(Array.isArray(savedItems)).toBe(true);
       expect(savedItems.length).toBe(1);
       expect(savedItems[0]).toHaveProperty('originalPrice', 60);
       expect(savedItems[0]).toHaveProperty('discountPercentage', 10);
-      expect(savedItems[0]).toHaveProperty('orderId', orderWithItems.id);
+      expect(savedItems[0]).toHaveProperty('orderId', mockSavedOrder.id);
+    });
+
+    it('should insert each order item only once (no cascade + manual save duplication)', async () => {
+      const inputWithTwoItems: CreateOrderInput = {
+        ...createOrderInput,
+        items: [
+          {
+            productId: 'product-1',
+            sellerProductId: 'seller-product-1',
+            productName: 'Test Product 1',
+            quantity: 1,
+            unitPrice: 50,
+            totalPrice: 50,
+          },
+          {
+            productId: 'product-2',
+            sellerProductId: 'seller-product-2',
+            productName: 'Test Product 2',
+            quantity: 2,
+            unitPrice: 30,
+            totalPrice: 60,
+          },
+        ],
+      };
+
+      const sellerProduct2 = { ...mockSellerProduct, id: 'seller-product-2', seller: { id: 1 } as any } as SellerProduct;
+
+      const orderWithoutItems = {
+        ...mockSavedOrder,
+        items: undefined,
+        subtotal: 110,
+        total: 120,
+      } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(mockSellerProduct)
+        .mockResolvedValueOnce(sellerProduct2);
+      orderRepository.save.mockResolvedValue({ ...orderWithoutItems } as any);
+      orderItemRepository.save.mockImplementation(((items: any[]) =>
+        Promise.resolve(items.map((i: any, idx: number) => ({ ...i, id: `item-${idx + 1}` })))) as any);
+
+      const result = await service.createOrder(inputWithTwoItems);
+
+      const savedOrderArg = orderRepository.save.mock.calls[0][0] as Order;
+      expect(savedOrderArg.items).toBeUndefined();
+
+      expect(orderItemRepository.save).toHaveBeenCalledTimes(1);
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].quantity).toBe(1);
+      expect(result.items[1].quantity).toBe(2);
+    });
+
+    it('should override client prices with catalog prices (price tampering protection)', async () => {
+      // Client sends unitPrice: 10, totalPrice: 20 but catalog price is 50
+      const inputWithTamperedPrices = {
+        ...createOrderInput,
+        items: [
+          {
+            ...createOrderInput.items[0],
+            unitPrice: 10,
+            totalPrice: 20,
+          },
+        ],
+      };
+      const sellerProductWithHigherPrice = {
+        ...mockSellerProduct,
+        price: 50,
+        discount: 0,
+      } as SellerProduct;
+
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductWithHigherPrice);
+      orderRepository.save.mockResolvedValue({
+        ...orderWithoutItems,
+        subtotal: 100, // 50 * 2 = 100 (catalog price)
+        total: 110,
+      });
+      orderItemRepository.save.mockImplementation(((items: any[]) =>
+        Promise.resolve(items)) as any);
+
+      const result = await service.createOrder(inputWithTamperedPrices);
+
+      expect(result.subtotal).toBe(100); // Catalog price, not client's 20
+      expect(result.total).toBe(110);
+      const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+      expect(savedItems[0].unitPrice).toBe(50); // Catalog unit price
+      expect(savedItems[0].totalPrice).toBe(100); // Catalog total price
+    });
+
+    it('should apply discount when computing catalog price', async () => {
+      const sellerProductWithDiscount = {
+        ...mockSellerProduct,
+        price: 100,
+        discount: 20, // 20% off
+        seller: { id: 1 } as any,
+      } as SellerProduct;
+
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductWithDiscount);
+      orderRepository.save.mockResolvedValue({
+        ...orderWithoutItems,
+        subtotal: 160, // 80 * 2 = 160 (after 20% discount)
+        total: 170,
+      });
+      orderItemRepository.save.mockImplementation(((items: any[]) =>
+        Promise.resolve(items)) as any);
+
+      const result = await service.createOrder(createOrderInput);
+
+      expect(result.subtotal).toBe(160);
+      expect(result.total).toBe(170);
+      const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+      expect(savedItems[0].unitPrice).toBe(80); // 100 * 0.8 = 80
+      expect(savedItems[0].totalPrice).toBe(160); // 80 * 2 = 160
+      expect(savedItems[0].originalPrice).toBe(100);
+      expect(savedItems[0].discountPercentage).toBe(20);
+    });
+
+    it('should reject cross-seller ownership (product belongs to different seller)', async () => {
+      const sellerProductWrongSeller = {
+        ...mockSellerProduct,
+        seller: { id: 999 } as any, // Different seller
+      } as SellerProduct;
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductWrongSeller);
+
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(
+        /does not belong to seller 1/,
+      );
+    });
+
+    it('should reject zero quantity', async () => {
+      const inputZeroQty = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], quantity: 0 }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+
+      await expect(service.createOrder(inputZeroQty)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputZeroQty)).rejects.toThrow(
+        /Quantity must be a positive integer/,
+      );
+    });
+
+    it('should reject negative quantity', async () => {
+      const inputNegativeQty = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], quantity: -1 }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+
+      await expect(service.createOrder(inputNegativeQty)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputNegativeQty)).rejects.toThrow(
+        /Quantity must be a positive integer/,
+      );
+    });
+
+    it('should reject non-integer quantity', async () => {
+      const inputFloatQty = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], quantity: 2.5 }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+
+      await expect(service.createOrder(inputFloatQty)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputFloatQty)).rejects.toThrow(
+        /Quantity must be a positive integer/,
+      );
+    });
+
+    it('should reject negative shipping cost', async () => {
+      const inputNegativeShipping = {
+        ...createOrderInput,
+        shippingCost: -5,
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+
+      await expect(service.createOrder(inputNegativeShipping)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputNegativeShipping)).rejects.toThrow(
+        /Shipping cost cannot be negative/,
+      );
+    });
+
+    it('should reject insufficient stock at create', async () => {
+      const sellerProductLowStock = {
+        ...mockSellerProduct,
+        stockQuantity: 1, // Only 1 in stock
+        seller: { id: 1 } as any,
+      } as SellerProduct;
+
+      const inputExceedsStock = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], quantity: 5 }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductLowStock);
+
+      await expect(service.createOrder(inputExceedsStock)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputExceedsStock)).rejects.toThrow(
+        /Insufficient stock for product seller-product-1. Available: 1, Requested: 5/,
+      );
+    });
+
+    it('should reject missing sellerProductId', async () => {
+      const inputMissingSellerProductId = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], sellerProductId: undefined }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+
+      await expect(service.createOrder(inputMissingSellerProductId)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputMissingSellerProductId)).rejects.toThrow(
+        /sellerProductId is required/,
+      );
+    });
+
+    it('should reject non-existent sellerProduct', async () => {
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(NotFoundException);
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(
+        /SellerProduct with ID seller-product-1 not found/,
+      );
     });
   });
 
@@ -368,6 +636,7 @@ describe('OrderService', () => {
       id: orderId,
       orderNumber: 'ORD-123',
       status: OrderStatus.PENDING,
+      stockReserved: false,
       items: [],
       seller: {} as SellerInfo,
       customerEmail: 'test@example.com',
@@ -403,7 +672,7 @@ describe('OrderService', () => {
 
       await expect(service.findOne(orderId)).rejects.toThrow(NotFoundException);
       await expect(service.findOne(orderId)).rejects.toThrow(
-        `Order with ID ${orderId} not found`
+        `Order with ID ${orderId} not found`,
       );
     });
   });
@@ -433,7 +702,7 @@ describe('OrderService', () => {
       expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalled();
       expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
         'order.createdAt',
-        'DESC'
+        'DESC',
       );
       expect(mockQueryBuilder.take).toHaveBeenCalledWith(11);
       expect(result.edges).toHaveLength(2);
@@ -445,16 +714,16 @@ describe('OrderService', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'order.sellerId = :sellerId',
-        { sellerId: 1 }
+        { sellerId: 1 },
       );
     });
 
     it('should throw BadRequestException for invalid sellerId', async () => {
       await expect(service.findAll(10, undefined, 'invalid')).rejects.toThrow(
-        BadRequestException
+        BadRequestException,
       );
       await expect(service.findAll(10, undefined, 'invalid')).rejects.toThrow(
-        'Invalid sellerId'
+        'Invalid sellerId',
       );
     });
 
@@ -463,7 +732,7 @@ describe('OrderService', () => {
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'order.status = :status',
-        { status: OrderStatus.PENDING }
+        { status: OrderStatus.PENDING },
       );
     });
 
@@ -485,6 +754,32 @@ describe('OrderService', () => {
 
       expect(result.pageInfo.hasNextPage).toBe(true);
     });
+
+    it('should apply id DESC tie-breaker ordering for deterministic pagination', async () => {
+      await service.findAll(10);
+
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'order.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
+        'order.id',
+        'DESC',
+      );
+    });
+
+    it('should filter by both sellerId and status', async () => {
+      await service.findAll(10, undefined, '1', OrderStatus.DELIVERED);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.sellerId = :sellerId',
+        { sellerId: 1 },
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.status = :status',
+        { status: OrderStatus.DELIVERED },
+      );
+    });
   });
 
   describe('updateOrder', () => {
@@ -495,6 +790,7 @@ describe('OrderService', () => {
       subtotal: 100,
       shippingCost: 10,
       total: 110,
+      stockReserved: false,
       items: [],
       status: OrderStatus.PENDING,
       seller: {} as SellerInfo,
@@ -582,28 +878,7 @@ describe('OrderService', () => {
       } as OrderItem,
     ];
 
-    it('should update order status successfully', async () => {
-      const order: Order = {
-        id: orderId,
-        status: OrderStatus.PENDING,
-        items: mockOrderItems,
-      } as Order;
-
-      orderRepository.findOne.mockResolvedValue(order);
-      orderRepository.save.mockResolvedValue({
-        ...order,
-        status: OrderStatus.CONFIRMED,
-      });
-
-      const result = await service.updateOrderStatus(
-        orderId,
-        OrderStatus.CONFIRMED
-      );
-
-      expect(result.status).toBe(OrderStatus.CONFIRMED);
-    });
-
-    it('should restore stock when cancelling an order', async () => {
+    it('should update order status successfully PENDING -> CONFIRMED with stock decrease', async () => {
       const sellerProduct: SellerProduct = {
         id: 'seller-product-1',
         stockQuantity: 10,
@@ -611,7 +886,8 @@ describe('OrderService', () => {
 
       const order: Order = {
         id: orderId,
-        status: OrderStatus.CONFIRMED,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
         items: mockOrderItems,
       } as Order;
 
@@ -619,38 +895,42 @@ describe('OrderService', () => {
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
       sellerProductRepository.save.mockResolvedValue({
         ...sellerProduct,
-        stockQuantity: 12, // 10 + 2
+        stockQuantity: 8,
       } as SellerProduct);
       orderRepository.save.mockResolvedValue({
         ...order,
-        status: OrderStatus.CANCELLED,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
       });
 
       const result = await service.updateOrderStatus(
         orderId,
-        OrderStatus.CANCELLED
+        OrderStatus.CONFIRMED,
       );
 
       expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'seller-product-1' },
+        lock: { mode: 'pessimistic_write' },
       });
       expect(sellerProductRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
-          stockQuantity: 12,
-        })
+          stockQuantity: 8,
+        }),
       );
-      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+      expect(result.stockReserved).toBe(true);
     });
 
-    it('should restore stock when refunding an order', async () => {
+    it('should restore stock when cancelling a CONFIRMED order (stockReserved = true)', async () => {
       const sellerProduct: SellerProduct = {
         id: 'seller-product-1',
-        stockQuantity: 10,
+        stockQuantity: 8,
       } as SellerProduct;
 
       const order: Order = {
         id: orderId,
         status: OrderStatus.CONFIRMED,
+        stockReserved: true,
         items: mockOrderItems,
       } as Order;
 
@@ -658,26 +938,103 @@ describe('OrderService', () => {
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
       sellerProductRepository.save.mockResolvedValue({
         ...sellerProduct,
-        stockQuantity: 12,
+        stockQuantity: 10,
       } as SellerProduct);
       orderRepository.save.mockResolvedValue({
         ...order,
-        status: OrderStatus.REFUNDED,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
       });
 
       const result = await service.updateOrderStatus(
         orderId,
-        OrderStatus.REFUNDED
+        OrderStatus.CANCELLED,
+      );
+
+      expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'seller-product-1' },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(sellerProductRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stockQuantity: 10,
+        }),
+      );
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should NOT restore stock when cancelling a PENDING order (stockReserved = false)', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 10,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CANCELLED,
+      );
+
+      expect(sellerProductRepository.findOne).not.toHaveBeenCalled();
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should restore stock when refunding a CONFIRMED order (stockReserved = true)', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
       );
 
       expect(sellerProductRepository.save).toHaveBeenCalled();
       expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
     });
 
     it('should not restore stock when order was already cancelled', async () => {
       const order: Order = {
         id: orderId,
         status: OrderStatus.CANCELLED,
+        stockReserved: false,
         items: mockOrderItems,
       } as Order;
 
@@ -688,33 +1045,439 @@ describe('OrderService', () => {
 
       expect(sellerProductRepository.save).not.toHaveBeenCalled();
     });
+
+    it('should throw BadRequestException for invalid transition CANCELLED -> DELIVERED', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.DELIVERED),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.DELIVERED),
+      ).rejects.toThrow('Invalid status transition from CANCELLED to DELIVERED');
+    });
+
+    it('should throw BadRequestException for invalid transition REFUNDED -> CANCELLED', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.CANCELLED),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.CANCELLED),
+      ).rejects.toThrow('Invalid status transition from REFUNDED to CANCELLED');
+    });
+
+    it('should throw BadRequestException for invalid transition PENDING -> PROCESSING', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.PROCESSING),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.PROCESSING),
+      ).rejects.toThrow('Invalid status transition from PENDING to PROCESSING');
+    });
+
+    it('should allow PENDING -> CONFIRMED transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CONFIRMED,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CONFIRMED,
+      );
+
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+    });
+
+    it('should allow PENDING -> CANCELLED transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CANCELLED,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CANCELLED,
+      );
+
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+    });
+
+    it('should allow CONFIRMED -> PROCESSING transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.PROCESSING,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.PROCESSING,
+      );
+
+      expect(result.status).toBe(OrderStatus.PROCESSING);
+    });
+
+    it('should allow CONFIRMED -> CANCELLED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CANCELLED,
+      );
+
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should allow CONFIRMED -> REFUNDED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
+      );
+
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should allow PROCESSING -> SHIPPED transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PROCESSING,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.SHIPPED,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.SHIPPED,
+      );
+
+      expect(result.status).toBe(OrderStatus.SHIPPED);
+    });
+
+    it('should allow PROCESSING -> REFUNDED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PROCESSING,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
+      );
+
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should allow SHIPPED -> DELIVERED transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.SHIPPED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.DELIVERED,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.DELIVERED,
+      );
+
+      expect(result.status).toBe(OrderStatus.DELIVERED);
+    });
+
+    it('should allow SHIPPED -> REFUNDED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.SHIPPED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
+      );
+
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should allow DELIVERED -> REFUNDED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.DELIVERED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
+      );
+
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should return order idempotently if status unchanged', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CONFIRMED,
+      );
+
+      expect(result).toEqual(order);
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
   });
 
   describe('deleteOrder', () => {
     const orderId = 'order-1';
-    const mockOrder: Order = {
-      id: orderId,
-      orderNumber: 'ORD-123',
-    } as Order;
+    const mockOrderItems: OrderItem[] = [
+      {
+        id: 'item-1',
+        productId: 'product-1',
+        sellerProductId: 'seller-product-1',
+        quantity: 2,
+      } as OrderItem,
+    ];
 
-    it('should delete an order successfully', async () => {
-      orderRepository.findOne.mockResolvedValue(mockOrder);
-      orderRepository.remove.mockResolvedValue(mockOrder);
+    it('should delete an order and restore stock if stockReserved = true', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        orderNumber: 'ORD-123',
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.remove.mockResolvedValue(order);
 
       await service.deleteOrder(orderId);
 
       expect(orderRepository.findOne).toHaveBeenCalledWith({
         where: { id: orderId },
-        relations: ['items', 'seller'],
+        relations: ['items'],
       });
-      expect(orderRepository.remove).toHaveBeenCalledWith(mockOrder);
+      expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'seller-product-1' },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(sellerProductRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stockQuantity: 10,
+        }),
+      );
+      expect(orderRepository.remove).toHaveBeenCalledWith(order);
+    });
+
+    it('should delete an order without restoring stock if stockReserved = false', async () => {
+      const order: Order = {
+        id: orderId,
+        orderNumber: 'ORD-123',
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.remove.mockResolvedValue(order);
+
+      await service.deleteOrder(orderId);
+
+      expect(sellerProductRepository.findOne).not.toHaveBeenCalled();
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+      expect(orderRepository.remove).toHaveBeenCalledWith(order);
     });
 
     it('should throw NotFoundException if order does not exist', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
       await expect(service.deleteOrder(orderId)).rejects.toThrow(
-        NotFoundException
+        NotFoundException,
+      );
+      await expect(service.deleteOrder(orderId)).rejects.toThrow(
+        `Order with ID ${orderId} not found`,
       );
     });
   });
@@ -740,6 +1503,7 @@ describe('OrderService', () => {
       const order: Order = {
         id: orderId,
         status: OrderStatus.PENDING,
+        stockReserved: false,
         items: mockOrderItems,
       } as Order;
 
@@ -747,30 +1511,34 @@ describe('OrderService', () => {
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
       sellerProductRepository.save.mockResolvedValue({
         ...mockSellerProduct,
-        stockQuantity: 98, // 100 - 2
+        stockQuantity: 98,
       } as SellerProduct);
       orderRepository.save.mockResolvedValue({
         ...order,
         status: OrderStatus.CONFIRMED,
+        stockReserved: true,
       });
 
       const result = await service.confirmOrderPayment(orderId);
 
       expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'seller-product-1' },
+        lock: { mode: 'pessimistic_write' },
       });
       expect(sellerProductRepository.save).toHaveBeenCalledWith(
         expect.objectContaining({
           stockQuantity: 98,
-        })
+        }),
       );
       expect(result.status).toBe(OrderStatus.CONFIRMED);
+      expect(result.stockReserved).toBe(true);
     });
 
-    it('should return order without changes if already CONFIRMED', async () => {
+    it('should return order without changes if already CONFIRMED and stockReserved', async () => {
       const order: Order = {
         id: orderId,
         status: OrderStatus.CONFIRMED,
+        stockReserved: true,
         items: mockOrderItems,
       } as Order;
 
@@ -787,16 +1555,17 @@ describe('OrderService', () => {
       const order: Order = {
         id: orderId,
         status: OrderStatus.CANCELLED,
+        stockReserved: false,
         items: mockOrderItems,
       } as Order;
 
       orderRepository.findOne.mockResolvedValue(order);
 
       await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
-        BadRequestException
+        BadRequestException,
       );
       await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
-        'Cannot confirm order with status CANCELLED'
+        'Cannot confirm payment for order in status CANCELLED',
       );
     });
 
@@ -804,6 +1573,7 @@ describe('OrderService', () => {
       const order: Order = {
         id: orderId,
         status: OrderStatus.PENDING,
+        stockReserved: false,
         items: mockOrderItems,
       } as Order;
 
@@ -811,10 +1581,10 @@ describe('OrderService', () => {
       sellerProductRepository.findOne.mockResolvedValue(null);
 
       await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
-        NotFoundException
+        NotFoundException,
       );
       await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
-        'SellerProduct with ID seller-product-1 not found'
+        'SellerProduct with ID seller-product-1 not found',
       );
     });
 
@@ -822,10 +1592,11 @@ describe('OrderService', () => {
       const order: Order = {
         id: orderId,
         status: OrderStatus.PENDING,
+        stockReserved: false,
         items: [
           {
             ...mockOrderItems[0],
-            quantity: 150, // More than available stock
+            quantity: 150,
           },
         ],
       } as Order;
@@ -834,10 +1605,10 @@ describe('OrderService', () => {
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
 
       await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
-        BadRequestException
+        BadRequestException,
       );
       await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
-        'Insufficient stock'
+        'Insufficient stock',
       );
     });
 
@@ -855,6 +1626,7 @@ describe('OrderService', () => {
       const order: Order = {
         id: orderId,
         status: OrderStatus.PENDING,
+        stockReserved: false,
         items: orderItemsWithoutSellerProductId,
       } as Order;
 
@@ -867,13 +1639,245 @@ describe('OrderService', () => {
       orderRepository.save.mockResolvedValue({
         ...order,
         status: OrderStatus.CONFIRMED,
+        stockReserved: true,
       } as Order);
 
       await service.confirmOrderPayment(orderId);
 
       expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'product-1' }, // Should use productId as fallback
+        where: { id: 'product-1' },
+        lock: { mode: 'pessimistic_write' },
       });
+    });
+
+    it('should decrement stock only once per line item when confirmOrderPayment is called', async () => {
+      const orderItems: OrderItem[] = [
+        {
+          id: 'item-1',
+          productId: 'product-1',
+          sellerProductId: 'seller-product-1',
+          productName: 'Test Product',
+          quantity: 3,
+        } as OrderItem,
+      ];
+
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 10,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: orderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      // findOne is called twice: once for stock check, once for actual decrement
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(sellerProduct)  // stock check
+        .mockResolvedValueOnce(sellerProduct as any);  // actual decrement
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 7,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+      } as Order);
+
+      const result = await service.confirmOrderPayment(orderId);
+
+      expect(sellerProductRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(sellerProductRepository.save).toHaveBeenCalledTimes(1);
+      expect(sellerProductRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stockQuantity: 7,
+        }),
+      );
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+    });
+
+    it('should throw BadRequestException for negative quantity', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: [
+          {
+            ...mockOrderItems[0],
+            quantity: -3,
+          },
+        ],
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Order item quantity must be a positive integer',
+      );
+    });
+
+    it('should throw BadRequestException for zero quantity', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: [
+          {
+            ...mockOrderItems[0],
+            quantity: 0,
+          },
+        ],
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Order item quantity must be a positive integer',
+      );
+    });
+
+    it('should throw BadRequestException for non-integer quantity', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: [
+          {
+            ...mockOrderItems[0],
+            quantity: 2.5,
+          },
+        ],
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Order item quantity must be a positive integer',
+      );
+    });
+
+    it('should fail atomically when multi-item stock check fails - no partial deduction', async () => {
+      const orderItems: OrderItem[] = [
+        {
+          id: 'item-1',
+          productId: 'product-1',
+          sellerProductId: 'seller-product-1',
+          productName: 'Product 1',
+          quantity: 2,
+        } as OrderItem,
+        {
+          id: 'item-2',
+          productId: 'product-2',
+          sellerProductId: 'seller-product-2',
+          productName: 'Product 2',
+          quantity: 3,
+        } as OrderItem,
+      ];
+
+      const sellerProduct1: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 5,
+      } as SellerProduct;
+
+      const sellerProduct2: SellerProduct = {
+        id: 'seller-product-2',
+        stockQuantity: 1,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: orderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      // 4 calls to findOne: 2 for stock check (sorted: seller-product-1, seller-product-2), 
+      // 2 for actual decrement (same order)
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(sellerProduct1)  // check stock for product 1
+        .mockResolvedValueOnce(sellerProduct2)  // check stock for product 2 (fails here)
+        .mockResolvedValueOnce(sellerProduct1)  // would be called for decrement product 1 (not reached)
+        .mockResolvedValueOnce(sellerProduct2); // would be called for decrement product 2 (not reached)
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Insufficient stock for product seller-product-2',
+      );
+
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should sort sellerProductIds to prevent deadlocks', async () => {
+      const orderItems: OrderItem[] = [
+        {
+          id: 'item-1',
+          productId: 'product-1',
+          sellerProductId: 'seller-product-b',
+          productName: 'Product B',
+          quantity: 1,
+        } as OrderItem,
+        {
+          id: 'item-2',
+          productId: 'product-2',
+          sellerProductId: 'seller-product-a',
+          productName: 'Product A',
+          quantity: 1,
+        } as OrderItem,
+      ];
+
+      const sellerProductA: SellerProduct = {
+        id: 'seller-product-a',
+        stockQuantity: 10,
+      } as SellerProduct;
+
+      const sellerProductB: SellerProduct = {
+        id: 'seller-product-b',
+        stockQuantity: 10,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: orderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(sellerProductA)
+        .mockResolvedValueOnce(sellerProductB);
+      sellerProductRepository.save
+        .mockResolvedValueOnce({ ...sellerProductA, stockQuantity: 9 } as SellerProduct)
+        .mockResolvedValueOnce({ ...sellerProductB, stockQuantity: 9 } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+      } as Order);
+
+      await service.confirmOrderPayment(orderId);
+
+      const findOneCalls = sellerProductRepository.findOne.mock.calls;
+      const firstCallWhere = findOneCalls[0][0].where as FindOptionsWhere<SellerProduct>;
+      const secondCallWhere = findOneCalls[1][0].where as FindOptionsWhere<SellerProduct>;
+      expect(firstCallWhere.id).toBe('seller-product-a');
+      expect(secondCallWhere.id).toBe('seller-product-b');
     });
   });
 
@@ -888,10 +1892,11 @@ describe('OrderService', () => {
       } as OrderItem,
     ];
 
-    it('should cancel PENDING order without restoring stock', async () => {
+    it('should cancel PENDING order without restoring stock (stockReserved = false)', async () => {
       const order: Order = {
         id: orderId,
         status: OrderStatus.PENDING,
+        stockReserved: false,
         items: mockOrderItems,
       } as Order;
 
@@ -899,68 +1904,40 @@ describe('OrderService', () => {
       orderRepository.save.mockResolvedValue({
         ...order,
         status: OrderStatus.CANCELLED,
+        stockReserved: false,
       });
 
       const result = await service.cancelPendingOrder(orderId);
 
       expect(sellerProductRepository.save).not.toHaveBeenCalled();
       expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.stockReserved).toBe(false);
     });
 
-    it('should cancel CONFIRMED order and restore stock', async () => {
-      const sellerProduct: SellerProduct = {
-        id: 'seller-product-1',
-        stockQuantity: 98,
-      } as SellerProduct;
-
+    it('should throw BadRequestException when trying to cancel CONFIRMED order', async () => {
       const order: Order = {
         id: orderId,
         status: OrderStatus.CONFIRMED,
+        stockReserved: true,
         items: mockOrderItems,
       } as Order;
 
       orderRepository.findOne.mockResolvedValue(order);
-      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
-      sellerProductRepository.save.mockResolvedValue({
-        ...sellerProduct,
-        stockQuantity: 100, // 98 + 2
-      } as SellerProduct);
-      orderRepository.save.mockResolvedValue({
-        ...order,
-        status: OrderStatus.CANCELLED,
-      } as Order);
 
-      const result = await service.cancelPendingOrder(orderId);
-
-      expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
-        where: { id: 'seller-product-1' },
-      });
-      expect(sellerProductRepository.save).toHaveBeenCalledWith(
-        expect.objectContaining({
-          stockQuantity: 100,
-        })
+      await expect(service.cancelPendingOrder(orderId)).rejects.toThrow(
+        BadRequestException,
       );
-      expect(result.status).toBe(OrderStatus.CANCELLED);
+      await expect(service.cancelPendingOrder(orderId)).rejects.toThrow(
+        'Only PENDING orders can be cancelled',
+      );
     });
 
-    it('should handle missing seller product gracefully', async () => {
-      const order: Order = {
-        id: orderId,
-        status: OrderStatus.CONFIRMED,
-        items: mockOrderItems,
-      } as Order;
+    it('should throw NotFoundException if order does not exist', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
 
-      orderRepository.findOne.mockResolvedValue(order);
-      sellerProductRepository.findOne.mockResolvedValue(null);
-      orderRepository.save.mockResolvedValue({
-        ...order,
-        status: OrderStatus.CANCELLED,
-      });
-
-      const result = await service.cancelPendingOrder(orderId);
-
-      // Should not throw error, just skip stock restoration
-      expect(result.status).toBe(OrderStatus.CANCELLED);
+      await expect(service.cancelPendingOrder(orderId)).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -985,7 +1962,7 @@ describe('OrderService', () => {
 
       expect(mockQueryBuilder.where).toHaveBeenCalledWith(
         'order.customerEmail = :customerEmail',
-        { customerEmail }
+        { customerEmail },
       );
       expect(result.edges).toHaveLength(1);
       expect(result.totalCount).toBe(1);
@@ -1013,7 +1990,43 @@ describe('OrderService', () => {
 
       await service.getOrdersBySeller('1', 10);
 
-      expect(findAllSpy).toHaveBeenCalledWith(10, undefined, '1');
+      expect(findAllSpy).toHaveBeenCalledWith(10, undefined, '1', undefined);
+
+      findAllSpy.mockRestore();
+    });
+
+    it('should call findAll with sellerId and status filter', async () => {
+      const findAllSpy = jest.spyOn(service, 'findAll').mockResolvedValue({
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+          endCursor: undefined,
+        },
+        totalCount: 0,
+      });
+
+      await service.getOrdersBySeller('1', 10, undefined, OrderStatus.DELIVERED);
+
+      expect(findAllSpy).toHaveBeenCalledWith(10, undefined, '1', OrderStatus.DELIVERED);
+
+      findAllSpy.mockRestore();
+    });
+
+    it('should call findAll with sellerId and undefined status (no filter)', async () => {
+      const findAllSpy = jest.spyOn(service, 'findAll').mockResolvedValue({
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+          endCursor: undefined,
+        },
+        totalCount: 0,
+      });
+
+      await service.getOrdersBySeller('1', 10, undefined, undefined);
+
+      expect(findAllSpy).toHaveBeenCalledWith(10, undefined, '1', undefined);
 
       findAllSpy.mockRestore();
     });
@@ -1037,10 +2050,98 @@ describe('OrderService', () => {
         10,
         undefined,
         undefined,
-        OrderStatus.PENDING
+        OrderStatus.PENDING,
       );
 
       findAllSpy.mockRestore();
+    });
+  });
+
+  describe('findOrdersByPaymentAuthority', () => {
+    const authority = 'test-authority-123';
+
+    it('should return all orders matching a paymentAuthority', async () => {
+      const mockOrders: Order[] = [
+        {
+          id: 'order-1',
+          orderNumber: 'ORD-1',
+          paymentAuthority: authority,
+          items: [],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 100,
+          shippingCost: 10,
+          total: 110,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date(),
+        } as Order,
+        {
+          id: 'order-2',
+          orderNumber: 'ORD-2',
+          paymentAuthority: authority,
+          items: [],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 2,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 200,
+          shippingCost: 15,
+          total: 215,
+          createdAt: new Date('2024-01-02'),
+          updatedAt: new Date(),
+        } as Order,
+      ];
+
+      orderRepository.find.mockResolvedValue(mockOrders);
+
+      const result = await service.findOrdersByPaymentAuthority(authority);
+
+      expect(orderRepository.find).toHaveBeenCalledWith({
+        where: { paymentAuthority: authority },
+        relations: ['items', 'items.sellerProduct', 'customer', 'seller'],
+        order: { id: 'ASC' },
+      });
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBe('order-1');
+      expect(result[1].id).toBe('order-2');
+    });
+
+    it('should return empty array for empty authority string', async () => {
+      const result = await service.findOrdersByPaymentAuthority('');
+
+      expect(result).toEqual([]);
+      expect(orderRepository.find).not.toHaveBeenCalled();
+    });
+
+    it('should return empty array when no orders match authority', async () => {
+      orderRepository.find.mockResolvedValue([]);
+
+      const result = await service.findOrdersByPaymentAuthority('non-existent');
+
+      expect(result).toEqual([]);
+      expect(orderRepository.find).toHaveBeenCalledWith({
+        where: { paymentAuthority: 'non-existent' },
+        relations: ['items', 'items.sellerProduct', 'customer', 'seller'],
+        order: { id: 'ASC' },
+      });
     });
   });
 });

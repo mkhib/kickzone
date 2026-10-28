@@ -6,7 +6,12 @@ import {
   ResolveField,
   Parent,
 } from '@nestjs/graphql';
-import { UseGuards, NotFoundException } from '@nestjs/common';
+import {
+  UseGuards,
+  NotFoundException,
+  ForbiddenException,
+  BadRequestException,
+} from '@nestjs/common';
 import {
   Order,
   OrderItem,
@@ -33,37 +38,82 @@ export class OrderResolver {
     private readonly sellerService: SellerService
   ) {}
 
+  /**
+   * Extract user ID from various possible fields in the user object.
+   */
+  private getUserId(user: any): string {
+    return String(user?.id ?? user?.sub ?? '');
+  }
+
+  /**
+   * Normalize user role to uppercase standard values.
+   */
+  private getUserRole(user: any): 'ADMIN' | 'SELLER' | 'CUSTOMER' | 'UNKNOWN' {
+    const rawRole = user?.role ?? user?.userType;
+    if (!rawRole) return 'UNKNOWN';
+    const normalized = String(rawRole).toUpperCase();
+    if (normalized === 'ADMIN') return 'ADMIN';
+    if (normalized === 'SELLER') return 'SELLER';
+    if (normalized === 'CUSTOMER') return 'CUSTOMER';
+    return 'UNKNOWN';
+  }
+
+  /**
+   * Assert that the caller is an admin.
+   */
+  private assertAdmin(user: any): void {
+    if (this.getUserRole(user) !== 'ADMIN') {
+      throw new ForbiddenException('Admin access required');
+    }
+  }
+
   @Query(() => OrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async orders(
+    @CurrentUser() user: any,
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
     @Args('after', { type: () => String, nullable: true }) after?: string,
     @Args('sellerId', { type: () => String, nullable: true }) sellerId?: string,
     @Args('status', { type: () => OrderStatus, nullable: true })
     status?: OrderStatus
   ) {
+    this.assertAdmin(user);
     return this.orderService.findAll(first, after, sellerId, status);
   }
 
   @Query(() => Order)
   @UseGuards(GraphqlAuthGuard)
   async order(
-    @CurrentUser() user: User,
+    @CurrentUser() user: any,
     @Args('id', { type: () => String }) id: string
   ) {
     const order = await this.orderService.findOne(id);
+    const role = this.getUserRole(user);
 
-    // If user is a seller and this is their order, return SellerOrder (no customer PII)
-    if (user.role === UserRole.SELLER) {
-      const seller = await this.sellerService.findOneByUserId(user.id);
-      if (seller && order.sellerId === seller.id) {
-        // Sellers should use mySellerOrders, but for single order query, convert to SellerOrder
+    switch (role) {
+      case 'ADMIN':
+        return order;
+
+      case 'SELLER': {
+        // Get seller info for this user to check ownership
+        const seller = await this.sellerService.findOneByUserId(this.getUserId(user));
+        if (!seller || order.sellerId !== seller.id) {
+          throw new ForbiddenException('You do not have permission to view this order');
+        }
         return toSellerOrder(order);
       }
-    }
 
-    // For customers and admins, return full Order
-    return order;
+      case 'CUSTOMER': {
+        // Customer ownership is determined by email
+        if (order.customerEmail !== user.email) {
+          throw new ForbiddenException('You do not have permission to view this order');
+        }
+        return order;
+      }
+
+      default:
+        throw new ForbiddenException('Access denied');
+    }
   }
 
   @Query(() => [Order])
@@ -98,7 +148,9 @@ export class OrderResolver {
   async mySellerOrders(
     @CurrentUser() user: User,
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
-    @Args('after', { type: () => String, nullable: true }) after?: string
+    @Args('after', { type: () => String, nullable: true }) after?: string,
+    @Args('status', { type: () => OrderStatus, nullable: true })
+    status?: OrderStatus
   ) {
     // Only sellers can access this
     if (user.role !== UserRole.SELLER) {
@@ -115,7 +167,8 @@ export class OrderResolver {
     const result = await this.orderService.getOrdersBySeller(
       seller.id.toString(),
       first,
-      after
+      after,
+      status
     );
 
     // Convert to SellerOrder connection (removes customer PII)
@@ -132,27 +185,27 @@ export class OrderResolver {
   @Query(() => OrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async adminSellerOrders(
-    @CurrentUser() _user: User,
+    @CurrentUser() user: any,
     @Args('sellerId', { type: () => String }) sellerId: string,
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
     @Args('after', { type: () => String, nullable: true }) after?: string,
     @Args('status', { type: () => OrderStatus, nullable: true })
     status?: OrderStatus
   ) {
-    // Admin can view any seller's orders
+    this.assertAdmin(user);
     return this.orderService.findAll(first, after, sellerId, status);
   }
 
   @Query(() => OrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async allSellerOrders(
-    @CurrentUser() _user: User,
+    @CurrentUser() user: any,
     @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
     @Args('after', { type: () => String, nullable: true }) after?: string,
     @Args('status', { type: () => OrderStatus, nullable: true })
     status?: OrderStatus
   ) {
-    // Admin can view all orders from all sellers
+    this.assertAdmin(user);
     return this.orderService.findAll(first, after, undefined, status);
   }
 
@@ -166,27 +219,126 @@ export class OrderResolver {
   @Mutation(() => Order)
   @UseGuards(GraphqlAuthGuard)
   async updateOrder(
+    @CurrentUser() user: any,
     @Args('id', { type: () => String }) id: string,
     @Args('updateOrderInput') updateOrderInput: UpdateOrderInput
   ) {
+    this.assertAdmin(user);
+
+    const order = await this.orderService.findOne(id);
+
+    // Forbid modifying items or financial totals after order creation
+    const input = updateOrderInput as any;
+    if (
+      input.items != null ||
+      order.status !== OrderStatus.PENDING
+    ) {
+      throw new BadRequestException(
+        'Order items and financial totals cannot be rewritten after order creation'
+      );
+    }
+
     return this.orderService.updateOrder(id, updateOrderInput);
   }
 
   @Mutation(() => Order)
   @UseGuards(GraphqlAuthGuard)
   async updateOrderStatus(
+    @CurrentUser() user: any,
     @Args('updateOrderStatusInput')
     updateOrderStatusInput: UpdateOrderStatusInput
   ) {
-    return this.orderService.updateOrderStatus(
-      updateOrderStatusInput.id,
-      updateOrderStatusInput.status
-    );
+    const { id, status } = updateOrderStatusInput;
+    const order = await this.orderService.findOne(id);
+
+    const role = this.getUserRole(user);
+
+    switch (role) {
+      case 'ADMIN':
+        // Admin can update any order status
+        break;
+
+      case 'SELLER': {
+        // Get seller info for this user to check ownership
+        const seller = await this.sellerService.findOneByUserId(this.getUserId(user));
+        if (!seller || order.sellerId !== seller.id) {
+          throw new ForbiddenException('You can only update status for your own seller orders');
+        }
+        break;
+      }
+
+      case 'CUSTOMER':
+      default:
+        throw new ForbiddenException('Customers are not allowed to update order status');
+    }
+
+    const updated = await this.orderService.updateOrderStatus(id, status);
+
+    // If caller is SELLER, return redacted SellerOrder
+    if (role === 'SELLER') {
+      return toSellerOrder(updated);
+    }
+
+    return updated;
   }
 
   @Mutation(() => Boolean)
   @UseGuards(GraphqlAuthGuard)
-  async deleteOrder(@Args('id', { type: () => String }) id: string) {
+  async cancelPendingOrder(
+    @CurrentUser() user: any,
+    @Args('orderId', { type: () => String }) orderId: string
+  ) {
+    const order = await this.orderService.findOne(orderId);
+
+    const role = this.getUserRole(user);
+
+    // Ownership check
+    let isOwner = false;
+    if (role === 'ADMIN') {
+      isOwner = true;
+    } else if (role === 'CUSTOMER') {
+      // Customer ownership by email
+      isOwner = order.customerEmail === user.email;
+    } else if (role === 'SELLER') {
+      // Seller ownership via SellerInfo
+      const seller = await this.sellerService.findOneByUserId(this.getUserId(user));
+      isOwner = seller != null && order.sellerId === seller.id;
+    }
+
+    if (!isOwner) {
+      throw new ForbiddenException('You do not have permission to cancel this order');
+    }
+
+    // Status check: only PENDING orders can be cancelled
+    if (order.status !== OrderStatus.PENDING) {
+      throw new BadRequestException('Only pending orders can be cancelled');
+    }
+
+    await this.orderService.cancelPendingOrder(orderId);
+    return true;
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(GraphqlAuthGuard)
+  async deleteOrder(
+    @CurrentUser() user: any,
+    @Args('id', { type: () => String }) id: string
+  ) {
+    this.assertAdmin(user);
+
+    const order = await this.orderService.findOne(id);
+
+    // If order is in an active paid status, cancel it first to restore stock
+    const activePaidStatuses = [
+      OrderStatus.CONFIRMED,
+      OrderStatus.PROCESSING,
+      OrderStatus.SHIPPED,
+    ];
+
+    if (activePaidStatuses.includes(order.status) || (order as any).stockReserved === true) {
+      await this.orderService.updateOrderStatus(id, OrderStatus.CANCELLED);
+    }
+
     await this.orderService.deleteOrder(id);
     return true;
   }

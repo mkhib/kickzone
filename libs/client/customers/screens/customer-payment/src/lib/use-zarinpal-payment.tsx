@@ -4,12 +4,14 @@ import {
   REQUEST_ZARINPAL_PAYMENT_MUTATION,
   VERIFY_ZARINPAL_PAYMENT_MUTATION,
   GET_ZARINPAL_GATEWAY_URL_MUTATION,
+  CANCEL_PENDING_ZARINPAL_ORDER_MUTATION,
 } from '@kickzone-workspace/customers-graphql';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   getZarinPalErrorMessage,
   type ZarinPalPaymentRequest,
   type ZarinPalVerificationRequest,
+  type CancelPendingOrderVariables,
 } from './zarinpal-payment-service';
 
 export interface UseZarinPalPaymentOptions {
@@ -20,15 +22,21 @@ export interface UseZarinPalPaymentOptions {
 export interface UseZarinPalPaymentReturn {
   isRequesting: boolean;
   isVerifying: boolean;
+  isCancelling: boolean;
   error: string | null;
   requestPayment: (
-    request: Omit<ZarinPalPaymentRequest, 'merchant_id'>
+    request: Omit<ZarinPalPaymentRequest, 'merchant_id'> & {
+      orderIds?: string[];
+    }
   ) => Promise<string | null>; // Returns authority or null on error
   verifyPayment: (
     request: Omit<ZarinPalVerificationRequest, 'merchant_id'> & {
       order_id?: string;
     }
   ) => Promise<number | null>; // Returns refId or null on error
+  cancelPendingOrder: (
+    variables: CancelPendingOrderVariables
+  ) => Promise<boolean>; // Returns true on success
   redirectToGateway: (authority: string) => void;
   clearError: () => void;
 }
@@ -56,9 +64,16 @@ export function useZarinPalPayment(
     KickzoneGraphqlTypes.MutationGetZarinPalGatewayUrlArgs
   >(GET_ZARINPAL_GATEWAY_URL_MUTATION);
 
+  const [cancelPendingOrderMutation, { loading: isCancelling }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'cancelPendingZarinPalOrder'>,
+    KickzoneGraphqlTypes.MutationCancelPendingZarinPalOrderArgs
+  >(CANCEL_PENDING_ZARINPAL_ORDER_MUTATION);
+
   const requestPayment = useCallback(
     async (
-      request: Omit<ZarinPalPaymentRequest, 'merchant_id'>
+      request: Omit<ZarinPalPaymentRequest, 'merchant_id'> & {
+        orderIds?: string[];
+      }
     ): Promise<string | null> => {
       setError(null);
 
@@ -67,6 +82,7 @@ export function useZarinPalPayment(
         currency: request.currency,
         callbackUrl: request.callback_url,
         orderId: request.metadata?.order_id,
+        orderIds: request.orderIds,
       });
 
       try {
@@ -80,7 +96,8 @@ export function useZarinPalPayment(
               mobile: request.metadata?.mobile,
               email: request.metadata?.email,
               order_id: request.metadata?.order_id,
-            },
+              orderIds: request.orderIds,
+            } as any, // Type assertion to bypass GraphQL codegen type until regeneration
           },
         });
 
@@ -214,6 +231,35 @@ export function useZarinPalPayment(
     [options, verifyPaymentMutation]
   );
 
+  const cancelPendingOrder = useCallback(
+    async (variables: CancelPendingOrderVariables): Promise<boolean> => {
+      setError(null);
+
+      try {
+        const { data } = await cancelPendingOrderMutation({
+          variables: {
+            orderId: variables.orderId,
+            authority: variables.authority,
+          } as any, // Cast to bypass GraphQL codegen type mismatch
+        });
+
+        const result = data?.cancelPendingZarinPalOrder;
+        if (result === true) {
+          return true;
+        } else {
+          throw new Error('Cancellation returned false');
+        }
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : 'خطا در لغو سفارش معلق';
+        setError(errorMessage);
+        options?.onError?.(errorMessage);
+        return false;
+      }
+    },
+    [options, cancelPendingOrderMutation]
+  );
+
   const redirectToGateway = useCallback(
     async (authority: string) => {
       try {
@@ -251,9 +297,11 @@ export function useZarinPalPayment(
   return {
     isRequesting,
     isVerifying,
+    isCancelling,
     error,
     requestPayment,
     verifyPayment,
+    cancelPendingOrder,
     redirectToGateway,
     clearError,
   };

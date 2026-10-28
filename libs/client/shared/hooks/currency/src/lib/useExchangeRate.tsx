@@ -22,9 +22,14 @@ export function useExchangeRate({
     fetchPolicy: 'network-only', // Disable cache for debugging
   });
 
+  const rawRate = Number(data?.currentExchangeRate?.rate);
+  const isValidRate = Number.isFinite(rawRate) && rawRate > 1;
+  const validRate = isValidRate ? rawRate : 0;
+
   return {
     exchangeRate: data?.currentExchangeRate,
-    rate: data?.currentExchangeRate?.rate || 1,
+    rate: validRate,
+    hasValidRate: isValidRate,
     loading,
     error,
     refetch,
