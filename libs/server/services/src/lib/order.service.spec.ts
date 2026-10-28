@@ -628,6 +628,58 @@ describe('OrderService', () => {
         /SellerProduct with ID seller-product-1 not found/,
       );
     });
+
+    it('should reject empty items array', async () => {
+      const inputEmptyItems = {
+        ...createOrderInput,
+        items: [],
+      };
+
+      await expect(service.createOrder(inputEmptyItems)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputEmptyItems)).rejects.toThrow(
+        'Order must contain at least one item',
+      );
+    });
+
+    it('should reject when aggregated quantity across items exceeds stock', async () => {
+      // Two line items for the same sellerProductId, each quantity <= stock individually,
+      // but combined quantity > stock
+      const sellerProductLimitedStock = {
+        ...mockSellerProduct,
+        stockQuantity: 3, // Only 3 in stock
+        seller: { id: 1 } as any,
+      } as SellerProduct;
+
+      const inputTwoItemsSameProduct = {
+        ...createOrderInput,
+        items: [
+          {
+            ...createOrderInput.items[0],
+            quantity: 2,
+            sellerProductId: 'seller-product-1',
+          },
+          {
+            ...createOrderInput.items[0],
+            productId: 'product-1-variant',
+            sellerProductId: 'seller-product-1', // Same sellerProductId
+            quantity: 2, // Combined = 4 > 3
+          },
+        ],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      // findOne will be called twice per service call (once per item in Promise.all),
+      // and the test calls the service twice (two expect statements), so 4 total calls
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductLimitedStock);
+
+      await expect(service.createOrder(inputTwoItemsSameProduct)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.createOrder(inputTwoItemsSameProduct)).rejects.toThrow(
+        /Insufficient stock for product seller-product-1. Available: 3, Requested: 4/,
+      );
+    });
   });
 
   describe('findOne', () => {
@@ -778,6 +830,16 @@ describe('OrderService', () => {
       expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
         'order.status = :status',
         { status: OrderStatus.DELIVERED },
+      );
+    });
+
+    it('should throw BadRequestException for invalid cursor', async () => {
+      const invalidCursor = 'not-valid-base64-date';
+      await expect(service.findAll(10, invalidCursor)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.findAll(10, invalidCursor)).rejects.toThrow(
+        'Invalid cursor',
       );
     });
   });
@@ -1973,6 +2035,38 @@ describe('OrderService', () => {
       await service.getOrdersByCustomerEmail(customerEmail, 10, cursor);
 
       expect(mockQueryBuilder.andWhere).toHaveBeenCalled();
+    });
+
+    it('should apply id DESC tie-breaker ordering for deterministic pagination', async () => {
+      await service.getOrdersByCustomerEmail(customerEmail, 10);
+
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'order.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
+        'order.id',
+        'DESC',
+      );
+    });
+
+    it('should throw BadRequestException for invalid cursor', async () => {
+      const invalidCursor = 'not-valid-base64-date';
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, invalidCursor),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, invalidCursor),
+      ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for empty cursor', async () => {
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, ''),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, ''),
+      ).rejects.toThrow('Invalid cursor');
     });
   });
 

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentResolver } from './payment.resolver';
-import { PaymentService, OrderService } from '@kickzone-workspace/services';
+import { PaymentService, OrderService, CurrencyService } from '@kickzone-workspace/services';
 import { OrderStatus } from '@kickzone-workspace/entities';
 import {
   ZarinPalPaymentRequestInput,
@@ -11,6 +11,7 @@ describe('PaymentResolver Integration Tests', () => {
   let resolver: PaymentResolver;
   let paymentService: jest.Mocked<PaymentService>;
   let orderService: jest.Mocked<OrderService>;
+  let currencyService: jest.Mocked<CurrencyService>;
 
   const mockPaymentService = {
     requestPayment: jest.fn(),
@@ -23,6 +24,11 @@ describe('PaymentResolver Integration Tests', () => {
     cancelPendingOrder: jest.fn(),
     findOne: jest.fn(),
     setPaymentIntent: jest.fn(),
+    findOrdersByPaymentAuthority: jest.fn(),
+  };
+
+  const mockCurrencyService = {
+    getCurrentExchangeRate: jest.fn().mockResolvedValue({ rate: 1000 }),
   };
 
   beforeEach(async () => {
@@ -37,16 +43,22 @@ describe('PaymentResolver Integration Tests', () => {
           provide: OrderService,
           useValue: mockOrderService,
         },
+        {
+          provide: CurrencyService,
+          useValue: mockCurrencyService,
+        },
       ],
     }).compile();
 
     resolver = module.get<PaymentResolver>(PaymentResolver);
     paymentService = module.get(PaymentService);
     orderService = module.get(OrderService);
+    currencyService = module.get(CurrencyService);
   });
 
   afterEach(() => {
     jest.clearAllMocks();
+    mockCurrencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 1000 });
   });
 
   describe('Full Payment Flow Integration', () => {
@@ -67,7 +79,7 @@ describe('PaymentResolver Integration Tests', () => {
     const mockOrder = {
       id: orderId,
       status: OrderStatus.PENDING,
-      total: amount,
+      total: 100, // USD, so 100 * 1000 = 100000 IRT amount
       paymentAuthority: authority,
       paymentAmount: amount,
       paymentCurrency: 'IRT',
@@ -84,6 +96,7 @@ describe('PaymentResolver Integration Tests', () => {
     describe('Successful Payment Flow', () => {
       it('should complete full payment flow: request → verify → confirm order', async () => {
         orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
         orderService.setPaymentIntent.mockResolvedValue(undefined as any);
 
         // Step 1: Request payment
@@ -98,10 +111,7 @@ describe('PaymentResolver Integration Tests', () => {
           errors: [],
         } as any);
 
-        const requestResult = await resolver.requestZarinPalPayment(
-          { id: 'user-1' } as any,
-          paymentRequestInput
-        );
+        const requestResult = await resolver.requestZarinPalPayment(paymentRequestInput);
 
         expect(paymentService.requestPayment).toHaveBeenCalledWith({
           amount: paymentRequestInput.amount,
@@ -147,10 +157,7 @@ describe('PaymentResolver Integration Tests', () => {
           confirmedOrder as any
         );
 
-        const verifyResult = await resolver.verifyZarinPalPayment(
-          { id: 'user-1' } as any,
-          verificationInput
-        );
+        const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
         expect(paymentService.verifyPayment).toHaveBeenCalledWith({
           amount: verificationInput.amount,
@@ -181,16 +188,14 @@ describe('PaymentResolver Integration Tests', () => {
         } as any);
 
         orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
         orderService.setPaymentIntent.mockResolvedValue(undefined as any);
         orderService.confirmOrderPayment.mockResolvedValue({
           ...mockOrder,
           status: OrderStatus.CONFIRMED,
         } as any);
 
-        const verifyResult = await resolver.verifyZarinPalPayment(
-          { id: 'user-1' } as any,
-          verificationInput
-        );
+        const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
         expect(verifyResult.code).toBe(101);
         // Order should still be confirmed even with code 101
@@ -216,16 +221,14 @@ describe('PaymentResolver Integration Tests', () => {
         } as any);
 
         orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
         orderService.setPaymentIntent.mockResolvedValue(undefined as any);
         orderService.cancelPendingOrder.mockResolvedValue({
           ...mockOrder,
           status: OrderStatus.CANCELLED,
         } as any);
 
-        const verifyResult = await resolver.verifyZarinPalPayment(
-          { id: 'user-1' } as any,
-          verificationInput
-        );
+        const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
         expect(verifyResult.code).toBe(-11);
         // Order should be cancelled
@@ -252,16 +255,14 @@ describe('PaymentResolver Integration Tests', () => {
         } as any);
 
         orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
         orderService.setPaymentIntent.mockResolvedValue(undefined as any);
         orderService.cancelPendingOrder.mockResolvedValue({
           ...mockOrder,
           status: OrderStatus.CANCELLED,
         } as any);
 
-        const verifyResult = await resolver.verifyZarinPalPayment(
-          { id: 'user-1' } as any,
-          verificationInput
-        );
+        const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
         expect(verifyResult.code).toBe(-10);
         expect(orderService.cancelPendingOrder).toHaveBeenCalledWith(orderId);
@@ -286,12 +287,11 @@ describe('PaymentResolver Integration Tests', () => {
           errors: [],
         } as any);
 
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([] as any);
+
         await expect(
-          resolver.verifyZarinPalPayment(
-            { id: 'user-1' } as any,
-            verificationInput
-          )
-        ).rejects.toThrow('order_id is required to verify payment');
+          resolver.verifyZarinPalPayment(verificationInput)
+        ).rejects.toThrow('No orders found for this payment authority');
 
         expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
         expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
@@ -299,7 +299,7 @@ describe('PaymentResolver Integration Tests', () => {
     });
 
     describe('Error Handling in Order Confirmation', () => {
-      it('should still return success if order confirmation fails but payment was verified', async () => {
+      it('should return success: false with ref_id when order confirmation fails but payment was verified', async () => {
         const verificationInput: ZarinPalVerificationRequestInput = {
           amount,
           authority,
@@ -316,6 +316,7 @@ describe('PaymentResolver Integration Tests', () => {
         } as any);
 
         orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
         orderService.setPaymentIntent.mockResolvedValue(undefined as any);
 
         // Order confirmation fails
@@ -323,14 +324,13 @@ describe('PaymentResolver Integration Tests', () => {
           new Error('Order confirmation failed')
         );
 
-        const verifyResult = await resolver.verifyZarinPalPayment(
-          { id: 'user-1' } as any,
-          verificationInput
-        );
+        const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
-        // Payment verification should still return success
+        // Payment was captured but order confirmation failed - returns code 100 but success: false
         expect(verifyResult.code).toBe(100);
         expect(verifyResult.ref_id).toBe(123456789);
+        expect(verifyResult.success).toBe(false);
+        expect(verifyResult.message).toContain('Order confirmation failed');
         // Order confirmation was attempted
         expect(orderService.confirmOrderPayment).toHaveBeenCalledWith(orderId);
       });
@@ -352,6 +352,7 @@ describe('PaymentResolver Integration Tests', () => {
         } as any);
 
         orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
         orderService.setPaymentIntent.mockResolvedValue(undefined as any);
 
         // Order cancellation fails
@@ -359,10 +360,7 @@ describe('PaymentResolver Integration Tests', () => {
           new Error('Order cancellation failed')
         );
 
-        const verifyResult = await resolver.verifyZarinPalPayment(
-          { id: 'user-1' } as any,
-          verificationInput
-        );
+        const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
         // Payment verification should still return failure
         expect(verifyResult.code).toBe(-11);
@@ -397,7 +395,7 @@ describe('PaymentResolver Integration Tests', () => {
     ) => ({
       id: orderId,
       status: OrderStatus.PENDING,
-      total,
+      total: total / 1000, // USD, so total * 1000 = paymentAmount (IRT)
       paymentAuthority: 'A00000000000000000000000000000000000000',
       paymentAmount: total,
       paymentCurrency,
@@ -431,10 +429,7 @@ describe('PaymentResolver Integration Tests', () => {
       } as any);
       orderService.setPaymentIntent.mockResolvedValue(undefined as any);
 
-      const result = await resolver.requestZarinPalPayment(
-        { id: 'user-1' } as any,
-        input
-      );
+      const result = await resolver.requestZarinPalPayment(input);
 
       expect(paymentService.requestPayment).toHaveBeenCalledWith({
         amount: input.amount,
@@ -472,10 +467,7 @@ describe('PaymentResolver Integration Tests', () => {
       } as any);
       orderService.setPaymentIntent.mockResolvedValue(undefined as any);
 
-      const result = await resolver.requestZarinPalPayment(
-        { id: 'user-1' } as any,
-        input
-      );
+      const result = await resolver.requestZarinPalPayment(input);
 
       expect(paymentService.requestPayment).toHaveBeenCalledWith({
         amount: input.amount,
@@ -513,7 +505,7 @@ describe('PaymentResolver Integration Tests', () => {
       } as any);
       orderService.setPaymentIntent.mockResolvedValue(undefined as any);
 
-      await resolver.requestZarinPalPayment({ id: 'user-1' } as any, input);
+      await resolver.requestZarinPalPayment(input);
 
       expect(paymentService.requestPayment).toHaveBeenCalledWith(
         expect.objectContaining({

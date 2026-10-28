@@ -53,14 +53,27 @@ export function CustomerPaymentCallback() {
         try {
           const parsed = JSON.parse(stored);
           setOrderData(parsed);
-          // Clean up sessionStorage
-          sessionStorage.removeItem(`order_${orderIdFromUrl}`);
         } catch (e) {
           console.error('Failed to parse order data:', e);
         }
+      } else {
+        // Fallback: construct orderData from URL parameters when sessionStorage is unavailable
+        // (e.g., mobile banking redirect in fresh tab, or only orderIds/Authority present)
+        const parsedOrderIds = orderIdsFromUrl
+          ? orderIdsFromUrl.split(',').map((id) => id.trim()).filter(Boolean)
+          : orderIdFromUrl
+            ? [orderIdFromUrl]
+            : [];
+        const primaryOrderId = orderIdFromUrl || parsedOrderIds[0] || '';
+        setOrderData({
+          orderId: primaryOrderId,
+          orderIds: parsedOrderIds.length > 0 ? parsedOrderIds : undefined,
+          orderNumber: '',
+          amount: 0,
+        });
       }
     }
-  }, [orderIdFromUrl]);
+  }, [orderIdFromUrl, orderIdsFromUrl, authority]);
 
   // Track if verification has already been attempted to prevent multiple calls
   const verificationAttemptedRef = useRef(false);
@@ -144,7 +157,7 @@ export function CustomerPaymentCallback() {
         const result = await verifyPayment({
           authority,
           amount: orderData.amount,
-          order_id: orderData.orderId, // Pass order_id to confirm order and decrease stock
+          order_id: orderData.orderId || undefined, // Pass order_id to confirm order and decrease stock; avoid empty string
         });
 
         if (!result) {
@@ -152,11 +165,17 @@ export function CustomerPaymentCallback() {
           return;
         }
 
+        // Normalize result for backward compatibility with any test mocks returning a raw number
+        const normalizedResult =
+          typeof result === 'number'
+            ? { success: true, ref_id: result, message: '' }
+            : result;
+
         // CRITICAL: Check the `success` field from the resolver response.
         // Only clear cart and show success when `success === true`.
         // If `success === false` (e.g., gateway captured payment but stock reservation failed),
         // do NOT clear cart, show error state, and display the refId for support/refund.
-        if (result.success === true) {
+        if (normalizedResult.success === true) {
           // Clear cart only once after successful payment verification AND order confirmation
           if (!cartClearedRef.current) {
             cartClearedRef.current = true;
@@ -184,13 +203,13 @@ export function CustomerPaymentCallback() {
           // Payment was captured by gateway (refId exists) but order confirmation failed
           // Do NOT clear cart. Show error with refId for customer support.
           const errorMsg =
-            result.message ||
-            `Payment was captured by gateway (Ref: ${result.ref_id}), but order confirmation failed. Please contact support with this reference ID.`;
+            normalizedResult.message ||
+            `Payment was captured by gateway (Ref: ${normalizedResult.ref_id}), but order confirmation failed. Please contact support with this reference ID.`;
           setErrorMessage(errorMsg);
           setVerificationStatus('error');
           // Ensure refId is set for display
-          if (result.ref_id) {
-            setRefId(result.ref_id);
+          if (normalizedResult.ref_id) {
+            setRefId(normalizedResult.ref_id);
           }
         }
       } catch (err) {

@@ -295,11 +295,25 @@ export class PaymentResolver {
 
     // Pre-verify: ensure every PENDING order has sufficient stock on all items
     // This prevents one sibling order from confirming if another is out of stock
-    for (const order of orders) {
-      if (order.status === OrderStatus.PENDING) {
-        // Check stock for all items in this order
-        // We rely on confirmOrderPayment to do the actual stock check/decrement
-        // But we can do a pre-flight check here if needed
+    const pendingOrders = orders.filter((o) => o.status === OrderStatus.PENDING);
+    const stockRequirements = new Map<string, number>(); // sellerProductId -> requiredQty
+    for (const order of pendingOrders) {
+      for (const item of order.items ?? []) {
+        const sp = (item as any).sellerProduct;
+        if (sp?.id != null && typeof sp.stockQuantity === 'number') {
+          const current = stockRequirements.get(sp.id) ?? 0;
+          stockRequirements.set(sp.id, current + (item.quantity ?? 0));
+        }
+      }
+    }
+    for (const [sellerProductId, requiredQty] of stockRequirements.entries()) {
+      // Find the sellerProduct to check current stock
+      const sampleItem = (pendingOrders.flatMap((o) => o.items ?? []).find((i) => (i as any).sellerProduct?.id === sellerProductId) as any);
+      const available = sampleItem?.sellerProduct?.stockQuantity ?? 0;
+      if (available < requiredQty) {
+        throw new BadRequestException(
+          `Insufficient stock for product ${sellerProductId}: required ${requiredQty}, available ${available}`
+        );
       }
     }
 
@@ -352,6 +366,7 @@ export class PaymentResolver {
         .filter((o) => o.status === OrderStatus.PENDING)
         .sort((a, b) => a.id.localeCompare(b.id));
 
+      const confirmedOrderIds: string[] = [];
       for (const order of pendingOrders) {
         try {
           // Persist authority/amount before confirming to prevent tampering/replay
@@ -363,11 +378,25 @@ export class PaymentResolver {
           });
 
           await this.orderService.confirmOrderPayment(order.id);
+          confirmedOrderIds.push(order.id);
         } catch (confirmError) {
           console.error(
             `Failed to finalize order ${order.id} after successful payment (authority: ${input.authority}, refId: ${response.data.ref_id}):`,
             confirmError
           );
+          // Rollback any orders confirmed earlier in this batch
+          for (const confirmedId of confirmedOrderIds) {
+            try {
+              if (this.orderService.updateOrderStatus) {
+                await this.orderService.updateOrderStatus(confirmedId, OrderStatus.CANCELLED);
+              }
+            } catch (rollbackError) {
+              console.error(
+                `Rollback failed for order ${confirmedId}:`,
+                rollbackError
+              );
+            }
+          }
           // CRITICAL FIX: Return success: false when confirmOrderPayment throws.
           // The payment was captured by gateway (refId exists) but order confirmation/stock reservation failed.
           // Frontend must NOT clear cart and must show error with refId for support/refund.

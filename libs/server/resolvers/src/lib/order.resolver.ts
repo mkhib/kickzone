@@ -17,7 +17,6 @@ import {
   OrderItem,
   OrderStatus,
   User,
-  UserRole,
   toSellerOrder,
 } from '@kickzone-workspace/entities';
 import {
@@ -124,7 +123,7 @@ export class OrderResolver {
     @Args('after', { type: () => String, nullable: true }) after?: string
   ) {
     // For CUSTOMER: Get orders by customer email
-    if (user.role === UserRole.CUSTOMER) {
+    if (this.getUserRole(user) === 'CUSTOMER') {
       const result = await this.orderService.getOrdersByCustomerEmail(
         user.email,
         first,
@@ -153,12 +152,12 @@ export class OrderResolver {
     status?: OrderStatus
   ) {
     // Only sellers can access this
-    if (user.role !== UserRole.SELLER) {
+    if (this.getUserRole(user) !== 'SELLER') {
       throw new NotFoundException('Only sellers can access seller orders');
     }
 
     // Get seller info from user
-    const seller = await this.sellerService.findOneByUserId(user.id);
+    const seller = await this.sellerService.findOneByUserId(this.getUserId(user));
     if (!seller) {
       throw new NotFoundException('Seller not found for this user');
     }

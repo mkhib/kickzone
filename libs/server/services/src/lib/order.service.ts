@@ -65,6 +65,10 @@ export class OrderService {
   async createOrder(createOrderInput: CreateOrderInput): Promise<Order> {
     const { items: inputItems, ...orderData } = createOrderInput;
 
+    if (!Array.isArray(inputItems) || inputItems.length === 0) {
+      throw new BadRequestException('Order must contain at least one item');
+    }
+
     const order = this.orderRepository.create(orderData);
 
     order.orderNumber = this.generateOrderNumber();
@@ -142,6 +146,26 @@ export class OrderService {
         };
       }),
     );
+
+    // Aggregate stock check: sum quantities per sellerProductId across all line items
+    const requestedBySellerProduct = new Map<
+      string,
+      { totalQty: number; available: number }
+    >();
+    for (const item of validatedItems) {
+      const sellerProductId = item.sellerProductId!; // validated as required earlier
+      const current = requestedBySellerProduct.get(sellerProductId) ?? {
+        totalQty: 0,
+        available: item.sellerProduct.stockQuantity,
+      };
+      current.totalQty += Number(item.quantity);
+      if (current.totalQty > current.available) {
+        throw new BadRequestException(
+          `Insufficient stock for product ${sellerProductId}. Available: ${current.available}, Requested: ${current.totalQty}`,
+        );
+      }
+      requestedBySellerProduct.set(sellerProductId, current);
+    }
 
     // Compute server-side totals from catalog prices
     order.subtotal = Number(
@@ -383,9 +407,10 @@ export class OrderService {
       .leftJoinAndSelect('order.items', 'items')
       .leftJoinAndSelect('order.seller', 'seller')
       .where('order.customerEmail = :customerEmail', { customerEmail })
-      .orderBy('order.createdAt', 'DESC');
+      .orderBy('order.createdAt', 'DESC')
+      .addOrderBy('order.id', 'DESC');
 
-    if (after) {
+    if (after !== undefined) {
       const cursor = await this.decodeCursor(after);
       queryBuilder.andWhere('order.createdAt < :cursor', { cursor });
     }
@@ -433,7 +458,11 @@ export class OrderService {
   private async decodeCursor(cursor: string): Promise<Date> {
     try {
       const decoded = Buffer.from(cursor, 'base64').toString();
-      return new Date(decoded);
+      const date = new Date(decoded);
+      if (!cursor || Number.isNaN(date.getTime())) {
+        throw new BadRequestException('Invalid cursor');
+      }
+      return date;
     } catch {
       throw new BadRequestException('Invalid cursor');
     }

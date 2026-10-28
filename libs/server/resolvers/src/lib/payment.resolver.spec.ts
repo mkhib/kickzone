@@ -1078,6 +1078,63 @@ describe('PaymentResolver Unit Tests', () => {
         expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
       });
 
+      it('should rollback earlier confirmed orders when a later order fails in multi-order batch', async () => {
+        // order-1 succeeds, order-2 fails with insufficient stock
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-002',
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', ref_id: refId },
+          errors: [],
+        } as any);
+
+        // First call (order-1) succeeds, second call (order-2) throws
+        orderService.confirmOrderPayment
+          .mockResolvedValueOnce(undefined as any)
+          .mockRejectedValueOnce(new BadRequestException('Insufficient stock for order-2'));
+
+        // Add updateOrderStatus mock for rollback verification
+        orderService.updateOrderStatus = jest.fn().mockResolvedValue(undefined as any);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as any;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(2);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-2');
+
+        // CRITICAL: Must return success: false with refId
+        expect(result.success).toBe(false);
+        expect(result.code).toBe(100);
+        expect(result.ref_id).toBe(refId);
+        expect(result.message).toContain('Insufficient stock for order-2');
+        expect(result.message).toContain(String(refId));
+
+        // Verify rollback was called for order-1
+        expect(orderService.updateOrderStatus).toHaveBeenCalledTimes(1);
+        expect(orderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+      });
+
       it('should reject when no orders found for authority', async () => {
         orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
 

@@ -213,7 +213,7 @@ describe('CustomerPaymentCallback - Guest ZarinPal Cancel', () => {
             query: expect.anything(), // verify mutation
             variables: expect.objectContaining({ input: expect.objectContaining({ authority }) }),
           },
-          result: { data: { verifyZarinPalPayment: { code: 100, message: 'Success', ref_id: 12345 } } },
+          result: { data: { verifyZarinPalPayment: { code: 100, message: 'Success', ref_id: 12345, success: true } } },
         },
       ];
 

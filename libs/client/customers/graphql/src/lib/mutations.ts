@@ -206,6 +206,7 @@ export const VERIFY_ZARINPAL_PAYMENT_MUTATION = gql`
       orderIds
       orderId
       orderNumber
+      success
     }
   }
 `;

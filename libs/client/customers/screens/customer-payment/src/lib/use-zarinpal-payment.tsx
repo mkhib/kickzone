@@ -14,6 +14,16 @@ import {
   type CancelPendingOrderVariables,
 } from './zarinpal-payment-service';
 
+export interface ZarinPalVerifyResult {
+  code: number;
+  message: string;
+  ref_id?: number | null;
+  orderIds?: string[] | null;
+  orderId?: string | null;
+  orderNumber?: string | null;
+  success: boolean;
+}
+
 export interface UseZarinPalPaymentOptions {
   onSuccess?: (refId: number) => void;
   onError?: (error: string) => void;
@@ -33,7 +43,7 @@ export interface UseZarinPalPaymentReturn {
     request: Omit<ZarinPalVerificationRequest, 'merchant_id'> & {
       order_id?: string;
     }
-  ) => Promise<number | null>; // Returns refId or null on error
+  ) => Promise<ZarinPalVerifyResult | null>; // Returns verification result or null on error
   cancelPendingOrder: (
     variables: CancelPendingOrderVariables
   ) => Promise<boolean>; // Returns true on success
@@ -184,7 +194,7 @@ export function useZarinPalPayment(
       request: Omit<ZarinPalVerificationRequest, 'merchant_id'> & {
         order_id?: string;
       }
-    ): Promise<number | null> => {
+    ): Promise<ZarinPalVerifyResult | null> => {
       setError(null);
 
       try {
@@ -208,18 +218,31 @@ export function useZarinPalPayment(
 
         // Code 100 means successful payment
         // Code 101 means payment was already verified
-        if (
+        // success field from resolver indicates if order confirmation succeeded
+        const isSuccess =
           (response.code === 100 || response.code === 101) &&
-          response.ref_id
-        ) {
+          response.success !== false &&
+          Boolean(response.ref_id);
+
+        const result: ZarinPalVerifyResult = {
+          code: response.code,
+          message: response.message,
+          ref_id: response.ref_id,
+          orderIds: (response as any).orderIds,
+          orderId: (response as any).orderId,
+          orderNumber: (response as any).orderNumber,
+          success: isSuccess,
+        };
+
+        if (isSuccess && response.ref_id) {
           options?.onSuccess?.(response.ref_id);
-          return response.ref_id;
-        } else {
+        } else if (!isSuccess) {
           const errorMessage = getZarinPalErrorMessage(response.code);
           setError(errorMessage);
           options?.onError?.(errorMessage);
-          return null;
         }
+
+        return result;
       } catch (err) {
         const errorMessage =
           err instanceof Error ? err.message : 'خطا در تایید پرداخت';

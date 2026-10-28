@@ -14,7 +14,7 @@ export function useSellerOrders({
 }: {
   first?: number;
   after?: string;
-  status?: KickzoneGraphqlTypes.OrderStatus;
+  status?: KickzoneGraphqlTypes.OrderStatus | 'ALL';
 } = {}) {
   // Normalize status: 'ALL' or undefined means no server-side filter
   const statusVariable = status && status !== 'ALL' ? status : undefined;
@@ -102,8 +102,8 @@ export function useSellerOrders({
   };
 
   // Filter orders by status on the client side if status filter is provided
-  const filteredOrders = status
-    ? orders.filter((order: SellerOrder) => order.status === status)
+  const filteredOrders = statusVariable
+    ? orders.filter((order: SellerOrder) => order.status === statusVariable)
     : orders;
 
   return {
