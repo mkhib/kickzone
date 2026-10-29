@@ -731,6 +731,21 @@ import { PlatformSettingsModule } from './platform-settings.module';
 export class CartModule {}
 </file>
 
+<file path="libs/server/modules/src/lib/catalog-guard.module.ts">
+import { Global, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SellerInfo } from '@kickzone-workspace/entities';
+import { CatalogGuard } from '@kickzone-workspace/guards';
+
+@Global()
+@Module({
+  imports: [TypeOrmModule.forFeature([SellerInfo])],
+  providers: [CatalogGuard],
+  exports: [CatalogGuard, TypeOrmModule],
+})
+export class CatalogGuardModule {}
+</file>
+
 <file path="libs/server/modules/src/lib/category.module.ts">
 import { CatalogGuardModule } from './catalog-guard.module';
 import { Module } from '@nestjs/common';
@@ -1751,21 +1766,6 @@ import { TranslationModule } from './translation.module';
   exports: [BrandService, TypeOrmModule.forFeature([Brand])],
 })
 export class BrandModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/catalog-guard.module.ts">
-import { Global, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { SellerInfo } from '@kickzone-workspace/entities';
-import { CatalogGuard } from '@kickzone-workspace/guards';
-
-@Global()
-@Module({
-  imports: [TypeOrmModule.forFeature([SellerInfo])],
-  providers: [CatalogGuard],
-  exports: [CatalogGuard, TypeOrmModule],
-})
-export class CatalogGuardModule {}
 </file>
 
 <file path="libs/server/modules/src/lib/graphql-context.module.ts">

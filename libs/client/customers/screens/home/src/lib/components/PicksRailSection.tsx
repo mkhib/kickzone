@@ -216,7 +216,7 @@ export function PicksRailSection({
                 navigate(getCustomerProductDetailsRoute(p.id));
               }}
               onAddToCart={(p) => {
-                const size = p.productInfos?.[0]?.size || 'L';
+                const size = p.productInfos?.[0]?.size || undefined;
                 onAddItem?.(p, size);
               }}
               onAddVariantToCart={({ product: p, productInfo }) => {

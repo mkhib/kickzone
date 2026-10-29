@@ -54,7 +54,7 @@ export function CustomersHome({
           preferredSize ? pi.size === preferredSize : true
         ) || product.productInfos?.[0];
 
-      const size = pInfo?.size || preferredSize || 'L';
+      const size = pInfo?.size || preferredSize || null;
       const color = pInfo?.colors?.[0]?.name || null;
       const image = pInfo?.images?.[0] || null;
 
