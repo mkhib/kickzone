@@ -316,6 +316,89 @@ export class Color {
 }
 </file>
 
+<file path="libs/server/entities/src/lib/seller-product.entity.ts">
+// src/entities/seller-product.entity.ts
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  ManyToOne,
+  Column,
+  Relation,
+  BeforeInsert,
+  BeforeUpdate,
+  Index,
+} from 'typeorm';
+import { SellerInfo } from './seller-info.entity';
+import { Product } from './product.entity';
+import { ProductInfo } from './product-info.entity';
+import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+
+@ObjectType()
+@Entity()
+@Index(['seller', 'productInfoId'], { unique: true })
+export class SellerProduct {
+  @Field(() => String)
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Field(() => SellerInfo, { nullable: true })
+  @ManyToOne(() => SellerInfo, (seller) => seller.sellerProducts)
+  seller: SellerInfo;
+
+  @Field(() => Product)
+  @ManyToOne(() => Product, (product) => product.sellerProducts)
+  product: Relation<Product>;
+
+  @Field(() => ProductInfo)
+  @ManyToOne(() => ProductInfo, { nullable: false })
+  productInfo: ProductInfo;
+
+  @Field(() => Int)
+  @Column({ nullable: false })
+  productInfoId: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  price: number;
+
+  @Field(() => Float, { nullable: true })
+  @Column('decimal', { precision: 10, scale: 2 })
+  costPrice: number;
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 5, scale: 2, default: 0 })
+  discount: number;
+
+  @Field(() => Int)
+  @Column()
+  stockQuantity: number;
+
+  @Field(() => Boolean, { defaultValue: false })
+  @Column({ type: 'boolean', default: false })
+  recommended: boolean;
+
+  @Field(() => Boolean, { defaultValue: false })
+  @Column({ type: 'boolean', default: false })
+  boxLess: boolean;
+
+  @BeforeInsert()
+  @BeforeUpdate()
+  setProductInfoId() {
+    // If productInfo relation is set but productInfoId is not, set it from the relation
+    if (this.productInfo && !this.productInfoId) {
+      this.productInfoId = this.productInfo.id;
+      console.log(
+        '🔧 Setting productInfoId:',
+        this.productInfoId,
+        'from productInfo:',
+        this.productInfo.id
+      );
+    }
+    // If productInfoId is set but productInfo relation is not, this is handled in the service layer
+  }
+}
+</file>
+
 <file path="libs/server/entities/src/lib/user.entity.ts">
 import { Entity, PrimaryGeneratedColumn, Column, Index } from 'typeorm';
 import { ObjectType, Field, ID, registerEnumType, Int } from '@nestjs/graphql';
@@ -1138,89 +1221,6 @@ export class SellerConnection implements Connection<SellerInfo> {
 }
 </file>
 
-<file path="libs/server/entities/src/lib/seller-product.entity.ts">
-// src/entities/seller-product.entity.ts
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  ManyToOne,
-  Column,
-  Relation,
-  BeforeInsert,
-  BeforeUpdate,
-  Index,
-} from 'typeorm';
-import { SellerInfo } from './seller-info.entity';
-import { Product } from './product.entity';
-import { ProductInfo } from './product-info.entity';
-import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
-
-@ObjectType()
-@Entity()
-@Index(['seller', 'productInfoId'], { unique: true })
-export class SellerProduct {
-  @Field(() => String)
-  @PrimaryGeneratedColumn('uuid')
-  id: string;
-
-  @Field(() => SellerInfo, { nullable: true })
-  @ManyToOne(() => SellerInfo, (seller) => seller.sellerProducts)
-  seller: SellerInfo;
-
-  @Field(() => Product)
-  @ManyToOne(() => Product, (product) => product.sellerProducts)
-  product: Relation<Product>;
-
-  @Field(() => ProductInfo)
-  @ManyToOne(() => ProductInfo, { nullable: false })
-  productInfo: ProductInfo;
-
-  @Field(() => Int)
-  @Column({ nullable: false })
-  productInfoId: number;
-
-  @Field(() => Float)
-  @Column('decimal', { precision: 10, scale: 2 })
-  price: number;
-
-  @Field(() => Float, { nullable: true })
-  @Column('decimal', { precision: 10, scale: 2 })
-  costPrice: number;
-
-  @Field(() => Float)
-  @Column('decimal', { precision: 5, scale: 2, default: 0 })
-  discount: number;
-
-  @Field(() => Int)
-  @Column()
-  stockQuantity: number;
-
-  @Field(() => Boolean, { defaultValue: false })
-  @Column({ type: 'boolean', default: false })
-  recommended: boolean;
-
-  @Field(() => Boolean, { defaultValue: false })
-  @Column({ type: 'boolean', default: false })
-  boxLess: boolean;
-
-  @BeforeInsert()
-  @BeforeUpdate()
-  setProductInfoId() {
-    // If productInfo relation is set but productInfoId is not, set it from the relation
-    if (this.productInfo && !this.productInfoId) {
-      this.productInfoId = this.productInfo.id;
-      console.log(
-        '🔧 Setting productInfoId:',
-        this.productInfoId,
-        'from productInfo:',
-        this.productInfo.id
-      );
-    }
-    // If productInfoId is set but productInfo relation is not, this is handled in the service layer
-  }
-}
-</file>
-
 <file path="libs/server/inputs/src/lib/brand.input.ts">
 import { InputType, Field, Int } from '@nestjs/graphql';
 
@@ -1728,21 +1728,6 @@ export class ProductInfo {
 }
 </file>
 
-<file path="libs/server/modules/src/lib/catalog-guard.module.ts">
-import { Global, Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { SellerInfo } from '@kickzone-workspace/entities';
-import { CatalogGuard } from '@kickzone-workspace/guards';
-
-@Global()
-@Module({
-  imports: [TypeOrmModule.forFeature([SellerInfo])],
-  providers: [CatalogGuard],
-  exports: [CatalogGuard, TypeOrmModule],
-})
-export class CatalogGuardModule {}
-</file>
-
 <file path="libs/server/inputs/src/lib/seller.input.ts">
 import { Field, InputType, Int, Float } from '@nestjs/graphql';
 import {
@@ -1959,6 +1944,21 @@ export class SellerFilterInput {
   @Field({ nullable: true })
   after?: string;
 }
+</file>
+
+<file path="libs/server/modules/src/lib/catalog-guard.module.ts">
+import { Global, Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SellerInfo } from '@kickzone-workspace/entities';
+import { CatalogGuard } from '@kickzone-workspace/guards';
+
+@Global()
+@Module({
+  imports: [TypeOrmModule.forFeature([SellerInfo])],
+  providers: [CatalogGuard],
+  exports: [CatalogGuard, TypeOrmModule],
+})
+export class CatalogGuardModule {}
 </file>
 
 <file path="libs/server/entities/src/lib/product.entity.ts">

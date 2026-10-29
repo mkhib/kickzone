@@ -591,7 +591,7 @@ const ProductInfoCard = React.memo(
                   }
                 }}
                 placeholder={LL.products.waistPlaceholder?.() || '32'}
-                inputProps={{ min: 0, max: 100, step: 1 }}
+                inputProps={{ min: 1, max: 99, step: 1 }}
                 {...getLtrTextFieldProps({
                   flex: 1,
                   minWidth: { xs: '100%', sm: 130 },
@@ -619,7 +619,7 @@ const ProductInfoCard = React.memo(
                   }
                 }}
                 placeholder={LL.products.inseamPlaceholder?.() || '34'}
-                inputProps={{ min: 0, max: 100, step: 1 }}
+                inputProps={{ min: 1, max: 99, step: 1 }}
                 {...getLtrTextFieldProps({
                   flex: 1,
                   minWidth: { xs: '100%', sm: 130 },
@@ -1483,7 +1483,9 @@ export function AdminProductEditor({
           // For pants, require both waist and inseam (which ensures size is set)
           const isPants = isPantsSizeKind(info.sizeKind);
           const sizeValid = isPants
-            ? info.waist !== undefined && info.inseam !== undefined
+            ? info.waist !== undefined &&
+              info.inseam !== undefined &&
+              formatPantsSize(info.waist, info.inseam) !== ''
             : !!info.size;
           if (!sizeValid || !info.colors.length || !info.weight) {
             showSnackbar('Please fill in all product variant fields', {
