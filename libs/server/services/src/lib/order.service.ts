@@ -236,7 +236,7 @@ export class OrderService {
       queryBuilder.andWhere('order.status = :status', { status });
     }
 
-    if (after) {
+    if (after !== undefined && after !== null) {
       const cursor = await this.decodeCursor(after);
       queryBuilder.andWhere('order.createdAt < :cursor', { cursor });
     }
@@ -253,7 +253,7 @@ export class OrderService {
       edges,
       pageInfo: {
         hasNextPage,
-        hasPreviousPage: !!after,
+        hasPreviousPage: after !== undefined && after !== null && after !== '',
         endCursor: edges[edges.length - 1]?.cursor,
       },
       totalCount: await this.getTotalCount(sellerId, status),
@@ -410,7 +410,7 @@ export class OrderService {
       .orderBy('order.createdAt', 'DESC')
       .addOrderBy('order.id', 'DESC');
 
-    if (after !== undefined) {
+    if (after !== undefined && after !== null) {
       const cursor = await this.decodeCursor(after);
       queryBuilder.andWhere('order.createdAt < :cursor', { cursor });
     }
@@ -427,7 +427,7 @@ export class OrderService {
       edges,
       pageInfo: {
         hasNextPage,
-        hasPreviousPage: !!after,
+        hasPreviousPage: after !== undefined && after !== null && after !== '',
         endCursor: edges[edges.length - 1]?.cursor,
       },
       totalCount: await this.orderRepository.count({
@@ -456,10 +456,13 @@ export class OrderService {
   }
 
   private async decodeCursor(cursor: string): Promise<Date> {
+    if (typeof cursor !== 'string' || cursor.trim() === '') {
+      throw new BadRequestException('Invalid cursor');
+    }
     try {
       const decoded = Buffer.from(cursor, 'base64').toString();
       const date = new Date(decoded);
-      if (!cursor || Number.isNaN(date.getTime())) {
+      if (!decoded || Number.isNaN(date.getTime())) {
         throw new BadRequestException('Invalid cursor');
       }
       return date;

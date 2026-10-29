@@ -24,6 +24,20 @@ export interface ZarinPalVerifyResult {
   success: boolean;
 }
 
+export interface ZarinPalVerifyResponseExtended {
+  code: number;
+  message: string;
+  ref_id?: number | null;
+  card_pan?: string;
+  card_hash?: string;
+  fee_type?: string;
+  fee?: number;
+  orderIds?: string[] | null;
+  orderId?: string | null;
+  orderNumber?: string | null;
+  success?: boolean;
+}
+
 export interface UseZarinPalPaymentOptions {
   onSuccess?: (refId: number) => void;
   onError?: (error: string) => void;
@@ -211,7 +225,7 @@ export function useZarinPalPayment(
           },
         });
 
-        const response = data?.verifyZarinPalPayment;
+        const response = data?.verifyZarinPalPayment as ZarinPalVerifyResponseExtended | null;
         if (!response) {
           throw new Error('No response from payment service');
         }
@@ -228,16 +242,24 @@ export function useZarinPalPayment(
           code: response.code,
           message: response.message,
           ref_id: response.ref_id,
-          orderIds: (response as any).orderIds,
-          orderId: (response as any).orderId,
-          orderNumber: (response as any).orderNumber,
+          orderIds: response.orderIds,
+          orderId: response.orderId,
+          orderNumber: response.orderNumber,
           success: isSuccess,
         };
 
         if (isSuccess && response.ref_id) {
           options?.onSuccess?.(response.ref_id);
         } else if (!isSuccess) {
-          const errorMessage = getZarinPalErrorMessage(response.code);
+          // CRITICAL: For code 100/101 with success=false, the server's response.message
+          // contains the actual failure reason (e.g., "Insufficient stock").
+          // getZarinPalErrorMessage(100) returns "عملیات با موفقیت انجام شد" (success message!)
+          // getZarinPalErrorMessage(101) returns "تراکنش قبلا verify شده است"
+          // So we must use response.message for these codes when success === false.
+          const isGatewaySuccessCode = response.code === 100 || response.code === 101;
+          const errorMessage = isGatewaySuccessCode && response.success === false
+            ? response.message
+            : getZarinPalErrorMessage(response.code);
           setError(errorMessage);
           options?.onError?.(errorMessage);
         }

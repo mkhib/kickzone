@@ -842,6 +842,73 @@ describe('OrderService', () => {
         'Invalid cursor',
       );
     });
+
+    it('should throw BadRequestException for empty string cursor', async () => {
+      await expect(service.findAll(10, '')).rejects.toThrow(BadRequestException);
+      await expect(service.findAll(10, '')).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for whitespace-only cursor', async () => {
+      await expect(service.findAll(10, '   ')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.findAll(10, '   ')).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for base64-encoded non-date string', async () => {
+      const nonDateCursor = Buffer.from('not-a-date').toString('base64');
+      await expect(service.findAll(10, nonDateCursor)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.findAll(10, nonDateCursor)).rejects.toThrow(
+        'Invalid cursor',
+      );
+    });
+
+    it('should handle valid cursor and set hasPreviousPage to true', async () => {
+      const validDate = new Date('2026-01-15T10:00:00.000Z');
+      const validCursor = Buffer.from(validDate.toISOString()).toString('base64');
+      await service.findAll(10, validCursor);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        { cursor: validDate },
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is undefined', async () => {
+      const result = await service.findAll(10, undefined);
+
+      expect(result.pageInfo.hasPreviousPage).toBe(false);
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        expect.any(Object),
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is null', async () => {
+      const result = await service.findAll(10, null as any);
+
+      expect(result.pageInfo.hasPreviousPage).toBe(false);
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        expect.any(Object),
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is empty string', async () => {
+      await expect(service.findAll(10, '')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should apply orderBy createdAt DESC and addOrderBy id DESC', async () => {
+      await service.findAll(10);
+
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'order.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('order.id', 'DESC');
+    });
   });
 
   describe('updateOrder', () => {
@@ -2067,6 +2134,75 @@ describe('OrderService', () => {
       await expect(
         service.getOrdersByCustomerEmail(customerEmail, 10, ''),
       ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for whitespace-only cursor', async () => {
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, '   '),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, '   '),
+      ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for invalid base64 cursor', async () => {
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, 'not-a-valid-cursor'),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, 'not-a-valid-cursor'),
+      ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for base64-encoded non-date string', async () => {
+      const nonDateCursor = Buffer.from('not-a-date').toString('base64');
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, nonDateCursor),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, nonDateCursor),
+      ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should handle valid cursor and set hasPreviousPage to true', async () => {
+      const validDate = new Date('2026-01-15T10:00:00.000Z');
+      const validCursor = Buffer.from(validDate.toISOString()).toString('base64');
+      await service.getOrdersByCustomerEmail(customerEmail, 10, validCursor);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        { cursor: validDate },
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is undefined', async () => {
+      const result = await service.getOrdersByCustomerEmail(customerEmail, 10, undefined);
+
+      expect(result.pageInfo.hasPreviousPage).toBe(false);
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        expect.any(Object),
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is null', async () => {
+      const result = await service.getOrdersByCustomerEmail(customerEmail, 10, null as any);
+
+      expect(result.pageInfo.hasPreviousPage).toBe(false);
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        expect.any(Object),
+      );
+    });
+
+    it('should apply orderBy createdAt DESC and addOrderBy id DESC', async () => {
+      await service.getOrdersByCustomerEmail(customerEmail, 10);
+
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'order.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('order.id', 'DESC');
     });
   });
 

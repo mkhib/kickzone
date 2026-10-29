@@ -1178,6 +1178,230 @@ describe('PaymentResolver Unit Tests', () => {
           'No orders found for this payment authority'
         );
       });
+
+      describe('Pre-verify Stock Check - Fail Closed After Gateway Capture', () => {
+        const createMockOrderWithItems = (overrides: Partial<{
+          id: string;
+          status: OrderStatus;
+          paymentAuthority: string | null;
+          paymentAmount: number | null;
+          paymentCurrency: string | null;
+          orderNumber: string;
+          items: Array<{
+            quantity: number;
+            sellerProduct: { id: string; stockQuantity: number };
+          }>;
+        }> = {}) => ({
+          id: 'order-123',
+          status: OrderStatus.PENDING,
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-123',
+          items: [],
+          ...overrides,
+        });
+
+        it('should return success:false with ref_id when pre-verify stock check fails across batch (order-2 insufficient stock), confirmOrderPayment called 0 times', async () => {
+          // order-1 has sufficient stock (sp-1 qty 1, stock 5)
+          // order-2 has insufficient stock (sp-2 qty 3, stock 1)
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            items: [
+              { quantity: 1, sellerProduct: { id: 'sp-1', stockQuantity: 5 } },
+            ],
+          });
+          const order2 = createMockOrderWithItems({
+            id: 'order-2',
+            orderNumber: 'ORD-002',
+            items: [
+              { quantity: 3, sellerProduct: { id: 'sp-2', stockQuantity: 1 } },
+            ],
+          });
+
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Success', ref_id: 111222 },
+            errors: [],
+          } as any);
+
+          const input = {
+            amount: 6000000,
+            authority,
+            order_id: 'order-1',
+          } as any;
+
+          const result = await resolver.verifyZarinPalPayment(input);
+
+          // CRITICAL: confirmOrderPayment must NOT be called for any order when pre-verify fails
+          expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+
+          // Must return success: false with ref_id (fail-closed after gateway capture)
+          expect(result.success).toBe(false);
+          expect(result.code).toBe(100);
+          expect(result.ref_id).toBe(111222);
+          expect(result.message.toLowerCase()).toContain('insufficient stock');
+          expect(result.message).toContain('111222');
+          expect(result.orderIds).toEqual(['order-1', 'order-2']);
+        });
+
+        it('should return success:false with ref_id when aggregated stock check fails (two orders share same sellerProductId, combined qty > stock)', async () => {
+          // order-1 requests qty 2 of sp-1 (stock 3)
+          // order-2 requests qty 2 of sp-1 (stock 3) -> combined 4 > 3
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            items: [
+              { quantity: 2, sellerProduct: { id: 'sp-1', stockQuantity: 3 } },
+            ],
+          });
+          const order2 = createMockOrderWithItems({
+            id: 'order-2',
+            orderNumber: 'ORD-002',
+            items: [
+              { quantity: 2, sellerProduct: { id: 'sp-1', stockQuantity: 3 } },
+            ],
+          });
+
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Success', ref_id: 222333 },
+            errors: [],
+          } as any);
+
+          const input = {
+            amount: 6000000,
+            authority,
+            order_id: 'order-1',
+          } as any;
+
+          const result = await resolver.verifyZarinPalPayment(input);
+
+          expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+
+          expect(result.success).toBe(false);
+          expect(result.code).toBe(100);
+          expect(result.ref_id).toBe(222333);
+          expect(result.message.toLowerCase()).toContain('insufficient stock');
+          expect(result.message).toContain('222333');
+        });
+
+        it('should rollback confirmed siblings when later order fails confirmOrderPayment (3-order batch, id ASC sort)', async () => {
+          // Input orders: order-3, order-1, order-2 (unsorted)
+          // After sort: order-1, order-2, order-3
+          // order-1 confirms, order-2 confirms, order-3 throws
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            paymentAmount: 150000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-x', stockQuantity: 10 } }],
+          });
+          const order2 = createMockOrderWithItems({
+            id: 'order-2',
+            orderNumber: 'ORD-002',
+            paymentAmount: 150000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-x', stockQuantity: 10 } }],
+          });
+          const order3 = createMockOrderWithItems({
+            id: 'order-3',
+            orderNumber: 'ORD-003',
+            paymentAmount: 150000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-3', stockQuantity: 10 } }],
+          });
+
+          // Return in unsorted order to test id ASC sorting
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order3, order1, order2] as any);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Verified', ref_id: 777888 },
+            errors: [],
+          } as any);
+
+          // order-1 succeeds, order-2 succeeds, order-3 throws
+          orderService.confirmOrderPayment
+            .mockResolvedValueOnce(undefined as any) // order-1
+            .mockResolvedValueOnce(undefined as any) // order-2
+            .mockRejectedValueOnce(new BadRequestException('Insufficient stock for product sp-3 during lock'));
+
+          // Mock updateOrderStatus for rollback verification
+          orderService.updateOrderStatus = jest.fn().mockResolvedValue(undefined as any);
+
+          const input = {
+            amount: 150000,
+            authority,
+            order_id: 'order-1',
+          } as any;
+
+          const result = await resolver.verifyZarinPalPayment(input);
+
+          // Confirm calls should be in id ASC order: order-1, order-2, order-3
+          expect(orderService.confirmOrderPayment).toHaveBeenNthCalledWith(1, 'order-1');
+          expect(orderService.confirmOrderPayment).toHaveBeenNthCalledWith(2, 'order-2');
+          expect(orderService.confirmOrderPayment).toHaveBeenNthCalledWith(3, 'order-3');
+
+          // Rollback should be called for BOTH order-1 and order-2
+          expect(orderService.updateOrderStatus).toHaveBeenCalledTimes(2);
+          expect(orderService.updateOrderStatus).toHaveBeenNthCalledWith(1, 'order-1', OrderStatus.CANCELLED);
+          expect(orderService.updateOrderStatus).toHaveBeenNthCalledWith(2, 'order-2', OrderStatus.CANCELLED);
+
+          // Must return success: false with ref_id
+          expect(result.success).toBe(false);
+          expect(result.code).toBe(100);
+          expect(result.ref_id).toBe(777888);
+          expect(result.message).toContain('777888');
+        });
+
+        it('should survive rollback failure (updateOrderStatus rejects) and still return success:false with ref_id', async () => {
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            paymentAmount: 100000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-1', stockQuantity: 10 } }],
+          });
+          const order2 = createMockOrderWithItems({
+            id: 'order-2',
+            orderNumber: 'ORD-002',
+            paymentAmount: 100000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-2', stockQuantity: 10 } }],
+          });
+
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Verified', ref_id: 444555 },
+            errors: [],
+          } as any);
+
+          // order-1 confirms, order-2 throws
+          orderService.confirmOrderPayment
+            .mockResolvedValueOnce(undefined as any) // order-1
+            .mockRejectedValueOnce(new Error('Confirmation DB failure'));
+
+          // updateOrderStatus for rollback ALSO rejects (DB connection lost)
+          orderService.updateOrderStatus = jest.fn().mockRejectedValue(new Error('Rollback DB connection lost'));
+
+          const input = {
+            amount: 100000,
+            authority,
+            order_id: 'order-1',
+          } as any;
+
+          const result = await resolver.verifyZarinPalPayment(input);
+
+          // Should NOT throw unhandled error
+          // Should have attempted rollback for order-1
+          expect(orderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+
+          // Must return success: false with ref_id and original error message
+          expect(result.success).toBe(false);
+          expect(result.code).toBe(100);
+          expect(result.ref_id).toBe(444555);
+          expect(result.message).toContain('Confirmation DB failure');
+        });
+      });
     });
 
     describe('cancelPendingZarinPalOrder - Multi-Seller Batch', () => {
