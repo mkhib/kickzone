@@ -1395,36 +1395,37 @@ RB["index.ts"]
 subgraph RC["lib"]
 RD["product-sizes.ts"]
 RE["product-sizes.pants-formats.spec.ts"]
-RF["product-sizes.pants-strict.spec.ts"]
-RG["product-sizes.spec.ts"]
+RF["product-sizes.pants-label.spec.ts"]
+RG["product-sizes.pants-strict.spec.ts"]
+RH["product-sizes.spec.ts"]
 end
 end
 end
-subgraph RH["shared-i18n"]
-subgraph RI["src"]
-RJ["index.ts"]
-subgraph RK["lib"]
-RL["language-context.tsx"]
-RM["language-detector.ts"]
-subgraph RN["locales"]
-RO["i18n-react.tsx"]
-RP["i18n-util.ts"]
-RQ["i18n-util.async.ts"]
-subgraph RR["en"]
-RS["index.ts"]
+subgraph RI["shared-i18n"]
+subgraph RJ["src"]
+RK["index.ts"]
+subgraph RL["lib"]
+RM["language-context.tsx"]
+RN["language-detector.ts"]
+subgraph RO["locales"]
+RP["i18n-react.tsx"]
+RQ["i18n-util.ts"]
+RR["i18n-util.async.ts"]
+subgraph RS["en"]
+RT["index.ts"]
 end
-subgraph RU["fa"]
-RV["index.ts"]
+subgraph RV["fa"]
+RW["index.ts"]
 end
-RW["formatters.ts"]
-RX["i18n-types.ts"]
-RY["i18n-util.sync.ts"]
-RZ["navigator-detector.ts"]
+RX["formatters.ts"]
+RY["i18n-types.ts"]
+RZ["i18n-util.sync.ts"]
+S0["navigator-detector.ts"]
 end
-RT["site-name.ts"]
-S0["table-localization.ts"]
-S1["theme-provider.tsx"]
-S2["use-page-title.ts"]
+RU["site-name.ts"]
+S1["table-localization.ts"]
+S2["theme-provider.tsx"]
+S3["use-page-title.ts"]
 end
 end
 end
@@ -1921,32 +1922,33 @@ RB-->RD
 RE-->RD
 RF-->RD
 RG-->RD
-RJ-->RL
-RJ-->RM
-RJ-->RO
-RJ-->RX
-RJ-->RP
-RJ-->RQ
-RJ-->RY
-RJ-->RZ
-RJ-->RT
-RJ-->S0
-RJ-->S1
-RJ-->S2
-RL-->RM
-RL-->RO
-RL-->RQ
-RO-->RP
-RQ-->RS
-RQ-->RV
-RQ-->RW
-RQ-->RP
-RS-->RT
-RV-->RT
-RY-->RS
-RY-->RV
-RY-->RW
-RY-->RP
-S0-->RO
-S1-->RL
-S2-->RO
+RH-->RD
+RK-->RM
+RK-->RN
+RK-->RP
+RK-->RY
+RK-->RQ
+RK-->RR
+RK-->RZ
+RK-->S0
+RK-->RU
+RK-->S1
+RK-->S2
+RK-->S3
+RM-->RN
+RM-->RP
+RM-->RR
+RP-->RQ
+RR-->RT
+RR-->RW
+RR-->RX
+RR-->RQ
+RT-->RU
+RW-->RU
+RZ-->RT
+RZ-->RW
+RZ-->RX
+RZ-->RQ
+S1-->RP
+S2-->RM
+S3-->RP

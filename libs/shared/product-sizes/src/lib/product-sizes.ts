@@ -213,8 +213,12 @@ export function formatSizeLabel(
     return canonicalCode;
   }
   if (isPantsSizeKind(kind)) {
-    const parsed = parsePantsSize(canonicalCode);
-    return parsed ? `W${parsed.waist}/L${parsed.inseam}` : canonicalCode;
+    const trimmed = String(canonicalCode ?? '').trim();
+    if (!trimmed) {
+      return '';
+    }
+    const parsed = parsePantsSize(trimmed);
+    return parsed ? `W${parsed.waist}/L${parsed.inseam}` : trimmed;
   }
   if (system === FootwearSizeSystem.Us) {
     const us = euToUs(canonicalCode);
