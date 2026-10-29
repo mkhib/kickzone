@@ -68,6 +68,7 @@ import {
   isFootwearSizeKind,
   isPantsSizeKind,
   SizeKind,
+  formatSizeLabel,
 } from '@kickzone-workspace/product-sizes';
 import {
   useI18nContext,
@@ -592,6 +593,13 @@ export function CustomerProductDetails() {
         : SizeKind.Apparel;
     return sortSizeCodes(kind, rawSizes);
   }, [activeColorwayVariants]);
+
+  // Determine if the active product is pants to format size labels accordingly
+  const isPantsProduct = isPantsSizeKind(
+    activeColorwayVariants[0]?.productInfo.sizeKind
+  );
+  const displaySize = (size: string): string =>
+    isPantsProduct ? formatSizeLabel(SizeKind.Pants, size) || size : size;
 
 
   // Default selected size
@@ -1859,7 +1867,7 @@ export function CustomerProductDetails() {
                             }}
                           >
                             <bdi dir={isRTL ? 'rtl' : 'ltr'}>
-                              {isRTL && /\d/.test(size) ? toFarsiDigits(size) : size}
+                              {isRTL && /\d/.test(size) ? toFarsiDigits(displaySize(size)) : displaySize(size)}
                             </bdi>
                           </Box>
                         );

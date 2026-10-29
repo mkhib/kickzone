@@ -17420,6 +17420,11 @@
       "customer-product-details": [
         {
           "source": "customer-product-details",
+          "target": "product-sizes",
+          "type": "static"
+        },
+        {
+          "source": "customer-product-details",
           "target": "customers-layout",
           "type": "static"
         },
@@ -17451,11 +17456,6 @@
         {
           "source": "customer-product-details",
           "target": "client-shared-graphql",
-          "type": "static"
-        },
-        {
-          "source": "customer-product-details",
-          "target": "product-sizes",
           "type": "static"
         },
         {

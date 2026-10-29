@@ -316,6 +316,103 @@ export class Color {
 }
 </file>
 
+<file path="libs/server/entities/src/lib/seller-info.entity.ts">
+import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  Relation,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
+import { User } from './user.entity';
+import { SellerProduct } from './seller-product.entity';
+import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
+
+@ObjectType()
+@Entity()
+export class SellerInfo {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field()
+  @Column()
+  storeName: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  phone?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  address?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  city?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  state?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  zipCode?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  country?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  businessName?: string;
+
+  @Field({ defaultValue: true })
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Field({ defaultValue: false })
+  @Column({ default: false })
+  canManageCatalog: boolean;
+
+  @Field(() => Float, { defaultValue: 0 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  shippingFee: number;
+
+  @Field(() => User)
+  @OneToOne(() => User)
+  @JoinColumn()
+  user: Relation<User>;
+
+  @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.seller)
+  sellerProducts: SellerProduct[];
+}
+
+@ObjectType()
+export class SellerEdge implements Edge<SellerInfo> {
+  @Field(() => SellerInfo)
+  node: SellerInfo;
+
+  @Field()
+  cursor: string;
+}
+
+@ObjectType()
+export class SellerConnection implements Connection<SellerInfo> {
+  @Field(() => [SellerEdge])
+  edges: SellerEdge[];
+
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+
+  @Field(() => Int)
+  totalCount: number;
+}
+</file>
+
 <file path="libs/server/entities/src/lib/seller-product.entity.ts">
 // src/entities/seller-product.entity.ts
 import {
@@ -632,6 +729,46 @@ import { PlatformSettingsModule } from './platform-settings.module';
   exports: [CartService],
 })
 export class CartModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/category.module.ts">
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Category, Product } from '@kickzone-workspace/entities';
+import { ProductService, CategoryService } from '@kickzone-workspace/services';
+import { CategoryResolver } from '@kickzone-workspace/resolvers';
+import { ProductModule } from './product.module';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Category, Product]),
+    ProductModule,
+    TranslationModule,
+    CatalogGuardModule,
+  ],
+  providers: [ProductService, CategoryResolver, CategoryService],
+  exports: [ProductService, CategoryService],
+})
+export class CategoryModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/color.module.ts">
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Color } from '@kickzone-workspace/entities';
+import { ColorService } from '@kickzone-workspace/services';
+import { ColorResolver } from '@kickzone-workspace/resolvers';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([Color]), TranslationModule, CatalogGuardModule],
+  providers: [ColorService, ColorResolver],
+  exports: [ColorService, TypeOrmModule.forFeature([Color])],
+})
+export class ColorModule {}
 </file>
 
 <file path="libs/server/modules/src/lib/currency.module.ts">
@@ -1124,103 +1261,6 @@ export class ProductDescription {
 }
 </file>
 
-<file path="libs/server/entities/src/lib/seller-info.entity.ts">
-import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  Relation,
-  OneToOne,
-  JoinColumn,
-  OneToMany,
-} from 'typeorm';
-import { User } from './user.entity';
-import { SellerProduct } from './seller-product.entity';
-import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
-
-@ObjectType()
-@Entity()
-export class SellerInfo {
-  @Field(() => Int)
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Field()
-  @Column()
-  storeName: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  phone?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  address?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  city?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  state?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  zipCode?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  country?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  businessName?: string;
-
-  @Field({ defaultValue: true })
-  @Column({ default: true })
-  isActive: boolean;
-
-  @Field({ defaultValue: false })
-  @Column({ default: false })
-  canManageCatalog: boolean;
-
-  @Field(() => Float, { defaultValue: 0 })
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
-  shippingFee: number;
-
-  @Field(() => User)
-  @OneToOne(() => User)
-  @JoinColumn()
-  user: Relation<User>;
-
-  @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.seller)
-  sellerProducts: SellerProduct[];
-}
-
-@ObjectType()
-export class SellerEdge implements Edge<SellerInfo> {
-  @Field(() => SellerInfo)
-  node: SellerInfo;
-
-  @Field()
-  cursor: string;
-}
-
-@ObjectType()
-export class SellerConnection implements Connection<SellerInfo> {
-  @Field(() => [SellerEdge])
-  edges: SellerEdge[];
-
-  @Field(() => PageInfo)
-  pageInfo: PageInfo;
-
-  @Field(() => Int)
-  totalCount: number;
-}
-</file>
-
 <file path="libs/server/inputs/src/lib/brand.input.ts">
 import { InputType, Field, Int } from '@nestjs/graphql';
 
@@ -1438,293 +1478,6 @@ export class OrdersPaginationInput {
 
   @Field(() => String, { nullable: true })
   after?: string;
-}
-</file>
-
-<file path="libs/server/modules/src/lib/auth.module.ts">
-import { AuthController } from '@kickzone-workspace/controllers';
-import { AuthService } from '@kickzone-workspace/services';
-import { LocalStrategy } from '@kickzone-workspace/strategies';
-import { Module, forwardRef } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { UserModule } from './user.module';
-import { JwtModule } from '@nestjs/jwt';
-import { AuthResolver } from '@kickzone-workspace/resolvers';
-import { EmailModule } from './email.module';
-import { TokenModule } from './token.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { RefreshToken } from '@kickzone-workspace/entities';
-
-@Module({
-  imports: [
-    forwardRef(() => UserModule),
-    PassportModule,
-    EmailModule,
-    TokenModule,
-    TypeOrmModule.forFeature([RefreshToken]),
-    JwtModule.register({
-      secret: process.env['JWT_SECRET'] || 'defaultSecret',
-      signOptions: { expiresIn: '15m' },
-    }),
-  ],
-  providers: [AuthService, LocalStrategy, AuthResolver],
-  controllers: [AuthController],
-  exports: [AuthService],
-})
-export class AuthModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/brand.module.ts">
-import { CatalogGuardModule } from './catalog-guard.module';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Brand, Product } from '@kickzone-workspace/entities';
-import { BrandService } from '@kickzone-workspace/services';
-import { BrandResolver } from '@kickzone-workspace/resolvers';
-import { TranslationModule } from './translation.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([Brand, Product]),
-    TranslationModule,
-    CatalogGuardModule,
-  ],
-  providers: [BrandService, BrandResolver],
-  exports: [BrandService, TypeOrmModule.forFeature([Brand])],
-})
-export class BrandModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/category.module.ts">
-import { CatalogGuardModule } from './catalog-guard.module';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Category, Product } from '@kickzone-workspace/entities';
-import { ProductService, CategoryService } from '@kickzone-workspace/services';
-import { CategoryResolver } from '@kickzone-workspace/resolvers';
-import { ProductModule } from './product.module';
-import { TranslationModule } from './translation.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([Category, Product]),
-    ProductModule,
-    TranslationModule,
-    CatalogGuardModule,
-  ],
-  providers: [ProductService, CategoryResolver, CategoryService],
-  exports: [ProductService, CategoryService],
-})
-export class CategoryModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/color.module.ts">
-import { CatalogGuardModule } from './catalog-guard.module';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Color } from '@kickzone-workspace/entities';
-import { ColorService } from '@kickzone-workspace/services';
-import { ColorResolver } from '@kickzone-workspace/resolvers';
-import { TranslationModule } from './translation.module';
-
-@Module({
-  imports: [TypeOrmModule.forFeature([Color]), TranslationModule, CatalogGuardModule],
-  providers: [ColorService, ColorResolver],
-  exports: [ColorService, TypeOrmModule.forFeature([Color])],
-})
-export class ColorModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/graphql-context.module.ts">
-import { Module } from '@nestjs/common';
-import { AuthService } from '@kickzone-workspace/services';
-import { UserModule } from './user.module';
-import { JwtModule } from '@nestjs/jwt';
-import { EmailModule } from './email.module';
-import { TokenModule } from './token.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { RefreshToken } from '@kickzone-workspace/entities';
-
-@Module({
-  imports: [
-    UserModule,
-    EmailModule,
-    TokenModule,
-    TypeOrmModule.forFeature([RefreshToken]),
-    JwtModule.register({
-      secret: process.env['JWT_SECRET'] || 'defaultSecret',
-      signOptions: { expiresIn: '15m' },
-    }),
-  ],
-  providers: [AuthService],
-  exports: [AuthService],
-})
-export class GraphqlContextModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/product-info.module.ts">
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { ProductInfo, ProductInfoColor } from '@kickzone-workspace/entities';
-import { ProductService } from '@kickzone-workspace/services';
-import { ProductModule } from './product.module';
-import { TranslationModule } from './translation.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([ProductInfo, ProductInfoColor]),
-    ProductModule,
-    TranslationModule,
-  ],
-  providers: [ProductService],
-  exports: [ProductService],
-})
-export class ProductInfoModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/seller-info.module.ts">
-import {
-  SellerInfo,
-  SellerProduct,
-  ProductInfo,
-  User,
-  RefreshToken,
-} from '@kickzone-workspace/entities';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserModule } from './user.module';
-import {
-  AuthService,
-  EmailService,
-  SellerService,
-} from '@kickzone-workspace/services';
-import { TokenModule } from './token.module';
-import { SellerResolver } from '@kickzone-workspace/resolvers';
-import { ProductModule } from './product.module';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      SellerInfo,
-      SellerProduct,
-      ProductInfo,
-      User,
-      RefreshToken,
-    ]),
-    UserModule,
-    ProductModule,
-    JwtModule.register({
-      secret: process.env['JWT_SECRET'] || 'defaultSecret',
-      signOptions: { expiresIn: '15m' },
-    }),
-    TokenModule,
-  ],
-  providers: [
-    SellerService,
-    SellerResolver,
-    AuthService,
-    EmailService,
-    ConfigService,
-  ],
-  exports: [SellerService],
-})
-export class SellerInfoModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/site-language.module.ts">
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { SiteLanguage } from '@kickzone-workspace/entities';
-import { SiteLanguageService } from '@kickzone-workspace/services';
-import { SiteLanguageResolver } from '@kickzone-workspace/resolvers';
-
-@Module({
-  imports: [TypeOrmModule.forFeature([SiteLanguage])],
-  providers: [SiteLanguageService, SiteLanguageResolver],
-  exports: [SiteLanguageService, TypeOrmModule],
-})
-export class SiteLanguageModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/user.module.ts">
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@kickzone-workspace/entities';
-import { UserService } from '@kickzone-workspace/services';
-import { UserResolver } from '@kickzone-workspace/resolvers';
-import { AuthModule } from './auth.module';
-import { CustomerProfileModule } from './customer-profile.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([User]),
-    forwardRef(() => AuthModule),
-    CustomerProfileModule,
-  ],
-  providers: [UserService, UserResolver],
-  exports: [UserService],
-})
-export class UserModule {}
-</file>
-
-<file path="libs/server/entities/src/lib/product-info.entity.ts">
-import { ObjectType, Field, Int, Float, registerEnumType } from '@nestjs/graphql';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  OneToMany,
-  Relation,
-} from 'typeorm';
-import { SizeKind } from '@kickzone-workspace/product-sizes';
-import { Product } from './product.entity';
-import { Color } from './color.entity';
-import { ProductInfoColor } from './product-info-color.entity';
-
-registerEnumType(SizeKind, {
-  name: 'SizeKind',
-});
-
-@ObjectType()
-@Entity()
-export class ProductInfo {
-  @Field(() => Int)
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  /** Canonical size code: apparel letter or EU footwear number. */
-  @Field()
-  @Column()
-  size: string;
-
-  @Field(() => SizeKind)
-  @Column({ type: 'varchar', default: SizeKind.Apparel })
-  sizeKind: SizeKind;
-
-  @OneToMany(() => ProductInfoColor, (link) => link.productInfo, {
-    cascade: true,
-    eager: true,
-  })
-  colorLinks: Relation<ProductInfoColor>[];
-
-  /** Ordered colors for this variant (resolved from colorLinks). */
-  @Field(() => [Color])
-  colors: Color[];
-
-  @Field(() => Float)
-  @Column('decimal', { precision: 10, scale: 2 })
-  weight: number;
-
-  @Field(() => Product)
-  @ManyToOne(() => Product, (product) => product.productInfos)
-  product: Product;
-
-  @Field(() => [String], { nullable: true })
-  @Column('simple-array', { nullable: true, default: '' })
-  images: string[];
 }
 </file>
 
@@ -1946,6 +1699,60 @@ export class SellerFilterInput {
 }
 </file>
 
+<file path="libs/server/modules/src/lib/auth.module.ts">
+import { AuthController } from '@kickzone-workspace/controllers';
+import { AuthService } from '@kickzone-workspace/services';
+import { LocalStrategy } from '@kickzone-workspace/strategies';
+import { Module, forwardRef } from '@nestjs/common';
+import { PassportModule } from '@nestjs/passport';
+import { UserModule } from './user.module';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthResolver } from '@kickzone-workspace/resolvers';
+import { EmailModule } from './email.module';
+import { TokenModule } from './token.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RefreshToken } from '@kickzone-workspace/entities';
+
+@Module({
+  imports: [
+    forwardRef(() => UserModule),
+    PassportModule,
+    EmailModule,
+    TokenModule,
+    TypeOrmModule.forFeature([RefreshToken]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+  ],
+  providers: [AuthService, LocalStrategy, AuthResolver],
+  controllers: [AuthController],
+  exports: [AuthService],
+})
+export class AuthModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/brand.module.ts">
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Brand, Product } from '@kickzone-workspace/entities';
+import { BrandService } from '@kickzone-workspace/services';
+import { BrandResolver } from '@kickzone-workspace/resolvers';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Brand, Product]),
+    TranslationModule,
+    CatalogGuardModule,
+  ],
+  providers: [BrandService, BrandResolver],
+  exports: [BrandService, TypeOrmModule.forFeature([Brand])],
+})
+export class BrandModule {}
+</file>
+
 <file path="libs/server/modules/src/lib/catalog-guard.module.ts">
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -1959,6 +1766,199 @@ import { CatalogGuard } from '@kickzone-workspace/guards';
   exports: [CatalogGuard, TypeOrmModule],
 })
 export class CatalogGuardModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/graphql-context.module.ts">
+import { Module } from '@nestjs/common';
+import { AuthService } from '@kickzone-workspace/services';
+import { UserModule } from './user.module';
+import { JwtModule } from '@nestjs/jwt';
+import { EmailModule } from './email.module';
+import { TokenModule } from './token.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RefreshToken } from '@kickzone-workspace/entities';
+
+@Module({
+  imports: [
+    UserModule,
+    EmailModule,
+    TokenModule,
+    TypeOrmModule.forFeature([RefreshToken]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+  ],
+  providers: [AuthService],
+  exports: [AuthService],
+})
+export class GraphqlContextModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/product-info.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ProductInfo, ProductInfoColor } from '@kickzone-workspace/entities';
+import { ProductService } from '@kickzone-workspace/services';
+import { ProductModule } from './product.module';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([ProductInfo, ProductInfoColor]),
+    ProductModule,
+    TranslationModule,
+  ],
+  providers: [ProductService],
+  exports: [ProductService],
+})
+export class ProductInfoModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/seller-info.module.ts">
+import {
+  SellerInfo,
+  SellerProduct,
+  ProductInfo,
+  User,
+  RefreshToken,
+} from '@kickzone-workspace/entities';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from './user.module';
+import {
+  AuthService,
+  EmailService,
+  SellerService,
+} from '@kickzone-workspace/services';
+import { TokenModule } from './token.module';
+import { SellerResolver } from '@kickzone-workspace/resolvers';
+import { ProductModule } from './product.module';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      SellerInfo,
+      SellerProduct,
+      ProductInfo,
+      User,
+      RefreshToken,
+    ]),
+    UserModule,
+    ProductModule,
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+    TokenModule,
+  ],
+  providers: [
+    SellerService,
+    SellerResolver,
+    AuthService,
+    EmailService,
+    ConfigService,
+  ],
+  exports: [SellerService],
+})
+export class SellerInfoModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/site-language.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SiteLanguage } from '@kickzone-workspace/entities';
+import { SiteLanguageService } from '@kickzone-workspace/services';
+import { SiteLanguageResolver } from '@kickzone-workspace/resolvers';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([SiteLanguage])],
+  providers: [SiteLanguageService, SiteLanguageResolver],
+  exports: [SiteLanguageService, TypeOrmModule],
+})
+export class SiteLanguageModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/user.module.ts">
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '@kickzone-workspace/entities';
+import { UserService } from '@kickzone-workspace/services';
+import { UserResolver } from '@kickzone-workspace/resolvers';
+import { AuthModule } from './auth.module';
+import { CustomerProfileModule } from './customer-profile.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    forwardRef(() => AuthModule),
+    CustomerProfileModule,
+  ],
+  providers: [UserService, UserResolver],
+  exports: [UserService],
+})
+export class UserModule {}
+</file>
+
+<file path="libs/server/entities/src/lib/product-info.entity.ts">
+import { ObjectType, Field, Int, Float, registerEnumType } from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  ManyToOne,
+  OneToMany,
+  Relation,
+} from 'typeorm';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
+import { Product } from './product.entity';
+import { Color } from './color.entity';
+import { ProductInfoColor } from './product-info-color.entity';
+
+registerEnumType(SizeKind, {
+  name: 'SizeKind',
+});
+
+@ObjectType()
+@Entity()
+export class ProductInfo {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  /** Canonical size code: apparel letter or EU footwear number. */
+  @Field()
+  @Column()
+  size: string;
+
+  @Field(() => SizeKind)
+  @Column({ type: 'varchar', default: SizeKind.Apparel })
+  sizeKind: SizeKind;
+
+  @OneToMany(() => ProductInfoColor, (link) => link.productInfo, {
+    cascade: true,
+    eager: true,
+  })
+  colorLinks: Relation<ProductInfoColor>[];
+
+  /** Ordered colors for this variant (resolved from colorLinks). */
+  @Field(() => [Color])
+  colors: Color[];
+
+  @Field(() => Float)
+  @Column('decimal', { precision: 10, scale: 2 })
+  weight: number;
+
+  @Field(() => Product)
+  @ManyToOne(() => Product, (product) => product.productInfos)
+  product: Product;
+
+  @Field(() => [String], { nullable: true })
+  @Column('simple-array', { nullable: true, default: '' })
+  images: string[];
+}
 </file>
 
 <file path="libs/server/entities/src/lib/product.entity.ts">
