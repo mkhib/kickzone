@@ -616,7 +616,7 @@ export function CustomersShopScreen() {
                     quantity: 1,
                     unitPrice: sp.price,
                     color: pInfo?.colors?.[0]?.name || null,
-                    size: pInfo?.size || 'L',
+                    size: pInfo?.size || null,
                     sellerId: String(sp.seller?.id || 1),
                     sellerName: '',
                     sellerShippingFee: sp.seller?.shippingFee || 0,
