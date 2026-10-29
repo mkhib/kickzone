@@ -16867,6 +16867,11 @@
           "source": "customer-order-confirmation",
           "target": "glassmorphism-container",
           "type": "static"
+        },
+        {
+          "source": "customer-order-confirmation",
+          "target": "product-sizes",
+          "type": "static"
         }
       ],
       "customer-checkout-store": [],

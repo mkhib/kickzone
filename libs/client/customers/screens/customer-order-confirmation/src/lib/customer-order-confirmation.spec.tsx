@@ -21,6 +21,10 @@ vi.mock('@kickzone-workspace/glassmorphism-container', () => ({
   ),
 }));
 
+vi.mock('@kickzone-workspace/customers-auth-context', () => ({
+  useCustomersAuth: () => ({ user: null, logout: vi.fn() }),
+}));
+
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
   useI18nContext: () => ({
     LL: {
@@ -33,6 +37,8 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         emailConfirmation: () => 'Email confirmation sent',
         viewOrders: () => 'View Orders',
         continueShopping: () => 'Continue Shopping',
+        createAccountPrompt: () => 'Create account for faster tracking',
+        createAccountDescription: () => 'Save your info for future orders',
       },
       orders: {
         trackingNumber: () => 'Tracking Number',
@@ -52,6 +58,9 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
       form: {
         email: () => 'Email',
         phone: () => 'Phone',
+      },
+      button: {
+        signUp: () => 'Sign Up',
       },
     },
   }),

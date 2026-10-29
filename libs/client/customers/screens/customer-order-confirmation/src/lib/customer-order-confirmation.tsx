@@ -28,6 +28,7 @@ import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import { formatSizeLabel, SizeKind } from '@kickzone-workspace/product-sizes';
 
 interface OrderItem {
   productId: string;
@@ -59,6 +60,15 @@ interface OrderData {
   notes?: string | null;
   createdAt: string;
 }
+
+const CANONICAL_PANTS_SIZE_RE = /^[1-9]\d?x[1-9]\d?$/;
+const displayOrderItemSize = (size?: string | null): string => {
+  if (!size) return '';
+  const trimmed = size.trim();
+  return CANONICAL_PANTS_SIZE_RE.test(trimmed)
+    ? formatSizeLabel(SizeKind.Pants, trimmed) || size
+    : size;
+};
 
 export function CustomerOrderConfirmation() {
   const { LL } = useI18nContext();
@@ -476,7 +486,7 @@ export function CustomerOrderConfirmation() {
                                     color="text.secondary"
                                     sx={{ display: 'block', mt: 0.25 }}
                                   >
-                                    {[item.color, item.size]
+                                    {[item.color, displayOrderItemSize(item.size)]
                                       .filter(Boolean)
                                       .join(' • ')}
                                   </Typography>
