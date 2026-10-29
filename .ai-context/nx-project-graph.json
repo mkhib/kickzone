@@ -18352,6 +18352,11 @@
         },
         {
           "source": "sellers-products-screen",
+          "target": "product-sizes",
+          "type": "static"
+        },
+        {
+          "source": "sellers-products-screen",
           "target": "glassmorphism-container",
           "type": "static"
         },

@@ -10,6 +10,7 @@ import {
 } from '@kickzone-workspace/shared-i18n';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
+import { formatSizeLabel, isPantsSizeKind, SizeKind } from '@kickzone-workspace/product-sizes';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -45,6 +46,9 @@ import DialogActions from '@mui/material/DialogActions';
 import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 import { useSellersAuthContext } from '@kickzone-workspace/sellers-auth-context';
 import { useState, useEffect } from 'react';
+
+const displayVariantSize = (info?: { size?: string | null; sizeKind?: string | null } | null): string =>
+  !info?.size ? '' : isPantsSizeKind(info.sizeKind) ? formatSizeLabel(SizeKind.Pants, info.size) || info.size : info.size;
 
 const SEARCH_DEBOUNCE_MS = 400;
 
@@ -610,7 +614,7 @@ export const SellersProducts = () => {
                           <Typography variant="body2" color="text.secondary">
                             <strong>{LL.products.sizes()}:</strong>{' '}
                             {sellerProducts
-                              .map((sp) => sp.productInfo?.size)
+                              .map((sp) => displayVariantSize(sp.productInfo))
                               .filter(Boolean)
                               .join(', ')}
                           </Typography>
@@ -1137,7 +1141,7 @@ export const SellersProducts = () => {
                                     color="text.secondary"
                                   >
                                     <strong>{LL.products.size()}:</strong>{' '}
-                                    {sellerProduct.productInfo.size}
+                                    {displayVariantSize(sellerProduct.productInfo)}
                                   </Typography>
                                   <Typography
                                     variant="body2"
