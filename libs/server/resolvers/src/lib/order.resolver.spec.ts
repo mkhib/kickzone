@@ -287,6 +287,54 @@ describe('OrderResolver', () => {
     });
   });
 
+  describe('myOrders query', () => {
+    const mockOrder = createMockOrder({ customerEmail: 'customer@example.com' });
+    const mockConnection = createMockConnection([mockOrder]);
+
+    beforeEach(() => {
+      mockOrderService.getOrdersByCustomerEmail.mockResolvedValue(mockConnection);
+    });
+
+    describe('JWT Shape & Role Matrix', () => {
+      it('succeeds for CUSTOMER with { sub, userType: "customer", email } (lowercase userType, sub instead of id)', async () => {
+        const user = { sub: 'u-1', userType: 'customer', email: 'customer@example.com' } as any;
+        const result = await resolver.myOrders(user, 10, undefined);
+
+        expect(mockOrderService.getOrdersByCustomerEmail).toHaveBeenCalledWith('customer@example.com', 10, undefined);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual(mockOrder);
+      });
+
+      it('throws NotFoundException for SELLER with { sub, userType: "seller" }', async () => {
+        const user = { sub: 's-1', userType: 'seller' } as any;
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow('Sellers should use mySellerOrders query instead');
+        expect(mockOrderService.getOrdersByCustomerEmail).not.toHaveBeenCalled();
+      });
+
+      it('throws NotFoundException for ADMIN with { id, role: "ADMIN" }', async () => {
+        const user = { id: 'a-1', role: 'ADMIN' } as any;
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow('Sellers should use mySellerOrders query instead');
+        expect(mockOrderService.getOrdersByCustomerEmail).not.toHaveBeenCalled();
+      });
+
+      it('throws NotFoundException for UNKNOWN role', async () => {
+        const user = { sub: 'u-1', userType: 'INVALID' } as any;
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow('Sellers should use mySellerOrders query instead');
+      });
+
+      it('throws NotFoundException for null user', async () => {
+        await expect(resolver.myOrders(null as any, 10, undefined)).rejects.toThrow(NotFoundException);
+      });
+
+      it('throws NotFoundException for empty object user', async () => {
+        await expect(resolver.myOrders({} as any, 10, undefined)).rejects.toThrow(NotFoundException);
+      });
+    });
+  });
+
   describe('mySellerOrders query', () => {
     const mockOrder = createMockOrder({ id: 'order-1', status: OrderStatus.PENDING });
     const mockOrderDelivered = createMockOrder({ id: 'order-2', status: OrderStatus.DELIVERED });
@@ -358,6 +406,79 @@ describe('OrderResolver', () => {
       await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(
         'Seller not found for this user'
       );
+    });
+
+    describe('JWT Shape, Status Filter, & PII Redaction Matrix', () => {
+      const mockOrderProcessing = createMockOrder({ id: 'order-1', status: OrderStatus.PROCESSING });
+      const mockOrderPending = createMockOrder({ id: 'order-2', status: OrderStatus.PENDING });
+      const mockSellerInfo = createMockSellerInfo({ id: 42, user: { id: 'seller-user-42' } as any });
+      const mockSellerConnection = createMockSellerConnection([mockOrderProcessing, mockOrderPending]);
+
+      beforeEach(() => {
+        mockOrderService.getOrdersBySeller.mockResolvedValue(mockSellerConnection);
+        mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+      });
+
+      it('succeeds for SELLER with { sub, userType: "seller" } (lowercase userType and sub claim)', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        const result = await resolver.mySellerOrders(user, 10, undefined, undefined);
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-42');
+        expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('42', 10, undefined, undefined);
+        expect(result).toEqual(mockSellerConnection);
+      });
+
+      it('forwards status filter (PROCESSING) to getOrdersBySeller', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        await resolver.mySellerOrders(user, 10, undefined, OrderStatus.PROCESSING);
+
+        expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('42', 10, undefined, OrderStatus.PROCESSING);
+      });
+
+      it('forwards undefined status to getOrdersBySeller', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        await resolver.mySellerOrders(user, 10, undefined, undefined);
+
+        expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('42', 10, undefined, undefined);
+      });
+
+      it('strips customer PII via toSellerOrder', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        const result = await resolver.mySellerOrders(user, 10, undefined, undefined);
+
+        expect(result.edges).toHaveLength(2);
+        result.edges.forEach((edge) => {
+          expect((edge.node as any).customerEmail).toBeUndefined();
+          expect((edge.node as any).customerPhone).toBeUndefined();
+          expect((edge.node as any).customerName).toBeUndefined();
+          expect((edge.node as any).shippingAddress).toBeUndefined();
+        });
+      });
+
+      it('throws NotFoundException for CUSTOMER with { sub, userType: "customer" }', async () => {
+        const user = { sub: 'c-1', userType: 'customer' } as any;
+        await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
+        expect(mockOrderService.getOrdersBySeller).not.toHaveBeenCalled();
+      });
+
+      it('throws NotFoundException for null user', async () => {
+        await expect(resolver.mySellerOrders(null as any, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders(null as any, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
+      });
+
+      it('throws NotFoundException for empty object user', async () => {
+        await expect(resolver.mySellerOrders({} as any, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders({} as any, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
+      });
+
+      it('throws NotFoundException when sellerService.findOneByUserId returns null', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        mockSellerService.findOneByUserId.mockResolvedValue(null);
+
+        await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow('Seller not found for this user');
+      });
     });
   });
 
@@ -449,6 +570,58 @@ describe('OrderResolver', () => {
         await expect(resolver.order(user, 'order-1')).rejects.toThrow('Access denied');
       });
     });
+
+    describe('JWT Shape { sub, userType } Claims', () => {
+      const mockOrder = createMockOrder({ customerEmail: 'customer@example.com', sellerId: 1 });
+      const mockSellerOrder = toSellerOrder(mockOrder);
+      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as any });
+
+      beforeEach(() => {
+        mockOrderService.findOne.mockResolvedValue(mockOrder);
+        mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+      });
+
+      it('allows SELLER with { sub, userType: "seller" } owning order to receive redacted SellerOrder', async () => {
+        const user = { sub: 's-user', userType: 'seller' } as any;
+        const result = await resolver.order(user, 'order-1');
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
+        expect(result).toEqual(mockSellerOrder);
+        expect((result as any).customerEmail).toBeUndefined();
+        expect((result as any).customerPhone).toBeUndefined();
+        expect((result as any).customerName).toBeUndefined();
+        expect((result as any).shippingAddress).toBeUndefined();
+      });
+
+      it('throws ForbiddenException for non-owner SELLER with { sub, userType: "seller" }', async () => {
+        const user = { sub: 'other-s-user', userType: 'seller' } as any;
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as any });
+        mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
+
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(ForbiddenException);
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow('You do not have permission to view this order');
+      });
+
+      it('allows CUSTOMER with { sub, userType: "customer", email } to read own order', async () => {
+        const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as any;
+        const result = await resolver.order(user, 'order-1');
+
+        expect(result).toEqual(mockOrder);
+      });
+
+      it('throws ForbiddenException for CUSTOMER with { sub, userType: "customer" } reading another customer order', async () => {
+        const user = { sub: 'other-c-user', userType: 'customer', email: 'other@example.com' } as any;
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(ForbiddenException);
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow('You do not have permission to view this order');
+      });
+
+      it('allows ADMIN with { sub, userType: "admin" } to read any order', async () => {
+        const user = { sub: 'a-user', userType: 'admin' } as any;
+        const result = await resolver.order(user, 'order-1');
+
+        expect(result).toEqual(mockOrder);
+      });
+    });
   });
 
   describe('updateOrderStatus mutation', () => {
@@ -525,6 +698,67 @@ describe('OrderResolver', () => {
       await expect(
         resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
       ).rejects.toThrow(ForbiddenException);
+    });
+
+    describe('JWT Shape { sub, userType } Claims', () => {
+      const mockOrder = createMockOrder({ sellerId: 1 });
+      const updatedOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
+      const updatedSellerOrder = toSellerOrder(updatedOrder);
+      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as any });
+
+      beforeEach(() => {
+        mockOrderService.findOne.mockResolvedValue(mockOrder);
+        mockOrderService.updateOrderStatus.mockResolvedValue(updatedOrder);
+        mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+      });
+
+      it('allows SELLER with { sub, userType: "seller" } owning order to update status and receive redacted SellerOrder', async () => {
+        const user = { sub: 's-user', userType: 'seller' } as any;
+        const result = await resolver.updateOrderStatus(user, {
+          id: 'order-1',
+          status: OrderStatus.CONFIRMED,
+        });
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
+        expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CONFIRMED);
+        expect(result).toEqual(updatedSellerOrder);
+        expect((result as any).customerEmail).toBeUndefined();
+      });
+
+      it('allows ADMIN with { sub, userType: "admin" } to update any order and receive full Order', async () => {
+        const user = { sub: 'a-user', userType: 'admin' } as any;
+        const result = await resolver.updateOrderStatus(user, {
+          id: 'order-1',
+          status: OrderStatus.SHIPPED,
+        });
+
+        expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.SHIPPED);
+        expect(result).toEqual(updatedOrder);
+        expect((result as any).customerEmail).toBeDefined();
+      });
+
+      it('throws ForbiddenException for SELLER with { sub, userType: "seller" } not owning order', async () => {
+        const user = { sub: 'other-s-user', userType: 'seller' } as any;
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as any });
+        mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
+
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow(ForbiddenException);
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow('You can only update status for your own seller orders');
+      });
+
+      it('throws ForbiddenException for CUSTOMER with { sub, userType: "customer" }', async () => {
+        const user = { sub: 'c-user', userType: 'customer' } as any;
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow(ForbiddenException);
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow('Customers are not allowed to update order status');
+      });
     });
   });
 
@@ -608,6 +842,66 @@ describe('OrderResolver', () => {
 
         expect(mockOrderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
         expect(result).toBe(true);
+      });
+    });
+
+    describe('JWT Shape { sub, userType } Claims', () => {
+      const mockOrder = createMockOrder({ customerEmail: 'buyer@example.com', sellerId: 1 });
+      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as any });
+
+      beforeEach(() => {
+        mockOrderService.findOne.mockResolvedValue(mockOrder);
+        mockOrderService.cancelPendingOrder.mockResolvedValue(true);
+        mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+      });
+
+      it('allows SELLER with { sub, userType: "seller" } owning PENDING order to cancel', async () => {
+        const user = { sub: 's-user', userType: 'seller' } as any;
+        const result = await resolver.cancelPendingOrder(user, 'order-1');
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
+        expect(mockOrderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(result).toBe(true);
+      });
+
+      it('allows CUSTOMER with { sub, userType: "customer", email } to cancel own PENDING order', async () => {
+        const user = { sub: 'c-user', userType: 'customer', email: 'buyer@example.com' } as any;
+        const result = await resolver.cancelPendingOrder(user, 'order-1');
+
+        expect(mockOrderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(result).toBe(true);
+      });
+
+      it('throws BadRequestException for non-PENDING order (CONFIRMED) for SELLER', async () => {
+        const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED, sellerId: 1 });
+        mockOrderService.findOne.mockResolvedValue(confirmedOrder);
+
+        const user = { sub: 's-user', userType: 'seller' } as any;
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(BadRequestException);
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('Only pending orders can be cancelled');
+      });
+
+      it('throws BadRequestException for non-PENDING order (CONFIRMED) for CUSTOMER', async () => {
+        const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED, customerEmail: 'buyer@example.com' });
+        mockOrderService.findOne.mockResolvedValue(confirmedOrder);
+
+        const user = { sub: 'c-user', userType: 'customer', email: 'buyer@example.com' } as any;
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(BadRequestException);
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('Only pending orders can be cancelled');
+      });
+
+      it('throws ForbiddenException for SELLER with { sub, userType: "seller" } not owning order', async () => {
+        const user = { sub: 'other-s-user', userType: 'seller' } as any;
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as any });
+        mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
+
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
+      });
+
+      it('throws ForbiddenException for CUSTOMER with { sub, userType: "customer" } not owning order', async () => {
+        const user = { sub: 'other-c-user', userType: 'customer', email: 'other@example.com' } as any;
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('You do not have permission to cancel this order');
       });
     });
   });
@@ -758,6 +1052,83 @@ describe('OrderResolver', () => {
 
       expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
       expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+    });
+
+    describe('Stock Restoration Guard - Call Order Verification', () => {
+      const verifyCallOrder = async (order: Order) => {
+        mockOrderService.findOne.mockResolvedValue(order);
+        mockOrderService.updateOrderStatus.mockResolvedValue(undefined);
+        mockOrderService.deleteOrder.mockResolvedValue(undefined);
+
+        const user = createMockAdminUser();
+        await resolver.deleteOrder(user, 'order-1');
+
+        const updateCalls = mockOrderService.updateOrderStatus.mock.invocationCallOrder;
+        const deleteCalls = mockOrderService.deleteOrder.mock.invocationCallOrder;
+
+        expect(updateCalls).toBeDefined();
+        expect(deleteCalls).toBeDefined();
+        expect(updateCalls[0]).toBeLessThan(deleteCalls[0]);
+        expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+        expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+      };
+
+      it('calls updateOrderStatus BEFORE deleteOrder for CONFIRMED order', async () => {
+        await verifyCallOrder(createMockOrder({ status: OrderStatus.CONFIRMED }));
+      });
+
+      it('calls updateOrderStatus BEFORE deleteOrder for PROCESSING order', async () => {
+        await verifyCallOrder(createMockOrder({ status: OrderStatus.PROCESSING }));
+      });
+
+      it('calls updateOrderStatus BEFORE deleteOrder for SHIPPED order', async () => {
+        await verifyCallOrder(createMockOrder({ status: OrderStatus.SHIPPED }));
+      });
+
+      it('calls updateOrderStatus BEFORE deleteOrder for PENDING order with stockReserved=true', async () => {
+        const order = createMockOrder({ status: OrderStatus.PENDING });
+        (order as any).stockReserved = true;
+        await verifyCallOrder(order);
+      });
+
+      it('does NOT call updateOrderStatus for PENDING order with stockReserved=false', async () => {
+        const order = createMockOrder({ status: OrderStatus.PENDING });
+        (order as any).stockReserved = false;
+        mockOrderService.findOne.mockResolvedValue(order);
+        mockOrderService.deleteOrder.mockResolvedValue(undefined);
+
+        const user = createMockAdminUser();
+        await resolver.deleteOrder(user, 'order-1');
+
+        expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+        expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+      });
+
+      it('does NOT call updateOrderStatus for PENDING order with stockReserved=undefined', async () => {
+        const order = createMockOrder({ status: OrderStatus.PENDING });
+        (order as any).stockReserved = undefined;
+        mockOrderService.findOne.mockResolvedValue(order);
+        mockOrderService.deleteOrder.mockResolvedValue(undefined);
+
+        const user = createMockAdminUser();
+        await resolver.deleteOrder(user, 'order-1');
+
+        expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+        expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+      });
+
+      it('does NOT call updateOrderStatus for DELIVERED order', async () => {
+        const order = createMockOrder({ status: OrderStatus.DELIVERED });
+        (order as any).stockReserved = false;
+        mockOrderService.findOne.mockResolvedValue(order);
+        mockOrderService.deleteOrder.mockResolvedValue(undefined);
+
+        const user = createMockAdminUser();
+        await resolver.deleteOrder(user, 'order-1');
+
+        expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+        expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+      });
     });
   });
 
