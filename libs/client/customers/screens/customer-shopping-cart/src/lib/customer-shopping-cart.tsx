@@ -94,6 +94,7 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { useZarinPalPayment, type CancelPendingOrderVariables } from '@kickzone-workspace/customer-payment';
 import { useConvertPrice } from '@kickzone-workspace/currency-hook';
+import { formatSizeLabel, SizeKind } from '@kickzone-workspace/product-sizes';
 
 // Import types from cart store
 import type { CartItem } from '@kickzone-workspace/customer-cart-store';
@@ -105,6 +106,20 @@ const formatNumber = (num: number | string, locale: string): string => {
     return String(num);
   }
   return n.toLocaleString(locale);
+};
+
+const CANONICAL_PANTS_SIZE_RE = /^[1-9]\d?x[1-9]\d?$/;
+
+const formatCartItemSize = (
+  size: string | null | undefined,
+  locale: string
+): string => {
+  if (!size) return '';
+  const trimmed = size.trim();
+  if (CANONICAL_PANTS_SIZE_RE.test(trimmed)) {
+    return formatSizeLabel(SizeKind.Pants, trimmed) || size;
+  }
+  return formatNumber(size, locale);
 };
 
 const isItemRecommended = (
@@ -1495,7 +1510,7 @@ export function CustomerShoppingCart() {
                                       color: 'text.primary',
                                     }}
                                   >
-                                    {formatNumber(item.size, currentLocale)}
+                                    {formatCartItemSize(item.size, currentLocale)}
                                   </Typography>
                                 </Box>
                               )}
@@ -2302,7 +2317,7 @@ export function CustomerShoppingCart() {
                                 }}
                               >
                                 {LL.products.size()}:{' '}
-                                {formatNumber(item.size, currentLocale)}
+                                {formatCartItemSize(item.size, currentLocale)}
                               </Typography>
                             )}
                             <Typography
@@ -2810,7 +2825,7 @@ export function CustomerShoppingCart() {
                                 color="text.secondary"
                                 fontWeight={500}
                               >
-                                {formatNumber(item.size, currentLocale)}
+                                {formatCartItemSize(item.size, currentLocale)}
                               </Typography>
                             </Box>
                           )}

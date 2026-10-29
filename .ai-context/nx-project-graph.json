@@ -16959,6 +16959,11 @@
           "source": "customer-shopping-cart",
           "target": "currency-hook",
           "type": "static"
+        },
+        {
+          "source": "customer-shopping-cart",
+          "target": "product-sizes",
+          "type": "static"
         }
       ],
       "shared-notification-store": [],
