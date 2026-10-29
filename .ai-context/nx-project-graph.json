@@ -17539,6 +17539,11 @@
         },
         {
           "source": "customers-product-card",
+          "target": "product-sizes",
+          "type": "static"
+        },
+        {
+          "source": "customers-product-card",
           "target": "customer-wishlist-store",
           "type": "static"
         }

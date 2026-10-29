@@ -4,6 +4,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { getCustomerProductDetailsRoute } from '@kickzone-workspace/customers-routes';
 import { useI18nContext, useLanguageContext } from '@kickzone-workspace/shared-i18n';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
+import { formatSizeLabel, isPantsSizeKind, SizeKind } from '@kickzone-workspace/product-sizes';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import IconButton from '@mui/material/IconButton';
@@ -211,6 +212,22 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     });
     return list;
   }, [inStockVariants]);
+
+  // Map size -> sizeKind for display formatting (display-only; values/keys/selection stay raw)
+  const sizeKindBySize = useMemo(() => {
+    const map = new Map<string, string | null | undefined>();
+    inStockVariants.forEach((v) => {
+      if (v.productInfo.size && !map.has(v.productInfo.size)) {
+        map.set(v.productInfo.size, v.productInfo.sizeKind);
+      }
+    });
+    return map;
+  }, [inStockVariants]);
+
+  const displaySize = (sz: string): string =>
+    isPantsSizeKind(sizeKindBySize.get(sz))
+      ? formatSizeLabel(SizeKind.Pants, sz) || sz
+      : sz;
 
   // Ensure default selected size
   useEffect(() => {
@@ -773,7 +790,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                               fontFamily: isRTL ? 'var(--font-sans)' : 'inherit',
                             }}
                           >
-                            <bdi dir={isRTL ? 'rtl' : 'ltr'}>{isRTL && /\d/.test(sz) ? toFarsiDigits(sz) : sz}</bdi>
+                            <bdi dir={isRTL ? 'rtl' : 'ltr'}>{isRTL && /\d/.test(sz) ? toFarsiDigits(displaySize(sz)) : displaySize(sz)}</bdi>
                           </Box>
                         );
                       })}
@@ -1215,7 +1232,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
                         },
                       }}
                     >
-                      <bdi dir={isRTL ? 'rtl' : 'ltr'}>{isRTL && /\d/.test(sz) ? toFarsiDigits(sz) : sz}</bdi>
+                      <bdi dir={isRTL ? 'rtl' : 'ltr'}>{isRTL && /\d/.test(sz) ? toFarsiDigits(displaySize(sz)) : displaySize(sz)}</bdi>
                     </Box>
                   );
                 })}
