@@ -3,6 +3,8 @@ import { render, screen } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { SellerOrdersScreen } from './seller-orders-screen';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import type { useSellerOrders as UseSellerOrdersFn } from '@kickzone-workspace/orders-hook';
+import { GET_MY_ORDERS_QUERY } from '@kickzone-workspace/sellers-graphql';
 
 // Mock the hooks and components
 jest.mock('@kickzone-workspace/sellers-layout', () => ({
@@ -26,6 +28,27 @@ const mockUseSellerOrders = require('@kickzone-workspace/orders-hook').useSeller
   updateOrderStatus: jest.Mock;
   updateStatusLoading: boolean;
 }>;
+
+// Heavy 7: Mock Apollo Client and sellers-graphql BEFORE loading real hook
+const mockApolloUseQuery = jest.fn();
+const mockApolloUseMutation = jest.fn();
+
+jest.mock('@apollo/client/react', () => ({
+  useQuery: (...args: unknown[]) => mockApolloUseQuery(...args),
+  useMutation: (...args: unknown[]) => mockApolloUseMutation(...args),
+}));
+
+jest.mock('@kickzone-workspace/sellers-graphql', () => ({
+  GET_MY_ORDERS_QUERY: 'GET_MY_ORDERS_QUERY_DOC',
+  UPDATE_ORDER_STATUS_MUTATION: 'UPDATE_ORDER_STATUS_MUTATION_DOC',
+  UPDATE_ORDER_MUTATION: 'UPDATE_ORDER_MUTATION_DOC',
+  GET_ORDER_DETAILS_QUERY: 'GET_ORDER_DETAILS_QUERY_DOC',
+}));
+
+// Load the REAL hook after mocks are in place
+const { useSellerOrders: realUseSellerOrders } = jest.requireActual<{
+  useSellerOrders: typeof UseSellerOrdersFn;
+}>('@kickzone-workspace/orders-hook');
 
 jest.mock('@kickzone-workspace/shared-i18n', () => ({
   useI18nContext: () => ({
@@ -365,5 +388,48 @@ describe('SellerOrdersScreen', () => {
       renderWithTheme(<SellerOrdersScreen />);
       expect(screen.getAllByTestId('status-chip-REFUNDED').length).toBeGreaterThan(0);
     });
+  });
+});
+
+describe('Heavy 7: real useSellerOrders hook unit tests', () => {
+  const mockRefetch = jest.fn();
+  const mockFetchMore = jest.fn();
+  const mockUpdateOrderStatusMutate = jest.fn();
+  const mockUpdateOrderMutate = jest.fn();
+
+  beforeEach(() => {
+    mockApolloUseQuery.mockReset();
+    mockApolloUseMutation.mockReset();
+    mockRefetch.mockReset();
+    mockFetchMore.mockReset();
+    mockUpdateOrderStatusMutate.mockReset();
+    mockUpdateOrderMutate.mockReset();
+
+    mockApolloUseMutation
+      .mockReturnValueOnce([mockUpdateOrderStatusMutate, { loading: false }])
+      .mockReturnValueOnce([mockUpdateOrderMutate, { loading: false }]);
+  });
+
+  it('Smoke test: imports and executes the real useSellerOrders hook from production', () => {
+    mockApolloUseQuery.mockReturnValue({
+      data: { mySellerOrders: { edges: [], pageInfo: { hasNextPage: false, endCursor: null } } },
+      loading: false,
+      error: undefined,
+      refetch: mockRefetch,
+      fetchMore: mockFetchMore,
+    });
+
+    const result = realUseSellerOrders({ first: 10, status: 'ALL' });
+
+    expect(realUseSellerOrders.name).toBe('useSellerOrders');
+    expect(mockApolloUseQuery).toHaveBeenCalledWith(
+      GET_MY_ORDERS_QUERY,
+      expect.objectContaining({
+        variables: { first: 10, after: undefined },
+        notifyOnNetworkStatusChange: true,
+        fetchPolicy: 'cache-and-network',
+      })
+    );
+    expect(result.orders).toEqual([]);
   });
 });

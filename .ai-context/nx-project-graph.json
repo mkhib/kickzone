@@ -17961,6 +17961,11 @@
         },
         {
           "source": "seller-orders-screen",
+          "target": "sellers-graphql",
+          "type": "static"
+        },
+        {
+          "source": "seller-orders-screen",
           "target": "sellers-layout",
           "type": "static"
         },
