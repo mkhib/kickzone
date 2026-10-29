@@ -93,26 +93,46 @@ export function normalizeFootwearEuCode(raw: string): string {
   return rounded.toFixed(1);
 }
 
-/** Parse a pants composite size such as "32x34", "32 X 34", "W32/L34", "32/34", "W32L34". */
+function isValidPantsDimension(value: number | string | null | undefined): boolean {
+  if (typeof value === 'number') {
+    return Number.isInteger(value) && value >= 1 && value <= 99;
+  }
+  if (typeof value === 'string') {
+    const trimmed = value.trim();
+    if (!/^[1-9]\d?$/.test(trimmed)) {
+      return false;
+    }
+    const num = Number(trimmed);
+    return Number.isInteger(num) && num >= 1 && num <= 99;
+  }
+  return false;
+}
+
 export function parsePantsSize(
-  raw: string
+  raw: string | null | undefined,
 ): { waist: number; inseam: number } | null {
-  let cleaned = String(raw).trim();
-  // Remove optional leading "W" marker
-  cleaned = cleaned.replace(/^W/i, '');
-  // Treat L, x, X, and / as separators between waist and inseam
-  cleaned = cleaned.replace(/L/g, '/');
-  cleaned = cleaned.replace(/[xX]/g, '/');
-  const parts = cleaned.split('/').filter((p) => p.trim() !== '');
-  if (parts.length !== 2) {
+  if (typeof raw !== 'string') {
     return null;
   }
-  const waist = Number(parts[0].trim());
-  const inseam = Number(parts[1].trim());
-  if (!Number.isFinite(waist) || !Number.isFinite(inseam)) {
+  const trimmed = raw.trim();
+  if (!trimmed) {
     return null;
   }
-  return { waist, inseam };
+  const match =
+    /^(?:[wW]\s*)?([1-9]\d?)(?:\s*[xX×*/]\s*(?:[lL]\s*)?|\s+[lL]\s*|\s*-\s*[lL]\s*)([1-9]\d?)$/.exec(
+      trimmed,
+    );
+  if (!match) {
+    return null;
+  }
+  const [, waistRaw, inseamRaw] = match;
+  if (!isValidPantsDimension(waistRaw) || !isValidPantsDimension(inseamRaw)) {
+    return null;
+  }
+  return {
+    waist: Number(waistRaw),
+    inseam: Number(inseamRaw),
+  };
 }
 
 /** Canonical pants composite: "waistxinseam" e.g. "32x34". */
@@ -214,9 +234,13 @@ export function expandFilterSizes(
       .filter((s): s is string => !!s);
   }
   if (isPantsSizeKind(kind)) {
-    return selected
-      .map((s) => normalizeSizeCode(SizeKind.Pants, s))
-      .filter((s): s is string => !!s);
+    return Array.from(
+      new Set(
+        selected
+          .map((s) => normalizeSizeCode(SizeKind.Pants, s))
+          .filter((s): s is string => !!s),
+      ),
+    );
   }
   if (system === FootwearSizeSystem.Eu) {
     return selected
