@@ -394,6 +394,11 @@ export function CustomerProducts() {
             options={availableSizes}
             value={selectedSizes}
             onChange={handleSizeChange}
+            getOptionLabel={(option) =>
+              isPantsSizeKind(sizeFilterKind)
+                ? formatSizeLabel(SizeKind.Pants, option) || option
+                : option
+            }
             renderInput={(params) => (
               <TextField
                 {...params}
