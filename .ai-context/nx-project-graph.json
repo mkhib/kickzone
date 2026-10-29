@@ -17800,6 +17800,11 @@
         },
         {
           "source": "sellers-manage-product-screen",
+          "target": "product-sizes",
+          "type": "static"
+        },
+        {
+          "source": "sellers-manage-product-screen",
           "target": "sellers-auth-context",
           "type": "static"
         },

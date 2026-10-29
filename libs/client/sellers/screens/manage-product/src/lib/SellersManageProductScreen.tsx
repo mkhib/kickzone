@@ -7,6 +7,7 @@ import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
+import { formatSizeLabel, isPantsSizeKind, SizeKind } from '@kickzone-workspace/product-sizes';
 import Alert from '@mui/material/Alert';
 import Autocomplete from '@mui/material/Autocomplete';
 import Box from '@mui/material/Box';
@@ -33,6 +34,9 @@ import {
 import { SELLER_ROUTES } from '@kickzone-workspace/sellers-routes';
 import { SellersDefineProductFlow } from './SellersDefineProductFlow';
 import { alpha } from '@mui/material/styles';
+
+const displayVariantSize = (info: { size: string; sizeKind?: string | null }): string =>
+  isPantsSizeKind(info.sizeKind) ? formatSizeLabel(SizeKind.Pants, info.size) || info.size : info.size;
 
 const initialFormData: KickzoneGraphqlTypes.CreateSellerProductInput = {
   productInfoId: 0,
@@ -470,7 +474,7 @@ export function SellersManageProductScreen() {
                         <Autocomplete
                           options={variantOptions}
                           getOptionLabel={(option) =>
-                            `${option.size} - ${formatVariantColorNames(
+                            `${displayVariantSize(option)} - ${formatVariantColorNames(
                               option.colors,
                               LL.products.noColorSpecified()
                             )} (${option.weight}kg)`
@@ -524,7 +528,7 @@ export function SellersManageProductScreen() {
                                   ))}
                                   <Box sx={{ flex: 1 }}>
                                     <Typography fontWeight={600}>
-                                      {option.size} -{' '}
+                                      {displayVariantSize(option)} -{' '}
                                       {formatVariantColorNames(
                                         option.colors,
                                         LL.products.noColorSpecified()
@@ -620,7 +624,7 @@ export function SellersManageProductScreen() {
                                   />
                                 ))}
                                 <Typography variant="body1" fontWeight={500}>
-                                  {selectedProductInfo.size} -{' '}
+                                  {displayVariantSize(selectedProductInfo)} -{' '}
                                   {formatVariantColorNames(
                                     selectedProductInfo.colors,
                                     LL.products.noColorSpecified()

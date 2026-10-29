@@ -6,6 +6,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
+import { formatSizeLabel, isPantsSizeKind, SizeKind } from '@kickzone-workspace/product-sizes';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -17,6 +18,9 @@ import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import React, { useMemo, useState } from 'react';
+
+const displayVariantSize = (info: { size: string; sizeKind?: string | null }): string =>
+  isPantsSizeKind(info.sizeKind) ? formatSizeLabel(SizeKind.Pants, info.size) || info.size : info.size;
 
 type ListingDraft = {
   productInfoId: number;
@@ -33,7 +37,7 @@ const emptyListing = (
   info: CreatedCatalogProduct['productInfos'][number]
 ): ListingDraft => ({
   productInfoId: info.id,
-  label: `${info.size} - ${formatVariantColorNames(info.colors)} (${info.weight}kg)`,
+  label: `${displayVariantSize(info)} - ${formatVariantColorNames(info.colors)} (${info.weight}kg)`,
   colorHexes: (info.colors || []).map((c) => c.hexCode),
   price: 0,
   costPrice: 0,
