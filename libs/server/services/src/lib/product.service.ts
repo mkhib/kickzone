@@ -471,7 +471,9 @@ export class ProductService implements OnModuleInit {
       throw new Error(
         sizeKind === SizeKind.Apparel
           ? 'Invalid apparel size. Use XS–XXXL.'
-          : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'
+          : sizeKind === SizeKind.Pants
+            ? 'Invalid pants size. Use waist and inseam between 1 and 99 (e.g. 32x34).'
+            : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'
       );
     }
     const colors = await this.resolveOrderedColors(input.colorIds);
@@ -638,7 +640,9 @@ export class ProductService implements OnModuleInit {
       throw new BadRequestException(
         sizeKind === SizeKind.Apparel
           ? 'Invalid apparel size. Use XS–XXXL.'
-          : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'
+          : sizeKind === SizeKind.Pants
+            ? 'Invalid pants size. Use waist and inseam between 1 and 99 (e.g. 32x34).'
+            : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'
       );
     }
     if (!variant.colorIds || variant.colorIds.length === 0) {
