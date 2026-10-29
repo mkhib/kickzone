@@ -17425,6 +17425,11 @@
           "source": "customer-orders",
           "target": "codegen",
           "type": "static"
+        },
+        {
+          "source": "customer-orders",
+          "target": "product-sizes",
+          "type": "static"
         }
       ],
       "customer-product-details": [

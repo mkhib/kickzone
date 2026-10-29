@@ -34,6 +34,7 @@ import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { formatSizeLabel, SizeKind } from '@kickzone-workspace/product-sizes';
 
 interface OrderItem {
   id: string;
@@ -72,6 +73,15 @@ interface Order {
 interface OrdersData {
   myOrders: Order[];
 }
+
+const CANONICAL_PANTS_SIZE_RE = /^[1-9]\d?x[1-9]\d?$/;
+const displayOrderItemSize = (size?: string | null): string => {
+  if (!size) return '';
+  const trimmed = size.trim();
+  return CANONICAL_PANTS_SIZE_RE.test(trimmed)
+    ? formatSizeLabel(SizeKind.Pants, trimmed) || size
+    : size;
+};
 
 export function CustomerOrders() {
   const { LL } = useI18nContext();
@@ -570,7 +580,7 @@ export function CustomerOrders() {
                                           variant="caption"
                                           color="text.secondary"
                                         >
-                                          {[item.color, item.size]
+                                          {[item.color, displayOrderItemSize(item.size)]
                                             .filter(Boolean)
                                             .join(' - ')}
                                         </Typography>
