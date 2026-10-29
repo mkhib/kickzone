@@ -433,3 +433,181 @@ describe('Heavy 7: real useSellerOrders hook unit tests', () => {
     expect(result.orders).toEqual([]);
   });
 });
+
+const mixedStatusEdges = [
+  { cursor: 'c-1', node: { id: '1', orderNumber: 'ORD-1', status: 'PENDING' } },
+  { cursor: 'c-2', node: { id: '2', orderNumber: 'ORD-2', status: 'CONFIRMED' } },
+  { cursor: 'c-3', node: { id: '3', orderNumber: 'ORD-3', status: 'SHIPPED' } },
+  { cursor: 'c-4', node: { id: '4', orderNumber: 'ORD-4', status: 'CANCELLED' } },
+];
+
+describe('Heavy 7: real useSellerOrders hook unit tests - Locked Tests 1-5', () => {
+  const mockRefetch = jest.fn();
+  const mockFetchMore = jest.fn();
+  const mockUpdateOrderStatusMutate = jest.fn();
+  const mockUpdateOrderMutate = jest.fn();
+
+  beforeEach(() => {
+    mockApolloUseQuery.mockReset();
+    mockApolloUseMutation.mockReset();
+    mockRefetch.mockReset();
+    mockFetchMore.mockReset();
+    mockUpdateOrderStatusMutate.mockReset();
+    mockUpdateOrderMutate.mockReset();
+
+    mockApolloUseMutation
+      .mockReturnValueOnce([mockUpdateOrderStatusMutate, { loading: false }])
+      .mockReturnValueOnce([mockUpdateOrderMutate, { loading: false }]);
+  });
+
+  // Locked Test 1
+  it('returns all orders when status=ALL and omits status variable', () => {
+    mockApolloUseQuery.mockReturnValue({
+      data: {
+        mySellerOrders: {
+          edges: mixedStatusEdges,
+          pageInfo: { hasNextPage: false, endCursor: 'c-4' },
+        },
+      },
+      loading: false,
+      error: undefined,
+      refetch: mockRefetch,
+      fetchMore: mockFetchMore,
+    });
+
+    const result = realUseSellerOrders({ first: 10, status: 'ALL' });
+
+    const queryOptions = mockApolloUseQuery.mock.calls[0][1];
+    expect(queryOptions.variables).toEqual({ first: 10, after: undefined });
+    expect('status' in queryOptions.variables).toBe(false);
+    expect(result.orders).toHaveLength(4);
+    expect(result.orders.map((o: any) => o.status)).toEqual(['PENDING', 'CONFIRMED', 'SHIPPED', 'CANCELLED']);
+  });
+
+  // Locked Test 2
+  it('returns all orders when status=undefined and omits status variable', () => {
+    mockApolloUseQuery.mockReturnValue({
+      data: {
+        mySellerOrders: {
+          edges: mixedStatusEdges,
+          pageInfo: { hasNextPage: false, endCursor: 'c-4' },
+        },
+      },
+      loading: false,
+      error: undefined,
+      refetch: mockRefetch,
+      fetchMore: mockFetchMore,
+    });
+
+    const result = realUseSellerOrders({ first: 10, status: undefined });
+
+    const queryOptions = mockApolloUseQuery.mock.calls[0][1];
+    expect(queryOptions.variables).toEqual({ first: 10, after: undefined });
+    expect('status' in queryOptions.variables).toBe(false);
+    expect(result.orders).toHaveLength(4);
+  });
+
+  // Locked Test 3
+  it('filters by CONFIRMED status, includes status in query/mutation/fetchMore', () => {
+    mockApolloUseQuery.mockReturnValue({
+      data: {
+        mySellerOrders: {
+          edges: [{ cursor: 'c-confirmed-1', node: { id: '2', orderNumber: 'ORD-2', status: 'CONFIRMED' } }],
+          pageInfo: { hasNextPage: true, endCursor: 'cursor-confirmed-1' },
+        },
+      },
+      loading: false,
+      error: undefined,
+      refetch: mockRefetch,
+      fetchMore: mockFetchMore,
+    });
+
+    const result = realUseSellerOrders({ first: 10, status: 'CONFIRMED' as any });
+
+    expect(mockApolloUseQuery).toHaveBeenCalledWith(
+      GET_MY_ORDERS_QUERY,
+      expect.objectContaining({
+        variables: { first: 10, after: undefined, status: 'CONFIRMED' },
+      })
+    );
+    expect(mockApolloUseMutation).toHaveBeenCalledWith(
+      'UPDATE_ORDER_STATUS_MUTATION_DOC',
+      expect.objectContaining({
+        refetchQueries: [{ query: GET_MY_ORDERS_QUERY, variables: { first: 10, status: 'CONFIRMED' } }],
+      })
+    );
+    expect(result.orders).toHaveLength(1);
+    expect(result.orders[0].status).toBe('CONFIRMED');
+
+    result.loadMore();
+    expect(mockFetchMore).toHaveBeenCalledWith({ variables: { after: 'cursor-confirmed-1', status: 'CONFIRMED' } });
+  });
+
+  // Locked Test 4
+  it('loadMore preserves status filter (ALL omits status, SHIPPED includes status)', () => {
+    // Part 1: status = ALL
+    mockApolloUseQuery.mockReturnValue({
+      data: {
+        mySellerOrders: {
+          edges: mixedStatusEdges,
+          pageInfo: { hasNextPage: true, endCursor: 'cursor-123' },
+        },
+      },
+      loading: false,
+      error: undefined,
+      refetch: mockRefetch,
+      fetchMore: mockFetchMore,
+    });
+
+    const allResult = realUseSellerOrders({ first: 10, status: 'ALL' });
+    allResult.loadMore();
+    expect(mockFetchMore).toHaveBeenLastCalledWith({ variables: { after: 'cursor-123' } });
+    expect('status' in mockFetchMore.mock.calls[0][0].variables).toBe(false);
+
+    // Part 2: status = SHIPPED
+    mockApolloUseMutation.mockReset();
+    mockApolloUseMutation
+      .mockReturnValueOnce([mockUpdateOrderStatusMutate, { loading: false }])
+      .mockReturnValueOnce([mockUpdateOrderMutate, { loading: false }]);
+    mockFetchMore.mockReset();
+
+    mockApolloUseQuery.mockReturnValue({
+      data: {
+        mySellerOrders: {
+          edges: [{ cursor: 'c-shipped-1', node: { id: '3', orderNumber: 'ORD-3', status: 'SHIPPED' } }],
+          pageInfo: { hasNextPage: true, endCursor: 'cursor-123' },
+        },
+      },
+      loading: false,
+      error: undefined,
+      refetch: mockRefetch,
+      fetchMore: mockFetchMore,
+    });
+
+    const shippedResult = realUseSellerOrders({ first: 10, status: 'SHIPPED' as any });
+    shippedResult.loadMore();
+    expect(mockFetchMore).toHaveBeenLastCalledWith({ variables: { after: 'cursor-123', status: 'SHIPPED' } });
+  });
+
+  // Locked Test 5
+  it('loadMore returns undefined and does not call fetchMore when hasNextPage=false', () => {
+    mockApolloUseQuery.mockReturnValue({
+      data: {
+        mySellerOrders: {
+          edges: mixedStatusEdges,
+          pageInfo: { hasNextPage: false, endCursor: null },
+        },
+      },
+      loading: false,
+      error: undefined,
+      refetch: mockRefetch,
+      fetchMore: mockFetchMore,
+    });
+
+    const result = realUseSellerOrders({ first: 10, status: 'ALL' });
+    const loadMoreReturn = result.loadMore();
+
+    expect(loadMoreReturn).toBeUndefined();
+    expect(mockFetchMore).not.toHaveBeenCalled();
+  });
+});
