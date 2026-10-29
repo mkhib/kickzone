@@ -136,8 +136,16 @@ export function parsePantsSize(
 }
 
 /** Canonical pants composite: "waistxinseam" e.g. "32x34". */
-export function formatPantsSize(waist: number, inseam: number): string {
-  return `${waist}x${inseam}`;
+export function formatPantsSize(
+  waist: number | string | null | undefined,
+  inseam: number | string | null | undefined,
+): string {
+  if (!isValidPantsDimension(waist) || !isValidPantsDimension(inseam)) {
+    return '';
+  }
+  const w = Number(String(waist).trim());
+  const l = Number(String(inseam).trim());
+  return `${w}x${l}`;
 }
 
 export function isApparelSizeCode(code: string): code is ApparelSizeCode {
