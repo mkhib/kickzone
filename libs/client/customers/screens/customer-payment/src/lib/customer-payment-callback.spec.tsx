@@ -4,7 +4,7 @@ import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
 import { CustomerPaymentCallback } from './customer-payment-callback';
-import { CANCEL_PENDING_ZARINPAL_ORDER_MUTATION } from '@kickzone-workspace/customers-graphql';
+import { VERIFY_ZARINPAL_PAYMENT_MUTATION, CANCEL_PENDING_ZARINPAL_ORDER_MUTATION } from '@kickzone-workspace/customers-graphql';
 
 // Mock theme for MUI components
 const mockTheme = {
@@ -227,6 +227,479 @@ describe('CustomerPaymentCallback - Guest ZarinPal Cancel', () => {
       // Should show loading/verifying state, not cancelled
       await waitFor(() => {
         expect(screen.getByText('در حال تایید پرداخت...')).toBeInTheDocument();
+      });
+    });
+  });
+});
+
+describe('CustomerPaymentCallback - ZarinPal Verification (Fail-Closed Heavy Tests)', () => {
+  const authority = 'A00000123';
+  const orderId = 'ord-1';
+  const orderNumber = 'ORD-123456';
+  const orderIds = ['ord-1', 'ord-2'];
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSessionStorage.clear();
+  });
+
+  const setupOrderInSessionStorage = (customOrderId = orderId, customAmount = 50000) => {
+    mockSessionStorage.setItem(
+      `order_${customOrderId}`,
+      JSON.stringify({ orderId: customOrderId, orderNumber, amount: customAmount, orderIds })
+    );
+  };
+
+  const triggerVerification = async (url: string) => {
+    await act(async () => {
+      window.history.pushState({}, '', url);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+  };
+
+  describe('Case 1: Happy path - success: true, code: 100', () => {
+    it('should clear cart, remove sessionStorage keys, and render success UI with refId', async () => {
+      const refId = 777888;
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+            variables: expect.objectContaining({
+              input: expect.objectContaining({ authority, amount: 50000, order_id: orderId }),
+            }),
+          },
+          result: {
+            data: {
+              verifyZarinPalPayment: {
+                code: 100,
+                message: 'Verified',
+                ref_id: refId,
+                success: true,
+                orderIds,
+                orderId,
+                orderNumber,
+              },
+            },
+          },
+        },
+      ];
+
+      setupOrderInSessionStorage();
+
+      renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+      await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}&orderIds=${orderIds.join(',')}`);
+
+      await waitFor(() => {
+        expect(screen.getByText('پرداخت با موفقیت انجام شد')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(`شماره تراکنش: ${refId}`)).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('سفارش شما با موفقیت ثبت شد و پرداخت تایید گردید.')).toBeInTheDocument();
+      });
+
+      // sessionStorage should be cleared for all orderIds
+      await waitFor(() => {
+        expect(mockSessionStorage.getItem(`order_${orderIds[0]}`)).toBeNull();
+        expect(mockSessionStorage.getItem(`order_${orderIds[1]}`)).toBeNull();
+      });
+    });
+  });
+
+  describe('Case 2: Fail-closed - success: false WITH ref_id', () => {
+    it('should NOT clear cart, show error UI, display server message, and display refId for support', async () => {
+      const refId = 555666;
+      const serverMessage = 'Payment was captured by gateway (Ref: 555666), but order confirmation failed: Insufficient stock';
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+            variables: expect.objectContaining({
+              input: expect.objectContaining({ authority, amount: 50000, order_id: orderId }),
+            }),
+          },
+          result: {
+            data: {
+              verifyZarinPalPayment: {
+                code: 100,
+                message: serverMessage,
+                ref_id: refId,
+                success: false,
+                orderIds: [orderId],
+                orderId,
+                orderNumber,
+              },
+            },
+          },
+        },
+      ];
+
+      setupOrderInSessionStorage();
+
+      renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+      await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}`);
+
+      await waitFor(() => {
+        expect(screen.getByText('خطا در پرداخت')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(serverMessage)).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(`شماره مرجع تراکنش: ${refId}`)).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('این شماره را برای پیگیری و استرداد وجه به پشتیبانی ارائه دهید.')).toBeInTheDocument();
+      });
+
+      // Cart should NOT be cleared - sessionStorage should remain
+      expect(mockSessionStorage.getItem(`order_${orderId}`)).not.toBeNull();
+    });
+  });
+
+  describe('Case 3: Fail-closed - success: false WITHOUT ref_id', () => {
+    it('should NOT clear cart and show error state', async () => {
+      const serverMessage = 'Order confirmation failed';
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+            variables: expect.objectContaining({
+              input: expect.objectContaining({ authority, amount: 50000, order_id: orderId }),
+            }),
+          },
+          result: {
+            data: {
+              verifyZarinPalPayment: {
+                code: 100,
+                message: serverMessage,
+                ref_id: null,
+                success: false,
+                orderIds: [orderId],
+                orderId,
+                orderNumber,
+              },
+            },
+          },
+        },
+      ];
+
+      setupOrderInSessionStorage();
+
+      renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+      await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}`);
+
+      await waitFor(() => {
+        expect(screen.getByText('خطا در پرداخت')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(serverMessage)).toBeInTheDocument();
+      });
+
+      // Cart should NOT be cleared
+      expect(mockSessionStorage.getItem(`order_${orderId}`)).not.toBeNull();
+    });
+  });
+
+  describe('Case 4: Legacy numeric return fallback', () => {
+    it('should treat numeric return as success and clear cart', async () => {
+      const legacyRefId = 123456;
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+            variables: expect.objectContaining({
+              input: expect.objectContaining({ authority, amount: 50000, order_id: orderId }),
+            }),
+          },
+          // Legacy mock returns a raw number (simulating old API shape)
+          result: {
+            data: {
+              verifyZarinPalPayment: legacyRefId,
+            },
+          },
+        },
+      ];
+
+      setupOrderInSessionStorage();
+
+      renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+      await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}`);
+
+      await waitFor(() => {
+        expect(screen.getByText('پرداخت با موفقیت انجام شد')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(`شماره تراکنش: ${legacyRefId}`)).toBeInTheDocument();
+      });
+
+      // sessionStorage should be cleared
+      await waitFor(() => {
+        expect(mockSessionStorage.getItem(`order_${orderId}`)).toBeNull();
+      });
+    });
+  });
+
+  describe('Case 5: Idempotent code: 101, success: true', () => {
+    it('should clear cart once and show success state', async () => {
+      const refId = 999111;
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+            variables: expect.objectContaining({
+              input: expect.objectContaining({ authority, amount: 50000, order_id: orderId }),
+            }),
+          },
+          result: {
+            data: {
+              verifyZarinPalPayment: {
+                code: 101,
+                message: 'Already verified',
+                ref_id: refId,
+                success: true,
+                orderIds: [orderId],
+                orderId,
+                orderNumber,
+              },
+            },
+          },
+        },
+      ];
+
+      setupOrderInSessionStorage();
+
+      renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+      await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}`);
+
+      await waitFor(() => {
+        expect(screen.getByText('پرداخت با موفقیت انجام شد')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(`شماره تراکنش: ${refId}`)).toBeInTheDocument();
+      });
+
+      // sessionStorage should be cleared
+      await waitFor(() => {
+        expect(mockSessionStorage.getItem(`order_${orderId}`)).toBeNull();
+      });
+    });
+  });
+});
+
+describe('CustomerPaymentCallback - SessionStorage & URL Fallback', () => {
+  const authority = 'A000000000000000000000000000000000000123';
+  const orderId = 'ord-1';
+  const orderId2 = 'ord-2';
+  const orderIds = [orderId, orderId2];
+  const orderNumber = 'ORD-123456';
+  const amount = 50000;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSessionStorage.clear();
+  });
+
+  const setupOrderInSessionStorage = (customOrderId = orderId, customAmount = amount, customOrderIds = [orderId]) => {
+    mockSessionStorage.setItem(
+      `order_${customOrderId}`,
+      JSON.stringify({ orderId: customOrderId, orderNumber, amount: customAmount, orderIds: customOrderIds })
+    );
+  };
+
+  const triggerVerification = async (url: string) => {
+    await act(async () => {
+      window.history.pushState({}, '', url);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+  };
+
+  describe('Case A: Empty sessionStorage with full URL fallback params', () => {
+    it('should call verifyPayment using URL fallback parameters (Authority, Status=OK, orderId, orderIds)', async () => {
+      // No sessionStorage setup - empty
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+            variables: expect.objectContaining({
+              input: expect.objectContaining({
+                authority,
+                amount: expect.any(Number),
+                order_id: orderId,
+              }),
+            }),
+          },
+          result: {
+            data: {
+              verifyZarinPalPayment: {
+                code: 100,
+                message: 'Verified',
+                ref_id: 777888,
+                success: true,
+                orderIds,
+                orderId,
+                orderNumber,
+              },
+            },
+          },
+        },
+      ];
+
+      renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+      await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}&orderIds=${orderIds.join(',')}`);
+
+      await waitFor(() => {
+        expect(screen.getByText('پرداخت با موفقیت انجام شد')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText('شماره تراکنش: 777888')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Case B: Empty sessionStorage with minimal URL params (Authority + Status=OK only)', () => {
+    it('should call verifyPayment with authority and undefined order_id', async () => {
+      // No sessionStorage setup - empty
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+            variables: expect.objectContaining({
+              input: expect.objectContaining({
+                authority,
+                order_id: undefined,
+              }),
+            }),
+          },
+          result: {
+            data: {
+              verifyZarinPalPayment: {
+                code: 100,
+                message: 'Verified',
+                ref_id: 777888,
+                success: true,
+                orderIds: [orderId],
+                orderId,
+                orderNumber,
+              },
+            },
+          },
+        },
+      ];
+
+      renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+      await triggerVerification(`/?Status=OK&Authority=${authority}`);
+
+      await waitFor(() => {
+        expect(screen.getByText('پرداخت با موفقیت انجام شد')).toBeInTheDocument();
+      });
+    });
+  });
+
+  describe('Case C: sessionStorage preserved when verifyPayment returns success: false', () => {
+    it('should NOT remove sessionStorage and NOT clear cart when verifyPayment returns success: false with ref_id', async () => {
+      setupOrderInSessionStorage(orderId, amount, orderIds);
+
+      const refId = 555666;
+      const serverMessage = 'Confirmation failed';
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+            variables: expect.objectContaining({
+              input: expect.objectContaining({ authority, amount, order_id: orderId }),
+            }),
+          },
+          result: {
+            data: {
+              verifyZarinPalPayment: {
+                code: 100,
+                message: serverMessage,
+                ref_id: refId,
+                success: false,
+                orderIds,
+                orderId,
+                orderNumber,
+              },
+            },
+          },
+        },
+      ];
+
+      renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+      await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}&orderIds=${orderIds.join(',')}`);
+
+      await waitFor(() => {
+        expect(screen.getByText('خطا در پرداخت')).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(serverMessage)).toBeInTheDocument();
+      });
+
+      await waitFor(() => {
+        expect(screen.getByText(`شماره مرجع تراکنش: ${refId}`)).toBeInTheDocument();
+      });
+
+      // sessionStorage should NOT be removed
+      expect(mockSessionStorage.getItem(`order_${orderId}`)).not.toBeNull();
+      // Cart should NOT be cleared (sessionStorage still exists)
+      expect(mockSessionStorage.getItem(`order_${orderId2}`)).not.toBeNull();
+    });
+  });
+
+  describe('Case D: Status=NOK with multi-seller orderIds in sessionStorage', () => {
+    it('should call cancelPendingOrder with authority and remove all order_<id> entries after successful cancellation', async () => {
+      setupOrderInSessionStorage(orderId, amount, orderIds);
+
+      const mocks: MockedResponse[] = [
+        {
+          request: {
+            query: CANCEL_PENDING_ZARINPAL_ORDER_MUTATION,
+            variables: expect.objectContaining({
+              orderId: orderId, // Uses first orderId from sessionStorage
+              authority,
+            }),
+          },
+          result: { data: { cancelPendingZarinPalOrder: true } },
+        },
+      ];
+
+      renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+      await triggerVerification(`/?Status=NOK&Authority=${authority}&orderId=${orderId}&orderIds=${orderIds.join(',')}`);
+
+      await waitFor(() => {
+        expect(screen.getByText('پرداخت لغو شد')).toBeInTheDocument();
+      });
+
+      // Verify cancellation was called
+      await waitFor(() => {
+        expect(mocks[0].result?.data).toEqual({ cancelPendingZarinPalOrder: true });
+      });
+
+      // All order_<id> entries should be removed from sessionStorage
+      await waitFor(() => {
+        expect(mockSessionStorage.getItem(`order_${orderId}`)).toBeNull();
+        expect(mockSessionStorage.getItem(`order_${orderId2}`)).toBeNull();
       });
     });
   });

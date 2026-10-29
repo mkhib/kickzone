@@ -731,6 +731,7 @@ export function CustomerShoppingCart() {
   const handleCreateOrderAndInitiatePayment = async () => {
     // Declare orderResults outside try block for access in catch
     let orderResults: Awaited<ReturnType<typeof createOrderMutation>>[] = [];
+    let rollbackExecuted = false;
 
     try {
       console.log('[Checkout] 🛒 Starting order creation and payment process');
@@ -851,7 +852,38 @@ export function CustomerShoppingCart() {
         }
       );
 
-      orderResults = await Promise.all(orderPromises);
+      // Use Promise.allSettled to capture all fulfilled orders even if some reject
+      const settledResults = await Promise.allSettled(orderPromises);
+      
+      // Collect all successfully created orders
+      const fulfilledOrders = settledResults
+        .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof createOrderMutation>>> => r.status === 'fulfilled')
+        .map((r) => r.value);
+      
+      orderResults = fulfilledOrders;
+      
+      // If any order creation failed, cancel all fulfilled orders and throw
+      const hasRejection = settledResults.some((r) => r.status === 'rejected');
+      if (hasRejection) {
+        // Cancel all successfully created orders to avoid orphan PENDING orders
+        rollbackExecuted = true;
+        for (const order of fulfilledOrders) {
+          try {
+            await cancelPendingOrderHook({ orderId: order.id, authority: '' });
+          } catch (cancelError) {
+            console.error(
+              `[Checkout] Failed to cancel order ${order.id} after sibling order creation failure:`,
+              cancelError
+            );
+          }
+        }
+        // Throw the first rejection reason to enter catch block for error handling
+        const firstRejection = settledResults.find((r) => r.status === 'rejected');
+        if (firstRejection && firstRejection.status === 'rejected') {
+          throw firstRejection.reason;
+        }
+        throw new Error('One or more seller orders failed to create');
+      }
 
       // Get all order IDs for multi-seller batch payment
       const allOrderIds = orderResults.map((o) => o!.id);
@@ -1025,7 +1057,9 @@ export function CustomerShoppingCart() {
           : undefined;
 
       // If order creation succeeded but something else failed, cancel created orders
-      if (orderResults && orderResults.length > 0) {
+      // (but only if we haven't already rolled back in the try block)
+      if (orderResults && orderResults.length > 0 && !rollbackExecuted) {
+        rollbackExecuted = true;
         for (const order of orderResults) {
           try {
             await cancelPendingOrderHook({ orderId: order!.id, authority: '' });

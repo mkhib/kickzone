@@ -1,11 +1,20 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import '@testing-library/jest-dom';
 import { CustomerShoppingCart } from './customer-shopping-cart';
 import type { CartItem } from '@kickzone-workspace/customer-cart-store';
 import type { ShippingMethod } from '@kickzone-workspace/customer-checkout-store';
+
+// Module-level shared mocks for consistent references across tests
+const mockCreateOrderMutation = vi.fn().mockResolvedValue({ id: 'order-1', orderNumber: 'ORD-1001' });
+const mockRequestPayment = vi.fn().mockResolvedValue('AUTH123456');
+const mockRedirectToGateway = vi.fn();
+const mockCancelPendingOrder = vi.fn().mockResolvedValue(true);
+const mockUpdateCartItem = vi.fn();
+const mockRemoveFromCart = vi.fn().mockResolvedValue({});
+const mockClearCartMutation = vi.fn().mockResolvedValue({});
 
 // Polyfill canvas getContext before any lottie imports
 if (typeof window !== 'undefined' && window.HTMLCanvasElement) {
@@ -188,6 +197,58 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         orderFailed: () => 'Order creation failed',
         unauthorized: () => 'Unauthorized',
       },
+      validation: {
+        name: {
+          required: () => 'Name is required',
+          minLength: () => 'Name must be at least 2 characters',
+          maxLength: () => 'Name cannot exceed 100 characters',
+          invalidCharacters: () => 'Name can only contain letters, spaces, hyphens, and apostrophes',
+        },
+        email: {
+          required: () => 'Email is required',
+          maxLength: () => 'Email cannot exceed 255 characters',
+          invalid: () => 'Please enter a valid email address',
+        },
+        phone: {
+          required: () => 'Phone number is required',
+          invalid: () => 'Please enter a valid phone number',
+        },
+        address: {
+          required: () => 'Address is required',
+          minLength: () => 'Address must be at least 3 characters',
+          maxLength: () => 'Address cannot exceed 200 characters',
+        },
+        city: {
+          required: () => 'City is required',
+          minLength: () => 'City must be at least 2 characters',
+          maxLength: () => 'City cannot exceed 100 characters',
+          invalidCharacters: () => 'City can only contain letters, spaces, hyphens, and apostrophes',
+        },
+        state: {
+          required: () => 'State/Province is required',
+          minLength: () => 'State/Province must be at least 2 characters',
+          maxLength: () => 'State/Province cannot exceed 100 characters',
+          invalidCharacters: () => 'State/Province can only contain letters, spaces, hyphens, and apostrophes',
+        },
+        zipCode: {
+          required: () => 'ZIP/Postal code is required',
+          minLength: () => 'ZIP/Postal code must be at least 3 characters',
+          maxLength: () => 'ZIP/Postal code cannot exceed 20 characters',
+          invalidCharacters: () => 'ZIP/Postal code can only contain letters, numbers, spaces, and hyphens',
+        },
+        country: {
+          required: () => 'Country is required',
+          minLength: () => 'Country must be at least 2 characters',
+          maxLength: () => 'Country cannot exceed 100 characters',
+          invalidCharacters: () => 'Country can only contain letters, spaces, hyphens, and apostrophes',
+        },
+        notes: {
+          maxLength: () => 'Notes cannot exceed 500 characters',
+        },
+        general: {
+          error: () => 'An unexpected validation error occurred',
+        },
+      },
     },
   }),
 }));
@@ -248,20 +309,18 @@ vi.mock('@kickzone-workspace/customer-checkout-store', () => ({
 vi.mock('@kickzone-workspace/customers-cart-hook', () => ({
   useCustomersCartService: vi.fn(),
   useCustomersCartMutations: () => ({
-    updateCartItem: vi.fn(),
-    removeFromCart: vi.fn().mockResolvedValue({}),
-    clearCart: vi.fn().mockResolvedValue({}),
-    createOrder: vi
-      .fn()
-      .mockResolvedValue({ id: 'order-1', orderNumber: 'ORD-1001' }),
+    updateCartItem: mockUpdateCartItem,
+    removeFromCart: mockRemoveFromCart,
+    clearCart: mockClearCartMutation,
+    createOrder: mockCreateOrderMutation,
   }),
 }));
 
 vi.mock('@kickzone-workspace/customer-payment', () => ({
   useZarinPalPayment: () => ({
-    requestPayment: vi.fn().mockResolvedValue('AUTH123456'),
-    redirectToGateway: vi.fn(),
-    cancelPendingOrder: vi.fn().mockResolvedValue(true),
+    requestPayment: mockRequestPayment,
+    redirectToGateway: mockRedirectToGateway,
+    cancelPendingOrder: mockCancelPendingOrder,
   }),
 }));
 
@@ -649,5 +708,284 @@ describe('Free Shipping and Zero Fee Handling', () => {
     // The total should be 150 (subtotal only) - use getAllByText since there are multiple
     const totalElements = screen.getAllByText(/\$150\.00/);
     expect(totalElements.length).toBeGreaterThan(0);
+  });
+});
+
+describe('Multi-Seller Checkout & Rollback', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLocale = 'fa'; // ZarinPal only runs for Farsi locale
+    mockUser = null; // Guest checkout
+    mockShippingMethod = 'vip';
+    mockIsCheckoutDialogOpen = true; // Start with dialog open
+    mockIsAuthDialogOpen = false;
+    mockActiveStep = 2; // Start at step 2 (Order Summary) - "Proceed to Payment" button
+
+    // Default valid shipping info is provided by the mock
+    // Cart with 2 items from 2 different sellers
+    mockCartItems = [
+      {
+        id: 'cart-item-1',
+        productId: 'prod-1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '1',
+        sellerName: 'Seller One',
+        sellerShippingFee: 1.2,
+        productName: 'Product from Seller 1',
+        productImage: '/item1.jpg',
+        quantity: 1,
+        unitPrice: 100,
+        totalPrice: 100,
+        availableStock: 5,
+        color: '#121212',
+        size: 'L',
+      },
+      {
+        id: 'cart-item-2',
+        productId: 'prod-2',
+        productInfoId: 'pi-2',
+        sellerProductId: '22222222-2222-2222-2222-222222222222',
+        sellerId: '2',
+        sellerName: 'Seller Two',
+        sellerShippingFee: 1.5,
+        productName: 'Product from Seller 2',
+        productImage: '/item2.jpg',
+        quantity: 1,
+        unitPrice: 50,
+        totalPrice: 50,
+        availableStock: 3,
+        color: '#333333',
+        size: 'M',
+      },
+    ];
+
+    // Shipping data with breakdown for both sellers
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 2.7,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 1.2, appliedFee: 1.2 },
+          { sellerId: '2', originalFee: 1.5, appliedFee: 1.5 },
+        ],
+      },
+    });
+  });
+
+  // Helper to click "Proceed to Payment" on Order Summary (step 2)
+  const proceedToPayment = async () => {
+    const proceedBtn = screen.getByText(/proceed to payment/i);
+    await act(async () => {
+      fireEvent.click(proceedBtn);
+    });
+  };
+
+  it('Test 1: Multi-seller batch checkout happy path - creates orders for each seller, requests payment once, redirects to gateway', async () => {
+    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
+    const orderSeller2 = { id: 'order-seller-2', orderNumber: 'ORD-2', total: 50 };
+    const authority = 'A000000000000000000000000000000000000123';
+
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockResolvedValueOnce(orderSeller2);
+    mockRequestPayment.mockResolvedValue(authority);
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for order creation and payment flow to complete
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    // Verify createOrder called for each seller with correct items
+    expect(mockCreateOrderMutation).toHaveBeenNthCalledWith(1, expect.objectContaining({
+      sellerId: 1,
+      items: expect.arrayContaining([expect.objectContaining({ sellerProductId: '11111111-1111-1111-1111-111111111111' })]),
+    }));
+    expect(mockCreateOrderMutation).toHaveBeenNthCalledWith(2, expect.objectContaining({
+      sellerId: 2,
+      items: expect.arrayContaining([expect.objectContaining({ sellerProductId: '22222222-2222-2222-2222-222222222222' })]),
+    }));
+
+    // Verify requestPayment called once with both order IDs
+    await waitFor(() => {
+      expect(mockRequestPayment).toHaveBeenCalledTimes(1);
+    }, { timeout: 5000 });
+    expect(mockRequestPayment).toHaveBeenCalledWith(expect.objectContaining({
+      orderIds: ['order-seller-1', 'order-seller-2'],
+    }));
+
+    // Verify sessionStorage has order metadata
+    await waitFor(() => {
+      const stored = sessionStorage.getItem('order_order-seller-1');
+      expect(stored).not.toBeNull();
+      const parsed = JSON.parse(stored as string);
+      expect(parsed.orderIds).toEqual(['order-seller-1', 'order-seller-2']);
+    });
+
+    // Wait for redirectToGateway setTimeout (1500ms) to complete
+    await waitFor(() => {
+      expect(mockRedirectToGateway).toHaveBeenCalledWith(authority);
+    }, { timeout: 5000 });
+  }, 15000);
+
+  it('Test 2: Mid-batch createOrder failure rolls back already-created seller order (via Promise.allSettled)', async () => {
+    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
+    const createOrderError = new Error('Out of stock for seller 2');
+
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockRejectedValueOnce(createOrderError);
+    mockCancelPendingOrder.mockResolvedValue(true);
+    mockRequestPayment.mockResolvedValue('AUTH123');
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for both createOrder calls
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    // Component uses Promise.allSettled - captures fulfilled orders, cancels them, then throws
+    // So cancelPendingOrder IS called for the successful order
+    await waitFor(() => {
+      expect(mockCancelPendingOrder).toHaveBeenCalledTimes(1);
+    });
+    expect(mockCancelPendingOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ orderId: 'order-seller-1', authority: '' })
+    );
+
+    // Verify requestPayment NOT called
+    expect(mockRequestPayment).not.toHaveBeenCalled();
+  });
+
+  it('Test 3: requestPayment returns null after 2 seller orders created -> cancels ALL created orders', async () => {
+    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
+    const orderSeller2 = { id: 'order-seller-2', orderNumber: 'ORD-2', total: 50 };
+
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockResolvedValueOnce(orderSeller2);
+    // requestPayment returns null (payment initiation failure)
+    mockRequestPayment.mockResolvedValue(null);
+    mockCancelPendingOrder.mockResolvedValue(true);
+    mockRedirectToGateway.mockResolvedValue(undefined);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for both createOrder calls
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    // Wait for requestPayment to be called and return null
+    await waitFor(() => {
+      expect(mockRequestPayment).toHaveBeenCalledTimes(1);
+    });
+
+    // Verify cancelPendingOrder called for BOTH orders
+    await waitFor(() => {
+      expect(mockCancelPendingOrder).toHaveBeenCalledTimes(2);
+    });
+    expect(mockCancelPendingOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ orderId: 'order-seller-1', authority: '' })
+    );
+    expect(mockCancelPendingOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ orderId: 'order-seller-2', authority: '' })
+    );
+
+    // Verify redirectToGateway NOT called
+    expect(mockRedirectToGateway).not.toHaveBeenCalled();
+  });
+
+  it('Test 4: Single-seller multiple items grouped into a single createOrder call', async () => {
+    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 150 };
+    const authority = 'A000000000000000000000000000000000000123';
+
+    // Override cart items: 2 items from SAME seller
+    mockCartItems = [
+      {
+        id: 'cart-item-1',
+        productId: 'prod-1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '1',
+        sellerName: 'Seller One',
+        sellerShippingFee: 1.2,
+        productName: 'Product 1 from Seller 1',
+        productImage: '/item1.jpg',
+        quantity: 1,
+        unitPrice: 100,
+        totalPrice: 100,
+        availableStock: 5,
+        color: '#121212',
+        size: 'L',
+      },
+      {
+        id: 'cart-item-2',
+        productId: 'prod-2',
+        productInfoId: 'pi-2',
+        sellerProductId: '22222222-2222-2222-2222-222222222222',
+        sellerId: '1', // Same seller
+        sellerName: 'Seller One',
+        sellerShippingFee: 1.2,
+        productName: 'Product 2 from Seller 1',
+        productImage: '/item2.jpg',
+        quantity: 1,
+        unitPrice: 50,
+        totalPrice: 50,
+        availableStock: 3,
+        color: '#333333',
+        size: 'M',
+      },
+    ];
+
+    // Update shipping data for single seller
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 1.2,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 1.2, appliedFee: 1.2 },
+        ],
+      },
+    });
+
+    mockCreateOrderMutation.mockResolvedValue(orderSeller1);
+    mockRequestPayment.mockResolvedValue(authority);
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Verify createOrder called ONLY ONCE with both items
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(1);
+    });
+    expect(mockCreateOrderMutation).toHaveBeenCalledWith(expect.objectContaining({
+      sellerId: 1,
+      items: expect.arrayContaining([
+        expect.objectContaining({ sellerProductId: '11111111-1111-1111-1111-111111111111' }),
+        expect.objectContaining({ sellerProductId: '22222222-2222-2222-2222-222222222222' }),
+      ]),
+    }));
+
+    // Verify requestPayment called once
+    await waitFor(() => {
+      expect(mockRequestPayment).toHaveBeenCalledTimes(1);
+    });
   });
 });
