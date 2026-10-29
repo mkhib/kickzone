@@ -119,7 +119,7 @@ export function parsePantsSize(
     return null;
   }
   const match =
-    /^(?:[wW]\s*)?([1-9]\d?)(?:\s*[xX×*/]\s*(?:[lL]\s*)?|\s+[lL]\s*|\s*-\s*[lL]\s*)([1-9]\d?)$/.exec(
+    /^(?:[wW]\s*)?([1-9]\d?)(?:\s*[xX×*/]\s*(?:[lL]\s*)?|\s*-\s*[lL]\s*|\s+[lL]\s*|[lL]\s*)([1-9]\d?)$/.exec(
       trimmed,
     );
   if (!match) {

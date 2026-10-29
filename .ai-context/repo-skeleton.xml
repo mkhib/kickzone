@@ -1041,6 +1041,103 @@ export class ProductDescription {
 }
 </file>
 
+<file path="libs/server/entities/src/lib/seller-info.entity.ts">
+import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+import {
+  Entity,
+  Column,
+  PrimaryGeneratedColumn,
+  Relation,
+  OneToOne,
+  JoinColumn,
+  OneToMany,
+} from 'typeorm';
+import { User } from './user.entity';
+import { SellerProduct } from './seller-product.entity';
+import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
+
+@ObjectType()
+@Entity()
+export class SellerInfo {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field()
+  @Column()
+  storeName: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  phone?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  address?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  city?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  state?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  zipCode?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  country?: string;
+
+  @Field({ nullable: true })
+  @Column({ nullable: true })
+  businessName?: string;
+
+  @Field({ defaultValue: true })
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Field({ defaultValue: false })
+  @Column({ default: false })
+  canManageCatalog: boolean;
+
+  @Field(() => Float, { defaultValue: 0 })
+  @Column('decimal', { precision: 10, scale: 2, default: 0 })
+  shippingFee: number;
+
+  @Field(() => User)
+  @OneToOne(() => User)
+  @JoinColumn()
+  user: Relation<User>;
+
+  @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.seller)
+  sellerProducts: SellerProduct[];
+}
+
+@ObjectType()
+export class SellerEdge implements Edge<SellerInfo> {
+  @Field(() => SellerInfo)
+  node: SellerInfo;
+
+  @Field()
+  cursor: string;
+}
+
+@ObjectType()
+export class SellerConnection implements Connection<SellerInfo> {
+  @Field(() => [SellerEdge])
+  edges: SellerEdge[];
+
+  @Field(() => PageInfo)
+  pageInfo: PageInfo;
+
+  @Field(() => Int)
+  totalCount: number;
+}
+</file>
+
 <file path="libs/server/entities/src/lib/seller-product.entity.ts">
 // src/entities/seller-product.entity.ts
 import {
@@ -1628,103 +1725,6 @@ export class ProductInfo {
   @Field(() => [String], { nullable: true })
   @Column('simple-array', { nullable: true, default: '' })
   images: string[];
-}
-</file>
-
-<file path="libs/server/entities/src/lib/seller-info.entity.ts">
-import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
-import {
-  Entity,
-  Column,
-  PrimaryGeneratedColumn,
-  Relation,
-  OneToOne,
-  JoinColumn,
-  OneToMany,
-} from 'typeorm';
-import { User } from './user.entity';
-import { SellerProduct } from './seller-product.entity';
-import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
-
-@ObjectType()
-@Entity()
-export class SellerInfo {
-  @Field(() => Int)
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Field()
-  @Column()
-  storeName: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  phone?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  address?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  city?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  state?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  zipCode?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  country?: string;
-
-  @Field({ nullable: true })
-  @Column({ nullable: true })
-  businessName?: string;
-
-  @Field({ defaultValue: true })
-  @Column({ default: true })
-  isActive: boolean;
-
-  @Field({ defaultValue: false })
-  @Column({ default: false })
-  canManageCatalog: boolean;
-
-  @Field(() => Float, { defaultValue: 0 })
-  @Column('decimal', { precision: 10, scale: 2, default: 0 })
-  shippingFee: number;
-
-  @Field(() => User)
-  @OneToOne(() => User)
-  @JoinColumn()
-  user: Relation<User>;
-
-  @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.seller)
-  sellerProducts: SellerProduct[];
-}
-
-@ObjectType()
-export class SellerEdge implements Edge<SellerInfo> {
-  @Field(() => SellerInfo)
-  node: SellerInfo;
-
-  @Field()
-  cursor: string;
-}
-
-@ObjectType()
-export class SellerConnection implements Connection<SellerInfo> {
-  @Field(() => [SellerEdge])
-  edges: SellerEdge[];
-
-  @Field(() => PageInfo)
-  pageInfo: PageInfo;
-
-  @Field(() => Int)
-  totalCount: number;
 }
 </file>
 
