@@ -172,10 +172,16 @@ export class OrderService {
       validatedItems.reduce((sum, item) => sum + item.catalogTotalPrice, 0).toFixed(2),
     );
 
-    // Validate shipping cost (must be non-negative if provided)
-    const shippingCost = createOrderInput.shippingCost !== undefined
-      ? createOrderInput.shippingCost
-      : seller.shippingFee || 0;
+    // Validate shipping cost (must be finite and non-negative if provided; null/undefined falls back to seller.shippingFee || 0)
+    const shippingCost =
+      createOrderInput.shippingCost !== undefined &&
+      createOrderInput.shippingCost !== null
+        ? Number(createOrderInput.shippingCost)
+        : Number(seller.shippingFee || 0);
+
+    if (!Number.isFinite(shippingCost)) {
+      throw new BadRequestException('Shipping cost must be a valid number');
+    }
 
     if (shippingCost < 0) {
       throw new BadRequestException('Shipping cost cannot be negative');

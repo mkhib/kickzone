@@ -680,6 +680,297 @@ describe('OrderService', () => {
         /Insufficient stock for product seller-product-1. Available: 3, Requested: 4/,
       );
     });
+
+    // Heavy 6: Locked Tests 1-9
+    describe('Heavy 6: createOrder catalog pricing, aggregated stock, and input validation', () => {
+      const heavy6Seller: SellerInfo = {
+        id: 1,
+        storeName: 'Heavy 6 Store',
+        phone: '1112223333',
+        address: 'Heavy 6 Address',
+        shippingFee: 15,
+      } as SellerInfo;
+
+      const baseItem = {
+        productId: 'prod-1',
+        sellerProductId: 'sp-1',
+        productName: 'Heavy 6 Product',
+        productImage: 'img.jpg',
+        color: 'Red',
+        size: '42',
+        unitPrice: 100,
+        totalPrice: 100,
+      };
+
+      const makeSellerProduct = (overrides: Partial<SellerProduct> = {}): SellerProduct => ({
+        id: 'sp-1',
+        price: 100,
+        discount: 0,
+        stockQuantity: 5,
+        seller: { id: 1 } as any,
+        productInfoId: 1,
+        product: undefined as any,
+        productInfo: undefined as any,
+        costPrice: undefined as any,
+        ...overrides,
+      } as SellerProduct);
+
+      const baseInput = (overrides: Partial<CreateOrderInput> = {}): CreateOrderInput => ({
+        customerEmail: 'c@e.com',
+        customerPhone: '123',
+        customerName: 'Customer',
+        shippingAddress: 'Addr',
+        city: 'City',
+        state: 'ST',
+        zipCode: '12345',
+        country: 'US',
+        sellerId: 1,
+        items: [],
+        ...overrides,
+      });
+
+      const setupSuccessMocks = (sellerProduct: SellerProduct, savedOrderOverrides: any = {}) => {
+        const orderWithoutItems = {
+          id: 'order-1',
+          orderNumber: 'ORD-123',
+          trackingNumber: 'KZ-123',
+          customerEmail: 'c@e.com',
+          customerPhone: '123',
+          customerName: 'Customer',
+          shippingAddress: 'Addr',
+          city: 'City',
+          state: 'ST',
+          zipCode: '12345',
+          country: 'US',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 0,
+          shippingCost: 0,
+          total: 0,
+          sellerStoreName: heavy6Seller.storeName,
+          sellerPhone: heavy6Seller.phone,
+          sellerAddress: heavy6Seller.address,
+          items: undefined,
+          seller: heavy6Seller,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...savedOrderOverrides,
+        } as any;
+        orderRepository.create.mockReturnValue(orderWithoutItems);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+        orderRepository.save.mockResolvedValue(orderWithoutItems);
+        orderItemRepository.save.mockImplementation((items: any) => Promise.resolve(Array.isArray(items) ? items.map((i: any, idx: number) => ({ ...i, id: `item-${idx + 1}` })) : items));
+      };
+
+      // Locked Test 1: items: [], null, undefined each reject with 'Order must contain at least one item'
+      it('Locked Test 1: rejects empty items array, null, and undefined', async () => {
+        const emptyInput = baseInput({ items: [] });
+        await expect(service.createOrder(emptyInput)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(emptyInput)).rejects.toThrow('Order must contain at least one item');
+
+        const nullInput = baseInput({ items: null as any });
+        await expect(service.createOrder(nullInput)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(nullInput)).rejects.toThrow('Order must contain at least one item');
+
+        const undefinedInput = baseInput({ items: undefined as any });
+        await expect(service.createOrder(undefinedInput)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(undefinedInput)).rejects.toThrow('Order must contain at least one item');
+      });
+
+      // Locked Test 2: 3 items on 'sp-1' (stock 5) qty 2,2,2 -> rejects 'Insufficient stock for product sp-1. Available: 5, Requested: 6'
+      it('Locked Test 2: aggregated quantity across 3 items exceeds stock', async () => {
+        const sellerProduct = makeSellerProduct({ stockQuantity: 5 });
+        const input = baseInput({
+          items: [
+            { ...baseItem, quantity: 2, size: '42' },
+            { ...baseItem, quantity: 2, size: '43' },
+            { ...baseItem, quantity: 2, size: '44' },
+          ],
+        });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+
+        await expect(service.createOrder(input)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(input)).rejects.toThrow('Insufficient stock for product sp-1. Available: 5, Requested: 6');
+        expect(orderRepository.save).not.toHaveBeenCalled();
+        expect(orderItemRepository.save).not.toHaveBeenCalled();
+      });
+
+      // Locked Test 3: 2 items on 'sp-1' (stock 5) qty 2 (size 42) and 3 (size 43) -> resolves; order.save subtotal 500; orderItem.save 2 items unitPrice 100/totalPrice 200 and 100/300
+      it('Locked Test 3: two items same sellerProductId different sizes within stock resolves with correct pricing', async () => {
+        const sellerProduct = makeSellerProduct({ stockQuantity: 5, price: 100, discount: 0 });
+        const input = baseInput({
+          items: [
+            { ...baseItem, quantity: 2, size: '42' },
+            { ...baseItem, quantity: 3, size: '43' },
+          ],
+        });
+        setupSuccessMocks(sellerProduct, { subtotal: 500, shippingCost: 15, total: 515 });
+
+        const result = await service.createOrder(input);
+
+        expect(orderRepository.save).toHaveBeenCalledWith(expect.objectContaining({ subtotal: 500 }));
+        const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+        expect(savedItems).toHaveLength(2);
+        expect(savedItems[0]).toEqual(expect.objectContaining({ unitPrice: 100, totalPrice: 200 }));
+        expect(savedItems[1]).toEqual(expect.objectContaining({ unitPrice: 100, totalPrice: 300 }));
+        expect(result.subtotal).toBe(500);
+      });
+
+      // Locked Test 4: sp-1 (stock 5) qty 1 and 1; sp-2 (stock 3) qty 2 and 2 -> rejects 'Insufficient stock for product sp-2. Available: 3, Requested: 4'
+      it('Locked Test 4: aggregated quantity across multiple sellerProductIds exceeds stock on sp-2', async () => {
+        const sellerProduct1 = makeSellerProduct({ id: 'sp-1', stockQuantity: 5 });
+        const sellerProduct2 = makeSellerProduct({ id: 'sp-2', stockQuantity: 3 });
+        const input = baseInput({
+          items: [
+            { ...baseItem, sellerProductId: 'sp-1', quantity: 1 },
+            { ...baseItem, sellerProductId: 'sp-1', quantity: 1 },
+            { ...baseItem, sellerProductId: 'sp-2', quantity: 2 },
+            { ...baseItem, sellerProductId: 'sp-2', quantity: 2 },
+          ],
+        });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockImplementation(({ where }: any) => {
+          const id = where?.id;
+          if (id === 'sp-1') return Promise.resolve(sellerProduct1);
+          if (id === 'sp-2') return Promise.resolve(sellerProduct2);
+          return Promise.resolve(null);
+        });
+
+        await expect(service.createOrder(input)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(input)).rejects.toThrow('Insufficient stock for product sp-2. Available: 3, Requested: 4');
+        expect(orderRepository.save).not.toHaveBeenCalled();
+      });
+
+      // Locked Test 5: quantity 0, -3, 1.5, NaN each reject /Quantity must be a positive integer for product/; sellerProductId '' rejects /sellerProductId is required for product/
+      it('Locked Test 5: invalid quantities and missing sellerProductId reject with correct messages', async () => {
+        const sellerProduct = makeSellerProduct();
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+
+        const invalidQuantities = [0, -3, 1.5, NaN];
+        for (const qty of invalidQuantities) {
+          const input = baseInput({ items: [{ ...baseItem, quantity: qty }] });
+          await expect(service.createOrder(input)).rejects.toThrow(BadRequestException);
+          await expect(service.createOrder(input)).rejects.toThrow(/Quantity must be a positive integer for product/);
+        }
+
+        const missingSellerProductIdInput = baseInput({ items: [{ ...baseItem, sellerProductId: '', quantity: 1 }] });
+        await expect(service.createOrder(missingSellerProductIdInput)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(missingSellerProductIdInput)).rejects.toThrow(/sellerProductId is required for product/);
+      });
+
+      // Locked Test 6: sellerId 1 with seller.id '1' as any succeeds; seller.id '99' as any rejects 'Product sp-1 does not belong to seller 1'
+      it('Locked Test 6: seller ownership check - string "1" succeeds, string "99" rejects', async () => {
+        const sellerProductSeller1 = makeSellerProduct({ seller: { id: '1' } as any });
+        const input = baseInput({ items: [{ ...baseItem, quantity: 1 }] });
+        setupSuccessMocks(sellerProductSeller1);
+
+        await expect(service.createOrder(input)).resolves.toBeDefined();
+
+        const sellerProductSeller99 = makeSellerProduct({ seller: { id: '99' } as any });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProductSeller99);
+
+        await expect(service.createOrder(input)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(input)).rejects.toThrow('Product sp-1 does not belong to seller 1');
+      });
+
+      // Locked Test 7: tampered client fields (unitPrice 0.01, totalPrice 0.01, subtotal 0.01, total 0.01 as any), qty 2, price 200, discount 25, stock 10, seller.shippingFee 10, shippingCost undefined -> order.save objectContaining({ subtotal: 300, shippingCost: 10, total: 310 }); orderItem.save [objectContaining({ unitPrice: 150, totalPrice: 300, originalPrice: 200, discountPercentage: 25 })]
+      it('Locked Test 7: tampered client prices are ignored; catalog pricing and shippingFee fallback used', async () => {
+        const sellerProduct = makeSellerProduct({ price: 200, discount: 25, stockQuantity: 10 });
+        const heavy6SellerWithFee = { ...heavy6Seller, shippingFee: 10 };
+        const input = baseInput({
+          shippingCost: undefined,
+          items: [{
+            ...baseItem,
+            quantity: 2,
+            unitPrice: 0.01,
+            totalPrice: 0.01,
+          }],
+        });
+        setupSuccessMocks(sellerProduct, { subtotal: 300, shippingCost: 10, total: 310 });
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee);
+
+        const result = await service.createOrder(input);
+
+        expect(orderRepository.save).toHaveBeenCalledWith(expect.objectContaining({ subtotal: 300, shippingCost: 10, total: 310 }));
+        const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+        expect(savedItems[0]).toEqual(expect.objectContaining({
+          unitPrice: 150, // 200 * (1 - 25/100) = 150
+          totalPrice: 300, // 150 * 2
+          originalPrice: 200,
+          discountPercentage: 25,
+        }));
+        expect(result.subtotal).toBe(300);
+        expect(result.shippingCost).toBe(10);
+        expect(result.total).toBe(310);
+      });
+
+      // Locked Test 8: price 99.99, discount 15, stock 10, qty 3, shippingCost 0 -> orderItem.save [objectContaining({ unitPrice: 84.99, totalPrice: 254.97 })]; order.save objectContaining({ subtotal: 254.97, shippingCost: 0, total: 254.97 })
+      it('Locked Test 8: precision pricing with discount and zero shippingCost', async () => {
+        const sellerProduct = makeSellerProduct({ price: 99.99, discount: 15, stockQuantity: 10 });
+        const input = baseInput({
+          shippingCost: 0,
+          items: [{ ...baseItem, quantity: 3 }],
+        });
+        setupSuccessMocks(sellerProduct, { subtotal: 254.97, shippingCost: 0, total: 254.97 });
+
+        const result = await service.createOrder(input);
+
+        const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+        expect(savedItems[0]).toEqual(expect.objectContaining({
+          unitPrice: 84.99, // 99.99 * 0.85 = 84.9915 -> 84.99
+          totalPrice: 254.97, // 84.99 * 3 = 254.97
+        }));
+        expect(orderRepository.save).toHaveBeenCalledWith(expect.objectContaining({ subtotal: 254.97, shippingCost: 0, total: 254.97 }));
+        expect(result.subtotal).toBe(254.97);
+        expect(result.shippingCost).toBe(0);
+        expect(result.total).toBe(254.97);
+      });
+
+      // Locked Test 9: seller.shippingFee 15, item subtotal 100: (a) shippingCost 0 -> { subtotal: 100, shippingCost: 0, total: 100 }; (b) shippingCost null -> { subtotal: 100, shippingCost: 15, total: 115 }; (c) shippingCost NaN -> rejects 'Shipping cost must be a valid number'; (d) shippingCost -5 -> rejects 'Shipping cost cannot be negative'
+      it('Locked Test 9: shippingCost 0, null, NaN, negative handling', async () => {
+        const sellerProduct = makeSellerProduct({ price: 100, discount: 0, stockQuantity: 10 });
+        const heavy6SellerWithFee15 = { ...heavy6Seller, shippingFee: 15 };
+
+        // (a) shippingCost 0 -> free shipping preserved
+        const inputZero = baseInput({ shippingCost: 0, items: [{ ...baseItem, quantity: 1 }] });
+        setupSuccessMocks(sellerProduct, { subtotal: 100, shippingCost: 0, total: 100 });
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
+        let result = await service.createOrder(inputZero);
+        expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 0, total: 100 }));
+
+        // (b) shippingCost null -> falls back to seller.shippingFee (15)
+        const inputNull = baseInput({ shippingCost: null as any, items: [{ ...baseItem, quantity: 1 }] });
+        setupSuccessMocks(sellerProduct, { subtotal: 100, shippingCost: 15, total: 115 });
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
+        result = await service.createOrder(inputNull);
+        expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 15, total: 115 }));
+
+        // (c) shippingCost NaN -> rejects 'Shipping cost must be a valid number'
+        const inputNaN = baseInput({ shippingCost: NaN, items: [{ ...baseItem, quantity: 1 }] });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+        await expect(service.createOrder(inputNaN)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(inputNaN)).rejects.toThrow('Shipping cost must be a valid number');
+
+        // (d) shippingCost -5 -> rejects 'Shipping cost cannot be negative'
+        const inputNegative = baseInput({ shippingCost: -5, items: [{ ...baseItem, quantity: 1 }] });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+        await expect(service.createOrder(inputNegative)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(inputNegative)).rejects.toThrow('Shipping cost cannot be negative');
+      });
+    });
   });
 
   describe('findOne', () => {
