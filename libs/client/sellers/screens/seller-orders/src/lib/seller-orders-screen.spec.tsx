@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { ThemeProvider, createTheme } from '@mui/material/styles';
 import { SellerOrdersScreen } from './seller-orders-screen';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
@@ -387,6 +387,84 @@ describe('SellerOrdersScreen', () => {
       });
       renderWithTheme(<SellerOrdersScreen />);
       expect(screen.getAllByTestId('status-chip-REFUNDED').length).toBeGreaterThan(0);
+    });
+  });
+
+  describe('Status filter switching', () => {
+    // Locked Test 6: Switch status filter from PENDING back to ALL
+    it('filters by PENDING then shows all when switching back to ALL', () => {
+      const pendingOrder = {
+        id: 'ORD-PENDING-1',
+        orderNumber: 'ORD-PENDING-1',
+        status: KickzoneGraphqlTypes.OrderStatus.Pending,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        sellerId: 1,
+        total: 100,
+        subtotal: 90,
+        shippingCost: 10,
+        trackingNumber: 'TRACK-1',
+        items: [{ id: 'item-1', orderId: 'ORD-PENDING-1', productId: 'p1', productName: 'Product 1', quantity: 1, unitPrice: 100, totalPrice: 100 }],
+        notes: '',
+      };
+      const confirmedOrder = {
+        id: 'ORD-CONFIRMED-2',
+        orderNumber: 'ORD-CONFIRMED-2',
+        status: KickzoneGraphqlTypes.OrderStatus.Confirmed,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        sellerId: 1,
+        total: 200,
+        subtotal: 180,
+        shippingCost: 20,
+        trackingNumber: 'TRACK-2',
+        items: [{ id: 'item-2', orderId: 'ORD-CONFIRMED-2', productId: 'p2', productName: 'Product 2', quantity: 1, unitPrice: 200, totalPrice: 200 }],
+        notes: '',
+      };
+      const allOrders = [pendingOrder, confirmedOrder];
+
+      // Use mockImplementation to dynamically filter based on status argument
+      mockUseSellerOrders.mockImplementation((args: { status?: KickzoneGraphqlTypes.OrderStatus | 'ALL' }) => {
+        const status = args?.status;
+        const filteredOrders = status && status !== 'ALL'
+          ? allOrders.filter((o) => o.status === status)
+          : allOrders;
+        return {
+          orders: filteredOrders,
+          loading: false,
+          error: null,
+          updateOrderStatus: jest.fn().mockResolvedValue(undefined),
+          updateStatusLoading: false,
+        };
+      });
+
+      renderWithTheme(<SellerOrdersScreen />);
+
+      // Verify initial state - both orders visible (status is undefined initially)
+      expect(screen.getByText(/ORD-PENDING-1/)).toBeInTheDocument();
+      expect(screen.getByText(/ORD-CONFIRMED-2/)).toBeInTheDocument();
+
+      // Switch to PENDING - find the native Select input and fire change event
+      const select = screen.getByTestId('ArrowDropDownIcon').closest('div')?.querySelector('input[aria-hidden="true"]') as HTMLInputElement;
+      expect(select).toBeInTheDocument();
+      fireEvent.change(select, { target: { value: KickzoneGraphqlTypes.OrderStatus.Pending } });
+
+      // Verify hook called with PENDING status
+      expect(mockUseSellerOrders).toHaveBeenCalledWith(expect.objectContaining({ status: KickzoneGraphqlTypes.OrderStatus.Pending }));
+
+      // Check only PENDING visible (mockImplementation filters automatically)
+      expect(screen.getByText(/ORD-PENDING-1/)).toBeInTheDocument();
+      expect(screen.queryByText(/ORD-CONFIRMED-2/)).not.toBeInTheDocument();
+
+      // Switch back to ALL (empty string value)
+      fireEvent.change(select, { target: { value: '' } });
+
+      // Verify hook called with undefined status (ALL)
+      expect(mockUseSellerOrders).toHaveBeenCalledWith(expect.objectContaining({ status: undefined }));
+
+      // Both orders visible again
+      expect(screen.getByText(/ORD-PENDING-1/)).toBeInTheDocument();
+      expect(screen.getByText(/ORD-CONFIRMED-2/)).toBeInTheDocument();
     });
   });
 });
