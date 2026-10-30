@@ -342,6 +342,47 @@ export class OrderResolver {
     return true;
   }
 
+  @Mutation(() => Order)
+  @UseGuards(GraphqlAuthGuard)
+  async updateOrderTracking(
+    @CurrentUser() user: any,
+    @Args('id', { type: () => String }) id: string,
+    @Args('trackingNumber', { type: () => String }) trackingNumber: string
+  ) {
+    const trimmed = String(trackingNumber ?? '').trim();
+    if (!trimmed || trimmed.length > 100) {
+      throw new BadRequestException('Tracking number must be 1-100 characters');
+    }
+
+    const order = await this.orderService.findOne(id);
+    const role = this.getUserRole(user);
+
+    switch (role) {
+      case 'ADMIN':
+        break;
+
+      case 'SELLER': {
+        const seller = await this.sellerService.findOneByUserId(this.getUserId(user));
+        if (!seller || order.sellerId !== seller.id) {
+          throw new ForbiddenException('You can only update tracking for your own seller orders');
+        }
+        break;
+      }
+
+      case 'CUSTOMER':
+      default:
+        throw new ForbiddenException('Customers are not allowed to update tracking');
+    }
+
+    const allowedStatuses = [OrderStatus.CONFIRMED, OrderStatus.PROCESSING, OrderStatus.SHIPPED];
+    if (!allowedStatuses.includes(order.status)) {
+      throw new BadRequestException('Tracking can only be set on confirmed, processing or shipped orders');
+    }
+
+    const updated = await this.orderService.updateTrackingNumber(id, trimmed);
+    return role === 'SELLER' ? toSellerOrder(updated) : updated;
+  }
+
   @ResolveField(() => [OrderItem])
   async items(@Parent() order: Order) {
     return order.items;

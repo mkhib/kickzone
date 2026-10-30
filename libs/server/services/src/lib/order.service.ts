@@ -664,6 +664,12 @@ export class OrderService {
     });
   }
 
+  async updateTrackingNumber(id: string, trackingNumber: string): Promise<Order> {
+    const order = await this.findOne(id);
+    order.trackingNumber = trackingNumber.trim();
+    return this.orderRepository.save(order);
+  }
+
   private async restoreStock(
     order: Order,
     sellerProductRepo: Repository<SellerProduct>,

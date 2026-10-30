@@ -531,6 +531,7 @@ type Mutation {
   createOrder(createOrderInput: CreateOrderInput!): Order!
   updateOrder(id: String!, updateOrderInput: UpdateOrderInput!): Order!
   updateOrderStatus(updateOrderStatusInput: UpdateOrderStatusInput!): Order!
+  updateOrderTracking(id: String!, trackingNumber: String!): Order!
   deleteOrder(id: String!): Boolean!
   addToCart(addToCartInput: AddToCartInput!): Cart!
   updateCartItem(itemId: String!, updateInput: UpdateCartItemInput!): Cart!
