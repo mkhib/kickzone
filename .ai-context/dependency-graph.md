@@ -1361,85 +1361,86 @@ QT["product-info-colors.util.spec.ts"]
 QU["product.service.pants.spec.ts"]
 QV["product.service.spec.ts"]
 QW["relay-connection.spec.ts"]
-QX["shipping-calculation.service.spec.ts"]
-QY["token.service.spec.ts"]
+QX["seller-info.service.price-validation.spec.ts"]
+QY["shipping-calculation.service.spec.ts"]
+QZ["token.service.spec.ts"]
 end
 end
 end
-subgraph QZ["strategies"]
-subgraph R0["src"]
-R1["index.ts"]
-subgraph R2["lib"]
-R3["local.strategy.ts"]
+subgraph R0["strategies"]
+subgraph R1["src"]
+R2["index.ts"]
+subgraph R3["lib"]
+R4["local.strategy.ts"]
 end
 end
 end
-subgraph R4["utils"]
-subgraph R5["src"]
-R6["index.ts"]
-subgraph R7["lib"]
-R8["email-templates.ts"]
-R9["relay-connection.ts"]
-RA["pagination.ts"]
-end
-end
-end
-end
-subgraph RB["shared"]
-subgraph RC["codegen"]
-RD["jest.config.ts"]
-subgraph RE["src"]
-RF["index.ts"]
-subgraph RG["lib"]
-subgraph RH["generated"]
-RI["graphql.ts"]
+subgraph R5["utils"]
+subgraph R6["src"]
+R7["index.ts"]
+subgraph R8["lib"]
+R9["email-templates.ts"]
+RA["relay-connection.ts"]
+RB["pagination.ts"]
 end
 end
 end
 end
-subgraph RJ["graphql-schema"]
-RK["jest.config.ts"]
-subgraph RL["src"]
-RM["index.ts"]
-end
-end
-subgraph RN["product-sizes"]
-subgraph RO["src"]
-RP["index.ts"]
-subgraph RQ["lib"]
-RR["product-sizes.ts"]
-RS["product-sizes.pants-formats.spec.ts"]
-RT["product-sizes.pants-label.spec.ts"]
-RU["product-sizes.pants-strict.spec.ts"]
-RV["product-sizes.spec.ts"]
+subgraph RC["shared"]
+subgraph RD["codegen"]
+RE["jest.config.ts"]
+subgraph RF["src"]
+RG["index.ts"]
+subgraph RH["lib"]
+subgraph RI["generated"]
+RJ["graphql.ts"]
 end
 end
 end
-subgraph RW["shared-i18n"]
-subgraph RX["src"]
-RY["index.ts"]
-subgraph RZ["lib"]
-S0["language-context.tsx"]
-S1["language-detector.ts"]
-subgraph S2["locales"]
-S3["i18n-react.tsx"]
-S4["i18n-util.ts"]
-S5["i18n-util.async.ts"]
-subgraph S6["en"]
-S7["index.ts"]
 end
-subgraph S9["fa"]
-SA["index.ts"]
+subgraph RK["graphql-schema"]
+RL["jest.config.ts"]
+subgraph RM["src"]
+RN["index.ts"]
 end
-SB["formatters.ts"]
-SC["i18n-types.ts"]
-SD["i18n-util.sync.ts"]
-SE["navigator-detector.ts"]
 end
-S8["site-name.ts"]
-SF["table-localization.ts"]
-SG["theme-provider.tsx"]
-SH["use-page-title.ts"]
+subgraph RO["product-sizes"]
+subgraph RP["src"]
+RQ["index.ts"]
+subgraph RR["lib"]
+RS["product-sizes.ts"]
+RT["product-sizes.pants-formats.spec.ts"]
+RU["product-sizes.pants-label.spec.ts"]
+RV["product-sizes.pants-strict.spec.ts"]
+RW["product-sizes.spec.ts"]
+end
+end
+end
+subgraph RX["shared-i18n"]
+subgraph RY["src"]
+RZ["index.ts"]
+subgraph S0["lib"]
+S1["language-context.tsx"]
+S2["language-detector.ts"]
+subgraph S3["locales"]
+S4["i18n-react.tsx"]
+S5["i18n-util.ts"]
+S6["i18n-util.async.ts"]
+subgraph S7["en"]
+S8["index.ts"]
+end
+subgraph SA["fa"]
+SB["index.ts"]
+end
+SC["formatters.ts"]
+SD["i18n-types.ts"]
+SE["i18n-util.sync.ts"]
+SF["navigator-detector.ts"]
+end
+S9["site-name.ts"]
+SG["table-localization.ts"]
+SH["theme-provider.tsx"]
+SI["use-page-title.ts"]
 end
 end
 end
@@ -1943,43 +1944,45 @@ QU-->QJ
 QU-->QO
 QV-->QJ
 QV-->QO
-QX-->QL
-QY-->QN
-R1-->R3
-R6-->R8
-R6-->R9
-RF-->RI
-RP-->RR
-RS-->RR
-RT-->RR
-RU-->RR
-RV-->RR
-RY-->S0
-RY-->S1
-RY-->S3
-RY-->SC
-RY-->S4
-RY-->S5
-RY-->SD
-RY-->SE
-RY-->S8
-RY-->SF
-RY-->SG
-RY-->SH
-S0-->S1
-S0-->S3
-S0-->S5
-S3-->S4
-S5-->S7
-S5-->SA
-S5-->SB
-S5-->S4
-S7-->S8
-SA-->S8
-SD-->S7
-SD-->SA
-SD-->SB
-SD-->S4
-SF-->S3
-SG-->S0
-SH-->S3
+QX-->Q6
+QX-->QK
+QY-->QL
+QZ-->QN
+R2-->R4
+R7-->R9
+R7-->RA
+RG-->RJ
+RQ-->RS
+RT-->RS
+RU-->RS
+RV-->RS
+RW-->RS
+RZ-->S1
+RZ-->S2
+RZ-->S4
+RZ-->SD
+RZ-->S5
+RZ-->S6
+RZ-->SE
+RZ-->SF
+RZ-->S9
+RZ-->SG
+RZ-->SH
+RZ-->SI
+S1-->S2
+S1-->S4
+S1-->S6
+S4-->S5
+S6-->S8
+S6-->SB
+S6-->SC
+S6-->S5
+S8-->S9
+SB-->S9
+SE-->S8
+SE-->SB
+SE-->SC
+SE-->S5
+SG-->S4
+SH-->S1
+SI-->S4

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import {
@@ -32,6 +32,34 @@ export class SellerService {
     private userRepository: Repository<User>,
     private authService: AuthService
   ) {}
+
+  private assertValidSellerProductNumbers(values: {
+    price?: number;
+    costPrice?: number | null;
+    discount?: number;
+    stockQuantity?: number;
+  }): void {
+    if (values.price !== undefined) {
+      if (!Number.isFinite(values.price) || values.price <= 0) {
+        throw new BadRequestException('Price must be a positive number');
+      }
+    }
+    if (values.costPrice !== undefined && values.costPrice !== null) {
+      if (!Number.isFinite(values.costPrice) || values.costPrice < 0) {
+        throw new BadRequestException('Cost price must be zero or greater');
+      }
+    }
+    if (values.discount !== undefined) {
+      if (!Number.isFinite(values.discount) || values.discount < 0 || values.discount > 100) {
+        throw new BadRequestException('Discount must be between 0 and 100');
+      }
+    }
+    if (values.stockQuantity !== undefined) {
+      if (!Number.isInteger(values.stockQuantity) || values.stockQuantity < 0) {
+        throw new BadRequestException('Stock quantity must be a non-negative integer');
+      }
+    }
+  }
 
   async create(createSellerInput: CreateSellerInput): Promise<SellerInfo> {
     // Check if email already exists
@@ -182,6 +210,13 @@ export class SellerService {
     input: CreateSellerProductInput,
     allowRecommended = false
   ): Promise<SellerProduct> {
+    this.assertValidSellerProductNumbers({
+      price: input.price,
+      costPrice: input.costPrice,
+      discount: input.discount,
+      stockQuantity: input.stockQuantity,
+    });
+
     // Load productInfo with product relation
     const productInfo = await this.productInfoRepository.findOne({
       where: { id: input.productInfoId },
@@ -267,6 +302,13 @@ export class SellerService {
     });
     if (!sellerProduct) throw new Error('Seller product not found');
     if (sellerProduct.seller.id !== sellerId) throw new Error('Unauthorized');
+
+    this.assertValidSellerProductNumbers({
+      price: input.price,
+      costPrice: input.costPrice,
+      discount: input.discount,
+      stockQuantity: input.stockQuantity,
+    });
 
     // If productInfoId is being updated, load the productInfo relation
     if (
