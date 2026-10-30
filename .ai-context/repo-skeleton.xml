@@ -578,34 +578,6 @@ export class UserConnection implements Connection<User> {
 export type UserWithoutPassword = Omit<User, 'password'>;
 </file>
 
-<file path="libs/server/inputs/src/lib/cart.inputs.ts">
-import { InputType, Field, Int } from '@nestjs/graphql';
-import { IsInt, Min } from 'class-validator';
-
-@InputType()
-export class AddToCartInput {
-  @Field(() => String)
-  sellerProductId: string;
-
-  @Field(() => Int)
-  @IsInt()
-  @Min(1)
-  quantity: number;
-}
-
-@InputType()
-export class UpdateCartItemInput {
-  @Field(() => Int, { nullable: true })
-  quantity?: number;
-
-  @Field(() => String, { nullable: true })
-  color?: string;
-
-  @Field(() => String, { nullable: true })
-  size?: string;
-}
-</file>
-
 <file path="libs/server/inputs/src/lib/category.input.ts">
 import { InputType, Field, Int } from '@nestjs/graphql';
 
@@ -1386,6 +1358,34 @@ export class UpdateBrandInput {
 }
 </file>
 
+<file path="libs/server/inputs/src/lib/cart.inputs.ts">
+import { InputType, Field, Int } from '@nestjs/graphql';
+import { IsInt, Min } from 'class-validator';
+
+@InputType()
+export class AddToCartInput {
+  @Field(() => String)
+  sellerProductId: string;
+
+  @Field(() => Int)
+  @IsInt()
+  @Min(1)
+  quantity: number;
+}
+
+@InputType()
+export class UpdateCartItemInput {
+  @Field(() => Int, { nullable: true })
+  quantity?: number;
+
+  @Field(() => String, { nullable: true })
+  color?: string;
+
+  @Field(() => String, { nullable: true })
+  size?: string;
+}
+</file>
+
 <file path="libs/server/modules/src/lib/auth.module.ts">
 import { AuthController } from '@kickzone-workspace/controllers';
 import { AuthService } from '@kickzone-workspace/services';
@@ -1706,6 +1706,7 @@ export class UpdateOrderInput {
   country?: string;
 
   @Field(() => [UpdateOrderItemInput], { nullable: true })
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => UpdateOrderItemInput)
   items?: UpdateOrderItemInput[];

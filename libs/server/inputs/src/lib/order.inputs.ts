@@ -149,6 +149,7 @@ export class UpdateOrderInput {
   country?: string;
 
   @Field(() => [UpdateOrderItemInput], { nullable: true })
+  @IsOptional()
   @ValidateNested({ each: true })
   @Type(() => UpdateOrderItemInput)
   items?: UpdateOrderItemInput[];
