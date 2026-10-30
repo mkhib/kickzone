@@ -4325,36 +4325,48 @@
           "root": "libs/client/customers/screens/reset-password",
           "targets": {
             "lint": {
-              "cache": true,
+              "executor": "@nx/eslint:lint",
+              "options": {},
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "@nx/vite:test",
+              "outputs": [
+                "{workspaceRoot}/coverage/{projectRoot}"
+              ],
               "options": {
-                "cwd": "libs/client/customers/screens/reset-password",
-                "command": "eslint ."
+                "passWithNoTests": false,
+                "reportsDirectory": "../../../../../coverage/libs/client/customers/screens/reset-password"
               },
+              "configurations": {},
+              "parallelism": true
+            },
+            "typecheck": {
+              "cache": true,
               "inputs": [
-                "default",
-                "^default",
-                "{workspaceRoot}/eslint.config.mjs",
-                "{workspaceRoot}/libs/client/customers/screens/reset-password/eslint.config.mjs",
-                "{workspaceRoot}/tools/eslint-rules/**/*",
+                "production",
+                "^production",
                 {
                   "externalDependencies": [
-                    "eslint"
+                    "typescript"
                   ]
                 }
               ],
-              "outputs": [
-                "{options.outputFile}"
-              ],
+              "options": {
+                "cwd": "libs/client/customers/screens/reset-password",
+                "command": "tsc --noEmit -p tsconfig.lib.json"
+              },
               "metadata": {
+                "description": "Runs type-checking for the project.",
                 "technologies": [
-                  "eslint"
+                  "typescript"
                 ],
-                "description": "Runs ESLint on project",
                 "help": {
-                  "command": "yarn eslint --help",
+                  "command": "yarn tsc -p tsconfig.lib.json --help",
                   "example": {
                     "options": {
-                      "max-warnings": 0
+                      "noEmit": true
                     }
                   }
                 }
@@ -4362,8 +4374,30 @@
               "executor": "nx:run-commands",
               "configurations": {},
               "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn nx watch --projects customer-reset-password --includeDependentProjects -- yarn nx build-deps customer-reset-password"
+              },
+              "configurations": {},
+              "parallelism": true
             }
           },
+          "metadata": {},
           "name": "customer-reset-password",
           "$schema": "../../../../../node_modules/nx/schemas/project-schema.json",
           "sourceRoot": "libs/client/customers/screens/reset-password/src",

@@ -54,6 +54,11 @@ export function CustomerResetPassword() {
       return;
     }
 
+    if (formData.password.length < 8) {
+      setError(LL.authorization.passwordTooShort());
+      return;
+    }
+
     if (!token) {
       setError(LL.authorization.invalidToken());
       return;
