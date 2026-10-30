@@ -184,3 +184,13 @@ export const UPDATE_ORDER_MUTATION = gql`
     }
   }
 `;
+
+export const UPDATE_ORDER_TRACKING_MUTATION = gql`
+  mutation UpdateOrderTracking($id: String!, $trackingNumber: String!) {
+    updateOrderTracking(id: $id, trackingNumber: $trackingNumber) {
+      id
+      trackingNumber
+      updatedAt
+    }
+  }
+`;

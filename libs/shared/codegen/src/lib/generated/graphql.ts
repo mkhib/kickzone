@@ -325,6 +325,7 @@ export type Mutation = {
   updateMySellerProduct: SellerProduct;
   updateOrder: Order;
   updateOrderStatus: Order;
+  updateOrderTracking: Order;
   updateProduct: Product;
   updateSeller: SellerInfo;
   updateSellerProduct: SellerProduct;
@@ -602,6 +603,12 @@ export type MutationUpdateOrderArgs = {
 
 export type MutationUpdateOrderStatusArgs = {
   updateOrderStatusInput: UpdateOrderStatusInput;
+};
+
+
+export type MutationUpdateOrderTrackingArgs = {
+  id: Scalars['String']['input'];
+  trackingNumber: Scalars['String']['input'];
 };
 
 

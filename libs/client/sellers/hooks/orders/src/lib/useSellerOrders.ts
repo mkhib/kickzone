@@ -3,7 +3,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   GET_MY_ORDERS_QUERY,
   UPDATE_ORDER_STATUS_MUTATION,
-  UPDATE_ORDER_MUTATION,
+  UPDATE_ORDER_TRACKING_MUTATION,
   GET_ORDER_DETAILS_QUERY,
 } from '@kickzone-workspace/sellers-graphql';
 
@@ -49,9 +49,9 @@ export function useSellerOrders({
     });
 
   const [updateOrderMutation, { loading: updateOrderLoading }] = useMutation<
-    Pick<KickzoneGraphqlTypes.Mutation, 'updateOrder'>,
-    KickzoneGraphqlTypes.MutationUpdateOrderArgs
-  >(UPDATE_ORDER_MUTATION, {
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateOrderTracking'>,
+    KickzoneGraphqlTypes.MutationUpdateOrderTrackingArgs
+  >(UPDATE_ORDER_TRACKING_MUTATION, {
     refetchQueries: [
       {
         query: GET_MY_ORDERS_QUERY,
@@ -82,12 +82,10 @@ export function useSellerOrders({
     const response = await updateOrderMutation({
       variables: {
         id: orderId,
-        updateOrderInput: {
-          trackingNumber,
-        },
+        trackingNumber,
       },
     });
-    return response.data?.updateOrder;
+    return response.data?.updateOrderTracking;
   };
 
   const loadMore = () => {
