@@ -9,11 +9,13 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsPositive,
   IsString,
+  Max,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -96,11 +98,13 @@ export class ProductVariantInput {
   @IsOptional()
   @IsNumber()
   @Min(0, { message: 'Discount cannot be negative' })
+  @Max(100, { message: 'Discount cannot exceed 100' })
   discount?: number;
 
   @Field(() => Int, { nullable: true })
   @IsOptional()
   @IsNumber()
+  @IsInt()
   @Min(0, { message: 'Stock quantity cannot be negative' })
   stockQuantity?: number;
 

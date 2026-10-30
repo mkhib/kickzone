@@ -1383,236 +1383,6 @@ export class UpdateBrandInput {
 }
 </file>
 
-<file path="libs/server/inputs/src/lib/seller.input.ts">
-import { Field, InputType, Int, Float } from '@nestjs/graphql';
-import {
-  IsEmail,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  IsNumber,
-  IsPositive,
-  Min,
-  Max,
-  IsInt,
-} from 'class-validator';
-
-@InputType()
-export class CreateSellerInput {
-  @Field()
-  @IsNotEmpty()
-  @IsString()
-  name: string;
-
-  @Field()
-  @IsNotEmpty()
-  @IsString()
-  lastName: string;
-
-  @Field()
-  @IsNotEmpty()
-  @IsString()
-  username: string;
-
-  @Field()
-  @IsNotEmpty()
-  @IsEmail()
-  email: string;
-
-  @Field()
-  @IsNotEmpty()
-  @IsString()
-  password: string;
-
-  @Field()
-  @IsNotEmpty()
-  @IsString()
-  storeName: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  address?: string;
-
-  @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  shippingFee?: number;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  canManageCatalog?: boolean;
-}
-
-@InputType()
-export class UpdateSellerInput {
-  @Field(() => Int)
-  @IsNotEmpty()
-  id: number;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  name?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  lastName?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  username?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsEmail()
-  email?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  storeName?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  phone?: string;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  @IsString()
-  address?: string;
-
-  @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  shippingFee?: number;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  isActive?: boolean;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  canManageCatalog?: boolean;
-}
-
-@InputType()
-export class CreateSellerProductInput {
-  @Field(() => Int)
-  @IsNotEmpty()
-  @IsNumber()
-  @IsPositive()
-  productInfoId: number;
-
-  @Field(() => Float)
-  @IsNotEmpty()
-  @IsNumber()
-  @IsPositive()
-  price: number;
-
-  @Field(() => Float)
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  costPrice: number;
-
-  @Field(() => Float)
-  @IsNotEmpty()
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  discount: number;
-
-  @Field(() => Int)
-  @IsNotEmpty()
-  @IsNumber()
-  @IsInt()
-  @Min(0)
-  stockQuantity: number;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  recommended?: boolean;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  boxLess?: boolean;
-}
-
-@InputType()
-export class UpdateSellerProductInput {
-  @Field(() => String)
-  @IsNotEmpty()
-  id: string;
-
-  @Field(() => Int, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  @IsPositive()
-  productInfoId?: number;
-
-  @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  @IsPositive()
-  price?: number;
-
-  @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  costPrice?: number;
-
-  @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  @Min(0)
-  @Max(100)
-  discount?: number;
-
-  @Field(() => Int, { nullable: true })
-  @IsOptional()
-  @IsNumber()
-  @IsInt()
-  @Min(0)
-  stockQuantity?: number;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  recommended?: boolean;
-
-  @Field({ nullable: true })
-  @IsOptional()
-  boxLess?: boolean;
-}
-
-@InputType()
-export class SellerFilterInput {
-  @Field({ nullable: true })
-  searchTerm?: string;
-
-  @Field({ nullable: true })
-  isActive?: boolean;
-
-  @Field(() => [Int], { nullable: true })
-  ids?: number[];
-
-  @Field(() => Int, { nullable: true })
-  first?: number;
-
-  @Field({ nullable: true })
-  after?: string;
-}
-</file>
-
 <file path="libs/server/modules/src/lib/auth.module.ts">
 import { AuthController } from '@kickzone-workspace/controllers';
 import { AuthService } from '@kickzone-workspace/services';
@@ -1978,6 +1748,236 @@ export class OrdersPaginationInput {
 }
 </file>
 
+<file path="libs/server/inputs/src/lib/seller.input.ts">
+import { Field, InputType, Int, Float } from '@nestjs/graphql';
+import {
+  IsEmail,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  IsNumber,
+  IsPositive,
+  Min,
+  Max,
+  IsInt,
+} from 'class-validator';
+
+@InputType()
+export class CreateSellerInput {
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  name: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  lastName: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  username: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsEmail()
+  email: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  password: string;
+
+  @Field()
+  @IsNotEmpty()
+  @IsString()
+  storeName: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  shippingFee?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  canManageCatalog?: boolean;
+}
+
+@InputType()
+export class UpdateSellerInput {
+  @Field(() => Int)
+  @IsNotEmpty()
+  id: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  name?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  lastName?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  username?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsEmail()
+  email?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  storeName?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  phone?: string;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  @IsString()
+  address?: string;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  shippingFee?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  isActive?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  canManageCatalog?: boolean;
+}
+
+@InputType()
+export class CreateSellerProductInput {
+  @Field(() => Int)
+  @IsNotEmpty()
+  @IsNumber()
+  @IsPositive()
+  productInfoId: number;
+
+  @Field(() => Float)
+  @IsNotEmpty()
+  @IsNumber()
+  @IsPositive()
+  price: number;
+
+  @Field(() => Float)
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  costPrice: number;
+
+  @Field(() => Float)
+  @IsNotEmpty()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  discount: number;
+
+  @Field(() => Int)
+  @IsNotEmpty()
+  @IsNumber()
+  @IsInt()
+  @Min(0)
+  stockQuantity: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  recommended?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  boxLess?: boolean;
+}
+
+@InputType()
+export class UpdateSellerProductInput {
+  @Field(() => String)
+  @IsNotEmpty()
+  id: string;
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  productInfoId?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @IsPositive()
+  price?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  costPrice?: number;
+
+  @Field(() => Float, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  discount?: number;
+
+  @Field(() => Int, { nullable: true })
+  @IsOptional()
+  @IsNumber()
+  @IsInt()
+  @Min(0)
+  stockQuantity?: number;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  recommended?: boolean;
+
+  @Field({ nullable: true })
+  @IsOptional()
+  boxLess?: boolean;
+}
+
+@InputType()
+export class SellerFilterInput {
+  @Field({ nullable: true })
+  searchTerm?: string;
+
+  @Field({ nullable: true })
+  isActive?: boolean;
+
+  @Field(() => [Int], { nullable: true })
+  ids?: number[];
+
+  @Field(() => Int, { nullable: true })
+  first?: number;
+
+  @Field({ nullable: true })
+  after?: string;
+}
+</file>
+
 <file path="libs/server/entities/src/lib/product.entity.ts">
 import { ConnectionType, EdgeType } from '@kickzone-workspace/utils';
 import { Field, Int, ObjectType } from '@nestjs/graphql';
@@ -2097,11 +2097,13 @@ import { Type } from 'class-transformer';
 import {
   IsArray,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsPositive,
   IsString,
+  Max,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -2184,11 +2186,13 @@ export class ProductVariantInput {
   @IsOptional()
   @IsNumber()
   @Min(0, { message: 'Discount cannot be negative' })
+  @Max(100, { message: 'Discount cannot exceed 100' })
   discount?: number;
 
   @Field(() => Int, { nullable: true })
   @IsOptional()
   @IsNumber()
+  @IsInt()
   @Min(0, { message: 'Stock quantity cannot be negative' })
   stockQuantity?: number;
 
