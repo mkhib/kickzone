@@ -127,7 +127,15 @@ export class AuthService {
     await this.emailService.sendEmail(email, subject, html);
   }
 
+  private assertPasswordPolicy(password: unknown): void {
+    if (typeof password !== 'string' || password.length < 8) {
+      throw new BadRequestException('Password must be at least 8 characters');
+    }
+  }
+
   async setupPassword(token: string, newPassword: string): Promise<User> {
+    this.assertPasswordPolicy(newPassword);
+
     const tokenData = await this.tokenService.validateToken(token);
     if (!tokenData) {
       throw new BadRequestException('Invalid or expired token');
@@ -152,6 +160,8 @@ export class AuthService {
   }
 
   async register(name: string, email: string, password: string): Promise<User> {
+    this.assertPasswordPolicy(password);
+
     // Check if user already exists
     const existingUser = await this.userService.findByEmail(email);
     if (existingUser) {
@@ -174,6 +184,8 @@ export class AuthService {
   }
 
   async adminCreateUser(params: AdminCreateUserParams): Promise<User> {
+    this.assertPasswordPolicy(params.password);
+
     const existingUser = await this.userService.findByEmail(params.email);
     if (existingUser) {
       throw new BadRequestException('Email already exists');
@@ -210,6 +222,8 @@ export class AuthService {
   }
 
   async resetPassword(token: string, newPassword: string): Promise<User> {
+    this.assertPasswordPolicy(newPassword);
+
     const tokenData = await this.tokenService.validateToken(token);
     if (!tokenData) {
       throw new BadRequestException('Invalid or expired token');
