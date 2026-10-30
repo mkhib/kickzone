@@ -19577,6 +19577,11 @@
           "source": "kickzone-api",
           "target": "services",
           "type": "static"
+        },
+        {
+          "source": "kickzone-api",
+          "target": "inputs",
+          "type": "static"
         }
       ],
       "utils": []
