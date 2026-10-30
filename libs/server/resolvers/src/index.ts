@@ -21,3 +21,5 @@ export {
   ShippingCalculationResult,
   SellerShippingBreakdown,
 } from './lib/shipping.resolver';
+
+export { ZodValidationPipe } from './lib/zod-validation.pipe';

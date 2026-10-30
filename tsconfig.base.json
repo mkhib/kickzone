@@ -378,7 +378,8 @@
       "@kickzone-workspace/unauthorized-path": [
         "libs/client/shared/components/unauthorized/src/index.ts"
       ],
-      "@kickzone-workspace/utils": ["libs/server/utils/src/index.ts"]
+      "@kickzone-workspace/utils": ["libs/server/utils/src/index.ts"],
+      "@kickzone-workspace/validation": ["libs/shared/validation/src/index.ts"]
     }
   },
   "exclude": ["node_modules", "tmp"]
