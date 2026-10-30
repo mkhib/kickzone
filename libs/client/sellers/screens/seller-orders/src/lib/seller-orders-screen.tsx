@@ -28,6 +28,7 @@ import ExpandMore from '@mui/icons-material/ExpandMore';
 import { SellersLayout } from '@kickzone-workspace/sellers-layout';
 import { useSellerOrders } from '@kickzone-workspace/orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { getSellerAllowedNextStatuses } from './seller-status-transitions';
 import {
   useI18nContext,
   useLanguageContext,
@@ -62,46 +63,6 @@ export function SellerOrdersScreen() {
   const [currentOrderStatus, setCurrentOrderStatus] = useState<KickzoneGraphqlTypes.OrderStatus>(
     KickzoneGraphqlTypes.OrderStatus.Pending
   );
-
-  // Define allowed status transitions for the UI
-  const getAllowedNextStatuses = (currentStatus: KickzoneGraphqlTypes.OrderStatus): KickzoneGraphqlTypes.OrderStatus[] => {
-    const transitions: Record<KickzoneGraphqlTypes.OrderStatus, KickzoneGraphqlTypes.OrderStatus[]> = {
-      [KickzoneGraphqlTypes.OrderStatus.Pending]: [
-        KickzoneGraphqlTypes.OrderStatus.Pending,
-        KickzoneGraphqlTypes.OrderStatus.Confirmed,
-        KickzoneGraphqlTypes.OrderStatus.Cancelled,
-      ],
-      [KickzoneGraphqlTypes.OrderStatus.Confirmed]: [
-        KickzoneGraphqlTypes.OrderStatus.Confirmed,
-        KickzoneGraphqlTypes.OrderStatus.Processing,
-        KickzoneGraphqlTypes.OrderStatus.Shipped,
-        KickzoneGraphqlTypes.OrderStatus.Cancelled,
-        KickzoneGraphqlTypes.OrderStatus.Refunded,
-      ],
-      [KickzoneGraphqlTypes.OrderStatus.Processing]: [
-        KickzoneGraphqlTypes.OrderStatus.Processing,
-        KickzoneGraphqlTypes.OrderStatus.Shipped,
-        KickzoneGraphqlTypes.OrderStatus.Cancelled,
-        KickzoneGraphqlTypes.OrderStatus.Refunded,
-      ],
-      [KickzoneGraphqlTypes.OrderStatus.Shipped]: [
-        KickzoneGraphqlTypes.OrderStatus.Shipped,
-        KickzoneGraphqlTypes.OrderStatus.Delivered,
-        KickzoneGraphqlTypes.OrderStatus.Refunded,
-      ],
-      [KickzoneGraphqlTypes.OrderStatus.Delivered]: [
-        KickzoneGraphqlTypes.OrderStatus.Delivered,
-        KickzoneGraphqlTypes.OrderStatus.Refunded,
-      ],
-      [KickzoneGraphqlTypes.OrderStatus.Cancelled]: [
-        KickzoneGraphqlTypes.OrderStatus.Cancelled,
-      ],
-      [KickzoneGraphqlTypes.OrderStatus.Refunded]: [
-        KickzoneGraphqlTypes.OrderStatus.Refunded,
-      ],
-    };
-    return transitions[currentStatus] || [];
-  };
 
   // Format date according to locale
   const formatDate = (dateString: string) => {
@@ -138,8 +99,8 @@ export function SellerOrdersScreen() {
   const handleStatusChange = (orderId: string, currentStatus: KickzoneGraphqlTypes.OrderStatus) => {
     setSelectedOrderId(orderId);
     setCurrentOrderStatus(currentStatus);
-    const allowed = getAllowedNextStatuses(currentStatus);
-    setNewStatus(allowed[0] || currentStatus);
+    const allowed = getSellerAllowedNextStatuses(currentStatus);
+    setNewStatus(allowed[1] ?? allowed[0] ?? currentStatus);
     setStatusDialogOpen(true);
   };
 
@@ -579,7 +540,7 @@ export function SellerOrdersScreen() {
                 }
                 label={LL.form.newStatus()}
               >
-                {getAllowedNextStatuses(currentOrderStatus).map((status) => (
+                {getSellerAllowedNextStatuses(currentOrderStatus).map((status) => (
                   <MenuItem key={status} value={status}>
                     {status === KickzoneGraphqlTypes.OrderStatus.Pending && LL.orders.pending()}
                     {status === KickzoneGraphqlTypes.OrderStatus.Confirmed && LL.orders.confirmed()}
@@ -604,6 +565,7 @@ export function SellerOrdersScreen() {
               variant="contained"
               onClick={handleUpdateStatus}
               loading={updateStatusLoading}
+              disabled={newStatus === currentOrderStatus || updateStatusLoading}
             >
               {LL.button.updateStatus()}
             </Button>
