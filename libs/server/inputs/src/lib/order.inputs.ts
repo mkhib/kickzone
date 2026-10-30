@@ -1,6 +1,7 @@
 import { InputType, Field, Int, Float } from '@nestjs/graphql';
 import { OrderStatus } from '@kickzone-workspace/entities';
-import { Min, IsInt, ArrayMinSize, IsOptional } from 'class-validator';
+import { Min, IsInt, ArrayMinSize, IsOptional, ValidateNested } from 'class-validator';
+import { Type } from 'class-transformer';
 
 @InputType()
 export class CreateOrderItemInput {
@@ -69,6 +70,8 @@ export class CreateOrderInput {
 
   @Field(() => [CreateOrderItemInput])
   @ArrayMinSize(1)
+  @ValidateNested({ each: true })
+  @Type(() => CreateOrderItemInput)
   items: CreateOrderItemInput[];
 
   @Field(() => String, { nullable: true })
@@ -146,6 +149,8 @@ export class UpdateOrderInput {
   country?: string;
 
   @Field(() => [UpdateOrderItemInput], { nullable: true })
+  @ValidateNested({ each: true })
+  @Type(() => UpdateOrderItemInput)
   items?: UpdateOrderItemInput[];
 
   @Field(() => String, { nullable: true })
