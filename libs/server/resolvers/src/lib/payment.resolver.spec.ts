@@ -1179,7 +1179,7 @@ describe('PaymentResolver Unit Tests', () => {
         );
       });
 
-      describe('Pre-verify Stock Check - Fail Closed After Gateway Capture', () => {
+      describe('Pre-verify Stock Check - Fail Closed Before Gateway', () => {
         const createMockOrderWithItems = (overrides: Partial<{
           id: string;
           status: OrderStatus;
@@ -1233,18 +1233,11 @@ describe('PaymentResolver Unit Tests', () => {
             order_id: 'order-1',
           } as any;
 
-          const result = await resolver.verifyZarinPalPayment(input);
-
-          // CRITICAL: confirmOrderPayment must NOT be called for any order when pre-verify fails
+          await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+            'Insufficient stock for product sp-2: required 3, available 1'
+          );
+          expect(paymentService.verifyPayment).not.toHaveBeenCalled();
           expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
-
-          // Must return success: false with ref_id (fail-closed after gateway capture)
-          expect(result.success).toBe(false);
-          expect(result.code).toBe(100);
-          expect(result.ref_id).toBe(111222);
-          expect(result.message.toLowerCase()).toContain('insufficient stock');
-          expect(result.message).toContain('111222');
-          expect(result.orderIds).toEqual(['order-1', 'order-2']);
         });
 
         it('should return success:false with ref_id when aggregated stock check fails (two orders share same sellerProductId, combined qty > stock)', async () => {
@@ -1278,15 +1271,11 @@ describe('PaymentResolver Unit Tests', () => {
             order_id: 'order-1',
           } as any;
 
-          const result = await resolver.verifyZarinPalPayment(input);
-
+          await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+            'Insufficient stock for product sp-1: required 4, available 3'
+          );
+          expect(paymentService.verifyPayment).not.toHaveBeenCalled();
           expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
-
-          expect(result.success).toBe(false);
-          expect(result.code).toBe(100);
-          expect(result.ref_id).toBe(222333);
-          expect(result.message.toLowerCase()).toContain('insufficient stock');
-          expect(result.message).toContain('222333');
         });
 
         it('should rollback confirmed siblings when later order fails confirmOrderPayment (3-order batch, id ASC sort)', async () => {
