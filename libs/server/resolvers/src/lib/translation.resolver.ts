@@ -2,7 +2,7 @@ import { Resolver, Query, Mutation, Args, Int, Context } from '@nestjs/graphql';
 import { UseGuards } from '@nestjs/common';
 import { TranslationService } from '@kickzone-workspace/services';
 import { Translation } from '@kickzone-workspace/entities';
-import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
+import { CatalogGuard } from '@kickzone-workspace/guards';
 import { TranslationInput, BulkTranslationInput } from './translation.input';
 
 @Resolver(() => Translation)
@@ -29,7 +29,7 @@ export class TranslationResolver {
   }
 
   @Mutation(() => Translation)
-  @UseGuards(GraphqlAuthGuard)
+  @UseGuards(CatalogGuard)
   async setTranslation(
     @Args('input') input: TranslationInput
   ): Promise<Translation> {
@@ -37,6 +37,7 @@ export class TranslationResolver {
   }
 
   @Mutation(() => Boolean)
+  @UseGuards(CatalogGuard)
   async bulkTranslateEntities(
     @Args('input') input: BulkTranslationInput
   ): Promise<boolean> {
@@ -75,7 +76,7 @@ export class TranslationResolver {
   }
 
   @Mutation(() => Boolean)
-  @UseGuards(GraphqlAuthGuard)
+  @UseGuards(CatalogGuard)
   async deleteEntityTranslations(
     @Args('entityType') entityType: string,
     @Args('entityId', { type: () => Int }) entityId: number
