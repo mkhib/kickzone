@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Cart, CartItem, SellerProduct } from '@kickzone-workspace/entities';
@@ -58,6 +58,12 @@ export class CartService {
     userId: string,
     addToCartInput: AddToCartInput
   ): Promise<Cart> {
+    // Validate quantity: must be a positive integer
+    const quantity = Number(addToCartInput.quantity);
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+      throw new BadRequestException('Quantity must be a positive integer');
+    }
+
     // Fetch the SellerProduct from database to get all product info
     const sellerProduct = await this.sellerProductRepository.findOne({
       where: { id: addToCartInput.sellerProductId },

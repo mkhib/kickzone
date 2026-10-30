@@ -1356,92 +1356,93 @@ QO["translation.service.ts"]
 QP["user.service.ts"]
 QQ["auth.service.password-policy.spec.ts"]
 QR["auth.service.spec.ts"]
-QS["cart.service.spec.ts"]
-QT["order.service.spec.ts"]
-QU["product-info-colors.util.spec.ts"]
-QV["product.service.pants.spec.ts"]
-QW["product.service.spec.ts"]
-QX["relay-connection.spec.ts"]
-QY["seller-info.service.price-validation.spec.ts"]
-QZ["shipping-calculation.service.spec.ts"]
-R0["token.service.spec.ts"]
+QS["cart.service.add-quantity.spec.ts"]
+QT["cart.service.spec.ts"]
+QU["order.service.spec.ts"]
+QV["product-info-colors.util.spec.ts"]
+QW["product.service.pants.spec.ts"]
+QX["product.service.spec.ts"]
+QY["relay-connection.spec.ts"]
+QZ["seller-info.service.price-validation.spec.ts"]
+R0["shipping-calculation.service.spec.ts"]
+R1["token.service.spec.ts"]
 end
 end
 end
-subgraph R1["strategies"]
-subgraph R2["src"]
-R3["index.ts"]
-subgraph R4["lib"]
-R5["local.strategy.ts"]
+subgraph R2["strategies"]
+subgraph R3["src"]
+R4["index.ts"]
+subgraph R5["lib"]
+R6["local.strategy.ts"]
 end
 end
 end
-subgraph R6["utils"]
-subgraph R7["src"]
-R8["index.ts"]
-subgraph R9["lib"]
-RA["email-templates.ts"]
-RB["relay-connection.ts"]
-RC["pagination.ts"]
-end
-end
-end
-end
-subgraph RD["shared"]
-subgraph RE["codegen"]
-RF["jest.config.ts"]
-subgraph RG["src"]
-RH["index.ts"]
-subgraph RI["lib"]
-subgraph RJ["generated"]
-RK["graphql.ts"]
+subgraph R7["utils"]
+subgraph R8["src"]
+R9["index.ts"]
+subgraph RA["lib"]
+RB["email-templates.ts"]
+RC["relay-connection.ts"]
+RD["pagination.ts"]
 end
 end
 end
 end
-subgraph RL["graphql-schema"]
-RM["jest.config.ts"]
-subgraph RN["src"]
-RO["index.ts"]
-end
-end
-subgraph RP["product-sizes"]
-subgraph RQ["src"]
-RR["index.ts"]
-subgraph RS["lib"]
-RT["product-sizes.ts"]
-RU["product-sizes.pants-formats.spec.ts"]
-RV["product-sizes.pants-label.spec.ts"]
-RW["product-sizes.pants-strict.spec.ts"]
-RX["product-sizes.spec.ts"]
+subgraph RE["shared"]
+subgraph RF["codegen"]
+RG["jest.config.ts"]
+subgraph RH["src"]
+RI["index.ts"]
+subgraph RJ["lib"]
+subgraph RK["generated"]
+RL["graphql.ts"]
 end
 end
 end
-subgraph RY["shared-i18n"]
-subgraph RZ["src"]
-S0["index.ts"]
-subgraph S1["lib"]
-S2["language-context.tsx"]
-S3["language-detector.ts"]
-subgraph S4["locales"]
-S5["i18n-react.tsx"]
-S6["i18n-util.ts"]
-S7["i18n-util.async.ts"]
-subgraph S8["en"]
-S9["index.ts"]
 end
-subgraph SB["fa"]
-SC["index.ts"]
+subgraph RM["graphql-schema"]
+RN["jest.config.ts"]
+subgraph RO["src"]
+RP["index.ts"]
 end
-SD["formatters.ts"]
-SE["i18n-types.ts"]
-SF["i18n-util.sync.ts"]
-SG["navigator-detector.ts"]
 end
-SA["site-name.ts"]
-SH["table-localization.ts"]
-SI["theme-provider.tsx"]
-SJ["use-page-title.ts"]
+subgraph RQ["product-sizes"]
+subgraph RR["src"]
+RS["index.ts"]
+subgraph RT["lib"]
+RU["product-sizes.ts"]
+RV["product-sizes.pants-formats.spec.ts"]
+RW["product-sizes.pants-label.spec.ts"]
+RX["product-sizes.pants-strict.spec.ts"]
+RY["product-sizes.spec.ts"]
+end
+end
+end
+subgraph RZ["shared-i18n"]
+subgraph S0["src"]
+S1["index.ts"]
+subgraph S2["lib"]
+S3["language-context.tsx"]
+S4["language-detector.ts"]
+subgraph S5["locales"]
+S6["i18n-react.tsx"]
+S7["i18n-util.ts"]
+S8["i18n-util.async.ts"]
+subgraph S9["en"]
+SA["index.ts"]
+end
+subgraph SC["fa"]
+SD["index.ts"]
+end
+SE["formatters.ts"]
+SF["i18n-types.ts"]
+SG["i18n-util.sync.ts"]
+SH["navigator-detector.ts"]
+end
+SB["site-name.ts"]
+SI["table-localization.ts"]
+SJ["theme-provider.tsx"]
+SK["use-page-title.ts"]
 end
 end
 end
@@ -1943,51 +1944,52 @@ QR-->QE
 QR-->QN
 QR-->QP
 QS-->Q8
-QT-->QG
-QU-->Q9
-QV-->QJ
-QV-->QO
+QT-->Q8
+QU-->QG
+QV-->Q9
 QW-->QJ
 QW-->QO
-QY-->Q6
-QY-->QK
-QZ-->QL
-R0-->QN
-R3-->R5
-R8-->RA
-R8-->RB
-RH-->RK
-RR-->RT
-RU-->RT
-RV-->RT
-RW-->RT
-RX-->RT
-S0-->S2
-S0-->S3
-S0-->S5
-S0-->SE
-S0-->S6
-S0-->S7
-S0-->SF
-S0-->SG
-S0-->SA
-S0-->SH
-S0-->SI
-S0-->SJ
-S2-->S3
-S2-->S5
-S2-->S7
-S5-->S6
-S7-->S9
-S7-->SC
-S7-->SD
-S7-->S6
-S9-->SA
-SC-->SA
-SF-->S9
-SF-->SC
-SF-->SD
-SF-->S6
-SH-->S5
-SI-->S2
-SJ-->S5
+QX-->QJ
+QX-->QO
+QZ-->Q6
+QZ-->QK
+R0-->QL
+R1-->QN
+R4-->R6
+R9-->RB
+R9-->RC
+RI-->RL
+RS-->RU
+RV-->RU
+RW-->RU
+RX-->RU
+RY-->RU
+S1-->S3
+S1-->S4
+S1-->S6
+S1-->SF
+S1-->S7
+S1-->S8
+S1-->SG
+S1-->SH
+S1-->SB
+S1-->SI
+S1-->SJ
+S1-->SK
+S3-->S4
+S3-->S6
+S3-->S8
+S6-->S7
+S8-->SA
+S8-->SD
+S8-->SE
+S8-->S7
+SA-->SB
+SD-->SB
+SG-->SA
+SG-->SD
+SG-->SE
+SG-->S7
+SI-->S6
+SJ-->S3
+SK-->S6
