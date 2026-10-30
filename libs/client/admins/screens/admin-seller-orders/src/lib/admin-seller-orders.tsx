@@ -36,6 +36,7 @@ import {
   useAdminsSellers,
 } from '@kickzone-workspace/admins-orders-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { formatSizeLabel, SizeKind } from '@kickzone-workspace/product-sizes';
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 
 type Order = KickzoneGraphqlTypes.Order;
@@ -48,6 +49,15 @@ const formatDate = (dateString: string) => {
     hour: '2-digit',
     minute: '2-digit',
   });
+};
+
+const CANONICAL_PANTS_SIZE_RE = /^[1-9]\d?x[1-9]\d?$/;
+const displayItemSize = (size?: string | null): string => {
+  if (!size) return '';
+  const t = size.trim();
+  return CANONICAL_PANTS_SIZE_RE.test(t)
+    ? formatSizeLabel(SizeKind.Pants, t) || size
+    : size;
 };
 
 export function AdminSellerOrders() {
@@ -715,7 +725,7 @@ export function AdminSellerOrders() {
                                     variant="caption"
                                     color="text.secondary"
                                   >
-                                    {[item.color, item.size]
+                                    {[item.color, displayItemSize(item.size)]
                                       .filter(Boolean)
                                       .join(' - ')}
                                   </Typography>

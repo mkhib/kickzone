@@ -17211,6 +17211,11 @@
         },
         {
           "source": "admin-seller-orders",
+          "target": "product-sizes",
+          "type": "static"
+        },
+        {
+          "source": "admin-seller-orders",
           "target": "order-status-chip",
           "type": "static"
         }
