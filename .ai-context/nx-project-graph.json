@@ -18018,6 +18018,11 @@
           "source": "seller-orders-screen",
           "target": "language-components",
           "type": "static"
+        },
+        {
+          "source": "seller-orders-screen",
+          "target": "product-sizes",
+          "type": "static"
         }
       ],
       "sellers-headerbar": [

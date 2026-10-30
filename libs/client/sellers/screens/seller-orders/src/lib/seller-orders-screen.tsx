@@ -36,6 +36,14 @@ import {
 import { OrderStatusChip } from '@kickzone-workspace/order-status-chip';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { DialogFormContent } from '@kickzone-workspace/language-components';
+import { formatSizeLabel, SizeKind } from '@kickzone-workspace/product-sizes';
+
+const CANONICAL_PANTS_SIZE_RE = /^[1-9]\d?x[1-9]\d?$/;
+const displayItemSize = (size?: string | null): string => {
+  if (!size) return '';
+  const t = size.trim();
+  return CANONICAL_PANTS_SIZE_RE.test(t) ? formatSizeLabel(SizeKind.Pants, t) || size : size;
+};
 
 export function SellerOrdersScreen() {
   const { LL } = useI18nContext();
@@ -468,7 +476,7 @@ export function SellerOrdersScreen() {
                                                 variant="caption"
                                                 color="text.secondary"
                                               >
-                                                {[item.color, item.size]
+                                                {[item.color, displayItemSize(item.size)]
                                                   .filter(Boolean)
                                                   .join(' - ')}
                                               </Typography>
@@ -512,7 +520,7 @@ export function SellerOrdersScreen() {
                                                 variant="caption"
                                                 color="text.secondary"
                                               >
-                                                {[item.color, item.size]
+                                                {[item.color, displayItemSize(item.size)]
                                                   .filter(Boolean)
                                                   .join(' - ')}
                                               </Typography>
