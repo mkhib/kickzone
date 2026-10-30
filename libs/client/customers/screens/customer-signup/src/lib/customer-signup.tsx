@@ -60,6 +60,8 @@ export function CustomerSignup() {
     }
     if (!formData.password) {
       newErrors.password = LL.errors.requiredFields();
+    } else if (formData.password.length < 8) {
+      newErrors.password = LL.authorization.passwordTooShort();
     }
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = LL.authorization.passwordsDoNotMatch();
