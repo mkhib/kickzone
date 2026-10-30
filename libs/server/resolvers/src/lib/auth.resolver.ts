@@ -7,6 +7,15 @@ import {
 import { User } from '@kickzone-workspace/entities';
 import { Response, Request } from 'express';
 import { UnauthorizedException } from '@nestjs/common';
+import { ZodValidationPipe } from './zod-validation.pipe';
+import {
+  emailSchema,
+  loginPasswordSchema,
+  newPasswordSchema,
+  personNameSchema,
+  baseUrlSchema,
+  tokenSchema,
+} from '@kickzone-workspace/validation';
 
 const COOKIE_BASE = {
   httpOnly: true,
@@ -41,8 +50,8 @@ export class AuthResolver {
 
   @Mutation(() => User)
   async login(
-    @Args('email') email: string,
-    @Args('password') password: string,
+    @Args('email', new ZodValidationPipe(emailSchema)) email: string,
+    @Args('password', new ZodValidationPipe(loginPasswordSchema)) password: string,
     @Context() context: { res: Response }
   ): Promise<User> {
     const user = await this.authService.validateUser(email, password);
@@ -118,8 +127,8 @@ export class AuthResolver {
 
   @Mutation(() => Boolean)
   async initiatePasswordSetup(
-    @Args('email') email: string,
-    @Args('baseUrl') baseUrl: string
+    @Args('email', new ZodValidationPipe(emailSchema)) email: string,
+    @Args('baseUrl', new ZodValidationPipe(baseUrlSchema)) baseUrl: string
   ): Promise<boolean> {
     await this.authService.initiatePasswordSetup(email, baseUrl);
     return true;
@@ -127,17 +136,17 @@ export class AuthResolver {
 
   @Mutation(() => User)
   async setupPassword(
-    @Args('token') token: string,
-    @Args('newPassword') newPassword: string
+    @Args('token', new ZodValidationPipe(tokenSchema)) token: string,
+    @Args('newPassword', new ZodValidationPipe(newPasswordSchema)) newPassword: string
   ): Promise<User> {
     return this.authService.setupPassword(token, newPassword);
   }
 
   @Mutation(() => User)
   async register(
-    @Args('name') name: string,
-    @Args('email') email: string,
-    @Args('password') password: string,
+    @Args('name', new ZodValidationPipe(personNameSchema)) name: string,
+    @Args('email', new ZodValidationPipe(emailSchema)) email: string,
+    @Args('password', new ZodValidationPipe(newPasswordSchema)) password: string,
     @Context() context: { res: Response }
   ): Promise<User> {
     const user = await this.authService.register(name, email, password);
@@ -151,8 +160,8 @@ export class AuthResolver {
 
   @Mutation(() => Boolean)
   async forgotPassword(
-    @Args('email') email: string,
-    @Args('baseUrl') baseUrl: string
+    @Args('email', new ZodValidationPipe(emailSchema)) email: string,
+    @Args('baseUrl', new ZodValidationPipe(baseUrlSchema)) baseUrl: string
   ): Promise<boolean> {
     await this.authService.initiateForgotPassword(email, baseUrl);
     return true;
@@ -160,8 +169,8 @@ export class AuthResolver {
 
   @Mutation(() => User)
   async resetPassword(
-    @Args('token') token: string,
-    @Args('newPassword') newPassword: string
+    @Args('token', new ZodValidationPipe(tokenSchema)) token: string,
+    @Args('newPassword', new ZodValidationPipe(newPasswordSchema)) newPassword: string
   ): Promise<User> {
     return this.authService.resetPassword(token, newPassword);
   }

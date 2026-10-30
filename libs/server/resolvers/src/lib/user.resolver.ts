@@ -21,6 +21,8 @@ import {
 } from '@nestjs/graphql';
 import { Connection } from '@kickzone-workspace/utils';
 import { CreateUserInput } from '@kickzone-workspace/inputs';
+import { ZodValidationPipe } from './zod-validation.pipe';
+import { createUserSchema } from '@kickzone-workspace/validation';
 
 @Resolver(() => User)
 export class UserResolver {
@@ -72,7 +74,7 @@ export class UserResolver {
 
   @Mutation(() => User)
   async createUser(
-    @Args('createUserInput') createUserInput: CreateUserInput
+    @Args('createUserInput', new ZodValidationPipe(createUserSchema)) createUserInput: CreateUserInput
   ): Promise<User> {
     // Public user creation: always create a CUSTOMER, but use all provided fields
     return this.authService.adminCreateUser({
@@ -89,7 +91,7 @@ export class UserResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   async adminCreateUser(
-    @Args('createUserInput') createUserInput: CreateUserInput
+    @Args('createUserInput', new ZodValidationPipe(createUserSchema)) createUserInput: CreateUserInput
   ): Promise<User> {
     return this.authService.adminCreateUser({
       name: createUserInput.name,

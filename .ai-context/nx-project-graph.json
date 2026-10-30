@@ -15115,6 +15115,104 @@
           "tags": []
         }
       },
+      "shared-validation": {
+        "name": "shared-validation",
+        "type": "lib",
+        "data": {
+          "root": "libs/shared/validation",
+          "targets": {
+            "lint": {
+              "executor": "@nx/eslint:lint",
+              "outputs": [
+                "{options.outputFile}"
+              ],
+              "options": {
+                "lintFilePatterns": [
+                  "libs/shared/validation/**/*.{ts,tsx,js,jsx}"
+                ]
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "test": {
+              "executor": "@nx/vite:test",
+              "outputs": [
+                "{options.reportsDirectory}"
+              ],
+              "options": {
+                "passWithNoTests": true,
+                "reportsDirectory": "../../../coverage/libs/shared/validation"
+              },
+              "configurations": {},
+              "parallelism": true
+            },
+            "typecheck": {
+              "cache": true,
+              "inputs": [
+                "production",
+                "^production",
+                {
+                  "externalDependencies": [
+                    "typescript"
+                  ]
+                }
+              ],
+              "options": {
+                "cwd": "libs/shared/validation",
+                "command": "tsc --noEmit -p tsconfig.lib.json"
+              },
+              "metadata": {
+                "description": "Runs type-checking for the project.",
+                "technologies": [
+                  "typescript"
+                ],
+                "help": {
+                  "command": "yarn tsc -p tsconfig.lib.json --help",
+                  "example": {
+                    "options": {
+                      "noEmit": true
+                    }
+                  }
+                }
+              },
+              "executor": "nx:run-commands",
+              "configurations": {},
+              "parallelism": true
+            },
+            "build-deps": {
+              "dependsOn": [
+                "^build"
+              ],
+              "configurations": {},
+              "options": {},
+              "parallelism": true,
+              "executor": "nx:noop"
+            },
+            "watch-deps": {
+              "continuous": true,
+              "dependsOn": [
+                "build-deps"
+              ],
+              "executor": "nx:run-commands",
+              "options": {
+                "command": "yarn nx watch --projects shared-validation --includeDependentProjects -- yarn nx build-deps shared-validation"
+              },
+              "configurations": {},
+              "parallelism": true
+            }
+          },
+          "metadata": {},
+          "name": "shared-validation",
+          "$schema": "../../../node_modules/nx/schemas/project-schema.json",
+          "sourceRoot": "libs/shared/validation/src",
+          "projectType": "library",
+          "tags": [
+            "scope:shared",
+            "type:util"
+          ],
+          "implicitDependencies": []
+        }
+      },
       "strategies": {
         "name": "strategies",
         "type": "lib",
@@ -19348,6 +19446,7 @@
           "type": "implicit"
         }
       ],
+      "shared-validation": [],
       "strategies": [
         {
           "source": "strategies",
@@ -19417,12 +19516,17 @@
       "resolvers": [
         {
           "source": "resolvers",
-          "target": "services",
+          "target": "entities",
           "type": "static"
         },
         {
           "source": "resolvers",
-          "target": "entities",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "resolvers",
+          "target": "services",
           "type": "static"
         },
         {
