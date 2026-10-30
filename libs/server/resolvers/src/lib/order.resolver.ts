@@ -26,6 +26,12 @@ import {
   UpdateOrderInput,
   UpdateOrderStatusInput,
 } from '@kickzone-workspace/inputs';
+
+const SELLER_STATUS_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus>> = {
+  [OrderStatus.CONFIRMED]: OrderStatus.PROCESSING,
+  [OrderStatus.PROCESSING]: OrderStatus.SHIPPED,
+  [OrderStatus.SHIPPED]: OrderStatus.DELIVERED,
+};
 import { OrderService, SellerService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
@@ -262,6 +268,12 @@ export class OrderResolver {
         const seller = await this.sellerService.findOneByUserId(this.getUserId(user));
         if (!seller || order.sellerId !== seller.id) {
           throw new ForbiddenException('You can only update status for your own seller orders');
+        }
+        // Sellers can only move orders through fulfilment steps
+        if (SELLER_STATUS_TRANSITIONS[order.status] !== status) {
+          throw new BadRequestException(
+            `Sellers can only move orders through fulfilment steps (CONFIRMED->PROCESSING->SHIPPED->DELIVERED); ${order.status} -> ${status} is not allowed`
+          );
         }
         break;
       }

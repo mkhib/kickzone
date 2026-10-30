@@ -668,18 +668,14 @@ describe('OrderResolver', () => {
       ).rejects.toThrow(ForbiddenException);
     });
 
-    it('allows SELLER to update own order and returns redacted SellerOrder', async () => {
+    it('rejects SELLER moving own PENDING order to CONFIRMED (payment flow confirms orders)', async () => {
       const user = createMockSellerUser({ id: 'seller-user-1' });
-      const result = await resolver.updateOrderStatus(user, {
-        id: 'order-1',
-        status: OrderStatus.CONFIRMED,
-      });
+      await expect(
+        resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+      ).rejects.toThrow(BadRequestException);
 
       expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-1');
-      expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CONFIRMED);
-      expect(result).toEqual(updatedSellerOrder);
-      // Verify customer PII is not present
-      expect((result as any).customerEmail).toBeUndefined();
+      expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
     });
 
     it('allows ADMIN to update any order and returns full Order', async () => {
@@ -712,17 +708,14 @@ describe('OrderResolver', () => {
         mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
       });
 
-      it('allows SELLER with { sub, userType: "seller" } owning order to update status and receive redacted SellerOrder', async () => {
+      it('rejects SELLER with { sub, userType: "seller" } moving own PENDING order to CONFIRMED', async () => {
         const user = { sub: 's-user', userType: 'seller' } as any;
-        const result = await resolver.updateOrderStatus(user, {
-          id: 'order-1',
-          status: OrderStatus.CONFIRMED,
-        });
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow(BadRequestException);
 
         expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
-        expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CONFIRMED);
-        expect(result).toEqual(updatedSellerOrder);
-        expect((result as any).customerEmail).toBeUndefined();
+        expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
       });
 
       it('allows ADMIN with { sub, userType: "admin" } to update any order and receive full Order', async () => {
