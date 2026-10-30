@@ -7,6 +7,8 @@ import {
   IsNumber,
   IsPositive,
   Min,
+  Max,
+  IsInt,
 } from 'class-validator';
 
 @InputType()
@@ -127,21 +129,26 @@ export class CreateSellerProductInput {
   @Field(() => Float)
   @IsNotEmpty()
   @IsNumber()
+  @IsPositive()
   price: number;
 
   @Field(() => Float)
   @IsNotEmpty()
   @IsNumber()
+  @Min(0)
   costPrice: number;
 
   @Field(() => Float)
   @IsNotEmpty()
   @IsNumber()
+  @Min(0)
+  @Max(100)
   discount: number;
 
   @Field(() => Int)
   @IsNotEmpty()
   @IsNumber()
+  @IsInt()
   @Min(0)
   stockQuantity: number;
 
@@ -169,21 +176,26 @@ export class UpdateSellerProductInput {
   @Field(() => Float, { nullable: true })
   @IsOptional()
   @IsNumber()
+  @IsPositive()
   price?: number;
 
   @Field(() => Float, { nullable: true })
   @IsOptional()
   @IsNumber()
+  @Min(0)
   costPrice?: number;
 
   @Field(() => Float, { nullable: true })
   @IsOptional()
   @IsNumber()
+  @Min(0)
+  @Max(100)
   discount?: number;
 
   @Field(() => Int, { nullable: true })
   @IsOptional()
   @IsNumber()
+  @IsInt()
   @Min(0)
   stockQuantity?: number;
 
