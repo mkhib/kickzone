@@ -18446,6 +18446,11 @@
           "source": "admin-products",
           "target": "language-components",
           "type": "static"
+        },
+        {
+          "source": "admin-products",
+          "target": "product-sizes",
+          "type": "static"
         }
       ],
       "categories-hook": [

@@ -29,6 +29,16 @@ import { useAdminsProductsStore } from '@kickzone-workspace/admins-products-stor
 import { useI18nContext } from '@kickzone-workspace/shared-i18n';
 import { DialogFormContent } from '@kickzone-workspace/language-components';
 import { formatVariantColorNames } from '@kickzone-workspace/client-shared-graphql';
+import { formatSizeLabel, SizeKind } from '@kickzone-workspace/product-sizes';
+
+const CANONICAL_PANTS_SIZE_RE = /^[1-9]\d?x[1-9]\d?$/;
+const displayItemSize = (size?: string | null): string => {
+  if (!size) return '';
+  const t = size.trim();
+  return CANONICAL_PANTS_SIZE_RE.test(t)
+    ? formatSizeLabel(SizeKind.Pants, t) || size
+    : size;
+};
 
 interface ProductImageManagementModalProps {
   open: boolean;
@@ -309,7 +319,7 @@ export function ProductImageManagementModal({
               {currentProduct.productInfos.map((productInfo, index) => (
                 <Tab
                   key={productInfo.id}
-                  label={`${productInfo.size}${
+                  label={`${displayItemSize(productInfo.size)}${
                     productInfo.colors?.length
                       ? ` - ${formatVariantColorNames(productInfo.colors)}`
                       : ''
@@ -329,7 +339,7 @@ export function ProductImageManagementModal({
             >
               <Box sx={{ mb: 3 }}>
                 <Typography variant="h6" gutterBottom>
-                  {LL.products.variant()}: {productInfo.size}
+                  {LL.products.variant()}: {displayItemSize(productInfo.size)}
                   {productInfo.colors?.length
                     ? ` - ${formatVariantColorNames(productInfo.colors)}`
                     : ''}
