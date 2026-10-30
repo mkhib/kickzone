@@ -82,6 +82,18 @@ export class CartService {
       );
     }
 
+    if (!sellerProduct.product) {
+      throw new NotFoundException(
+        `Product for SellerProduct ${addToCartInput.sellerProductId} not found`
+      );
+    }
+
+    if (!sellerProduct.seller) {
+      throw new NotFoundException(
+        `Seller for SellerProduct ${addToCartInput.sellerProductId} not found`
+      );
+    }
+
     const cart = await this.getOrCreateCart(userId);
 
     // Check if item already exists in cart
