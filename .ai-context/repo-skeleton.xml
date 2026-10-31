@@ -1871,6 +1871,383 @@ export class SellerFilterInput {
 }
 </file>
 
+<file path="libs/server/inputs/src/lib/order.inputs.ts">
+import { InputType, Field, Int, Float } from '@nestjs/graphql';
+import { OrderStatus } from '@kickzone-workspace/entities';
+
+@InputType()
+export class CreateOrderItemInput {
+  @Field(() => String)
+  productId: string;
+
+  @Field(() => String, { nullable: true })
+  sellerProductId?: string;
+
+  @Field(() => String)
+  productName: string;
+
+  @Field(() => String, { nullable: true })
+  productImage?: string;
+
+  @Field(() => Int)
+  quantity: number;
+
+  @Field(() => Float)
+  unitPrice: number;
+
+  @Field(() => Float)
+  totalPrice: number;
+
+  @Field(() => String, { nullable: true })
+  color?: string;
+
+  @Field(() => String, { nullable: true })
+  size?: string;
+}
+
+@InputType()
+export class CreateOrderInput {
+  @Field(() => String)
+  customerEmail: string;
+
+  @Field(() => String)
+  customerPhone: string;
+
+  @Field(() => String)
+  customerName: string;
+
+  @Field(() => String)
+  shippingAddress: string;
+
+  @Field(() => String)
+  city: string;
+
+  @Field(() => String)
+  state: string;
+
+  @Field(() => String)
+  zipCode: string;
+
+  @Field(() => String)
+  country: string;
+
+  @Field(() => Int)
+  sellerId: number;
+
+  @Field(() => [CreateOrderItemInput])
+  items: CreateOrderItemInput[];
+
+  @Field(() => String, { nullable: true })
+  notes?: string;
+
+  // Optional: Override shipping cost (calculated by smart shipping logic)
+  // If not provided, will use seller's shippingFee
+  @Field(() => Float, { nullable: true })
+  shippingCost?: number;
+}
+
+@InputType()
+export class UpdateOrderItemInput {
+  @Field(() => String, { nullable: true })
+  id?: string;
+
+  @Field(() => String)
+  productId: string;
+
+  @Field(() => String, { nullable: true })
+  sellerProductId?: string;
+
+  @Field(() => String)
+  productName: string;
+
+  @Field(() => String, { nullable: true })
+  productImage?: string;
+
+  @Field(() => Int)
+  quantity: number;
+
+  @Field(() => Float)
+  unitPrice: number;
+
+  @Field(() => Float)
+  totalPrice: number;
+
+  @Field(() => String, { nullable: true })
+  color?: string;
+
+  @Field(() => String, { nullable: true })
+  size?: string;
+}
+
+@InputType()
+export class UpdateOrderInput {
+  @Field(() => String, { nullable: true })
+  customerEmail?: string;
+
+  @Field(() => String, { nullable: true })
+  customerPhone?: string;
+
+  @Field(() => String, { nullable: true })
+  customerName?: string;
+
+  @Field(() => String, { nullable: true })
+  shippingAddress?: string;
+
+  @Field(() => String, { nullable: true })
+  city?: string;
+
+  @Field(() => String, { nullable: true })
+  state?: string;
+
+  @Field(() => String, { nullable: true })
+  zipCode?: string;
+
+  @Field(() => String, { nullable: true })
+  country?: string;
+
+  @Field(() => [UpdateOrderItemInput], { nullable: true })
+  items?: UpdateOrderItemInput[];
+
+  @Field(() => String, { nullable: true })
+  notes?: string;
+
+  @Field(() => String, { nullable: true })
+  trackingNumber?: string;
+}
+
+@InputType()
+export class UpdateOrderStatusInput {
+  @Field(() => String)
+  id: string;
+
+  @Field(() => OrderStatus)
+  status: OrderStatus;
+}
+
+@InputType()
+export class OrdersFilterInput {
+  @Field(() => String, { nullable: true })
+  sellerId?: string;
+
+  @Field(() => OrderStatus, { nullable: true })
+  status?: OrderStatus;
+
+  @Field(() => String, { nullable: true })
+  customerEmail?: string;
+
+  @Field(() => String, { nullable: true })
+  orderNumber?: string;
+}
+
+@InputType()
+export class OrdersPaginationInput {
+  @Field(() => Int, { defaultValue: 10 })
+  first: number;
+
+  @Field(() => String, { nullable: true })
+  after?: string;
+}
+</file>
+
+<file path="libs/server/inputs/src/lib/product.input.ts">
+import {
+  InputType,
+  Field,
+  Int,
+  Float,
+  registerEnumType,
+} from '@nestjs/graphql';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
+import { ProductInfoFilterInput } from './product-info-filter.input';
+
+export enum ProductArchivedStatus {
+  ALL = 'ALL',
+  ACTIVE = 'ACTIVE',
+  ARCHIVED = 'ARCHIVED',
+}
+
+registerEnumType(ProductArchivedStatus, {
+  name: 'ProductArchivedStatus',
+});
+
+@InputType()
+export class ProductDescriptionInput {
+  @Field(() => Int, { nullable: true })
+  languageId?: number;
+
+  @Field({ nullable: true })
+  languageCode?: string;
+
+  @Field()
+  description: string;
+}
+
+@InputType()
+export class ProductVariantInput {
+  @Field(() => Int, { nullable: true })
+  id?: number;
+
+  @Field()
+  size: string;
+
+  @Field(() => SizeKind, { nullable: true })
+  sizeKind?: SizeKind;
+
+  @Field(() => [Int])
+  colorIds: number[];
+
+  @Field(() => Float)
+  weight: number;
+
+  @Field({ nullable: true })
+  sku?: string;
+
+  @Field(() => Float, { nullable: true })
+  price?: number;
+
+  @Field(() => Float, { nullable: true })
+  costPrice?: number;
+
+  @Field(() => Float, { nullable: true })
+  discount?: number;
+
+  @Field(() => Int, { nullable: true })
+  stockQuantity?: number;
+
+  @Field({ nullable: true })
+  boxLess?: boolean;
+
+  @Field(() => [String], { nullable: true })
+  images?: string[];
+}
+
+@InputType()
+export class CreateProductInput {
+  @Field()
+  name: string;
+
+  @Field()
+  sku: string;
+
+  @Field(() => [Int])
+  categoryIds: number[];
+
+  @Field(() => Int, { nullable: true })
+  brandId?: number | null;
+
+  @Field({ nullable: true })
+  description?: string;
+
+  @Field(() => [ProductDescriptionInput], { nullable: true })
+  descriptions?: ProductDescriptionInput[];
+
+  @Field(() => [ProductVariantInput], { nullable: true })
+  variants?: ProductVariantInput[];
+}
+
+@InputType()
+export class UpdateProductInput {
+  @Field(() => Int)
+  id: number;
+
+  @Field()
+  name: string;
+
+  @Field()
+  sku: string;
+
+  @Field(() => [Int])
+  categoryIds: number[];
+
+  @Field(() => Int, { nullable: true })
+  brandId?: number | null;
+
+  @Field({ nullable: true })
+  description?: string;
+
+  @Field(() => [ProductDescriptionInput], { nullable: true })
+  descriptions?: ProductDescriptionInput[];
+
+  @Field(() => [ProductVariantInput], { nullable: true })
+  variants?: ProductVariantInput[];
+}
+
+@InputType()
+export class CreateProductInfoInput {
+  @Field(() => Int)
+  productId: number;
+
+  @Field()
+  size: string;
+
+  @Field(() => SizeKind)
+  sizeKind: SizeKind;
+
+  @Field(() => [Int])
+  colorIds: number[];
+
+  @Field(() => Float)
+  weight: number;
+}
+
+@InputType()
+export class ProductFilterInput {
+  @Field({ nullable: true })
+  category?: string;
+
+  @Field(() => [String], { nullable: true })
+  categorySlugs?: string[];
+
+  @Field({ nullable: true })
+  brand?: string;
+
+  @Field(() => [String], { nullable: true })
+  brands?: string[];
+
+  @Field(() => [Int], { nullable: true })
+  ids?: number[];
+
+  @Field({ nullable: true })
+  searchTerm?: string;
+
+  @Field(() => ProductInfoFilterInput, { nullable: true })
+  productInfoFilter?: ProductInfoFilterInput;
+
+  @Field(() => [Int], { nullable: true })
+  categoryIds?: number[];
+
+  @Field({ nullable: true })
+  first?: number;
+
+  @Field({ nullable: true })
+  after?: string;
+
+  @Field(() => Int, { nullable: true })
+  categoryId?: number;
+
+  @Field({ nullable: true })
+  sort?: string;
+
+  @Field({ nullable: true })
+  sortOrder?: 'asc' | 'desc';
+
+  @Field(() => ProductArchivedStatus, { nullable: true })
+  archivedStatus?: ProductArchivedStatus;
+
+  @Field(() => Int, { nullable: true })
+  sellerId?: number;
+
+  @Field({ nullable: true })
+  onlyWithSellers?: boolean;
+
+  @Field({ nullable: true })
+  onlyInStock?: boolean;
+
+  @Field({ nullable: true })
+  onlyDiscounted?: boolean;
+}
+</file>
+
 <file path="libs/shared/graphql-schema/src/lib/schema.gql">
 # ------------------------------------------------------
 # THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
@@ -2736,383 +3113,6 @@ input UpdateSiteLanguageInput {
   isRTL: Boolean
   isActive: Boolean
   isDefault: Boolean
-}
-</file>
-
-<file path="libs/server/inputs/src/lib/order.inputs.ts">
-import { InputType, Field, Int, Float } from '@nestjs/graphql';
-import { OrderStatus } from '@kickzone-workspace/entities';
-
-@InputType()
-export class CreateOrderItemInput {
-  @Field(() => String)
-  productId: string;
-
-  @Field(() => String, { nullable: true })
-  sellerProductId?: string;
-
-  @Field(() => String)
-  productName: string;
-
-  @Field(() => String, { nullable: true })
-  productImage?: string;
-
-  @Field(() => Int)
-  quantity: number;
-
-  @Field(() => Float)
-  unitPrice: number;
-
-  @Field(() => Float)
-  totalPrice: number;
-
-  @Field(() => String, { nullable: true })
-  color?: string;
-
-  @Field(() => String, { nullable: true })
-  size?: string;
-}
-
-@InputType()
-export class CreateOrderInput {
-  @Field(() => String)
-  customerEmail: string;
-
-  @Field(() => String)
-  customerPhone: string;
-
-  @Field(() => String)
-  customerName: string;
-
-  @Field(() => String)
-  shippingAddress: string;
-
-  @Field(() => String)
-  city: string;
-
-  @Field(() => String)
-  state: string;
-
-  @Field(() => String)
-  zipCode: string;
-
-  @Field(() => String)
-  country: string;
-
-  @Field(() => Int)
-  sellerId: number;
-
-  @Field(() => [CreateOrderItemInput])
-  items: CreateOrderItemInput[];
-
-  @Field(() => String, { nullable: true })
-  notes?: string;
-
-  // Optional: Override shipping cost (calculated by smart shipping logic)
-  // If not provided, will use seller's shippingFee
-  @Field(() => Float, { nullable: true })
-  shippingCost?: number;
-}
-
-@InputType()
-export class UpdateOrderItemInput {
-  @Field(() => String, { nullable: true })
-  id?: string;
-
-  @Field(() => String)
-  productId: string;
-
-  @Field(() => String, { nullable: true })
-  sellerProductId?: string;
-
-  @Field(() => String)
-  productName: string;
-
-  @Field(() => String, { nullable: true })
-  productImage?: string;
-
-  @Field(() => Int)
-  quantity: number;
-
-  @Field(() => Float)
-  unitPrice: number;
-
-  @Field(() => Float)
-  totalPrice: number;
-
-  @Field(() => String, { nullable: true })
-  color?: string;
-
-  @Field(() => String, { nullable: true })
-  size?: string;
-}
-
-@InputType()
-export class UpdateOrderInput {
-  @Field(() => String, { nullable: true })
-  customerEmail?: string;
-
-  @Field(() => String, { nullable: true })
-  customerPhone?: string;
-
-  @Field(() => String, { nullable: true })
-  customerName?: string;
-
-  @Field(() => String, { nullable: true })
-  shippingAddress?: string;
-
-  @Field(() => String, { nullable: true })
-  city?: string;
-
-  @Field(() => String, { nullable: true })
-  state?: string;
-
-  @Field(() => String, { nullable: true })
-  zipCode?: string;
-
-  @Field(() => String, { nullable: true })
-  country?: string;
-
-  @Field(() => [UpdateOrderItemInput], { nullable: true })
-  items?: UpdateOrderItemInput[];
-
-  @Field(() => String, { nullable: true })
-  notes?: string;
-
-  @Field(() => String, { nullable: true })
-  trackingNumber?: string;
-}
-
-@InputType()
-export class UpdateOrderStatusInput {
-  @Field(() => String)
-  id: string;
-
-  @Field(() => OrderStatus)
-  status: OrderStatus;
-}
-
-@InputType()
-export class OrdersFilterInput {
-  @Field(() => String, { nullable: true })
-  sellerId?: string;
-
-  @Field(() => OrderStatus, { nullable: true })
-  status?: OrderStatus;
-
-  @Field(() => String, { nullable: true })
-  customerEmail?: string;
-
-  @Field(() => String, { nullable: true })
-  orderNumber?: string;
-}
-
-@InputType()
-export class OrdersPaginationInput {
-  @Field(() => Int, { defaultValue: 10 })
-  first: number;
-
-  @Field(() => String, { nullable: true })
-  after?: string;
-}
-</file>
-
-<file path="libs/server/inputs/src/lib/product.input.ts">
-import {
-  InputType,
-  Field,
-  Int,
-  Float,
-  registerEnumType,
-} from '@nestjs/graphql';
-import { SizeKind } from '@kickzone-workspace/product-sizes';
-import { ProductInfoFilterInput } from './product-info-filter.input';
-
-export enum ProductArchivedStatus {
-  ALL = 'ALL',
-  ACTIVE = 'ACTIVE',
-  ARCHIVED = 'ARCHIVED',
-}
-
-registerEnumType(ProductArchivedStatus, {
-  name: 'ProductArchivedStatus',
-});
-
-@InputType()
-export class ProductDescriptionInput {
-  @Field(() => Int, { nullable: true })
-  languageId?: number;
-
-  @Field({ nullable: true })
-  languageCode?: string;
-
-  @Field()
-  description: string;
-}
-
-@InputType()
-export class ProductVariantInput {
-  @Field(() => Int, { nullable: true })
-  id?: number;
-
-  @Field()
-  size: string;
-
-  @Field(() => SizeKind, { nullable: true })
-  sizeKind?: SizeKind;
-
-  @Field(() => [Int])
-  colorIds: number[];
-
-  @Field(() => Float)
-  weight: number;
-
-  @Field({ nullable: true })
-  sku?: string;
-
-  @Field(() => Float, { nullable: true })
-  price?: number;
-
-  @Field(() => Float, { nullable: true })
-  costPrice?: number;
-
-  @Field(() => Float, { nullable: true })
-  discount?: number;
-
-  @Field(() => Int, { nullable: true })
-  stockQuantity?: number;
-
-  @Field({ nullable: true })
-  boxLess?: boolean;
-
-  @Field(() => [String], { nullable: true })
-  images?: string[];
-}
-
-@InputType()
-export class CreateProductInput {
-  @Field()
-  name: string;
-
-  @Field()
-  sku: string;
-
-  @Field(() => [Int])
-  categoryIds: number[];
-
-  @Field(() => Int, { nullable: true })
-  brandId?: number | null;
-
-  @Field({ nullable: true })
-  description?: string;
-
-  @Field(() => [ProductDescriptionInput], { nullable: true })
-  descriptions?: ProductDescriptionInput[];
-
-  @Field(() => [ProductVariantInput], { nullable: true })
-  variants?: ProductVariantInput[];
-}
-
-@InputType()
-export class UpdateProductInput {
-  @Field(() => Int)
-  id: number;
-
-  @Field()
-  name: string;
-
-  @Field()
-  sku: string;
-
-  @Field(() => [Int])
-  categoryIds: number[];
-
-  @Field(() => Int, { nullable: true })
-  brandId?: number | null;
-
-  @Field({ nullable: true })
-  description?: string;
-
-  @Field(() => [ProductDescriptionInput], { nullable: true })
-  descriptions?: ProductDescriptionInput[];
-
-  @Field(() => [ProductVariantInput], { nullable: true })
-  variants?: ProductVariantInput[];
-}
-
-@InputType()
-export class CreateProductInfoInput {
-  @Field(() => Int)
-  productId: number;
-
-  @Field()
-  size: string;
-
-  @Field(() => SizeKind)
-  sizeKind: SizeKind;
-
-  @Field(() => [Int])
-  colorIds: number[];
-
-  @Field(() => Float)
-  weight: number;
-}
-
-@InputType()
-export class ProductFilterInput {
-  @Field({ nullable: true })
-  category?: string;
-
-  @Field(() => [String], { nullable: true })
-  categorySlugs?: string[];
-
-  @Field({ nullable: true })
-  brand?: string;
-
-  @Field(() => [String], { nullable: true })
-  brands?: string[];
-
-  @Field(() => [Int], { nullable: true })
-  ids?: number[];
-
-  @Field({ nullable: true })
-  searchTerm?: string;
-
-  @Field(() => ProductInfoFilterInput, { nullable: true })
-  productInfoFilter?: ProductInfoFilterInput;
-
-  @Field(() => [Int], { nullable: true })
-  categoryIds?: number[];
-
-  @Field({ nullable: true })
-  first?: number;
-
-  @Field({ nullable: true })
-  after?: string;
-
-  @Field(() => Int, { nullable: true })
-  categoryId?: number;
-
-  @Field({ nullable: true })
-  sort?: string;
-
-  @Field({ nullable: true })
-  sortOrder?: 'asc' | 'desc';
-
-  @Field(() => ProductArchivedStatus, { nullable: true })
-  archivedStatus?: ProductArchivedStatus;
-
-  @Field(() => Int, { nullable: true })
-  sellerId?: number;
-
-  @Field({ nullable: true })
-  onlyWithSellers?: boolean;
-
-  @Field({ nullable: true })
-  onlyInStock?: boolean;
-
-  @Field({ nullable: true })
-  onlyDiscounted?: boolean;
 }
 </file>
 

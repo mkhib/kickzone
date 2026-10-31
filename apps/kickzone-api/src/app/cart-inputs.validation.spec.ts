@@ -27,7 +27,7 @@ describe('Cart Inputs Validation', () => {
 
   describe('UpdateCartItemInput', () => {
     // Changed from the class-validator era: the shared cart rule (V2a) requires a
-    // quantity of 1-999, so -5 is now rejected at the API instead of being clamped.
+    // quantity of 1-99, so -5 is now rejected at the API instead of being clamped.
     it('should reject quantity -5 via BadRequestException', () => {
       const input: UpdateCartItemInput = { quantity: -5 };
       expect(() => updatePipe.transform(input)).toThrow(BadRequestException);

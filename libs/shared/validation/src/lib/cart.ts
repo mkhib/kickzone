@@ -2,7 +2,7 @@ import { z } from 'zod';
 import { idSchema, trimmedString } from './primitives';
 
 export const CART_LIMITS = {
-  quantity: { min: 1, max: 999 },
+  quantity: { min: 1, max: 99 },
   color: { max: 50 },
   size: { max: 20 },
 } as const;

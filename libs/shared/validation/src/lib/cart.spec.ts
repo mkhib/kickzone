@@ -16,11 +16,11 @@ describe('cart validation schemas', () => {
       }
     });
 
-    it('accepts 999', () => {
-      const result = cartQuantitySchema.safeParse(999);
+    it('accepts 99', () => {
+      const result = cartQuantitySchema.safeParse(99);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data).toBe(999);
+        expect(result.data).toBe(99);
       }
     });
 
@@ -39,8 +39,8 @@ describe('cart validation schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('rejects 1000', () => {
-      const result = cartQuantitySchema.safeParse(1000);
+    it('rejects 100', () => {
+      const result = cartQuantitySchema.safeParse(100);
       expect(result.success).toBe(false);
     });
   });
@@ -57,11 +57,11 @@ describe('cart validation schemas', () => {
       }
     });
 
-    it('accepts max quantity 999', () => {
-      const result = addToCartSchema.safeParse({ sellerProductId: 'sp-1', quantity: 999 });
+    it('accepts max quantity 99', () => {
+      const result = addToCartSchema.safeParse({ sellerProductId: 'sp-1', quantity: 99 });
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data.quantity).toBe(999);
+        expect(result.data.quantity).toBe(99);
       }
     });
 
@@ -80,8 +80,8 @@ describe('cart validation schemas', () => {
       expect(result.success).toBe(false);
     });
 
-    it('rejects quantity 1000', () => {
-      const result = addToCartSchema.safeParse({ sellerProductId: 'sp-1', quantity: 1000 });
+    it('rejects quantity 100', () => {
+      const result = addToCartSchema.safeParse({ sellerProductId: 'sp-1', quantity: 100 });
       expect(result.success).toBe(false);
     });
 
@@ -194,7 +194,7 @@ describe('cart validation schemas', () => {
   describe('CART_LIMITS constant', () => {
     it('has correct values', () => {
       expect(CART_LIMITS.quantity.min).toBe(1);
-      expect(CART_LIMITS.quantity.max).toBe(999);
+      expect(CART_LIMITS.quantity.max).toBe(99);
       expect(CART_LIMITS.color.max).toBe(50);
       expect(CART_LIMITS.size.max).toBe(20);
     });
