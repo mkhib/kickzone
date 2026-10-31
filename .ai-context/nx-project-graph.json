@@ -65,7 +65,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\customer-order-confirmation"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/customer-order-confirmation"
               ],
               "metadata": {
                 "technologies": [
@@ -214,7 +214,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\zustand\\customer-checkout-store"
+                "{workspaceRoot}/coverage/libs/client/customers/zustand/customer-checkout-store"
               ],
               "metadata": {
                 "technologies": [
@@ -254,7 +254,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\dist\\libs\\client\\customers\\zustand\\customer-checkout-store"
+                "{workspaceRoot}/dist/libs/client/customers/zustand/customer-checkout-store"
               ],
               "metadata": {
                 "technologies": [
@@ -513,7 +513,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\zustand\\customer-wishlist-store"
+                "{workspaceRoot}/coverage/libs/client/customers/zustand/customer-wishlist-store"
               ],
               "metadata": {
                 "technologies": [
@@ -662,7 +662,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\glassmorphism-container"
+                "{workspaceRoot}/coverage/libs/client/shared/components/glassmorphism-container"
               ],
               "metadata": {
                 "technologies": [
@@ -865,7 +865,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\customer-shopping-cart"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/customer-shopping-cart"
               ],
               "metadata": {
                 "technologies": [
@@ -1014,7 +1014,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\zustand\\shared-notification-store"
+                "{workspaceRoot}/coverage/libs/client/shared/zustand/shared-notification-store"
               ],
               "metadata": {
                 "technologies": [
@@ -1163,7 +1163,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\apollo-provider-base"
+                "{workspaceRoot}/coverage/libs/client/shared/components/apollo-provider-base"
               ],
               "metadata": {
                 "technologies": [
@@ -1312,7 +1312,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\zustand\\sellers-products-store"
+                "{workspaceRoot}/coverage/libs/client/sellers/zustand/sellers-products-store"
               ],
               "metadata": {
                 "technologies": [
@@ -1461,7 +1461,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\zustand\\customer-cart-store"
+                "{workspaceRoot}/coverage/libs/client/customers/zustand/customer-cart-store"
               ],
               "metadata": {
                 "technologies": [
@@ -1610,7 +1610,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\material-data-table"
+                "{workspaceRoot}/coverage/libs/client/shared/components/material-data-table"
               ],
               "metadata": {
                 "technologies": [
@@ -1934,7 +1934,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\customer-favorites"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/customer-favorites"
               ],
               "metadata": {
                 "technologies": [
@@ -2083,7 +2083,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\guide-authenticity"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/guide-authenticity"
               ],
               "metadata": {
                 "technologies": [
@@ -2340,7 +2340,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\order-status-chip"
+                "{workspaceRoot}/coverage/libs/client/shared/components/order-status-chip"
               ],
               "metadata": {
                 "technologies": [
@@ -2731,7 +2731,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\admins\\screens\\currency-management"
+                "{workspaceRoot}/coverage/libs/client/admins/screens/currency-management"
               ],
               "metadata": {
                 "technologies": [
@@ -2934,7 +2934,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\customer-profile"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/customer-profile"
               ],
               "metadata": {
                 "technologies": [
@@ -3083,7 +3083,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\shipping-returns"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/shipping-returns"
               ],
               "metadata": {
                 "technologies": [
@@ -3374,7 +3374,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\product-details"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/product-details"
               ],
               "metadata": {
                 "technologies": [
@@ -3611,7 +3611,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\components\\product-card"
+                "{workspaceRoot}/coverage/libs/client/customers/components/product-card"
               ],
               "metadata": {
                 "technologies": [
@@ -3760,7 +3760,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\rtl-table-utils"
+                "{workspaceRoot}/coverage/libs/client/shared/components/rtl-table-utils"
               ],
               "metadata": {
                 "technologies": [
@@ -4030,7 +4030,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\admins\\hooks\\currency-management"
+                "{workspaceRoot}/coverage/libs/client/admins/hooks/currency-management"
               ],
               "metadata": {
                 "technologies": [
@@ -4233,7 +4233,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\privacy-policy"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/privacy-policy"
               ],
               "metadata": {
                 "technologies": [
@@ -4470,7 +4470,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\error-boundary"
+                "{workspaceRoot}/coverage/libs/client/shared/components/error-boundary"
               ],
               "metadata": {
                 "technologies": [
@@ -4672,7 +4672,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\guide-payment"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/guide-payment"
               ],
               "metadata": {
                 "technologies": [
@@ -4821,7 +4821,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\price-display"
+                "{workspaceRoot}/coverage/libs/client/shared/components/price-display"
               ],
               "metadata": {
                 "technologies": [
@@ -4970,7 +4970,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\private-route"
+                "{workspaceRoot}/coverage/libs/client/shared/components/private-route"
               ],
               "metadata": {
                 "technologies": [
@@ -5119,7 +5119,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\styled-drawer"
+                "{workspaceRoot}/coverage/libs/client/shared/components/styled-drawer"
               ],
               "metadata": {
                 "technologies": [
@@ -5268,7 +5268,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\components\\headerbar"
+                "{workspaceRoot}/coverage/libs/client/customers/components/headerbar"
               ],
               "metadata": {
                 "technologies": [
@@ -5417,7 +5417,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\unauthorized"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/unauthorized"
               ],
               "metadata": {
                 "technologies": [
@@ -5687,7 +5687,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\screens\\setup-password"
+                "{workspaceRoot}/coverage/libs/client/sellers/screens/setup-password"
               ],
               "metadata": {
                 "technologies": [
@@ -5836,7 +5836,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\zustand\\shared-ui-store"
+                "{workspaceRoot}/coverage/libs/client/shared/zustand/shared-ui-store"
               ],
               "metadata": {
                 "technologies": [
@@ -5985,7 +5985,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\unauthorized"
+                "{workspaceRoot}/coverage/libs/client/shared/components/unauthorized"
               ],
               "metadata": {
                 "technologies": [
@@ -6375,7 +6375,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\components\\headerbar"
+                "{workspaceRoot}/coverage/libs/client/sellers/components/headerbar"
               ],
               "metadata": {
                 "technologies": [
@@ -6524,7 +6524,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\screens\\unauthorized"
+                "{workspaceRoot}/coverage/libs/client/sellers/screens/unauthorized"
               ],
               "metadata": {
                 "technologies": [
@@ -6673,7 +6673,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\admins\\components\\headerbar"
+                "{workspaceRoot}/coverage/libs/client/admins/components/headerbar"
               ],
               "metadata": {
                 "technologies": [
@@ -6943,7 +6943,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\not-found"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/not-found"
               ],
               "metadata": {
                 "technologies": [
@@ -7209,7 +7209,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\components\\layout"
+                "{workspaceRoot}/coverage/libs/client/customers/components/layout"
               ],
               "metadata": {
                 "technologies": [
@@ -7358,7 +7358,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\lottie\\success-check"
+                "{workspaceRoot}/coverage/libs/client/shared/lottie/success-check"
               ],
               "metadata": {
                 "technologies": [
@@ -7507,7 +7507,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\hooks\\site-languages"
+                "{workspaceRoot}/coverage/libs/client/shared/hooks/site-languages"
               ],
               "metadata": {
                 "technologies": [
@@ -7656,7 +7656,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\lottie\\unauthorized"
+                "{workspaceRoot}/coverage/libs/client/shared/lottie/unauthorized"
               ],
               "metadata": {
                 "technologies": [
@@ -7805,7 +7805,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\snackbar"
+                "{workspaceRoot}/coverage/libs/client/shared/components/snackbar"
               ],
               "metadata": {
                 "technologies": [
@@ -7954,7 +7954,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\contact"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/contact"
               ],
               "metadata": {
                 "technologies": [
@@ -8220,7 +8220,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\components\\layout"
+                "{workspaceRoot}/coverage/libs/client/sellers/components/layout"
               ],
               "metadata": {
                 "technologies": [
@@ -8486,7 +8486,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\admins\\components\\layout"
+                "{workspaceRoot}/coverage/libs/client/admins/components/layout"
               ],
               "metadata": {
                 "technologies": [
@@ -8689,7 +8689,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\components\\layout"
+                "{workspaceRoot}/coverage/libs/client/shared/components/layout"
               ],
               "metadata": {
                 "technologies": [
@@ -8838,7 +8838,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\lottie\\empty-cart"
+                "{workspaceRoot}/coverage/libs/client/shared/lottie/empty-cart"
               ],
               "metadata": {
                 "technologies": [
@@ -9642,7 +9642,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\admins\\hooks\\customers"
+                "{workspaceRoot}/coverage/libs/client/admins/hooks/customers"
               ],
               "metadata": {
                 "technologies": [
@@ -9791,7 +9791,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\screens\\home"
+                "{workspaceRoot}/coverage/libs/client/customers/screens/home"
               ],
               "metadata": {
                 "technologies": [
@@ -10048,7 +10048,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\hooks\\products"
+                "{workspaceRoot}/coverage/libs/client/sellers/hooks/products"
               ],
               "metadata": {
                 "technologies": [
@@ -10197,7 +10197,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\hooks\\currency"
+                "{workspaceRoot}/coverage/libs/client/shared/hooks/currency"
               ],
               "metadata": {
                 "technologies": [
@@ -10345,7 +10345,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\lottie\\loading"
+                "{workspaceRoot}/coverage/libs/client/shared/lottie/loading"
               ],
               "metadata": {
                 "technologies": [
@@ -10494,7 +10494,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\hooks\\products"
+                "{workspaceRoot}/coverage/libs/client/shared/hooks/products"
               ],
               "metadata": {
                 "technologies": [
@@ -10764,7 +10764,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\screens\\login"
+                "{workspaceRoot}/coverage/libs/client/sellers/screens/login"
               ],
               "metadata": {
                 "technologies": [
@@ -10913,7 +10913,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\validations"
+                "{workspaceRoot}/coverage/libs/client/customers/validations"
               ],
               "metadata": {
                 "technologies": [
@@ -11062,7 +11062,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\hooks\\snackbar"
+                "{workspaceRoot}/coverage/libs/client/shared/hooks/snackbar"
               ],
               "metadata": {
                 "technologies": [
@@ -11211,7 +11211,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\admins\\screens\\login"
+                "{workspaceRoot}/coverage/libs/client/admins/screens/login"
               ],
               "metadata": {
                 "technologies": [
@@ -11481,7 +11481,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\hooks\\auth"
+                "{workspaceRoot}/coverage/libs/client/customers/hooks/auth"
               ],
               "metadata": {
                 "technologies": [
@@ -11641,8 +11641,7 @@
               "options": {
                 "cwd": "libs/client/customers/hooks/cart",
                 "env": {
-                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}",
-                  "NODE_OPTIONS": "--no-experimental-strip-types"
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
                 },
                 "command": "jest"
               },
@@ -11931,7 +11930,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\hooks\\brands"
+                "{workspaceRoot}/coverage/libs/client/shared/hooks/brands"
               ],
               "metadata": {
                 "technologies": [
@@ -12080,7 +12079,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\hooks\\colors"
+                "{workspaceRoot}/coverage/libs/client/shared/hooks/colors"
               ],
               "metadata": {
                 "technologies": [
@@ -12283,7 +12282,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\hooks\\auth"
+                "{workspaceRoot}/coverage/libs/client/sellers/hooks/auth"
               ],
               "metadata": {
                 "technologies": [
@@ -12553,7 +12552,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\graphql"
+                "{workspaceRoot}/coverage/libs/client/customers/graphql"
               ],
               "metadata": {
                 "technologies": [
@@ -12810,7 +12809,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\customers\\router"
+                "{workspaceRoot}/coverage/libs/client/customers/router"
               ],
               "metadata": {
                 "technologies": [
@@ -13134,7 +13133,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\graphql"
+                "{workspaceRoot}/coverage/libs/client/sellers/graphql"
               ],
               "metadata": {
                 "technologies": [
@@ -13283,7 +13282,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\shared\\ui\\sizes"
+                "{workspaceRoot}/coverage/libs/client/shared/ui/sizes"
               ],
               "metadata": {
                 "technologies": [
@@ -13643,8 +13642,7 @@
               "options": {
                 "cwd": "libs/shared/graphql-schema",
                 "env": {
-                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}",
-                  "NODE_OPTIONS": "--no-experimental-strip-types"
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
                 },
                 "command": "jest"
               },
@@ -13666,7 +13664,7 @@
               "inputs": [
                 "default",
                 "^production",
-                "{workspaceRoot}\\jest.preset.js",
+                "{workspaceRoot}/jest.preset.js",
                 {
                   "externalDependencies": [
                     "jest"
@@ -13674,7 +13672,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\shared\\graphql-schema"
+                "{workspaceRoot}/coverage/libs/shared/graphql-schema"
               ],
               "executor": "nx:run-commands",
               "configurations": {},
@@ -13787,7 +13785,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\sellers\\router"
+                "{workspaceRoot}/coverage/libs/client/sellers/router"
               ],
               "metadata": {
                 "technologies": [
@@ -13990,7 +13988,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\client\\admins\\router"
+                "{workspaceRoot}/coverage/libs/client/admins/router"
               ],
               "metadata": {
                 "technologies": [
@@ -14290,10 +14288,10 @@
               "options": {
                 "cwd": "apps/client/customers-e2e",
                 "env": {
-                  "PLAYWRIGHT_HTML_OUTPUT_DIR": "..\\..\\..\\dist\\.playwright\\apps\\client\\customers-e2e\\playwright-report\\src-critical-path-spec-ts",
-                  "PLAYWRIGHT_HTML_REPORT": "..\\..\\..\\dist\\.playwright\\apps\\client\\customers-e2e\\playwright-report\\src-critical-path-spec-ts"
+                  "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../../dist/.playwright/apps/client/customers-e2e/playwright-report/src-critical-path-spec-ts",
+                  "PLAYWRIGHT_HTML_REPORT": "../../../dist/.playwright/apps/client/customers-e2e/playwright-report/src-critical-path-spec-ts"
                 },
-                "command": "playwright test src/critical-path.spec.ts --output=..\\..\\..\\dist\\.playwright\\apps\\client\\customers-e2e\\test-output\\src-critical-path-spec-ts"
+                "command": "playwright test src/critical-path.spec.ts --output=../../../dist/.playwright/apps/client/customers-e2e/test-output/src-critical-path-spec-ts"
               },
               "metadata": {
                 "technologies": [
@@ -14636,10 +14634,10 @@
               "options": {
                 "cwd": "apps/client/sellers-e2e",
                 "env": {
-                  "PLAYWRIGHT_HTML_OUTPUT_DIR": "..\\..\\..\\dist\\.playwright\\apps\\client\\sellers-e2e\\playwright-report\\src-critical-path-spec-ts",
-                  "PLAYWRIGHT_HTML_REPORT": "..\\..\\..\\dist\\.playwright\\apps\\client\\sellers-e2e\\playwright-report\\src-critical-path-spec-ts"
+                  "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../../dist/.playwright/apps/client/sellers-e2e/playwright-report/src-critical-path-spec-ts",
+                  "PLAYWRIGHT_HTML_REPORT": "../../../dist/.playwright/apps/client/sellers-e2e/playwright-report/src-critical-path-spec-ts"
                 },
-                "command": "playwright test src/critical-path.spec.ts --output=..\\..\\..\\dist\\.playwright\\apps\\client\\sellers-e2e\\test-output\\src-critical-path-spec-ts"
+                "command": "playwright test src/critical-path.spec.ts --output=../../../dist/.playwright/apps/client/sellers-e2e/test-output/src-critical-path-spec-ts"
               },
               "metadata": {
                 "technologies": [
@@ -14840,8 +14838,7 @@
               "options": {
                 "cwd": "libs/server/decorators",
                 "env": {
-                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}",
-                  "NODE_OPTIONS": "--no-experimental-strip-types"
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
                 },
                 "command": "jest"
               },
@@ -14863,7 +14860,7 @@
               "inputs": [
                 "default",
                 "^production",
-                "{workspaceRoot}\\jest.preset.js",
+                "{workspaceRoot}/jest.preset.js",
                 {
                   "externalDependencies": [
                     "jest"
@@ -14871,7 +14868,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\server\\decorators"
+                "{workspaceRoot}/coverage/libs/server/decorators"
               ],
               "executor": "nx:run-commands",
               "configurations": {},
@@ -15014,10 +15011,10 @@
               "options": {
                 "cwd": "apps/client/admins-e2e",
                 "env": {
-                  "PLAYWRIGHT_HTML_OUTPUT_DIR": "..\\..\\..\\dist\\.playwright\\apps\\client\\admins-e2e\\playwright-report\\src-critical-path-spec-ts",
-                  "PLAYWRIGHT_HTML_REPORT": "..\\..\\..\\dist\\.playwright\\apps\\client\\admins-e2e\\playwright-report\\src-critical-path-spec-ts"
+                  "PLAYWRIGHT_HTML_OUTPUT_DIR": "../../../dist/.playwright/apps/client/admins-e2e/playwright-report/src-critical-path-spec-ts",
+                  "PLAYWRIGHT_HTML_REPORT": "../../../dist/.playwright/apps/client/admins-e2e/playwright-report/src-critical-path-spec-ts"
                 },
-                "command": "playwright test src/critical-path.spec.ts --output=..\\..\\..\\dist\\.playwright\\apps\\client\\admins-e2e\\test-output\\src-critical-path-spec-ts"
+                "command": "playwright test src/critical-path.spec.ts --output=../../../dist/.playwright/apps/client/admins-e2e/test-output/src-critical-path-spec-ts"
               },
               "metadata": {
                 "technologies": [
@@ -15400,7 +15397,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\apps\\client\\customers"
+                "{workspaceRoot}/coverage/apps/client/customers"
               ],
               "metadata": {
                 "technologies": [
@@ -15440,7 +15437,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\dist\\apps\\client\\customers"
+                "{workspaceRoot}/dist/apps/client/customers"
               ],
               "metadata": {
                 "technologies": [
@@ -15671,8 +15668,7 @@
               "options": {
                 "cwd": "libs/server/resolvers",
                 "env": {
-                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}",
-                  "NODE_OPTIONS": "--no-experimental-strip-types"
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
                 },
                 "command": "jest"
               },
@@ -15694,7 +15690,7 @@
               "inputs": [
                 "default",
                 "^production",
-                "{workspaceRoot}\\jest.preset.js",
+                "{workspaceRoot}/jest.preset.js",
                 {
                   "externalDependencies": [
                     "jest"
@@ -15702,7 +15698,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\server\\resolvers"
+                "{workspaceRoot}/coverage/libs/server/resolvers"
               ],
               "executor": "nx:run-commands",
               "configurations": {},
@@ -15818,8 +15814,7 @@
               "options": {
                 "cwd": "libs/server/services",
                 "env": {
-                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}",
-                  "NODE_OPTIONS": "--no-experimental-strip-types"
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
                 },
                 "command": "jest"
               },
@@ -15841,7 +15836,7 @@
               "inputs": [
                 "default",
                 "^production",
-                "{workspaceRoot}\\jest.preset.js",
+                "{workspaceRoot}/jest.preset.js",
                 {
                   "externalDependencies": [
                     "jest"
@@ -15849,7 +15844,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\server\\services"
+                "{workspaceRoot}/coverage/libs/server/services"
               ],
               "executor": "nx:run-commands",
               "configurations": {},
@@ -15913,8 +15908,7 @@
               "options": {
                 "cwd": "libs/shared/codegen",
                 "env": {
-                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}",
-                  "NODE_OPTIONS": "--no-experimental-strip-types"
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
                 },
                 "command": "jest"
               },
@@ -15936,7 +15930,7 @@
               "inputs": [
                 "default",
                 "^production",
-                "{workspaceRoot}\\jest.preset.js",
+                "{workspaceRoot}/jest.preset.js",
                 {
                   "externalDependencies": [
                     "jest"
@@ -15944,7 +15938,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\shared\\codegen"
+                "{workspaceRoot}/coverage/libs/shared/codegen"
               ],
               "executor": "nx:run-commands",
               "configurations": {},
@@ -16057,7 +16051,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\apps\\client\\sellers"
+                "{workspaceRoot}/coverage/apps/client/sellers"
               ],
               "metadata": {
                 "technologies": [
@@ -16097,7 +16091,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\dist\\apps\\client\\sellers"
+                "{workspaceRoot}/dist/apps/client/sellers"
               ],
               "metadata": {
                 "technologies": [
@@ -16369,8 +16363,7 @@
               "options": {
                 "cwd": "libs/server/guards",
                 "env": {
-                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}",
-                  "NODE_OPTIONS": "--no-experimental-strip-types"
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
                 },
                 "command": "jest"
               },
@@ -16392,7 +16385,7 @@
               "inputs": [
                 "default",
                 "^production",
-                "{workspaceRoot}\\jest.preset.js",
+                "{workspaceRoot}/jest.preset.js",
                 {
                   "externalDependencies": [
                     "jest"
@@ -16400,7 +16393,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\libs\\server\\guards"
+                "{workspaceRoot}/coverage/libs/server/guards"
               ],
               "executor": "nx:run-commands",
               "configurations": {},
@@ -16532,7 +16525,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\dist\\apps\\client\\admins"
+                "{workspaceRoot}/dist/apps/client/admins"
               ],
               "metadata": {
                 "technologies": [
@@ -16738,7 +16731,7 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}/dist\\apps\\kickzone-api"
+                "{workspaceRoot}/dist/apps/kickzone-api"
               ],
               "metadata": {
                 "technologies": [
@@ -16917,7 +16910,7 @@
               "inputs": [
                 "default",
                 "^production",
-                "{workspaceRoot}\\jest.preset.js",
+                "{workspaceRoot}/jest.preset.js",
                 {
                   "externalDependencies": [
                     "jest"
@@ -16925,14 +16918,13 @@
                 }
               ],
               "outputs": [
-                "{workspaceRoot}\\coverage\\apps\\kickzone-api"
+                "{workspaceRoot}/coverage/apps/kickzone-api"
               ],
               "executor": "nx:run-commands",
               "options": {
                 "cwd": "apps/kickzone-api",
                 "env": {
-                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}",
-                  "NODE_OPTIONS": "--no-experimental-strip-types"
+                  "TS_NODE_COMPILER_OPTIONS": "{\"moduleResolution\":\"node10\",\"module\":\"commonjs\",\"customConditions\":null}"
                 },
                 "command": "jest",
                 "passWithNoTests": true
@@ -19703,17 +19695,22 @@
       "kickzone-api": [
         {
           "source": "kickzone-api",
+          "target": "resolvers",
+          "type": "static"
+        },
+        {
+          "source": "kickzone-api",
+          "target": "services",
+          "type": "static"
+        },
+        {
+          "source": "kickzone-api",
           "target": "entities",
           "type": "static"
         },
         {
           "source": "kickzone-api",
           "target": "modules",
-          "type": "static"
-        },
-        {
-          "source": "kickzone-api",
-          "target": "services",
           "type": "static"
         },
         {
