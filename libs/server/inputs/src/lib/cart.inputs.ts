@@ -1,5 +1,4 @@
 import { InputType, Field, Int } from '@nestjs/graphql';
-import { IsInt, Min } from 'class-validator';
 
 @InputType()
 export class AddToCartInput {
@@ -7,8 +6,6 @@ export class AddToCartInput {
   sellerProductId: string;
 
   @Field(() => Int)
-  @IsInt()
-  @Min(1)
   quantity: number;
 }
 

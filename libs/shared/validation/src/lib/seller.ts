@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * Seller and seller-product rules. They mirror the existing class-validator
+ * Seller and seller-product rules. They mirror the former class-validator
  * decorators on the GraphQL inputs so nothing that is accepted today is rejected.
  */
 const requiredText = z.string().min(1);

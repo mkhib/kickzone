@@ -1,7 +1,7 @@
 import { z } from 'zod';
 
 /**
- * Catalog product rules. They mirror the class-validator decorators on the
+ * Catalog product rules. They mirror the former class-validator decorators on the
  * product GraphQL inputs so nothing that is accepted today is rejected.
  * (`sizeKind` is already restricted to the SizeKind enum by GraphQL.)
  */

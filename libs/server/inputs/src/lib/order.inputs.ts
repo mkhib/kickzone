@@ -1,7 +1,5 @@
 import { InputType, Field, Int, Float } from '@nestjs/graphql';
 import { OrderStatus } from '@kickzone-workspace/entities';
-import { Min, IsInt, ArrayMinSize, IsOptional, ValidateNested } from 'class-validator';
-import { Type } from 'class-transformer';
 
 @InputType()
 export class CreateOrderItemInput {
@@ -18,16 +16,12 @@ export class CreateOrderItemInput {
   productImage?: string;
 
   @Field(() => Int)
-  @IsInt()
-  @Min(1)
   quantity: number;
 
   @Field(() => Float)
-  @Min(0)
   unitPrice: number;
 
   @Field(() => Float)
-  @Min(0)
   totalPrice: number;
 
   @Field(() => String, { nullable: true })
@@ -64,14 +58,9 @@ export class CreateOrderInput {
   country: string;
 
   @Field(() => Int)
-  @IsInt()
-  @Min(1)
   sellerId: number;
 
   @Field(() => [CreateOrderItemInput])
-  @ArrayMinSize(1)
-  @ValidateNested({ each: true })
-  @Type(() => CreateOrderItemInput)
   items: CreateOrderItemInput[];
 
   @Field(() => String, { nullable: true })
@@ -80,8 +69,6 @@ export class CreateOrderInput {
   // Optional: Override shipping cost (calculated by smart shipping logic)
   // If not provided, will use seller's shippingFee
   @Field(() => Float, { nullable: true })
-  @IsOptional()
-  @Min(0)
   shippingCost?: number;
 }
 
@@ -103,16 +90,12 @@ export class UpdateOrderItemInput {
   productImage?: string;
 
   @Field(() => Int)
-  @IsInt()
-  @Min(1)
   quantity: number;
 
   @Field(() => Float)
-  @Min(0)
   unitPrice: number;
 
   @Field(() => Float)
-  @Min(0)
   totalPrice: number;
 
   @Field(() => String, { nullable: true })
@@ -149,9 +132,6 @@ export class UpdateOrderInput {
   country?: string;
 
   @Field(() => [UpdateOrderItemInput], { nullable: true })
-  @IsOptional()
-  @ValidateNested({ each: true })
-  @Type(() => UpdateOrderItemInput)
   items?: UpdateOrderItemInput[];
 
   @Field(() => String, { nullable: true })
