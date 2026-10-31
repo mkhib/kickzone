@@ -17688,6 +17688,11 @@
         },
         {
           "source": "customer-signup",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "customer-signup",
           "target": "password-field",
           "type": "static"
         },
