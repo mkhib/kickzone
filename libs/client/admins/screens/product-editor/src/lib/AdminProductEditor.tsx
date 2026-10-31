@@ -50,7 +50,11 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import {
+  categoryFormSchema,
+  colorFormSchema,
   productEditorFormSchema,
+  type CategoryFormInput,
+  type ColorFormInput,
   type ProductEditorFormInput,
 } from '@kickzone-workspace/validation';
 import { useParams } from 'react-router-dom';
@@ -159,11 +163,19 @@ const CategoryModal = ({
     setCategoryName(initialName);
   }, [initialName]);
 
-  const handleSubmit = useCallback(() => {
+  const categoryForm = useForm<CategoryFormInput>({
+    values: { name: categoryName },
+    resolver: zodResolver(categoryFormSchema),
+    mode: 'onSubmit',
+  });
+  const nameError = categoryForm.formState.errors.name;
+
+  const handleSubmit = useCallback(async () => {
+    if (!(await categoryForm.trigger())) return;
     onSubmit(categoryName);
     setCategoryName('');
     onClose();
-  }, [categoryName, onSubmit, onClose]);
+  }, [categoryForm, categoryName, onSubmit, onClose]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg">
@@ -176,6 +188,7 @@ const CategoryModal = ({
           fullWidth
           value={categoryName}
           onChange={(e) => setCategoryName(e.target.value)}
+          error={Boolean(nameError)}
         />
       </DialogFormContent>
       <DialogActions>
@@ -835,7 +848,15 @@ const ColorModal = ({
     setHexCode(initialColor?.hexCode || '#ffffff');
   }, [initialColor]);
 
-  const handleSubmit = useCallback(() => {
+  const colorForm = useForm<ColorFormInput>({
+    values: { name: colorName, hexCode },
+    resolver: zodResolver(colorFormSchema),
+    mode: 'onSubmit',
+  });
+  const colorErrors = colorForm.formState.errors;
+
+  const handleSubmit = useCallback(async () => {
+    if (!(await colorForm.trigger())) return;
     onSubmit(initialColor?.id || null, colorName, hexCode);
     // Reset fields for new colors (when initialColor is null)
     if (!initialColor) {
@@ -843,7 +864,7 @@ const ColorModal = ({
       setHexCode('#ffffff');
     }
     onClose();
-  }, [initialColor, colorName, hexCode, onSubmit, onClose]);
+  }, [colorForm, initialColor, colorName, hexCode, onSubmit, onClose]);
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
@@ -856,6 +877,7 @@ const ColorModal = ({
           fullWidth
           value={colorName}
           onChange={(e) => setColorName(e.target.value)}
+          error={Boolean(colorErrors.name)}
         />
         <TextField
           margin="dense"
@@ -863,6 +885,7 @@ const ColorModal = ({
           fullWidth
           value={hexCode}
           onChange={(e) => setHexCode(e.target.value)}
+          error={Boolean(colorErrors.hexCode)}
           {...getLtrTextFieldProps()}
         />
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
