@@ -18936,6 +18936,11 @@
           "source": "shipping-validation",
           "target": "shared-i18n",
           "type": "static"
+        },
+        {
+          "source": "shipping-validation",
+          "target": "shared-validation",
+          "type": "static"
         }
       ],
       "snackbar-hook": [],

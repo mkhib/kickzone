@@ -1,4 +1,8 @@
 import { z } from 'zod';
+import {
+  optionalEmailSchema,
+  shippingAddressSchema,
+} from '@kickzone-workspace/validation';
 import type { TranslationFunctions } from '@kickzone-workspace/shared-i18n';
 
 export type ShippingInfoFormData = {
@@ -17,87 +21,100 @@ export interface ShippingInfoValidationErrors {
   [key: string]: string | undefined;
 }
 
+/**
+ * Checkout shipping schema: the shared server-side order/shipping rules
+ * (`shippingAddressSchema`) plus client-only fields. Email may be omitted for guests.
+ */
 export const createShippingInfoSchema = (LL: TranslationFunctions) =>
-  z.object({
-    customerName: z
-      .string()
-      .min(1, LL.validation.name.required())
-      .min(2, LL.validation.name.minLength())
-      .max(100, LL.validation.name.maxLength())
-      .regex(/^[\p{L}\s'-]+$/u, {
-        message: LL.validation.name.invalidCharacters(),
-      }),
-
-    customerEmail: z
-      .string()
-      .max(255, LL.validation.email.maxLength())
-      .optional()
-      .or(z.literal(''))
-      .refine(
-        (email) => {
-          if (!email || email.trim() === '') return true;
-          return z.string().email().safeParse(email.trim()).success;
-        },
-        {
-          message: LL.validation.email.invalid(),
-        }
-      ),
-
-    customerPhone: z
-      .string()
-      .min(1, LL.validation.phone.required())
-      .regex(/^[+]?[\d\s\-()]{7,15}$/, {
-        message: LL.validation.phone.invalid(),
-      }),
-
-    shippingAddress: z
-      .string()
-      .min(1, LL.validation.address.required())
-      .min(3, LL.validation.address.minLength())
-      .max(200, LL.validation.address.maxLength()),
-
-    city: z
-      .string()
-      .min(1, LL.validation.city.required())
-      .min(2, LL.validation.city.minLength())
-      .max(100, LL.validation.city.maxLength())
-      .regex(/^[\p{L}\s'-]+$/u, {
-        message: LL.validation.city.invalidCharacters(),
-      }),
-
-    state: z
-      .string()
-      .min(1, LL.validation.state.required())
-      .min(2, LL.validation.state.minLength())
-      .max(100, LL.validation.state.maxLength())
-      .regex(/^[\p{L}\s'-]+$/u, {
-        message: LL.validation.state.invalidCharacters(),
-      }),
-
-    zipCode: z
-      .string()
-      .min(1, LL.validation.zipCode.required())
-      .regex(/^[a-zA-Z0-9\s-]+$/, {
-        message: LL.validation.zipCode.invalidCharacters(),
-      })
-      .min(3, LL.validation.zipCode.minLength())
-      .max(20, LL.validation.zipCode.maxLength()),
-
-    country: z
-      .string()
-      .min(1, LL.validation.country.required())
-      .min(2, LL.validation.country.minLength())
-      .max(100, LL.validation.country.maxLength())
-      .regex(/^[\p{L}\s'-]+$/u, {
-        message: LL.validation.country.invalidCharacters(),
-      }),
-
+  shippingAddressSchema.extend({
+    customerEmail: optionalEmailSchema.optional(),
     notes: z
       .string()
       .max(500, LL.validation.notes.maxLength())
       .optional()
       .or(z.literal('')),
   });
+
+type ShippingIssue = {
+  code: string;
+  path?: PropertyKey[];
+  input?: unknown;
+};
+
+const isBlank = (input: unknown) =>
+  input === undefined || input === null || String(input).trim() === '';
+
+/** Maps a shared-schema issue to the existing localized checkout message. */
+export const shippingIssueMessage = (
+  issue: ShippingIssue,
+  LL: TranslationFunctions
+): string => {
+  const field = String(issue.path?.[0] ?? '');
+  const v = LL.validation;
+  const kind =
+    issue.code === 'invalid_type' || (issue.code === 'too_small' && isBlank(issue.input))
+      ? 'required'
+      : issue.code === 'too_small'
+      ? 'min'
+      : issue.code === 'too_big'
+      ? 'max'
+      : 'format';
+
+  switch (field) {
+    case 'customerName':
+      return kind === 'required'
+        ? v.name.required()
+        : kind === 'min'
+        ? v.name.minLength()
+        : kind === 'max'
+        ? v.name.maxLength()
+        : v.name.invalidCharacters();
+    case 'customerEmail':
+      return kind === 'max' ? v.email.maxLength() : v.email.invalid();
+    case 'customerPhone':
+      return isBlank(issue.input) ? v.phone.required() : v.phone.invalid();
+    case 'shippingAddress':
+      return kind === 'required'
+        ? v.address.required()
+        : kind === 'max'
+        ? v.address.maxLength()
+        : v.address.minLength();
+    case 'city':
+      return kind === 'required'
+        ? v.city.required()
+        : kind === 'min'
+        ? v.city.minLength()
+        : kind === 'max'
+        ? v.city.maxLength()
+        : v.city.invalidCharacters();
+    case 'state':
+      return kind === 'required'
+        ? v.state.required()
+        : kind === 'min'
+        ? v.state.minLength()
+        : kind === 'max'
+        ? v.state.maxLength()
+        : v.state.invalidCharacters();
+    case 'zipCode':
+      return kind === 'required'
+        ? v.zipCode.required()
+        : kind === 'min'
+        ? v.zipCode.minLength()
+        : kind === 'max'
+        ? v.zipCode.maxLength()
+        : v.zipCode.invalidCharacters();
+    case 'country':
+      return kind === 'required'
+        ? v.country.required()
+        : kind === 'max'
+        ? v.country.maxLength()
+        : v.country.minLength();
+    case 'notes':
+      return v.notes.maxLength();
+    default:
+      return v.general.error();
+  }
+};
 
 /**
  * Converts Persian (۰-۹) and Arabic (٠-٩) digits to standard English ASCII digits (0-9).
@@ -126,7 +143,9 @@ export const validateShippingInfo = (
         : data.customerPhone,
     };
     const schema = createShippingInfoSchema(LL);
-    const validatedData = schema.parse(normalizedData);
+    const validatedData = schema.parse(normalizedData, {
+      error: (issue) => shippingIssueMessage(issue, LL),
+    });
     return {
       isValid: true,
       errors: {},
@@ -139,7 +158,8 @@ export const validateShippingInfo = (
       error.issues.forEach((err) => {
         if (err.path.length > 0) {
           const fieldName = err.path[0] as string;
-          errors[fieldName] = err.message;
+          // Keep the first (most specific) message, e.g. "required" for an empty field.
+          if (!errors[fieldName]) errors[fieldName] = err.message;
         }
       });
 
