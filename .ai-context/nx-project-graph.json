@@ -17542,6 +17542,11 @@
         },
         {
           "source": "customer-forgot-password",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "customer-forgot-password",
           "target": "glassmorphism-container",
           "type": "static"
         },
@@ -17684,6 +17689,11 @@
         {
           "source": "customer-signup",
           "target": "translations",
+          "type": "static"
+        },
+        {
+          "source": "customer-signup",
+          "target": "shared-validation",
           "type": "static"
         },
         {
@@ -17852,6 +17862,11 @@
         {
           "source": "customer-reset-password",
           "target": "translations",
+          "type": "static"
+        },
+        {
+          "source": "customer-reset-password",
+          "target": "shared-validation",
           "type": "static"
         },
         {
@@ -18672,6 +18687,11 @@
         {
           "source": "customers-login-screen",
           "target": "translations",
+          "type": "static"
+        },
+        {
+          "source": "customers-login-screen",
+          "target": "shared-validation",
           "type": "static"
         },
         {

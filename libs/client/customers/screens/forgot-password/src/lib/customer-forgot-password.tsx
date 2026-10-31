@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersForgotPassword } from '@kickzone-workspace/customers-auth-hooks';
 import { getErrorMessage } from '@kickzone-workspace/translations';
+import { customerForgotPasswordFormSchema, type CustomerForgotPasswordFormValues } from '@kickzone-workspace/validation';
 import LockResetOutlined from '@mui/icons-material/LockResetOutlined';
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
@@ -19,6 +22,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { useTheme } from '@mui/material/styles';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
+import type { FieldError } from 'react-hook-form';
 
 export function CustomerForgotPassword() {
   const { LL } = useI18nContext();
@@ -33,23 +37,35 @@ export function CustomerForgotPassword() {
 
   const goldColor = isDark ? '#c5b89a' : '#7c6d48';
 
-  const [email, setEmail] = useState('');
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CustomerForgotPasswordFormValues>({
+    resolver: zodResolver(customerForgotPasswordFormSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      email: '',
+    },
+  });
 
-    if (!email.trim()) {
-      showSnackbar(LL.errors.requiredFields(), { severity: 'error' });
-      return;
-    }
+  const fieldErrorText = (error: FieldError | undefined): string => {
+    if (!error || !error.type) return '';
+    // For required, invalid_type, too_big, invalid_string (email), etc.
+    return LL.errors.requiredFields();
+  };
 
+  const onValidSubmit = async (values: CustomerForgotPasswordFormValues) => {
     try {
       const baseUrl = window.location.origin;
-      await handleForgotPassword(email.trim(), baseUrl);
+      await handleForgotPassword(values.email, baseUrl);
 
       setSubmitted(true);
-      showSnackbar(LL.authorization.resetLinkSent(), { severity: 'success' });
+      showSnackbar(LL.authorization.resetLinkSent(), {
+        severity: 'success',
+      });
     } catch (error) {
       const { translationKey, rawMessage } = getErrorMessage(error as Error);
       const errorMessage = translationKey
@@ -58,6 +74,10 @@ export function CustomerForgotPassword() {
 
       showSnackbar(errorMessage, { severity: 'error' });
     }
+  };
+
+  const onInvalidSubmit = () => {
+    showSnackbar(LL.errors.requiredFields(), { severity: 'error' });
   };
 
   return (
@@ -339,7 +359,8 @@ export function CustomerForgotPassword() {
 
                 <Box
                   component="form"
-                  onSubmit={handleSubmit}
+                  onSubmit={handleSubmit(onValidSubmit, onInvalidSubmit)}
+                  noValidate
                   sx={{
                     width: '100%',
                     display: 'flex',
@@ -353,11 +374,11 @@ export function CustomerForgotPassword() {
                     size="small"
                     id="email"
                     label={LL.form.email()}
-                    name="email"
                     autoComplete="email"
                     autoFocus
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    error={!!errors.email}
+                    helperText={errors.email ? fieldErrorText(errors.email) : undefined}
+                    {...register('email')}
                     {...getLtrTextFieldProps()}
                   />
 

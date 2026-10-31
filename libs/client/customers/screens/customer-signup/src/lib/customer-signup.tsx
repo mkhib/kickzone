@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersRegister } from '@kickzone-workspace/customers-auth-hooks';
 import { getErrorMessage } from '@kickzone-workspace/translations';
+import { customerSignupFormSchema, type CustomerSignupFormValues } from '@kickzone-workspace/validation';
 import PersonAddOutlined from '@mui/icons-material/PersonAddOutlined';
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
@@ -19,6 +22,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { useTheme } from '@mui/material/styles';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
+import type { FieldError } from 'react-hook-form';
 
 export function CustomerSignup() {
   const { LL } = useI18nContext();
@@ -32,59 +36,40 @@ export function CustomerSignup() {
   const isDark = theme.palette.mode === 'dark';
   const isRtl = theme.direction === 'rtl';
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    password: '',
-    confirmPassword: '',
+  const {
+    register,
+    handleSubmit,
+    getValues,
+    formState: { errors },
+  } = useForm<CustomerSignupFormValues>({
+    resolver: zodResolver(customerSignupFormSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+    },
   });
-  const [errors, setErrors] = useState<Record<string, string>>({});
 
-  const handleChange =
-    (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: event.target.value }));
-      // Clear error when user starts typing
-      if (errors[field]) {
-        setErrors((prev) => ({ ...prev, [field]: '' }));
-      }
-    };
+  const fieldErrorText = (error: FieldError | undefined, field?: keyof CustomerSignupFormValues): string => {
+    if (!error || !error.type) return '';
+    const type = error.type as string;
+    const message = error.message as string;
 
-  const validateForm = (): boolean => {
-    const newErrors: Record<string, string> = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = LL.errors.requiredFields();
-    }
-    if (!formData.email.trim()) {
-      newErrors.email = LL.errors.requiredFields();
-    }
-    if (!formData.password) {
-      newErrors.password = LL.errors.requiredFields();
-    } else if (formData.password.length < 8) {
-      newErrors.password = LL.authorization.passwordTooShort();
-    }
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = LL.authorization.passwordsDoNotMatch();
-    }
-
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    if (type === 'custom' && message === 'passwordsDoNotMatch') return LL.authorization.passwordsDoNotMatch();
+    if (type === 'too_small' && field === 'password' && getValues('password') !== '') return LL.authorization.passwordTooShort();
+    // For required, invalid_type, too_big, invalid_string (email), etc.
+    return LL.errors.requiredFields();
   };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
-    if (!validateForm()) {
-      return;
-    }
-
+  const onValidSubmit = async (values: CustomerSignupFormValues) => {
     try {
-      await handleRegister(formData.name, formData.email, formData.password);
+      await handleRegister(values.name, values.email, values.password);
       showSnackbar(LL.authorization.registrationSuccess(), {
         severity: 'success',
       });
 
-      // Redirect to the page they were trying to access, or default to home
       const from =
         (location.state as { from?: string })?.from || CUSTOMER_ROUTES.HOME;
       navigate(from, { replace: true });
@@ -370,7 +355,7 @@ export function CustomerSignup() {
 
             <Box
               component="form"
-              onSubmit={handleSubmit}
+              onSubmit={handleSubmit(onValidSubmit)}
               sx={{
                 width: '100%',
                 mt: 0.5,
@@ -385,13 +370,11 @@ export function CustomerSignup() {
                 size="small"
                 id="name"
                 label={LL.form.fullName()}
-                name="name"
                 autoComplete="name"
                 autoFocus
-                value={formData.name}
-                onChange={handleChange('name')}
                 error={!!errors.name}
-                helperText={errors.name}
+                helperText={errors.name ? fieldErrorText(errors.name) : undefined}
+                {...register('name')}
               />
 
               <TextField
@@ -400,12 +383,10 @@ export function CustomerSignup() {
                 size="small"
                 id="email"
                 label={LL.form.email()}
-                name="email"
                 autoComplete="email"
-                value={formData.email}
-                onChange={handleChange('email')}
                 error={!!errors.email}
-                helperText={errors.email}
+                helperText={errors.email ? fieldErrorText(errors.email) : undefined}
+                {...register('email')}
                 {...getLtrTextFieldProps()}
               />
 
@@ -413,28 +394,24 @@ export function CustomerSignup() {
                 required
                 fullWidth
                 size="small"
-                name="password"
                 label={LL.form.password()}
                 id="password"
                 autoComplete="new-password"
-                value={formData.password}
-                onChange={handleChange('password')}
                 error={!!errors.password}
-                helperText={errors.password}
+                helperText={errors.password ? fieldErrorText(errors.password, 'password') : undefined}
+                {...register('password')}
               />
 
               <PasswordTextField
                 required
                 fullWidth
                 size="small"
-                name="confirmPassword"
                 label={LL.authorization.confirmPassword()}
                 id="confirmPassword"
                 autoComplete="new-password"
-                value={formData.confirmPassword}
-                onChange={handleChange('confirmPassword')}
                 error={!!errors.confirmPassword}
-                helperText={errors.confirmPassword}
+                helperText={errors.confirmPassword ? fieldErrorText(errors.confirmPassword) : undefined}
+                {...register('confirmPassword')}
               />
 
               <Button
