@@ -1,13 +1,12 @@
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { createGlobalValidationPipe } from './global-validation-pipe';
+import { BadRequestException } from '@nestjs/common';
+import { ZodValidationPipe } from '@kickzone-workspace/resolvers';
+import { addToCartSchema, updateCartItemSchema } from '@kickzone-workspace/validation';
 import { AddToCartInput, UpdateCartItemInput } from '@kickzone-workspace/inputs';
 
+// Cart inputs are validated by the resolver's ZodValidationPipe with the shared cart schemas.
 describe('Cart Inputs Validation', () => {
-  let pipe: ValidationPipe;
-
-  beforeEach(() => {
-    pipe = createGlobalValidationPipe();
-  });
+  const addPipe = new ZodValidationPipe(addToCartSchema);
+  const updatePipe = new ZodValidationPipe(updateCartItemSchema);
 
   describe('AddToCartInput', () => {
     const validAddToCartBase: AddToCartInput = {
@@ -15,78 +14,28 @@ describe('Cart Inputs Validation', () => {
       quantity: 1,
     };
 
-    it('should reject quantity 0 via BadRequestException', async () => {
-      const input: AddToCartInput = {
-        ...validAddToCartBase,
-        quantity: 0,
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: AddToCartInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
+    it.each([0, -1, 1.5])('should reject quantity %p via BadRequestException', (quantity) => {
+      const input: AddToCartInput = { ...validAddToCartBase, quantity };
+      expect(() => addPipe.transform(input)).toThrow(BadRequestException);
     });
 
-    it('should reject quantity -1 via BadRequestException', async () => {
-      const input: AddToCartInput = {
-        ...validAddToCartBase,
-        quantity: -1,
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: AddToCartInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should reject quantity 1.5 via BadRequestException', async () => {
-      const input: AddToCartInput = {
-        ...validAddToCartBase,
-        quantity: 1.5,
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: AddToCartInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should resolve quantity 1 unchanged', async () => {
-      const input: AddToCartInput = {
-        ...validAddToCartBase,
-        quantity: 1,
-      };
-
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: AddToCartInput,
-        data: '',
-      });
-      expect(result).toEqual(input);
+    it('should resolve quantity 1 unchanged', () => {
+      const input: AddToCartInput = { ...validAddToCartBase, quantity: 1 };
+      expect(addPipe.transform(input)).toEqual(input);
     });
   });
 
   describe('UpdateCartItemInput', () => {
-    it('should resolve quantity -5 (not rejected, service clamps to 0)', async () => {
-      const input: UpdateCartItemInput = {
-        quantity: -5,
-      };
+    // Changed from the class-validator era: the shared cart rule (V2a) requires a
+    // quantity of 1-999, so -5 is now rejected at the API instead of being clamped.
+    it('should reject quantity -5 via BadRequestException', () => {
+      const input: UpdateCartItemInput = { quantity: -5 };
+      expect(() => updatePipe.transform(input)).toThrow(BadRequestException);
+    });
 
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: UpdateCartItemInput,
-        data: '',
-      });
-      expect(result).toEqual(input);
+    it('should resolve quantity 2 unchanged', () => {
+      const input: UpdateCartItemInput = { quantity: 2 };
+      expect(updatePipe.transform(input)).toEqual(input);
     });
   });
 });

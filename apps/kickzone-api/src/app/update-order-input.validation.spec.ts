@@ -1,13 +1,10 @@
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { createGlobalValidationPipe } from './global-validation-pipe';
+import { BadRequestException } from '@nestjs/common';
+import { ZodValidationPipe } from '@kickzone-workspace/resolvers';
+import { updateOrderSchema } from '@kickzone-workspace/validation';
 import { UpdateOrderInput, UpdateOrderItemInput } from '@kickzone-workspace/inputs';
 
 describe('UpdateOrderInput Validation', () => {
-  let pipe: ValidationPipe;
-
-  beforeEach(() => {
-    pipe = createGlobalValidationPipe();
-  });
+  const pipe = new ZodValidationPipe(updateOrderSchema);
 
   const validUpdateOrderItem: UpdateOrderItemInput = {
     productId: 'prod-1',
@@ -17,65 +14,25 @@ describe('UpdateOrderInput Validation', () => {
     totalPrice: 10.0,
   };
 
-  it('should resolve UpdateOrderInput with only trackingNumber (no items)', async () => {
-    const input: UpdateOrderInput = {
-      trackingNumber: 'T1',
-    };
-
-    const result = await pipe.transform(input, {
-      type: 'body',
-      metatype: UpdateOrderInput,
-      data: '',
-    });
-
-    expect(result).toEqual(input);
+  it('should resolve UpdateOrderInput with only trackingNumber (no items)', () => {
+    const input: UpdateOrderInput = { trackingNumber: 'T1' };
+    expect(pipe.transform(input)).toEqual(input);
   });
 
-  it('should resolve UpdateOrderInput with trackingNumber and items: null', async () => {
-    const input: UpdateOrderInput = {
-      trackingNumber: 'T1',
-      items: null,
-    };
-
-    const result = await pipe.transform(input, {
-      type: 'body',
-      metatype: UpdateOrderInput,
-      data: '',
-    });
-
-    expect(result).toEqual(input);
+  it('should resolve UpdateOrderInput with trackingNumber and items: null', () => {
+    const input: UpdateOrderInput = { trackingNumber: 'T1', items: null };
+    expect(pipe.transform(input)).toEqual(input);
   });
 
-  it('should reject UpdateOrderInput with items containing quantity 0 via BadRequestException', async () => {
+  it('should reject UpdateOrderInput with items containing quantity 0 via BadRequestException', () => {
     const input: UpdateOrderInput = {
-      items: [
-        {
-          ...validUpdateOrderItem,
-          quantity: 0, // invalid: must be >= 1
-        },
-      ],
+      items: [{ ...validUpdateOrderItem, quantity: 0 }], // invalid: must be >= 1
     };
-
-    await expect(
-      pipe.transform(input, {
-        type: 'body',
-        metatype: UpdateOrderInput,
-        data: '',
-      })
-    ).rejects.toThrow(BadRequestException);
+    expect(() => pipe.transform(input)).toThrow(BadRequestException);
   });
 
-  it('should resolve UpdateOrderInput with items containing quantity 1 and valid fields', async () => {
-    const input: UpdateOrderInput = {
-      items: [validUpdateOrderItem],
-    };
-
-    const result = await pipe.transform(input, {
-      type: 'body',
-      metatype: UpdateOrderInput,
-      data: '',
-    });
-
-    expect(result).toEqual(input);
+  it('should resolve UpdateOrderInput with items containing quantity 1 and valid fields', () => {
+    const input: UpdateOrderInput = { items: [validUpdateOrderItem] };
+    expect(pipe.transform(input)).toEqual(input);
   });
 });

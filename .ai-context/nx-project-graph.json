@@ -19818,6 +19818,11 @@
         },
         {
           "source": "kickzone-api",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "kickzone-api",
           "target": "inputs",
           "type": "static"
         }

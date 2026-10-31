@@ -1,13 +1,11 @@
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { createGlobalValidationPipe } from './global-validation-pipe';
+import { BadRequestException } from '@nestjs/common';
+import { ZodValidationPipe } from '@kickzone-workspace/resolvers';
+import { createSellerProductSchema, updateSellerProductSchema } from '@kickzone-workspace/validation';
 import { CreateSellerProductInput, UpdateSellerProductInput } from '@kickzone-workspace/inputs';
 
 describe('Seller Product Inputs Validation', () => {
-  let pipe: ValidationPipe;
-
-  beforeEach(() => {
-    pipe = createGlobalValidationPipe();
-  });
+  const createPipe = new ZodValidationPipe(createSellerProductSchema);
+  const updatePipe = new ZodValidationPipe(updateSellerProductSchema);
 
   const validCreateBase: CreateSellerProductInput = {
     productInfoId: 1,
@@ -18,160 +16,44 @@ describe('Seller Product Inputs Validation', () => {
   };
 
   describe('CreateSellerProductInput', () => {
-    it('should resolve valid base input', async () => {
-      const result = await pipe.transform(validCreateBase, {
-        type: 'body',
-        metatype: CreateSellerProductInput,
-        data: '',
-      });
-      expect(result).toEqual(validCreateBase);
+    it('should resolve valid base input', () => {
+      expect(createPipe.transform(validCreateBase)).toEqual(validCreateBase);
     });
 
-    it('should reject discount 101 via BadRequestException', async () => {
-      const input: CreateSellerProductInput = {
-        ...validCreateBase,
-        discount: 101,
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateSellerProductInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
+    it.each([
+      ['discount 101', { discount: 101 }],
+      ['discount -1', { discount: -1 }],
+      ['price 0', { price: 0 }],
+      ['costPrice -1', { costPrice: -1 }],
+      ['stockQuantity 1.5', { stockQuantity: 1.5 }],
+    ])('should reject %s via BadRequestException', (_label, patch) => {
+      const input: CreateSellerProductInput = { ...validCreateBase, ...patch };
+      expect(() => createPipe.transform(input)).toThrow(BadRequestException);
     });
 
-    it('should reject discount -1 via BadRequestException', async () => {
-      const input: CreateSellerProductInput = {
-        ...validCreateBase,
-        discount: -1,
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateSellerProductInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should reject price 0 via BadRequestException', async () => {
-      const input: CreateSellerProductInput = {
-        ...validCreateBase,
-        price: 0,
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateSellerProductInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should reject costPrice -1 via BadRequestException', async () => {
-      const input: CreateSellerProductInput = {
-        ...validCreateBase,
-        costPrice: -1,
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateSellerProductInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should reject stockQuantity 1.5 via BadRequestException', async () => {
-      const input: CreateSellerProductInput = {
-        ...validCreateBase,
-        stockQuantity: 1.5,
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateSellerProductInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
-    });
-
-    it('should resolve discount 100', async () => {
-      const input: CreateSellerProductInput = {
-        ...validCreateBase,
-        discount: 100,
-      };
-
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: CreateSellerProductInput,
-        data: '',
-      });
-      expect(result).toEqual(input);
-    });
-
-    it('should resolve stockQuantity 0', async () => {
-      const input: CreateSellerProductInput = {
-        ...validCreateBase,
-        stockQuantity: 0,
-      };
-
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: CreateSellerProductInput,
-        data: '',
-      });
-      expect(result).toEqual(input);
+    it.each([
+      ['discount 100', { discount: 100 }],
+      ['stockQuantity 0', { stockQuantity: 0 }],
+    ])('should resolve %s', (_label, patch) => {
+      const input: CreateSellerProductInput = { ...validCreateBase, ...patch };
+      expect(createPipe.transform(input)).toEqual(input);
     });
   });
 
   describe('UpdateSellerProductInput', () => {
-    it('should reject discount 150 via BadRequestException', async () => {
-      const input: UpdateSellerProductInput = {
-        id: 'sp-1',
-        discount: 150,
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: UpdateSellerProductInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
+    it('should reject discount 150 via BadRequestException', () => {
+      const input: UpdateSellerProductInput = { id: 'sp-1', discount: 150 };
+      expect(() => updatePipe.transform(input)).toThrow(BadRequestException);
     });
 
-    it('should resolve with only id', async () => {
-      const input: UpdateSellerProductInput = {
-        id: 'sp-1',
-      };
-
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: UpdateSellerProductInput,
-        data: '',
-      });
-      expect(result).toEqual(input);
+    it('should resolve with only id', () => {
+      const input: UpdateSellerProductInput = { id: 'sp-1' };
+      expect(updatePipe.transform(input)).toEqual(input);
     });
 
-    it('should resolve with stockQuantity 0', async () => {
-      const input: UpdateSellerProductInput = {
-        id: 'sp-1',
-        stockQuantity: 0,
-      };
-
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: UpdateSellerProductInput,
-        data: '',
-      });
-      expect(result).toEqual(input);
+    it('should resolve with stockQuantity 0', () => {
+      const input: UpdateSellerProductInput = { id: 'sp-1', stockQuantity: 0 };
+      expect(updatePipe.transform(input)).toEqual(input);
     });
   });
 });

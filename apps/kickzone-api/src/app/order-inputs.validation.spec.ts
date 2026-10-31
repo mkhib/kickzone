@@ -1,13 +1,10 @@
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { createGlobalValidationPipe } from './global-validation-pipe';
+import { BadRequestException } from '@nestjs/common';
+import { ZodValidationPipe } from '@kickzone-workspace/resolvers';
+import { createOrderSchema } from '@kickzone-workspace/validation';
 import { CreateOrderInput, CreateOrderItemInput } from '@kickzone-workspace/inputs';
 
 describe('Order Inputs Validation', () => {
-  let pipe: ValidationPipe;
-
-  beforeEach(() => {
-    pipe = createGlobalValidationPipe();
-  });
+  const pipe = new ZodValidationPipe(createOrderSchema);
 
   const validOrderItem: CreateOrderItemInput = {
     productId: 'prod-1',
@@ -29,58 +26,24 @@ describe('Order Inputs Validation', () => {
     sellerId: 1,
   };
 
-  it('should reject CreateOrderInput with quantity 0 via BadRequestException', async () => {
+  it('should reject CreateOrderInput with quantity 0 via BadRequestException', () => {
     const input: CreateOrderInput = {
       ...validOrderBase,
-      items: [
-        {
-          ...validOrderItem,
-          quantity: 0, // invalid: must be >= 1
-        },
-      ],
+      items: [{ ...validOrderItem, quantity: 0 }], // invalid: must be >= 1
     };
-
-    await expect(
-      pipe.transform(input, {
-        type: 'body',
-        metatype: CreateOrderInput,
-        data: '',
-      })
-    ).rejects.toThrow(BadRequestException);
+    expect(() => pipe.transform(input)).toThrow(BadRequestException);
   });
 
-  it('should reject CreateOrderInput with quantity 1.5 via BadRequestException', async () => {
+  it('should reject CreateOrderInput with quantity 1.5 via BadRequestException', () => {
     const input: CreateOrderInput = {
       ...validOrderBase,
-      items: [
-        {
-          ...validOrderItem,
-          quantity: 1.5, // invalid: must be integer
-        },
-      ],
+      items: [{ ...validOrderItem, quantity: 1.5 }], // invalid: must be integer
     };
-
-    await expect(
-      pipe.transform(input, {
-        type: 'body',
-        metatype: CreateOrderInput,
-        data: '',
-      })
-    ).rejects.toThrow(BadRequestException);
+    expect(() => pipe.transform(input)).toThrow(BadRequestException);
   });
 
-  it('should resolve CreateOrderInput with quantity 1 and valid fields', async () => {
-    const input: CreateOrderInput = {
-      ...validOrderBase,
-      items: [validOrderItem],
-    };
-
-    const result = await pipe.transform(input, {
-      type: 'body',
-      metatype: CreateOrderInput,
-      data: '',
-    });
-
-    expect(result).toEqual(input);
+  it('should resolve CreateOrderInput with quantity 1 and valid fields', () => {
+    const input: CreateOrderInput = { ...validOrderBase, items: [validOrderItem] };
+    expect(pipe.transform(input)).toEqual(input);
   });
 });

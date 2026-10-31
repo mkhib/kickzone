@@ -7,8 +7,8 @@ subgraph 3["app"]
 4["app.module.spec.ts"]
 5["app.module.ts"]
 6["cart-inputs.validation.spec.ts"]
-7["global-validation-pipe.ts"]
-8["global-validation-pipe.spec.ts"]
+7["global-validation-pipe.spec.ts"]
+8["global-validation-pipe.ts"]
 9["order-inputs.validation.spec.ts"]
 A["product-variant-inputs.validation.spec.ts"]
 B["seller-product-inputs.validation.spec.ts"]
@@ -1540,14 +1540,9 @@ end
 end
 end
 4-->5
-6-->7
-8-->7
-9-->7
-A-->7
-B-->7
-C-->7
+7-->8
 D-->5
-D-->7
+D-->8
 K-->M
 N-->M
 Q-->S

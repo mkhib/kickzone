@@ -1,19 +1,12 @@
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { createGlobalValidationPipe } from './global-validation-pipe';
+import { BadRequestException } from '@nestjs/common';
+import { ZodValidationPipe } from '@kickzone-workspace/resolvers';
+import { createProductSchema } from '@kickzone-workspace/validation';
 import { CreateProductInput, ProductVariantInput } from '@kickzone-workspace/inputs';
 
 describe('Product Variant Inputs Validation', () => {
-  let pipe: ValidationPipe;
+  const pipe = new ZodValidationPipe(createProductSchema);
 
-  beforeEach(() => {
-    pipe = createGlobalValidationPipe();
-  });
-
-  const validVariant: ProductVariantInput = {
-    size: 'M',
-    colorIds: [1],
-    weight: 1,
-  };
+  const validVariant: ProductVariantInput = { size: 'M', colorIds: [1], weight: 1 };
 
   const validCreateBase: CreateProductInput = {
     name: 'X',
@@ -22,92 +15,32 @@ describe('Product Variant Inputs Validation', () => {
     variants: [validVariant],
   };
 
+  const withVariant = (patch: Partial<ProductVariantInput>): CreateProductInput => ({
+    ...validCreateBase,
+    variants: [{ ...validVariant, ...patch }],
+  });
+
   describe('CreateProductInput with ProductVariantInput', () => {
-    it('should resolve valid variant input', async () => {
-      const result = await pipe.transform(validCreateBase, {
-        type: 'body',
-        metatype: CreateProductInput,
-        data: '',
-      });
-      expect(result).toEqual(validCreateBase);
+    it('should resolve valid variant input', () => {
+      expect(pipe.transform(validCreateBase)).toEqual(validCreateBase);
     });
 
-    it('should reject discount 101 via BadRequestException', async () => {
-      const input: CreateProductInput = {
-        ...validCreateBase,
-        variants: [
-          {
-            ...validVariant,
-            discount: 101,
-          },
-        ],
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateProductInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
+    it('should reject discount 101 via BadRequestException', () => {
+      expect(() => pipe.transform(withVariant({ discount: 101 }))).toThrow(BadRequestException);
     });
 
-    it('should resolve discount 100', async () => {
-      const input: CreateProductInput = {
-        ...validCreateBase,
-        variants: [
-          {
-            ...validVariant,
-            discount: 100,
-          },
-        ],
-      };
-
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: CreateProductInput,
-        data: '',
-      });
-      expect(result).toEqual(input);
+    it('should resolve discount 100', () => {
+      const input = withVariant({ discount: 100 });
+      expect(pipe.transform(input)).toEqual(input);
     });
 
-    it('should reject stockQuantity 2.5 via BadRequestException', async () => {
-      const input: CreateProductInput = {
-        ...validCreateBase,
-        variants: [
-          {
-            ...validVariant,
-            stockQuantity: 2.5,
-          },
-        ],
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateProductInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
+    it('should reject stockQuantity 2.5 via BadRequestException', () => {
+      expect(() => pipe.transform(withVariant({ stockQuantity: 2.5 }))).toThrow(BadRequestException);
     });
 
-    it('should resolve stockQuantity 0', async () => {
-      const input: CreateProductInput = {
-        ...validCreateBase,
-        variants: [
-          {
-            ...validVariant,
-            stockQuantity: 0,
-          },
-        ],
-      };
-
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: CreateProductInput,
-        data: '',
-      });
-      expect(result).toEqual(input);
+    it('should resolve stockQuantity 0', () => {
+      const input = withVariant({ stockQuantity: 0 });
+      expect(pipe.transform(input)).toEqual(input);
     });
   });
 });
