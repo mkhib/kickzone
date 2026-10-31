@@ -19,6 +19,7 @@ export function useProductsQuery({
   category,
   categorySlugs,
   brand,
+  brands,
   sort = '',
   sortOrder = 'asc',
   pageSize = 12,
@@ -26,12 +27,14 @@ export function useProductsQuery({
   sellerId,
   onlyWithSellers,
   onlyInStock,
+  onlyDiscounted,
 }: {
   search: string;
   categoryId?: number;
   category?: string;
   categorySlugs?: string[];
   brand?: string;
+  brands?: string[];
   sort?: string;
   sortOrder?: 'asc' | 'desc';
   pageSize?: number;
@@ -39,6 +42,7 @@ export function useProductsQuery({
   sellerId?: number;
   onlyWithSellers?: boolean;
   onlyInStock?: boolean;
+  onlyDiscounted?: boolean;
 }) {
   const buildFilter = useCallback(
     (after?: string) => ({
@@ -48,6 +52,7 @@ export function useProductsQuery({
       categorySlugs:
         categorySlugs && categorySlugs.length > 0 ? categorySlugs : undefined,
       brand: brand || undefined,
+      brands: brands && brands.length > 0 ? brands : undefined,
       first: pageSize,
       after,
       sort,
@@ -56,6 +61,7 @@ export function useProductsQuery({
       sellerId,
       onlyWithSellers,
       onlyInStock,
+      onlyDiscounted,
     }),
     [
       search,
@@ -70,6 +76,8 @@ export function useProductsQuery({
       sellerId,
       onlyWithSellers,
       onlyInStock,
+      onlyDiscounted,
+      brands,
     ]
   );
 

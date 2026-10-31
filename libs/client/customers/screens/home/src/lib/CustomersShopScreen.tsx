@@ -117,6 +117,19 @@ function toProductsSort(selectedSort: string): {
   return { sort: 'ID_DESC', sortOrder: 'desc' };
 }
 
+export function splitList(value: string): string[] {
+  return uniqueList(
+    value
+      .split(',')
+      .map((v) => v.trim().toLowerCase())
+      .filter(Boolean)
+  );
+}
+
+export function uniqueList(values: string[]): string[] {
+  return Array.from(new Set(values.filter(Boolean)));
+}
+
 export function CustomersShopScreen() {
   const { LL } = useI18nContext();
   const { isRTL, currentLocale } = useLanguageContext();
@@ -136,6 +149,15 @@ export function CustomersShopScreen() {
   const categoryParam = searchParams.get('category') || '';
   const brandFromQuery = searchParams.get('brand') || '';
   const brandParam = (brandSlugParam || brandFromQuery || '').toLowerCase();
+  const brandsFromQuery = searchParams.get('brands') || '';
+  const selectedCategories = useMemo(
+    () => splitList(categoryParam),
+    [categoryParam]
+  );
+  const selectedBrands = useMemo(
+    () => uniqueList([brandParam, ...splitList(brandsFromQuery)]),
+    [brandParam, brandsFromQuery]
+  );
   const sortParam = searchParams.get('sort') || '';
   const searchParam = searchParams.get('search') || '';
 
@@ -189,51 +211,56 @@ export function CustomersShopScreen() {
     return () => clearTimeout(timer);
   }, [searchInput]);
 
+  const buildShopUrl = useCallback(
+    (state: {
+      search: string;
+      sort: string;
+      categories: string[];
+      brands: string[];
+    }) => {
+      const next = new URLSearchParams(searchParams);
+      ['search', 'sort', 'category', 'brand', 'brands'].forEach((key) =>
+        next.delete(key)
+      );
+      if (state.search) next.set('search', state.search);
+      if (state.sort && state.sort !== 'newest') next.set('sort', state.sort);
+      if (state.categories.length > 0)
+        next.set('category', state.categories.join(','));
+      // A single brand keeps its SEO-friendly /brands/:slug route.
+      if (state.brands.length > 1) next.set('brands', state.brands.join(','));
+      const base =
+        state.brands.length === 1
+          ? getCustomerBrandRoute(state.brands[0])
+          : CUSTOMER_ROUTES.SHOP;
+      const qs = next.toString();
+      return `${base}${qs ? `?${qs}` : ''}`;
+    },
+    [searchParams]
+  );
+
   const syncUrl = useCallback(
     (patch: {
       search?: string;
       sort?: string;
-      category?: string;
-      brand?: string;
+      categories?: string[];
+      brands?: string[];
     }) => {
-      const next = new URLSearchParams(searchParams);
-      const nextSearch =
-        patch.search !== undefined ? patch.search : debouncedSearch;
-      const nextSort = patch.sort !== undefined ? patch.sort : selectedSort;
-      const nextCategory =
-        patch.category !== undefined ? patch.category : categoryParam;
-
-      if (nextSearch) next.set('search', nextSearch);
-      else next.delete('search');
-
-      if (nextSort && nextSort !== 'newest') next.set('sort', nextSort);
-      else next.delete('sort');
-
-      if (nextCategory) next.set('category', nextCategory);
-      else next.delete('category');
-
-      next.delete('brand');
-
-      const brand =
-        patch.brand !== undefined ? patch.brand : brandParam;
-      const qs = next.toString();
-
-      if (brand) {
-        navigate(`${getCustomerBrandRoute(brand)}${qs ? `?${qs}` : ''}`, {
-          replace: true,
-        });
-      } else {
-        navigate(`${CUSTOMER_ROUTES.SHOP}${qs ? `?${qs}` : ''}`, {
-          replace: true,
-        });
-      }
+      navigate(
+        buildShopUrl({
+          search: patch.search !== undefined ? patch.search : debouncedSearch,
+          sort: patch.sort !== undefined ? patch.sort : selectedSort,
+          categories: patch.categories ?? selectedCategories,
+          brands: patch.brands ?? selectedBrands,
+        }),
+        { replace: true }
+      );
     },
     [
-      searchParams,
+      buildShopUrl,
       debouncedSearch,
       selectedSort,
-      categoryParam,
-      brandParam,
+      selectedCategories,
+      selectedBrands,
       navigate,
     ]
   );
@@ -250,14 +277,29 @@ export function CustomersShopScreen() {
   const productsSort = toProductsSort(selectedSort);
   const { products, loading, loadMore, hasNextPage } = useProductsQuery({
     search: debouncedSearch,
-    category: categoryParam || undefined,
-    brand: brandParam || undefined,
+    // One value keeps the original single filters; two or more use the multi-select arrays.
+    category:
+      selectedCategories.length === 1 ? selectedCategories[0] : undefined,
+    categorySlugs:
+      selectedCategories.length > 1 ? selectedCategories : undefined,
+    brand: selectedBrands.length === 1 ? selectedBrands[0] : undefined,
+    brands: selectedBrands.length > 1 ? selectedBrands : undefined,
     sort: productsSort.sort,
     sortOrder: productsSort.sortOrder,
     pageSize: 16,
     onlyWithSellers: true,
     onlyInStock: true,
   });
+
+  // Lightweight probe: is any in-stock product discounted? Drives the "sale" chip.
+  const { products: discountedProbe } = useProductsQuery({
+    search: '',
+    pageSize: 1,
+    onlyWithSellers: true,
+    onlyInStock: true,
+    onlyDiscounted: true,
+  });
+  const hasDiscountedProducts = discountedProbe.length > 0;
 
   const { addItem } = useCustomersCartService();
   const [isLoadingMore, setIsLoadingMore] = useState(false);
@@ -288,34 +330,46 @@ export function CustomersShopScreen() {
   }, [hasNextPage, handleLoadMore]);
 
   const categoryLabel = useMemo(() => {
-    if (!categoryParam) return '';
+    if (selectedCategories.length === 0) return '';
     const fallbackMap: Record<string, string> = {
       women: LL.home.categories.women(),
       men: LL.home.categories.men(),
       hoodies: LL.home.categories.hoodies(),
       pants: LL.home.categories.pants(),
     };
-    return resolveCategoryLabel(
-      categoryParam,
-      categories,
-      fallbackMap[categoryParam.toLowerCase()] || categoryParam
-    );
-  }, [categoryParam, categories, LL]);
+    return selectedCategories
+      .map((slug) =>
+        resolveCategoryLabel(
+          slug,
+          categories,
+          fallbackMap[slug.toLowerCase()] || slug
+        )
+      )
+      .join(isEn ? ', ' : '، ');
+  }, [selectedCategories, categories, LL, isEn]);
 
-  const brandLabel = useMemo(() => {
-    if (!brandParam) return '';
-    const match = brands.find((b) => b.slug.toLowerCase() === brandParam);
-    return match?.name || brandParam;
-  }, [brandParam, brands]);
+  const brandLabel = useMemo(
+    () =>
+      selectedBrands
+        .map(
+          (slug) =>
+            brands.find((b) => b.slug.toLowerCase() === slug)?.name || slug
+        )
+        .join(isEn ? ', ' : '، '),
+    [selectedBrands, brands, isEn]
+  );
 
-  const heading = categoryParam
+  const heading = selectedCategories.length > 0
     ? LL.home.shop.productsInCategory({ category: categoryLabel })
-    : brandParam
+    : selectedBrands.length > 0
     ? LL.home.shop.productsByBrand({ brand: brandLabel })
     : LL.home.shop.allProducts();
 
   const hasActiveFilters = Boolean(
-    categoryParam || brandParam || debouncedSearch || selectedSort !== 'newest'
+    selectedCategories.length > 0 ||
+      selectedBrands.length > 0 ||
+      debouncedSearch ||
+      selectedSort !== 'newest'
   );
 
   const clearFilters = () => {
@@ -326,7 +380,15 @@ export function CustomersShopScreen() {
   };
 
   const categoryChips = useMemo(() => {
-    const preferred = ['women', 'men', 'hoodies', 'pants', 'sneakers', 'sale'];
+    const preferred = [
+      'women',
+      'men',
+      't-shirts',
+      'hoodies',
+      'pants',
+      'sneakers',
+      'sale',
+    ];
     const bySlug = new Map(
       (categories || []).map((c) => [c.slug.toLowerCase(), c])
     );
@@ -338,8 +400,14 @@ export function CustomersShopScreen() {
     for (const c of categories || []) {
       if (!preferred.includes(c.slug.toLowerCase())) ordered.push(c);
     }
-    return ordered.slice(0, 10);
-  }, [categories]);
+    // Hide the sale chip when nothing is discounted (unless it is already selected).
+    return ordered.filter(
+      (c) =>
+        c.slug.toLowerCase() !== 'sale' ||
+        hasDiscountedProducts ||
+        selectedCategories.includes('sale')
+    );
+  }, [categories, hasDiscountedProducts, selectedCategories]);
 
   return (
     <CustomersLayout>
@@ -426,10 +494,19 @@ export function CustomersShopScreen() {
               </InputLabel>
               <Select
                 labelId="shop-brand-label"
-                value={brandParam}
+                multiple
+                value={selectedBrands}
                 label={LL.home.shop.brandLabel()}
+                renderValue={() => brandLabel || LL.home.shop.allBrands()}
                 onChange={(e) => {
-                  syncUrl({ brand: e.target.value });
+                  const value = e.target.value;
+                  const picked =
+                    typeof value === 'string' ? splitList(value) : value;
+                  syncUrl({
+                    brands: picked.includes('')
+                      ? []
+                      : uniqueList(picked.map((v) => v.toLowerCase())),
+                  });
                 }}
                 MenuProps={{
                   PaperProps: {
@@ -501,44 +578,42 @@ export function CustomersShopScreen() {
             label={LL.home.shop.allCategories()}
             clickable
             component={RouterLink}
-            to={(() => {
-              const base = brandParam
-                ? getCustomerBrandRoute(brandParam)
-                : CUSTOMER_ROUTES.SHOP;
-              const params = new URLSearchParams();
-              if (debouncedSearch) params.set('search', debouncedSearch);
-              if (selectedSort !== 'newest') params.set('sort', selectedSort);
-              const qs = params.toString();
-              return `${base}${qs ? `?${qs}` : ''}`;
-            })()}
-            variant={!categoryParam ? 'filled' : 'outlined'}
+            to={buildShopUrl({
+              search: debouncedSearch,
+              sort: selectedSort,
+              categories: [],
+              brands: selectedBrands,
+            })}
+            variant={selectedCategories.length === 0 ? 'filled' : 'outlined'}
             sx={{
               fontFamily: 'var(--font-sans)',
-              bgcolor: !categoryParam ? 'var(--accent)' : 'transparent',
-              color: !categoryParam ? '#fff' : 'var(--ink-2)',
+              bgcolor: selectedCategories.length === 0 ? 'var(--accent)' : 'transparent',
+              color: selectedCategories.length === 0 ? '#fff' : 'var(--ink-2)',
               borderColor: 'var(--hair)',
               '&:hover': {
-                bgcolor: !categoryParam ? 'var(--accent)' : 'var(--paper)',
+                bgcolor: selectedCategories.length === 0 ? 'var(--accent)' : 'var(--paper)',
               },
             }}
           />
           {categoryChips.map((cat) => {
-            const active = categoryParam.toLowerCase() === cat.slug.toLowerCase();
-            const base = brandParam
-              ? getCustomerBrandRoute(brandParam)
-              : CUSTOMER_ROUTES.SHOP;
-            const params = new URLSearchParams();
-            if (!active) params.set('category', cat.slug);
-            if (debouncedSearch) params.set('search', debouncedSearch);
-            if (selectedSort !== 'newest') params.set('sort', selectedSort);
-            const qs = params.toString();
+            const slug = cat.slug.toLowerCase();
+            const active = selectedCategories.includes(slug);
+            const nextCategories = active
+              ? selectedCategories.filter((c) => c !== slug)
+              : [...selectedCategories, slug];
             return (
               <Chip
                 key={cat.id}
                 label={cat.name}
                 clickable
                 component={RouterLink}
-                to={`${base}${qs ? `?${qs}` : ''}`}
+                to={buildShopUrl({
+                  search: debouncedSearch,
+                  sort: selectedSort,
+                  categories: nextCategories,
+                  brands: selectedBrands,
+                })}
+                aria-pressed={active}
                 variant={active ? 'filled' : 'outlined'}
                 sx={{
                   fontFamily: 'var(--font-sans)',
