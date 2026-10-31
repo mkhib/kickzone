@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { personNameSchema, emailSchema, newPasswordSchema } from './auth';
+import { personNameSchema, emailSchema, newPasswordSchema, loginPasswordSchema } from './auth';
 
 export const customerSignupFormSchema = z
   .object({
@@ -14,3 +14,10 @@ export const customerSignupFormSchema = z
   });
 
 export type CustomerSignupFormValues = z.input<typeof customerSignupFormSchema>;
+
+export const customerLoginFormSchema = z.object({
+  email: emailSchema,
+  password: loginPasswordSchema,
+});
+
+export type CustomerLoginFormValues = z.input<typeof customerLoginFormSchema>;

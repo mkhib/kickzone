@@ -18681,6 +18681,11 @@
         },
         {
           "source": "customers-login-screen",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "customers-login-screen",
           "target": "password-field",
           "type": "static"
         },

@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useNavigate, useLocation, Link as RouterLink } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersLogin } from '@kickzone-workspace/customers-auth-hooks';
 import { getErrorMessage } from '@kickzone-workspace/translations';
+import { customerLoginFormSchema, type CustomerLoginFormValues } from '@kickzone-workspace/validation';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
@@ -20,6 +23,7 @@ import CssBaseline from '@mui/material/CssBaseline';
 import { useTheme } from '@mui/material/styles';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
+import type { FieldError } from 'react-hook-form';
 
 export function CustomersLogin() {
   const { LL } = useI18nContext();
@@ -35,21 +39,28 @@ export function CustomersLogin() {
 
   const goldColor = isDark ? '#c5b89a' : '#7c6d48';
 
-  const [formData, setFormData] = useState({
-    email: '',
-    password: '',
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<CustomerLoginFormValues>({
+    resolver: zodResolver(customerLoginFormSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
   });
 
-  const handleChange =
-    (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: event.target.value }));
-    };
+  const fieldErrorText = (error: FieldError | undefined): string => {
+    if (!error || !error.type) return '';
+    // For required, invalid_type, too_big, invalid_string (email), etc.
+    return LL.errors.requiredFields();
+  };
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-
+  const onValidSubmit = async (values: CustomerLoginFormValues) => {
     try {
-      await handleLogin(formData.email, formData.password);
+      await handleLogin(values.email, values.password);
 
       showSnackbar(LL.messages.welcome(), { severity: 'success' });
 
@@ -339,7 +350,8 @@ export function CustomersLogin() {
 
             <Box
               component="form"
-              onSubmit={handleSubmit}
+              onSubmit={handleSubmit(onValidSubmit)}
+              noValidate
               sx={{
                 width: '100%',
                 mt: 0.5,
@@ -354,11 +366,11 @@ export function CustomersLogin() {
                 size="small"
                 id="email"
                 label={LL.form.email()}
-                name="email"
                 autoComplete="email"
                 autoFocus
-                value={formData.email}
-                onChange={handleChange('email')}
+                error={!!errors.email}
+                helperText={errors.email ? fieldErrorText(errors.email) : undefined}
+                {...register('email')}
                 {...getLtrTextFieldProps()}
               />
 
@@ -366,12 +378,12 @@ export function CustomersLogin() {
                 required
                 fullWidth
                 size="small"
-                name="password"
                 label={LL.form.password()}
                 id="password"
                 autoComplete="current-password"
-                value={formData.password}
-                onChange={handleChange('password')}
+                error={!!errors.password}
+                helperText={errors.password ? fieldErrorText(errors.password) : undefined}
+                {...register('password')}
               />
 
               <Box
