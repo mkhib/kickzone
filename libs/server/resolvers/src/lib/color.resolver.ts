@@ -14,6 +14,13 @@ import { CatalogGuard } from '@kickzone-workspace/guards';
 import { TranslationService, ColorService } from '@kickzone-workspace/services';
 import { CreateColorInput, UpdateColorInput } from '@kickzone-workspace/inputs';
 
+import {
+  createColorSchema,
+  optionalDisplayNameSchema,
+  updateColorSchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
+
 @Resolver(() => Color)
 export class ColorResolver {
   constructor(
@@ -38,8 +45,13 @@ export class ColorResolver {
   @Mutation(() => Color)
   @UseGuards(CatalogGuard)
   async createColor(
-    @Args('input') input: CreateColorInput,
-    @Args('name', { nullable: true }) name?: string
+    @Args('input', new ZodValidationPipe(createColorSchema)) input: CreateColorInput,
+    @Args(
+      'name',
+      { nullable: true },
+      new ZodValidationPipe(optionalDisplayNameSchema)
+    )
+    name?: string
   ): Promise<Color> {
     return this.colorService.createColor(input, name);
   }
@@ -48,8 +60,13 @@ export class ColorResolver {
   @UseGuards(CatalogGuard)
   async updateColor(
     @Args('id', { type: () => Int }) id: number,
-    @Args('input') input: UpdateColorInput,
-    @Args('name', { nullable: true }) name?: string,
+    @Args('input', new ZodValidationPipe(updateColorSchema)) input: UpdateColorInput,
+    @Args(
+      'name',
+      { nullable: true },
+      new ZodValidationPipe(optionalDisplayNameSchema)
+    )
+    name?: string,
     @Context() context?: { req: { locale?: string } }
   ): Promise<Color> {
     return this.colorService.updateColor(

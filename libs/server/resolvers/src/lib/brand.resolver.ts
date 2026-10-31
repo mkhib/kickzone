@@ -14,6 +14,13 @@ import { CatalogGuard } from '@kickzone-workspace/guards';
 import { TranslationService, BrandService } from '@kickzone-workspace/services';
 import { CreateBrandInput, UpdateBrandInput } from '@kickzone-workspace/inputs';
 
+import {
+  createBrandSchema,
+  optionalDisplayNameSchema,
+  updateBrandSchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
+
 @Resolver(() => Brand)
 export class BrandResolver {
   constructor(
@@ -41,8 +48,13 @@ export class BrandResolver {
   @Mutation(() => Brand)
   @UseGuards(CatalogGuard)
   async createBrand(
-    @Args('input') input: CreateBrandInput,
-    @Args('name', { nullable: true }) name?: string
+    @Args('input', new ZodValidationPipe(createBrandSchema)) input: CreateBrandInput,
+    @Args(
+      'name',
+      { nullable: true },
+      new ZodValidationPipe(optionalDisplayNameSchema)
+    )
+    name?: string
   ): Promise<Brand> {
     return this.brandService.createBrand(input, name);
   }
@@ -50,8 +62,13 @@ export class BrandResolver {
   @Mutation(() => Brand)
   @UseGuards(CatalogGuard)
   async updateBrand(
-    @Args('input') input: UpdateBrandInput,
-    @Args('name', { nullable: true }) name?: string,
+    @Args('input', new ZodValidationPipe(updateBrandSchema)) input: UpdateBrandInput,
+    @Args(
+      'name',
+      { nullable: true },
+      new ZodValidationPipe(optionalDisplayNameSchema)
+    )
+    name?: string,
     @Context() context?: { req: { locale?: string } }
   ): Promise<Brand> {
     return this.brandService.updateBrand(

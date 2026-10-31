@@ -19,6 +19,13 @@ import {
   UpdateCategoryInput,
 } from '@kickzone-workspace/inputs';
 
+import {
+  createCategorySchema,
+  optionalDisplayNameSchema,
+  updateCategorySchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
+
 @Resolver(() => Category)
 export class CategoryResolver {
   constructor(
@@ -29,8 +36,14 @@ export class CategoryResolver {
   @Mutation(() => Category)
   @UseGuards(CatalogGuard)
   async createCategory(
-    @Args('input') input: CreateCategoryInput,
-    @Args('name', { nullable: true }) name?: string
+    @Args('input', new ZodValidationPipe(createCategorySchema))
+    input: CreateCategoryInput,
+    @Args(
+      'name',
+      { nullable: true },
+      new ZodValidationPipe(optionalDisplayNameSchema)
+    )
+    name?: string
   ): Promise<Category> {
     return this.productService.createCategory(input, name);
   }
@@ -38,8 +51,14 @@ export class CategoryResolver {
   @Mutation(() => Category)
   @UseGuards(CatalogGuard)
   async updateCategory(
-    @Args('input') input: UpdateCategoryInput,
-    @Args('name', { nullable: true }) name?: string,
+    @Args('input', new ZodValidationPipe(updateCategorySchema))
+    input: UpdateCategoryInput,
+    @Args(
+      'name',
+      { nullable: true },
+      new ZodValidationPipe(optionalDisplayNameSchema)
+    )
+    name?: string,
     @Context() context?: { req: { locale?: string } }
   ): Promise<Category> {
     return this.productService.updateCategory(

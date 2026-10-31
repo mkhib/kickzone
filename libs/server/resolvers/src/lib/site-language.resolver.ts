@@ -8,6 +8,12 @@ import {
   UpdateSiteLanguageInput,
 } from '@kickzone-workspace/inputs';
 
+import {
+  createSiteLanguageSchema,
+  updateSiteLanguageSchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
+
 @Resolver(() => SiteLanguage)
 export class SiteLanguageResolver {
   constructor(private readonly siteLanguageService: SiteLanguageService) {}
@@ -31,7 +37,8 @@ export class SiteLanguageResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   async createSiteLanguage(
-    @Args('input') input: CreateSiteLanguageInput
+    @Args('input', new ZodValidationPipe(createSiteLanguageSchema))
+    input: CreateSiteLanguageInput
   ): Promise<SiteLanguage> {
     return this.siteLanguageService.create(input);
   }
@@ -41,7 +48,8 @@ export class SiteLanguageResolver {
   @SetMetadata('roles', [UserRole.ADMIN])
   async updateSiteLanguage(
     @Args('id', { type: () => Int }) id: number,
-    @Args('input') input: UpdateSiteLanguageInput
+    @Args('input', new ZodValidationPipe(updateSiteLanguageSchema))
+    input: UpdateSiteLanguageInput
   ): Promise<SiteLanguage> {
     return this.siteLanguageService.update(id, input);
   }
