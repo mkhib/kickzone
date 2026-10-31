@@ -13,34 +13,64 @@ import Container from '@mui/material/Container';
 import Alert from '@mui/material/Alert';
 import CircularProgress from '@mui/material/CircularProgress';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  sellerSetupPasswordFormSchema,
+  type SellerSetupPasswordFormValues,
+} from '@kickzone-workspace/validation';
 
 export const SellersSetupPassword = () => {
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.sellerSetupPassword());
   const { token } = useParams();
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const { setupPassword, setupPasswordLoading, setupPasswordError } =
     useSetupPassword();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  const {
+    register,
+    handleSubmit,
+  } = useForm<SellerSetupPasswordFormValues>({
+    resolver: zodResolver(sellerSetupPasswordFormSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
-    if (password !== confirmPassword) {
+  const onValidSubmit = async (values: SellerSetupPasswordFormValues) => {
+    if (token) {
+      setupPassword(token, values.password);
+    }
+  };
+
+  const onInvalidSubmit = (errors: Record<string, unknown>) => {
+    // Check for confirmPassword mismatch first (priority)
+    const confirmPasswordError = errors.confirmPassword as
+      | { type?: string; message?: string }
+      | undefined;
+    if (
+      confirmPasswordError &&
+      confirmPasswordError.type === 'custom' &&
+      confirmPasswordError.message === 'passwordsDoNotMatch'
+    ) {
       setError(LL.authorization.passwordsDoNotMatch());
       return;
     }
 
-    if (password.length < 8) {
+    // Check for password issues (too_small, etc.)
+    const passwordError = errors.password as
+      | { type?: string; message?: string }
+      | undefined;
+    if (passwordError && passwordError.type === 'too_small') {
       setError(LL.authorization.passwordTooShort());
       return;
     }
 
-    if (token) {
-      setupPassword(token, password);
-    }
+    // Fallback
+    setError(LL.errors.requiredFields());
   };
 
   return (
@@ -99,7 +129,8 @@ export const SellersSetupPassword = () => {
 
             <Box
               component="form"
-              onSubmit={handleSubmit}
+              onSubmit={handleSubmit(onValidSubmit, onInvalidSubmit)}
+              noValidate
               sx={{ width: '100%' }}
             >
               <Grid container spacing={2}>
@@ -108,8 +139,7 @@ export const SellersSetupPassword = () => {
                     required
                     fullWidth
                     label={LL.authorization.newPassword()}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    {...register('password', { onChange: () => setError('') })}
                   />
                 </Grid>
                 <Grid size={12}>
@@ -117,8 +147,8 @@ export const SellersSetupPassword = () => {
                     required
                     fullWidth
                     label={LL.authorization.confirmNewPassword()}
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    error={!!error && error === LL.authorization.passwordsDoNotMatch()}
+                    {...register('confirmPassword', { onChange: () => setError('') })}
                   />
                 </Grid>
               </Grid>

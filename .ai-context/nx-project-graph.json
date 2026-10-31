@@ -18065,6 +18065,11 @@
           "source": "sellers-setup-password",
           "target": "password-field",
           "type": "static"
+        },
+        {
+          "source": "sellers-setup-password",
+          "target": "shared-validation",
+          "type": "static"
         }
       ],
       "shared-ui-store": [],
@@ -18903,6 +18908,11 @@
         {
           "source": "sellers-login-screen",
           "target": "language-components",
+          "type": "static"
+        },
+        {
+          "source": "sellers-login-screen",
+          "target": "shared-validation",
           "type": "static"
         }
       ],

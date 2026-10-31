@@ -11,21 +11,42 @@ import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import { PasswordTextField } from '@kickzone-workspace/password-field';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useSellerLogin } from '@kickzone-workspace/sellers-auth-hooks';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
+import type { FieldError } from 'react-hook-form';
+import {
+  sellerLoginFormSchema,
+  type SellerLoginFormValues,
+} from '@kickzone-workspace/validation';
 
 export function SellersLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const { loginSeller, sellersLoginLoading, sellersLoginError } =
     useSellerLogin();
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.sellerLogin());
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    loginSeller({ email, password });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<SellerLoginFormValues>({
+    resolver: zodResolver(sellerLoginFormSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const fieldErrorText = (error: FieldError | undefined): string => {
+    if (!error || !error.type) return '';
+    return LL.errors.requiredFields();
+  };
+
+  const onValidSubmit = async (values: SellerLoginFormValues) => {
+    loginSeller({ email: values.email, password: values.password });
   };
 
   // Get translated error message
@@ -60,30 +81,30 @@ export function SellersLogin() {
           >
             {LL.authorization.signIn()}
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+          <Box component="form" onSubmit={handleSubmit(onValidSubmit)} noValidate sx={{ mt: 3 }}>
             <TextField
               margin="normal"
               required
               fullWidth
               id="email"
               label={LL.form.email()}
-              name="email"
               autoComplete="email"
               autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              error={!!errors.email}
+              helperText={errors.email ? fieldErrorText(errors.email) : undefined}
+              {...register('email')}
               {...getLtrTextFieldProps()}
             />
             <PasswordTextField
               margin="normal"
               required
               fullWidth
-              name="password"
               label={LL.form.password()}
               id="password"
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              error={!!errors.password}
+              helperText={errors.password ? fieldErrorText(errors.password) : undefined}
+              {...register('password')}
             />
             <Button
               type="submit"

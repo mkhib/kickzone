@@ -39,3 +39,10 @@ export const customerResetPasswordFormSchema = z
   });
 
 export type CustomerResetPasswordFormValues = z.input<typeof customerResetPasswordFormSchema>;
+
+// Seller form schemas (same rules as customer, no duplication)
+export const sellerLoginFormSchema = customerLoginFormSchema;
+export type SellerLoginFormValues = CustomerLoginFormValues;
+
+export const sellerSetupPasswordFormSchema = customerResetPasswordFormSchema;
+export type SellerSetupPasswordFormValues = CustomerResetPasswordFormValues;
