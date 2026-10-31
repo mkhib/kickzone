@@ -745,7 +745,7 @@ export function CustomerShoppingCart() {
 
   const handleCreateOrderAndInitiatePayment = async () => {
     // Declare orderResults outside try block for access in catch
-    let orderResults: Awaited<ReturnType<typeof createOrderMutation>>[] = [];
+    let orderResults: NonNullable<Awaited<ReturnType<typeof createOrderMutation>>>[] = [];
     let rollbackExecuted = false;
 
     try {
@@ -873,7 +873,9 @@ export function CustomerShoppingCart() {
       // Collect all successfully created orders
       const fulfilledOrders = settledResults
         .filter((r): r is PromiseFulfilledResult<Awaited<ReturnType<typeof createOrderMutation>>> => r.status === 'fulfilled')
-        .map((r) => r.value);
+        .map((r) => r.value)
+        // A mutation that resolves without data did not create an order.
+        .filter((o): o is NonNullable<typeof o> => o != null);
       
       orderResults = fulfilledOrders;
       

@@ -1342,6 +1342,14 @@ type RootTranslation = {
 		 * C​o​n​t​i​n​u​e​ ​S​h​o​p​p​i​n​g
 		 */
 		continueShopping: string
+		/**
+		 * C​r​e​a​t​e​ ​a​n​ ​a​c​c​o​u​n​t​ ​t​o​ ​t​r​a​c​k​ ​y​o​u​r​ ​o​r​d​e​r​s​ ​a​n​d​ ​c​h​e​c​k​ ​o​u​t​ ​f​a​s​t​e​r​ ​n​e​x​t​ ​t​i​m​e
+		 */
+		createAccountPrompt: string
+		/**
+		 * S​a​v​e​ ​y​o​u​r​ ​d​e​t​a​i​l​s​,​ ​f​o​l​l​o​w​ ​e​v​e​r​y​ ​o​r​d​e​r​ ​i​n​ ​o​n​e​ ​p​l​a​c​e​ ​a​n​d​ ​g​e​t​ ​e​a​r​l​y​ ​a​c​c​e​s​s​ ​t​o​ ​n​e​w​ ​d​r​o​p​s​.
+		 */
+		createAccountDescription: string
 	}
 	status: {
 		/**
@@ -4833,6 +4841,14 @@ export type TranslationFunctions = {
 		 * Continue Shopping
 		 */
 		continueShopping: () => LocalizedString
+		/**
+		 * Create an account to track your orders and check out faster next time
+		 */
+		createAccountPrompt: () => LocalizedString
+		/**
+		 * Save your details, follow every order in one place and get early access to new drops.
+		 */
+		createAccountDescription: () => LocalizedString
 	}
 	status: {
 		/**

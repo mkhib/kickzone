@@ -374,6 +374,9 @@ const en = {
       'You will receive an email confirmation with your order details and tracking information.',
     viewOrders: 'View My Orders',
     continueShopping: 'Continue Shopping',
+    createAccountPrompt: 'Create an account to track your orders and check out faster next time',
+    createAccountDescription:
+      'Save your details, follow every order in one place and get early access to new drops.',
   },
 
   // Status and states
