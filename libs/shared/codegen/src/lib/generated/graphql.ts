@@ -264,6 +264,7 @@ export type Mutation = {
   adminCreateUser: User;
   archiveProduct: Product;
   bulkTranslateEntities: Scalars['Boolean']['output'];
+  cancelPendingOrder: Scalars['Boolean']['output'];
   cancelPendingZarinPalOrder: Scalars['Boolean']['output'];
   clearCart: Cart;
   createBrand: Brand;
@@ -343,8 +344,14 @@ export type MutationBulkTranslateEntitiesArgs = {
 };
 
 
-export type MutationCancelPendingZarinPalOrderArgs = {
+export type MutationCancelPendingOrderArgs = {
   orderId: Scalars['String']['input'];
+};
+
+
+export type MutationCancelPendingZarinPalOrderArgs = {
+  authority?: InputMaybe<Scalars['String']['input']>;
+  orderId?: InputMaybe<Scalars['String']['input']>;
 };
 
 
@@ -647,6 +654,7 @@ export type Order = {
   paymentAmount?: Maybe<Scalars['Float']['output']>;
   paymentAuthority?: Maybe<Scalars['String']['output']>;
   paymentCurrency?: Maybe<Scalars['String']['output']>;
+  paymentVerifiedAt?: Maybe<Scalars['DateTime']['output']>;
   sellerAddress?: Maybe<Scalars['String']['output']>;
   sellerId: Scalars['Int']['output'];
   sellerPhone?: Maybe<Scalars['String']['output']>;
@@ -655,6 +663,7 @@ export type Order = {
   shippingCost: Scalars['Float']['output'];
   state: Scalars['String']['output'];
   status: OrderStatus;
+  stockReserved: Scalars['Boolean']['output'];
   subtotal: Scalars['Float']['output'];
   total: Scalars['Float']['output'];
   trackingNumber?: Maybe<Scalars['String']['output']>;
@@ -978,6 +987,7 @@ export type QueryMyOrdersArgs = {
 export type QueryMySellerOrdersArgs = {
   after?: InputMaybe<Scalars['String']['input']>;
   first?: Scalars['Int']['input'];
+  status?: InputMaybe<OrderStatus>;
 };
 
 
@@ -1363,6 +1373,7 @@ export type ZarinPalPaymentRequestInput = {
   description: Scalars['String']['input'];
   email?: InputMaybe<Scalars['String']['input']>;
   mobile?: InputMaybe<Scalars['String']['input']>;
+  orderIds?: InputMaybe<Array<Scalars['String']['input']>>;
   order_id?: InputMaybe<Scalars['String']['input']>;
 };
 
@@ -1389,5 +1400,9 @@ export type ZarinPalVerificationResponse = {
   fee?: Maybe<Scalars['Int']['output']>;
   fee_type?: Maybe<Scalars['String']['output']>;
   message: Scalars['String']['output'];
+  orderId?: Maybe<Scalars['String']['output']>;
+  orderIds?: Maybe<Array<Scalars['String']['output']>>;
+  orderNumber?: Maybe<Scalars['String']['output']>;
   ref_id?: Maybe<Scalars['Int']['output']>;
+  success?: Maybe<Scalars['Boolean']['output']>;
 };

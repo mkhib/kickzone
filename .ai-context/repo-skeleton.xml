@@ -1642,6 +1642,68 @@ export class OrderItem {
 }
 </file>
 
+<file path="libs/server/inputs/src/lib/user.input.ts">
+import { InputType, Field } from '@nestjs/graphql';
+import { UserRole } from '@kickzone-workspace/entities';
+
+@InputType()
+export class CreateUserInput {
+  @Field()
+  name: string;
+
+  @Field()
+  lastName: string;
+
+  @Field()
+  username: string;
+
+  @Field()
+  email: string;
+
+  @Field()
+  password: string;
+
+  @Field(() => UserRole)
+  role: UserRole;
+}
+
+@InputType()
+export class UpdateUserInput {
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  lastName?: string;
+
+  @Field({ nullable: true })
+  email?: string;
+
+  @Field({ nullable: true })
+  password?: string;
+
+  @Field(() => UserRole, { nullable: true })
+  role?: UserRole;
+}
+</file>
+
+<file path="libs/server/modules/src/lib/payment.module.ts">
+import { Module } from '@nestjs/common';
+import { PaymentService, PaymentLogger } from '@kickzone-workspace/services';
+import { PaymentResolver } from '@kickzone-workspace/resolvers';
+import { CurrencyModule } from './currency.module';
+import { OrderModule } from './order.module';
+
+@Module({
+  imports: [
+    OrderModule, // OrderService
+    CurrencyModule, // CurrencyService for the server-side FX check
+  ],
+  providers: [PaymentService, PaymentResolver, PaymentLogger],
+  exports: [PaymentService],
+})
+export class PaymentModule {}
+</file>
+
 <file path="libs/server/inputs/src/lib/cart.inputs.ts">
 import { InputType, Field, Int } from '@nestjs/graphql';
 
@@ -1809,66 +1871,872 @@ export class SellerFilterInput {
 }
 </file>
 
-<file path="libs/server/inputs/src/lib/user.input.ts">
-import { InputType, Field } from '@nestjs/graphql';
-import { UserRole } from '@kickzone-workspace/entities';
+<file path="libs/shared/graphql-schema/src/lib/schema.gql">
+# ------------------------------------------------------
+# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
+# ------------------------------------------------------
 
-@InputType()
-export class CreateUserInput {
-  @Field()
-  name: string;
-
-  @Field()
-  lastName: string;
-
-  @Field()
-  username: string;
-
-  @Field()
-  email: string;
-
-  @Field()
-  password: string;
-
-  @Field(() => UserRole)
-  role: UserRole;
+type PageInfo {
+  endCursor: String
+  hasNextPage: Boolean!
+  hasPreviousPage: Boolean!
 }
 
-@InputType()
-export class UpdateUserInput {
-  @Field({ nullable: true })
-  name?: string;
-
-  @Field({ nullable: true })
-  lastName?: string;
-
-  @Field({ nullable: true })
-  email?: string;
-
-  @Field({ nullable: true })
-  password?: string;
-
-  @Field(() => UserRole, { nullable: true })
-  role?: UserRole;
+type User {
+  id: ID!
+  name: String!
+  lastName: String!
+  username: String!
+  email: String!
+  role: UserRole!
+  locale: String
+  customerProfile: CustomerProfile
 }
-</file>
 
-<file path="libs/server/modules/src/lib/payment.module.ts">
-import { Module } from '@nestjs/common';
-import { PaymentService, PaymentLogger } from '@kickzone-workspace/services';
-import { PaymentResolver } from '@kickzone-workspace/resolvers';
-import { CurrencyModule } from './currency.module';
-import { OrderModule } from './order.module';
+enum UserRole {
+  ADMIN
+  SELLER
+  CUSTOMER
+}
 
-@Module({
-  imports: [
-    OrderModule, // OrderService
-    CurrencyModule, // CurrencyService for the server-side FX check
-  ],
-  providers: [PaymentService, PaymentResolver, PaymentLogger],
-  exports: [PaymentService],
-})
-export class PaymentModule {}
+type UserEdge {
+  node: User!
+  cursor: String!
+}
+
+type UserConnection {
+  edges: [UserEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Brand {
+  id: Int!
+  slug: String!
+  sortOrder: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+}
+
+"""
+A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
+"""
+scalar DateTime
+
+type Category {
+  id: Int!
+  slug: String!
+  sortOrder: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+}
+
+type Color {
+  id: Int!
+  hexCode: String!
+  sortOrder: Int!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  name: String!
+}
+
+type ProductInfo {
+  id: Int!
+  size: String!
+  sizeKind: SizeKind!
+  colors: [Color!]!
+  weight: Float!
+  product: Product!
+  images: [String!]
+}
+
+enum SizeKind {
+  Apparel
+  Footwear
+  Pants
+}
+
+type SiteLanguage {
+  id: ID!
+  code: String!
+  name: String!
+  nativeName: String!
+  isRTL: Boolean!
+  isActive: Boolean!
+  isDefault: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ProductDescription {
+  id: ID!
+  productId: Int!
+  language: SiteLanguage!
+  languageId: Int!
+  description: String!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Product {
+  id: Int!
+  name: String!
+  sku: String
+  productInfos: [ProductInfo!]!
+  categories: [Category!]!
+  brand: Brand
+  brandId: Int
+  seller: SellerInfo
+  sellerId: Int
+  description: String
+  descriptions: [ProductDescription!]
+  sellerProducts: [SellerProduct!]
+  archived: Boolean!
+}
+
+type ProductEdge {
+  cursor: String!
+  node: Product!
+}
+
+type ProductConnection {
+  pageInfo: PageInfo!
+  totalCount: Int!
+  edges: [ProductEdge!]!
+}
+
+type SellerProduct {
+  id: String!
+  seller: SellerInfo
+  product: Product!
+  productInfo: ProductInfo!
+  productInfoId: Int!
+  price: Float!
+  costPrice: Float
+  discount: Float!
+  stockQuantity: Int!
+  recommended: Boolean!
+  boxLess: Boolean!
+}
+
+type SellerInfo {
+  id: Int!
+  storeName: String!
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  businessName: String
+  isActive: Boolean!
+  canManageCatalog: Boolean!
+  shippingFee: Float!
+  user: User!
+  sellerProducts: [SellerProduct!]!
+}
+
+type SellerEdge {
+  node: SellerInfo!
+  cursor: String!
+}
+
+type SellerConnection {
+  edges: [SellerEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type Order {
+  id: ID!
+  orderNumber: String!
+  customerEmail: String!
+  customerPhone: String!
+  customerName: String!
+  shippingAddress: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String!
+  status: OrderStatus!
+  stockReserved: Boolean!
+  subtotal: Float!
+  shippingCost: Float!
+  total: Float!
+  paymentAmount: Float
+  paymentCurrency: String
+  paymentAuthority: String
+  sellerStoreName: String
+  sellerPhone: String
+  sellerAddress: String
+  notes: String
+  trackingNumber: String
+  paymentVerifiedAt: DateTime
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  sellerId: Int!
+  items: [OrderItem!]!
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+type OrderItem {
+  id: ID!
+  orderId: String!
+  productId: String!
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+  sellerProductId: String
+  originalPrice: Float
+  discountPercentage: Float
+  productInfoId: Int
+}
+
+type Cart {
+  id: ID!
+  userId: String!
+  subtotal: Float!
+  total: Float!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  items: [CartItem!]!
+}
+
+type CartItem {
+  id: ID!
+  cartId: String!
+  productId: String!
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+  sellerId: String!
+  sellerName: String
+  productInfoId: String
+  sellerProductId: String
+  availableStock: Int
+}
+
+type CustomerProfile {
+  id: ID!
+  userId: String!
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  clothingSize: String
+  shoeSize: String
+  favorites: String
+}
+
+type Translation {
+  id: Int!
+  entityType: String!
+  entityId: Int!
+  locale: String!
+  fieldName: String!
+  value: String!
+  isAutoTranslated: Boolean!
+  translatedBy: Int
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type Currency {
+  id: ID!
+  code: String!
+  name: String!
+  symbol: String!
+  decimalPlaces: Int!
+  isActive: Boolean!
+  isBaseCurrency: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type ExchangeRate {
+  id: ID!
+  fromCurrency: Currency!
+  toCurrency: Currency!
+  rate: Float!
+  effectiveDate: DateTime!
+  createdBy: User
+  createdAt: DateTime!
+  notes: String
+}
+
+type CurrencyPreference {
+  id: ID!
+  locale: String!
+  currency: Currency!
+  isActive: Boolean!
+  createdAt: DateTime!
+  updatedAt: DateTime!
+}
+
+type SellerOrder {
+  id: ID!
+  orderNumber: String!
+  status: OrderStatus!
+  subtotal: Float!
+  shippingCost: Float!
+  total: Float!
+  notes: String
+  trackingNumber: String
+  createdAt: DateTime!
+  updatedAt: DateTime!
+  sellerId: Int!
+  sellerStoreName: String
+  sellerPhone: String
+  sellerAddress: String
+  items: [OrderItem!]!
+}
+
+type OrderEdge {
+  node: Order!
+  cursor: String!
+}
+
+type OrdersConnection {
+  edges: [OrderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type SellerOrderEdge {
+  node: SellerOrder!
+  cursor: String!
+}
+
+type SellerOrdersConnection {
+  edges: [SellerOrderEdge!]!
+  pageInfo: PageInfo!
+  totalCount: Int!
+}
+
+type ShippingCalculationResult {
+  totalShippingCost: Float!
+  freeShippingApplied: Boolean!
+  strategyUsed: String!
+  shippingBreakdown: [SellerShippingBreakdown!]
+}
+
+type SellerShippingBreakdown {
+  sellerId: String!
+  sellerName: String
+  originalFee: Float!
+  appliedFee: Float!
+}
+
+type ZarinPalPaymentResponse {
+  code: Int!
+  message: String!
+  authority: String!
+  fee_type: String
+  fee: Int
+}
+
+type ZarinPalVerificationResponse {
+  code: Int!
+  message: String!
+  ref_id: Int
+  card_pan: String
+  card_hash: String
+  fee_type: String
+  fee: Int
+  orderIds: [String!]
+  orderId: String
+  orderNumber: String
+  success: Boolean
+}
+
+type GatewayUrlResponse {
+  url: String!
+}
+
+type Query {
+  users(first: Int, after: String, searchTerm: String, role: UserRole): UserConnection!
+  customers(first: Int, after: String, searchTerm: String): UserConnection!
+  me: User
+  products(filter: ProductFilterInput): ProductConnection!
+  distinctProductSizes(sizeKind: SizeKind): [String!]!
+  sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
+  categories: [Category!]!
+  product(id: Int!): Product
+  sellerProductsByProduct(productId: Int!): [SellerProduct!]!
+  myProfile: CustomerProfile!
+  brands(onlyWithProducts: Boolean): [Brand!]!
+  brand(id: Int!): Brand
+  colors: [Color!]!
+  color(id: Int!): Color
+  sellers(filter: SellerFilterInput, first: Int! = 100, after: String): SellerConnection!
+  findOne(id: Int!): SellerInfo
+  mySellerInfo: SellerInfo
+  mySellerProductById(id: String!): SellerProduct
+  orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): OrdersConnection!
+  order(id: String!): Order!
+  myOrders(first: Int! = 10, after: String): [Order!]!
+  mySellerOrders(first: Int! = 10, after: String, status: OrderStatus): SellerOrdersConnection!
+  adminSellerOrders(sellerId: String!, first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
+  allSellerOrders(first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
+  myCart: Cart!
+  getTranslation(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String): String!
+  getEntityTranslations(entityType: String!, entityId: Int!): [Translation!]!
+  getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
+  currencies: [Currency!]!
+  currency(id: Int!): Currency
+  currencyByCode(code: String!): Currency
+  currentExchangeRate(fromCurrencyCode: String!, toCurrencyCode: String!): ExchangeRate
+  exchangeRateHistory(fromCurrencyCode: String!, toCurrencyCode: String!, limit: Int): [ExchangeRate!]!
+  currencyPreferences: [CurrencyPreference!]!
+  currencyPreferenceByLocale(locale: String!): CurrencyPreference
+  calculateShippingCost(cartSubtotal: Float!, sellerShippingFees: [SellerShippingInfoInput!]!): ShippingCalculationResult!
+  siteLanguages(activeOnly: Boolean): [SiteLanguage!]!
+  siteLanguage(code: String!): SiteLanguage
+}
+
+input ProductFilterInput {
+  category: String
+  categorySlugs: [String!]
+  brand: String
+  brands: [String!]
+  ids: [Int!]
+  searchTerm: String
+  productInfoFilter: ProductInfoFilterInput
+  categoryIds: [Int!]
+  first: Int
+  after: String
+  categoryId: Int
+  sort: String
+  sortOrder: String
+  archivedStatus: ProductArchivedStatus
+  sellerId: Int
+  onlyWithSellers: Boolean
+  onlyInStock: Boolean
+  onlyDiscounted: Boolean
+}
+
+input ProductInfoFilterInput {
+  size: [String!]
+  sizeKind: SizeKind
+  price: [Float!]
+  costPrice: [Float!]
+  colorId: [Int!]
+  weight: [Float!]
+  discount: [Float!]
+  stockQuantity: [Int!]
+}
+
+enum ProductArchivedStatus {
+  ALL
+  ACTIVE
+  ARCHIVED
+}
+
+input SellerFilterInput {
+  searchTerm: String
+  isActive: Boolean
+  ids: [Int!]
+  first: Int
+  after: String
+}
+
+input SellerShippingInfoInput {
+  sellerId: String!
+  shippingFee: Float!
+  sellerName: String
+}
+
+type Mutation {
+  createUser(createUserInput: CreateUserInput!): User!
+  adminCreateUser(createUserInput: CreateUserInput!): User!
+  login(email: String!, password: String!): User!
+  refresh: Boolean!
+  logout: Boolean!
+  initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!
+  setupPassword(token: String!, newPassword: String!): User!
+  register(name: String!, email: String!, password: String!): User!
+  forgotPassword(email: String!, baseUrl: String!): Boolean!
+  resetPassword(token: String!, newPassword: String!): User!
+  createProduct(input: CreateProductInput!): Product!
+  createProductInfo(input: CreateProductInfoInput!): Product!
+  uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
+  removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
+  archiveProduct(id: Int!): Product!
+  unarchiveProduct(id: Int!): Product!
+  deleteProduct(id: Int!): Boolean!
+  updateProduct(input: UpdateProductInput!): Product!
+  subscribeNewsletter(email: String!): Boolean!
+  updateMyProfile(input: UpdateCustomerProfileInput!): CustomerProfile!
+  createCategory(input: CreateCategoryInput!, name: String): Category!
+  updateCategory(input: UpdateCategoryInput!, name: String): Category!
+  deleteCategory(id: Int!): Boolean!
+  createBrand(input: CreateBrandInput!, name: String): Brand!
+  updateBrand(input: UpdateBrandInput!, name: String): Brand!
+  deleteBrand(id: Int!): Boolean!
+  createColor(input: CreateColorInput!, name: String): Color!
+  updateColor(id: Int!, input: UpdateColorInput!, name: String): Color!
+  deleteColor(id: Int!): Boolean!
+  createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
+  updateSeller(updateSellerInput: UpdateSellerInput!): SellerInfo!
+  toggleSellerActive(id: Int!): SellerInfo!
+  createSellerProduct(sellerId: Int!, input: CreateSellerProductInput!): SellerProduct!
+  updateSellerProduct(sellerId: Int!, input: UpdateSellerProductInput!): SellerProduct!
+  createMySellerProduct(input: CreateSellerProductInput!): SellerProduct!
+  updateMySellerProduct(input: UpdateSellerProductInput!): SellerProduct!
+  createOrder(createOrderInput: CreateOrderInput!): Order!
+  updateOrder(id: String!, updateOrderInput: UpdateOrderInput!): Order!
+  updateOrderStatus(updateOrderStatusInput: UpdateOrderStatusInput!): Order!
+  cancelPendingOrder(orderId: String!): Boolean!
+  deleteOrder(id: String!): Boolean!
+  updateOrderTracking(id: String!, trackingNumber: String!): Order!
+  addToCart(addToCartInput: AddToCartInput!): Cart!
+  updateCartItem(itemId: String!, updateInput: UpdateCartItemInput!): Cart!
+  removeFromCart(itemId: String!): Cart!
+  clearCart: Cart!
+  setTranslation(input: TranslationInput!): Translation!
+  bulkTranslateEntities(input: BulkTranslationInput!): Boolean!
+  deleteEntityTranslations(entityType: String!, entityId: Int!): Boolean!
+  createCurrency(input: CreateCurrencyInput!): Currency!
+  updateCurrency(id: Int!, input: UpdateCurrencyInput!): Currency!
+  setExchangeRate(input: SetExchangeRateInput!): ExchangeRate!
+  setCurrencyPreference(locale: String!, currencyCode: String!): CurrencyPreference!
+  deleteCurrencyPreference(id: Int!): Boolean!
+  requestZarinPalPayment(input: ZarinPalPaymentRequestInput!): ZarinPalPaymentResponse!
+  verifyZarinPalPayment(input: ZarinPalVerificationRequestInput!): ZarinPalVerificationResponse!
+  getZarinPalGatewayUrl(authority: String!): GatewayUrlResponse!
+  cancelPendingZarinPalOrder(orderId: String, authority: String): Boolean!
+  createSiteLanguage(input: CreateSiteLanguageInput!): SiteLanguage!
+  updateSiteLanguage(id: Int!, input: UpdateSiteLanguageInput!): SiteLanguage!
+  deleteSiteLanguage(id: Int!): Boolean!
+}
+
+input CreateUserInput {
+  name: String!
+  lastName: String!
+  username: String!
+  email: String!
+  password: String!
+  role: UserRole!
+}
+
+input CreateProductInput {
+  name: String!
+  sku: String!
+  categoryIds: [Int!]!
+  brandId: Int
+  description: String
+  descriptions: [ProductDescriptionInput!]
+  variants: [ProductVariantInput!]
+}
+
+input ProductDescriptionInput {
+  languageId: Int
+  languageCode: String
+  description: String!
+}
+
+input ProductVariantInput {
+  id: Int
+  size: String!
+  sizeKind: SizeKind
+  colorIds: [Int!]!
+  weight: Float!
+  sku: String
+  price: Float
+  costPrice: Float
+  discount: Float
+  stockQuantity: Int
+  boxLess: Boolean
+  images: [String!]
+}
+
+input CreateProductInfoInput {
+  productId: Int!
+  size: String!
+  sizeKind: SizeKind!
+  colorIds: [Int!]!
+  weight: Float!
+}
+
+"""The `Upload` scalar type represents a file upload."""
+scalar Upload
+
+input UpdateProductInput {
+  id: Int!
+  name: String!
+  sku: String!
+  categoryIds: [Int!]!
+  brandId: Int
+  description: String
+  descriptions: [ProductDescriptionInput!]
+  variants: [ProductVariantInput!]
+}
+
+input UpdateCustomerProfileInput {
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  clothingSize: String
+  shoeSize: String
+  favorites: String
+}
+
+input CreateCategoryInput {
+  slug: String!
+  sortOrder: Int = 0
+}
+
+input UpdateCategoryInput {
+  id: Int!
+  slug: String
+  sortOrder: Int
+  isActive: Boolean
+}
+
+input CreateBrandInput {
+  slug: String!
+  sortOrder: Int = 0
+}
+
+input UpdateBrandInput {
+  id: Int!
+  slug: String
+  sortOrder: Int
+  isActive: Boolean
+}
+
+input CreateColorInput {
+  hexCode: String!
+  sortOrder: Int = 0
+}
+
+input UpdateColorInput {
+  hexCode: String!
+  sortOrder: Int
+  isActive: Boolean
+}
+
+input CreateSellerInput {
+  name: String!
+  lastName: String!
+  username: String!
+  email: String!
+  password: String!
+  storeName: String!
+  phone: String
+  address: String
+  shippingFee: Float
+  canManageCatalog: Boolean
+}
+
+input UpdateSellerInput {
+  id: Int!
+  name: String
+  lastName: String
+  username: String
+  email: String
+  storeName: String
+  phone: String
+  address: String
+  shippingFee: Float
+  isActive: Boolean
+  canManageCatalog: Boolean
+}
+
+input CreateSellerProductInput {
+  productInfoId: Int!
+  price: Float!
+  costPrice: Float!
+  discount: Float!
+  stockQuantity: Int!
+  recommended: Boolean
+  boxLess: Boolean
+}
+
+input UpdateSellerProductInput {
+  id: String!
+  productInfoId: Int
+  price: Float
+  costPrice: Float
+  discount: Float
+  stockQuantity: Int
+  recommended: Boolean
+  boxLess: Boolean
+}
+
+input CreateOrderInput {
+  customerEmail: String!
+  customerPhone: String!
+  customerName: String!
+  shippingAddress: String!
+  city: String!
+  state: String!
+  zipCode: String!
+  country: String!
+  sellerId: Int!
+  items: [CreateOrderItemInput!]!
+  notes: String
+  shippingCost: Float
+}
+
+input CreateOrderItemInput {
+  productId: String!
+  sellerProductId: String
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+}
+
+input UpdateOrderInput {
+  customerEmail: String
+  customerPhone: String
+  customerName: String
+  shippingAddress: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  items: [UpdateOrderItemInput!]
+  notes: String
+  trackingNumber: String
+}
+
+input UpdateOrderItemInput {
+  id: String
+  productId: String!
+  sellerProductId: String
+  productName: String!
+  productImage: String
+  quantity: Int!
+  unitPrice: Float!
+  totalPrice: Float!
+  color: String
+  size: String
+}
+
+input UpdateOrderStatusInput {
+  id: String!
+  status: OrderStatus!
+}
+
+input AddToCartInput {
+  sellerProductId: String!
+  quantity: Int!
+}
+
+input UpdateCartItemInput {
+  quantity: Int
+  color: String
+  size: String
+}
+
+input TranslationInput {
+  entityType: String!
+  entityId: Int!
+  locale: String!
+  fieldName: String!
+  value: String!
+  isAutoTranslated: Boolean = false
+  translatedBy: Int
+}
+
+input BulkTranslationInput {
+  entityType: String!
+  entityIds: [Int!]!
+  sourceLocale: String!
+  targetLocales: [String!]!
+}
+
+input CreateCurrencyInput {
+  code: String!
+  name: String!
+  symbol: String!
+  decimalPlaces: Int!
+  isActive: Boolean
+  isBaseCurrency: Boolean
+}
+
+input UpdateCurrencyInput {
+  code: String
+  name: String
+  symbol: String
+  decimalPlaces: Int
+  isActive: Boolean
+  isBaseCurrency: Boolean
+}
+
+input SetExchangeRateInput {
+  fromCurrencyCode: String!
+  toCurrencyCode: String!
+  rate: Float!
+  effectiveDate: DateTime
+  notes: String
+}
+
+input ZarinPalPaymentRequestInput {
+  amount: Int!
+  callback_url: String!
+  description: String!
+  currency: String
+  mobile: String
+  email: String
+  order_id: String
+  orderIds: [String!]
+}
+
+input ZarinPalVerificationRequestInput {
+  amount: Int!
+  authority: String!
+  order_id: String
+}
+
+input CreateSiteLanguageInput {
+  code: String!
+  name: String!
+  nativeName: String!
+  isRTL: Boolean = false
+  isActive: Boolean = true
+  isDefault: Boolean = false
+}
+
+input UpdateSiteLanguageInput {
+  name: String
+  nativeName: String
+  isRTL: Boolean
+  isActive: Boolean
+  isDefault: Boolean
+}
 </file>
 
 <file path="libs/server/inputs/src/lib/order.inputs.ts">
@@ -2245,866 +3113,6 @@ export class ProductFilterInput {
 
   @Field({ nullable: true })
   onlyDiscounted?: boolean;
-}
-</file>
-
-<file path="libs/shared/graphql-schema/src/lib/schema.gql">
-# ------------------------------------------------------
-# THIS FILE WAS AUTOMATICALLY GENERATED (DO NOT MODIFY)
-# ------------------------------------------------------
-
-type PageInfo {
-  endCursor: String
-  hasNextPage: Boolean!
-  hasPreviousPage: Boolean!
-}
-
-type User {
-  id: ID!
-  name: String!
-  lastName: String!
-  username: String!
-  email: String!
-  role: UserRole!
-  locale: String
-  customerProfile: CustomerProfile
-}
-
-enum UserRole {
-  ADMIN
-  SELLER
-  CUSTOMER
-}
-
-type UserEdge {
-  node: User!
-  cursor: String!
-}
-
-type UserConnection {
-  edges: [UserEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type Brand {
-  id: Int!
-  slug: String!
-  sortOrder: Int!
-  isActive: Boolean!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  name: String!
-}
-
-"""
-A date-time string at UTC, such as 2019-12-03T09:54:33Z, compliant with the date-time format.
-"""
-scalar DateTime
-
-type Category {
-  id: Int!
-  slug: String!
-  sortOrder: Int!
-  isActive: Boolean!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  name: String!
-}
-
-type Color {
-  id: Int!
-  hexCode: String!
-  sortOrder: Int!
-  isActive: Boolean!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  name: String!
-}
-
-type ProductInfo {
-  id: Int!
-  size: String!
-  sizeKind: SizeKind!
-  colors: [Color!]!
-  weight: Float!
-  product: Product!
-  images: [String!]
-}
-
-enum SizeKind {
-  Apparel
-  Footwear
-  Pants
-}
-
-type SiteLanguage {
-  id: ID!
-  code: String!
-  name: String!
-  nativeName: String!
-  isRTL: Boolean!
-  isActive: Boolean!
-  isDefault: Boolean!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
-type ProductDescription {
-  id: ID!
-  productId: Int!
-  language: SiteLanguage!
-  languageId: Int!
-  description: String!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
-type Product {
-  id: Int!
-  name: String!
-  sku: String
-  productInfos: [ProductInfo!]!
-  categories: [Category!]!
-  brand: Brand
-  brandId: Int
-  seller: SellerInfo
-  sellerId: Int
-  description: String
-  descriptions: [ProductDescription!]
-  sellerProducts: [SellerProduct!]
-  archived: Boolean!
-}
-
-type ProductEdge {
-  cursor: String!
-  node: Product!
-}
-
-type ProductConnection {
-  pageInfo: PageInfo!
-  totalCount: Int!
-  edges: [ProductEdge!]!
-}
-
-type SellerProduct {
-  id: String!
-  seller: SellerInfo
-  product: Product!
-  productInfo: ProductInfo!
-  productInfoId: Int!
-  price: Float!
-  costPrice: Float
-  discount: Float!
-  stockQuantity: Int!
-  recommended: Boolean!
-  boxLess: Boolean!
-}
-
-type SellerInfo {
-  id: Int!
-  storeName: String!
-  phone: String
-  address: String
-  city: String
-  state: String
-  zipCode: String
-  country: String
-  businessName: String
-  isActive: Boolean!
-  canManageCatalog: Boolean!
-  shippingFee: Float!
-  user: User!
-  sellerProducts: [SellerProduct!]!
-}
-
-type SellerEdge {
-  node: SellerInfo!
-  cursor: String!
-}
-
-type SellerConnection {
-  edges: [SellerEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type Order {
-  id: ID!
-  orderNumber: String!
-  customerEmail: String!
-  customerPhone: String!
-  customerName: String!
-  shippingAddress: String!
-  city: String!
-  state: String!
-  zipCode: String!
-  country: String!
-  status: OrderStatus!
-  subtotal: Float!
-  shippingCost: Float!
-  total: Float!
-  paymentAmount: Float
-  paymentCurrency: String
-  paymentAuthority: String
-  sellerStoreName: String
-  sellerPhone: String
-  sellerAddress: String
-  notes: String
-  trackingNumber: String
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  sellerId: Int!
-  items: [OrderItem!]!
-}
-
-enum OrderStatus {
-  PENDING
-  CONFIRMED
-  PROCESSING
-  SHIPPED
-  DELIVERED
-  CANCELLED
-  REFUNDED
-}
-
-type OrderItem {
-  id: ID!
-  orderId: String!
-  productId: String!
-  productName: String!
-  productImage: String
-  quantity: Int!
-  unitPrice: Float!
-  totalPrice: Float!
-  color: String
-  size: String
-  sellerProductId: String
-  originalPrice: Float
-  discountPercentage: Float
-  productInfoId: Int
-}
-
-type Cart {
-  id: ID!
-  userId: String!
-  subtotal: Float!
-  total: Float!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  items: [CartItem!]!
-}
-
-type CartItem {
-  id: ID!
-  cartId: String!
-  productId: String!
-  productName: String!
-  productImage: String
-  quantity: Int!
-  unitPrice: Float!
-  totalPrice: Float!
-  color: String
-  size: String
-  sellerId: String!
-  sellerName: String
-  productInfoId: String
-  sellerProductId: String
-  availableStock: Int
-}
-
-type CustomerProfile {
-  id: ID!
-  userId: String!
-  phone: String
-  address: String
-  city: String
-  state: String
-  zipCode: String
-  country: String
-  clothingSize: String
-  shoeSize: String
-  favorites: String
-}
-
-type Translation {
-  id: Int!
-  entityType: String!
-  entityId: Int!
-  locale: String!
-  fieldName: String!
-  value: String!
-  isAutoTranslated: Boolean!
-  translatedBy: Int
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
-type Currency {
-  id: ID!
-  code: String!
-  name: String!
-  symbol: String!
-  decimalPlaces: Int!
-  isActive: Boolean!
-  isBaseCurrency: Boolean!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
-type ExchangeRate {
-  id: ID!
-  fromCurrency: Currency!
-  toCurrency: Currency!
-  rate: Float!
-  effectiveDate: DateTime!
-  createdBy: User
-  createdAt: DateTime!
-  notes: String
-}
-
-type CurrencyPreference {
-  id: ID!
-  locale: String!
-  currency: Currency!
-  isActive: Boolean!
-  createdAt: DateTime!
-  updatedAt: DateTime!
-}
-
-type SellerOrder {
-  id: ID!
-  orderNumber: String!
-  status: OrderStatus!
-  subtotal: Float!
-  shippingCost: Float!
-  total: Float!
-  notes: String
-  trackingNumber: String
-  createdAt: DateTime!
-  updatedAt: DateTime!
-  sellerId: Int!
-  sellerStoreName: String
-  sellerPhone: String
-  sellerAddress: String
-  items: [OrderItem!]!
-}
-
-type OrderEdge {
-  node: Order!
-  cursor: String!
-}
-
-type OrdersConnection {
-  edges: [OrderEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type SellerOrderEdge {
-  node: SellerOrder!
-  cursor: String!
-}
-
-type SellerOrdersConnection {
-  edges: [SellerOrderEdge!]!
-  pageInfo: PageInfo!
-  totalCount: Int!
-}
-
-type ShippingCalculationResult {
-  totalShippingCost: Float!
-  freeShippingApplied: Boolean!
-  strategyUsed: String!
-  shippingBreakdown: [SellerShippingBreakdown!]
-}
-
-type SellerShippingBreakdown {
-  sellerId: String!
-  sellerName: String
-  originalFee: Float!
-  appliedFee: Float!
-}
-
-type ZarinPalPaymentResponse {
-  code: Int!
-  message: String!
-  authority: String!
-  fee_type: String
-  fee: Int
-}
-
-type ZarinPalVerificationResponse {
-  code: Int!
-  message: String!
-  ref_id: Int
-  card_pan: String
-  card_hash: String
-  fee_type: String
-  fee: Int
-}
-
-type GatewayUrlResponse {
-  url: String!
-}
-
-type Query {
-  users(first: Int, after: String, searchTerm: String, role: UserRole): UserConnection!
-  customers(first: Int, after: String, searchTerm: String): UserConnection!
-  me: User
-  myProfile: CustomerProfile!
-  products(filter: ProductFilterInput): ProductConnection!
-  distinctProductSizes(sizeKind: SizeKind): [String!]!
-  sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
-  categories: [Category!]!
-  product(id: Int!): Product
-  sellerProductsByProduct(productId: Int!): [SellerProduct!]!
-  getTranslation(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String): String!
-  getEntityTranslations(entityType: String!, entityId: Int!): [Translation!]!
-  getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
-  brands(onlyWithProducts: Boolean): [Brand!]!
-  brand(id: Int!): Brand
-  sellers(filter: SellerFilterInput, first: Int! = 100, after: String): SellerConnection!
-  findOne(id: Int!): SellerInfo
-  mySellerInfo: SellerInfo
-  mySellerProductById(id: String!): SellerProduct
-  colors: [Color!]!
-  color(id: Int!): Color
-  orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): OrdersConnection!
-  order(id: String!): Order!
-  myOrders(first: Int! = 10, after: String): [Order!]!
-  mySellerOrders(first: Int! = 10, after: String): SellerOrdersConnection!
-  adminSellerOrders(sellerId: String!, first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
-  allSellerOrders(first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
-  myCart: Cart!
-  calculateShippingCost(cartSubtotal: Float!, sellerShippingFees: [SellerShippingInfoInput!]!): ShippingCalculationResult!
-  currencies: [Currency!]!
-  currency(id: Int!): Currency
-  currencyByCode(code: String!): Currency
-  currentExchangeRate(fromCurrencyCode: String!, toCurrencyCode: String!): ExchangeRate
-  exchangeRateHistory(fromCurrencyCode: String!, toCurrencyCode: String!, limit: Int): [ExchangeRate!]!
-  currencyPreferences: [CurrencyPreference!]!
-  currencyPreferenceByLocale(locale: String!): CurrencyPreference
-  siteLanguages(activeOnly: Boolean): [SiteLanguage!]!
-  siteLanguage(code: String!): SiteLanguage
-}
-
-input ProductFilterInput {
-  category: String
-  categorySlugs: [String!]
-  brand: String
-  brands: [String!]
-  ids: [Int!]
-  searchTerm: String
-  productInfoFilter: ProductInfoFilterInput
-  categoryIds: [Int!]
-  first: Int
-  after: String
-  categoryId: Int
-  sort: String
-  sortOrder: String
-  archivedStatus: ProductArchivedStatus
-  sellerId: Int
-  onlyWithSellers: Boolean
-  onlyInStock: Boolean
-  onlyDiscounted: Boolean
-}
-
-input ProductInfoFilterInput {
-  size: [String!]
-  sizeKind: SizeKind
-  price: [Float!]
-  costPrice: [Float!]
-  colorId: [Int!]
-  weight: [Float!]
-  discount: [Float!]
-  stockQuantity: [Int!]
-}
-
-enum ProductArchivedStatus {
-  ALL
-  ACTIVE
-  ARCHIVED
-}
-
-input SellerFilterInput {
-  searchTerm: String
-  isActive: Boolean
-  ids: [Int!]
-  first: Int
-  after: String
-}
-
-input SellerShippingInfoInput {
-  sellerId: String!
-  shippingFee: Float!
-  sellerName: String
-}
-
-type Mutation {
-  createUser(createUserInput: CreateUserInput!): User!
-  adminCreateUser(createUserInput: CreateUserInput!): User!
-  login(email: String!, password: String!): User!
-  refresh: Boolean!
-  logout: Boolean!
-  initiatePasswordSetup(email: String!, baseUrl: String!): Boolean!
-  setupPassword(token: String!, newPassword: String!): User!
-  register(name: String!, email: String!, password: String!): User!
-  forgotPassword(email: String!, baseUrl: String!): Boolean!
-  resetPassword(token: String!, newPassword: String!): User!
-  updateMyProfile(input: UpdateCustomerProfileInput!): CustomerProfile!
-  createCategory(input: CreateCategoryInput!, name: String): Category!
-  updateCategory(input: UpdateCategoryInput!, name: String): Category!
-  deleteCategory(id: Int!): Boolean!
-  createProduct(input: CreateProductInput!): Product!
-  createProductInfo(input: CreateProductInfoInput!): Product!
-  uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
-  removeProductInfoImage(productInfoId: Int!, imageName: String!): Boolean!
-  archiveProduct(id: Int!): Product!
-  unarchiveProduct(id: Int!): Product!
-  deleteProduct(id: Int!): Boolean!
-  updateProduct(input: UpdateProductInput!): Product!
-  subscribeNewsletter(email: String!): Boolean!
-  setTranslation(input: TranslationInput!): Translation!
-  bulkTranslateEntities(input: BulkTranslationInput!): Boolean!
-  deleteEntityTranslations(entityType: String!, entityId: Int!): Boolean!
-  createBrand(input: CreateBrandInput!, name: String): Brand!
-  updateBrand(input: UpdateBrandInput!, name: String): Brand!
-  deleteBrand(id: Int!): Boolean!
-  createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
-  updateSeller(updateSellerInput: UpdateSellerInput!): SellerInfo!
-  toggleSellerActive(id: Int!): SellerInfo!
-  createSellerProduct(sellerId: Int!, input: CreateSellerProductInput!): SellerProduct!
-  updateSellerProduct(sellerId: Int!, input: UpdateSellerProductInput!): SellerProduct!
-  createMySellerProduct(input: CreateSellerProductInput!): SellerProduct!
-  updateMySellerProduct(input: UpdateSellerProductInput!): SellerProduct!
-  createColor(input: CreateColorInput!, name: String): Color!
-  updateColor(id: Int!, input: UpdateColorInput!, name: String): Color!
-  deleteColor(id: Int!): Boolean!
-  createOrder(createOrderInput: CreateOrderInput!): Order!
-  updateOrder(id: String!, updateOrderInput: UpdateOrderInput!): Order!
-  updateOrderStatus(updateOrderStatusInput: UpdateOrderStatusInput!): Order!
-  updateOrderTracking(id: String!, trackingNumber: String!): Order!
-  deleteOrder(id: String!): Boolean!
-  addToCart(addToCartInput: AddToCartInput!): Cart!
-  updateCartItem(itemId: String!, updateInput: UpdateCartItemInput!): Cart!
-  removeFromCart(itemId: String!): Cart!
-  clearCart: Cart!
-  createCurrency(input: CreateCurrencyInput!): Currency!
-  updateCurrency(id: Int!, input: UpdateCurrencyInput!): Currency!
-  setExchangeRate(input: SetExchangeRateInput!): ExchangeRate!
-  setCurrencyPreference(locale: String!, currencyCode: String!): CurrencyPreference!
-  deleteCurrencyPreference(id: Int!): Boolean!
-  requestZarinPalPayment(input: ZarinPalPaymentRequestInput!): ZarinPalPaymentResponse!
-  verifyZarinPalPayment(input: ZarinPalVerificationRequestInput!): ZarinPalVerificationResponse!
-  getZarinPalGatewayUrl(authority: String!): GatewayUrlResponse!
-  cancelPendingZarinPalOrder(orderId: String!): Boolean!
-  createSiteLanguage(input: CreateSiteLanguageInput!): SiteLanguage!
-  updateSiteLanguage(id: Int!, input: UpdateSiteLanguageInput!): SiteLanguage!
-  deleteSiteLanguage(id: Int!): Boolean!
-}
-
-input CreateUserInput {
-  name: String!
-  lastName: String!
-  username: String!
-  email: String!
-  password: String!
-  role: UserRole!
-}
-
-input UpdateCustomerProfileInput {
-  phone: String
-  address: String
-  city: String
-  state: String
-  zipCode: String
-  country: String
-  clothingSize: String
-  shoeSize: String
-  favorites: String
-}
-
-input CreateCategoryInput {
-  slug: String!
-  sortOrder: Int = 0
-}
-
-input UpdateCategoryInput {
-  id: Int!
-  slug: String
-  sortOrder: Int
-  isActive: Boolean
-}
-
-input CreateProductInput {
-  name: String!
-  sku: String!
-  categoryIds: [Int!]!
-  brandId: Int
-  description: String
-  descriptions: [ProductDescriptionInput!]
-  variants: [ProductVariantInput!]
-}
-
-input ProductDescriptionInput {
-  languageId: Int
-  languageCode: String
-  description: String!
-}
-
-input ProductVariantInput {
-  id: Int
-  size: String!
-  sizeKind: SizeKind
-  colorIds: [Int!]!
-  weight: Float!
-  sku: String
-  price: Float
-  costPrice: Float
-  discount: Float
-  stockQuantity: Int
-  boxLess: Boolean
-  images: [String!]
-}
-
-input CreateProductInfoInput {
-  productId: Int!
-  size: String!
-  sizeKind: SizeKind!
-  colorIds: [Int!]!
-  weight: Float!
-}
-
-"""The `Upload` scalar type represents a file upload."""
-scalar Upload
-
-input UpdateProductInput {
-  id: Int!
-  name: String!
-  sku: String!
-  categoryIds: [Int!]!
-  brandId: Int
-  description: String
-  descriptions: [ProductDescriptionInput!]
-  variants: [ProductVariantInput!]
-}
-
-input TranslationInput {
-  entityType: String!
-  entityId: Int!
-  locale: String!
-  fieldName: String!
-  value: String!
-  isAutoTranslated: Boolean = false
-  translatedBy: Int
-}
-
-input BulkTranslationInput {
-  entityType: String!
-  entityIds: [Int!]!
-  sourceLocale: String!
-  targetLocales: [String!]!
-}
-
-input CreateBrandInput {
-  slug: String!
-  sortOrder: Int = 0
-}
-
-input UpdateBrandInput {
-  id: Int!
-  slug: String
-  sortOrder: Int
-  isActive: Boolean
-}
-
-input CreateSellerInput {
-  name: String!
-  lastName: String!
-  username: String!
-  email: String!
-  password: String!
-  storeName: String!
-  phone: String
-  address: String
-  shippingFee: Float
-  canManageCatalog: Boolean
-}
-
-input UpdateSellerInput {
-  id: Int!
-  name: String
-  lastName: String
-  username: String
-  email: String
-  storeName: String
-  phone: String
-  address: String
-  shippingFee: Float
-  isActive: Boolean
-  canManageCatalog: Boolean
-}
-
-input CreateSellerProductInput {
-  productInfoId: Int!
-  price: Float!
-  costPrice: Float!
-  discount: Float!
-  stockQuantity: Int!
-  recommended: Boolean
-  boxLess: Boolean
-}
-
-input UpdateSellerProductInput {
-  id: String!
-  productInfoId: Int
-  price: Float
-  costPrice: Float
-  discount: Float
-  stockQuantity: Int
-  recommended: Boolean
-  boxLess: Boolean
-}
-
-input CreateColorInput {
-  hexCode: String!
-  sortOrder: Int = 0
-}
-
-input UpdateColorInput {
-  hexCode: String!
-  sortOrder: Int
-  isActive: Boolean
-}
-
-input CreateOrderInput {
-  customerEmail: String!
-  customerPhone: String!
-  customerName: String!
-  shippingAddress: String!
-  city: String!
-  state: String!
-  zipCode: String!
-  country: String!
-  sellerId: Int!
-  items: [CreateOrderItemInput!]!
-  notes: String
-  shippingCost: Float
-}
-
-input CreateOrderItemInput {
-  productId: String!
-  sellerProductId: String
-  productName: String!
-  productImage: String
-  quantity: Int!
-  unitPrice: Float!
-  totalPrice: Float!
-  color: String
-  size: String
-}
-
-input UpdateOrderInput {
-  customerEmail: String
-  customerPhone: String
-  customerName: String
-  shippingAddress: String
-  city: String
-  state: String
-  zipCode: String
-  country: String
-  items: [UpdateOrderItemInput!]
-  notes: String
-  trackingNumber: String
-}
-
-input UpdateOrderItemInput {
-  id: String
-  productId: String!
-  sellerProductId: String
-  productName: String!
-  productImage: String
-  quantity: Int!
-  unitPrice: Float!
-  totalPrice: Float!
-  color: String
-  size: String
-}
-
-input UpdateOrderStatusInput {
-  id: String!
-  status: OrderStatus!
-}
-
-input AddToCartInput {
-  sellerProductId: String!
-  quantity: Int!
-}
-
-input UpdateCartItemInput {
-  quantity: Int
-  color: String
-  size: String
-}
-
-input CreateCurrencyInput {
-  code: String!
-  name: String!
-  symbol: String!
-  decimalPlaces: Int!
-  isActive: Boolean
-  isBaseCurrency: Boolean
-}
-
-input UpdateCurrencyInput {
-  code: String
-  name: String
-  symbol: String
-  decimalPlaces: Int
-  isActive: Boolean
-  isBaseCurrency: Boolean
-}
-
-input SetExchangeRateInput {
-  fromCurrencyCode: String!
-  toCurrencyCode: String!
-  rate: Float!
-  effectiveDate: DateTime
-  notes: String
-}
-
-input ZarinPalPaymentRequestInput {
-  amount: Int!
-  callback_url: String!
-  description: String!
-  currency: String
-  mobile: String
-  email: String
-  order_id: String
-}
-
-input ZarinPalVerificationRequestInput {
-  amount: Int!
-  authority: String!
-  order_id: String
-}
-
-input CreateSiteLanguageInput {
-  code: String!
-  name: String!
-  nativeName: String!
-  isRTL: Boolean = false
-  isActive: Boolean = true
-  isDefault: Boolean = false
-}
-
-input UpdateSiteLanguageInput {
-  name: String
-  nativeName: String
-  isRTL: Boolean
-  isActive: Boolean
-  isDefault: Boolean
 }
 </file>
 
