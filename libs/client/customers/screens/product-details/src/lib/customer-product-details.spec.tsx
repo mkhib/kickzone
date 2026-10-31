@@ -253,11 +253,6 @@ describe('CustomerProductDetails Screen', () => {
     expect(screen.getAllByText('Jordan').length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText('زنانه').length).toBeGreaterThanOrEqual(1);
 
-    // Low stock warning
-    expect(
-      screen.getByText('تنها ۱ عدد باقی مانده — همین حالا رزرو کنید')
-    ).toBeInTheDocument();
-
     // Action buttons
     expect(screen.getByText('افزودن به سبد خرید')).toBeInTheDocument();
     expect(screen.queryByText('خرید فوری')).not.toBeInTheDocument();

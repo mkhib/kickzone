@@ -127,8 +127,6 @@ export interface ProductCardProps {
   exchangeRate?: number;
   index?: number;
   discountOverride?: number;
-  lowStockOverride?: boolean;
-  lowStockThreshold?: number;
   isRecommended?: boolean;
   isBoxLess?: boolean;
 }
@@ -358,9 +356,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
     return null;
   }, [activeVariant, product.productInfos]);
 
-  // Stock indicator: if variant stock is 1
-  const isSingleStock = activeVariant ? activeVariant.stockQuantity === 1 : false;
-
   // Fallback pricing from sellerProducts or productInfos for products without active variant
   const fallbackSeller = useMemo(() => {
     if (!product.sellerProducts || product.sellerProducts.length === 0) return null;
@@ -445,12 +440,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
       ? LL.products.card.size()
       : 'Size'
     : 'سایز';
-
-  const singleStockLabel = isEn
-    ? LL?.products?.card?.onlyOneLeft
-      ? LL.products.card.onlyOneLeft()
-      : 'Only 1 left in stock'
-    : 'تنها ۱ عدد باقی مانده';
 
   const favoriteAriaLabel = isFavorite
     ? isEn
@@ -800,42 +789,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
               </Box>
 
               {/* Stock note (or 18px reserved space) */}
-              <Box sx={{ minHeight: '18px', mt: '8px', display: 'flex', alignItems: 'center' }}>
-                {isSingleStock && (
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      borderRadius: { xs: '9999px', sm: 0 },
-                      px: { xs: '10px', sm: 0 },
-                      py: { xs: '4px', sm: 0 },
-                      background: { xs: 'rgba(245, 158, 11, 0.10)', sm: 'transparent' },
-                      border: { xs: '1px solid rgba(245, 158, 11, 0.20)', sm: 'none' },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 6,
-                        height: 6,
-                        borderRadius: '50%',
-                        backgroundColor: 'var(--lg-stock-dot)',
-                        flexShrink: 0,
-                      }}
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: '11px',
-                        fontWeight: 500,
-                        color: 'var(--lg-stock-ink-card)',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {singleStockLabel}
-                    </Typography>
-                  </Box>
-                )}
-              </Box>
+              <Box sx={{ minHeight: '18px', mt: '8px', display: 'flex', alignItems: 'center' }} />
             </Box>
           </Box>
 
@@ -1240,21 +1194,6 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
             </Box>
 
             {/* Single item stock badge */}
-            {isSingleStock && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-                <Box
-                  sx={{
-                    width: 6,
-                    height: 6,
-                    borderRadius: '50%',
-                    backgroundColor: 'var(--stock-dot)',
-                  }}
-                />
-                <Typography sx={{ fontSize: '11px', color: 'var(--stock)' }}>
-                  {singleStockLabel}
-                </Typography>
-              </Box>
-            )}
           </Box>
         )}
 

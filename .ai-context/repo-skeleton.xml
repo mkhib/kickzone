@@ -1330,218 +1330,6 @@ export class UpdateCartItemInput {
 }
 </file>
 
-<file path="libs/server/inputs/src/lib/user.input.ts">
-import { InputType, Field } from '@nestjs/graphql';
-import { UserRole } from '@kickzone-workspace/entities';
-
-@InputType()
-export class CreateUserInput {
-  @Field()
-  name: string;
-
-  @Field()
-  lastName: string;
-
-  @Field()
-  username: string;
-
-  @Field()
-  email: string;
-
-  @Field()
-  password: string;
-
-  @Field(() => UserRole)
-  role: UserRole;
-}
-
-@InputType()
-export class UpdateUserInput {
-  @Field({ nullable: true })
-  name?: string;
-
-  @Field({ nullable: true })
-  lastName?: string;
-
-  @Field({ nullable: true })
-  email?: string;
-
-  @Field({ nullable: true })
-  password?: string;
-
-  @Field(() => UserRole, { nullable: true })
-  role?: UserRole;
-}
-</file>
-
-<file path="libs/server/modules/src/lib/auth.module.ts">
-import { AuthController } from '@kickzone-workspace/controllers';
-import { AuthService } from '@kickzone-workspace/services';
-import { LocalStrategy } from '@kickzone-workspace/strategies';
-import { Module, forwardRef } from '@nestjs/common';
-import { PassportModule } from '@nestjs/passport';
-import { UserModule } from './user.module';
-import { JwtModule } from '@nestjs/jwt';
-import { AuthResolver } from '@kickzone-workspace/resolvers';
-import { EmailModule } from './email.module';
-import { TokenModule } from './token.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { RefreshToken } from '@kickzone-workspace/entities';
-
-@Module({
-  imports: [
-    forwardRef(() => UserModule),
-    PassportModule,
-    EmailModule,
-    TokenModule,
-    TypeOrmModule.forFeature([RefreshToken]),
-    JwtModule.register({
-      secret: process.env['JWT_SECRET'] || 'defaultSecret',
-      signOptions: { expiresIn: '15m' },
-    }),
-  ],
-  providers: [AuthService, LocalStrategy, AuthResolver],
-  controllers: [AuthController],
-  exports: [AuthService],
-})
-export class AuthModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/brand.module.ts">
-import { CatalogGuardModule } from './catalog-guard.module';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Brand, Product } from '@kickzone-workspace/entities';
-import { BrandService } from '@kickzone-workspace/services';
-import { BrandResolver } from '@kickzone-workspace/resolvers';
-import { TranslationModule } from './translation.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([Brand, Product]),
-    TranslationModule,
-    CatalogGuardModule,
-  ],
-  providers: [BrandService, BrandResolver],
-  exports: [BrandService, TypeOrmModule.forFeature([Brand])],
-})
-export class BrandModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/graphql-context.module.ts">
-import { Module } from '@nestjs/common';
-import { AuthService } from '@kickzone-workspace/services';
-import { UserModule } from './user.module';
-import { JwtModule } from '@nestjs/jwt';
-import { EmailModule } from './email.module';
-import { TokenModule } from './token.module';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { RefreshToken } from '@kickzone-workspace/entities';
-
-@Module({
-  imports: [
-    UserModule,
-    EmailModule,
-    TokenModule,
-    TypeOrmModule.forFeature([RefreshToken]),
-    JwtModule.register({
-      secret: process.env['JWT_SECRET'] || 'defaultSecret',
-      signOptions: { expiresIn: '15m' },
-    }),
-  ],
-  providers: [AuthService],
-  exports: [AuthService],
-})
-export class GraphqlContextModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/seller-info.module.ts">
-import {
-  SellerInfo,
-  SellerProduct,
-  ProductInfo,
-  User,
-  RefreshToken,
-} from '@kickzone-workspace/entities';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { UserModule } from './user.module';
-import {
-  AuthService,
-  EmailService,
-  SellerService,
-} from '@kickzone-workspace/services';
-import { TokenModule } from './token.module';
-import { SellerResolver } from '@kickzone-workspace/resolvers';
-import { ProductModule } from './product.module';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      SellerInfo,
-      SellerProduct,
-      ProductInfo,
-      User,
-      RefreshToken,
-    ]),
-    UserModule,
-    ProductModule,
-    JwtModule.register({
-      secret: process.env['JWT_SECRET'] || 'defaultSecret',
-      signOptions: { expiresIn: '15m' },
-    }),
-    TokenModule,
-  ],
-  providers: [
-    SellerService,
-    SellerResolver,
-    AuthService,
-    EmailService,
-    ConfigService,
-  ],
-  exports: [SellerService],
-})
-export class SellerInfoModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/site-language.module.ts">
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { SiteLanguage } from '@kickzone-workspace/entities';
-import { SiteLanguageService } from '@kickzone-workspace/services';
-import { SiteLanguageResolver } from '@kickzone-workspace/resolvers';
-
-@Module({
-  imports: [TypeOrmModule.forFeature([SiteLanguage])],
-  providers: [SiteLanguageService, SiteLanguageResolver],
-  exports: [SiteLanguageService, TypeOrmModule],
-})
-export class SiteLanguageModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/user.module.ts">
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@kickzone-workspace/entities';
-import { UserService } from '@kickzone-workspace/services';
-import { UserResolver } from '@kickzone-workspace/resolvers';
-import { AuthModule } from './auth.module';
-import { CustomerProfileModule } from './customer-profile.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([User]),
-    forwardRef(() => AuthModule),
-    CustomerProfileModule,
-  ],
-  providers: [UserService, UserResolver],
-  exports: [UserService],
-})
-export class UserModule {}
-</file>
-
 <file path="libs/server/inputs/src/lib/seller.input.ts">
 import { Field, InputType, Int, Float } from '@nestjs/graphql';
 import {
@@ -1770,6 +1558,218 @@ export class SellerFilterInput {
   @Field({ nullable: true })
   after?: string;
 }
+</file>
+
+<file path="libs/server/inputs/src/lib/user.input.ts">
+import { InputType, Field } from '@nestjs/graphql';
+import { UserRole } from '@kickzone-workspace/entities';
+
+@InputType()
+export class CreateUserInput {
+  @Field()
+  name: string;
+
+  @Field()
+  lastName: string;
+
+  @Field()
+  username: string;
+
+  @Field()
+  email: string;
+
+  @Field()
+  password: string;
+
+  @Field(() => UserRole)
+  role: UserRole;
+}
+
+@InputType()
+export class UpdateUserInput {
+  @Field({ nullable: true })
+  name?: string;
+
+  @Field({ nullable: true })
+  lastName?: string;
+
+  @Field({ nullable: true })
+  email?: string;
+
+  @Field({ nullable: true })
+  password?: string;
+
+  @Field(() => UserRole, { nullable: true })
+  role?: UserRole;
+}
+</file>
+
+<file path="libs/server/modules/src/lib/auth.module.ts">
+import { AuthController } from '@kickzone-workspace/controllers';
+import { AuthService } from '@kickzone-workspace/services';
+import { LocalStrategy } from '@kickzone-workspace/strategies';
+import { Module, forwardRef } from '@nestjs/common';
+import { PassportModule } from '@nestjs/passport';
+import { UserModule } from './user.module';
+import { JwtModule } from '@nestjs/jwt';
+import { AuthResolver } from '@kickzone-workspace/resolvers';
+import { EmailModule } from './email.module';
+import { TokenModule } from './token.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RefreshToken } from '@kickzone-workspace/entities';
+
+@Module({
+  imports: [
+    forwardRef(() => UserModule),
+    PassportModule,
+    EmailModule,
+    TokenModule,
+    TypeOrmModule.forFeature([RefreshToken]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+  ],
+  providers: [AuthService, LocalStrategy, AuthResolver],
+  controllers: [AuthController],
+  exports: [AuthService],
+})
+export class AuthModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/brand.module.ts">
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Brand, Product } from '@kickzone-workspace/entities';
+import { BrandService } from '@kickzone-workspace/services';
+import { BrandResolver } from '@kickzone-workspace/resolvers';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Brand, Product]),
+    TranslationModule,
+    CatalogGuardModule,
+  ],
+  providers: [BrandService, BrandResolver],
+  exports: [BrandService, TypeOrmModule.forFeature([Brand])],
+})
+export class BrandModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/graphql-context.module.ts">
+import { Module } from '@nestjs/common';
+import { AuthService } from '@kickzone-workspace/services';
+import { UserModule } from './user.module';
+import { JwtModule } from '@nestjs/jwt';
+import { EmailModule } from './email.module';
+import { TokenModule } from './token.module';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { RefreshToken } from '@kickzone-workspace/entities';
+
+@Module({
+  imports: [
+    UserModule,
+    EmailModule,
+    TokenModule,
+    TypeOrmModule.forFeature([RefreshToken]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+  ],
+  providers: [AuthService],
+  exports: [AuthService],
+})
+export class GraphqlContextModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/seller-info.module.ts">
+import {
+  SellerInfo,
+  SellerProduct,
+  ProductInfo,
+  User,
+  RefreshToken,
+} from '@kickzone-workspace/entities';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { UserModule } from './user.module';
+import {
+  AuthService,
+  EmailService,
+  SellerService,
+} from '@kickzone-workspace/services';
+import { TokenModule } from './token.module';
+import { SellerResolver } from '@kickzone-workspace/resolvers';
+import { ProductModule } from './product.module';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      SellerInfo,
+      SellerProduct,
+      ProductInfo,
+      User,
+      RefreshToken,
+    ]),
+    UserModule,
+    ProductModule,
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+    TokenModule,
+  ],
+  providers: [
+    SellerService,
+    SellerResolver,
+    AuthService,
+    EmailService,
+    ConfigService,
+  ],
+  exports: [SellerService],
+})
+export class SellerInfoModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/site-language.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { SiteLanguage } from '@kickzone-workspace/entities';
+import { SiteLanguageService } from '@kickzone-workspace/services';
+import { SiteLanguageResolver } from '@kickzone-workspace/resolvers';
+
+@Module({
+  imports: [TypeOrmModule.forFeature([SiteLanguage])],
+  providers: [SiteLanguageService, SiteLanguageResolver],
+  exports: [SiteLanguageService, TypeOrmModule],
+})
+export class SiteLanguageModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/user.module.ts">
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '@kickzone-workspace/entities';
+import { UserService } from '@kickzone-workspace/services';
+import { UserResolver } from '@kickzone-workspace/resolvers';
+import { AuthModule } from './auth.module';
+import { CustomerProfileModule } from './customer-profile.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    forwardRef(() => AuthModule),
+    CustomerProfileModule,
+  ],
+  providers: [UserService, UserResolver],
+  exports: [UserService],
+})
+export class UserModule {}
 </file>
 
 <file path="libs/server/entities/src/lib/product.entity.ts">

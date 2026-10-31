@@ -724,10 +724,6 @@ export function CustomerProductDetails() {
     return null;
   }, [activeVariant, product]);
 
-  const isLowStock =
-    pricingInfo != null &&
-    pricingInfo.stockQuantity > 0 &&
-    pricingInfo.stockQuantity <= 5;
   const isOutOfStock = pricingInfo == null || pricingInfo.stockQuantity === 0;
 
   // Add to cart handler
@@ -1690,36 +1686,6 @@ export function CustomerProductDetails() {
                 )}
 
                 {/* Stock Pill Badge */}
-                {isLowStock && (
-                  <Box
-                    className="lg-stock-low"
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 1,
-                      px: 1.75,
-                      py: 0.65,
-                      borderRadius: '9999px',
-                      alignSelf: 'flex-start',
-                    }}
-                  >
-                    <Box
-                      className="lg-stock-dot"
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        backgroundColor: '#f59e0b',
-                      }}
-                    />
-                    <Typography sx={{ fontSize: '0.75rem', fontWeight: 600 }}>
-                      {isRTL
-                        ? `تنها ${formatNumber(pricingInfo?.stockQuantity || 1)} عدد باقی مانده — همین حالا رزرو کنید`
-                        : `Only ${pricingInfo?.stockQuantity} left in stock — Order now`}
-                    </Typography>
-                  </Box>
-                )}
-
                 {isOutOfStock && (
                   <Box
                     className="lg-stock-oos"
