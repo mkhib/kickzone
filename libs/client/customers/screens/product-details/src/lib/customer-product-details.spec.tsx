@@ -104,6 +104,8 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
   },
 }));
 
+vi.mock('./reviews-flag', () => ({ REVIEWS_ENABLED: true }));
+
 vi.mock('@kickzone-workspace/shared-ui-store', () => ({
   useUIStore: (selector: (state: { theme: { mode: string } }) => unknown) =>
     selector({ theme: { mode: 'dark' } }),

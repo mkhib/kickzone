@@ -11,6 +11,7 @@ import AccordionSummary from '@mui/material/AccordionSummary';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Dialog from '@mui/material/Dialog';
+import { REVIEWS_ENABLED } from './reviews-flag';
 import Skeleton from '@mui/material/Skeleton';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
@@ -2082,6 +2083,7 @@ export function CustomerProductDetails() {
           </Box>
 
           {/* Customer Reviews Section */}
+          {REVIEWS_ENABLED && (
           <Box
             data-testid="customer-reviews-section"
             sx={{
@@ -2672,6 +2674,7 @@ export function CustomerProductDetails() {
               </Box>
             )}
           </Box>
+          )}
 
           {/* Similar Products Section */}
           {similarProducts.length > 0 && (
