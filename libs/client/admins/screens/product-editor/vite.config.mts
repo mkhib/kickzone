@@ -18,6 +18,8 @@ export default defineConfig(() => ({
     passWithNoTests: true,
     watch: false,
     globals: true,
+    // Heavy MUI editor flows (pants range T1-T5) take 3-4s each; 5s default flakes under load.
+    testTimeout: 15000,
     environment: 'jsdom',
     include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     reporters: ['default'],
