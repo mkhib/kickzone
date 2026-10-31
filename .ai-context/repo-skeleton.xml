@@ -102,6 +102,54 @@ libs/
 <files>
 This section contains the contents of the repository's files.
 
+<file path="libs/server/entities/src/lib/brand.entity.ts">
+import { ObjectType, Field, Int } from '@nestjs/graphql';
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { Product } from './product.entity';
+
+@ObjectType()
+@Entity('brands')
+export class Brand {
+  @Field(() => Int)
+  @PrimaryGeneratedColumn()
+  id: number;
+
+  @Field()
+  @Column({ unique: true })
+  slug: string;
+
+  @Field()
+  @Column({ default: 0 })
+  sortOrder: number;
+
+  @Field()
+  @Column({ default: true })
+  isActive: boolean;
+
+  @Field()
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @Field()
+  @UpdateDateColumn()
+  updatedAt: Date;
+
+  @OneToMany(() => Product, (product) => product.brand)
+  products: Product[];
+
+  // Virtual field - resolved via GraphQL resolver
+  @Field()
+  name: string;
+}
+</file>
+
 <file path="libs/server/entities/src/lib/cart.entity.ts">
 import { Field, ObjectType, ID, Int, Float } from '@nestjs/graphql';
 import {
@@ -699,6 +747,34 @@ export class UserConnection implements Connection<User> {
 export type UserWithoutPassword = Omit<User, 'password'>;
 </file>
 
+<file path="libs/server/inputs/src/lib/brand.input.ts">
+import { InputType, Field, Int } from '@nestjs/graphql';
+
+@InputType()
+export class CreateBrandInput {
+  @Field()
+  slug: string;
+
+  @Field(() => Int, { nullable: true, defaultValue: 0 })
+  sortOrder?: number;
+}
+
+@InputType()
+export class UpdateBrandInput {
+  @Field(() => Int)
+  id: number;
+
+  @Field({ nullable: true })
+  slug?: string;
+
+  @Field(() => Int, { nullable: true })
+  sortOrder?: number;
+
+  @Field({ nullable: true })
+  isActive?: boolean;
+}
+</file>
+
 <file path="libs/server/inputs/src/lib/category.input.ts">
 import { InputType, Field, Int } from '@nestjs/graphql';
 
@@ -750,6 +826,27 @@ export class UpdateColorInput {
   @Field({ nullable: true })
   isActive?: boolean;
 }
+</file>
+
+<file path="libs/server/modules/src/lib/brand.module.ts">
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Brand, Product } from '@kickzone-workspace/entities';
+import { BrandService } from '@kickzone-workspace/services';
+import { BrandResolver } from '@kickzone-workspace/resolvers';
+import { TranslationModule } from './translation.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Brand, Product]),
+    TranslationModule,
+    CatalogGuardModule,
+  ],
+  providers: [BrandService, BrandResolver],
+  exports: [BrandService, TypeOrmModule.forFeature([Brand])],
+})
+export class BrandModule {}
 </file>
 
 <file path="libs/server/modules/src/lib/cart.module.ts">
@@ -1017,54 +1114,6 @@ import { CustomerProfileModule } from './customer-profile.module';
 export class UserModule {}
 </file>
 
-<file path="libs/server/entities/src/lib/brand.entity.ts">
-import { ObjectType, Field, Int } from '@nestjs/graphql';
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  OneToMany,
-  CreateDateColumn,
-  UpdateDateColumn,
-} from 'typeorm';
-import { Product } from './product.entity';
-
-@ObjectType()
-@Entity('brands')
-export class Brand {
-  @Field(() => Int)
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Field()
-  @Column({ unique: true })
-  slug: string;
-
-  @Field()
-  @Column({ default: 0 })
-  sortOrder: number;
-
-  @Field()
-  @Column({ default: true })
-  isActive: boolean;
-
-  @Field()
-  @CreateDateColumn()
-  createdAt: Date;
-
-  @Field()
-  @UpdateDateColumn()
-  updatedAt: Date;
-
-  @OneToMany(() => Product, (product) => product.brand)
-  products: Product[];
-
-  // Virtual field - resolved via GraphQL resolver
-  @Field()
-  name: string;
-}
-</file>
-
 <file path="libs/server/entities/src/lib/order.entity.ts">
 import {
   Field,
@@ -1296,31 +1345,110 @@ export class OrderItem {
 }
 </file>
 
-<file path="libs/server/inputs/src/lib/brand.input.ts">
-import { InputType, Field, Int } from '@nestjs/graphql';
+<file path="libs/server/entities/src/lib/product.entity.ts">
+import { ConnectionType, EdgeType } from '@kickzone-workspace/utils';
+import { Field, Int, ObjectType } from '@nestjs/graphql';
+import {
+  Column,
+  Entity,
+  JoinColumn,
+  JoinTable,
+  ManyToMany,
+  ManyToOne,
+  OneToMany,
+  PrimaryGeneratedColumn,
+  Relation,
+} from 'typeorm';
+import { Brand } from './brand.entity';
+import { Category } from './category.entity';
+import { ProductInfo } from './product-info.entity';
+import { SellerProduct } from './seller-product.entity';
+import { SellerInfo } from './seller-info.entity';
+import { ProductDescription } from './product-description.entity';
 
-@InputType()
-export class CreateBrandInput {
-  @Field()
-  slug: string;
-
-  @Field(() => Int, { nullable: true, defaultValue: 0 })
-  sortOrder?: number;
-}
-
-@InputType()
-export class UpdateBrandInput {
+@ObjectType()
+@Entity()
+export class Product {
   @Field(() => Int)
+  @PrimaryGeneratedColumn()
   id: number;
 
+  @Field()
+  @Column({ unique: true })
+  name: string;
+
   @Field({ nullable: true })
-  slug?: string;
+  @Column({ unique: true, nullable: true })
+  sku?: string | null;
+
+  @Field(() => [ProductInfo])
+  @OneToMany(() => ProductInfo, (productInfo) => productInfo.product, {
+    cascade: true,
+  })
+  productInfos: ProductInfo[];
+
+  @Field(() => [Category])
+  @ManyToMany(() => Category, (category) => category.products)
+  @JoinTable()
+  categories: Category[];
+
+  @Field(() => Brand, { nullable: true })
+  @ManyToOne(() => Brand, (brand) => brand.products, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
+  @JoinColumn({ name: 'brandId' })
+  brand?: Brand | null;
 
   @Field(() => Int, { nullable: true })
-  sortOrder?: number;
+  @Column({ type: 'int', nullable: true })
+  brandId?: number | null;
+
+  @Field(() => SellerInfo, { nullable: true })
+  @ManyToOne(() => SellerInfo, { nullable: true, onDelete: 'SET NULL' })
+  @JoinColumn({ name: 'sellerId' })
+  seller?: SellerInfo | null;
+
+  @Field(() => Int, { nullable: true })
+  @Column({ type: 'int', nullable: true })
+  sellerId?: number | null;
 
   @Field({ nullable: true })
-  isActive?: boolean;
+  @Column({ type: 'text', nullable: true })
+  description?: string | null;
+
+  @Field(() => [ProductDescription], { nullable: true })
+  @OneToMany(
+    () => ProductDescription,
+    (productDescription) => productDescription.product,
+    { cascade: true }
+  )
+  descriptions?: Relation<ProductDescription>[];
+
+  @Field(() => [SellerProduct], { nullable: true })
+  @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
+  sellerProducts: Relation<SellerProduct>[];
+
+  @Field({ defaultValue: false })
+  @Column({
+    type: 'boolean',
+    default: false,
+    nullable: false,
+    comment: 'For partitioning',
+  })
+  archived: boolean;
+}
+
+@ObjectType()
+export class ProductEdge extends EdgeType<Product> {
+  @Field(() => Product)
+  node: Product;
+}
+
+@ObjectType()
+export class ProductConnection extends ConnectionType<Product> {
+  @Field(() => [ProductEdge])
+  edges: ProductEdge[];
 }
 </file>
 
@@ -1659,27 +1787,6 @@ import { RefreshToken } from '@kickzone-workspace/entities';
 export class AuthModule {}
 </file>
 
-<file path="libs/server/modules/src/lib/brand.module.ts">
-import { CatalogGuardModule } from './catalog-guard.module';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { Brand, Product } from '@kickzone-workspace/entities';
-import { BrandService } from '@kickzone-workspace/services';
-import { BrandResolver } from '@kickzone-workspace/resolvers';
-import { TranslationModule } from './translation.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([Brand, Product]),
-    TranslationModule,
-    CatalogGuardModule,
-  ],
-  providers: [BrandService, BrandResolver],
-  exports: [BrandService, TypeOrmModule.forFeature([Brand])],
-})
-export class BrandModule {}
-</file>
-
 <file path="libs/server/modules/src/lib/graphql-context.module.ts">
 import { Module } from '@nestjs/common';
 import { AuthService } from '@kickzone-workspace/services';
@@ -1776,111 +1883,83 @@ import { ConfigService } from '@nestjs/config';
 export class SellerInfoModule {}
 </file>
 
-<file path="libs/server/entities/src/lib/product.entity.ts">
-import { ConnectionType, EdgeType } from '@kickzone-workspace/utils';
-import { Field, Int, ObjectType } from '@nestjs/graphql';
+<file path="libs/server/modules/src/lib/product.module.ts">
 import {
-  Column,
-  Entity,
-  JoinColumn,
-  JoinTable,
-  ManyToMany,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  Relation,
-} from 'typeorm';
-import { Brand } from './brand.entity';
-import { Category } from './category.entity';
-import { ProductInfo } from './product-info.entity';
-import { SellerProduct } from './seller-product.entity';
-import { SellerInfo } from './seller-info.entity';
-import { ProductDescription } from './product-description.entity';
+  Brand,
+  Category,
+  Color,
+  OrderItem,
+  Product,
+  ProductInfo,
+  ProductInfoColor,
+  SellerProduct,
+  SellerInfo,
+  User,
+  ProductDescription,
+  SiteLanguage,
+  RefreshToken,
+} from '@kickzone-workspace/entities';
+import {
+  AuthResolver,
+  ProductResolver,
+  ProductInfoResolver,
+  SellerProductResolver,
+} from '@kickzone-workspace/resolvers';
+import {
+  AuthService,
+  EmailService,
+  ProductService,
+  SellerService,
+  UserService,
+} from '@kickzone-workspace/services';
+import { TokenModule } from './token.module';
+import { TranslationModule } from './translation.module';
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
 
-@ObjectType()
-@Entity()
-export class Product {
-  @Field(() => Int)
-  @PrimaryGeneratedColumn()
-  id: number;
-
-  @Field()
-  @Column({ unique: true })
-  name: string;
-
-  @Field({ nullable: true })
-  @Column({ unique: true, nullable: true })
-  sku?: string | null;
-
-  @Field(() => [ProductInfo])
-  @OneToMany(() => ProductInfo, (productInfo) => productInfo.product, {
-    cascade: true,
-  })
-  productInfos: ProductInfo[];
-
-  @Field(() => [Category])
-  @ManyToMany(() => Category, (category) => category.products)
-  @JoinTable()
-  categories: Category[];
-
-  @Field(() => Brand, { nullable: true })
-  @ManyToOne(() => Brand, (brand) => brand.products, {
-    nullable: true,
-    onDelete: 'SET NULL',
-  })
-  @JoinColumn({ name: 'brandId' })
-  brand?: Brand | null;
-
-  @Field(() => Int, { nullable: true })
-  @Column({ type: 'int', nullable: true })
-  brandId?: number | null;
-
-  @Field(() => SellerInfo, { nullable: true })
-  @ManyToOne(() => SellerInfo, { nullable: true, onDelete: 'SET NULL' })
-  @JoinColumn({ name: 'sellerId' })
-  seller?: SellerInfo | null;
-
-  @Field(() => Int, { nullable: true })
-  @Column({ type: 'int', nullable: true })
-  sellerId?: number | null;
-
-  @Field({ nullable: true })
-  @Column({ type: 'text', nullable: true })
-  description?: string | null;
-
-  @Field(() => [ProductDescription], { nullable: true })
-  @OneToMany(
-    () => ProductDescription,
-    (productDescription) => productDescription.product,
-    { cascade: true }
-  )
-  descriptions?: Relation<ProductDescription>[];
-
-  @Field(() => [SellerProduct], { nullable: true })
-  @OneToMany(() => SellerProduct, (sellerProduct) => sellerProduct.product)
-  sellerProducts: Relation<SellerProduct>[];
-
-  @Field({ defaultValue: false })
-  @Column({
-    type: 'boolean',
-    default: false,
-    nullable: false,
-    comment: 'For partitioning',
-  })
-  archived: boolean;
-}
-
-@ObjectType()
-export class ProductEdge extends EdgeType<Product> {
-  @Field(() => Product)
-  node: Product;
-}
-
-@ObjectType()
-export class ProductConnection extends ConnectionType<Product> {
-  @Field(() => [ProductEdge])
-  edges: ProductEdge[];
-}
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      Product,
+      ProductInfo,
+      ProductInfoColor,
+      Category,
+      Brand,
+      SellerProduct,
+      Color,
+      SellerInfo,
+      OrderItem,
+      ProductDescription,
+      SiteLanguage,
+      RefreshToken,
+    ]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+    TokenModule,
+    TranslationModule,
+    CatalogGuardModule,
+  ],
+  providers: [
+    ProductService,
+    ProductResolver,
+    ProductInfoResolver,
+    SellerProductResolver,
+    SellerService,
+    UserService,
+    AuthService,
+    AuthResolver,
+    EmailService,
+    ConfigService,
+  ],
+  exports: [ProductService, TypeOrmModule.forFeature([Product])],
+})
+export class ProductModule {}
 </file>
 
 <file path="libs/server/inputs/src/lib/order.inputs.ts">
@@ -2079,85 +2158,6 @@ export class OrdersPaginationInput {
   @Field(() => String, { nullable: true })
   after?: string;
 }
-</file>
-
-<file path="libs/server/modules/src/lib/product.module.ts">
-import {
-  Brand,
-  Category,
-  Color,
-  OrderItem,
-  Product,
-  ProductInfo,
-  ProductInfoColor,
-  SellerProduct,
-  SellerInfo,
-  User,
-  ProductDescription,
-  SiteLanguage,
-  RefreshToken,
-} from '@kickzone-workspace/entities';
-import {
-  AuthResolver,
-  ProductResolver,
-  ProductInfoResolver,
-  SellerProductResolver,
-} from '@kickzone-workspace/resolvers';
-import {
-  AuthService,
-  EmailService,
-  ProductService,
-  SellerService,
-  UserService,
-} from '@kickzone-workspace/services';
-import { TokenModule } from './token.module';
-import { TranslationModule } from './translation.module';
-import { CatalogGuardModule } from './catalog-guard.module';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      User,
-      Product,
-      ProductInfo,
-      ProductInfoColor,
-      Category,
-      Brand,
-      SellerProduct,
-      Color,
-      SellerInfo,
-      OrderItem,
-      ProductDescription,
-      SiteLanguage,
-      RefreshToken,
-    ]),
-    JwtModule.register({
-      secret: process.env['JWT_SECRET'] || 'defaultSecret',
-      signOptions: { expiresIn: '15m' },
-    }),
-    TokenModule,
-    TranslationModule,
-    CatalogGuardModule,
-  ],
-  providers: [
-    ProductService,
-    ProductResolver,
-    ProductInfoResolver,
-    SellerProductResolver,
-    SellerService,
-    UserService,
-    AuthService,
-    AuthResolver,
-    EmailService,
-    ConfigService,
-  ],
-  exports: [ProductService, TypeOrmModule.forFeature([Product])],
-})
-export class ProductModule {}
 </file>
 
 <file path="libs/server/inputs/src/lib/product.input.ts">

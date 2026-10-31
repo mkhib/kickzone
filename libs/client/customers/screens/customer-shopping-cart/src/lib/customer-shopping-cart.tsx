@@ -1,3 +1,5 @@
+import { useForm, type Resolver } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   useCartError,
   useCartItems,
@@ -13,7 +15,6 @@ import {
   useCheckoutActiveStep,
   useCheckoutShippingMethod,
   useCheckoutShippingInfo,
-  useCheckoutValidationErrors,
   useIsCreatingOrder,
   useCreatedOrder,
   usePaymentAuthority,
@@ -27,7 +28,6 @@ import {
   useSetShippingMethod,
   useSetShippingInfo,
   useUpdateShippingField,
-  useSetValidationErrors,
   useClearAllValidationErrors,
   useSetIsCreatingOrder,
   useSetCreatedOrder,
@@ -55,7 +55,8 @@ import {
 } from '@kickzone-workspace/shared-i18n';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import {
-  validateShippingInfo,
+  createShippingInfoSchema,
+  shippingIssueMessage,
   toEnglishDigits,
 } from '@kickzone-workspace/shipping-validation';
 import Add from '@mui/icons-material/Add';
@@ -378,7 +379,6 @@ export function CustomerShoppingCart() {
   const paymentAuthority = usePaymentAuthority();
   const isCreatingOrder = useIsCreatingOrder();
   const shippingInfo = useCheckoutShippingInfo();
-  const validationErrors = useCheckoutValidationErrors();
   const checkoutDialogOpen = useIsCheckoutDialogOpen();
   const authDialogOpen = useIsAuthDialogOpen();
 
@@ -392,9 +392,45 @@ export function CustomerShoppingCart() {
   const setShippingMethod = useSetShippingMethod();
   const setShippingInfo = useSetShippingInfo();
   const updateShippingField = useUpdateShippingField();
-  const setValidationErrors = useSetValidationErrors();
   const clearAllValidationErrors = useClearAllValidationErrors();
   const setIsCreatingOrder = useSetIsCreatingOrder();
+
+  type ShippingFormValues = Partial<ShippingInfo>;
+  // Shipping form: the checkout store stays the source of truth for values;
+  // react-hook-form + the shared Zod schema own validation and field errors.
+  const shippingSchema = useMemo(() => createShippingInfoSchema(LL), [LL]);
+  const shippingResolver = useMemo<Resolver<ShippingFormValues>>(() => {
+    const base = zodResolver(shippingSchema, {
+      error: (issue) => shippingIssueMessage(issue, LL),
+    });
+    return (values, context, options) =>
+      base(
+        {
+          customerName: values.customerName ?? '',
+          customerEmail: values.customerEmail,
+          customerPhone: toEnglishDigits(values.customerPhone || '').trim(),
+          shippingAddress: values.shippingAddress ?? '',
+          city: values.city ?? '',
+          state: values.state ?? '',
+          zipCode: toEnglishDigits(values.zipCode || '').trim(),
+          country: values.country ?? '',
+          notes: values.notes,
+        },
+        context,
+        options as Parameters<typeof base>[2]
+      ) as ReturnType<Resolver<ShippingFormValues>>;
+  }, [shippingSchema, LL]);
+  const {
+    trigger: validateShippingForm,
+    clearErrors: clearShippingError,
+    formState: { errors: shippingErrors },
+  } = useForm<ShippingFormValues>({
+    values: shippingInfo,
+    resolver: shippingResolver,
+    mode: 'onSubmit',
+  });
+  const shippingFieldError = (field: keyof ShippingInfo): string | undefined =>
+    shippingErrors[field]?.message;
   const setCreatedOrder = useSetCreatedOrder();
   const setPaymentAuthority = useSetPaymentAuthority();
   const resetCheckout = useResetCheckout();
@@ -714,16 +750,16 @@ export function CustomerShoppingCart() {
   const handleShippingInfoChange = (field: string, value: string) => {
     const finalValue = field === 'zipCode' ? toEnglishDigits(value) : value;
     updateShippingField(field as keyof ShippingInfo, finalValue);
+    clearShippingError(field as keyof ShippingInfo);
   };
 
   const handleNext = async () => {
     // If moving from step 1 (shipping info) to step 2 (order summary), validate the form
     if (activeStep === 1) {
-      // Validate shipping information using Zod
-      const validation = validateShippingInfo(shippingInfo, LL);
+      // Validate shipping information (react-hook-form + shared Zod schema)
+      const isShippingValid = await validateShippingForm();
 
-      if (!validation.isValid) {
-        setValidationErrors(validation.errors);
+      if (!isShippingValid) {
         showSnackbar(LL.errors.missingShippingInfo(), {
           severity: 'error',
         });
@@ -753,9 +789,8 @@ export function CustomerShoppingCart() {
       setIsCreatingOrder(true);
 
       // Validate shipping information
-      const validation = validateShippingInfo(shippingInfo, LL);
-      if (!validation.isValid) {
-        setValidationErrors(validation.errors);
+      const isShippingValid = await validateShippingForm();
+      if (!isShippingValid) {
         showSnackbar(LL.errors.missingShippingInfo(), {
           severity: 'error',
         });
@@ -2453,8 +2488,8 @@ export function CustomerShoppingCart() {
                       onChange={(e) =>
                         handleShippingInfoChange('customerName', e.target.value)
                       }
-                      error={!!validationErrors.customerName}
-                      helperText={validationErrors.customerName}
+                      error={!!shippingFieldError('customerName')}
+                      helperText={shippingFieldError('customerName')}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -2480,8 +2515,8 @@ export function CustomerShoppingCart() {
                           e.target.value
                         )
                       }
-                      error={!!validationErrors.customerEmail}
-                      helperText={validationErrors.customerEmail}
+                      error={!!shippingFieldError('customerEmail')}
+                      helperText={shippingFieldError('customerEmail')}
                       {...getLtrTextFieldProps({
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -2502,8 +2537,8 @@ export function CustomerShoppingCart() {
                           e.target.value
                         )
                       }
-                      error={!!validationErrors.customerPhone}
-                      helperText={validationErrors.customerPhone}
+                      error={!!shippingFieldError('customerPhone')}
+                      helperText={shippingFieldError('customerPhone')}
                       {...getLtrTextFieldProps({
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -2521,8 +2556,8 @@ export function CustomerShoppingCart() {
                       onChange={(e) =>
                         handleShippingInfoChange('country', e.target.value)
                       }
-                      error={!!validationErrors.country}
-                      helperText={validationErrors.country}
+                      error={!!shippingFieldError('country')}
+                      helperText={shippingFieldError('country')}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -2543,8 +2578,8 @@ export function CustomerShoppingCart() {
                           e.target.value
                         )
                       }
-                      error={!!validationErrors.shippingAddress}
-                      helperText={validationErrors.shippingAddress}
+                      error={!!shippingFieldError('shippingAddress')}
+                      helperText={shippingFieldError('shippingAddress')}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -2562,8 +2597,8 @@ export function CustomerShoppingCart() {
                       onChange={(e) =>
                         handleShippingInfoChange('city', e.target.value)
                       }
-                      error={!!validationErrors.city}
-                      helperText={validationErrors.city}
+                      error={!!shippingFieldError('city')}
+                      helperText={shippingFieldError('city')}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -2581,8 +2616,8 @@ export function CustomerShoppingCart() {
                       onChange={(e) =>
                         handleShippingInfoChange('state', e.target.value)
                       }
-                      error={!!validationErrors.state}
-                      helperText={validationErrors.state}
+                      error={!!shippingFieldError('state')}
+                      helperText={shippingFieldError('state')}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
@@ -2600,8 +2635,8 @@ export function CustomerShoppingCart() {
                       onChange={(e) =>
                         handleShippingInfoChange('zipCode', toEnglishDigits(e.target.value))
                       }
-                      error={!!validationErrors.zipCode}
-                      helperText={validationErrors.zipCode}
+                      error={!!shippingFieldError('zipCode')}
+                      helperText={shippingFieldError('zipCode')}
                       slotProps={{ htmlInput: { dir: 'ltr' } }}
                       sx={{
                         '& .MuiOutlinedInput-root': {
@@ -2621,8 +2656,8 @@ export function CustomerShoppingCart() {
                       onChange={(e) =>
                         handleShippingInfoChange('notes', e.target.value)
                       }
-                      error={!!validationErrors.notes}
-                      helperText={validationErrors.notes}
+                      error={!!shippingFieldError('notes')}
+                      helperText={shippingFieldError('notes')}
                       sx={{
                         '& .MuiOutlinedInput-root': {
                           borderRadius: 2,
