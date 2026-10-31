@@ -18158,6 +18158,11 @@
         },
         {
           "source": "admin-product-editor",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "admin-product-editor",
           "target": "colors-hook",
           "type": "static"
         },

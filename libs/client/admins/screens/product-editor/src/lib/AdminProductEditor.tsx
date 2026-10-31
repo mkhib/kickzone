@@ -46,7 +46,13 @@ import { styled, useTheme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  productEditorFormSchema,
+  type ProductEditorFormInput,
+} from '@kickzone-workspace/validation';
 import { useParams } from 'react-router-dom';
 import { useColors } from '@kickzone-workspace/colors-hook';
 import { SketchPicker, ColorResult } from 'react-color';
@@ -1230,6 +1236,31 @@ export function AdminProductEditor({
 
   const [, setCreatedProductInfoIds] = useState<(number | null)[]>([null]);
 
+  // Shared Zod rules (react-hook-form) for the required product and variant fields.
+  const editorValues = useMemo<ProductEditorFormInput>(
+    () => ({
+      name: product.name,
+      sku: product.sku,
+      categoryIds: product.categoryIds,
+      variants: productInfos.map((info) => ({
+        // Pants need both waist and inseam (which ensures the size is set).
+        size: isPantsSizeKind(info.sizeKind)
+          ? info.waist !== undefined && info.inseam !== undefined
+            ? formatPantsSize(info.waist, info.inseam)
+            : ''
+          : info.size,
+        colorIds: info.colors.map((c) => c.id),
+        weight: Number(info.weight) || 0,
+      })),
+    }),
+    [product, productInfos]
+  );
+  const editorForm = useForm<ProductEditorFormInput>({
+    values: editorValues,
+    resolver: zodResolver(productEditorFormSchema),
+    mode: 'onSubmit',
+  });
+
   const [isManageCategoriesModalOpen, setIsManageCategoriesModalOpen] =
     useState(false);
   const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
@@ -1469,30 +1500,17 @@ export function AdminProductEditor({
       e.preventDefault();
       try {
         // Validate required fields
-        if (
-          !product.name ||
-          !product.sku.trim() ||
-          product.categoryIds.length === 0
-        ) {
+        if (!(await editorForm.trigger(['name', 'sku', 'categoryIds']))) {
           showSnackbar('Please fill in all required fields', {
             severity: 'error',
           });
           return;
         }
-        for (const info of productInfos) {
-          // For pants, require both waist and inseam (which ensures size is set)
-          const isPants = isPantsSizeKind(info.sizeKind);
-          const sizeValid = isPants
-            ? info.waist !== undefined &&
-              info.inseam !== undefined &&
-              formatPantsSize(info.waist, info.inseam) !== ''
-            : !!info.size;
-          if (!sizeValid || !info.colors.length || !info.weight) {
-            showSnackbar('Please fill in all product variant fields', {
-              severity: 'error',
-            });
-            return;
-          }
+        if (!(await editorForm.trigger('variants'))) {
+          showSnackbar('Please fill in all product variant fields', {
+            severity: 'error',
+          });
+          return;
         }
         const descriptionList = languagesToDisplay
           .map((lang) => ({
@@ -1657,6 +1675,7 @@ export function AdminProductEditor({
       }
     },
     [
+      editorForm,
       product,
       productInfos,
       createProductWithInfos,

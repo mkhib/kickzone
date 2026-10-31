@@ -58,3 +58,18 @@ export type ProductVariantData = z.output<typeof productVariantSchema>;
 export type CreateProductData = z.output<typeof createProductSchema>;
 export type UpdateProductData = z.output<typeof updateProductSchema>;
 export type CreateProductInfoData = z.output<typeof createProductInfoSchema>;
+/** Admin product editor: required product fields and complete variants. */
+export const productEditorFormSchema = z.object({
+  name: z.string().min(1),
+  sku: z.string().trim().min(1),
+  categoryIds: z.array(z.number().int()).min(1),
+  variants: z.array(
+    z.object({
+      size: z.string().min(1),
+      colorIds: z.array(z.number().int()).min(1),
+      weight: z.number().positive(),
+    })
+  ),
+});
+
+export type ProductEditorFormInput = z.input<typeof productEditorFormSchema>;
