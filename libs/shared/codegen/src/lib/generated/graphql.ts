@@ -162,20 +162,6 @@ export type CreateProductInput = {
   variants?: InputMaybe<Array<ProductVariantInput>>;
 };
 
-export type ProductVariantInput = {
-  boxLess?: InputMaybe<Scalars['Boolean']['input']>;
-  colorIds: Array<Scalars['Int']['input']>;
-  costPrice?: InputMaybe<Scalars['Float']['input']>;
-  discount?: InputMaybe<Scalars['Float']['input']>;
-  id?: InputMaybe<Scalars['Int']['input']>;
-  images?: InputMaybe<Array<Scalars['String']['input']>>;
-  price?: InputMaybe<Scalars['Float']['input']>;
-  size: Scalars['String']['input'];
-  sizeKind?: InputMaybe<SizeKind>;
-  stockQuantity?: InputMaybe<Scalars['Int']['input']>;
-  weight: Scalars['Float']['input'];
-};
-
 export type CreateSellerInput = {
   address?: InputMaybe<Scalars['String']['input']>;
   canManageCatalog?: InputMaybe<Scalars['Boolean']['input']>;
@@ -246,6 +232,7 @@ export type CustomerProfile = {
   city?: Maybe<Scalars['String']['output']>;
   clothingSize?: Maybe<Scalars['String']['output']>;
   country?: Maybe<Scalars['String']['output']>;
+  favorites?: Maybe<Scalars['String']['output']>;
   id: Scalars['ID']['output'];
   phone?: Maybe<Scalars['String']['output']>;
   shoeSize?: Maybe<Scalars['String']['output']>;
@@ -304,6 +291,7 @@ export type Mutation = {
   initiatePasswordSetup: Scalars['Boolean']['output'];
   login: User;
   logout: Scalars['Boolean']['output'];
+  refresh: Scalars['Boolean']['output'];
   register: User;
   removeFromCart: Cart;
   removeProductInfoImage: Scalars['Boolean']['output'];
@@ -733,6 +721,8 @@ export type Product = {
   id: Scalars['Int']['output'];
   name: Scalars['String']['output'];
   productInfos: Array<ProductInfo>;
+  seller?: Maybe<SellerInfo>;
+  sellerId?: Maybe<Scalars['Int']['output']>;
   sellerProducts?: Maybe<Array<SellerProduct>>;
   sku?: Maybe<Scalars['String']['output']>;
 };
@@ -814,6 +804,21 @@ export type ProductInfoFilterInput = {
   sizeKind?: InputMaybe<SizeKind>;
   stockQuantity?: InputMaybe<Array<Scalars['Int']['input']>>;
   weight?: InputMaybe<Array<Scalars['Float']['input']>>;
+};
+
+export type ProductVariantInput = {
+  boxLess?: InputMaybe<Scalars['Boolean']['input']>;
+  colorIds: Array<Scalars['Int']['input']>;
+  costPrice?: InputMaybe<Scalars['Float']['input']>;
+  discount?: InputMaybe<Scalars['Float']['input']>;
+  id?: InputMaybe<Scalars['Int']['input']>;
+  images?: InputMaybe<Array<Scalars['String']['input']>>;
+  price?: InputMaybe<Scalars['Float']['input']>;
+  size: Scalars['String']['input'];
+  sizeKind?: InputMaybe<SizeKind>;
+  sku?: InputMaybe<Scalars['String']['input']>;
+  stockQuantity?: InputMaybe<Scalars['Int']['input']>;
+  weight: Scalars['Float']['input'];
 };
 
 export type Query = {
@@ -1237,6 +1242,7 @@ export type UpdateCustomerProfileInput = {
   city?: InputMaybe<Scalars['String']['input']>;
   clothingSize?: InputMaybe<Scalars['String']['input']>;
   country?: InputMaybe<Scalars['String']['input']>;
+  favorites?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
   shoeSize?: InputMaybe<Scalars['String']['input']>;
   state?: InputMaybe<Scalars['String']['input']>;
