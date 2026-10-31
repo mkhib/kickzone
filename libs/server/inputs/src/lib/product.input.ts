@@ -232,6 +232,9 @@ export class ProductFilterInput {
   @Field({ nullable: true })
   brand?: string;
 
+  @Field(() => [String], { nullable: true })
+  brands?: string[];
+
   @Field(() => [Int], { nullable: true })
   ids?: number[];
 

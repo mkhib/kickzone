@@ -184,23 +184,29 @@ export class ProductService implements OnModuleInit {
       query.andWhere('product.id IN (:...ids)', { ids: filter.ids });
     }
 
+    // Multi-select categories: match products in ANY of the listed categories.
     if (filter?.categorySlugs?.length) {
-      filter.categorySlugs.forEach((slug, idx) => {
-        query.andWhere(
-          `EXISTS (
-            SELECT 1 FROM product_category pc
-            JOIN category c ON pc."categoryId" = c.id
-            WHERE pc."productId" = product.id
-              AND (LOWER(c.slug) = :catSlug_${idx} OR LOWER(c.name) = :catSlug_${idx})
-          )`,
-          { [`catSlug_${idx}`]: slug.toLowerCase() }
-        );
-      });
+      query.andWhere(
+        `EXISTS (
+          SELECT 1 FROM product_category pc
+          JOIN category c ON pc."categoryId" = c.id
+          WHERE pc."productId" = product.id
+            AND (LOWER(c.slug) IN (:...catSlugs) OR LOWER(c.name) IN (:...catSlugs))
+        )`,
+        { catSlugs: filter.categorySlugs.map((slug) => slug.toLowerCase()) }
+      );
     }
 
     if (filter?.brand) {
       query.andWhere('LOWER(brand.slug) = :brandSlug', {
         brandSlug: filter.brand.toLowerCase(),
+      });
+    }
+
+    // Multi-select brands: match products from ANY of the listed brand slugs.
+    if (filter?.brands?.length) {
+      query.andWhere('LOWER(brand.slug) IN (:...brandSlugs)', {
+        brandSlugs: filter.brands.map((slug) => slug.toLowerCase()),
       });
     }
 
