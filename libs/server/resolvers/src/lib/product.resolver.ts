@@ -1,4 +1,10 @@
 import {
+  createProductInfoSchema,
+  createProductSchema,
+  updateProductSchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
+import {
   Category,
   Product,
   ProductConnection,
@@ -101,7 +107,8 @@ export class ProductResolver {
   @Mutation(() => Product)
   @UseGuards(CatalogGuard)
   async createProduct(
-    @Args('input') input: CreateProductInput,
+    @Args('input', new ZodValidationPipe(createProductSchema))
+    input: CreateProductInput,
     @Context() context?: { req: { user?: User } }
   ): Promise<Product> {
     const product = await this.productService.createProduct(
@@ -117,7 +124,8 @@ export class ProductResolver {
   @Mutation(() => Product)
   @UseGuards(CatalogGuard)
   async createProductInfo(
-    @Args('input') input: CreateProductInfoInput
+    @Args('input', new ZodValidationPipe(createProductInfoSchema))
+    input: CreateProductInfoInput
   ): Promise<Product> {
     return this.productService.createProductInfo(input);
   }
@@ -263,7 +271,8 @@ export class ProductResolver {
   @Mutation(() => Product)
   @UseGuards(CatalogGuard)
   async updateProduct(
-    @Args('input') input: UpdateProductInput,
+    @Args('input', new ZodValidationPipe(updateProductSchema))
+    input: UpdateProductInput,
     @Context() context?: { req: { user?: User } }
   ): Promise<Product> {
     return this.productService.updateProduct(input, context?.req?.user);
