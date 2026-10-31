@@ -1,4 +1,9 @@
 import React, { useState } from 'react';
+import { useForm, type FieldErrors, type Resolver } from 'react-hook-form';
+import {
+  contactFormSchema,
+  type ContactFormInput,
+} from '@kickzone-workspace/validation';
 import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -113,6 +118,40 @@ const SOCIAL_LINKS = [
   },
 ];
 
+/** Localized contact form messages: [English, Persian]. */
+const CONTACT_MESSAGES = {
+  fullName: ['Please enter your full name', 'لطفاً نام و نام خانوادگی خود را وارد کنید'],
+  email: ['Please enter your email address', 'لطفاً آدرس ایمیل خود را وارد کنید'],
+  emailInvalid: ['Please enter a valid email address', 'فرمت آدرس ایمیل نامعتبر است'],
+  subject: ['Please enter a subject', 'لطفاً موضوع پیام را وارد کنید'],
+  message: ['Please write your message or inquiry', 'لطفاً متن پیام یا درخواست خود را بنویسید'],
+} as const;
+
+type ContactMessageKey = keyof typeof CONTACT_MESSAGES;
+
+/** react-hook-form resolver over the shared contact schema with the existing messages. */
+export const createContactResolver =
+  (isEn: boolean): Resolver<ContactFormInput> =>
+  async (values) => {
+    const result = contactFormSchema.safeParse(values);
+    if (result.success) return { values, errors: {} };
+    const errors: Record<string, { type: string; message: string }> = {};
+    for (const issue of result.error.issues) {
+      const field = String(issue.path[0] ?? '');
+      if (!field || errors[field]) continue;
+      const key: ContactMessageKey | undefined =
+        field === 'email' && issue.code !== 'too_small'
+          ? 'emailInvalid'
+          : field in CONTACT_MESSAGES
+          ? (field as ContactMessageKey)
+          : undefined;
+      if (!key) continue;
+      const [en, fa] = CONTACT_MESSAGES[key];
+      errors[field] = { type: issue.code, message: isEn ? en : fa };
+    }
+    return { values: {}, errors: errors as FieldErrors<ContactFormInput> };
+  };
+
 const INQUIRY_TYPES = [
   {
     value: 'AUTHENTICATION',
@@ -161,43 +200,19 @@ export function CustomerContact() {
     message: '',
   });
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitSuccess, setSubmitSuccess] = useState(false);
 
-  const validate = () => {
-    const errs: Record<string, string> = {};
-    if (!formData.fullName.trim()) {
-      errs['fullName'] = isEn
-        ? 'Please enter your full name'
-        : 'لطفاً نام و نام خانوادگی خود را وارد کنید';
-    }
-    if (!formData.email.trim()) {
-      errs['email'] = isEn
-        ? 'Please enter your email address'
-        : 'لطفاً آدرس ایمیل خود را وارد کنید';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      errs['email'] = isEn
-        ? 'Please enter a valid email address'
-        : 'فرمت آدرس ایمیل نامعتبر است';
-    }
-    if (!formData.subject.trim()) {
-      errs['subject'] = isEn
-        ? 'Please enter a subject'
-        : 'لطفاً موضوع پیام را وارد کنید';
-    }
-    if (!formData.message.trim()) {
-      errs['message'] = isEn
-        ? 'Please write your message or inquiry'
-        : 'لطفاً متن پیام یا درخواست خود را بنویسید';
-    }
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
+  const contactForm = useForm<ContactFormInput>({
+    values: formData,
+    resolver: createContactResolver(isEn),
+    mode: 'onSubmit',
+  });
+  const errors = contactForm.formState.errors;
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!(await contactForm.trigger())) return;
 
     setIsSubmitting(true);
     // Simulate luxury concierge routing
@@ -212,7 +227,7 @@ export function CustomerContact() {
         subject: '',
         message: '',
       });
-      setErrors({});
+      contactForm.clearErrors();
     }, 600);
   };
 
@@ -489,8 +504,8 @@ export function CustomerContact() {
                         onChange={(e) =>
                           setFormData({ ...formData, fullName: e.target.value })
                         }
-                        error={Boolean(errors['fullName'])}
-                        helperText={errors['fullName']}
+                        error={Boolean(errors.fullName)}
+                        helperText={errors.fullName?.message}
                         inputProps={{ 'data-testid': 'contact-input-name' }}
                       />
                     </Grid>
@@ -504,8 +519,8 @@ export function CustomerContact() {
                         onChange={(e) =>
                           setFormData({ ...formData, email: e.target.value })
                         }
-                        error={Boolean(errors['email'])}
-                        helperText={errors['email']}
+                        error={Boolean(errors.email)}
+                        helperText={errors.email?.message}
                         inputProps={{ 'data-testid': 'contact-input-email' }}
                       />
                     </Grid>
@@ -551,8 +566,8 @@ export function CustomerContact() {
                         onChange={(e) =>
                           setFormData({ ...formData, subject: e.target.value })
                         }
-                        error={Boolean(errors['subject'])}
-                        helperText={errors['subject']}
+                        error={Boolean(errors.subject)}
+                        helperText={errors.subject?.message}
                         inputProps={{ 'data-testid': 'contact-input-subject' }}
                       />
                     </Grid>
@@ -567,8 +582,8 @@ export function CustomerContact() {
                         onChange={(e) =>
                           setFormData({ ...formData, message: e.target.value })
                         }
-                        error={Boolean(errors['message'])}
-                        helperText={errors['message']}
+                        error={Boolean(errors.message)}
+                        helperText={errors.message?.message}
                         inputProps={{ 'data-testid': 'contact-input-message' }}
                       />
                     </Grid>

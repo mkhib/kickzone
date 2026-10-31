@@ -125,21 +125,22 @@ describe('CustomerContact Screen', () => {
     ).toBeInTheDocument();
   });
 
-  it('validates required fields on submission', () => {
+  it('validates required fields on submission', async () => {
     renderComponent();
 
     const submitBtn = screen.getByTestId('contact-submit-btn');
     fireEvent.click(submitBtn);
 
     expect(
-      screen.getByText('Please enter your full name')
+      await screen.findByText('Please enter your full name')
     ).toBeInTheDocument();
     expect(
-      screen.getByText('Please enter your email address')
+      await screen.findByText('Please enter your email address')
     ).toBeInTheDocument();
-    expect(screen.getByText('Please enter a subject')).toBeInTheDocument();
     expect(
-      screen.getByText('Please write your message or inquiry')
+      await screen.findByText('Please enter a subject')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Please write your message or inquiry')
     ).toBeInTheDocument();
   });
 

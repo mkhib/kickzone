@@ -18408,6 +18408,11 @@
       "customer-contact": [
         {
           "source": "customer-contact",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "customer-contact",
           "target": "customers-layout",
           "type": "static"
         },
