@@ -17157,6 +17157,11 @@
       "translation-management": [
         {
           "source": "translation-management",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "translation-management",
           "target": "codegen",
           "type": "static"
         },

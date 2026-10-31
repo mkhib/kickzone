@@ -4,6 +4,7 @@ import {
   currencyCodeSchema,
   exchangeRateFormSchema,
   setExchangeRateSchema,
+  translationNameFormSchema,
   translationSchema,
   updateCurrencySchema,
 } from './currency';
@@ -34,5 +35,11 @@ describe('currency and translation schemas', () => {
     expect(ok(translationSchema, { ...t, entityId: 0 })).toBe(false);
     expect(ok(bulkTranslationSchema, { entityType: 'brand', entityIds: [1, 2], sourceLocale: 'en', targetLocales: ['fa'] })).toBe(true);
     expect(ok(bulkTranslationSchema, { entityType: 'brand', entityIds: [1], sourceLocale: 'en', targetLocales: [''] })).toBe(false);
+  });
+
+  it('limits translated names in the admin editor but allows clearing', () => {
+    expect(ok(translationNameFormSchema, { value: '' })).toBe(true);
+    expect(ok(translationNameFormSchema, { value: 'کفش ورزشی' })).toBe(true);
+    expect(ok(translationNameFormSchema, { value: 'x'.repeat(101) })).toBe(false);
   });
 });

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { languageCodeSchema } from './taxonomy';
+import { languageCodeSchema, TAXONOMY_LIMITS } from './taxonomy';
 
 export const CURRENCY_LIMITS = {
   name: { max: 100 },
@@ -81,4 +81,10 @@ export const bulkTranslationSchema = z.object({
   targetLocales: z.array(languageCodeSchema),
 });
 
+/** Admin translation editor (entity names); blank clears the translation. */
+export const translationNameFormSchema = z.object({
+  value: z.string().max(TAXONOMY_LIMITS.name.max),
+});
+
+export type TranslationNameFormInput = z.input<typeof translationNameFormSchema>;
 export type ExchangeRateFormInput = z.input<typeof exchangeRateFormSchema>;

@@ -1,5 +1,11 @@
 import * as React from 'react';
 import { useState, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  translationNameFormSchema,
+  type TranslationNameFormInput,
+} from '@kickzone-workspace/validation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
@@ -122,6 +128,12 @@ function TranslationsModal({
   const [editingLocale, setEditingLocale] = useState<string | null>(null);
   const [editValue, setEditValue] = useState('');
   const [isSavingTranslation, setIsSavingTranslation] = useState(false);
+  const translationForm = useForm<TranslationNameFormInput>({
+    values: { value: editValue },
+    resolver: zodResolver(translationNameFormSchema),
+    mode: 'onSubmit',
+  });
+  const valueError = translationForm.formState.errors.value;
 
   // Expose refetch function to parent component
   React.useEffect(() => {
@@ -144,6 +156,7 @@ function TranslationsModal({
 
   const handleSave = async () => {
     if (!editingLocale) return;
+    if (!(await translationForm.trigger())) return;
     setIsSavingTranslation(true);
     try {
       await setTranslation(
@@ -218,6 +231,7 @@ function TranslationsModal({
                           fullWidth
                           value={editValue}
                           onChange={(e) => setEditValue(e.target.value)}
+                          error={Boolean(valueError)}
                           autoFocus
                         />
                       ) : (
