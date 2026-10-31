@@ -19,6 +19,14 @@ import {
 import { CurrencyService } from '@kickzone-workspace/services';
 import { RolesGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
+import {
+  currencyCodeSchema,
+  createCurrencySchema,
+  languageCodeSchema,
+  setExchangeRateSchema,
+  updateCurrencySchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
 
 // =============== Input Types ===============
 
@@ -149,7 +157,8 @@ export class CurrencyResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   async createCurrency(
-    @Args('input') input: CreateCurrencyInput
+    @Args('input', new ZodValidationPipe(createCurrencySchema))
+    input: CreateCurrencyInput
   ): Promise<Currency> {
     return this.currencyService.createCurrency(input);
   }
@@ -159,7 +168,8 @@ export class CurrencyResolver {
   @SetMetadata('roles', [UserRole.ADMIN])
   async updateCurrency(
     @Args('id', { type: () => Int }) id: number,
-    @Args('input') input: UpdateCurrencyInput
+    @Args('input', new ZodValidationPipe(updateCurrencySchema))
+    input: UpdateCurrencyInput
   ): Promise<Currency> {
     return this.currencyService.updateCurrency(id, input);
   }
@@ -168,7 +178,8 @@ export class CurrencyResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   async setExchangeRate(
-    @Args('input') input: SetExchangeRateInput,
+    @Args('input', new ZodValidationPipe(setExchangeRateSchema))
+    input: SetExchangeRateInput,
     @CurrentUser() user?: User
   ): Promise<ExchangeRate> {
     return this.currencyService.setExchangeRate({
@@ -181,8 +192,9 @@ export class CurrencyResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   async setCurrencyPreference(
-    @Args('locale') locale: string,
-    @Args('currencyCode') currencyCode: string
+    @Args('locale', new ZodValidationPipe(languageCodeSchema)) locale: string,
+    @Args('currencyCode', new ZodValidationPipe(currencyCodeSchema))
+    currencyCode: string
   ): Promise<CurrencyPreference> {
     return this.currencyService.setCurrencyPreference(locale, currencyCode);
   }

@@ -4,6 +4,11 @@ import { TranslationService } from '@kickzone-workspace/services';
 import { Translation } from '@kickzone-workspace/entities';
 import { CatalogGuard } from '@kickzone-workspace/guards';
 import { TranslationInput, BulkTranslationInput } from './translation.input';
+import {
+  bulkTranslationSchema,
+  translationSchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
 
 @Resolver(() => Translation)
 export class TranslationResolver {
@@ -31,7 +36,7 @@ export class TranslationResolver {
   @Mutation(() => Translation)
   @UseGuards(CatalogGuard)
   async setTranslation(
-    @Args('input') input: TranslationInput
+    @Args('input', new ZodValidationPipe(translationSchema)) input: TranslationInput
   ): Promise<Translation> {
     return this.translationService.setTranslation(input);
   }
@@ -39,7 +44,8 @@ export class TranslationResolver {
   @Mutation(() => Boolean)
   @UseGuards(CatalogGuard)
   async bulkTranslateEntities(
-    @Args('input') input: BulkTranslationInput
+    @Args('input', new ZodValidationPipe(bulkTranslationSchema))
+    input: BulkTranslationInput
   ): Promise<boolean> {
     await this.translationService.bulkTranslateEntities(input);
     return true;

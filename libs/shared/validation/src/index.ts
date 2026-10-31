@@ -9,3 +9,4 @@ export * from './lib/profile';export * from './lib/seller';
 export * from './lib/contact';
 export * from './lib/catalog';
 export * from './lib/taxonomy';
+export * from './lib/currency';
