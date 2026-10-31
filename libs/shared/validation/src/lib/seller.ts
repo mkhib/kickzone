@@ -73,6 +73,41 @@ export const sellerProductFormSchema = createSellerProductSchema.extend({
   costPrice: z.number().positive(),
 });
 
+/** Admin seller form: blank or a non-negative shipping fee (typed as text). */
+const sellerFeeSchema = z
+  .union([z.number(), z.string()])
+  .nullish()
+  .refine((v) => v == null || v === '' || (Number.isFinite(Number(v)) && Number(v) >= 0));
+const formEmail = z.string().trim().pipe(z.email());
+
+/** Admin seller create form. */
+export const sellerCreateFormSchema = z.object({
+  name: z.string().trim().min(1),
+  lastName: z.string().trim().min(1),
+  username: z.string().trim().min(1),
+  email: formEmail,
+  storeName: z.string().trim().min(1),
+  phone: z.string().nullish(),
+  address: z.string().nullish(),
+  shippingFee: sellerFeeSchema,
+  canManageCatalog: optionalFlag,
+});
+
+/** Admin seller edit form: blank fields are left unchanged. */
+export const sellerEditFormSchema = z.object({
+  name: z.string().nullish(),
+  lastName: z.string().nullish(),
+  username: z.string().nullish(),
+  email: z.union([z.literal(''), formEmail]).nullish(),
+  storeName: z.string().nullish(),
+  phone: z.string().nullish(),
+  address: z.string().nullish(),
+  shippingFee: sellerFeeSchema,
+  canManageCatalog: optionalFlag,
+});
+
+export type SellerCreateFormInput = z.input<typeof sellerCreateFormSchema>;
+export type SellerEditFormInput = z.input<typeof sellerEditFormSchema>;
 export type CreateSellerData = z.output<typeof createSellerSchema>;
 export type UpdateSellerData = z.output<typeof updateSellerSchema>;
 export type CreateSellerProductData = z.output<typeof createSellerProductSchema>;

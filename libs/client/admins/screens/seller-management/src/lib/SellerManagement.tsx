@@ -49,6 +49,14 @@ import {
   type MRT_ColumnDef,
 } from 'material-react-table';
 import { ChangeEvent, useMemo, useState, useEffect } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  sellerCreateFormSchema,
+  sellerEditFormSchema,
+  type SellerCreateFormInput,
+  type SellerEditFormInput,
+} from '@kickzone-workspace/validation';
 
 type Seller = NonNullable<KickzoneGraphqlTypes.SellerInfo>;
 type CreateSellerInput = KickzoneGraphqlTypes.CreateSellerInput;
@@ -143,6 +151,30 @@ export const SellerManagement = () => {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedSeller, setSelectedSeller] = useState<Seller | null>(null);
   const [formData, setFormData] = useState<SellerFormData>({});
+  const sellerFormValues = {
+    name: formData.name ?? '',
+    lastName: formData.lastName ?? '',
+    username: formData.username ?? '',
+    email: formData.email ?? '',
+    storeName: formData.storeName ?? '',
+    phone: formData.phone,
+    address: formData.address,
+    shippingFee: formData.shippingFee,
+    canManageCatalog: formData.canManageCatalog,
+  };
+  const createForm = useForm<SellerCreateFormInput>({
+    values: sellerFormValues,
+    resolver: zodResolver(sellerCreateFormSchema),
+    mode: 'onSubmit',
+  });
+  const editForm = useForm<SellerEditFormInput>({
+    values: sellerFormValues,
+    resolver: zodResolver(sellerEditFormSchema),
+    mode: 'onSubmit',
+  });
+  const sellerErrors = editModalOpen
+    ? editForm.formState.errors
+    : createForm.formState.errors;
   const [usernameConfirmation, setUsernameConfirmation] = useState('');
   const [needsReconfirmation, setNeedsReconfirmation] = useState(false);
   const { showSnackbar } = useSnackbar();
@@ -397,15 +429,7 @@ export const SellerManagement = () => {
 
   const handleCreateSubmit = async () => {
     try {
-      if (
-        !formData.name ||
-        !formData.lastName ||
-        !formData.username ||
-        !formData.email ||
-        !formData.storeName
-      ) {
-        return;
-      }
+      if (!(await createForm.trigger())) return;
       const rawFee = formData.shippingFee as number | string | undefined | null;
       const shippingFeeValue =
         rawFee === undefined || rawFee === null || rawFee === ''
@@ -437,6 +461,7 @@ export const SellerManagement = () => {
 
   const handleEditSubmit = async () => {
     if (!selectedSeller) return;
+    if (!(await editForm.trigger())) return;
     try {
       await updateSeller({
         variables: {
@@ -485,6 +510,7 @@ export const SellerManagement = () => {
         name="name"
         label={LL.table.name()}
         value={formData.name || ''}
+        error={Boolean(sellerErrors.name)}
         onChange={handleInputChange}
       />
       <TextField
@@ -493,6 +519,7 @@ export const SellerManagement = () => {
         name="lastName"
         label={LL.table.lastName()}
         value={formData.lastName || ''}
+        error={Boolean(sellerErrors.lastName)}
         onChange={handleInputChange}
       />
       <TextField
@@ -501,6 +528,7 @@ export const SellerManagement = () => {
         name="username"
         label={LL.table.username()}
         value={formData.username || ''}
+        error={Boolean(sellerErrors.username)}
         onChange={handleInputChange}
         {...getLtrTextFieldProps()}
       />
@@ -511,6 +539,7 @@ export const SellerManagement = () => {
         label={LL.table.email()}
         type="email"
         value={formData.email || ''}
+        error={Boolean(sellerErrors.email)}
         onChange={handleInputChange}
         {...getLtrTextFieldProps()}
       />
@@ -520,6 +549,7 @@ export const SellerManagement = () => {
         name="storeName"
         label={LL.table.storeName()}
         value={formData.storeName || ''}
+        error={Boolean(sellerErrors.storeName)}
         onChange={handleInputChange}
       />
       <TextField
@@ -545,6 +575,7 @@ export const SellerManagement = () => {
         label="Shipping Fee ($)"
         type="number"
         value={formData.shippingFee || ''}
+        error={Boolean(sellerErrors.shippingFee)}
         onChange={handleInputChange}
         sx={getLtrTextFieldProps().sx}
         slotProps={{

@@ -1,6 +1,8 @@
 import {
   createSellerProductSchema,
   createSellerSchema,
+  sellerCreateFormSchema,
+  sellerEditFormSchema,
   sellerProductFormSchema,
   updateSellerProductSchema,
   updateSellerSchema,
@@ -41,5 +43,15 @@ describe('seller schemas', () => {
   it('the editor form also requires a positive cost price', () => {
     expect(sellerProductFormSchema.safeParse(product).success).toBe(false);
     expect(sellerProductFormSchema.safeParse({ ...product, costPrice: 100 }).success).toBe(true);
+  });
+
+  it('admin seller forms: create requires the core fields, edit allows blanks', () => {
+    const form = { name: 'Ali', lastName: 'R', username: 'ali', email: 'ali@example.com', storeName: 'S', shippingFee: '' };
+    expect(sellerCreateFormSchema.safeParse(form).success).toBe(true);
+    expect(sellerCreateFormSchema.safeParse({ ...form, storeName: ' ' }).success).toBe(false);
+    expect(sellerCreateFormSchema.safeParse({ ...form, shippingFee: '-1' }).success).toBe(false);
+    expect(sellerEditFormSchema.safeParse({ name: '', email: '' }).success).toBe(true);
+    expect(sellerEditFormSchema.safeParse({ email: 'bad' }).success).toBe(false);
+    expect(sellerEditFormSchema.safeParse({ shippingFee: 4.5 }).success).toBe(true);
   });
 });

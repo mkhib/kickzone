@@ -17821,6 +17821,11 @@
           "source": "admin-seller-management",
           "target": "language-components",
           "type": "static"
+        },
+        {
+          "source": "admin-seller-management",
+          "target": "shared-validation",
+          "type": "static"
         }
       ],
       "admins-currency-management-hooks": [
