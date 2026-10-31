@@ -17503,6 +17503,11 @@
         },
         {
           "source": "customer-profile",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "customer-profile",
           "target": "product-sizes",
           "type": "static"
         }

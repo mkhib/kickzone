@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
+import { useForm, type FieldErrors, type FieldValues, type Resolver } from 'react-hook-form';
 import { useNavigate, Link as RouterLink } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
 import Box from '@mui/material/Box';
@@ -53,7 +54,17 @@ import {
   UPDATE_MY_PROFILE,
 } from '@kickzone-workspace/customers-graphql';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
-import { toEnglishDigits } from '@kickzone-workspace/shipping-validation';
+import {
+  shippingIssueMessage,
+  toEnglishDigits,
+} from '@kickzone-workspace/shipping-validation';
+import {
+  profileAddressFormSchema,
+  profilePhoneFormSchema,
+  type ProfileAddressFormInput,
+  type ProfilePhoneFormInput,
+} from '@kickzone-workspace/validation';
+import type { TranslationFunctions } from '@kickzone-workspace/shared-i18n';
 import {
   APPAREL_SIZES,
   FOOTWEAR_EU_SIZES,
@@ -61,6 +72,64 @@ import {
 } from '@kickzone-workspace/product-sizes';
 
 const farsiFont = '"Vazirmatn", "Manrope", sans-serif';
+
+/** Profile field names that differ from the checkout (shipping) field names. */
+const PROFILE_TO_SHIPPING_FIELD: Record<string, string> = {
+  phone: 'customerPhone',
+  address: 'shippingAddress',
+};
+
+type ProfileIssue = {
+  code: string;
+  path: PropertyKey[];
+  input?: unknown;
+  errors?: ProfileIssue[][];
+};
+
+type ProfileSchema = {
+  safeParse: (
+    data: unknown,
+    params: { reportInput: boolean }
+  ) => { success: true } | { success: false; error: { issues: ProfileIssue[] } };
+};
+
+/** Maps a shared profile-schema issue to the existing localized validation message. */
+export const profileIssueMessage = (
+  issue: ProfileIssue,
+  LL: TranslationFunctions
+): string => {
+  const field = String(issue.path[0] ?? '');
+  // Clearable fields are "'' or a valid value": report the valid-value branch.
+  const inner =
+    issue.code === 'invalid_union'
+      ? issue.errors?.[issue.errors.length - 1]?.[0] ?? issue
+      : issue;
+  return shippingIssueMessage(
+    { code: inner.code, input: inner.input, path: [PROFILE_TO_SHIPPING_FIELD[field] ?? field] },
+    LL
+  );
+};
+
+/** react-hook-form resolver for the shared profile schemas (digits normalized first). */
+export const createProfileResolver =
+  <T extends FieldValues>(schema: ProfileSchema, LL: TranslationFunctions): Resolver<T> =>
+  async (values) => {
+    const normalized: Record<string, unknown> = { ...values };
+    for (const key of ['phone', 'zipCode']) {
+      const v = normalized[key];
+      if (typeof v === 'string') normalized[key] = toEnglishDigits(v).trim();
+    }
+    const result = schema.safeParse(normalized, { reportInput: true });
+    if (result.success) return { values, errors: {} };
+    const errors: Record<string, { type: string; message: string }> = {};
+    for (const issue of result.error.issues) {
+      const field = String(issue.path[0] ?? '');
+      if (field && !errors[field]) {
+        errors[field] = { type: issue.code, message: profileIssueMessage(issue, LL) };
+      }
+    }
+    return { values: {}, errors: errors as FieldErrors<T> };
+  };
 
 export function CustomerProfile() {
   const { LL } = useI18nContext();
@@ -227,9 +296,31 @@ export function CustomerProfile() {
     setEditAddressOpen(true);
   };
 
+  const addressResolver = useMemo(
+    () => createProfileResolver<ProfileAddressFormInput>(profileAddressFormSchema, LL),
+    [LL]
+  );
+  const phoneResolver = useMemo(
+    () => createProfileResolver<ProfilePhoneFormInput>(profilePhoneFormSchema, LL),
+    [LL]
+  );
+  const addressRhf = useForm<ProfileAddressFormInput>({
+    values: addressForm,
+    resolver: addressResolver,
+    mode: 'onSubmit',
+  });
+  const phoneRhf = useForm<ProfilePhoneFormInput>({
+    values: { phone: profileForm.phone },
+    resolver: phoneResolver,
+    mode: 'onSubmit',
+  });
+  const addressErrors = addressRhf.formState.errors;
+  const phoneErrors = phoneRhf.formState.errors;
+
   // Save Address Modal Action
   const handleSaveAddress = async () => {
     if (!isLoggedIn) return;
+    if (!(await addressRhf.trigger())) return;
     const cleanZip = toEnglishDigits(addressForm.zipCode).trim();
     const cleanPhone = toEnglishDigits(addressForm.phone).trim();
 
@@ -258,6 +349,7 @@ export function CustomerProfile() {
   // Save Profile Form Action
   const handleSaveProfile = async () => {
     if (!isLoggedIn) return;
+    if (!(await phoneRhf.trigger())) return;
     const cleanPhone = toEnglishDigits(profileForm.phone).trim();
     try {
       await updateProfileMutation({
@@ -1383,6 +1475,8 @@ export function CustomerProfile() {
             <TextField
               label={LL.customerProfile.phone()}
               value={profileForm.phone}
+              error={Boolean(phoneErrors.phone)}
+              helperText={phoneErrors.phone?.message}
               onChange={(e) => setProfileForm({ ...profileForm, phone: toEnglishDigits(e.target.value) })}
               fullWidth
               size="small"
@@ -1450,6 +1544,8 @@ export function CustomerProfile() {
                 <TextField
                   label={LL.customerProfile.province()}
                   value={addressForm.state}
+                  error={Boolean(addressErrors.state)}
+                  helperText={addressErrors.state?.message}
                   onChange={(e) => setAddressForm({ ...addressForm, state: e.target.value })}
                   fullWidth
                   size="small"
@@ -1459,6 +1555,8 @@ export function CustomerProfile() {
                 <TextField
                   label={LL.customerProfile.city()}
                   value={addressForm.city}
+                  error={Boolean(addressErrors.city)}
+                  helperText={addressErrors.city?.message}
                   onChange={(e) => setAddressForm({ ...addressForm, city: e.target.value })}
                   fullWidth
                   size="small"
@@ -1468,6 +1566,8 @@ export function CustomerProfile() {
             <TextField
               label={LL.customerProfile.addressLine()}
               value={addressForm.address}
+              error={Boolean(addressErrors.address)}
+              helperText={addressErrors.address?.message}
               onChange={(e) => setAddressForm({ ...addressForm, address: e.target.value })}
               fullWidth
               multiline
@@ -1479,6 +1579,8 @@ export function CustomerProfile() {
                 <TextField
                   label={LL.customerProfile.postalCode()}
                   value={addressForm.zipCode}
+                  error={Boolean(addressErrors.zipCode)}
+                  helperText={addressErrors.zipCode?.message}
                   onChange={(e) => setAddressForm({ ...addressForm, zipCode: toEnglishDigits(e.target.value) })}
                   fullWidth
                   size="small"
@@ -1489,6 +1591,8 @@ export function CustomerProfile() {
                 <TextField
                   label={LL.customerProfile.phone()}
                   value={addressForm.phone}
+                  error={Boolean(addressErrors.phone)}
+                  helperText={addressErrors.phone?.message}
                   onChange={(e) => setAddressForm({ ...addressForm, phone: toEnglishDigits(e.target.value) })}
                   fullWidth
                   size="small"
