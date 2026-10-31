@@ -1,11 +1,14 @@
 import React, { useState } from 'react';
 import { useNavigate, useParams, Link as RouterLink } from 'react-router-dom';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { useSnackbar } from '@kickzone-workspace/snackbar-hook';
 import { useCustomersResetPassword } from '@kickzone-workspace/customers-auth-hooks';
 import { getErrorMessage } from '@kickzone-workspace/translations';
+import { customerResetPasswordFormSchema, type CustomerResetPasswordFormValues } from '@kickzone-workspace/validation';
 import LockResetOutlined from '@mui/icons-material/LockResetOutlined';
 import ArrowBackRounded from '@mui/icons-material/ArrowBackRounded';
 import ArrowForwardRounded from '@mui/icons-material/ArrowForwardRounded';
@@ -34,38 +37,29 @@ export function CustomerResetPassword() {
 
   const goldColor = isDark ? '#c5b89a' : '#7c6d48';
 
-  const [formData, setFormData] = useState({
-    password: '',
-    confirmPassword: '',
-  });
   const [error, setError] = useState('');
 
-  const handleChange =
-    (field: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
-      setFormData((prev) => ({ ...prev, [field]: event.target.value }));
-      setError('');
-    };
+  const {
+    register,
+    handleSubmit,
+  } = useForm<CustomerResetPasswordFormValues>({
+    resolver: zodResolver(customerResetPasswordFormSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      password: '',
+      confirmPassword: '',
+    },
+  });
 
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
 
-    if (formData.password !== formData.confirmPassword) {
-      setError(LL.authorization.passwordsDoNotMatch());
-      return;
-    }
-
-    if (formData.password.length < 8) {
-      setError(LL.authorization.passwordTooShort());
-      return;
-    }
-
+  const onValidSubmit = async (values: CustomerResetPasswordFormValues) => {
     if (!token) {
       setError(LL.authorization.invalidToken());
       return;
     }
 
     try {
-      await handleResetPassword(token, formData.password);
+      await handleResetPassword(token, values.password);
       showSnackbar(LL.authorization.passwordResetSuccess(), {
         severity: 'success',
       });
@@ -79,6 +73,33 @@ export function CustomerResetPassword() {
       setError(errorMessage);
       showSnackbar(errorMessage, { severity: 'error' });
     }
+  };
+
+  const onInvalidSubmit = (errors: Record<string, unknown>) => {
+    // Check for confirmPassword mismatch first (priority)
+    const confirmPasswordError = errors.confirmPassword as
+      | { type?: string; message?: string }
+      | undefined;
+    if (
+      confirmPasswordError &&
+      confirmPasswordError.type === 'custom' &&
+      confirmPasswordError.message === 'passwordsDoNotMatch'
+    ) {
+      setError(LL.authorization.passwordsDoNotMatch());
+      return;
+    }
+
+    // Check for password issues (too_small, etc.)
+    const passwordError = errors.password as
+      | { type?: string; message?: string }
+      | undefined;
+    if (passwordError && passwordError.type === 'too_small') {
+      setError(LL.authorization.passwordTooShort());
+      return;
+    }
+
+    // Fallback
+    setError(LL.errors.requiredFields());
   };
 
   return (
@@ -288,7 +309,8 @@ export function CustomerResetPassword() {
 
             <Box
               component="form"
-              onSubmit={handleSubmit}
+              onSubmit={handleSubmit(onValidSubmit, onInvalidSubmit)}
+              noValidate
               sx={{
                 width: '100%',
                 display: 'flex',
@@ -300,28 +322,22 @@ export function CustomerResetPassword() {
                 required
                 fullWidth
                 size="small"
-                name="password"
                 label={LL.form.password()}
                 id="password"
                 autoComplete="new-password"
                 autoFocus
-                value={formData.password}
-                onChange={handleChange('password')}
+                {...register('password', { onChange: () => setError('') })}
               />
 
               <PasswordTextField
                 required
                 fullWidth
                 size="small"
-                name="confirmPassword"
                 label={LL.authorization.confirmPassword()}
                 id="confirmPassword"
                 autoComplete="new-password"
-                value={formData.confirmPassword}
-                onChange={handleChange('confirmPassword')}
-                error={
-                  !!error && error === LL.authorization.passwordsDoNotMatch()
-                }
+                error={!!error && error === LL.authorization.passwordsDoNotMatch()}
+                {...register('confirmPassword', { onChange: () => setError('') })}
               />
 
               {/* Submit Button */}
