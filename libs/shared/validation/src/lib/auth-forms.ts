@@ -46,3 +46,7 @@ export type SellerLoginFormValues = CustomerLoginFormValues;
 
 export const sellerSetupPasswordFormSchema = customerResetPasswordFormSchema;
 export type SellerSetupPasswordFormValues = CustomerResetPasswordFormValues;
+
+// Admin form schemas (same rules as customer, no duplication)
+export const adminLoginFormSchema = customerLoginFormSchema;
+export type AdminLoginFormValues = CustomerLoginFormValues;

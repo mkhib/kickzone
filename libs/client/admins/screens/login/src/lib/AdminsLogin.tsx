@@ -1,6 +1,7 @@
 import { AdminsLayout } from '@kickzone-workspace/admins-layout';
 import { colors } from '@kickzone-workspace/colors';
 import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
+import { mapApolloErrorToTranslationKey } from '@kickzone-workspace/translations';
 import LockOutlined from '@mui/icons-material/LockOutlined';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -10,21 +11,46 @@ import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 import { PasswordTextField } from '@kickzone-workspace/password-field';
 import Typography from '@mui/material/Typography';
-import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { useAdminLogin } from '@kickzone-workspace/admins-auth-hooks';
-import { mapApolloErrorToTranslationKey } from '@kickzone-workspace/translations';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
+import type { FieldError } from 'react-hook-form';
+import {
+  adminLoginFormSchema,
+  type AdminLoginFormValues,
+} from '@kickzone-workspace/validation';
 
 export function AdminsLogin() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const { loginAdmin, adminsLoginLoading, adminsLoginError } = useAdminLogin();
   const { LL } = useI18nContext();
   usePageTitle(() => LL.pageTitles.adminLogin());
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    loginAdmin({ email, password });
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<AdminLoginFormValues>({
+    resolver: zodResolver(adminLoginFormSchema),
+    mode: 'onSubmit',
+    defaultValues: {
+      email: '',
+      password: '',
+    },
+  });
+
+  const fieldErrorText = (error: FieldError | undefined): string => {
+    if (!error || !error.type) return '';
+    return LL.errors.requiredFields();
+  };
+
+  const onValidSubmit = async (values: AdminLoginFormValues) => {
+    loginAdmin({ email: values.email, password: values.password });
+  };
+
+  const getDisplayError = () => {
+    if (!adminsLoginError) return null;
+    return LL.errors[mapApolloErrorToTranslationKey(adminsLoginError)]();
   };
 
   return (
@@ -50,30 +76,30 @@ export function AdminsLogin() {
           >
             {LL.authorization.signIn()}
           </Typography>
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 3 }}>
+          <Box component="form" onSubmit={handleSubmit(onValidSubmit)} noValidate sx={{ mt: 3 }}>
             <TextField
               margin="normal"
               required
               fullWidth
               id="email"
               label={LL.form.email()}
-              name="email"
               autoComplete="email"
               autoFocus
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              error={!!errors.email}
+              helperText={errors.email ? fieldErrorText(errors.email) : undefined}
+              {...register('email')}
               {...getLtrTextFieldProps()}
             />
             <PasswordTextField
               margin="normal"
               required
               fullWidth
-              name="password"
               label={LL.form.password()}
               id="password"
               autoComplete="current-password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              error={!!errors.password}
+              helperText={errors.password ? fieldErrorText(errors.password) : undefined}
+              {...register('password')}
             />
             <Button
               type="submit"
@@ -91,7 +117,7 @@ export function AdminsLogin() {
             </Button>
             {adminsLoginError && (
               <Typography color="error" sx={{ mt: 2 }}>
-                {LL.errors[mapApolloErrorToTranslationKey(adminsLoginError)]()}
+                {getDisplayError()}
               </Typography>
             )}
           </Box>

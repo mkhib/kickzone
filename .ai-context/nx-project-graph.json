@@ -18942,6 +18942,11 @@
         },
         {
           "source": "admins-login",
+          "target": "translations",
+          "type": "static"
+        },
+        {
+          "source": "admins-login",
           "target": "password-field",
           "type": "static"
         },
@@ -18952,12 +18957,12 @@
         },
         {
           "source": "admins-login",
-          "target": "translations",
+          "target": "language-components",
           "type": "static"
         },
         {
           "source": "admins-login",
-          "target": "language-components",
+          "target": "shared-validation",
           "type": "static"
         }
       ],
