@@ -5,6 +5,8 @@ import { CustomerProfileService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
 import { InputType, Field } from '@nestjs/graphql';
+import { updateCustomerProfileSchema } from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
 
 @InputType()
 export class UpdateCustomerProfileInput {
@@ -54,7 +56,8 @@ export class CustomerProfileResolver {
   @UseGuards(GraphqlAuthGuard)
   async updateMyProfile(
     @CurrentUser() user: { id: string },
-    @Args('input') input: UpdateCustomerProfileInput
+    @Args('input', new ZodValidationPipe(updateCustomerProfileSchema))
+    input: UpdateCustomerProfileInput
   ): Promise<CustomerProfile> {
     return this.customerProfileService.updateProfile(user.id, input);
   }
