@@ -26,6 +26,13 @@ import {
   UpdateOrderInput,
   UpdateOrderStatusInput,
 } from '@kickzone-workspace/inputs';
+import {
+  createOrderSchema,
+  idSchema,
+  updateOrderSchema,
+  updateOrderStatusSchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
 
 const SELLER_STATUS_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus>> = {
   [OrderStatus.CONFIRMED]: OrderStatus.PROCESSING,
@@ -216,7 +223,8 @@ export class OrderResolver {
 
   @Mutation(() => Order)
   async createOrder(
-    @Args('createOrderInput') createOrderInput: CreateOrderInput
+    @Args('createOrderInput', new ZodValidationPipe(createOrderSchema))
+    createOrderInput: CreateOrderInput
   ) {
     return this.orderService.createOrder(createOrderInput);
   }
@@ -225,8 +233,9 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async updateOrder(
     @CurrentUser() user: any,
-    @Args('id', { type: () => String }) id: string,
-    @Args('updateOrderInput') updateOrderInput: UpdateOrderInput
+    @Args('id', { type: () => String }, new ZodValidationPipe(idSchema)) id: string,
+    @Args('updateOrderInput', new ZodValidationPipe(updateOrderSchema))
+    updateOrderInput: UpdateOrderInput
   ) {
     this.assertAdmin(user);
 
@@ -250,7 +259,7 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async updateOrderStatus(
     @CurrentUser() user: any,
-    @Args('updateOrderStatusInput')
+    @Args('updateOrderStatusInput', new ZodValidationPipe(updateOrderStatusSchema))
     updateOrderStatusInput: UpdateOrderStatusInput
   ) {
     const { id, status } = updateOrderStatusInput;
@@ -297,7 +306,7 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async cancelPendingOrder(
     @CurrentUser() user: any,
-    @Args('orderId', { type: () => String }) orderId: string
+    @Args('orderId', { type: () => String }, new ZodValidationPipe(idSchema)) orderId: string
   ) {
     const order = await this.orderService.findOne(orderId);
 
@@ -333,7 +342,7 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async deleteOrder(
     @CurrentUser() user: any,
-    @Args('id', { type: () => String }) id: string
+    @Args('id', { type: () => String }, new ZodValidationPipe(idSchema)) id: string
   ) {
     this.assertAdmin(user);
 
