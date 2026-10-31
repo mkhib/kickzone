@@ -14,7 +14,7 @@ concurrency:
 jobs:
   build:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[deploy]')
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
 
     steps:
       - name: Checkout code
@@ -62,7 +62,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     if: github.event_name == 'workflow_dispatch' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
 
     steps:
