@@ -17357,6 +17357,16 @@
       "admin-seller-orders": [
         {
           "source": "admin-seller-orders",
+          "target": "codegen",
+          "type": "static"
+        },
+        {
+          "source": "admin-seller-orders",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "admin-seller-orders",
           "target": "glassmorphism-container",
           "type": "static"
         },
@@ -17388,11 +17398,6 @@
         {
           "source": "admin-seller-orders",
           "target": "admins-orders-hook",
-          "type": "static"
-        },
-        {
-          "source": "admin-seller-orders",
-          "target": "codegen",
           "type": "static"
         },
         {
@@ -18223,6 +18228,11 @@
         {
           "source": "seller-orders-screen",
           "target": "sellers-graphql",
+          "type": "static"
+        },
+        {
+          "source": "seller-orders-screen",
+          "target": "shared-validation",
           "type": "static"
         },
         {

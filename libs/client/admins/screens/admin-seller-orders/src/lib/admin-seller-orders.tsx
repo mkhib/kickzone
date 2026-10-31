@@ -1,4 +1,10 @@
 import React, { useMemo, useState, useCallback } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  updateOrderStatusSchema,
+  type UpdateOrderStatusInput,
+} from '@kickzone-workspace/validation';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { DialogFormContent } from '@kickzone-workspace/language-components';
 import {
@@ -74,6 +80,12 @@ export function AdminSellerOrders() {
     KickzoneGraphqlTypes.OrderStatus.Pending
   );
 
+  const statusForm = useForm<UpdateOrderStatusInput>({
+    values: { id: selectedOrder?.id ?? '', status: newStatus },
+    resolver: zodResolver(updateOrderStatusSchema),
+    mode: 'onSubmit',
+  });
+
   const {
     orders,
     loading: ordersLoading,
@@ -95,6 +107,7 @@ export function AdminSellerOrders() {
 
   const handleUpdateStatus = async () => {
     if (!selectedOrder || !newStatus) return;
+    if (!(await statusForm.trigger())) return;
 
     try {
       await updateOrderStatus(selectedOrder.id, newStatus);

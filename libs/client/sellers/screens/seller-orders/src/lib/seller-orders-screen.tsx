@@ -1,4 +1,10 @@
 import React, { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  updateOrderStatusSchema,
+  type UpdateOrderStatusInput,
+} from '@kickzone-workspace/validation';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import Card from '@mui/material/Card';
@@ -86,6 +92,12 @@ export function SellerOrdersScreen() {
     status: selectedStatus,
   });
 
+  const statusForm = useForm<UpdateOrderStatusInput>({
+    values: { id: selectedOrderId ?? '', status: newStatus },
+    resolver: zodResolver(updateOrderStatusSchema),
+    mode: 'onSubmit',
+  });
+
   const handleExpandOrder = (orderId: string) => {
     setExpandedOrder(expandedOrder === orderId ? false : orderId);
   };
@@ -106,6 +118,7 @@ export function SellerOrdersScreen() {
 
   const handleUpdateStatus = async () => {
     if (!selectedOrderId || !newStatus) return;
+    if (!(await statusForm.trigger())) return;
 
     try {
       await updateOrderStatus(selectedOrderId, newStatus);

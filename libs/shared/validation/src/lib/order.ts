@@ -133,4 +133,5 @@ export type OrderItemData = z.output<typeof orderItemSchema>;
 export type CreateOrderData = z.output<typeof createOrderSchema>;
 export type UpdateOrderData = z.output<typeof updateOrderSchema>;
 export type UpdateOrderStatusData = z.output<typeof updateOrderStatusSchema>;
+export type UpdateOrderStatusInput = z.input<typeof updateOrderStatusSchema>;
 export type OrderStatusValue = (typeof ORDER_STATUSES)[number];
