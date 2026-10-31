@@ -1094,6 +1094,85 @@ import { TranslationModule } from './translation.module';
 export class ProductInfoModule {}
 </file>
 
+<file path="libs/server/modules/src/lib/product.module.ts">
+import {
+  Brand,
+  Category,
+  Color,
+  OrderItem,
+  Product,
+  ProductInfo,
+  ProductInfoColor,
+  SellerProduct,
+  SellerInfo,
+  User,
+  ProductDescription,
+  SiteLanguage,
+  RefreshToken,
+} from '@kickzone-workspace/entities';
+import {
+  AuthResolver,
+  ProductResolver,
+  ProductInfoResolver,
+  SellerProductResolver,
+} from '@kickzone-workspace/resolvers';
+import {
+  AuthService,
+  EmailService,
+  ProductService,
+  SellerService,
+  UserService,
+} from '@kickzone-workspace/services';
+import { TokenModule } from './token.module';
+import { TranslationModule } from './translation.module';
+import { CatalogGuardModule } from './catalog-guard.module';
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { JwtModule } from '@nestjs/jwt';
+import { ConfigService } from '@nestjs/config';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([
+      User,
+      Product,
+      ProductInfo,
+      ProductInfoColor,
+      Category,
+      Brand,
+      SellerProduct,
+      Color,
+      SellerInfo,
+      OrderItem,
+      ProductDescription,
+      SiteLanguage,
+      RefreshToken,
+    ]),
+    JwtModule.register({
+      secret: process.env['JWT_SECRET'] || 'defaultSecret',
+      signOptions: { expiresIn: '15m' },
+    }),
+    TokenModule,
+    TranslationModule,
+    CatalogGuardModule,
+  ],
+  providers: [
+    ProductService,
+    ProductResolver,
+    ProductInfoResolver,
+    SellerProductResolver,
+    SellerService,
+    UserService,
+    AuthService,
+    AuthResolver,
+    EmailService,
+    ConfigService,
+  ],
+  exports: [ProductService, TypeOrmModule.forFeature([Product])],
+})
+export class ProductModule {}
+</file>
+
 <file path="libs/server/modules/src/lib/seller-info.module.ts">
 import {
   SellerInfo,
@@ -1881,85 +1960,6 @@ import { OrderModule } from './order.module';
   exports: [PaymentService],
 })
 export class PaymentModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/product.module.ts">
-import {
-  Brand,
-  Category,
-  Color,
-  OrderItem,
-  Product,
-  ProductInfo,
-  ProductInfoColor,
-  SellerProduct,
-  SellerInfo,
-  User,
-  ProductDescription,
-  SiteLanguage,
-  RefreshToken,
-} from '@kickzone-workspace/entities';
-import {
-  AuthResolver,
-  ProductResolver,
-  ProductInfoResolver,
-  SellerProductResolver,
-} from '@kickzone-workspace/resolvers';
-import {
-  AuthService,
-  EmailService,
-  ProductService,
-  SellerService,
-  UserService,
-} from '@kickzone-workspace/services';
-import { TokenModule } from './token.module';
-import { TranslationModule } from './translation.module';
-import { CatalogGuardModule } from './catalog-guard.module';
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { JwtModule } from '@nestjs/jwt';
-import { ConfigService } from '@nestjs/config';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([
-      User,
-      Product,
-      ProductInfo,
-      ProductInfoColor,
-      Category,
-      Brand,
-      SellerProduct,
-      Color,
-      SellerInfo,
-      OrderItem,
-      ProductDescription,
-      SiteLanguage,
-      RefreshToken,
-    ]),
-    JwtModule.register({
-      secret: process.env['JWT_SECRET'] || 'defaultSecret',
-      signOptions: { expiresIn: '15m' },
-    }),
-    TokenModule,
-    TranslationModule,
-    CatalogGuardModule,
-  ],
-  providers: [
-    ProductService,
-    ProductResolver,
-    ProductInfoResolver,
-    SellerProductResolver,
-    SellerService,
-    UserService,
-    AuthService,
-    AuthResolver,
-    EmailService,
-    ConfigService,
-  ],
-  exports: [ProductService, TypeOrmModule.forFeature([Product])],
-})
-export class ProductModule {}
 </file>
 
 <file path="libs/server/inputs/src/lib/order.inputs.ts">

@@ -17,6 +17,13 @@ import {
 } from '@kickzone-workspace/inputs';
 import { ProductService, SellerService } from '@kickzone-workspace/services';
 import { createConnection } from '@kickzone-workspace/utils';
+import {
+  createSellerProductSchema,
+  createSellerSchema,
+  updateSellerProductSchema,
+  updateSellerSchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
 import { SetMetadata, UseGuards } from '@nestjs/common';
 import {
   Args,
@@ -40,7 +47,8 @@ export class SellerResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   createSeller(
-    @Args('createSellerInput') createSellerInput: CreateSellerInput
+    @Args('createSellerInput', new ZodValidationPipe(createSellerSchema))
+    createSellerInput: CreateSellerInput
   ) {
     return this.sellerService.create(createSellerInput);
   }
@@ -112,7 +120,8 @@ export class SellerResolver {
   @UseGuards(RolesGuard)
   @SetMetadata('roles', [UserRole.ADMIN])
   updateSeller(
-    @Args('updateSellerInput') updateSellerInput: UpdateSellerInput
+    @Args('updateSellerInput', new ZodValidationPipe(updateSellerSchema))
+    updateSellerInput: UpdateSellerInput
   ) {
     return this.sellerService.update(updateSellerInput);
   }
@@ -129,7 +138,8 @@ export class SellerResolver {
   @SetMetadata('roles', [UserRole.ADMIN])
   createSellerProduct(
     @Args('sellerId', { type: () => Int }) sellerId: number,
-    @Args('input') input: CreateSellerProductInput
+    @Args('input', new ZodValidationPipe(createSellerProductSchema))
+    input: CreateSellerProductInput
   ) {
     return this.sellerService.createSellerProduct(sellerId, input, true);
   }
@@ -139,7 +149,8 @@ export class SellerResolver {
   @SetMetadata('roles', [UserRole.ADMIN])
   updateSellerProduct(
     @Args('sellerId', { type: () => Int }) sellerId: number,
-    @Args('input') input: UpdateSellerProductInput
+    @Args('input', new ZodValidationPipe(updateSellerProductSchema))
+    input: UpdateSellerProductInput
   ) {
     return this.sellerService.updateSellerProduct(sellerId, input, true);
   }
@@ -150,7 +161,8 @@ export class SellerResolver {
   @SetMetadata('roles', [UserRole.SELLER])
   async createMySellerProduct(
     @Context() context: { req: { user: User } },
-    @Args('input') input: CreateSellerProductInput
+    @Args('input', new ZodValidationPipe(createSellerProductSchema))
+    input: CreateSellerProductInput
   ) {
     const user = context.req.user;
     if (!user) throw new Error('Not authenticated');
@@ -167,7 +179,8 @@ export class SellerResolver {
   @SetMetadata('roles', [UserRole.SELLER])
   async updateMySellerProduct(
     @Context() context: { req: { user: User } },
-    @Args('input') input: UpdateSellerProductInput
+    @Args('input', new ZodValidationPipe(updateSellerProductSchema))
+    input: UpdateSellerProductInput
   ) {
     const user = context.req.user;
     if (!user) throw new Error('Not authenticated');
