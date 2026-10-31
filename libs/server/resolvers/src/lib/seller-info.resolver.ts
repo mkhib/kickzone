@@ -20,6 +20,10 @@ import { createConnection } from '@kickzone-workspace/utils';
 import {
   createSellerProductSchema,
   createSellerSchema,
+  cursorSchema,
+  paginationFirstSchema,
+  productFilterSchema,
+  sellerFilterSchema,
   updateSellerProductSchema,
   updateSellerSchema,
 } from '@kickzone-workspace/validation';
@@ -58,9 +62,20 @@ export class SellerResolver {
   @SetMetadata('roles', [UserRole.ADMIN, UserRole.CUSTOMER])
   async sellers(
     @Context() context: { req: { user?: User } },
-    @Args('filter', { nullable: true }) filter?: SellerFilterInput,
-    @Args('first', { type: () => Int, defaultValue: 100 }) first = 100,
-    @Args('after', { type: () => String, nullable: true }) after?: string
+    @Args('filter', { nullable: true }, new ZodValidationPipe(sellerFilterSchema))
+    filter?: SellerFilterInput,
+    @Args(
+      'first',
+      { type: () => Int, defaultValue: 100 },
+      new ZodValidationPipe(paginationFirstSchema)
+    )
+    first = 100,
+    @Args(
+      'after',
+      { type: () => String, nullable: true },
+      new ZodValidationPipe(cursorSchema)
+    )
+    after?: string
   ) {
     // For customers, only allow querying by IDs
     const user = context.req.user;
@@ -196,7 +211,8 @@ export class SellerResolver {
   @Query(() => ProductConnection)
   async sellerProductsForMe(
     @Context() context: { req: { user: User } },
-    @Args('filter', { nullable: true }) filter?: ProductFilterInput
+    @Args('filter', { nullable: true }, new ZodValidationPipe(productFilterSchema))
+    filter?: ProductFilterInput
   ) {
     const user = context.req.user;
     if (!user) throw new Error('Not authenticated');

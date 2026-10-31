@@ -1,6 +1,7 @@
 import {
   createProductInfoSchema,
   createProductSchema,
+  productFilterSchema,
   updateProductSchema,
 } from '@kickzone-workspace/validation';
 import { ZodValidationPipe } from './zod-validation.pipe';
@@ -56,7 +57,8 @@ export class ProductResolver {
 
   @Query(() => ProductConnection)
   async products(
-    @Args('filter', { nullable: true }) filter?: ProductFilterInput
+    @Args('filter', { nullable: true }, new ZodValidationPipe(productFilterSchema))
+    filter?: ProductFilterInput
   ): Promise<ProductConnection> {
     if (!filter) filter = { archivedStatus: ProductArchivedStatus.ACTIVE };
     if (!filter.archivedStatus)
@@ -83,7 +85,8 @@ export class ProductResolver {
   @Query(() => ProductConnection)
   async sellerProductsForMe(
     @Context() context: { req: { user: User } },
-    @Args('filter', { nullable: true }) filter?: ProductFilterInput
+    @Args('filter', { nullable: true }, new ZodValidationPipe(productFilterSchema))
+    filter?: ProductFilterInput
   ): Promise<ProductConnection> {
     const user = context.req.user;
     if (!user) throw new Error('Not authenticated');

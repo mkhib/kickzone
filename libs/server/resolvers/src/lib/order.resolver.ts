@@ -28,7 +28,11 @@ import {
 } from '@kickzone-workspace/inputs';
 import {
   createOrderSchema,
+  cursorSchema,
   idSchema,
+  optionalIdSchema,
+  paginationFirstSchema,
+  trackingNumberSchema,
   updateOrderSchema,
   updateOrderStatusSchema,
 } from '@kickzone-workspace/validation';
@@ -83,9 +87,24 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async orders(
     @CurrentUser() user: any,
-    @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
-    @Args('after', { type: () => String, nullable: true }) after?: string,
-    @Args('sellerId', { type: () => String, nullable: true }) sellerId?: string,
+    @Args(
+      'first',
+      { type: () => Number, defaultValue: 10 },
+      new ZodValidationPipe(paginationFirstSchema)
+    )
+    first: number,
+    @Args(
+      'after',
+      { type: () => String, nullable: true },
+      new ZodValidationPipe(cursorSchema)
+    )
+    after?: string,
+    @Args(
+      'sellerId',
+      { type: () => String, nullable: true },
+      new ZodValidationPipe(optionalIdSchema)
+    )
+    sellerId?: string,
     @Args('status', { type: () => OrderStatus, nullable: true })
     status?: OrderStatus
   ) {
@@ -97,7 +116,7 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async order(
     @CurrentUser() user: any,
-    @Args('id', { type: () => String }) id: string
+    @Args('id', { type: () => String }, new ZodValidationPipe(idSchema)) id: string
   ) {
     const order = await this.orderService.findOne(id);
     const role = this.getUserRole(user);
@@ -132,8 +151,18 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async myOrders(
     @CurrentUser() user: User,
-    @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
-    @Args('after', { type: () => String, nullable: true }) after?: string
+    @Args(
+      'first',
+      { type: () => Number, defaultValue: 10 },
+      new ZodValidationPipe(paginationFirstSchema)
+    )
+    first: number,
+    @Args(
+      'after',
+      { type: () => String, nullable: true },
+      new ZodValidationPipe(cursorSchema)
+    )
+    after?: string
   ) {
     // For CUSTOMER: Get orders by customer email
     if (this.getUserRole(user) === 'CUSTOMER') {
@@ -159,8 +188,18 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async mySellerOrders(
     @CurrentUser() user: User,
-    @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
-    @Args('after', { type: () => String, nullable: true }) after?: string,
+    @Args(
+      'first',
+      { type: () => Number, defaultValue: 10 },
+      new ZodValidationPipe(paginationFirstSchema)
+    )
+    first: number,
+    @Args(
+      'after',
+      { type: () => String, nullable: true },
+      new ZodValidationPipe(cursorSchema)
+    )
+    after?: string,
     @Args('status', { type: () => OrderStatus, nullable: true })
     status?: OrderStatus
   ) {
@@ -198,9 +237,20 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async adminSellerOrders(
     @CurrentUser() user: any,
-    @Args('sellerId', { type: () => String }) sellerId: string,
-    @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
-    @Args('after', { type: () => String, nullable: true }) after?: string,
+    @Args('sellerId', { type: () => String }, new ZodValidationPipe(idSchema))
+    sellerId: string,
+    @Args(
+      'first',
+      { type: () => Number, defaultValue: 10 },
+      new ZodValidationPipe(paginationFirstSchema)
+    )
+    first: number,
+    @Args(
+      'after',
+      { type: () => String, nullable: true },
+      new ZodValidationPipe(cursorSchema)
+    )
+    after?: string,
     @Args('status', { type: () => OrderStatus, nullable: true })
     status?: OrderStatus
   ) {
@@ -212,8 +262,18 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async allSellerOrders(
     @CurrentUser() user: any,
-    @Args('first', { type: () => Number, defaultValue: 10 }) first: number,
-    @Args('after', { type: () => String, nullable: true }) after?: string,
+    @Args(
+      'first',
+      { type: () => Number, defaultValue: 10 },
+      new ZodValidationPipe(paginationFirstSchema)
+    )
+    first: number,
+    @Args(
+      'after',
+      { type: () => String, nullable: true },
+      new ZodValidationPipe(cursorSchema)
+    )
+    after?: string,
     @Args('status', { type: () => OrderStatus, nullable: true })
     status?: OrderStatus
   ) {
@@ -367,8 +427,13 @@ export class OrderResolver {
   @UseGuards(GraphqlAuthGuard)
   async updateOrderTracking(
     @CurrentUser() user: any,
-    @Args('id', { type: () => String }) id: string,
-    @Args('trackingNumber', { type: () => String }) trackingNumber: string
+    @Args('id', { type: () => String }, new ZodValidationPipe(idSchema)) id: string,
+    @Args(
+      'trackingNumber',
+      { type: () => String },
+      new ZodValidationPipe(trackingNumberSchema)
+    )
+    trackingNumber: string
   ) {
     const trimmed = String(trackingNumber ?? '').trim();
     if (!trimmed || trimmed.length > 100) {
