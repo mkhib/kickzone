@@ -25,6 +25,12 @@ import Typography from '@mui/material/Typography';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Switch from '@mui/material/Switch';
 import React, { useState, useEffect, useMemo } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  sellerProductFormSchema,
+  type SellerProductFormInput,
+} from '@kickzone-workspace/validation';
 import { Link as RouterLink, useSearchParams } from 'react-router-dom';
 import {
   useI18nContext,
@@ -56,6 +62,12 @@ export function SellersManageProductScreen() {
   const { formatNumber, currentLocale } = useLanguageContext();
   const [formData, setFormData] =
     useState<KickzoneGraphqlTypes.CreateSellerProductInput>(initialFormData);
+  const productForm = useForm<SellerProductFormInput>({
+    values: formData,
+    resolver: zodResolver(sellerProductFormSchema),
+    mode: 'onSubmit',
+  });
+  const productErrors = productForm.formState.errors;
   const [selectedProduct, setSelectedProduct] =
     useState<KickzoneGraphqlTypes.Product | null>(null);
   const [selectedProductInfo, setSelectedProductInfo] =
@@ -227,6 +239,8 @@ export function SellersManageProductScreen() {
       return;
     }
 
+    if (!(await productForm.trigger())) return;
+
     try {
       if (isEditing && editingProductId) {
         await updateProduct(
@@ -260,16 +274,7 @@ export function SellersManageProductScreen() {
     }
   };
 
-  const isFormValid = () => {
-    return (
-      formData.productInfoId > 0 &&
-      formData.price > 0 &&
-      formData.costPrice > 0 &&
-      formData.stockQuantity >= 0 &&
-      formData.discount >= 0 &&
-      formData.discount <= 100
-    );
-  };
+  const isFormValid = () => sellerProductFormSchema.safeParse(formData).success;
 
   const isLoading =
     isManagementLoading || isProductsLoading || isSellerProductLoading;
@@ -704,6 +709,7 @@ export function SellersManageProductScreen() {
                         label={LL.form.price()}
                         type="number"
                         value={formData.price}
+                        error={Boolean(productErrors.price)}
                         onChange={(e) =>
                           handleInputChange('price', e.target.value)
                         }
@@ -728,6 +734,7 @@ export function SellersManageProductScreen() {
                         label={LL.form.costPrice()}
                         type="number"
                         value={formData.costPrice}
+                        error={Boolean(productErrors.costPrice)}
                         onChange={(e) =>
                           handleInputChange('costPrice', e.target.value)
                         }
@@ -781,6 +788,7 @@ export function SellersManageProductScreen() {
                         label={LL.form.stockQuantity()}
                         type="number"
                         value={formData.stockQuantity}
+                        error={Boolean(productErrors.stockQuantity)}
                         onChange={(e) =>
                           handleInputChange('stockQuantity', e.target.value)
                         }

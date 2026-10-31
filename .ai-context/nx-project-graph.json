@@ -18061,6 +18061,11 @@
         },
         {
           "source": "sellers-manage-product-screen",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "sellers-manage-product-screen",
           "target": "sellers-routes",
           "type": "static"
         }
