@@ -1,155 +1,78 @@
-import { BadRequestException, ValidationPipe } from '@nestjs/common';
-import { GLOBAL_VALIDATION_PIPE_OPTIONS, createGlobalValidationPipe } from './global-validation-pipe';
-import { AddToCartInput } from '@kickzone-workspace/inputs';
-import { CreateBrandInput } from '@kickzone-workspace/inputs';
-import { CreateProductInput, ProductVariantInput } from '@kickzone-workspace/inputs';
-import { CreateSellerInput } from '@kickzone-workspace/inputs';
+import { BadRequestException } from '@nestjs/common';
+import { readFileSync } from 'fs';
+import { join } from 'path';
+import { ZodValidationPipe } from '@kickzone-workspace/resolvers';
+import {
+  addToCartSchema,
+  createBrandSchema,
+  createProductSchema,
+  createSellerSchema,
+} from '@kickzone-workspace/validation';
+import {
+  AddToCartInput,
+  CreateBrandInput,
+  CreateProductInput,
+  CreateSellerInput,
+  ProductVariantInput,
+} from '@kickzone-workspace/inputs';
 
-describe('Global Validation Pipe', () => {
-  let pipe: ValidationPipe;
-
-  beforeEach(() => {
-    pipe = createGlobalValidationPipe();
+/**
+ * The global class-validator ValidationPipe was removed (V9). Arguments are now
+ * validated per resolver argument by ZodValidationPipe with the shared schemas.
+ */
+describe('Global Validation Pipe (replaced by per-argument Zod pipes)', () => {
+  it('main.ts no longer registers a global validation pipe', () => {
+    const main = readFileSync(join(__dirname, '..', 'main.ts'), 'utf8');
+    expect(main).not.toMatch(/useGlobalPipes|ValidationPipe/);
   });
 
-  describe('GLOBAL_VALIDATION_PIPE_OPTIONS', () => {
-    it('should have exactly the required 5 options with correct values', () => {
-      expect(GLOBAL_VALIDATION_PIPE_OPTIONS).toEqual({
-        whitelist: false,
-        forbidNonWhitelisted: false,
-        forbidUnknownValues: false,
-        transform: false,
-        stopAtFirstError: true,
-      });
+  describe('valid inputs pass through unchanged (fields not stripped)', () => {
+    it('should pass AddToCartInput unchanged', () => {
+      const input: AddToCartInput = { sellerProductId: 'sp-1', quantity: 2 };
+      expect(new ZodValidationPipe(addToCartSchema).transform(input)).toEqual(input);
     });
 
-    it('should not have any additional properties', () => {
-      const keys = Object.keys(GLOBAL_VALIDATION_PIPE_OPTIONS).sort();
-      expect(keys).toEqual([
-        'forbidNonWhitelisted',
-        'forbidUnknownValues',
-        'stopAtFirstError',
-        'transform',
-        'whitelist',
-      ]);
-    });
-  });
-
-  describe('undecorated inputs (no class-validator decorators)', () => {
-    it('should pass AddToCartInput unchanged (fields not stripped)', async () => {
-      const input = { sellerProductId: 'sp-1', quantity: 2 };
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: AddToCartInput,
-        data: '',
-      });
-      expect(result).toEqual(input); // deep-equal, fields not stripped
-    });
-
-    it('should pass CreateBrandInput unchanged (fields not stripped)', async () => {
-      const input = { slug: 'nike', sortOrder: 5 };
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: CreateBrandInput,
-        data: '',
-      });
-      expect(result).toEqual(input); // deep-equal, fields not stripped
-    });
-
-    it('should NOT reject plain object for undecorated class with "unknown value" error', async () => {
-      const input = { slug: 'adidas', sortOrder: 10 };
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateBrandInput,
-          data: '',
-        })
-      ).resolves.toEqual(input);
+    it.each([
+      { slug: 'nike', sortOrder: 5 },
+      { slug: 'adidas', sortOrder: 10 },
+    ])('should pass CreateBrandInput %p unchanged', (input: CreateBrandInput) => {
+      expect(new ZodValidationPipe(createBrandSchema).transform(input)).toEqual(input);
     });
   });
 
-  describe('decorated inputs (with class-validator decorators)', () => {
-    it('should reject CreateProductInput with invalid weight (0) via BadRequestException', async () => {
-      const input: CreateProductInput = {
-        name: 'X',
-        sku: 'S',
-        categoryIds: [1],
-        variants: [
-          {
-            size: 'M',
-            colorIds: [1],
-            weight: 0, // invalid: must be > 0
-          } as ProductVariantInput,
-        ],
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateProductInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
+  describe('product and seller rules', () => {
+    const productPipe = new ZodValidationPipe(createProductSchema);
+    const product = (weight: number): CreateProductInput => ({
+      name: 'X',
+      sku: 'S',
+      categoryIds: [1],
+      variants: [{ size: 'M', colorIds: [1], weight } as ProductVariantInput],
     });
 
-    it('should resolve CreateProductInput with valid weight (1.5)', async () => {
-      const input: CreateProductInput = {
-        name: 'X',
-        sku: 'S',
-        categoryIds: [1],
-        variants: [
-          {
-            size: 'M',
-            colorIds: [1],
-            weight: 1.5, // valid: > 0
-          } as ProductVariantInput,
-        ],
-      };
-
-      const result = await pipe.transform(input, {
-        type: 'body',
-        metatype: CreateProductInput,
-        data: '',
-      });
-      expect(result).toEqual(input);
+    it('should reject CreateProductInput with invalid weight (0) via BadRequestException', () => {
+      expect(() => productPipe.transform(product(0))).toThrow(BadRequestException);
     });
 
-    it('should reject CreateSellerInput with missing/empty storeName via BadRequestException', async () => {
-      const input: CreateSellerInput = {
-        name: 'John',
-        lastName: 'Doe',
-        username: 'johndoe',
-        email: 'john@example.com',
-        password: 'password123',
-        storeName: '', // invalid: empty string
-      };
-
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateSellerInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
+    it('should resolve CreateProductInput with valid weight (1.5)', () => {
+      expect(productPipe.transform(product(1.5))).toEqual(product(1.5));
     });
 
-    it('should reject CreateSellerInput with missing storeName via BadRequestException', async () => {
-      const input = {
-        name: 'John',
-        lastName: 'Doe',
-        username: 'johndoe',
-        email: 'john@example.com',
-        password: 'password123',
-        // storeName missing entirely
-      };
+    const sellerPipe = new ZodValidationPipe(createSellerSchema);
+    const seller = {
+      name: 'John',
+      lastName: 'Doe',
+      username: 'johndoe',
+      email: 'john@example.com',
+      password: 'password123',
+    };
 
-      await expect(
-        pipe.transform(input, {
-          type: 'body',
-          metatype: CreateSellerInput,
-          data: '',
-        })
-      ).rejects.toThrow(BadRequestException);
+    it('should reject CreateSellerInput with empty storeName via BadRequestException', () => {
+      const input: CreateSellerInput = { ...seller, storeName: '' };
+      expect(() => sellerPipe.transform(input)).toThrow(BadRequestException);
+    });
+
+    it('should reject CreateSellerInput with missing storeName via BadRequestException', () => {
+      expect(() => sellerPipe.transform(seller)).toThrow(BadRequestException);
     });
   });
 });

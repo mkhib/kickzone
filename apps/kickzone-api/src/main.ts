@@ -8,7 +8,6 @@ import { AppModule } from './app/app.module';
 import cookieParser from 'cookie-parser';
 import graphqlUploadExpress from 'graphql-upload/graphqlUploadExpress.js';
 import helmet from 'helmet';
-import { createGlobalValidationPipe } from './app/global-validation-pipe';
 
 type HotModule = {
   hot?: {
@@ -26,7 +25,6 @@ async function bootstrap() {
     bufferLogs: true,
   });
   app.useLogger(app.get(PinoLogger));
-  app.useGlobalPipes(createGlobalValidationPipe());
 
   console.log('this is module', module);
 
