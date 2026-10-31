@@ -15,6 +15,12 @@ import {
 import { CartService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
+import { ZodValidationPipe } from './zod-validation.pipe';
+import {
+  addToCartSchema,
+  updateCartItemSchema,
+  idSchema,
+} from '@kickzone-workspace/validation';
 
 @Resolver(() => Cart)
 export class CartResolver {
@@ -30,7 +36,7 @@ export class CartResolver {
   @UseGuards(GraphqlAuthGuard)
   async addToCart(
     @CurrentUser() user: any,
-    @Args('addToCartInput') addToCartInput: AddToCartInput
+    @Args('addToCartInput', new ZodValidationPipe(addToCartSchema)) addToCartInput: AddToCartInput
   ) {
     return this.cartService.addToCart(user.id, addToCartInput);
   }
@@ -39,8 +45,8 @@ export class CartResolver {
   @UseGuards(GraphqlAuthGuard)
   async updateCartItem(
     @CurrentUser() user: any,
-    @Args('itemId', { type: () => String }) itemId: string,
-    @Args('updateInput') updateInput: UpdateCartItemInput
+    @Args('itemId', { type: () => String }, new ZodValidationPipe(idSchema)) itemId: string,
+    @Args('updateInput', new ZodValidationPipe(updateCartItemSchema)) updateInput: UpdateCartItemInput
   ) {
     return this.cartService.updateCartItem(user.id, itemId, updateInput);
   }
@@ -49,7 +55,7 @@ export class CartResolver {
   @UseGuards(GraphqlAuthGuard)
   async removeFromCart(
     @CurrentUser() user: any,
-    @Args('itemId', { type: () => String }) itemId: string
+    @Args('itemId', { type: () => String }, new ZodValidationPipe(idSchema)) itemId: string
   ) {
     return this.cartService.removeFromCart(user.id, itemId);
   }
