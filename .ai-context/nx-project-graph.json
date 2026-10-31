@@ -17542,6 +17542,11 @@
         },
         {
           "source": "customer-forgot-password",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "customer-forgot-password",
           "target": "glassmorphism-container",
           "type": "static"
         },
@@ -17857,6 +17862,11 @@
         {
           "source": "customer-reset-password",
           "target": "translations",
+          "type": "static"
+        },
+        {
+          "source": "customer-reset-password",
+          "target": "shared-validation",
           "type": "static"
         },
         {

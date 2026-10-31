@@ -509,978 +509,981 @@ subgraph 9W["src"]
 subgraph 9Y["lib"]
 9Z["customer-forgot-password.tsx"]
 A0["customer-forgot-password.spec.tsx"]
+A1["customer-forgot-password.zod.spec.tsx"]
 end
 end
 end
-subgraph A1["guide-authenticity"]
-subgraph A2["src"]
-A3["index.ts"]
-subgraph A4["lib"]
-A5["customer-guide-authenticity.tsx"]
-A6["customer-guide-authenticity.spec.tsx"]
+subgraph A2["guide-authenticity"]
+subgraph A3["src"]
+A4["index.ts"]
+subgraph A5["lib"]
+A6["customer-guide-authenticity.tsx"]
+A7["customer-guide-authenticity.spec.tsx"]
 end
 end
-A7["vite.config.ts"]
+A8["vite.config.ts"]
 end
-subgraph A8["guide-payment"]
-subgraph A9["src"]
-AA["index.ts"]
-subgraph AB["lib"]
-AC["customer-guide-payment.tsx"]
-AD["customer-guide-payment.spec.tsx"]
+subgraph A9["guide-payment"]
+subgraph AA["src"]
+AB["index.ts"]
+subgraph AC["lib"]
+AD["customer-guide-payment.tsx"]
+AE["customer-guide-payment.spec.tsx"]
 end
 end
-AE["vite.config.ts"]
+AF["vite.config.ts"]
 end
-subgraph AF["home"]
-subgraph AG["src"]
-AH["index.ts"]
-subgraph AI["lib"]
-AJ["CustomersHomeScreen.tsx"]
-subgraph AK["components"]
-AL["CategoryBentoSection.tsx"]
-AN["HeroSection.tsx"]
-AO["HomeLoadingScreen.tsx"]
-AP["PicksRailSection.tsx"]
-AQ["TrustStripSection.tsx"]
-AV["NewArrivalsSection.tsx"]
-AX["BrandBlocksSection.tsx"]
-AY["NewsletterSection.tsx"]
-AZ["ShopTheLookSection.tsx"]
-B0["TickerSection.tsx"]
+subgraph AG["home"]
+subgraph AH["src"]
+AI["index.ts"]
+subgraph AJ["lib"]
+AK["CustomersHomeScreen.tsx"]
+subgraph AL["components"]
+AM["CategoryBentoSection.tsx"]
+AO["HeroSection.tsx"]
+AP["HomeLoadingScreen.tsx"]
+AQ["PicksRailSection.tsx"]
+AR["TrustStripSection.tsx"]
+AW["NewArrivalsSection.tsx"]
+AY["BrandBlocksSection.tsx"]
+AZ["NewsletterSection.tsx"]
+B0["ShopTheLookSection.tsx"]
+B1["TickerSection.tsx"]
 end
-AM["home-selectors.ts"]
-AR["useScrollProgress.ts"]
-AS["CustomersShopScreen.tsx"]
-AT["CustomersHomeScreen.cart-size.spec.tsx"]
-AU["CustomersHomeScreen.spec.tsx"]
-AW["CustomersShopScreen.cart-size.spec.tsx"]
+AN["home-selectors.ts"]
+AS["useScrollProgress.ts"]
+AT["CustomersShopScreen.tsx"]
+AU["CustomersHomeScreen.cart-size.spec.tsx"]
+AV["CustomersHomeScreen.spec.tsx"]
+AX["CustomersShopScreen.cart-size.spec.tsx"]
 end
 end
 end
-subgraph B1["login"]
-subgraph B2["src"]
-B3["index.ts"]
-subgraph B4["lib"]
-B5["CustomersLoginScreen.tsx"]
-B6["CustomersLoginScreen.spec.tsx"]
-B7["CustomersLoginScreen.zod.spec.tsx"]
+subgraph B2["login"]
+subgraph B3["src"]
+B4["index.ts"]
+subgraph B5["lib"]
+B6["CustomersLoginScreen.tsx"]
+B7["CustomersLoginScreen.spec.tsx"]
+B8["CustomersLoginScreen.zod.spec.tsx"]
 end
 end
 end
-subgraph B8["not-found"]
-subgraph B9["src"]
-BA["index.ts"]
-subgraph BB["lib"]
-BC["customer-not-found.tsx"]
-BD["customer-not-found.spec.tsx"]
+subgraph B9["not-found"]
+subgraph BA["src"]
+BB["index.ts"]
+subgraph BC["lib"]
+BD["customer-not-found.tsx"]
+BE["customer-not-found.spec.tsx"]
 end
 end
-BE["vite.config.ts"]
+BF["vite.config.ts"]
 end
-subgraph BF["privacy-policy"]
-subgraph BG["src"]
-BH["index.ts"]
-subgraph BI["lib"]
-BJ["customer-privacy-policy.tsx"]
-BK["customer-privacy-policy.spec.tsx"]
+subgraph BG["privacy-policy"]
+subgraph BH["src"]
+BI["index.ts"]
+subgraph BJ["lib"]
+BK["customer-privacy-policy.tsx"]
+BL["customer-privacy-policy.spec.tsx"]
 end
 end
-BL["vite.config.ts"]
+BM["vite.config.ts"]
 end
-subgraph BM["product-details"]
-subgraph BN["src"]
-BO["index.ts"]
-subgraph BP["lib"]
-BQ["customer-product-details.tsx"]
-BR["customer-product-details.pants-size.spec.tsx"]
-BS["customer-product-details.spec.tsx"]
+subgraph BN["product-details"]
+subgraph BO["src"]
+BP["index.ts"]
+subgraph BQ["lib"]
+BR["customer-product-details.tsx"]
+BS["customer-product-details.pants-size.spec.tsx"]
+BT["customer-product-details.spec.tsx"]
 end
 end
-BT["vite.config.ts"]
+BU["vite.config.ts"]
 end
-subgraph BU["reset-password"]
-subgraph BV["src"]
-BW["index.ts"]
-subgraph BX["lib"]
-BY["customer-reset-password.tsx"]
-BZ["customer-reset-password.password-length.spec.tsx"]
+subgraph BV["reset-password"]
+subgraph BW["src"]
+BX["index.ts"]
+subgraph BY["lib"]
+BZ["customer-reset-password.tsx"]
+C0["customer-reset-password.password-length.spec.tsx"]
+C1["customer-reset-password.zod.spec.tsx"]
 end
 end
 end
-subgraph C0["shipping-returns"]
-subgraph C1["src"]
-C2["index.ts"]
-subgraph C3["lib"]
-C4["customer-shipping-returns.tsx"]
-C5["customer-shipping-returns.spec.tsx"]
+subgraph C2["shipping-returns"]
+subgraph C3["src"]
+C4["index.ts"]
+subgraph C5["lib"]
+C6["customer-shipping-returns.tsx"]
+C7["customer-shipping-returns.spec.tsx"]
 end
 end
-C6["vite.config.ts"]
+C8["vite.config.ts"]
 end
-subgraph C7["unauthorized"]
-subgraph C8["src"]
-C9["index.ts"]
-subgraph CA["lib"]
-CB["customers-unauthorized-screen.tsx"]
+subgraph C9["unauthorized"]
+subgraph CA["src"]
+CB["index.ts"]
+subgraph CC["lib"]
+CD["customers-unauthorized-screen.tsx"]
 end
 end
 end
 end
-subgraph CC["utility"]
-subgraph CD["test"]
-subgraph CE["src"]
-CF["index.ts"]
-subgraph CG["lib"]
-CH["customers-test-utility.tsx"]
+subgraph CE["utility"]
+subgraph CF["test"]
+subgraph CG["src"]
+CH["index.ts"]
+subgraph CI["lib"]
+CJ["customers-test-utility.tsx"]
 end
 end
 end
 end
-subgraph CI["validations"]
-subgraph CJ["src"]
-CK["index.ts"]
-subgraph CL["lib"]
-CM["shipping-validation.ts"]
-CN["shipping-validation.spec.tsx"]
-CO["shipping-validation.tsx"]
+subgraph CK["validations"]
+subgraph CL["src"]
+CM["index.ts"]
+subgraph CN["lib"]
+CO["shipping-validation.ts"]
+CP["shipping-validation.spec.tsx"]
+CQ["shipping-validation.tsx"]
 end
 end
 end
-subgraph CP["zustand"]
-subgraph CQ["customer-cart-store"]
-subgraph CR["src"]
-CS["index.ts"]
-subgraph CT["lib"]
-CU["customer-cart-store.ts"]
-CV["customer-cart-store.spec.ts"]
-CW["customer-cart-store.tsx"]
+subgraph CR["zustand"]
+subgraph CS["customer-cart-store"]
+subgraph CT["src"]
+CU["index.ts"]
+subgraph CV["lib"]
+CW["customer-cart-store.ts"]
+CX["customer-cart-store.spec.ts"]
+CY["customer-cart-store.tsx"]
 end
 end
 end
-subgraph CX["customer-checkout-store"]
-subgraph CY["src"]
-CZ["index.ts"]
-subgraph D0["lib"]
-D1["customer-checkout-store.ts"]
-D2["customer-checkout-store.spec.ts"]
+subgraph CZ["customer-checkout-store"]
+subgraph D0["src"]
+D1["index.ts"]
+subgraph D2["lib"]
+D3["customer-checkout-store.ts"]
+D4["customer-checkout-store.spec.ts"]
 end
 end
-D3["vite.config.ts"]
+D5["vite.config.ts"]
 end
-subgraph D4["customer-wishlist-store"]
-subgraph D5["src"]
-D6["index.ts"]
-subgraph D7["lib"]
-D8["customer-wishlist-store.ts"]
-D9["customer-wishlist-store.spec.ts"]
+subgraph D6["customer-wishlist-store"]
+subgraph D7["src"]
+D8["index.ts"]
+subgraph D9["lib"]
+DA["customer-wishlist-store.ts"]
+DB["customer-wishlist-store.spec.ts"]
 end
 end
 end
-subgraph DA["src"]
-DB["index.ts"]
-subgraph DC["lib"]
-DD["customers-products-store.tsx"]
+subgraph DC["src"]
+DD["index.ts"]
+subgraph DE["lib"]
+DF["customers-products-store.tsx"]
 end
 end
 end
 end
-subgraph DE["sellers"]
-subgraph DF["components"]
-subgraph DG["footer"]
-subgraph DH["src"]
-DI["index.ts"]
-subgraph DJ["lib"]
-DK["sellers-footer.tsx"]
-DL["sellers-footer.spec.tsx"]
+subgraph DG["sellers"]
+subgraph DH["components"]
+subgraph DI["footer"]
+subgraph DJ["src"]
+DK["index.ts"]
+subgraph DL["lib"]
+DM["sellers-footer.tsx"]
+DN["sellers-footer.spec.tsx"]
 end
 end
 end
-subgraph DM["headerbar"]
-subgraph DN["src"]
-DO["index.ts"]
-subgraph DP["lib"]
-DQ["SellersHeaderbar.tsx"]
+subgraph DO["headerbar"]
+subgraph DP["src"]
+DQ["index.ts"]
+subgraph DR["lib"]
+DS["SellersHeaderbar.tsx"]
 end
 end
 end
-subgraph DR["layout"]
-subgraph DS["src"]
-DT["index.ts"]
-subgraph DU["lib"]
-DV["SellersLayout.tsx"]
-DW["SellersTabbar.tsx"]
+subgraph DT["layout"]
+subgraph DU["src"]
+DV["index.ts"]
+subgraph DW["lib"]
+DX["SellersLayout.tsx"]
+DY["SellersTabbar.tsx"]
 end
 end
 end
 end
-subgraph DX["contexts"]
-subgraph DY["auth"]
-subgraph DZ["src"]
-E0["index.ts"]
-subgraph E1["lib"]
-E2["SellersAuthContext.tsx"]
-E3["SellersAuthContext.spec.tsx"]
+subgraph DZ["contexts"]
+subgraph E0["auth"]
+subgraph E1["src"]
+E2["index.ts"]
+subgraph E3["lib"]
+E4["SellersAuthContext.tsx"]
+E5["SellersAuthContext.spec.tsx"]
 end
 end
 end
 end
-subgraph E4["graphql"]
-subgraph E5["src"]
-E6["index.ts"]
-subgraph E7["lib"]
-E8["fragments.ts"]
-E9["mutations.ts"]
-EA["Provider.tsx"]
-EB["SellersApolloProvider.tsx"]
-EC["client.ts"]
-ED["queries.ts"]
-EE["seller-orders.graphql.ts"]
-EF["apollo-upload-client.d.ts"]
-end
-subgraph EG["types"]
+subgraph E6["graphql"]
+subgraph E7["src"]
+E8["index.ts"]
+subgraph E9["lib"]
+EA["fragments.ts"]
+EB["mutations.ts"]
+EC["Provider.tsx"]
+ED["SellersApolloProvider.tsx"]
+EE["client.ts"]
+EF["queries.ts"]
+EG["seller-orders.graphql.ts"]
 EH["apollo-upload-client.d.ts"]
 end
+subgraph EI["types"]
+EJ["apollo-upload-client.d.ts"]
 end
 end
-subgraph EI["hooks"]
-subgraph EJ["auth"]
-subgraph EK["src"]
-EL["index.ts"]
-subgraph EM["lib"]
-EN["useSellerAuth.ts"]
-EO["sellerAuth.graphql.ts"]
 end
+subgraph EK["hooks"]
+subgraph EL["auth"]
+subgraph EM["src"]
+EN["index.ts"]
+subgraph EO["lib"]
+EP["useSellerAuth.ts"]
+EQ["sellerAuth.graphql.ts"]
 end
 end
-subgraph EP["orders"]
-subgraph EQ["src"]
-ER["index.ts"]
-subgraph ES["lib"]
-ET["useSellerOrders.ts"]
-EU["useSellerOrders.tracking.spec.tsx"]
 end
+subgraph ER["orders"]
+subgraph ES["src"]
+ET["index.ts"]
+subgraph EU["lib"]
+EV["useSellerOrders.ts"]
+EW["useSellerOrders.tracking.spec.tsx"]
 end
 end
-subgraph EV["products"]
-subgraph EW["src"]
-EX["index.ts"]
-subgraph EY["lib"]
-EZ["useSellersProductManagement.ts"]
-F0["useSellersProducts.ts"]
 end
+subgraph EX["products"]
+subgraph EY["src"]
+EZ["index.ts"]
+subgraph F0["lib"]
+F1["useSellersProductManagement.ts"]
+F2["useSellersProducts.ts"]
 end
 end
 end
-subgraph F1["router"]
-subgraph F2["src"]
-F3["index.ts"]
-subgraph F4["lib"]
-F5["SellersRouter.tsx"]
 end
+subgraph F3["router"]
+subgraph F4["src"]
+F5["index.ts"]
+subgraph F6["lib"]
+F7["SellersRouter.tsx"]
 end
 end
-subgraph F6["routes"]
-subgraph F7["src"]
-F8["index.ts"]
-subgraph F9["lib"]
-FA["seller-routes.ts"]
 end
+subgraph F8["routes"]
+subgraph F9["src"]
+FA["index.ts"]
+subgraph FB["lib"]
+FC["seller-routes.ts"]
 end
 end
-subgraph FB["screens"]
-subgraph FC["catalog"]
-subgraph FD["src"]
-FE["index.ts"]
-subgraph FF["lib"]
-FG["SellersCatalogScreens.tsx"]
-FH["SellersCatalogScreens.spec.tsx"]
 end
+subgraph FD["screens"]
+subgraph FE["catalog"]
+subgraph FF["src"]
+FG["index.ts"]
+subgraph FH["lib"]
+FI["SellersCatalogScreens.tsx"]
+FJ["SellersCatalogScreens.spec.tsx"]
 end
 end
-subgraph FI["login"]
-subgraph FJ["src"]
-FK["index.ts"]
-subgraph FL["lib"]
-FM["SellersLogin.tsx"]
 end
+subgraph FK["login"]
+subgraph FL["src"]
+FM["index.ts"]
+subgraph FN["lib"]
+FO["SellersLogin.tsx"]
 end
 end
-subgraph FN["manage-product"]
-subgraph FO["src"]
-FP["index.ts"]
-subgraph FQ["lib"]
-FR["SellersManageProductScreen.tsx"]
-FS["SellersDefineProductFlow.tsx"]
-FT["SellersDefineProductFlow.pants-label.spec.tsx"]
-FU["SellersDefineProductFlow.spec.tsx"]
-FV["SellersManageProductScreen.spec.tsx"]
 end
+subgraph FP["manage-product"]
+subgraph FQ["src"]
+FR["index.ts"]
+subgraph FS["lib"]
+FT["SellersManageProductScreen.tsx"]
+FU["SellersDefineProductFlow.tsx"]
+FV["SellersDefineProductFlow.pants-label.spec.tsx"]
+FW["SellersDefineProductFlow.spec.tsx"]
+FX["SellersManageProductScreen.spec.tsx"]
 end
 end
-subgraph FW["products"]
-subgraph FX["src"]
-FY["index.ts"]
-subgraph FZ["lib"]
-G0["SellersProducts.tsx"]
-G1["SellersProducts.pants-label.spec.tsx"]
-G2["SellersProducts.spec.tsx"]
 end
+subgraph FY["products"]
+subgraph FZ["src"]
+G0["index.ts"]
+subgraph G1["lib"]
+G2["SellersProducts.tsx"]
+G3["SellersProducts.pants-label.spec.tsx"]
+G4["SellersProducts.spec.tsx"]
 end
 end
-subgraph G3["seller-orders"]
-G4["jest.config.ts"]
-G5["jest.setup.ts"]
-subgraph G6["src"]
-G7["index.ts"]
-subgraph G8["lib"]
-G9["seller-orders-screen.tsx"]
-GA["seller-status-transitions.ts"]
-GB["seller-orders-screen.pants-size.spec.tsx"]
-GC["seller-orders-screen.spec.tsx"]
-GD["seller-status-transitions.spec.ts"]
 end
-GE["test-setup.ts"]
+subgraph G5["seller-orders"]
+G6["jest.config.ts"]
+G7["jest.setup.ts"]
+subgraph G8["src"]
+G9["index.ts"]
+subgraph GA["lib"]
+GB["seller-orders-screen.tsx"]
+GC["seller-status-transitions.ts"]
+GD["seller-orders-screen.pants-size.spec.tsx"]
+GE["seller-orders-screen.spec.tsx"]
+GF["seller-status-transitions.spec.ts"]
 end
+GG["test-setup.ts"]
 end
-subgraph GF["setup-password"]
-subgraph GG["src"]
-GH["index.ts"]
-subgraph GI["lib"]
-GJ["SellersSetupPassword.tsx"]
 end
+subgraph GH["setup-password"]
+subgraph GI["src"]
+GJ["index.ts"]
+subgraph GK["lib"]
+GL["SellersSetupPassword.tsx"]
 end
 end
-subgraph GK["unauthorized"]
-subgraph GL["src"]
-GM["index.ts"]
-subgraph GN["lib"]
-GO["sellers-unauthorized-screen.tsx"]
 end
+subgraph GM["unauthorized"]
+subgraph GN["src"]
+GO["index.ts"]
+subgraph GP["lib"]
+GQ["sellers-unauthorized-screen.tsx"]
 end
 end
 end
-subgraph GP["zustand"]
-subgraph GQ["sellers-products-store"]
-subgraph GR["src"]
-GS["index.ts"]
-subgraph GT["lib"]
-GU["useSellersProductsStore.ts"]
-GV["sellers-products-store.tsx"]
 end
+subgraph GR["zustand"]
+subgraph GS["sellers-products-store"]
+subgraph GT["src"]
+GU["index.ts"]
+subgraph GV["lib"]
+GW["useSellersProductsStore.ts"]
+GX["sellers-products-store.tsx"]
 end
 end
 end
 end
-subgraph GW["shared"]
-subgraph GX["components"]
-subgraph GY["apollo-provider-base"]
-subgraph GZ["src"]
-H0["index.ts"]
-subgraph H1["lib"]
-H2["ApolloProviderBase.tsx"]
-H3["createSilentRefreshAuthLink.ts"]
-H4["createSilentRefreshAuthLink.spec.ts"]
 end
+subgraph GY["shared"]
+subgraph GZ["components"]
+subgraph H0["apollo-provider-base"]
+subgraph H1["src"]
+H2["index.ts"]
+subgraph H3["lib"]
+H4["ApolloProviderBase.tsx"]
+H5["createSilentRefreshAuthLink.ts"]
+H6["createSilentRefreshAuthLink.spec.ts"]
 end
 end
-subgraph H5["error-boundary"]
-subgraph H6["src"]
-H7["index.ts"]
-subgraph H8["lib"]
-H9["error-boundary.tsx"]
-HA["error-boundary.spec.tsx"]
 end
+subgraph H7["error-boundary"]
+subgraph H8["src"]
+H9["index.ts"]
+subgraph HA["lib"]
+HB["error-boundary.tsx"]
+HC["error-boundary.spec.tsx"]
 end
-HB["vite.config.ts"]
 end
-subgraph HC["glassmorphism-container"]
-subgraph HD["src"]
-HE["index.ts"]
-subgraph HF["lib"]
-HG["glassmorphism-container.tsx"]
-HH["glassmorphism-container.spec.tsx"]
+HD["vite.config.ts"]
 end
+subgraph HE["glassmorphism-container"]
+subgraph HF["src"]
+HG["index.ts"]
+subgraph HH["lib"]
+HI["glassmorphism-container.tsx"]
+HJ["glassmorphism-container.spec.tsx"]
 end
 end
-subgraph HI["layout"]
-subgraph HJ["src"]
-HK["index.ts"]
-subgraph HL["lib"]
-HM["Layout.tsx"]
 end
+subgraph HK["layout"]
+subgraph HL["src"]
+HM["index.ts"]
+subgraph HN["lib"]
+HO["Layout.tsx"]
 end
 end
-subgraph HN["material-data-table"]
-subgraph HO["src"]
-HP["index.ts"]
-subgraph HQ["lib"]
-HR["material-data-table.tsx"]
-HS["table-config.ts"]
-HT["table-utils.ts"]
-HU["material-data-table.spec.tsx"]
-HV["table-types.ts"]
 end
+subgraph HP["material-data-table"]
+subgraph HQ["src"]
+HR["index.ts"]
+subgraph HS["lib"]
+HT["material-data-table.tsx"]
+HU["table-config.ts"]
+HV["table-utils.ts"]
+HW["material-data-table.spec.tsx"]
+HX["table-types.ts"]
 end
 end
-subgraph HW["order-status-chip"]
-subgraph HX["src"]
-HY["index.ts"]
-subgraph HZ["lib"]
-I0["order-status-chip.tsx"]
-I1["order-status-chip.spec.tsx"]
 end
+subgraph HY["order-status-chip"]
+subgraph HZ["src"]
+I0["index.ts"]
+subgraph I1["lib"]
+I2["order-status-chip.tsx"]
+I3["order-status-chip.spec.tsx"]
 end
 end
-subgraph I2["password-field"]
-subgraph I3["src"]
-I4["index.ts"]
-subgraph I5["lib"]
-I6["PasswordTextField.tsx"]
 end
+subgraph I4["password-field"]
+subgraph I5["src"]
+I6["index.ts"]
+subgraph I7["lib"]
+I8["PasswordTextField.tsx"]
 end
 end
-subgraph I7["price-display"]
-subgraph I8["src"]
-I9["index.ts"]
-subgraph IA["lib"]
-IB["price-display.tsx"]
-IC["price-display.spec.tsx"]
 end
+subgraph I9["price-display"]
+subgraph IA["src"]
+IB["index.ts"]
+subgraph IC["lib"]
+ID["price-display.tsx"]
+IE["price-display.spec.tsx"]
 end
 end
-subgraph ID["private-route"]
-subgraph IE["src"]
-IF["index.ts"]
-subgraph IG["lib"]
-IH["createPrivateRoute.tsx"]
-II["PrivateRoute.tsx"]
 end
+subgraph IF["private-route"]
+subgraph IG["src"]
+IH["index.ts"]
+subgraph II["lib"]
+IJ["createPrivateRoute.tsx"]
+IK["PrivateRoute.tsx"]
 end
 end
-subgraph IJ["rtl-table-utils"]
-subgraph IK["src"]
-IL["index.ts"]
-subgraph IM["lib"]
-IN["rtl-table-utils.ts"]
-IO["rtl-cell-components.tsx"]
-IP["rtl-column-helpers.ts"]
-IQ["rtl-table-props.ts"]
-IR["use-table-alignment.ts"]
-IS["rtl-table-utils.spec.tsx"]
-IT["rtl-table-utils.tsx"]
 end
+subgraph IL["rtl-table-utils"]
+subgraph IM["src"]
+IN["index.ts"]
+subgraph IO["lib"]
+IP["rtl-table-utils.ts"]
+IQ["rtl-cell-components.tsx"]
+IR["rtl-column-helpers.ts"]
+IS["rtl-table-props.ts"]
+IT["use-table-alignment.ts"]
+IU["rtl-table-utils.spec.tsx"]
+IV["rtl-table-utils.tsx"]
 end
 end
-subgraph IU["snackbar"]
-subgraph IV["src"]
-IW["index.ts"]
-subgraph IX["lib"]
-IY["snackbar.tsx"]
-IZ["Snackbar.tsx"]
 end
+subgraph IW["snackbar"]
+subgraph IX["src"]
+IY["index.ts"]
+subgraph IZ["lib"]
+J0["snackbar.tsx"]
+J1["Snackbar.tsx"]
 end
 end
-subgraph J0["styled-drawer"]
-subgraph J1["src"]
-J2["index.ts"]
-subgraph J3["lib"]
-J4["styled-drawer.tsx"]
-J5["styled-drawer.spec.tsx"]
 end
+subgraph J2["styled-drawer"]
+subgraph J3["src"]
+J4["index.ts"]
+subgraph J5["lib"]
+J6["styled-drawer.tsx"]
+J7["styled-drawer.spec.tsx"]
 end
 end
-subgraph J6["unauthorized"]
-subgraph J7["src"]
-J8["index.ts"]
-subgraph J9["lib"]
-JA["unauthorized-path.tsx"]
 end
+subgraph J8["unauthorized"]
+subgraph J9["src"]
+JA["index.ts"]
+subgraph JB["lib"]
+JC["unauthorized-path.tsx"]
 end
 end
 end
-subgraph JB["graphql"]
-subgraph JC["src"]
-JD["index.ts"]
-subgraph JE["lib"]
-JF["currency.mutations.ts"]
-JG["currency.queries.ts"]
-JH["fragments.ts"]
-JI["variant-colors.ts"]
-JJ["client-shared-graphql.tsx"]
 end
+subgraph JD["graphql"]
+subgraph JE["src"]
+JF["index.ts"]
+subgraph JG["lib"]
+JH["currency.mutations.ts"]
+JI["currency.queries.ts"]
+JJ["fragments.ts"]
+JK["variant-colors.ts"]
+JL["client-shared-graphql.tsx"]
 end
 end
-subgraph JK["hooks"]
-subgraph JL["brands"]
-subgraph JM["src"]
-JN["index.ts"]
-subgraph JO["lib"]
-JP["brands.graphql.ts"]
-JQ["useBrands.ts"]
 end
+subgraph JM["hooks"]
+subgraph JN["brands"]
+subgraph JO["src"]
+JP["index.ts"]
+subgraph JQ["lib"]
+JR["brands.graphql.ts"]
+JS["useBrands.ts"]
 end
-JR["vite.config.ts"]
 end
-subgraph JS["categories"]
-subgraph JT["src"]
-JU["index.ts"]
-subgraph JV["lib"]
-JW["useCategories.ts"]
-JX["categories.graphql.ts"]
+JT["vite.config.ts"]
 end
+subgraph JU["categories"]
+subgraph JV["src"]
+JW["index.ts"]
+subgraph JX["lib"]
+JY["useCategories.ts"]
+JZ["categories.graphql.ts"]
 end
 end
-subgraph JY["colors"]
-subgraph JZ["src"]
-K0["index.ts"]
-subgraph K1["lib"]
-K2["useColors.ts"]
-K3["color.graphql.ts"]
 end
+subgraph K0["colors"]
+subgraph K1["src"]
+K2["index.ts"]
+subgraph K3["lib"]
+K4["useColors.ts"]
+K5["color.graphql.ts"]
 end
 end
-subgraph K4["currency"]
-subgraph K5["src"]
-K6["index.ts"]
-subgraph K7["lib"]
-K8["useConvertPrice.tsx"]
-K9["useExchangeRate.tsx"]
-KA["useCurrencies.tsx"]
-KB["useCurrencyForLocale.tsx"]
-KC["useExchangeRate.spec.tsx"]
 end
+subgraph K6["currency"]
+subgraph K7["src"]
+K8["index.ts"]
+subgraph K9["lib"]
+KA["useConvertPrice.tsx"]
+KB["useExchangeRate.tsx"]
+KC["useCurrencies.tsx"]
+KD["useCurrencyForLocale.tsx"]
+KE["useExchangeRate.spec.tsx"]
 end
 end
-subgraph KD["products"]
-subgraph KE["src"]
-KF["index.ts"]
-subgraph KG["lib"]
-KH["productImage.ts"]
-KI["products.graphql.ts"]
-KJ["useProducts.ts"]
-KK["productImage.spec.ts"]
 end
+subgraph KF["products"]
+subgraph KG["src"]
+KH["index.ts"]
+subgraph KI["lib"]
+KJ["productImage.ts"]
+KK["products.graphql.ts"]
+KL["useProducts.ts"]
+KM["productImage.spec.ts"]
 end
 end
-subgraph KL["site-languages"]
-subgraph KM["src"]
-KN["index.ts"]
-subgraph KO["lib"]
-KP["site-languages.graphql.ts"]
-KQ["useSiteLanguages.ts"]
-KR["site-languages-hook.spec.tsx"]
 end
+subgraph KN["site-languages"]
+subgraph KO["src"]
+KP["index.ts"]
+subgraph KQ["lib"]
+KR["site-languages.graphql.ts"]
+KS["useSiteLanguages.ts"]
+KT["site-languages-hook.spec.tsx"]
 end
-KS["vite.config.ts"]
 end
-subgraph KT["snackbar"]
-subgraph KU["src"]
-KV["index.ts"]
-subgraph KW["lib"]
-KX["SnackbarContext.tsx"]
-KY["useSnackbar.ts"]
+KU["vite.config.ts"]
 end
+subgraph KV["snackbar"]
+subgraph KW["src"]
+KX["index.ts"]
+subgraph KY["lib"]
+KZ["SnackbarContext.tsx"]
+L0["useSnackbar.ts"]
 end
 end
-subgraph KZ["translations-management-hook"]
-subgraph L0["src"]
-L1["index.ts"]
-subgraph L2["lib"]
-L3["useTranslationsManagement.ts"]
 end
+subgraph L1["translations-management-hook"]
+subgraph L2["src"]
+L3["index.ts"]
+subgraph L4["lib"]
+L5["useTranslationsManagement.ts"]
 end
 end
 end
-subgraph L4["lottie"]
-subgraph L5["empty-cart"]
-subgraph L6["src"]
-L7["index.ts"]
-subgraph L8["lib"]
-L9["lottie-empty-cart.tsx"]
-LA["lottie-empty-cart.spec.tsx"]
 end
+subgraph L6["lottie"]
+subgraph L7["empty-cart"]
+subgraph L8["src"]
+L9["index.ts"]
+subgraph LA["lib"]
+LB["lottie-empty-cart.tsx"]
+LC["lottie-empty-cart.spec.tsx"]
 end
-LB["vite.config.ts"]
 end
-subgraph LC["loading"]
-subgraph LD["src"]
-LE["index.ts"]
-subgraph LF["lib"]
-LG["lottie-loading.tsx"]
-LH["lottie-loading.spec.tsx"]
+LD["vite.config.ts"]
 end
+subgraph LE["loading"]
+subgraph LF["src"]
+LG["index.ts"]
+subgraph LH["lib"]
+LI["lottie-loading.tsx"]
+LJ["lottie-loading.spec.tsx"]
 end
 end
-subgraph LI["success-check"]
-subgraph LJ["src"]
-LK["index.ts"]
-subgraph LL["lib"]
-LM["lottie-success-check.tsx"]
-LN["lottie-success-check.spec.tsx"]
 end
+subgraph LK["success-check"]
+subgraph LL["src"]
+LM["index.ts"]
+subgraph LN["lib"]
+LO["lottie-success-check.tsx"]
+LP["lottie-success-check.spec.tsx"]
 end
 end
-subgraph LO["unauthorized"]
-subgraph LP["src"]
-LQ["index.ts"]
-subgraph LR["lib"]
-LS["lottie-unauthorized.tsx"]
 end
+subgraph LQ["unauthorized"]
+subgraph LR["src"]
+LS["index.ts"]
+subgraph LT["lib"]
+LU["lottie-unauthorized.tsx"]
 end
 end
 end
-subgraph LT["translations"]
-subgraph LU["src"]
-LV["index.ts"]
-subgraph LW["lib"]
-LX["mapApolloErrorToTranslationKey.ts"]
-LY["WrapTranslation.tsx"]
 end
+subgraph LV["translations"]
+subgraph LW["src"]
+LX["index.ts"]
+subgraph LY["lib"]
+LZ["mapApolloErrorToTranslationKey.ts"]
+M0["WrapTranslation.tsx"]
 end
 end
-subgraph LZ["ui"]
-subgraph M0["colors"]
-subgraph M1["src"]
-M2["index.ts"]
-subgraph M3["lib"]
-M4["colors.ts"]
 end
+subgraph M1["ui"]
+subgraph M2["colors"]
+subgraph M3["src"]
+M4["index.ts"]
+subgraph M5["lib"]
+M6["colors.ts"]
 end
 end
-subgraph M5["language-components"]
-subgraph M6["src"]
-M7["index.ts"]
-subgraph M8["lib"]
-M9["language-components.tsx"]
-MA["ltr-text-field.tsx"]
 end
+subgraph M7["language-components"]
+subgraph M8["src"]
+M9["index.ts"]
+subgraph MA["lib"]
+MB["language-components.tsx"]
+MC["ltr-text-field.tsx"]
 end
 end
-subgraph MB["sizes"]
-subgraph MC["src"]
-MD["index.ts"]
-subgraph ME["lib"]
-MF["sizes.ts"]
-MG["sizes.spec.tsx"]
-MH["sizes.tsx"]
 end
+subgraph MD["sizes"]
+subgraph ME["src"]
+MF["index.ts"]
+subgraph MG["lib"]
+MH["sizes.ts"]
+MI["sizes.spec.tsx"]
+MJ["sizes.tsx"]
 end
 end
 end
-subgraph MI["zustand"]
-subgraph MJ["shared-auth-store"]
-subgraph MK["src"]
-ML["index.ts"]
-subgraph MM["lib"]
-MN["shared-auth-store.ts"]
 end
+subgraph MK["zustand"]
+subgraph ML["shared-auth-store"]
+subgraph MM["src"]
+MN["index.ts"]
+subgraph MO["lib"]
+MP["shared-auth-store.ts"]
 end
 end
-subgraph MO["shared-notification-store"]
-subgraph MP["src"]
-MQ["index.ts"]
-subgraph MR["lib"]
-MS["shared-notification-store.tsx"]
 end
+subgraph MQ["shared-notification-store"]
+subgraph MR["src"]
+MS["index.ts"]
+subgraph MT["lib"]
+MU["shared-notification-store.tsx"]
 end
 end
-subgraph MT["shared-ui-store"]
-subgraph MU["src"]
-MV["index.ts"]
-subgraph MW["lib"]
-MX["shared-ui-store.ts"]
-MY["shared-ui-store.tsx"]
 end
+subgraph MV["shared-ui-store"]
+subgraph MW["src"]
+MX["index.ts"]
+subgraph MY["lib"]
+MZ["shared-ui-store.ts"]
+N0["shared-ui-store.tsx"]
 end
 end
 end
 end
 end
-subgraph MZ["server"]
-subgraph N0["controllers"]
-subgraph N1["src"]
-N2["index.ts"]
-subgraph N3["lib"]
-N4["auth.controller.ts"]
-N5["order.controller.ts"]
 end
+subgraph N1["server"]
+subgraph N2["controllers"]
+subgraph N3["src"]
+N4["index.ts"]
+subgraph N5["lib"]
+N6["auth.controller.ts"]
+N7["order.controller.ts"]
 end
 end
-subgraph N6["decorators"]
-N7["jest.config.ts"]
-subgraph N8["src"]
-N9["index.ts"]
-subgraph NA["lib"]
-NB["current-user.decorator.ts"]
-NC["decorators.ts"]
-ND["decorators.spec.ts"]
 end
+subgraph N8["decorators"]
+N9["jest.config.ts"]
+subgraph NA["src"]
+NB["index.ts"]
+subgraph NC["lib"]
+ND["current-user.decorator.ts"]
+NE["decorators.ts"]
+NF["decorators.spec.ts"]
 end
 end
-subgraph NE["entities"]
-subgraph NF["src"]
-NG["index.ts"]
-subgraph NH["lib"]
-NI["brand.entity.ts"]
-NJ["product.entity.ts"]
-NK["category.entity.ts"]
-NL["product-description.entity.ts"]
-NM["site-language.entity.ts"]
-NN["product-info.entity.ts"]
-NO["color.entity.ts"]
-NP["product-info-color.entity.ts"]
-NQ["seller-info.entity.ts"]
-NR["seller-product.entity.ts"]
-NS["user.entity.ts"]
-NT["cart.entity.ts"]
-NU["currency-preference.entity.ts"]
-NV["currency.entity.ts"]
-NW["customer.entity.ts"]
-NX["exchange-rate.entity.ts"]
-NY["order.entity.ts"]
-NZ["platform-settings.entity.ts"]
-O0["refresh-token.entity.ts"]
-O1["seller-order.entity.ts"]
-O2["translation.entity.ts"]
 end
+subgraph NG["entities"]
+subgraph NH["src"]
+NI["index.ts"]
+subgraph NJ["lib"]
+NK["brand.entity.ts"]
+NL["product.entity.ts"]
+NM["category.entity.ts"]
+NN["product-description.entity.ts"]
+NO["site-language.entity.ts"]
+NP["product-info.entity.ts"]
+NQ["color.entity.ts"]
+NR["product-info-color.entity.ts"]
+NS["seller-info.entity.ts"]
+NT["seller-product.entity.ts"]
+NU["user.entity.ts"]
+NV["cart.entity.ts"]
+NW["currency-preference.entity.ts"]
+NX["currency.entity.ts"]
+NY["customer.entity.ts"]
+NZ["exchange-rate.entity.ts"]
+O0["order.entity.ts"]
+O1["platform-settings.entity.ts"]
+O2["refresh-token.entity.ts"]
+O3["seller-order.entity.ts"]
+O4["translation.entity.ts"]
 end
 end
-subgraph O3["guards"]
-O4["jest.config.ts"]
-subgraph O5["src"]
-O6["index.ts"]
-subgraph O7["lib"]
-O8["catalog.guard.ts"]
-O9["graphql-auth.guard.ts"]
-OA["http-auth.guard.ts"]
-OB["roles.guard.ts"]
-OC["catalog.guard.spec.ts"]
-OD["roles.guard.spec.ts"]
 end
+subgraph O5["guards"]
+O6["jest.config.ts"]
+subgraph O7["src"]
+O8["index.ts"]
+subgraph O9["lib"]
+OA["catalog.guard.ts"]
+OB["graphql-auth.guard.ts"]
+OC["http-auth.guard.ts"]
+OD["roles.guard.ts"]
+OE["catalog.guard.spec.ts"]
+OF["roles.guard.spec.ts"]
 end
 end
-subgraph OE["inputs"]
-subgraph OF["src"]
-OG["index.ts"]
-subgraph OH["lib"]
-OI["brand.input.ts"]
-OJ["cart.inputs.ts"]
-OK["category.input.ts"]
-OL["color.input.ts"]
-OM["customer-auth.inputs.ts"]
-ON["order-pagination.inputs.ts"]
-OO["order.inputs.ts"]
-OP["product-info-filter.input.ts"]
-OQ["product.input.ts"]
-OR["seller-order-pagination.inputs.ts"]
-OS["seller.input.ts"]
-OT["site-language.input.ts"]
-OU["user.input.ts"]
 end
+subgraph OG["inputs"]
+subgraph OH["src"]
+OI["index.ts"]
+subgraph OJ["lib"]
+OK["brand.input.ts"]
+OL["cart.inputs.ts"]
+OM["category.input.ts"]
+ON["color.input.ts"]
+OO["customer-auth.inputs.ts"]
+OP["order-pagination.inputs.ts"]
+OQ["order.inputs.ts"]
+OR["product-info-filter.input.ts"]
+OS["product.input.ts"]
+OT["seller-order-pagination.inputs.ts"]
+OU["seller.input.ts"]
+OV["site-language.input.ts"]
+OW["user.input.ts"]
 end
 end
-subgraph OV["modules"]
-subgraph OW["src"]
-OX["index.ts"]
-subgraph OY["lib"]
-OZ["auth.module.ts"]
-P0["email.module.ts"]
-P1["token.module.ts"]
-P2["user.module.ts"]
-P3["customer-profile.module.ts"]
-P4["brand.module.ts"]
-P5["catalog-guard.module.ts"]
-P6["translation.module.ts"]
-P7["cart.module.ts"]
-P8["platform-settings.module.ts"]
-P9["category.module.ts"]
-PA["product.module.ts"]
-PB["color.module.ts"]
-PC["currency.module.ts"]
-PD["graphql-context.module.ts"]
-PE["order.module.ts"]
-PF["seller-info.module.ts"]
-PG["payment.module.ts"]
-PH["product-info.module.ts"]
-PI["seller-products.module.ts"]
-PJ["site-language.module.ts"]
 end
+subgraph OX["modules"]
+subgraph OY["src"]
+OZ["index.ts"]
+subgraph P0["lib"]
+P1["auth.module.ts"]
+P2["email.module.ts"]
+P3["token.module.ts"]
+P4["user.module.ts"]
+P5["customer-profile.module.ts"]
+P6["brand.module.ts"]
+P7["catalog-guard.module.ts"]
+P8["translation.module.ts"]
+P9["cart.module.ts"]
+PA["platform-settings.module.ts"]
+PB["category.module.ts"]
+PC["product.module.ts"]
+PD["color.module.ts"]
+PE["currency.module.ts"]
+PF["graphql-context.module.ts"]
+PG["order.module.ts"]
+PH["seller-info.module.ts"]
+PI["payment.module.ts"]
+PJ["product-info.module.ts"]
+PK["seller-products.module.ts"]
+PL["site-language.module.ts"]
 end
 end
-subgraph PK["resolvers"]
-PL["jest.config.ts"]
-subgraph PM["src"]
-PN["index.ts"]
-subgraph PO["lib"]
-PP["auth.resolver.ts"]
-PQ["zod-validation.pipe.ts"]
-PR["brand.resolver.ts"]
-PS["cart.resolver.ts"]
-PT["category.resolver.ts"]
-PU["color.resolver.ts"]
-PV["currency.resolver.ts"]
-PW["customer-profile.resolver.ts"]
-PX["order.resolver.ts"]
-PY["payment.resolver.ts"]
-PZ["product-info.resolver.ts"]
-Q0["product.resolver.ts"]
-Q1["seller-info.resolver.ts"]
-Q2["shipping.resolver.ts"]
-Q3["site-language.resolver.ts"]
-Q4["translation.input.ts"]
-Q5["translation.resolver.ts"]
-Q6["user.resolver.ts"]
-Q7["auth-validation.spec.ts"]
-Q8["auth.resolver.spec.ts"]
-Q9["order.resolver.spec.ts"]
-QA["order.resolver.status-transitions.spec.ts"]
-QB["order.resolver.tracking.spec.ts"]
-QC["payment.resolver.integration.spec.ts"]
-QD["payment.resolver.spec.ts"]
-QE["product-info.resolver.spec.ts"]
-QF["translation.resolver.guards.spec.ts"]
-subgraph QG["types"]
-QH["graphql-upload.d.ts"]
 end
-QI["user.resolver.spec.ts"]
-QJ["zod-validation.pipe.spec.ts"]
+subgraph PM["resolvers"]
+PN["jest.config.ts"]
+subgraph PO["src"]
+PP["index.ts"]
+subgraph PQ["lib"]
+PR["auth.resolver.ts"]
+PS["zod-validation.pipe.ts"]
+PT["brand.resolver.ts"]
+PU["cart.resolver.ts"]
+PV["category.resolver.ts"]
+PW["color.resolver.ts"]
+PX["currency.resolver.ts"]
+PY["customer-profile.resolver.ts"]
+PZ["order.resolver.ts"]
+Q0["payment.resolver.ts"]
+Q1["product-info.resolver.ts"]
+Q2["product.resolver.ts"]
+Q3["seller-info.resolver.ts"]
+Q4["shipping.resolver.ts"]
+Q5["site-language.resolver.ts"]
+Q6["translation.input.ts"]
+Q7["translation.resolver.ts"]
+Q8["user.resolver.ts"]
+Q9["auth-validation.spec.ts"]
+QA["auth.resolver.spec.ts"]
+QB["order.resolver.spec.ts"]
+QC["order.resolver.status-transitions.spec.ts"]
+QD["order.resolver.tracking.spec.ts"]
+QE["payment.resolver.integration.spec.ts"]
+QF["payment.resolver.spec.ts"]
+QG["product-info.resolver.spec.ts"]
+QH["translation.resolver.guards.spec.ts"]
+subgraph QI["types"]
+QJ["graphql-upload.d.ts"]
 end
+QK["user.resolver.spec.ts"]
+QL["zod-validation.pipe.spec.ts"]
 end
 end
-subgraph QK["services"]
-QL["jest.config.ts"]
-subgraph QM["src"]
-QN["index.ts"]
-subgraph QO["lib"]
-QP["auth.service.ts"]
-QQ["brand.service.ts"]
-QR["cart.service.ts"]
-QS["product-info-colors.util.ts"]
-QT["category.service.ts"]
-QU["color.service.ts"]
-QV["currency.service.ts"]
-QW["customer-profile.service.ts"]
-QX["email.service.ts"]
-QY["image-upload.service.ts"]
-QZ["order.service.ts"]
-R0["payment-logger.service.ts"]
-R1["payment.service.ts"]
-R2["product.service.ts"]
-R3["seller-info.service.ts"]
-R4["shipping-calculation.service.ts"]
-R5["site-language.service.ts"]
-R6["token.service.ts"]
-R7["translation.service.ts"]
-R8["user.service.ts"]
-R9["auth.service.password-policy.spec.ts"]
-RA["auth.service.spec.ts"]
-RB["cart.service.add-quantity.spec.ts"]
-RC["cart.service.null-relations.spec.ts"]
-RD["cart.service.spec.ts"]
-RE["order.service.spec.ts"]
-RF["order.service.tracking.spec.ts"]
-RG["product-info-colors.util.spec.ts"]
-RH["product.service.pants.spec.ts"]
-RI["product.service.spec.ts"]
-RJ["relay-connection.spec.ts"]
-RK["seller-info.service.price-validation.spec.ts"]
-RL["shipping-calculation.service.spec.ts"]
-RM["token.service.spec.ts"]
 end
+subgraph QM["services"]
+QN["jest.config.ts"]
+subgraph QO["src"]
+QP["index.ts"]
+subgraph QQ["lib"]
+QR["auth.service.ts"]
+QS["brand.service.ts"]
+QT["cart.service.ts"]
+QU["product-info-colors.util.ts"]
+QV["category.service.ts"]
+QW["color.service.ts"]
+QX["currency.service.ts"]
+QY["customer-profile.service.ts"]
+QZ["email.service.ts"]
+R0["image-upload.service.ts"]
+R1["order.service.ts"]
+R2["payment-logger.service.ts"]
+R3["payment.service.ts"]
+R4["product.service.ts"]
+R5["seller-info.service.ts"]
+R6["shipping-calculation.service.ts"]
+R7["site-language.service.ts"]
+R8["token.service.ts"]
+R9["translation.service.ts"]
+RA["user.service.ts"]
+RB["auth.service.password-policy.spec.ts"]
+RC["auth.service.spec.ts"]
+RD["cart.service.add-quantity.spec.ts"]
+RE["cart.service.null-relations.spec.ts"]
+RF["cart.service.spec.ts"]
+RG["order.service.spec.ts"]
+RH["order.service.tracking.spec.ts"]
+RI["product-info-colors.util.spec.ts"]
+RJ["product.service.pants.spec.ts"]
+RK["product.service.spec.ts"]
+RL["relay-connection.spec.ts"]
+RM["seller-info.service.price-validation.spec.ts"]
+RN["shipping-calculation.service.spec.ts"]
+RO["token.service.spec.ts"]
 end
 end
-subgraph RN["strategies"]
-subgraph RO["src"]
-RP["index.ts"]
-subgraph RQ["lib"]
-RR["local.strategy.ts"]
 end
+subgraph RP["strategies"]
+subgraph RQ["src"]
+RR["index.ts"]
+subgraph RS["lib"]
+RT["local.strategy.ts"]
 end
 end
-subgraph RS["utils"]
-subgraph RT["src"]
-RU["index.ts"]
-subgraph RV["lib"]
-RW["email-templates.ts"]
-RX["relay-connection.ts"]
-RY["pagination.ts"]
 end
+subgraph RU["utils"]
+subgraph RV["src"]
+RW["index.ts"]
+subgraph RX["lib"]
+RY["email-templates.ts"]
+RZ["relay-connection.ts"]
+S0["pagination.ts"]
 end
 end
 end
-subgraph RZ["shared"]
-subgraph S0["codegen"]
-S1["jest.config.ts"]
-subgraph S2["src"]
-S3["index.ts"]
-subgraph S4["lib"]
-subgraph S5["generated"]
-S6["graphql.ts"]
 end
+subgraph S1["shared"]
+subgraph S2["codegen"]
+S3["jest.config.ts"]
+subgraph S4["src"]
+S5["index.ts"]
+subgraph S6["lib"]
+subgraph S7["generated"]
+S8["graphql.ts"]
 end
 end
 end
-subgraph S7["graphql-schema"]
-S8["jest.config.ts"]
-subgraph S9["src"]
-SA["index.ts"]
 end
+subgraph S9["graphql-schema"]
+SA["jest.config.ts"]
+subgraph SB["src"]
+SC["index.ts"]
 end
-subgraph SB["product-sizes"]
-subgraph SC["src"]
-SD["index.ts"]
-subgraph SE["lib"]
-SF["product-sizes.ts"]
-SG["product-sizes.pants-formats.spec.ts"]
-SH["product-sizes.pants-label.spec.ts"]
-SI["product-sizes.pants-strict.spec.ts"]
-SJ["product-sizes.spec.ts"]
 end
+subgraph SD["product-sizes"]
+subgraph SE["src"]
+SF["index.ts"]
+subgraph SG["lib"]
+SH["product-sizes.ts"]
+SI["product-sizes.pants-formats.spec.ts"]
+SJ["product-sizes.pants-label.spec.ts"]
+SK["product-sizes.pants-strict.spec.ts"]
+SL["product-sizes.spec.ts"]
 end
 end
-subgraph SK["shared-i18n"]
-subgraph SL["src"]
-SM["index.ts"]
-subgraph SN["lib"]
-SO["language-context.tsx"]
-SP["language-detector.ts"]
-subgraph SQ["locales"]
-SR["i18n-react.tsx"]
-SS["i18n-util.ts"]
-ST["i18n-util.async.ts"]
-subgraph SU["en"]
-SV["index.ts"]
 end
-subgraph SX["fa"]
-SY["index.ts"]
+subgraph SM["shared-i18n"]
+subgraph SN["src"]
+SO["index.ts"]
+subgraph SP["lib"]
+SQ["language-context.tsx"]
+SR["language-detector.ts"]
+subgraph SS["locales"]
+ST["i18n-react.tsx"]
+SU["i18n-util.ts"]
+SV["i18n-util.async.ts"]
+subgraph SW["en"]
+SX["index.ts"]
 end
-SZ["formatters.ts"]
-T0["i18n-types.ts"]
-T1["i18n-util.sync.ts"]
-T2["navigator-detector.ts"]
+subgraph SZ["fa"]
+T0["index.ts"]
 end
-SW["site-name.ts"]
-T3["table-localization.ts"]
-T4["theme-provider.tsx"]
-T5["use-page-title.ts"]
+T1["formatters.ts"]
+T2["i18n-types.ts"]
+T3["i18n-util.sync.ts"]
+T4["navigator-detector.ts"]
 end
+SY["site-name.ts"]
+T5["table-localization.ts"]
+T6["theme-provider.tsx"]
+T7["use-page-title.ts"]
 end
 end
-subgraph T6["validation"]
-subgraph T7["src"]
-T8["index.ts"]
-subgraph T9["lib"]
-TA["auth.ts"]
-TB["limits.ts"]
-TC["primitives.ts"]
-TD["auth-forms.ts"]
-TE["errors.ts"]
-TF["auth-forms.login.spec.ts"]
-TG["auth-forms.spec.ts"]
-TH["auth.spec.ts"]
-TI["errors.spec.ts"]
-TJ["primitives.spec.ts"]
+end
+subgraph T8["validation"]
+subgraph T9["src"]
+TA["index.ts"]
+subgraph TB["lib"]
+TC["auth.ts"]
+TD["limits.ts"]
+TE["primitives.ts"]
+TF["auth-forms.ts"]
+TG["errors.ts"]
+TH["auth-forms.login.spec.ts"]
+TI["auth-forms.recovery.spec.ts"]
+TJ["auth-forms.spec.ts"]
+TK["auth.spec.ts"]
+TL["errors.spec.ts"]
+TM["primitives.spec.ts"]
 end
 end
 end
@@ -1638,435 +1641,438 @@ Z-->X
 9U-->9R
 9X-->9Z
 A0-->9Z
-A3-->A5
-A6-->A5
-AA-->AC
-AD-->AC
-AH-->AJ
-AH-->AS
-AH-->AM
-AH-->AR
-AJ-->AL
-AJ-->AN
-AJ-->AO
-AJ-->AP
-AJ-->AQ
-AJ-->AM
-AJ-->AR
-AL-->AM
-AS-->AM
-AT-->AP
-AT-->AJ
-AT-->AM
-AU-->AV
-AU-->AP
-AU-->AJ
-AU-->AS
-AU-->AM
-AW-->AS
-AX-->AM
-AZ-->AM
-B3-->B5
-B6-->B5
-B7-->B5
-BA-->BC
-BD-->BC
-BH-->BJ
-BK-->BJ
-BO-->BQ
-BR-->BQ
-BS-->BQ
-BW-->BY
-BZ-->BY
-C2-->C4
-C5-->C4
-C9-->CB
-CF-->CH
-CK-->CM
-CN-->CM
-CN-->CO
-CS-->CU
-CV-->CU
-CZ-->D1
-D2-->D1
-D6-->D8
-D9-->D8
-DB-->DD
-DI-->DK
-DL-->DK
-DO-->DQ
-DT-->DV
-DT-->DW
-DV-->DW
-E0-->E2
-E3-->E2
-E6-->E8
-E6-->E9
-E6-->EA
-E6-->ED
-EA-->EB
-EB-->EC
-ED-->E8
+A1-->9Z
+A4-->A6
+A7-->A6
+AB-->AD
+AE-->AD
+AI-->AK
+AI-->AT
+AI-->AN
+AI-->AS
+AK-->AM
+AK-->AO
+AK-->AP
+AK-->AQ
+AK-->AR
+AK-->AN
+AK-->AS
+AM-->AN
+AT-->AN
+AU-->AQ
+AU-->AK
+AU-->AN
+AV-->AW
+AV-->AQ
+AV-->AK
+AV-->AT
+AV-->AN
+AX-->AT
+AY-->AN
+B0-->AN
+B4-->B6
+B7-->B6
+B8-->B6
+BB-->BD
+BE-->BD
+BI-->BK
+BL-->BK
+BP-->BR
+BS-->BR
+BT-->BR
+BX-->BZ
+C0-->BZ
+C1-->BZ
+C4-->C6
+C7-->C6
+CB-->CD
+CH-->CJ
+CM-->CO
+CP-->CO
+CP-->CQ
+CU-->CW
+CX-->CW
+D1-->D3
+D4-->D3
+D8-->DA
+DB-->DA
+DD-->DF
+DK-->DM
+DN-->DM
+DQ-->DS
+DV-->DX
+DV-->DY
+DX-->DY
+E2-->E4
+E5-->E4
+E8-->EA
+E8-->EB
+E8-->EC
+E8-->EF
+EC-->ED
 ED-->EE
-EL-->EN
-EN-->EO
-ER-->ET
-EX-->EZ
-EX-->F0
-F3-->F5
-F8-->FA
-FE-->FG
-FH-->FG
-FK-->FM
-FP-->FR
-FR-->FS
-FT-->FS
-FU-->FS
-FV-->FR
-FY-->G0
-G1-->G0
-G2-->G0
-G7-->G9
-G9-->GA
-GB-->G9
-GC-->G9
-GD-->GA
-GH-->GJ
-GM-->GO
-GS-->GU
-H0-->H2
-H0-->H3
-H4-->H3
-H7-->H9
-HA-->H9
-HE-->HG
-HH-->HG
-HK-->HM
-HP-->HR
-HP-->HS
-HP-->HT
-HR-->HS
-HU-->HR
-HY-->I0
-I1-->I0
-I4-->I6
-I9-->IB
-IC-->IB
-IF-->IH
-IH-->II
-IL-->IN
-IN-->IO
+EF-->EA
+EF-->EG
+EN-->EP
+EP-->EQ
+ET-->EV
+EZ-->F1
+EZ-->F2
+F5-->F7
+FA-->FC
+FG-->FI
+FJ-->FI
+FM-->FO
+FR-->FT
+FT-->FU
+FV-->FU
+FW-->FU
+FX-->FT
+G0-->G2
+G3-->G2
+G4-->G2
+G9-->GB
+GB-->GC
+GD-->GB
+GE-->GB
+GF-->GC
+GJ-->GL
+GO-->GQ
+GU-->GW
+H2-->H4
+H2-->H5
+H6-->H5
+H9-->HB
+HC-->HB
+HG-->HI
+HJ-->HI
+HM-->HO
+HR-->HT
+HR-->HU
+HR-->HV
+HT-->HU
+HW-->HT
+I0-->I2
+I3-->I2
+I6-->I8
+IB-->ID
+IE-->ID
+IH-->IJ
+IJ-->IK
 IN-->IP
-IN-->IQ
-IN-->IR
-IP-->IO
 IP-->IQ
-IS-->IT
-IW-->IY
-J2-->J4
-J5-->J4
-J8-->JA
-JD-->JF
-JD-->JG
-JD-->JH
-JD-->JI
-JN-->JP
-JN-->JQ
-JQ-->JP
-JU-->JW
-JW-->JX
-K0-->K2
-K2-->K3
-K6-->K8
-K6-->KA
-K6-->KB
-K6-->K9
-K8-->K9
-KC-->K9
-KF-->KH
-KF-->KI
-KF-->KJ
-KJ-->KI
-KK-->KH
-KN-->KP
-KN-->KQ
-KQ-->KP
-KR-->KQ
-KV-->KX
-KV-->KY
-KY-->KX
-L1-->L3
-L7-->L9
-LA-->L9
-LE-->LG
-LH-->LG
-LK-->LM
-LN-->LM
-LQ-->LS
-LV-->LX
-M2-->M4
-M7-->M9
-M7-->MA
-MD-->MF
-MG-->MH
-ML-->MN
-MQ-->MS
-MV-->MX
-N2-->N4
-N2-->N5
-N9-->NB
-N9-->NC
-ND-->NC
-NG-->NI
-NG-->NT
-NG-->NK
-NG-->NO
-NG-->NU
-NG-->NV
-NG-->NW
-NG-->NX
-NG-->NY
-NG-->NZ
-NG-->NL
-NG-->NP
-NG-->NN
-NG-->NJ
-NG-->O0
-NG-->NQ
-NG-->O1
-NG-->NR
-NG-->NM
-NG-->O2
-NG-->NS
-NI-->NJ
-NJ-->NI
-NJ-->NK
-NJ-->NL
-NJ-->NN
-NJ-->NQ
-NJ-->NR
-NK-->NJ
-NL-->NJ
+IP-->IR
+IP-->IS
+IP-->IT
+IR-->IQ
+IR-->IS
+IU-->IV
+IY-->J0
+J4-->J6
+J7-->J6
+JA-->JC
+JF-->JH
+JF-->JI
+JF-->JJ
+JF-->JK
+JP-->JR
+JP-->JS
+JS-->JR
+JW-->JY
+JY-->JZ
+K2-->K4
+K4-->K5
+K8-->KA
+K8-->KC
+K8-->KD
+K8-->KB
+KA-->KB
+KE-->KB
+KH-->KJ
+KH-->KK
+KH-->KL
+KL-->KK
+KM-->KJ
+KP-->KR
+KP-->KS
+KS-->KR
+KT-->KS
+KX-->KZ
+KX-->L0
+L0-->KZ
+L3-->L5
+L9-->LB
+LC-->LB
+LG-->LI
+LJ-->LI
+LM-->LO
+LP-->LO
+LS-->LU
+LX-->LZ
+M4-->M6
+M9-->MB
+M9-->MC
+MF-->MH
+MI-->MJ
+MN-->MP
+MS-->MU
+MX-->MZ
+N4-->N6
+N4-->N7
+NB-->ND
+NB-->NE
+NF-->NE
+NI-->NK
+NI-->NV
+NI-->NM
+NI-->NQ
+NI-->NW
+NI-->NX
+NI-->NY
+NI-->NZ
+NI-->O0
+NI-->O1
+NI-->NN
+NI-->NR
+NI-->NP
+NI-->NL
+NI-->O2
+NI-->NS
+NI-->O3
+NI-->NT
+NI-->NO
+NI-->O4
+NI-->NU
+NK-->NL
+NL-->NK
 NL-->NM
+NL-->NN
+NL-->NP
+NL-->NS
+NL-->NT
 NM-->NL
+NN-->NL
 NN-->NO
-NN-->NP
-NN-->NJ
-NP-->NO
-NP-->NN
-NQ-->NR
-NQ-->NS
-NR-->NN
-NR-->NJ
+NO-->NN
+NP-->NQ
+NP-->NR
+NP-->NL
 NR-->NQ
-NT-->NJ
+NR-->NP
+NS-->NT
+NS-->NU
+NT-->NP
+NT-->NL
 NT-->NS
-NU-->NV
-NW-->NS
-NX-->NV
-NX-->NS
-NY-->NJ
-NY-->NQ
+NV-->NL
+NV-->NU
+NW-->NX
+NY-->NU
+NZ-->NX
+NZ-->NU
+O0-->NL
 O0-->NS
-O1-->NY
-O6-->O8
-O6-->O9
-O6-->OA
-O6-->OB
-OC-->O8
-OD-->OB
-OG-->OI
-OG-->OJ
-OG-->OK
-OG-->OL
-OG-->OM
-OG-->ON
-OG-->OO
-OG-->OP
-OG-->OQ
-OG-->OR
-OG-->OS
-OG-->OT
-OG-->OU
-OQ-->OP
-OX-->OZ
-OX-->P4
-OX-->P7
-OX-->P5
-OX-->P9
-OX-->PB
-OX-->PC
-OX-->P3
-OX-->P0
-OX-->PD
-OX-->PE
-OX-->PG
-OX-->P8
-OX-->PH
-OX-->PA
-OX-->PF
-OX-->PI
-OX-->PJ
-OX-->P1
-OX-->P6
-OX-->P2
-OZ-->P0
+O2-->NU
+O3-->O0
+O8-->OA
+O8-->OB
+O8-->OC
+O8-->OD
+OE-->OA
+OF-->OD
+OI-->OK
+OI-->OL
+OI-->OM
+OI-->ON
+OI-->OO
+OI-->OP
+OI-->OQ
+OI-->OR
+OI-->OS
+OI-->OT
+OI-->OU
+OI-->OV
+OI-->OW
+OS-->OR
 OZ-->P1
+OZ-->P6
+OZ-->P9
+OZ-->P7
+OZ-->PB
+OZ-->PD
+OZ-->PE
+OZ-->P5
 OZ-->P2
-P2-->OZ
-P2-->P3
+OZ-->PF
+OZ-->PG
+OZ-->PI
+OZ-->PA
+OZ-->PJ
+OZ-->PC
+OZ-->PH
+OZ-->PK
+OZ-->PL
+OZ-->P3
+OZ-->P8
+OZ-->P4
+P1-->P2
+P1-->P3
+P1-->P4
+P4-->P1
 P4-->P5
-P4-->P6
-P7-->P8
-P9-->P5
+P6-->P7
+P6-->P8
 P9-->PA
-P9-->P6
-PA-->P5
-PA-->P1
-PA-->P6
-PB-->P5
-PB-->P6
-PD-->P0
-PD-->P1
-PD-->P2
-PE-->P8
-PE-->PF
-PF-->PA
-PF-->P1
+PB-->P7
+PB-->PC
+PB-->P8
+PC-->P7
+PC-->P3
+PC-->P8
+PD-->P7
+PD-->P8
 PF-->P2
-PG-->PE
-PH-->PA
-PH-->P6
-PI-->PF
-PI-->P2
-PN-->PP
-PN-->PR
-PN-->PS
-PN-->PT
-PN-->PU
-PN-->PV
-PN-->PW
-PN-->PX
-PN-->PY
-PN-->PZ
-PN-->Q0
-PN-->Q1
-PN-->Q2
-PN-->Q3
-PN-->Q4
-PN-->Q5
-PN-->Q6
-PN-->PQ
-PP-->PQ
-Q6-->PQ
-Q7-->PP
-Q7-->Q6
-Q7-->PQ
-Q8-->PP
-Q9-->PX
-QA-->PX
-QB-->PX
-QC-->PY
-QD-->PY
-QE-->PZ
-QF-->Q5
-QI-->Q6
-QJ-->PQ
-QN-->QP
-QN-->QQ
-QN-->QR
-QN-->QT
-QN-->QU
-QN-->QV
-QN-->QW
-QN-->QX
-QN-->QY
-QN-->QZ
-QN-->R0
-QN-->R1
-QN-->QS
-QN-->R2
-QN-->R3
-QN-->R4
-QN-->R5
-QN-->R6
-QN-->R7
-QN-->R8
-QR-->QS
-R2-->QS
-R3-->QS
-R9-->QP
-R9-->QX
-R9-->R6
-R9-->R8
-RA-->QP
-RA-->QX
-RA-->R6
-RA-->R8
+PF-->P3
+PF-->P4
+PG-->PA
+PG-->PH
+PH-->PC
+PH-->P3
+PH-->P4
+PI-->PG
+PJ-->PC
+PJ-->P8
+PK-->PH
+PK-->P4
+PP-->PR
+PP-->PT
+PP-->PU
+PP-->PV
+PP-->PW
+PP-->PX
+PP-->PY
+PP-->PZ
+PP-->Q0
+PP-->Q1
+PP-->Q2
+PP-->Q3
+PP-->Q4
+PP-->Q5
+PP-->Q6
+PP-->Q7
+PP-->Q8
+PP-->PS
+PR-->PS
+Q8-->PS
+Q9-->PR
+Q9-->Q8
+Q9-->PS
+QA-->PR
+QB-->PZ
+QC-->PZ
+QD-->PZ
+QE-->Q0
+QF-->Q0
+QG-->Q1
+QH-->Q7
+QK-->Q8
+QL-->PS
+QP-->QR
+QP-->QS
+QP-->QT
+QP-->QV
+QP-->QW
+QP-->QX
+QP-->QY
+QP-->QZ
+QP-->R0
+QP-->R1
+QP-->R2
+QP-->R3
+QP-->QU
+QP-->R4
+QP-->R5
+QP-->R6
+QP-->R7
+QP-->R8
+QP-->R9
+QP-->RA
+QT-->QU
+R4-->QU
+R5-->QU
 RB-->QR
+RB-->QZ
+RB-->R8
+RB-->RA
 RC-->QR
-RD-->QR
-RE-->QZ
-RF-->QZ
-RG-->QS
-RH-->R2
-RH-->R7
-RI-->R2
-RI-->R7
-RK-->QP
-RK-->R3
-RL-->R4
-RM-->R6
-RP-->RR
-RU-->RW
-RU-->RX
-S3-->S6
-SD-->SF
-SG-->SF
-SH-->SF
-SI-->SF
-SJ-->SF
-SM-->SO
-SM-->SP
-SM-->SR
-SM-->T0
-SM-->SS
-SM-->ST
-SM-->T1
-SM-->T2
-SM-->SW
-SM-->T3
-SM-->T4
-SM-->T5
-SO-->SP
+RC-->QZ
+RC-->R8
+RC-->RA
+RD-->QT
+RE-->QT
+RF-->QT
+RG-->R1
+RH-->R1
+RI-->QU
+RJ-->R4
+RJ-->R9
+RK-->R4
+RK-->R9
+RM-->QR
+RM-->R5
+RN-->R6
+RO-->R8
+RR-->RT
+RW-->RY
+RW-->RZ
+S5-->S8
+SF-->SH
+SI-->SH
+SJ-->SH
+SK-->SH
+SL-->SH
+SO-->SQ
 SO-->SR
 SO-->ST
-SR-->SS
-ST-->SV
-ST-->SY
-ST-->SZ
-ST-->SS
-SV-->SW
-SY-->SW
-T1-->SV
-T1-->SY
-T1-->SZ
-T1-->SS
-T3-->SR
-T4-->SO
-T5-->SR
-T8-->TA
-T8-->TD
-T8-->TE
-T8-->TB
-T8-->TC
-TA-->TB
+SO-->T2
+SO-->SU
+SO-->SV
+SO-->T3
+SO-->T4
+SO-->SY
+SO-->T5
+SO-->T6
+SO-->T7
+SQ-->SR
+SQ-->ST
+SQ-->SV
+ST-->SU
+SV-->SX
+SV-->T0
+SV-->T1
+SV-->SU
+SX-->SY
+T0-->SY
+T3-->SX
+T3-->T0
+T3-->T1
+T3-->SU
+T5-->ST
+T6-->SQ
+T7-->ST
 TA-->TC
-TC-->TB
-TD-->TA
-TF-->TD
-TG-->TD
-TH-->TA
-TI-->TE
-TJ-->TB
-TJ-->TC
+TA-->TF
+TA-->TG
+TA-->TD
+TA-->TE
+TC-->TD
+TC-->TE
+TE-->TD
+TF-->TC
+TH-->TF
+TI-->TF
+TJ-->TF
+TK-->TC
+TL-->TG
+TM-->TD
+TM-->TE
