@@ -257,10 +257,9 @@ describe('CustomerProductDetails Screen', () => {
     expect(screen.getByText('افزودن به سبد خرید')).toBeInTheDocument();
     expect(screen.queryByText('خرید فوری')).not.toBeInTheDocument();
 
-    // Value propositions (Fast delivery removed, Authenticity and Exchange remain)
+    // Value propositions (Fast delivery removed, only Authenticity remains)
     expect(screen.getByText('اصالت کالا')).toBeInTheDocument();
     expect(screen.queryByText('ارسال سریع')).not.toBeInTheDocument();
-    expect(screen.getByText('ضمانت تعویض ۷ روزه')).toBeInTheDocument();
 
     // Accordions (Shipping, exchange, and size guide removed)
     expect(screen.getByText('توضیحات')).toBeInTheDocument();

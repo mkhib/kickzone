@@ -841,20 +841,6 @@ import { PlatformSettingsModule } from './platform-settings.module';
 export class OrderModule {}
 </file>
 
-<file path="libs/server/modules/src/lib/payment.module.ts">
-import { Module } from '@nestjs/common';
-import { PaymentService, PaymentLogger } from '@kickzone-workspace/services';
-import { PaymentResolver } from '@kickzone-workspace/resolvers';
-import { OrderModule } from './order.module';
-
-@Module({
-  imports: [OrderModule], // Import OrderModule to access OrderService
-  providers: [PaymentService, PaymentResolver, PaymentLogger],
-  exports: [PaymentService],
-})
-export class PaymentModule {}
-</file>
-
 <file path="libs/server/modules/src/lib/platform-settings.module.ts">
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -931,6 +917,27 @@ import { TranslationResolver } from '@kickzone-workspace/resolvers';
   exports: [TranslationService],
 })
 export class TranslationModule {}
+</file>
+
+<file path="libs/server/modules/src/lib/user.module.ts">
+import { Module, forwardRef } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { User } from '@kickzone-workspace/entities';
+import { UserService } from '@kickzone-workspace/services';
+import { UserResolver } from '@kickzone-workspace/resolvers';
+import { AuthModule } from './auth.module';
+import { CustomerProfileModule } from './customer-profile.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([User]),
+    forwardRef(() => AuthModule),
+    CustomerProfileModule,
+  ],
+  providers: [UserService, UserResolver],
+  exports: [UserService],
+})
+export class UserModule {}
 </file>
 
 <file path="libs/server/entities/src/lib/brand.entity.ts">
@@ -1685,6 +1692,24 @@ import { RefreshToken } from '@kickzone-workspace/entities';
 export class GraphqlContextModule {}
 </file>
 
+<file path="libs/server/modules/src/lib/payment.module.ts">
+import { Module } from '@nestjs/common';
+import { PaymentService, PaymentLogger } from '@kickzone-workspace/services';
+import { PaymentResolver } from '@kickzone-workspace/resolvers';
+import { CurrencyModule } from './currency.module';
+import { OrderModule } from './order.module';
+
+@Module({
+  imports: [
+    OrderModule, // OrderService
+    CurrencyModule, // CurrencyService for the server-side FX check
+  ],
+  providers: [PaymentService, PaymentResolver, PaymentLogger],
+  exports: [PaymentService],
+})
+export class PaymentModule {}
+</file>
+
 <file path="libs/server/modules/src/lib/seller-info.module.ts">
 import {
   SellerInfo,
@@ -1749,27 +1774,6 @@ import { SiteLanguageResolver } from '@kickzone-workspace/resolvers';
   exports: [SiteLanguageService, TypeOrmModule],
 })
 export class SiteLanguageModule {}
-</file>
-
-<file path="libs/server/modules/src/lib/user.module.ts">
-import { Module, forwardRef } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import { User } from '@kickzone-workspace/entities';
-import { UserService } from '@kickzone-workspace/services';
-import { UserResolver } from '@kickzone-workspace/resolvers';
-import { AuthModule } from './auth.module';
-import { CustomerProfileModule } from './customer-profile.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([User]),
-    forwardRef(() => AuthModule),
-    CustomerProfileModule,
-  ],
-  providers: [UserService, UserResolver],
-  exports: [UserService],
-})
-export class UserModule {}
 </file>
 
 <file path="libs/server/entities/src/lib/product.entity.ts">

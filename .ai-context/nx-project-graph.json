@@ -18942,11 +18942,6 @@
         },
         {
           "source": "admins-login",
-          "target": "translations",
-          "type": "static"
-        },
-        {
-          "source": "admins-login",
           "target": "password-field",
           "type": "static"
         },
@@ -18957,12 +18952,12 @@
         },
         {
           "source": "admins-login",
-          "target": "language-components",
+          "target": "translations",
           "type": "static"
         },
         {
           "source": "admins-login",
-          "target": "shared-validation",
+          "target": "language-components",
           "type": "static"
         }
       ],
@@ -19738,17 +19733,22 @@
       "kickzone-api": [
         {
           "source": "kickzone-api",
+          "target": "resolvers",
+          "type": "static"
+        },
+        {
+          "source": "kickzone-api",
+          "target": "services",
+          "type": "static"
+        },
+        {
+          "source": "kickzone-api",
           "target": "entities",
           "type": "static"
         },
         {
           "source": "kickzone-api",
           "target": "modules",
-          "type": "static"
-        },
-        {
-          "source": "kickzone-api",
-          "target": "services",
           "type": "static"
         },
         {

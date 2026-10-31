@@ -28,7 +28,6 @@ import ChevronRight from '@mui/icons-material/ChevronRight';
 import ExpandMore from '@mui/icons-material/ExpandMore';
 import Check from '@mui/icons-material/Check';
 import GppGoodOutlined from '@mui/icons-material/GppGoodOutlined';
-import PublishedWithChangesOutlined from '@mui/icons-material/PublishedWithChangesOutlined';
 import ArrowForward from '@mui/icons-material/ArrowForward';
 import ArrowBack from '@mui/icons-material/ArrowBack';
 import ZoomIn from '@mui/icons-material/ZoomIn';
@@ -2036,9 +2035,10 @@ export function CustomerProductDetails() {
           <Box sx={{ mt: { xs: 5, md: 7 }, mb: { xs: 6, md: 8 } }}>
             <Grid container spacing={{ xs: 2, sm: 2.5, md: 3 }}>
               {/* Feature 1: Authenticity */}
-              <Grid size={{ xs: 12, sm: 6 }}>
+              <Grid size={{ xs: 12 }}>
                 <Box
                   className="lg-card"
+                  data-testid="authentic-guarantee-card"
                   dir={isRTL ? 'rtl' : 'ltr'}
                   sx={{
                     display: 'flex',
@@ -2046,7 +2046,8 @@ export function CustomerProductDetails() {
                     gap: 2,
                     p: { xs: 2.5, sm: 3 },
                     borderRadius: { xs: '20px', md: '28px' },
-                    textAlign: isRTL ? 'right' : 'left',
+                    textAlign: 'start',
+                    flexDirection: 'row',
                   }}
                 >
                   <Box
@@ -2064,7 +2065,7 @@ export function CustomerProductDetails() {
                   >
                     <GppGoodOutlined sx={{ fontSize: 24 }} />
                   </Box>
-                  <Box>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem', mb: 0.25, color: 'var(--lg-ink)' }}>
                       {isRTL ? 'اصالت کالا' : 'Authentic Guarantee'}
                     </Typography>
@@ -2073,51 +2074,6 @@ export function CustomerProductDetails() {
                       sx={{ color: 'var(--lg-muted)', fontSize: '0.8125rem' }}
                     >
                       {isRTL ? '۱۰۰٪ اورجینال نایک و جردن' : '100% Genuine Nike & Jordan'}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Grid>
-
-              {/* Feature 2: 7 Days Exchange */}
-              <Grid size={{ xs: 12, sm: 6 }}>
-                <Box
-                  className="lg-card"
-                  dir={isRTL ? 'rtl' : 'ltr'}
-                  sx={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: 2,
-                    p: { xs: 2.5, sm: 3 },
-                    borderRadius: { xs: '20px', md: '28px' },
-                    textAlign: isRTL ? 'right' : 'left',
-                  }}
-                >
-                  <Box
-                    className="lg-pill"
-                    sx={{
-                      width: 48,
-                      height: 48,
-                      borderRadius: '16px',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      color: 'var(--lg-ink)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    <PublishedWithChangesOutlined sx={{ fontSize: 24 }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontWeight: 700, fontSize: '0.9375rem', mb: 0.25, color: 'var(--lg-ink)' }}>
-                      {isRTL ? 'ضمانت تعویض ۷ روزه' : '7-Day Size Exchange'}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      sx={{ color: 'var(--lg-muted)', fontSize: '0.8125rem' }}
-                    >
-                      {isRTL
-                        ? 'امکان تعویض سریع سایز و مدل'
-                        : 'Hassle-free size & model exchange'}
                     </Typography>
                   </Box>
                 </Box>
