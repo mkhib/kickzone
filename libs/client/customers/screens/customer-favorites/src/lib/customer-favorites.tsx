@@ -4,20 +4,17 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
-import Card from '@mui/material/Card';
-import CardMedia from '@mui/material/CardMedia';
-import CardContent from '@mui/material/CardContent';
-import IconButton from '@mui/material/IconButton';
 import Chip from '@mui/material/Chip';
 import FavoriteIcon from '@mui/icons-material/Favorite';
 import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import ShoppingBagOutlinedIcon from '@mui/icons-material/ShoppingBagOutlined';
-import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { Link as RouterLink } from 'react-router-dom';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
+import { CustomersProductCard } from '@kickzone-workspace/customers-product-card';
+import { useProductById } from '@kickzone-workspace/products-hook';
+import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
 import {
   CUSTOMER_ROUTES,
-  getCustomerProductDetailsRoute,
 } from '@kickzone-workspace/customers-routes';
 import {
   useLanguageContext,
@@ -29,6 +26,45 @@ import {
   useClearWishlist,
   WishlistItem,
 } from '@kickzone-workspace/customer-wishlist-store';
+
+function FavoriteProductItem({
+  item,
+  onRemove,
+}: {
+  item: WishlistItem;
+  onRemove: (itemId: WishlistItem['id']) => void;
+}) {
+  const { product } = useProductById(Number(item.id));
+  const { addItem } = useCustomersCartService();
+
+  if (!product) return null;
+
+  return (
+    <CustomersProductCard
+      product={product}
+      variant="compact"
+      isFavorite
+      onToggleFavorite={() => onRemove(item.id)}
+      onAddVariantToCart={({ productInfo, sellerProduct }) => {
+        addItem({
+          productId: String(product.id),
+          productName: product.name,
+          productImage: productInfo.images?.[0] || null,
+          quantity: 1,
+          unitPrice: sellerProduct.price,
+          color: productInfo.colors?.[0]?.name || null,
+          size: productInfo.size || null,
+          sellerId: String(sellerProduct.seller?.id || 1),
+          sellerName: '',
+          sellerShippingFee: sellerProduct.seller?.shippingFee || 0,
+          productInfoId: String(productInfo.id),
+          sellerProductId: String(sellerProduct.id),
+          availableStock: sellerProduct.stockQuantity || 1,
+        });
+      }}
+    />
+  );
+}
 
 export function CustomerFavorites() {
   const { currentLocale } = useLanguageContext();
@@ -278,238 +314,11 @@ export function CustomerFavorites() {
           ) : (
             /* Populated Favorites Grid */
             <Grid container spacing={3} data-testid="favorites-grid">
-              {items.map((item) => {
-                const productUrl = getCustomerProductDetailsRoute(item.id);
-                const hasImage = Boolean(item.primaryImage);
-
-                return (
-                  <Grid size={{ xs: 12, sm: 6, md: 4 }} key={String(item.id)}>
-                    <Card
-                      elevation={0}
-                      data-testid={`favorite-card-${item.id}`}
-                      sx={{
-                        height: '100%',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        borderRadius: '16px',
-                        bgcolor: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? 'rgba(13, 14, 20, 0.72)'
-                            : 'rgba(255, 255, 255, 0.85)',
-                        border: (theme) =>
-                          theme.palette.mode === 'dark'
-                            ? '1px solid rgba(255, 255, 255, 0.10)'
-                            : '1px solid rgba(0, 0, 0, 0.08)',
-                        backdropFilter: 'blur(20px)',
-                        transition:
-                          'transform 0.25s ease, box-shadow 0.25s ease',
-                        '&:hover': {
-                          transform: 'translateY(-4px)',
-                          boxShadow: (theme) =>
-                            theme.palette.mode === 'dark'
-                              ? '0 16px 36px rgba(0, 0, 0, 0.6)'
-                              : '0 12px 30px rgba(0, 0, 0, 0.08)',
-                        },
-                      }}
-                    >
-                      {/* Image / Thumbnail Container */}
-                      <Box sx={{ position: 'relative', pt: '100%', bgcolor: '#141416' }}>
-                        {hasImage ? (
-                          <CardMedia
-                            component="img"
-                            image={item.primaryImage as string}
-                            alt={item.name}
-                            sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              height: '100%',
-                              objectFit: 'cover',
-                            }}
-                          />
-                        ) : (
-                          <Box
-                            sx={{
-                              position: 'absolute',
-                              top: 0,
-                              left: 0,
-                              width: '100%',
-                              height: '100%',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              bgcolor: (theme) =>
-                                theme.palette.mode === 'dark'
-                                  ? '#141416'
-                                  : '#f0efe9',
-                              color: (theme) =>
-                                theme.palette.mode === 'dark'
-                                  ? '#c9a774'
-                                  : '#8a6a3d',
-                            }}
-                          >
-                            <Typography
-                              sx={{
-                                fontFamily: '"Manrope", sans-serif',
-                                fontWeight: 800,
-                                letterSpacing: '0.2em',
-                                fontSize: '13px',
-                              }}
-                            >
-                              <bdi>SAINTBALA</bdi>
-                            </Typography>
-                          </Box>
-                        )}
-
-                        {/* Remove Action Button */}
-                        <IconButton
-                          aria-label={labels.removeAria}
-                          onClick={() => removeItem(item.id)}
-                          data-testid={`remove-favorite-btn-${item.id}`}
-                          sx={{
-                            position: 'absolute',
-                            top: 10,
-                            right: 10,
-                            bgcolor: 'rgba(0, 0, 0, 0.6)',
-                            color: '#ef4444',
-                            backdropFilter: 'blur(8px)',
-                            width: 36,
-                            height: 36,
-                            '&:hover': {
-                              bgcolor: 'rgba(0, 0, 0, 0.85)',
-                              transform: 'scale(1.08)',
-                            },
-                          }}
-                        >
-                          <FavoriteIcon fontSize="small" />
-                        </IconButton>
-                      </Box>
-
-                      {/* Content */}
-                      <CardContent
-                        sx={{
-                          flex: 1,
-                          display: 'flex',
-                          flexDirection: 'column',
-                          p: 2.5,
-                        }}
-                      >
-                        <Typography
-                          component="div"
-                          sx={{
-                            fontFamily: '"Manrope", sans-serif',
-                            fontSize: '11px',
-                            fontWeight: 700,
-                            letterSpacing: '0.15em',
-                            textTransform: 'uppercase',
-                            color: (theme) =>
-                              theme.palette.mode === 'dark'
-                                ? '#c9a774'
-                                : '#8a6a3d',
-                            mb: 0.5,
-                          }}
-                        >
-                          {item.brand || <bdi>SAINTBALA</bdi>}
-                        </Typography>
-
-                        <Typography
-                          component="h2"
-                          variant="subtitle1"
-                          sx={{
-                            fontFamily: '"Manrope", "Vazirmatn", sans-serif',
-                            fontWeight: 700,
-                            fontSize: '1rem',
-                            lineHeight: 1.4,
-                            color: (theme) =>
-                              theme.palette.mode === 'dark'
-                                ? '#ffffff'
-                                : '#1d1d1f',
-                            mb: 1,
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            overflow: 'hidden',
-                          }}
-                        >
-                          {item.name}
-                        </Typography>
-
-                        {item.productCode && (
-                          <Typography
-                            variant="caption"
-                            sx={{
-                              color: (theme) =>
-                                theme.palette.mode === 'dark'
-                                  ? '#8e8e93'
-                                  : '#6e6e73',
-                              fontFamily: 'monospace',
-                              mb: 1.5,
-                            }}
-                          >
-                            {labels.sku} {item.productCode}
-                          </Typography>
-                        )}
-
-                        <Box sx={{ mt: 'auto', pt: 1 }}>
-                          {typeof item.price === 'number' && (
-                            <Typography
-                              sx={{
-                                fontFamily: '"Manrope", sans-serif',
-                                fontWeight: 800,
-                                fontSize: '1.15rem',
-                                color: (theme) =>
-                                  theme.palette.mode === 'dark'
-                                    ? '#ffffff'
-                                    : '#1d1d1f',
-                                mb: 2,
-                              }}
-                            >
-                              ${item.price.toLocaleString()}
-                            </Typography>
-                          )}
-
-                          <Button
-                            component={RouterLink}
-                            to={productUrl}
-                            variant="outlined"
-                            fullWidth
-                            data-testid={`view-favorite-btn-${item.id}`}
-                            endIcon={<ArrowForwardIcon />}
-                            sx={{
-                              minHeight: '44px',
-                              borderRadius: '8px',
-                              borderColor: (theme) =>
-                                theme.palette.mode === 'dark'
-                                  ? 'rgba(201, 167, 116, 0.4)'
-                                  : 'rgba(0, 0, 0, 0.2)',
-                              color: (theme) =>
-                                theme.palette.mode === 'dark'
-                                  ? '#f5f5f7'
-                                  : '#1d1d1f',
-                              fontWeight: 600,
-                              textTransform: 'none',
-                              '&:hover': {
-                                borderColor: (theme) =>
-                                  theme.palette.mode === 'dark'
-                                    ? '#c9a774'
-                                    : '#8a6a3d',
-                                bgcolor: (theme) =>
-                                  theme.palette.mode === 'dark'
-                                    ? 'rgba(201, 167, 116, 0.08)'
-                                    : 'rgba(138, 106, 61, 0.06)',
-                              },
-                            }}
-                          >
-                            {labels.viewProduct}
-                          </Button>
-                        </Box>
-                      </CardContent>
-                    </Card>
-                  </Grid>
-                );
-              })}
+              {items.map((item) => (
+                <Grid size={{ xs: 12, sm: 6, md: 4 }} key={String(item.id)}>
+                  <FavoriteProductItem item={item} onRemove={removeItem} />
+                </Grid>
+              ))}
             </Grid>
           )}
         </Container>

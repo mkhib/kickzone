@@ -54,6 +54,34 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
   }),
 }));
 
+const mockUseProductById = vi.fn();
+vi.mock('@kickzone-workspace/products-hook', () => ({
+  useProductById: (id: number) => mockUseProductById(id),
+}));
+
+vi.mock('@kickzone-workspace/customers-cart-hook', () => ({
+  useCustomersCartService: () => ({ addItem: vi.fn() }),
+  useWishlistSync: vi.fn(),
+}));
+
+vi.mock('@kickzone-workspace/customers-product-card', () => ({
+  CustomersProductCard: ({
+    product,
+    onToggleFavorite,
+  }: {
+    product: { id: number; name: string };
+    onToggleFavorite?: (id: number) => void;
+  }) => (
+    <div data-testid={`shared-product-card-${product.id}`}>
+      <a href={`/products/${product.id}`}>{product.name}</a>
+      <button
+        data-testid={`favorite-toggle-${product.id}`}
+        onClick={() => onToggleFavorite?.(product.id)}
+      />
+    </div>
+  ),
+}));
+
 vi.mock('@kickzone-workspace/customers-auth-context', () => ({
   useCustomersAuth: () => ({
     user: null,
@@ -102,6 +130,11 @@ const mockItem: WishlistItem = {
 describe('CustomerFavorites Screen', () => {
   beforeEach(() => {
     mockLocale = 'en';
+    mockUseProductById.mockImplementation((id: number) => ({
+      product: { id, name: 'Structured Technical Trench' },
+      loading: false,
+      error: null,
+    }));
     useWishlistStore.setState({
       items: [],
       isLoading: false,
@@ -150,15 +183,13 @@ describe('CustomerFavorites Screen', () => {
     renderWithProviders(<CustomerFavorites />);
 
     expect(screen.getByText('Structured Technical Trench')).toBeInTheDocument();
-    expect(screen.getByText('$890')).toBeInTheDocument();
+    expect(screen.getByTestId('shared-product-card-42')).toBeInTheDocument();
+    expect(mockUseProductById).toHaveBeenCalledWith(42);
+    expect(
+      screen.getByText('Structured Technical Trench').closest('a')
+    ).toHaveAttribute('href', '/products/42');
 
-    const viewBtn = screen.getByTestId('view-favorite-btn-42');
-    expect(viewBtn).toBeInTheDocument();
-    expect(viewBtn).toHaveAttribute('href', '/products/42');
-    expect(viewBtn).toHaveStyle({ minHeight: '44px' });
-
-    const removeBtn = screen.getByTestId('remove-favorite-btn-42');
-    fireEvent.click(removeBtn);
+    fireEvent.click(screen.getByTestId('favorite-toggle-42'));
 
     expect(useWishlistStore.getState().items).toHaveLength(0);
   });

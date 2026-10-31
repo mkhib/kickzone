@@ -17211,6 +17211,21 @@
         },
         {
           "source": "customer-favorites",
+          "target": "customers-product-card",
+          "type": "static"
+        },
+        {
+          "source": "customer-favorites",
+          "target": "products-hook",
+          "type": "static"
+        },
+        {
+          "source": "customer-favorites",
+          "target": "customers-cart-hook",
+          "type": "static"
+        },
+        {
+          "source": "customer-favorites",
           "target": "customers-routes",
           "type": "static"
         },
