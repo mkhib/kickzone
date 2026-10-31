@@ -1395,111 +1395,112 @@ RR["order.service.spec.ts"]
 RS["order.service.tracking.spec.ts"]
 RT["product-info-colors.util.spec.ts"]
 RU["product.service.multi-filters.spec.ts"]
-RV["product.service.pants.spec.ts"]
-RW["product.service.spec.ts"]
-RX["relay-connection.spec.ts"]
-RY["seller-info.service.price-validation.spec.ts"]
-RZ["shipping-calculation.service.spec.ts"]
-S0["token.service.spec.ts"]
+RV["product.service.only-discounted.spec.ts"]
+RW["product.service.pants.spec.ts"]
+RX["product.service.spec.ts"]
+RY["relay-connection.spec.ts"]
+RZ["seller-info.service.price-validation.spec.ts"]
+S0["shipping-calculation.service.spec.ts"]
+S1["token.service.spec.ts"]
 end
 end
 end
-subgraph S1["strategies"]
-subgraph S2["src"]
-S3["index.ts"]
-subgraph S4["lib"]
-S5["local.strategy.ts"]
+subgraph S2["strategies"]
+subgraph S3["src"]
+S4["index.ts"]
+subgraph S5["lib"]
+S6["local.strategy.ts"]
 end
 end
 end
-subgraph S6["utils"]
-subgraph S7["src"]
-S8["index.ts"]
-subgraph S9["lib"]
-SA["email-templates.ts"]
-SB["relay-connection.ts"]
-SC["pagination.ts"]
-end
-end
-end
-end
-subgraph SD["shared"]
-subgraph SE["codegen"]
-SF["jest.config.ts"]
-subgraph SG["src"]
-SH["index.ts"]
-subgraph SI["lib"]
-subgraph SJ["generated"]
-SK["graphql.ts"]
+subgraph S7["utils"]
+subgraph S8["src"]
+S9["index.ts"]
+subgraph SA["lib"]
+SB["email-templates.ts"]
+SC["relay-connection.ts"]
+SD["pagination.ts"]
 end
 end
 end
 end
-subgraph SL["graphql-schema"]
-SM["jest.config.ts"]
-subgraph SN["src"]
-SO["index.ts"]
-end
-end
-subgraph SP["product-sizes"]
-subgraph SQ["src"]
-SR["index.ts"]
-subgraph SS["lib"]
-ST["product-sizes.ts"]
-SU["product-sizes.pants-formats.spec.ts"]
-SV["product-sizes.pants-label.spec.ts"]
-SW["product-sizes.pants-strict.spec.ts"]
-SX["product-sizes.spec.ts"]
+subgraph SE["shared"]
+subgraph SF["codegen"]
+SG["jest.config.ts"]
+subgraph SH["src"]
+SI["index.ts"]
+subgraph SJ["lib"]
+subgraph SK["generated"]
+SL["graphql.ts"]
 end
 end
 end
-subgraph SY["shared-i18n"]
-subgraph SZ["src"]
-T0["index.ts"]
-subgraph T1["lib"]
-T2["language-context.tsx"]
-T3["language-detector.ts"]
-subgraph T4["locales"]
-T5["i18n-react.tsx"]
-T6["i18n-util.ts"]
-T7["i18n-util.async.ts"]
-subgraph T8["en"]
-T9["index.ts"]
 end
-subgraph TB["fa"]
-TC["index.ts"]
+subgraph SM["graphql-schema"]
+SN["jest.config.ts"]
+subgraph SO["src"]
+SP["index.ts"]
 end
-TD["formatters.ts"]
-TE["i18n-types.ts"]
-TF["i18n-util.sync.ts"]
-TG["navigator-detector.ts"]
 end
-TA["site-name.ts"]
-TH["table-localization.ts"]
-TI["theme-provider.tsx"]
-TJ["use-page-title.ts"]
+subgraph SQ["product-sizes"]
+subgraph SR["src"]
+SS["index.ts"]
+subgraph ST["lib"]
+SU["product-sizes.ts"]
+SV["product-sizes.pants-formats.spec.ts"]
+SW["product-sizes.pants-label.spec.ts"]
+SX["product-sizes.pants-strict.spec.ts"]
+SY["product-sizes.spec.ts"]
 end
 end
 end
-subgraph TK["validation"]
-subgraph TL["src"]
-TM["index.ts"]
-subgraph TN["lib"]
-TO["auth.ts"]
-TP["limits.ts"]
-TQ["primitives.ts"]
-TR["auth-forms.ts"]
-TS["cart.ts"]
-TT["errors.ts"]
-TU["auth-forms.admin.spec.ts"]
-TV["auth-forms.login.spec.ts"]
-TW["auth-forms.recovery.spec.ts"]
-TX["auth-forms.seller.spec.ts"]
-TY["auth-forms.spec.ts"]
-TZ["auth.spec.ts"]
-U0["cart.spec.ts"]
-U1["errors.spec.ts"]
-U2["primitives.spec.ts"]
+subgraph SZ["shared-i18n"]
+subgraph T0["src"]
+T1["index.ts"]
+subgraph T2["lib"]
+T3["language-context.tsx"]
+T4["language-detector.ts"]
+subgraph T5["locales"]
+T6["i18n-react.tsx"]
+T7["i18n-util.ts"]
+T8["i18n-util.async.ts"]
+subgraph T9["en"]
+TA["index.ts"]
+end
+subgraph TC["fa"]
+TD["index.ts"]
+end
+TE["formatters.ts"]
+TF["i18n-types.ts"]
+TG["i18n-util.sync.ts"]
+TH["navigator-detector.ts"]
+end
+TB["site-name.ts"]
+TI["table-localization.ts"]
+TJ["theme-provider.tsx"]
+TK["use-page-title.ts"]
+end
+end
+end
+subgraph TL["validation"]
+subgraph TM["src"]
+TN["index.ts"]
+subgraph TO["lib"]
+TP["auth.ts"]
+TQ["limits.ts"]
+TR["primitives.ts"]
+TS["auth-forms.ts"]
+TT["cart.ts"]
+TU["errors.ts"]
+TV["auth-forms.admin.spec.ts"]
+TW["auth-forms.login.spec.ts"]
+TX["auth-forms.recovery.spec.ts"]
+TY["auth-forms.seller.spec.ts"]
+TZ["auth-forms.spec.ts"]
+U0["auth.spec.ts"]
+U1["cart.spec.ts"]
+U2["errors.spec.ts"]
+U3["primitives.spec.ts"]
 end
 end
 end
@@ -2050,66 +2051,68 @@ RV-->RF
 RV-->RK
 RW-->RF
 RW-->RK
-RY-->R2
-RY-->RG
-RZ-->RH
-S0-->RJ
-S3-->S5
-S8-->SA
-S8-->SB
-SH-->SK
-SR-->ST
-SU-->ST
-SV-->ST
-SW-->ST
-SX-->ST
-T0-->T2
-T0-->T3
-T0-->T5
-T0-->TE
-T0-->T6
-T0-->T7
-T0-->TF
-T0-->TG
-T0-->TA
-T0-->TH
-T0-->TI
-T0-->TJ
-T2-->T3
-T2-->T5
-T2-->T7
-T5-->T6
-T7-->T9
-T7-->TC
-T7-->TD
-T7-->T6
-T9-->TA
-TC-->TA
-TF-->T9
-TF-->TC
-TF-->TD
-TF-->T6
-TH-->T5
-TI-->T2
-TJ-->T5
-TM-->TO
-TM-->TR
-TM-->TS
-TM-->TT
-TM-->TP
-TM-->TQ
-TO-->TP
-TO-->TQ
-TQ-->TP
-TR-->TO
-TS-->TQ
-TU-->TR
-TV-->TR
-TW-->TR
-TX-->TR
-TY-->TR
-TZ-->TO
-U0-->TS
+RX-->RF
+RX-->RK
+RZ-->R2
+RZ-->RG
+S0-->RH
+S1-->RJ
+S4-->S6
+S9-->SB
+S9-->SC
+SI-->SL
+SS-->SU
+SV-->SU
+SW-->SU
+SX-->SU
+SY-->SU
+T1-->T3
+T1-->T4
+T1-->T6
+T1-->TF
+T1-->T7
+T1-->T8
+T1-->TG
+T1-->TH
+T1-->TB
+T1-->TI
+T1-->TJ
+T1-->TK
+T3-->T4
+T3-->T6
+T3-->T8
+T6-->T7
+T8-->TA
+T8-->TD
+T8-->TE
+T8-->T7
+TA-->TB
+TD-->TB
+TG-->TA
+TG-->TD
+TG-->TE
+TG-->T7
+TI-->T6
+TJ-->T3
+TK-->T6
+TN-->TP
+TN-->TS
+TN-->TT
+TN-->TU
+TN-->TQ
+TN-->TR
+TP-->TQ
+TP-->TR
+TR-->TQ
+TS-->TP
+TT-->TR
+TV-->TS
+TW-->TS
+TX-->TS
+TY-->TS
+TZ-->TS
+U0-->TP
 U1-->TT
-U2-->TP
-U2-->TQ
+U2-->TU
+U3-->TQ
+U3-->TR

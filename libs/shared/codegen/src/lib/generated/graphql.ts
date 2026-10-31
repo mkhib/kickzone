@@ -777,12 +777,14 @@ export type ProductFilterInput = {
   after?: InputMaybe<Scalars['String']['input']>;
   archivedStatus?: InputMaybe<ProductArchivedStatus>;
   brand?: InputMaybe<Scalars['String']['input']>;
+  brands?: InputMaybe<Array<Scalars['String']['input']>>;
   category?: InputMaybe<Scalars['String']['input']>;
   categoryId?: InputMaybe<Scalars['Int']['input']>;
   categoryIds?: InputMaybe<Array<Scalars['Int']['input']>>;
   categorySlugs?: InputMaybe<Array<Scalars['String']['input']>>;
   first?: InputMaybe<Scalars['Int']['input']>;
   ids?: InputMaybe<Array<Scalars['Int']['input']>>;
+  onlyDiscounted?: InputMaybe<Scalars['Boolean']['input']>;
   onlyInStock?: InputMaybe<Scalars['Boolean']['input']>;
   onlyWithSellers?: InputMaybe<Scalars['Boolean']['input']>;
   productInfoFilter?: InputMaybe<ProductInfoFilterInput>;

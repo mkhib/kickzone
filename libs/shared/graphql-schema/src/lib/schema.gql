@@ -442,6 +442,7 @@ input ProductFilterInput {
   category: String
   categorySlugs: [String!]
   brand: String
+  brands: [String!]
   ids: [Int!]
   searchTerm: String
   productInfoFilter: ProductInfoFilterInput
@@ -455,6 +456,7 @@ input ProductFilterInput {
   sellerId: Int
   onlyWithSellers: Boolean
   onlyInStock: Boolean
+  onlyDiscounted: Boolean
 }
 
 input ProductInfoFilterInput {

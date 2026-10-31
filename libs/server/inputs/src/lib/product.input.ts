@@ -273,4 +273,7 @@ export class ProductFilterInput {
 
   @Field({ nullable: true })
   onlyInStock?: boolean;
+
+  @Field({ nullable: true })
+  onlyDiscounted?: boolean;
 }

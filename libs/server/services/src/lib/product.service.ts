@@ -173,6 +173,24 @@ export class ProductService implements OnModuleInit {
       );
     }
 
+    // Only products with at least one discounted seller offer (drives the "sale" chip).
+    if (filter?.onlyDiscounted === true) {
+      const productRelation =
+        this.sellerProductRepository.metadata.findRelationWithPropertyPath(
+          'product'
+        );
+      const discountColumn =
+        this.sellerProductRepository.metadata.findColumnWithPropertyName(
+          'discount'
+        )?.databaseName || 'discount';
+      const productColumn =
+        productRelation?.joinColumns?.[0]?.databaseName || 'productId';
+
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM seller_product sp WHERE sp."${productColumn}" = product.id AND sp."${discountColumn}" > 0)`
+      );
+    }
+
     // Partitioning hint: The 'archived' column should be used for table partitioning at the DB level.
     if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
       query.andWhere('product.archived = :archived', {
