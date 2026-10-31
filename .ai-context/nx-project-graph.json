@@ -17426,6 +17426,11 @@
           "source": "currency-management",
           "target": "admins-currency-management-hooks",
           "type": "static"
+        },
+        {
+          "source": "currency-management",
+          "target": "shared-validation",
+          "type": "static"
         }
       ],
       "customer-payment": [

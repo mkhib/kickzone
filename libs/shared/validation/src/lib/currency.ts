@@ -47,7 +47,11 @@ export const setExchangeRateSchema = z.object({
 
 /** Admin exchange-rate form (rate typed as text). */
 export const exchangeRateFormSchema = z.object({
-  rate: z.coerce.number().positive().finite(),
+  rate: z
+    .string()
+    .trim()
+    .min(1)
+    .refine((v) => Number.isFinite(Number(v)) && Number(v) > 0),
   notes: z.string().max(CURRENCY_LIMITS.notes.max).optional(),
 });
 

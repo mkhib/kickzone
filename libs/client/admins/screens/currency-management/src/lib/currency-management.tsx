@@ -18,6 +18,12 @@ import TableRow from '@mui/material/TableRow';
 import Stack from '@mui/material/Stack';
 import { useTheme } from '@mui/material/styles';
 import { useAdminsCurrencyManagement } from '@kickzone-workspace/admins-currency-management-hooks';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  exchangeRateFormSchema,
+  type ExchangeRateFormInput,
+} from '@kickzone-workspace/validation';
 
 export function CurrencyManagement() {
   const { LL } = useI18nContext();
@@ -57,6 +63,17 @@ export function CurrencyManagement() {
     handleSetExchangeRate,
     handleSetCurrencyPreference,
   } = useAdminsCurrencyManagement();
+
+  const rateForm = useForm<ExchangeRateFormInput>({
+    values: { rate: newRate, notes },
+    resolver: zodResolver(exchangeRateFormSchema),
+    mode: 'onSubmit',
+  });
+  const rateError = rateForm.formState.errors.rate;
+  const submitExchangeRate = async () => {
+    if (!(await rateForm.trigger())) return;
+    handleSetExchangeRate();
+  };
 
   return (
     <AdminsLayout>
@@ -148,6 +165,8 @@ export function CurrencyManagement() {
                 value={newRate}
                 onChange={(e) => setNewRate(e.target.value)}
                 placeholder={LL.currency.enterExchangeRate()}
+                error={Boolean(rateError)}
+                helperText={rateError ? LL.currency.enterExchangeRate() : undefined}
                 fullWidth
                 {...getLtrTextFieldProps()}
                 slotProps={{
@@ -165,7 +184,7 @@ export function CurrencyManagement() {
               />
               <Button
                 variant="contained"
-                onClick={handleSetExchangeRate}
+                onClick={submitExchangeRate}
                 loading={settingRate}
                 disabled={currencies.length === 0 || !selectedFromCurrency || !selectedToCurrency}
                 sx={{ alignSelf: 'flex-start' }}
