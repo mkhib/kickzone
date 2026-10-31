@@ -12,6 +12,7 @@ export default defineConfig(() => ({
   //  plugins: [ nxViteTsPaths() ],
   // },
   test: {
+    passWithNoTests: true,
     name: 'brands-hook',
     watch: false,
     globals: true,

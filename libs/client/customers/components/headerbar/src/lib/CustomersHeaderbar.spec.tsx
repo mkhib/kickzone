@@ -20,6 +20,11 @@ vi.mock('@kickzone-workspace/customer-cart-store', () => ({
 
 vi.mock('@kickzone-workspace/shared-i18n', () => ({
   SITE_NAME: 'SAINTBALA',
+  useLanguageContext: () => ({
+    currentLocale: 'en',
+    availableLocales: [{ code: 'en', name: 'English', nativeName: 'English' }],
+    changeLanguage: vi.fn(),
+  }),
   useI18nContext: () => ({
     LL: {
       home: {
@@ -164,13 +169,16 @@ describe('CustomersHeaderbar', () => {
     });
 
     it('hides header menu button on mobile when all items are handled in the tabbar', () => {
-      // Guest with default items handled in tabbar (home, cart, login)
+      // Guest where every visible item is handled in the tabbar. Favorites is a drawer-only
+      // item for guests (not in the default guest tabbar), so it must be listed here too.
       mockUseCustomersAuth.mockReturnValue({
         user: null,
         logout: mockLogout,
       });
 
-      renderWithProviders(<Headerbar />);
+      renderWithProviders(
+        <Headerbar handledInTabbarIds={['home', 'cart', 'favorites', 'login']} />
+      );
 
       // Menu button should NOT be rendered!
       expect(screen.queryByLabelText('menu')).not.toBeInTheDocument();
