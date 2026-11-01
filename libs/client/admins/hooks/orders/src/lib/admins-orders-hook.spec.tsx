@@ -91,7 +91,7 @@ describe('useAdminsOrders', () => {
     const customParams = {
       first: 20,
       after: 'cursor123',
-      status: 'COMPLETED' as any,
+      status: 'COMPLETED' as unknown as NonNullable<Parameters<typeof useAdminsOrders>[0]>['status'],
     };
 
     vi.mocked(useQuery).mockReturnValue({
@@ -219,7 +219,7 @@ describe('useAdminsOrders', () => {
     const { result } = renderHook(() => useAdminsOrders());
 
     await act(async () => {
-      await result.current.updateOrderStatus('1', 'COMPLETED' as any);
+      await result.current.updateOrderStatus('1', 'COMPLETED' as unknown as Parameters<ReturnType<typeof useAdminsOrders>['updateOrderStatus']>[1]);
     });
 
     expect(mockUpdateOrderStatusMutation).toHaveBeenCalledWith({

@@ -18,8 +18,7 @@ const mockClearCartMutation = vi.fn().mockResolvedValue({});
 
 // Polyfill canvas getContext before any lottie imports
 if (typeof window !== 'undefined' && window.HTMLCanvasElement) {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  (window.HTMLCanvasElement.prototype as any).getContext = vi
+  (window.HTMLCanvasElement.prototype as unknown as { getContext: unknown }).getContext = vi
     .fn()
     .mockReturnValue({
       fillRect: vi.fn(),

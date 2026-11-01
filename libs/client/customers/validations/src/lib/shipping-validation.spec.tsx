@@ -43,8 +43,7 @@ describe('ShippingValidation', () => {
         zipCode: '۱۹۸۷۶۵۴۳۲۱',
         country: 'ایران',
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mockLL as any
+      mockLL as unknown as Parameters<typeof validateShippingInfo>[1]
     );
 
     expect(result.isValid).toBe(true);
@@ -78,8 +77,7 @@ describe('ShippingValidation', () => {
         zipCode: '1234567890',
         country: 'Iran',
       },
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      mockLL as any
+      mockLL as unknown as Parameters<typeof validateShippingInfo>[1]
     );
 
     expect(result.isValid).toBe(true);

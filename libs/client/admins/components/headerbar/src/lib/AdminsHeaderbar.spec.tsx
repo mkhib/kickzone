@@ -17,14 +17,13 @@ vi.mock('@kickzone-workspace/admins-contexts', () => ({
 // Any LL key not listed explicitly falls back to a function returning its key path,
 // so tests do not break each time the headerbar uses a new translation key.
 const { withKeyFallback } = vi.hoisted(() => {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const withKeyFallback = (base: any, path = ''): any =>
+  const withKeyFallback = (base: unknown, path = ''): unknown =>
     new Proxy(typeof base === 'function' ? base : () => path, {
       get: (_t, k) =>
         typeof k === 'symbol'
           ? undefined
           : withKeyFallback(
-              base && typeof base === 'object' ? base[k] : undefined,
+              base && typeof base === 'object' ? (base as Record<string, unknown>)[k] : undefined,
               path ? `${path}.${String(k)}` : String(k)
             ),
     });

@@ -403,7 +403,7 @@ describe('Heavy 7: real useSellerOrders hook unit tests - Locked Tests 1-5', () 
     expect(queryOptions.variables).toEqual({ first: 10, after: undefined });
     expect('status' in queryOptions.variables).toBe(false);
     expect(result.orders).toHaveLength(4);
-    expect(result.orders.map((o: any) => o.status)).toEqual(['PENDING', 'CONFIRMED', 'SHIPPED', 'CANCELLED']);
+    expect(result.orders.map((o: { status: string }) => o.status)).toEqual(['PENDING', 'CONFIRMED', 'SHIPPED', 'CANCELLED']);
   });
 
   // Locked Test 2
@@ -444,7 +444,7 @@ describe('Heavy 7: real useSellerOrders hook unit tests - Locked Tests 1-5', () 
       fetchMore: mockFetchMore,
     });
 
-    const result = realUseSellerOrders({ first: 10, status: 'CONFIRMED' as any });
+    const result = realUseSellerOrders({ first: 10, status: 'CONFIRMED' as NonNullable<Parameters<typeof UseSellerOrdersFn>[0]>['status'] });
 
     expect(mockApolloUseQuery).toHaveBeenCalledWith(
       GET_MY_ORDERS_QUERY,
@@ -506,7 +506,7 @@ describe('Heavy 7: real useSellerOrders hook unit tests - Locked Tests 1-5', () 
       fetchMore: mockFetchMore,
     });
 
-    const shippedResult = realUseSellerOrders({ first: 10, status: 'SHIPPED' as any });
+    const shippedResult = realUseSellerOrders({ first: 10, status: 'SHIPPED' as NonNullable<Parameters<typeof UseSellerOrdersFn>[0]>['status'] });
     shippedResult.loadMore();
     expect(mockFetchMore).toHaveBeenLastCalledWith({ variables: { after: 'cursor-123', status: 'SHIPPED' } });
   });

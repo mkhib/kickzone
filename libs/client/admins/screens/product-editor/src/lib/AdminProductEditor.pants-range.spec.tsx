@@ -19,7 +19,7 @@ const mockDeleteColor = vi.fn();
 const mockRefetchProduct = vi.fn();
 const mockUseParams = vi.fn<[], { id?: string }>(() => ({ id: undefined }));
 const mockUseProductById = vi.fn(
-  (..._args: unknown[]): { product: any; refetch?: any; loading?: boolean; error?: any } => ({
+  (..._args: unknown[]): { product: unknown; refetch?: unknown; loading?: boolean; error?: unknown } => ({
     product: null,
     refetch: mockRefetchProduct,
   })

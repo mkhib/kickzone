@@ -60,16 +60,16 @@ const createMockAuth = (overrides = {}) => ({
 
 const setupHook = (options: {
   isLoggedIn?: boolean;
-  cartItems?: any[];
+  cartItems?: unknown[];
   mockMutations?: {
-    addToCart?: any;
-    updateCartItem?: any;
-    removeFromCart?: any;
-    clearCart?: any;
+    addToCart?: jest.Mock;
+    updateCartItem?: jest.Mock;
+    removeFromCart?: jest.Mock;
+    clearCart?: jest.Mock;
   };
   mockQueries?: {
-    myCart?: any;
-    sellers?: any;
+    myCart?: unknown;
+    sellers?: unknown;
   };
 } = {}) => {
   const { isLoggedIn = false, cartItems = [], mockMutations = {}, mockQueries = {} } = options;
@@ -90,7 +90,7 @@ const setupHook = (options: {
   mockedUseCartStore.getState.mockReturnValue(mockStoreState);
 
   // Setup mutations - return correct mock based on mutation document
-  mockedUseMutation.mockImplementation((mutationDoc: any) => {
+  mockedUseMutation.mockImplementation((mutationDoc: unknown) => {
     if (mutationDoc === 'ADD_TO_CART_MUTATION') return [mockAddToCartMutation, { loading: false }];
     if (mutationDoc === 'UPDATE_CART_ITEM_MUTATION') return [mockUpdateCartItemMutation, { loading: false }];
     if (mutationDoc === 'REMOVE_FROM_CART_MUTATION') return [mockRemoveFromCartMutation, { loading: false }];

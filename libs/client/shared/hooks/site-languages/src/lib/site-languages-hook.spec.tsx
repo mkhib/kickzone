@@ -20,7 +20,7 @@ describe('useSiteLanguages', () => {
       loading: false,
       error: undefined,
       refetch: vi.fn(),
-    } as any);
+    } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
     const { result } = renderHook(() => useSiteLanguages());
 

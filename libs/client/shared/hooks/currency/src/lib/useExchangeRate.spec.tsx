@@ -23,7 +23,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -39,7 +39,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -53,7 +53,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -69,7 +69,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -84,7 +84,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -100,7 +100,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -114,7 +114,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -128,7 +128,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -144,7 +144,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -163,7 +163,7 @@ describe('useExchangeRate', () => {
           loading: false,
           error: undefined,
           refetch: vi.fn(),
-        } as any);
+        } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
         const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -178,7 +178,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -194,7 +194,7 @@ describe('useExchangeRate', () => {
         loading: true,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -208,7 +208,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: testError,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
 
@@ -225,7 +225,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode, skip: true }));
 
@@ -240,7 +240,7 @@ describe('useExchangeRate', () => {
         loading: false,
         error: undefined,
         refetch: vi.fn(),
-      } as any);
+      } as unknown as ReturnType<typeof apolloReact.useQuery>);
 
       const { result } = renderHook(() => useExchangeRate({ fromCurrencyCode: 'USD', toCurrencyCode: 'USD' }));
 
@@ -263,14 +263,14 @@ describe('useExchangeRate', () => {
             loading: false,
             error: undefined,
             refetch: vi.fn().mockResolvedValue({ data: { currentExchangeRate: { rate: 65000 } } }),
-          } as any;
+          } as unknown as ReturnType<typeof apolloReact.useQuery>;
         }
         return {
           data: { currentExchangeRate: { rate: 65000 } },
           loading: false,
           error: undefined,
           refetch: vi.fn(),
-        } as any;
+        } as unknown as ReturnType<typeof apolloReact.useQuery>;
       });
 
       const { result, rerender } = renderHook(() => useExchangeRate({ fromCurrencyCode, toCurrencyCode }));
