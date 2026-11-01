@@ -925,6 +925,27 @@ describe('PaymentResolver Unit Tests', () => {
         expect(result.ref_id).toBe(refId);
         expect(result.orderIds).toEqual(['order-1', 'order-2']);
       });
+it('does NOT treat CONFIRMED orders with stockReserved=undefined as idempotently reserved (matches entity default false)', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          status: OrderStatus.CONFIRMED,
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+        (order1 as unknown as Record<string, unknown>)['stockReserved'] = undefined;
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 101, message: 'Already verified', ref_id: refId },
+          errors: [],
+        } as never);
+        const result = await resolver.verifyZarinPalPayment({ amount: 6000000, authority, order_id: 'order-1' } as never);
+        // Already-CONFIRMED orders are never re-confirmed; result is still a gateway success
+        expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+        expect(result.success).toBe(true);
+        expect(result.code).toBe(101);
+      });
 
       it('should retry confirmOrderPayment when gateway returns 101 but order is still PENDING (previous attempt failed)', async () => {
         const order1 = createMockOrder({

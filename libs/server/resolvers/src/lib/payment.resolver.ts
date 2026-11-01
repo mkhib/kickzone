@@ -348,7 +348,7 @@ export class PaymentResolver {
       // and has stock reserved, return success without re-decrementing stock.
       const allOrdersConfirmedAndStockReserved = orders.every(
         (o) =>
-          o.status === OrderStatus.CONFIRMED && o.stockReserved !== false
+          o.status === OrderStatus.CONFIRMED && o.stockReserved === true
       );
 
       if (response.data.code === 101 && allOrdersConfirmedAndStockReserved) {
