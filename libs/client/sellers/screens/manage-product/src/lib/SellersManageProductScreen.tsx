@@ -206,7 +206,7 @@ export function SellersManageProductScreen() {
     field: keyof KickzoneGraphqlTypes.CreateSellerProductInput,
     value: string | number | boolean
   ) => {
-    let parsed: any = value;
+    let parsed: string | number | boolean = value;
     if (typeof value === 'string') {
       if (field === 'stockQuantity') {
         parsed = value === '' ? 0 : parseInt(value, 10);

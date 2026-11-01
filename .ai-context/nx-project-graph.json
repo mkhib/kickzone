@@ -17063,6 +17063,11 @@
         },
         {
           "source": "customer-shopping-cart",
+          "target": "shared-validation",
+          "type": "static"
+        },
+        {
+          "source": "customer-shopping-cart",
           "target": "customers-cart-hook",
           "type": "static"
         },
@@ -17477,6 +17482,11 @@
         {
           "source": "customer-payment",
           "target": "codegen",
+          "type": "static"
+        },
+        {
+          "source": "customer-payment",
+          "target": "shared-validation",
           "type": "static"
         }
       ],

@@ -1,4 +1,4 @@
-import type { MRT_TableOptions } from 'material-react-table';
+import type { MRT_RowData, MRT_TableOptions } from 'material-react-table';
 
 /**
  * Props for RTL table configuration
@@ -18,7 +18,7 @@ function contentJustify(alignment: 'left' | 'right' | 'center') {
  * Gets MaterialReactTable props with RTL alignment support.
  * Aligns header labels and body cells the same way so values sit under titles in Farsi.
  */
-export function getRTLTableProps<T extends Record<string, any>>(
+export function getRTLTableProps<T extends MRT_RowData>(
   config: RTLTablePropsConfig
 ): Partial<MRT_TableOptions<T>> {
   const { alignment, isFarsi } = config;
