@@ -14,7 +14,7 @@ import {
 } from '@kickzone-workspace/inputs';
 import { CartService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
-import { CurrentUser } from '@kickzone-workspace/decorators';
+import { CurrentUser, type AuthenticatedUser } from '@kickzone-workspace/decorators';
 import { ZodValidationPipe } from './zod-validation.pipe';
 import {
   addToCartSchema,
@@ -28,14 +28,14 @@ export class CartResolver {
 
   @Query(() => Cart)
   @UseGuards(GraphqlAuthGuard)
-  async myCart(@CurrentUser() user: any) {
+  async myCart(@CurrentUser() user: AuthenticatedUser) {
     return this.cartService.getCart(user.id);
   }
 
   @Mutation(() => Cart)
   @UseGuards(GraphqlAuthGuard)
   async addToCart(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('addToCartInput', new ZodValidationPipe(addToCartSchema)) addToCartInput: AddToCartInput
   ) {
     return this.cartService.addToCart(user.id, addToCartInput);
@@ -44,7 +44,7 @@ export class CartResolver {
   @Mutation(() => Cart)
   @UseGuards(GraphqlAuthGuard)
   async updateCartItem(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('itemId', { type: () => String }, new ZodValidationPipe(idSchema)) itemId: string,
     @Args('updateInput', new ZodValidationPipe(updateCartItemSchema)) updateInput: UpdateCartItemInput
   ) {
@@ -54,7 +54,7 @@ export class CartResolver {
   @Mutation(() => Cart)
   @UseGuards(GraphqlAuthGuard)
   async removeFromCart(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('itemId', { type: () => String }, new ZodValidationPipe(idSchema)) itemId: string
   ) {
     return this.cartService.removeFromCart(user.id, itemId);
@@ -62,7 +62,7 @@ export class CartResolver {
 
   @Mutation(() => Cart)
   @UseGuards(GraphqlAuthGuard)
-  async clearCart(@CurrentUser() user: any) {
+  async clearCart(@CurrentUser() user: AuthenticatedUser) {
     return this.cartService.clearCart(user.id);
   }
 

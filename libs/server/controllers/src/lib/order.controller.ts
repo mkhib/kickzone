@@ -17,7 +17,7 @@ import {
 } from '@kickzone-workspace/inputs';
 import { Order, OrderStatus } from '@kickzone-workspace/entities';
 import { HttpAuthGuard } from '@kickzone-workspace/guards';
-import { CurrentUser } from '@kickzone-workspace/decorators';
+import { CurrentUser, type AuthenticatedUser } from '@kickzone-workspace/decorators';
 
 @Controller('orders')
 @UseGuards(HttpAuthGuard)
@@ -63,7 +63,7 @@ export class OrderController {
 
   @Get('admin/seller/:sellerId')
   async adminGetSellerOrders(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Param('sellerId') sellerId: string,
     @Query('first') first = '10',
     @Query('after') after?: string,
@@ -81,7 +81,7 @@ export class OrderController {
 
   @Get('admin/all')
   async adminGetAllOrders(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('first') first = '10',
     @Query('after') after?: string,
     @Query('status') status?: OrderStatus
@@ -98,7 +98,7 @@ export class OrderController {
 
   @Get('my/orders')
   async getMyOrders(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Query('first') first = '10',
     @Query('after') after?: string
   ) {

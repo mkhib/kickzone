@@ -45,7 +45,11 @@ const SELLER_STATUS_TRANSITIONS: Partial<Record<OrderStatus, OrderStatus>> = {
 };
 import { OrderService, SellerService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
-import { CurrentUser } from '@kickzone-workspace/decorators';
+import {
+  CurrentUser,
+  type AuthenticatedUser,
+  type OptionalAuthenticatedUser,
+} from '@kickzone-workspace/decorators';
 
 @Resolver(() => Order)
 export class OrderResolver {
@@ -57,14 +61,14 @@ export class OrderResolver {
   /**
    * Extract user ID from various possible fields in the user object.
    */
-  private getUserId(user: any): string {
+  private getUserId(user: OptionalAuthenticatedUser): string {
     return String(user?.id ?? user?.sub ?? '');
   }
 
   /**
    * Normalize user role to uppercase standard values.
    */
-  private getUserRole(user: any): 'ADMIN' | 'SELLER' | 'CUSTOMER' | 'UNKNOWN' {
+  private getUserRole(user: OptionalAuthenticatedUser): 'ADMIN' | 'SELLER' | 'CUSTOMER' | 'UNKNOWN' {
     const rawRole = user?.role ?? user?.userType;
     if (!rawRole) return 'UNKNOWN';
     const normalized = String(rawRole).toUpperCase();
@@ -77,7 +81,7 @@ export class OrderResolver {
   /**
    * Assert that the caller is an admin.
    */
-  private assertAdmin(user: any): void {
+  private assertAdmin(user: OptionalAuthenticatedUser): void {
     if (this.getUserRole(user) !== 'ADMIN') {
       throw new ForbiddenException('Admin access required');
     }
@@ -86,7 +90,7 @@ export class OrderResolver {
   @Query(() => OrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async orders(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args(
       'first',
       { type: () => Number, defaultValue: 10 },
@@ -115,7 +119,7 @@ export class OrderResolver {
   @Query(() => Order)
   @UseGuards(GraphqlAuthGuard)
   async order(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('id', { type: () => String }, new ZodValidationPipe(idSchema)) id: string
   ) {
     const order = await this.orderService.findOne(id);
@@ -236,7 +240,7 @@ export class OrderResolver {
   @Query(() => OrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async adminSellerOrders(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('sellerId', { type: () => String }, new ZodValidationPipe(idSchema))
     sellerId: string,
     @Args(
@@ -261,7 +265,7 @@ export class OrderResolver {
   @Query(() => OrdersConnection)
   @UseGuards(GraphqlAuthGuard)
   async allSellerOrders(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args(
       'first',
       { type: () => Number, defaultValue: 10 },
@@ -292,7 +296,7 @@ export class OrderResolver {
   @Mutation(() => Order)
   @UseGuards(GraphqlAuthGuard)
   async updateOrder(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('id', { type: () => String }, new ZodValidationPipe(idSchema)) id: string,
     @Args('updateOrderInput', new ZodValidationPipe(updateOrderSchema))
     updateOrderInput: UpdateOrderInput
@@ -302,7 +306,8 @@ export class OrderResolver {
     const order = await this.orderService.findOne(id);
 
     // Forbid modifying items or financial totals after order creation
-    const input = updateOrderInput as any;
+    // items is not part of UpdateOrderInput; guard against it arriving anyway
+    const input: UpdateOrderInput & { items?: unknown } = updateOrderInput;
     if (
       input.items != null ||
       order.status !== OrderStatus.PENDING
@@ -318,7 +323,7 @@ export class OrderResolver {
   @Mutation(() => Order)
   @UseGuards(GraphqlAuthGuard)
   async updateOrderStatus(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('updateOrderStatusInput', new ZodValidationPipe(updateOrderStatusSchema))
     updateOrderStatusInput: UpdateOrderStatusInput
   ) {
@@ -365,7 +370,7 @@ export class OrderResolver {
   @Mutation(() => Boolean)
   @UseGuards(GraphqlAuthGuard)
   async cancelPendingOrder(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('orderId', { type: () => String }, new ZodValidationPipe(idSchema)) orderId: string
   ) {
     const order = await this.orderService.findOne(orderId);
@@ -401,7 +406,7 @@ export class OrderResolver {
   @Mutation(() => Boolean)
   @UseGuards(GraphqlAuthGuard)
   async deleteOrder(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('id', { type: () => String }, new ZodValidationPipe(idSchema)) id: string
   ) {
     this.assertAdmin(user);
@@ -415,7 +420,7 @@ export class OrderResolver {
       OrderStatus.SHIPPED,
     ];
 
-    if (activePaidStatuses.includes(order.status) || (order as any).stockReserved === true) {
+    if (activePaidStatuses.includes(order.status) || order.stockReserved === true) {
       await this.orderService.updateOrderStatus(id, OrderStatus.CANCELLED);
     }
 
@@ -426,7 +431,7 @@ export class OrderResolver {
   @Mutation(() => Order)
   @UseGuards(GraphqlAuthGuard)
   async updateOrderTracking(
-    @CurrentUser() user: any,
+    @CurrentUser() user: AuthenticatedUser,
     @Args('id', { type: () => String }, new ZodValidationPipe(idSchema)) id: string,
     @Args(
       'trackingNumber',

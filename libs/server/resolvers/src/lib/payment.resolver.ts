@@ -1,6 +1,11 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
 import { UseGuards, BadRequestException } from '@nestjs/common';
-import { OrderStatus } from '@kickzone-workspace/entities';
+import { OrderStatus, type OrderItem } from '@kickzone-workspace/entities';
+
+/** OrderItem with the sellerProduct relation loaded (not declared on the entity class). */
+type OrderItemWithSellerProduct = OrderItem & {
+  sellerProduct?: { id?: string; stockQuantity?: number } | null;
+};
 import { PaymentService, OrderService, CurrencyService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser } from '@kickzone-workspace/decorators';
@@ -299,7 +304,7 @@ export class PaymentResolver {
     const stockRequirements = new Map<string, number>(); // sellerProductId -> requiredQty
     for (const order of pendingOrders) {
       for (const item of order.items ?? []) {
-        const sp = (item as any).sellerProduct;
+        const sp = (item as OrderItemWithSellerProduct).sellerProduct;
         if (sp?.id != null && typeof sp.stockQuantity === 'number') {
           const current = stockRequirements.get(sp.id) ?? 0;
           stockRequirements.set(sp.id, current + (item.quantity ?? 0));
@@ -308,7 +313,9 @@ export class PaymentResolver {
     }
     for (const [sellerProductId, requiredQty] of stockRequirements.entries()) {
       // Find the sellerProduct to check current stock
-      const sampleItem = (pendingOrders.flatMap((o) => o.items ?? []).find((i) => (i as any).sellerProduct?.id === sellerProductId) as any);
+      const sampleItem = pendingOrders
+        .flatMap((o): OrderItemWithSellerProduct[] => o.items ?? [])
+        .find((i) => i.sellerProduct?.id === sellerProductId);
       const available = sampleItem?.sellerProduct?.stockQuantity ?? 0;
       if (available < requiredQty) {
         throw new BadRequestException(
@@ -341,7 +348,7 @@ export class PaymentResolver {
       // and has stock reserved, return success without re-decrementing stock.
       const allOrdersConfirmedAndStockReserved = orders.every(
         (o) =>
-          o.status === OrderStatus.CONFIRMED && (o as any).stockReserved !== false
+          o.status === OrderStatus.CONFIRMED && o.stockReserved !== false
       );
 
       if (response.data.code === 101 && allOrdersConfirmedAndStockReserved) {
