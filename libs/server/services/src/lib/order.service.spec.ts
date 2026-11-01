@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { Repository, EntityManager, DataSource, FindOptionsWhere } from 'typeorm';
+import { Repository, EntityManager, DataSource, FindOneOptions, FindOptionsWhere } from 'typeorm';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 import { OrderService } from './order.service';
 import {
@@ -73,7 +73,7 @@ describe('OrderService', () => {
       transaction: jest.fn((fn) => fn(mockTransactionManager)),
     };
 
-    mockTransactionManager.getRepository.mockImplementation((entity: any) => {
+    mockTransactionManager.getRepository.mockImplementation((entity: unknown) => {
       if (entity === Order) return orderRepository;
       if (entity === SellerProduct) return sellerProductRepository;
       return mockOrderRepository;
@@ -160,7 +160,7 @@ describe('OrderService', () => {
       discount: 0,
       productInfoId: 1,
       stockQuantity: 100,
-      seller: { id: 1 } as any,
+      seller: { id: 1 } as unknown as SellerProduct['seller'],
     } as SellerProduct;
 
     const mockSavedOrder = {
@@ -188,7 +188,7 @@ describe('OrderService', () => {
       seller: mockSeller,
       createdAt: new Date(),
       updatedAt: new Date(),
-    } as any;
+    } as unknown as Order;
 
     const mockOrderItem: OrderItem = {
       id: 'item-1',
@@ -205,12 +205,12 @@ describe('OrderService', () => {
     } as OrderItem;
 
     it('should create an order successfully with stockReserved = false', async () => {
-      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
-      orderRepository.save.mockResolvedValue({ ...orderWithoutItems } as any);
-      orderItemRepository.save.mockResolvedValue([mockOrderItem] as any);
+      orderRepository.save.mockResolvedValue({ ...orderWithoutItems } as unknown as typeof orderWithoutItems);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
 
       const result = await service.createOrder(createOrderInput);
 
@@ -253,8 +253,8 @@ describe('OrderService', () => {
         ],
       };
       // Catalog prices: product-1 = 50, product-2 = 25 (different from client prices)
-      const sellerProduct1 = { ...mockSellerProduct, id: 'seller-product-1', price: 50, discount: 0, seller: { id: 1 } as any } as SellerProduct;
-      const sellerProduct2 = { ...mockSellerProduct, id: 'seller-product-2', price: 25, discount: 0, seller: { id: 1 } as any } as SellerProduct;
+      const sellerProduct1 = { ...mockSellerProduct, id: 'seller-product-1', price: 50, discount: 0, seller: { id: 1 } as unknown as SellerProduct['seller'] } as SellerProduct;
+      const sellerProduct2 = { ...mockSellerProduct, id: 'seller-product-2', price: 25, discount: 0, seller: { id: 1 } as unknown as SellerProduct['seller'] } as SellerProduct;
       const mockOrderItem1 = { ...mockOrderItem, totalPrice: 100, id: 'item-1', unitPrice: 50 } as OrderItem;
       const mockOrderItem2 = { ...mockOrderItem, productId: 'product-2', totalPrice: 50, id: 'item-2', unitPrice: 25 } as OrderItem;
       const orderWithoutItems = {
@@ -262,14 +262,14 @@ describe('OrderService', () => {
         items: undefined,
         subtotal: 150, // 50*2 + 25*2 = 100 + 50 = 150
         total: 160,
-      } as any;
+      } as never;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne
         .mockResolvedValueOnce(sellerProduct1)
         .mockResolvedValueOnce(sellerProduct2);
       orderRepository.save.mockResolvedValue(orderWithoutItems);
-      orderItemRepository.save.mockResolvedValue([mockOrderItem1, mockOrderItem2] as any);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem1, mockOrderItem2] as never);
 
       const result = await service.createOrder(inputWithTwoItems);
 
@@ -283,7 +283,7 @@ describe('OrderService', () => {
         ...createOrderInput,
         shippingCost: 20,
       };
-      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
@@ -292,7 +292,7 @@ describe('OrderService', () => {
         shippingCost: 20,
         total: 120,
       });
-      orderItemRepository.save.mockResolvedValue([mockOrderItem] as any);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
 
       const result = await service.createOrder(inputWithShipping);
 
@@ -305,7 +305,7 @@ describe('OrderService', () => {
         ...createOrderInput,
         shippingCost: undefined,
       };
-      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
@@ -314,7 +314,7 @@ describe('OrderService', () => {
         shippingCost: 15,
         total: 115,
       });
-      orderItemRepository.save.mockResolvedValue([mockOrderItem] as any);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
 
       const result = await service.createOrder(inputWithoutShipping);
 
@@ -323,12 +323,12 @@ describe('OrderService', () => {
     });
 
     it('should preserve seller snapshot information', async () => {
-      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
       orderRepository.save.mockResolvedValue(orderWithoutItems);
-      orderItemRepository.save.mockResolvedValue([mockOrderItem] as any);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
 
       const result = await service.createOrder(createOrderInput);
 
@@ -338,12 +338,12 @@ describe('OrderService', () => {
     });
 
     it('should NOT decrease stock when creating order', async () => {
-      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
       orderRepository.save.mockResolvedValue(orderWithoutItems);
-      orderItemRepository.save.mockResolvedValue([] as any);
+      orderItemRepository.save.mockResolvedValue([] as never);
 
       await service.createOrder(createOrderInput);
 
@@ -356,22 +356,22 @@ describe('OrderService', () => {
         ...mockSellerProduct,
         price: 60,
         discount: 10,
-        seller: { id: 1 } as any,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
       } as SellerProduct;
-      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(
         sellerProductWithDiscount,
       );
       orderRepository.save.mockResolvedValue(orderWithoutItems);
-      orderItemRepository.save.mockImplementation(((items: any[]) =>
-        Promise.resolve(items)) as any);
+      orderItemRepository.save.mockImplementation(((items: unknown[]) =>
+        Promise.resolve(items)) as never);
 
       await service.createOrder(createOrderInput);
 
       expect(orderItemRepository.save).toHaveBeenCalledTimes(1);
-      const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+      const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
       expect(Array.isArray(savedItems)).toBe(true);
       expect(savedItems.length).toBe(1);
       expect(savedItems[0]).toHaveProperty('originalPrice', 60);
@@ -402,22 +402,22 @@ describe('OrderService', () => {
         ],
       };
 
-      const sellerProduct2 = { ...mockSellerProduct, id: 'seller-product-2', seller: { id: 1 } as any } as SellerProduct;
+      const sellerProduct2 = { ...mockSellerProduct, id: 'seller-product-2', seller: { id: 1 } as unknown as SellerProduct['seller'] } as SellerProduct;
 
       const orderWithoutItems = {
         ...mockSavedOrder,
         items: undefined,
         subtotal: 110,
         total: 120,
-      } as any;
+      } as unknown as Order;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne
         .mockResolvedValueOnce(mockSellerProduct)
         .mockResolvedValueOnce(sellerProduct2);
-      orderRepository.save.mockResolvedValue({ ...orderWithoutItems } as any);
-      orderItemRepository.save.mockImplementation(((items: any[]) =>
-        Promise.resolve(items.map((i: any, idx: number) => ({ ...i, id: `item-${idx + 1}` })))) as any);
+      orderRepository.save.mockResolvedValue({ ...orderWithoutItems } as unknown as typeof orderWithoutItems);
+      orderItemRepository.save.mockImplementation(((items: object[]) =>
+        Promise.resolve(items.map((i: object, idx: number) => ({ ...i, id: `item-${idx + 1}` })))) as never);
 
       const result = await service.createOrder(inputWithTwoItems);
 
@@ -449,7 +449,7 @@ describe('OrderService', () => {
         discount: 0,
       } as SellerProduct;
 
-      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(sellerProductWithHigherPrice);
@@ -458,14 +458,14 @@ describe('OrderService', () => {
         subtotal: 100, // 50 * 2 = 100 (catalog price)
         total: 110,
       });
-      orderItemRepository.save.mockImplementation(((items: any[]) =>
-        Promise.resolve(items)) as any);
+      orderItemRepository.save.mockImplementation(((items: unknown[]) =>
+        Promise.resolve(items)) as never);
 
       const result = await service.createOrder(inputWithTamperedPrices);
 
       expect(result.subtotal).toBe(100); // Catalog price, not client's 20
       expect(result.total).toBe(110);
-      const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+      const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
       expect(savedItems[0].unitPrice).toBe(50); // Catalog unit price
       expect(savedItems[0].totalPrice).toBe(100); // Catalog total price
     });
@@ -475,10 +475,10 @@ describe('OrderService', () => {
         ...mockSellerProduct,
         price: 100,
         discount: 20, // 20% off
-        seller: { id: 1 } as any,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
       } as SellerProduct;
 
-      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as any;
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(sellerProductWithDiscount);
@@ -487,14 +487,14 @@ describe('OrderService', () => {
         subtotal: 160, // 80 * 2 = 160 (after 20% discount)
         total: 170,
       });
-      orderItemRepository.save.mockImplementation(((items: any[]) =>
-        Promise.resolve(items)) as any);
+      orderItemRepository.save.mockImplementation(((items: unknown[]) =>
+        Promise.resolve(items)) as never);
 
       const result = await service.createOrder(createOrderInput);
 
       expect(result.subtotal).toBe(160);
       expect(result.total).toBe(170);
-      const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+      const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
       expect(savedItems[0].unitPrice).toBe(80); // 100 * 0.8 = 80
       expect(savedItems[0].totalPrice).toBe(160); // 80 * 2 = 160
       expect(savedItems[0].originalPrice).toBe(100);
@@ -504,10 +504,10 @@ describe('OrderService', () => {
     it('should reject cross-seller ownership (product belongs to different seller)', async () => {
       const sellerProductWrongSeller = {
         ...mockSellerProduct,
-        seller: { id: 999 } as any, // Different seller
+        seller: { id: 999 } as unknown as SellerProduct['seller'], // Different seller
       } as SellerProduct;
 
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(sellerProductWrongSeller);
 
@@ -523,7 +523,7 @@ describe('OrderService', () => {
         items: [{ ...createOrderInput.items[0], quantity: 0 }],
       };
 
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
 
@@ -539,7 +539,7 @@ describe('OrderService', () => {
         items: [{ ...createOrderInput.items[0], quantity: -1 }],
       };
 
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
 
@@ -555,7 +555,7 @@ describe('OrderService', () => {
         items: [{ ...createOrderInput.items[0], quantity: 2.5 }],
       };
 
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
 
@@ -571,7 +571,7 @@ describe('OrderService', () => {
         shippingCost: -5,
       };
 
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
 
@@ -585,7 +585,7 @@ describe('OrderService', () => {
       const sellerProductLowStock = {
         ...mockSellerProduct,
         stockQuantity: 1, // Only 1 in stock
-        seller: { id: 1 } as any,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
       } as SellerProduct;
 
       const inputExceedsStock = {
@@ -593,7 +593,7 @@ describe('OrderService', () => {
         items: [{ ...createOrderInput.items[0], quantity: 5 }],
       };
 
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(sellerProductLowStock);
 
@@ -609,7 +609,7 @@ describe('OrderService', () => {
         items: [{ ...createOrderInput.items[0], sellerProductId: undefined }],
       };
 
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
 
       await expect(service.createOrder(inputMissingSellerProductId)).rejects.toThrow(BadRequestException);
@@ -619,7 +619,7 @@ describe('OrderService', () => {
     });
 
     it('should reject non-existent sellerProduct', async () => {
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       sellerProductRepository.findOne.mockResolvedValue(null);
 
@@ -647,7 +647,7 @@ describe('OrderService', () => {
       const sellerProductLimitedStock = {
         ...mockSellerProduct,
         stockQuantity: 3, // Only 3 in stock
-        seller: { id: 1 } as any,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
       } as SellerProduct;
 
       const inputTwoItemsSameProduct = {
@@ -667,7 +667,7 @@ describe('OrderService', () => {
         ],
       };
 
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as any);
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
       sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
       // findOne will be called twice per service call (once per item in Promise.all),
       // and the test calls the service twice (two expect statements), so 4 total calls
@@ -707,11 +707,11 @@ describe('OrderService', () => {
         price: 100,
         discount: 0,
         stockQuantity: 5,
-        seller: { id: 1 } as any,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
         productInfoId: 1,
-        product: undefined as any,
-        productInfo: undefined as any,
-        costPrice: undefined as any,
+        product: undefined as never,
+        productInfo: undefined as never,
+        costPrice: undefined as never,
         ...overrides,
       } as SellerProduct);
 
@@ -729,7 +729,7 @@ describe('OrderService', () => {
         ...overrides,
       });
 
-      const setupSuccessMocks = (sellerProduct: SellerProduct, savedOrderOverrides: any = {}) => {
+      const setupSuccessMocks = (sellerProduct: SellerProduct, savedOrderOverrides: Partial<Order> = {}) => {
         const orderWithoutItems = {
           id: 'order-1',
           orderNumber: 'ORD-123',
@@ -756,12 +756,12 @@ describe('OrderService', () => {
           createdAt: new Date(),
           updatedAt: new Date(),
           ...savedOrderOverrides,
-        } as any;
+        } as never;
         orderRepository.create.mockReturnValue(orderWithoutItems);
         sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
         sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
         orderRepository.save.mockResolvedValue(orderWithoutItems);
-        orderItemRepository.save.mockImplementation((items: any) => Promise.resolve(Array.isArray(items) ? items.map((i: any, idx: number) => ({ ...i, id: `item-${idx + 1}` })) : items));
+        orderItemRepository.save.mockImplementation(((items: unknown) => Promise.resolve(Array.isArray(items) ? items.map((i: object, idx: number) => ({ ...i, id: `item-${idx + 1}` })) : items)) as never);
       };
 
       // Locked Test 1: items: [], null, undefined each reject with 'Order must contain at least one item'
@@ -770,11 +770,11 @@ describe('OrderService', () => {
         await expect(service.createOrder(emptyInput)).rejects.toThrow(BadRequestException);
         await expect(service.createOrder(emptyInput)).rejects.toThrow('Order must contain at least one item');
 
-        const nullInput = baseInput({ items: null as any });
+        const nullInput = baseInput({ items: null as never });
         await expect(service.createOrder(nullInput)).rejects.toThrow(BadRequestException);
         await expect(service.createOrder(nullInput)).rejects.toThrow('Order must contain at least one item');
 
-        const undefinedInput = baseInput({ items: undefined as any });
+        const undefinedInput = baseInput({ items: undefined as never });
         await expect(service.createOrder(undefinedInput)).rejects.toThrow(BadRequestException);
         await expect(service.createOrder(undefinedInput)).rejects.toThrow('Order must contain at least one item');
       });
@@ -789,7 +789,7 @@ describe('OrderService', () => {
             { ...baseItem, quantity: 2, size: '44' },
           ],
         });
-        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
         sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
         sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
 
@@ -813,7 +813,7 @@ describe('OrderService', () => {
         const result = await service.createOrder(input);
 
         expect(orderRepository.save).toHaveBeenCalledWith(expect.objectContaining({ subtotal: 500 }));
-        const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+        const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
         expect(savedItems).toHaveLength(2);
         expect(savedItems[0]).toEqual(expect.objectContaining({ unitPrice: 100, totalPrice: 200 }));
         expect(savedItems[1]).toEqual(expect.objectContaining({ unitPrice: 100, totalPrice: 300 }));
@@ -832,10 +832,10 @@ describe('OrderService', () => {
             { ...baseItem, sellerProductId: 'sp-2', quantity: 2 },
           ],
         });
-        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
         sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
-        sellerProductRepository.findOne.mockImplementation(({ where }: any) => {
-          const id = where?.id;
+        sellerProductRepository.findOne.mockImplementation(({ where }: FindOneOptions<SellerProduct>) => {
+          const id = (where as FindOptionsWhere<SellerProduct> | undefined)?.id;
           if (id === 'sp-1') return Promise.resolve(sellerProduct1);
           if (id === 'sp-2') return Promise.resolve(sellerProduct2);
           return Promise.resolve(null);
@@ -849,7 +849,7 @@ describe('OrderService', () => {
       // Locked Test 5: quantity 0, -3, 1.5, NaN each reject /Quantity must be a positive integer for product/; sellerProductId '' rejects /sellerProductId is required for product/
       it('Locked Test 5: invalid quantities and missing sellerProductId reject with correct messages', async () => {
         const sellerProduct = makeSellerProduct();
-        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
         sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
         sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
 
@@ -867,14 +867,14 @@ describe('OrderService', () => {
 
       // Locked Test 6: sellerId 1 with seller.id '1' as any succeeds; seller.id '99' as any rejects 'Product sp-1 does not belong to seller 1'
       it('Locked Test 6: seller ownership check - string "1" succeeds, string "99" rejects', async () => {
-        const sellerProductSeller1 = makeSellerProduct({ seller: { id: '1' } as any });
+        const sellerProductSeller1 = makeSellerProduct({ seller: { id: '1' } as unknown as SellerProduct['seller'] });
         const input = baseInput({ items: [{ ...baseItem, quantity: 1 }] });
         setupSuccessMocks(sellerProductSeller1);
 
         await expect(service.createOrder(input)).resolves.toBeDefined();
 
-        const sellerProductSeller99 = makeSellerProduct({ seller: { id: '99' } as any });
-        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        const sellerProductSeller99 = makeSellerProduct({ seller: { id: '99' } as unknown as SellerProduct['seller'] });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
         sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
         sellerProductRepository.findOne.mockResolvedValue(sellerProductSeller99);
 
@@ -901,7 +901,7 @@ describe('OrderService', () => {
         const result = await service.createOrder(input);
 
         expect(orderRepository.save).toHaveBeenCalledWith(expect.objectContaining({ subtotal: 300, shippingCost: 10, total: 310 }));
-        const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+        const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
         expect(savedItems[0]).toEqual(expect.objectContaining({
           unitPrice: 150, // 200 * (1 - 25/100) = 150
           totalPrice: 300, // 150 * 2
@@ -924,7 +924,7 @@ describe('OrderService', () => {
 
         const result = await service.createOrder(input);
 
-        const savedItems = orderItemRepository.save.mock.calls[0][0] as any[];
+        const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
         expect(savedItems[0]).toEqual(expect.objectContaining({
           unitPrice: 84.99, // 99.99 * 0.85 = 84.9915 -> 84.99
           totalPrice: 254.97, // 84.99 * 3 = 254.97
@@ -948,7 +948,7 @@ describe('OrderService', () => {
         expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 0, total: 100 }));
 
         // (b) shippingCost null -> falls back to seller.shippingFee (15)
-        const inputNull = baseInput({ shippingCost: null as any, items: [{ ...baseItem, quantity: 1 }] });
+        const inputNull = baseInput({ shippingCost: null as never, items: [{ ...baseItem, quantity: 1 }] });
         setupSuccessMocks(sellerProduct, { subtotal: 100, shippingCost: 15, total: 115 });
         sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
         result = await service.createOrder(inputNull);
@@ -956,7 +956,7 @@ describe('OrderService', () => {
 
         // (c) shippingCost NaN -> rejects 'Shipping cost must be a valid number'
         const inputNaN = baseInput({ shippingCost: NaN, items: [{ ...baseItem, quantity: 1 }] });
-        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
         sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
         sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
         await expect(service.createOrder(inputNaN)).rejects.toThrow(BadRequestException);
@@ -964,7 +964,7 @@ describe('OrderService', () => {
 
         // (d) shippingCost -5 -> rejects 'Shipping cost cannot be negative'
         const inputNegative = baseInput({ shippingCost: -5, items: [{ ...baseItem, quantity: 1 }] });
-        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as any);
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
         sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
         sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
         await expect(service.createOrder(inputNegative)).rejects.toThrow(BadRequestException);
@@ -1178,7 +1178,7 @@ describe('OrderService', () => {
     });
 
     it('should return hasPreviousPage: false when after is null', async () => {
-      const result = await service.findAll(10, null as any);
+      const result = await service.findAll(10, null as never);
 
       expect(result.pageInfo.hasPreviousPage).toBe(false);
       expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
@@ -1268,8 +1268,8 @@ describe('OrderService', () => {
       };
 
       orderRepository.findOne.mockResolvedValue(existingOrder);
-      orderItemRepository.delete.mockResolvedValue({ affected: 0 } as any);
-      orderItemRepository.save.mockResolvedValue([] as any);
+      orderItemRepository.delete.mockResolvedValue({ affected: 0 } as never);
+      orderItemRepository.save.mockResolvedValue([] as never);
       orderRepository.save.mockResolvedValue({
         ...existingOrder,
         subtotal: 180,
@@ -2097,7 +2097,7 @@ describe('OrderService', () => {
       // findOne is called twice: once for stock check, once for actual decrement
       sellerProductRepository.findOne
         .mockResolvedValueOnce(sellerProduct)  // stock check
-        .mockResolvedValueOnce(sellerProduct as any);  // actual decrement
+        .mockResolvedValueOnce(sellerProduct as never);  // actual decrement
       sellerProductRepository.save.mockResolvedValue({
         ...sellerProduct,
         stockQuantity: 7,
@@ -2477,7 +2477,7 @@ describe('OrderService', () => {
     });
 
     it('should return hasPreviousPage: false when after is null', async () => {
-      const result = await service.getOrdersByCustomerEmail(customerEmail, 10, null as any);
+      const result = await service.getOrdersByCustomerEmail(customerEmail, 10, null as never);
 
       expect(result.pageInfo.hasPreviousPage).toBe(false);
       expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(

@@ -47,7 +47,7 @@ describe('SellerService - Price Validation', () => {
     id: 50,
     product: mockProduct,
     size: '42',
-    sizeKind: 'Footwear' as any,
+    sizeKind: 'Footwear' as never,
     weight: 350,
     colorLinks: [],
     colors: [],

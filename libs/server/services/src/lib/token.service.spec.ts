@@ -29,7 +29,7 @@ describe('TokenService', () => {
   };
 
   const setupServiceWithoutDb = (): TokenService => {
-    return new TokenService(undefined as any);
+    return new TokenService(undefined as never);
   };
 
   afterEach(() => {
@@ -102,7 +102,9 @@ describe('TokenService', () => {
       const token = await serviceWithoutDb.generateToken('user-1', 'test@example.com', 'CUSTOMER', 'password_reset');
 
       // Manually expire the token
-      const stored = (serviceWithoutDb as any).tokens.get(token);
+      const stored = serviceWithoutDb['tokens'].get(token);
+
+      if (!stored) throw new Error('expected token to be stored');
       stored.expiresAt = new Date(Date.now() - 1000);
 
       const result = await serviceWithoutDb.validateToken(token);
@@ -167,7 +169,7 @@ describe('TokenService', () => {
 
       // Add token to in-memory store directly
       const token = 'fallback-token-' + 'c'.repeat(48); // 64 chars
-      (service as any).tokens.set(token, {
+      service['tokens'].set(token, {
         userId: 'user-1',
         email: 'test@example.com',
         userType: 'CUSTOMER',
@@ -234,7 +236,7 @@ describe('TokenService', () => {
       const plainToken = 'plaintext-token-for-testing';
       const expectedHash = createHash('sha256').update(plainToken).digest('hex');
 
-      const hash = (serviceWithoutDb as any).hashToken(plainToken);
+      const hash = serviceWithoutDb['hashToken'](plainToken);
       expect(hash).toBe(expectedHash);
       expect(hash).not.toBe(plainToken);
       expect(hash).toMatch(/^[a-f0-9]{64}$/);
@@ -310,12 +312,14 @@ describe('TokenService', () => {
       const token = await serviceWithoutDb.generateToken('user-1', 'test@example.com', 'CUSTOMER', 'password_reset');
 
       // Expire the token
-      const stored = (serviceWithoutDb as any).tokens.get(token);
+      const stored = serviceWithoutDb['tokens'].get(token);
+
+      if (!stored) throw new Error('expected token to be stored');
       stored.expiresAt = new Date(Date.now() - 1000);
 
       const result = await serviceWithoutDb.validateToken(token);
       expect(result).toBeNull();
-      expect((serviceWithoutDb as any).tokens.has(token)).toBe(false);
+      expect(serviceWithoutDb['tokens'].has(token)).toBe(false);
     });
   });
 });

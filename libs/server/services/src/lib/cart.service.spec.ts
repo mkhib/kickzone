@@ -5,6 +5,8 @@ import { CartService } from './cart.service';
 import { Cart, CartItem, SellerProduct } from '@kickzone-workspace/entities';
 import { NotFoundException } from '@nestjs/common';
 
+type PrivateMethods = Record<string, (...args: unknown[]) => Promise<unknown>>;
+
 describe('CartService', () => {
   let service: CartService;
   let cartRepository: jest.Mocked<Repository<Cart>>;
@@ -16,17 +18,17 @@ describe('CartService', () => {
     price: 99.95,
     discount: 10,
     stockQuantity: 100,
-    product: { id: 1, name: 'Test Product' } as any,
+    product: { id: 1, name: 'Test Product' } as never,
     productInfo: {
       id: 'pi-1',
       images: ['image.jpg'],
       colorLinks: [],
       size: 'M',
-    } as any,
-    seller: { id: 's-1', storeName: 'Test Store' } as any,
+    } as never,
+    seller: { id: 's-1', storeName: 'Test Store' } as unknown as SellerProduct['seller'],
     productInfoId: 1,
     ...overrides,
-  }) as any;
+  }) as never;
 
   const mockCart = (overrides: Partial<Cart> = {}): Cart => ({
     id: 'cart-1',
@@ -36,9 +38,9 @@ describe('CartService', () => {
     items: [],
     createdAt: new Date(),
     updatedAt: new Date(),
-    user: { id: 'user-1' } as any,
+    user: { id: 'user-1' } as never,
     ...overrides,
-  }) as any;
+  }) as never;
 
   const mockCartItem = (overrides: Partial<CartItem> = {}): CartItem => ({
     id: 'ci-1',
@@ -57,7 +59,7 @@ describe('CartService', () => {
     sellerProductId: 'sp-1',
     availableStock: 100,
     ...overrides,
-  }) as any;
+  }) as never;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -104,9 +106,9 @@ describe('CartService', () => {
       // This tests the private toDecimalNumber via recalculateCartTotals
       const cart = mockCart({
         items: [
-          mockCartItem({ totalPrice: '10.00' as any }),
-          mockCartItem({ totalPrice: '20.00' as any }),
-          mockCartItem({ totalPrice: '15.55' as any }),
+          mockCartItem({ totalPrice: '10.00' as never }),
+          mockCartItem({ totalPrice: '20.00' as never }),
+          mockCartItem({ totalPrice: '15.55' as never }),
         ],
       });
 
@@ -114,7 +116,7 @@ describe('CartService', () => {
       cartRepository.save.mockResolvedValue(cart);
 
       // Access private method via public recalculateCartTotals
-      await (service as any).recalculateCartTotals('cart-1');
+      await service['recalculateCartTotals']('cart-1');
 
       expect(cart.subtotal).toBe(45.55);
       expect(typeof cart.subtotal).toBe('number');
@@ -126,7 +128,7 @@ describe('CartService', () => {
       cartRepository.findOne.mockResolvedValue(cart);
       cartRepository.save.mockResolvedValue(cart);
 
-      await (service as any).recalculateCartTotals('cart-1');
+      await service['recalculateCartTotals']('cart-1');
 
       expect(cart.subtotal).toBe(0);
       expect(cart.total).toBe(0);
@@ -136,18 +138,18 @@ describe('CartService', () => {
     it('should handle non-finite values gracefully', async () => {
       const cart = mockCart({
         items: [
-          mockCartItem({ totalPrice: '10.00' as any }),
-          mockCartItem({ totalPrice: NaN as any }),
-          mockCartItem({ totalPrice: Infinity as any }),
-          mockCartItem({ totalPrice: null as any }),
-          mockCartItem({ totalPrice: undefined as any }),
+          mockCartItem({ totalPrice: '10.00' as never }),
+          mockCartItem({ totalPrice: NaN as never }),
+          mockCartItem({ totalPrice: Infinity as never }),
+          mockCartItem({ totalPrice: null as never }),
+          mockCartItem({ totalPrice: undefined as never }),
         ],
       });
 
       cartRepository.findOne.mockResolvedValue(cart);
       cartRepository.save.mockResolvedValue(cart);
 
-      await (service as any).recalculateCartTotals('cart-1');
+      await service['recalculateCartTotals']('cart-1');
 
       expect(cart.subtotal).toBe(10.00);
       expect(typeof cart.subtotal).toBe('number');
@@ -156,16 +158,16 @@ describe('CartService', () => {
     it('should correctly sum quantities as integers', async () => {
       const cart = mockCart({
         items: [
-          mockCartItem({ quantity: 2, totalPrice: '10.00' as any }),
-          mockCartItem({ quantity: '3' as any, totalPrice: '20.00' as any }), // quantity as string
-          mockCartItem({ quantity: 1.9, totalPrice: '15.55' as any }), // quantity as float
+          mockCartItem({ quantity: 2, totalPrice: '10.00' as never }),
+          mockCartItem({ quantity: '3' as never, totalPrice: '20.00' as never }), // quantity as string
+          mockCartItem({ quantity: 1.9, totalPrice: '15.55' as never }), // quantity as float
         ],
       });
 
       cartRepository.findOne.mockResolvedValue(cart);
       cartRepository.save.mockResolvedValue(cart);
 
-      await (service as any).recalculateCartTotals('cart-1');
+      await service['recalculateCartTotals']('cart-1');
 
       // totalItems should be 2 + 3 + 1 = 6 (truncated)
       // We can't directly test totalItems since it's not stored, but we verify no crash
@@ -176,8 +178,8 @@ describe('CartService', () => {
   describe('addToCart', () => {
     it('should calculate finalPrice correctly with string price and discount from Postgres', async () => {
       const sellerProduct = mockSellerProduct({
-        price: '99.95' as any, // string from Postgres
-        discount: '10' as any, // string from Postgres
+        price: '99.95' as never, // string from Postgres
+        discount: '10' as never, // string from Postgres
       });
 
       const cart = mockCart({ items: [] });
@@ -187,7 +189,7 @@ describe('CartService', () => {
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
 
       // Spy on recalculateCartTotals to avoid double mocking
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       const result = await service.addToCart('user-1', {
         sellerProductId: 'sp-1',
@@ -204,8 +206,8 @@ describe('CartService', () => {
 
     it('should handle zero discount', async () => {
       const sellerProduct = mockSellerProduct({
-        price: '50.00' as any,
-        discount: '0' as any,
+        price: '50.00' as never,
+        discount: '0' as never,
       });
 
       const cart = mockCart({ items: [] });
@@ -213,7 +215,7 @@ describe('CartService', () => {
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await service.addToCart('user-1', {
         sellerProductId: 'sp-1',
@@ -227,8 +229,8 @@ describe('CartService', () => {
 
     it('should handle missing discount (null/undefined)', async () => {
       const sellerProduct = mockSellerProduct({
-        price: '50.00' as any,
-        discount: null as any,
+        price: '50.00' as never,
+        discount: null as never,
       });
 
       const cart = mockCart({ items: [] });
@@ -236,7 +238,7 @@ describe('CartService', () => {
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await service.addToCart('user-1', {
         sellerProductId: 'sp-1',
@@ -250,15 +252,15 @@ describe('CartService', () => {
 
     it('should update existing item quantity and recalculate totalPrice with coercion', async () => {
       const sellerProduct = mockSellerProduct({
-        price: '100.00' as any,
-        discount: '20' as any,
+        price: '100.00' as never,
+        discount: '20' as never,
       });
 
       const existingItem = mockCartItem({
         id: 'ci-existing',
         quantity: 1,
         unitPrice: 80.00,
-        totalPrice: '80.00' as any, // string from Postgres
+        totalPrice: '80.00' as never, // string from Postgres
         sellerProductId: 'sp-1',
       });
 
@@ -267,7 +269,7 @@ describe('CartService', () => {
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await service.addToCart('user-1', {
         sellerProductId: 'sp-1',
@@ -310,8 +312,8 @@ describe('CartService', () => {
       const cartItem = mockCartItem({
         id: 'ci-1',
         quantity: 2,
-        unitPrice: '89.96' as any, // string from Postgres
-        totalPrice: '179.92' as any,
+        unitPrice: '89.96' as never, // string from Postgres
+        totalPrice: '179.92' as never,
         sellerProductId: 'sp-1',
       });
 
@@ -323,7 +325,7 @@ describe('CartService', () => {
       const sellerProduct = mockSellerProduct({ stockQuantity: 100 });
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
 
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await service.updateCartItem('user-1', 'ci-1', { quantity: 5 });
 
@@ -340,7 +342,7 @@ describe('CartService', () => {
         id: 'ci-1',
         quantity: 2,
         unitPrice: 50.00,
-        totalPrice: '100.00' as any,
+        totalPrice: '100.00' as never,
       });
 
       const cart = mockCart({ items: [cartItem] });
@@ -348,10 +350,10 @@ describe('CartService', () => {
       cartRepository.save.mockResolvedValue(cart);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
 
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       // quantity comes as string from GraphQL
-      await service.updateCartItem('user-1', 'ci-1', { quantity: '3' as any });
+      await service.updateCartItem('user-1', 'ci-1', { quantity: '3' as never });
 
       const savedItem = cartItemRepository.save.mock.calls[0][0];
       expect(savedItem.quantity).toBe(3);
@@ -389,7 +391,7 @@ describe('CartService', () => {
       const cart = mockCart({ items: [cartItem] });
       cartRepository.findOne.mockResolvedValue(cart);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await service.updateCartItem('user-1', 'ci-1', { quantity: -5 });
 
@@ -405,7 +407,7 @@ describe('CartService', () => {
       cartRepository.findOne.mockResolvedValue(cart);
       cartRepository.save.mockResolvedValue(cart);
       cartItemRepository.remove.mockResolvedValue(cartItem);
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await service.removeFromCart('user-1', 'ci-1');
 
@@ -432,7 +434,7 @@ describe('CartService', () => {
       });
       cartRepository.findOne.mockResolvedValue(cart);
       cartRepository.save.mockResolvedValue(cart);
-      cartItemRepository.remove.mockResolvedValue({} as any);
+      cartItemRepository.remove.mockResolvedValue({} as never);
 
       // Mock the second findOne call for the fresh cart
       const freshCart = mockCart({ items: [], subtotal: 0, total: 0 });
@@ -477,15 +479,15 @@ describe('CartService', () => {
       // Test various floating point edge cases
       const cart = mockCart({
         items: [
-          mockCartItem({ totalPrice: '10.005' as any }), // Should round to 10.01
-          mockCartItem({ totalPrice: '20.004' as any }), // Should round to 20.00
+          mockCartItem({ totalPrice: '10.005' as never }), // Should round to 10.01
+          mockCartItem({ totalPrice: '20.004' as never }), // Should round to 20.00
         ],
       });
 
       cartRepository.findOne.mockResolvedValue(cart);
       cartRepository.save.mockResolvedValue(cart);
 
-      await (service as any).recalculateCartTotals('cart-1');
+      await service['recalculateCartTotals']('cart-1');
 
       // 10.005 + 20.004 = 30.009 -> rounded to 30.01
       expect(cart.subtotal).toBe(30.01);
@@ -495,15 +497,15 @@ describe('CartService', () => {
       // 0.1 + 0.2 = 0.30000000000000004 in JS
       const cart = mockCart({
         items: [
-          mockCartItem({ totalPrice: '0.1' as any }),
-          mockCartItem({ totalPrice: '0.2' as any }),
+          mockCartItem({ totalPrice: '0.1' as never }),
+          mockCartItem({ totalPrice: '0.2' as never }),
         ],
       });
 
       cartRepository.findOne.mockResolvedValue(cart);
       cartRepository.save.mockResolvedValue(cart);
 
-      await (service as any).recalculateCartTotals('cart-1');
+      await service['recalculateCartTotals']('cart-1');
 
       expect(cart.subtotal).toBe(0.3);
     });

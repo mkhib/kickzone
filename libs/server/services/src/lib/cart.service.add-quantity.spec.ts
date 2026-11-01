@@ -5,6 +5,8 @@ import { CartService } from './cart.service';
 import { Cart, CartItem, SellerProduct } from '@kickzone-workspace/entities';
 import { NotFoundException, BadRequestException } from '@nestjs/common';
 
+type PrivateMethods = Record<string, (...args: unknown[]) => Promise<unknown>>;
+
 describe('CartService - addToCart quantity validation', () => {
   let service: CartService;
   let cartRepository: jest.Mocked<Repository<Cart>>;
@@ -16,17 +18,17 @@ describe('CartService - addToCart quantity validation', () => {
     price: 99.95,
     discount: 10,
     stockQuantity: 100,
-    product: { id: 1, name: 'Test Product' } as any,
+    product: { id: 1, name: 'Test Product' } as never,
     productInfo: {
       id: 'pi-1',
       images: ['image.jpg'],
       colorLinks: [],
       size: 'M',
-    } as any,
-    seller: { id: 's-1', storeName: 'Test Store' } as any,
+    } as never,
+    seller: { id: 's-1', storeName: 'Test Store' } as unknown as SellerProduct['seller'],
     productInfoId: 1,
     ...overrides,
-  }) as any;
+  }) as never;
 
   const mockCart = (overrides: Partial<Cart> = {}): Cart => ({
     id: 'cart-1',
@@ -36,9 +38,9 @@ describe('CartService - addToCart quantity validation', () => {
     items: [],
     createdAt: new Date(),
     updatedAt: new Date(),
-    user: { id: 'user-1' } as any,
+    user: { id: 'user-1' } as never,
     ...overrides,
-  }) as any;
+  }) as never;
 
   const mockCartItem = (overrides: Partial<CartItem> = {}): CartItem => ({
     id: 'ci-1',
@@ -57,7 +59,7 @@ describe('CartService - addToCart quantity validation', () => {
     sellerProductId: 'sp-1',
     availableStock: 100,
     ...overrides,
-  }) as any;
+  }) as never;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -106,7 +108,7 @@ describe('CartService - addToCart quantity validation', () => {
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct());
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await expect(
         service.addToCart('user-1', { sellerProductId: 'sp-1', quantity: 0 })
@@ -122,7 +124,7 @@ describe('CartService - addToCart quantity validation', () => {
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct());
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await expect(
         service.addToCart('user-1', { sellerProductId: 'sp-1', quantity: -5 })
@@ -138,7 +140,7 @@ describe('CartService - addToCart quantity validation', () => {
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct());
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await expect(
         service.addToCart('user-1', { sellerProductId: 'sp-1', quantity: 1.5 })
@@ -156,7 +158,7 @@ describe('CartService - addToCart quantity validation', () => {
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       const result = await service.addToCart('user-1', {
         sellerProductId: 'sp-1',

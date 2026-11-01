@@ -5,6 +5,8 @@ import { CartService } from './cart.service';
 import { Cart, CartItem, SellerProduct } from '@kickzone-workspace/entities';
 import { NotFoundException } from '@nestjs/common';
 
+type PrivateMethods = Record<string, (...args: unknown[]) => Promise<unknown>>;
+
 describe('CartService - null relation guards', () => {
   let service: CartService;
   let cartRepository: jest.Mocked<Repository<Cart>>;
@@ -16,17 +18,17 @@ describe('CartService - null relation guards', () => {
     price: 99.95,
     discount: 10,
     stockQuantity: 100,
-    product: { id: 1, name: 'Test Product' } as any,
+    product: { id: 1, name: 'Test Product' } as never,
     productInfo: {
       id: 'pi-1',
       images: ['image.jpg'],
       colorLinks: [],
       size: 'M',
-    } as any,
-    seller: { id: 's-1', storeName: 'Test Store' } as any,
+    } as never,
+    seller: { id: 's-1', storeName: 'Test Store' } as unknown as SellerProduct['seller'],
     productInfoId: 1,
     ...overrides,
-  }) as any;
+  }) as never;
 
   const mockCart = (overrides: Partial<Cart> = {}): Cart => ({
     id: 'cart-1',
@@ -36,9 +38,9 @@ describe('CartService - null relation guards', () => {
     items: [],
     createdAt: new Date(),
     updatedAt: new Date(),
-    user: { id: 'user-1' } as any,
+    user: { id: 'user-1' } as never,
     ...overrides,
-  }) as any;
+  }) as never;
 
   const mockCartItem = (overrides: Partial<CartItem> = {}): CartItem => ({
     id: 'ci-1',
@@ -57,7 +59,7 @@ describe('CartService - null relation guards', () => {
     sellerProductId: 'sp-1',
     availableStock: 100,
     ...overrides,
-  }) as any;
+  }) as never;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -101,14 +103,14 @@ describe('CartService - null relation guards', () => {
 
   describe('addToCart with missing product relation', () => {
     it('should reject with NotFoundException when sellerProduct.product is null', async () => {
-      const sellerProduct = mockSellerProduct({ product: null as any });
+      const sellerProduct = mockSellerProduct({ product: null as never });
 
       const cart = mockCart({ items: [] });
       cartRepository.findOne.mockResolvedValue(cart);
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await expect(
         service.addToCart('user-1', { sellerProductId: 'sp-1', quantity: 1 })
@@ -121,7 +123,7 @@ describe('CartService - null relation guards', () => {
       // Verify it's not a TypeError
       try {
         await service.addToCart('user-1', { sellerProductId: 'sp-1', quantity: 1 });
-      } catch (e: any) {
+      } catch (e) {
         expect(e).not.toBeInstanceOf(TypeError);
         expect(e).toBeInstanceOf(NotFoundException);
       }
@@ -133,14 +135,14 @@ describe('CartService - null relation guards', () => {
 
   describe('addToCart with missing seller relation', () => {
     it('should reject with NotFoundException when sellerProduct.seller is null', async () => {
-      const sellerProduct = mockSellerProduct({ seller: null as any });
+      const sellerProduct = mockSellerProduct({ seller: null as never });
 
       const cart = mockCart({ items: [] });
       cartRepository.findOne.mockResolvedValue(cart);
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       await expect(
         service.addToCart('user-1', { sellerProductId: 'sp-1', quantity: 1 })
@@ -153,7 +155,7 @@ describe('CartService - null relation guards', () => {
       // Verify it's not a TypeError
       try {
         await service.addToCart('user-1', { sellerProductId: 'sp-1', quantity: 1 });
-      } catch (e: any) {
+      } catch (e) {
         expect(e).not.toBeInstanceOf(TypeError);
         expect(e).toBeInstanceOf(NotFoundException);
       }
@@ -172,7 +174,7 @@ describe('CartService - null relation guards', () => {
       cartRepository.save.mockResolvedValue(cart);
       sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
-      jest.spyOn(service as any, 'recalculateCartTotals').mockResolvedValue(undefined);
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
       const result = await service.addToCart('user-1', {
         sellerProductId: 'sp-1',

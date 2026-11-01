@@ -281,8 +281,8 @@ describe('ShippingCalculationService', () => {
       });
 
       const sellerFees = [
-        { sellerId: '1', shippingFee: null as any, sellerName: 'Seller 1' },
-        { sellerId: '2', shippingFee: undefined as any, sellerName: 'Seller 2' },
+        { sellerId: '1', shippingFee: null as never, sellerName: 'Seller 1' },
+        { sellerId: '2', shippingFee: undefined as never, sellerName: 'Seller 2' },
       ];
 
       const result = await service.calculateShippingCost(50, sellerFees);

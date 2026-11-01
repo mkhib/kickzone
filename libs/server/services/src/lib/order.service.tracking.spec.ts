@@ -73,7 +73,7 @@ describe('OrderService - updateTrackingNumber', () => {
       transaction: jest.fn((fn) => fn(mockTransactionManager)),
     };
 
-    mockTransactionManager.getRepository.mockImplementation((entity: any) => {
+    mockTransactionManager.getRepository.mockImplementation((entity: unknown) => {
       if (entity === Order) return orderRepository;
       if (entity === SellerProduct) return sellerProductRepository;
       return mockOrderRepository;
