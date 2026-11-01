@@ -48,6 +48,13 @@ export interface ZarinPalVerificationResponse {
   }>;
 }
 
+/** Error body returned by the ZarinPal REST API on non-2xx responses. */
+interface ZarinPalErrorBody {
+  errors?: { message?: string; code?: number }[];
+  message?: string;
+  data?: { message?: string };
+}
+
 @Injectable()
 export class PaymentService {
   private readonly merchantId: string;
@@ -123,7 +130,7 @@ export class PaymentService {
 
         // Try to get error details from response body
         let errorDetails = '';
-        let fullErrorBody: any = null;
+        let fullErrorBody: ZarinPalErrorBody | null = null;
         let responseText = '';
 
         try {
@@ -136,23 +143,24 @@ export class PaymentService {
 
           // Try to parse as JSON
           try {
-            fullErrorBody = JSON.parse(responseText);
+            const parsedBody: ZarinPalErrorBody = JSON.parse(responseText);
+            fullErrorBody = parsedBody;
             console.error(
               `[PaymentService] ❌ ZarinPal API error response body (JSON):`,
               JSON.stringify(fullErrorBody, null, 2)
             );
 
-            if (fullErrorBody.errors && fullErrorBody.errors.length > 0) {
-              errorDetails = fullErrorBody.errors
+            if (parsedBody.errors && parsedBody.errors.length > 0) {
+              errorDetails = parsedBody.errors
                 .map(
                   (e: { message?: string; code?: number }) =>
                     e.message || `Code: ${e.code}`
                 )
                 .join(', ');
-            } else if (fullErrorBody.message) {
-              errorDetails = fullErrorBody.message;
-            } else if (fullErrorBody.data && fullErrorBody.data.message) {
-              errorDetails = fullErrorBody.data.message;
+            } else if (parsedBody.message) {
+              errorDetails = parsedBody.message;
+            } else if (parsedBody.data && parsedBody.data.message) {
+              errorDetails = parsedBody.data.message;
             } else {
               errorDetails = JSON.stringify(fullErrorBody);
             }

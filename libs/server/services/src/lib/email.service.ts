@@ -2,6 +2,14 @@ import { Injectable } from '@nestjs/common';
 import { google } from 'googleapis';
 import { ConfigService } from '@nestjs/config';
 
+/** Shape of errors thrown by the googleapis Gmail client that this service inspects. */
+interface GmailSendError {
+  message?: string;
+  code?: number;
+  status?: number;
+  response?: { data?: { error?: string } };
+}
+
 @Injectable()
 export class EmailService {
   private gmail;
@@ -45,7 +53,8 @@ export class EmailService {
           raw: encodedMessage,
         },
       });
-    } catch (error: any) {
+    } catch (caught: unknown) {
+      const error = caught as GmailSendError | null | undefined;
       console.error('Error sending email:', error);
       
       // Check for OAuth errors

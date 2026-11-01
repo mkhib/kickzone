@@ -21,6 +21,15 @@ export interface BulkTranslationInput {
   targetLocales: string[];
 }
 
+/** Request body for the LibreTranslate /translate endpoint. */
+interface LibreTranslateRequestBody {
+  q: string;
+  source: string;
+  target: string;
+  format?: 'text' | 'html';
+  api_key?: string;
+}
+
 @Injectable()
 export class TranslationService {
   private readonly logger = new Logger(TranslationService.name);
@@ -424,7 +433,7 @@ export class TranslationService {
       );
 
       // Prepare request body
-      const requestBody: any = {
+      const requestBody: LibreTranslateRequestBody = {
         q: text,
         source: 'en', // Assuming source is always English
         target: targetLang,
