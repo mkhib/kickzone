@@ -83,8 +83,8 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ amount: 80, order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: 80 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Payment amount does not match order total'
@@ -98,8 +98,8 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ amount: 1000, order_id: 'order-456' });
         const mockOrder = createMockOrder({ id: 'order-456', total: 2000 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 50000 } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 50000 } as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Payment amount does not match order total'
@@ -113,8 +113,8 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ amount: 0, order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: 80 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Payment amount does not match order total'
@@ -127,7 +127,7 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: 80 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
         currencyService.getCurrentExchangeRate.mockResolvedValue(null);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
@@ -142,8 +142,8 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: 80 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 1 } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 1 } as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
@@ -154,8 +154,8 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: 80 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 0 } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 0 } as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
@@ -166,8 +166,8 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: 80 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: -100 } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: -100 } as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
@@ -178,8 +178,8 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: 80 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: NaN } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: NaN } as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
@@ -190,8 +190,8 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: 80 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: Infinity } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: Infinity } as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
@@ -204,7 +204,7 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ order_id: 'order-123' });
         const mockOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Order order-123 is not in PENDING status and cannot be paid'
@@ -217,7 +217,7 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ order_id: 'order-123' });
         const mockOrder = createMockOrder({ status: OrderStatus.CANCELLED });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Order order-123 is not in PENDING status and cannot be paid'
@@ -228,7 +228,7 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ order_id: 'order-123' });
         const mockOrder = createMockOrder({ status: OrderStatus.SHIPPED });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Order order-123 is not in PENDING status and cannot be paid'
@@ -238,7 +238,7 @@ describe('PaymentResolver Unit Tests', () => {
       it('should reject when order does not exist', async () => {
         const input = createPaymentRequestInput({ order_id: 'nonexistent' });
 
-        orderService.findOne.mockResolvedValue(undefined as any);
+        orderService.findOne.mockResolvedValue(undefined as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow('Order not found');
       });
@@ -250,13 +250,13 @@ describe('PaymentResolver Unit Tests', () => {
         const mockOrder = createMockOrder({ total: 80 });
         const authority = 'A00000000000000000000000000000000000000';
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
         paymentService.requestPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
           errors: [],
-        } as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        } as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
         const result = await resolver.requestZarinPalPayment(input);
 
@@ -277,17 +277,17 @@ describe('PaymentResolver Unit Tests', () => {
 
       it('should use server-computed amount even when client sends no amount', async () => {
         const input = createPaymentRequestInput({ order_id: 'order-123' });
-        delete (input as any).amount;
+        delete (input as unknown as Record<string, unknown>)['amount'];
         const mockOrder = createMockOrder({ total: 100 });
         const authority = 'A00000000000000000000000000000000000001';
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 55000 } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 55000 } as never);
         paymentService.requestPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
           errors: [],
-        } as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        } as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
         const result = await resolver.requestZarinPalPayment(input);
 
@@ -305,13 +305,13 @@ describe('PaymentResolver Unit Tests', () => {
         const mockOrder = createMockOrder({ total: 80 });
         const authority = 'A00000000000000000000000000000000000002';
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
         paymentService.requestPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
           errors: [],
-        } as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        } as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
         const result = await resolver.requestZarinPalPayment(input);
 
@@ -335,13 +335,13 @@ describe('PaymentResolver Unit Tests', () => {
           const mockOrder = createMockOrder({ id: `order-${total}`, total });
           const authority = `A${Math.random().toString(36).substring(2, 15)}`;
 
-          orderService.findOne.mockResolvedValue(mockOrder as any);
-          currencyService.getCurrentExchangeRate.mockResolvedValue({ rate } as any);
+          orderService.findOne.mockResolvedValue(mockOrder as never);
+          currencyService.getCurrentExchangeRate.mockResolvedValue({ rate } as never);
           paymentService.requestPayment.mockResolvedValue({
             data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
             errors: [],
-          } as any);
-          orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+          } as never);
+          orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
           const result = await resolver.requestZarinPalPayment(input);
 
@@ -356,7 +356,7 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: NaN });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Order total is invalid or missing'
@@ -367,7 +367,7 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: 0 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Order total is invalid or missing'
@@ -378,7 +378,7 @@ describe('PaymentResolver Unit Tests', () => {
         const input = createPaymentRequestInput({ order_id: 'order-123' });
         const mockOrder = createMockOrder({ total: -100 });
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Order total is invalid or missing'
@@ -426,16 +426,16 @@ describe('PaymentResolver Unit Tests', () => {
 
     beforeEach(() => {
       orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
-      orderService.findOne.mockResolvedValue(createPendingOrder() as any);
-      orderService.cancelPendingOrder.mockResolvedValue(createCancelledOrder() as any);
+      orderService.findOne.mockResolvedValue(createPendingOrder() as never);
+      orderService.cancelPendingOrder.mockResolvedValue(createCancelledOrder() as never);
     });
 
     describe('Guest Cancel with Valid authority Test', () => {
       it('should succeed when unauthenticated guest calls with valid authority and orderId', async () => {
         const pendingOrder = createPendingOrder();
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([pendingOrder] as any);
-        orderService.findOne.mockResolvedValue(pendingOrder as any);
-        orderService.cancelPendingOrder.mockResolvedValue(createCancelledOrder() as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([pendingOrder] as never);
+        orderService.findOne.mockResolvedValue(pendingOrder as never);
+        orderService.cancelPendingOrder.mockResolvedValue(createCancelledOrder() as never);
 
         const result = await resolver.cancelPendingZarinPalOrder(orderId, authority);
 
@@ -447,8 +447,8 @@ describe('PaymentResolver Unit Tests', () => {
 
       it('should succeed when unauthenticated guest calls with authority only (no orderId in sessionStorage)', async () => {
         const pendingOrder = createPendingOrder();
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([pendingOrder] as any);
-        orderService.cancelPendingOrder.mockResolvedValue(createCancelledOrder() as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([pendingOrder] as never);
+        orderService.cancelPendingOrder.mockResolvedValue(createCancelledOrder() as never);
 
         const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
 
@@ -462,8 +462,8 @@ describe('PaymentResolver Unit Tests', () => {
     describe('Unauthenticated Caller With Mismatched / Missing authority Test', () => {
       it('should reject when caller passes orderId with wrong authority', async () => {
         const pendingOrder = createPendingOrder({ paymentAuthority: authority });
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([pendingOrder] as any);
-        orderService.findOne.mockResolvedValue(pendingOrder as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([pendingOrder] as never);
+        orderService.findOne.mockResolvedValue(pendingOrder as never);
 
         await expect(resolver.cancelPendingZarinPalOrder(orderId, 'WRONG_AUTHORITY')).rejects.toThrow(
           'Order does not match the provided payment authority'
@@ -503,7 +503,7 @@ describe('PaymentResolver Unit Tests', () => {
     describe('Already CONFIRMED Order Test', () => {
       it('should reject when authority belongs to a CONFIRMED order', async () => {
         const confirmedOrder = createConfirmedOrder();
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([confirmedOrder] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([confirmedOrder] as never);
 
         await expect(resolver.cancelPendingZarinPalOrder(undefined, authority)).rejects.toThrow(
           `Cannot cancel order ${orderId} with status ${OrderStatus.CONFIRMED}. Only PENDING orders can be cancelled.`
@@ -514,8 +514,8 @@ describe('PaymentResolver Unit Tests', () => {
 
       it('should reject when orderId + authority belongs to a CONFIRMED order', async () => {
         const confirmedOrder = createConfirmedOrder();
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([confirmedOrder] as any);
-        orderService.findOne.mockResolvedValue(confirmedOrder as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([confirmedOrder] as never);
+        orderService.findOne.mockResolvedValue(confirmedOrder as never);
 
         await expect(resolver.cancelPendingZarinPalOrder(orderId, authority)).rejects.toThrow(
           `Cannot cancel order ${orderId} with status ${OrderStatus.CONFIRMED}. Only PENDING orders can be cancelled.`
@@ -528,7 +528,7 @@ describe('PaymentResolver Unit Tests', () => {
     describe('Idempotent Repeat CANCELLED Test', () => {
       it('should succeed idempotently when order is already CANCELLED (authority only)', async () => {
         const cancelledOrder = createCancelledOrder();
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([cancelledOrder] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([cancelledOrder] as never);
 
         const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
 
@@ -538,8 +538,8 @@ describe('PaymentResolver Unit Tests', () => {
 
       it('should succeed idempotently when order is already CANCELLED (orderId + authority)', async () => {
         const cancelledOrder = createCancelledOrder();
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([cancelledOrder] as any);
-        orderService.findOne.mockResolvedValue(cancelledOrder as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([cancelledOrder] as never);
+        orderService.findOne.mockResolvedValue(cancelledOrder as never);
 
         const result = await resolver.cancelPendingZarinPalOrder(orderId, authority);
 
@@ -554,10 +554,10 @@ describe('PaymentResolver Unit Tests', () => {
         const order2 = createPendingOrder({ id: 'order-2', paymentAuthority: authority });
         const order3 = createCancelledOrder({ id: 'order-3', paymentAuthority: authority });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2, order3] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2, order3] as never);
         orderService.cancelPendingOrder
-          .mockResolvedValueOnce(createCancelledOrder({ id: 'order-1' }) as any)
-          .mockResolvedValueOnce(createCancelledOrder({ id: 'order-2' }) as any);
+          .mockResolvedValueOnce(createCancelledOrder({ id: 'order-1' }) as never)
+          .mockResolvedValueOnce(createCancelledOrder({ id: 'order-2' }) as never);
 
         const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
 
@@ -599,9 +599,9 @@ describe('PaymentResolver Unit Tests', () => {
     beforeEach(() => {
       jest.clearAllMocks();
       orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
-      orderService.confirmOrderPayment.mockResolvedValue(undefined as any);
-      orderService.cancelPendingOrder.mockResolvedValue(undefined as any);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
+      orderService.confirmOrderPayment.mockResolvedValue(undefined as never);
+      orderService.cancelPendingOrder.mockResolvedValue(undefined as never);
     });
 
     describe('requestZarinPalPayment - Multi-Seller Batch', () => {
@@ -610,15 +610,15 @@ describe('PaymentResolver Unit Tests', () => {
         const order2 = createMockOrder({ id: 'order-2', total: 60, orderNumber: 'ORD-002' });
 
         orderService.findOne
-          .mockResolvedValueOnce(order1 as any)
-          .mockResolvedValueOnce(order2 as any);
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
 
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as any);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
 
         paymentService.requestPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
           errors: [],
-        } as any);
+        } as never);
 
         const input = {
           amount: 6000000, // (40 + 60) * 60000 = 6,000,000
@@ -626,7 +626,7 @@ describe('PaymentResolver Unit Tests', () => {
           description: 'Test',
           currency: 'IRT',
           orderIds: ['order-1', 'order-2'],
-        } as any;
+        } as never;
 
         const result = await resolver.requestZarinPalPayment(input);
 
@@ -661,10 +661,10 @@ describe('PaymentResolver Unit Tests', () => {
         const order2 = createMockOrder({ id: 'order-2', customerId: 'cust-B', customerEmail: 'b@test.com' });
 
         orderService.findOne
-          .mockResolvedValueOnce(order1 as any)
-          .mockResolvedValueOnce(order2 as any);
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
 
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as any);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
 
         const input = {
           amount: 6000000,
@@ -672,7 +672,7 @@ describe('PaymentResolver Unit Tests', () => {
           description: 'Test',
           currency: 'IRT',
           orderIds: ['order-1', 'order-2'],
-        } as any;
+        } as never;
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'All orders in a batch must belong to the same customer'
@@ -687,8 +687,8 @@ describe('PaymentResolver Unit Tests', () => {
         const order2 = createMockOrder({ id: 'order-2', status: OrderStatus.CONFIRMED });
 
         orderService.findOne
-          .mockResolvedValueOnce(order1 as any)
-          .mockResolvedValueOnce(order2 as any);
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
 
         const input = {
           amount: 6000000,
@@ -696,7 +696,7 @@ describe('PaymentResolver Unit Tests', () => {
           description: 'Test',
           currency: 'IRT',
           orderIds: ['order-1', 'order-2'],
-        } as any;
+        } as never;
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Order(s) order-2 are not in PENDING status and cannot be paid'
@@ -709,8 +709,8 @@ describe('PaymentResolver Unit Tests', () => {
         const order1 = createMockOrder({ id: 'order-1' });
 
         orderService.findOne
-          .mockResolvedValueOnce(order1 as any)
-          .mockResolvedValueOnce(null as any);
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(null as never);
 
         const input = {
           amount: 6000000,
@@ -718,7 +718,7 @@ describe('PaymentResolver Unit Tests', () => {
           description: 'Test',
           currency: 'IRT',
           orderIds: ['order-1', 'order-nonexistent'],
-        } as any;
+        } as never;
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Order(s) not found: order-nonexistent'
@@ -728,12 +728,12 @@ describe('PaymentResolver Unit Tests', () => {
       it('should work with single orderId (backward compatibility)', async () => {
         const order1 = createMockOrder({ id: 'order-1', total: 100 });
 
-        orderService.findOne.mockResolvedValue(order1 as any);
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 55000 } as any);
+        orderService.findOne.mockResolvedValue(order1 as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 55000 } as never);
         paymentService.requestPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
           errors: [],
-        } as any);
+        } as never);
 
         const input = {
           amount: 5500000,
@@ -741,7 +741,7 @@ describe('PaymentResolver Unit Tests', () => {
           description: 'Test',
           currency: 'IRT',
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         const result = await resolver.requestZarinPalPayment(input);
 
@@ -755,14 +755,14 @@ describe('PaymentResolver Unit Tests', () => {
         const order2 = createMockOrder({ id: 'order-2', total: 50 });
 
         orderService.findOne
-          .mockResolvedValueOnce(order1 as any)
-          .mockResolvedValueOnce(order2 as any);
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
 
-        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as any);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
         paymentService.requestPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
           errors: [],
-        } as any);
+        } as never);
 
         const input = {
           amount: 6000000,
@@ -771,7 +771,7 @@ describe('PaymentResolver Unit Tests', () => {
           currency: 'IRT',
           order_id: 'order-1',
           orderIds: ['order-1', 'order-2', 'order-1'], // duplicates
-        } as any;
+        } as never;
 
         await resolver.requestZarinPalPayment(input);
 
@@ -786,7 +786,7 @@ describe('PaymentResolver Unit Tests', () => {
           callback_url: 'https://example.com/callback',
           description: 'Test',
           currency: 'IRT',
-        } as any;
+        } as never;
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'At least one orderId is required'
@@ -811,18 +811,18 @@ describe('PaymentResolver Unit Tests', () => {
           orderNumber: 'ORD-002',
         });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
         paymentService.verifyPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', ref_id: refId },
           errors: [],
-        } as any);
+        } as never);
 
         const input = {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         const result = await resolver.verifyZarinPalPayment(input);
 
@@ -848,12 +848,12 @@ describe('PaymentResolver Unit Tests', () => {
           orderNumber: 'ORD-001',
         });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
 
         paymentService.verifyPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', ref_id: refId },
           errors: [],
-        } as any);
+        } as never);
 
         const stockError = new BadRequestException('Insufficient stock');
         orderService.confirmOrderPayment.mockRejectedValue(stockError);
@@ -862,7 +862,7 @@ describe('PaymentResolver Unit Tests', () => {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         const result = await resolver.verifyZarinPalPayment(input);
 
@@ -898,21 +898,21 @@ describe('PaymentResolver Unit Tests', () => {
           orderNumber: 'ORD-002',
         });
         // Simulate stockReserved flag being true (or not false)
-        (order1 as any).stockReserved = true;
-        (order2 as any).stockReserved = true;
+        (order1 as unknown as Record<string, unknown>)['stockReserved'] = true;
+        (order2 as unknown as Record<string, unknown>)['stockReserved'] = true;
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
         paymentService.verifyPayment.mockResolvedValue({
           data: { code: 101, message: 'Already verified', ref_id: refId },
           errors: [],
-        } as any);
+        } as never);
 
         const input = {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         const result = await resolver.verifyZarinPalPayment(input);
 
@@ -936,21 +936,21 @@ describe('PaymentResolver Unit Tests', () => {
           orderNumber: 'ORD-001',
         });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
 
         paymentService.verifyPayment.mockResolvedValue({
           data: { code: 101, message: 'Already verified', ref_id: refId },
           errors: [],
-        } as any);
+        } as never);
 
         // First call succeeds (simulating retry success)
-        orderService.confirmOrderPayment.mockResolvedValue(undefined as any);
+        orderService.confirmOrderPayment.mockResolvedValue(undefined as never);
 
         const input = {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         const result = await resolver.verifyZarinPalPayment(input);
 
@@ -973,12 +973,12 @@ describe('PaymentResolver Unit Tests', () => {
           orderNumber: 'ORD-001',
         });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
 
         paymentService.verifyPayment.mockResolvedValue({
           data: { code: 101, message: 'Already verified', ref_id: refId },
           errors: [],
-        } as any);
+        } as never);
 
         const stockError = new BadRequestException('Insufficient stock on retry');
         orderService.confirmOrderPayment.mockRejectedValue(stockError);
@@ -987,7 +987,7 @@ describe('PaymentResolver Unit Tests', () => {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         const result = await resolver.verifyZarinPalPayment(input);
 
@@ -1007,18 +1007,18 @@ describe('PaymentResolver Unit Tests', () => {
         const order2 = createMockOrder({ id: 'order-a', paymentAuthority: authority, paymentAmount: 3000000 });
 
         // Return in non-sorted order to test sorting
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
         paymentService.verifyPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', ref_id: refId },
           errors: [],
-        } as any);
+        } as never);
 
         const input = {
           amount: 6000000,
           authority,
           order_id: 'order-b',
-        } as any;
+        } as never;
 
         await resolver.verifyZarinPalPayment(input);
 
@@ -1032,18 +1032,18 @@ describe('PaymentResolver Unit Tests', () => {
         const order1 = createMockOrder({ id: 'order-1', paymentAuthority: authority, paymentAmount: 6000000 });
         const order2 = createMockOrder({ id: 'order-2', paymentAuthority: authority, paymentAmount: 6000000 });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
         paymentService.verifyPayment.mockResolvedValue({
           data: { code: -51, message: 'Payment failed' },
           errors: [],
-        } as any);
+        } as never);
 
         const input = {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         const result = await resolver.verifyZarinPalPayment(input);
 
@@ -1058,18 +1058,18 @@ describe('PaymentResolver Unit Tests', () => {
         const order1 = createMockOrder({ id: 'order-1', status: OrderStatus.PENDING, paymentAuthority: authority, paymentAmount: 6000000 });
         const order2 = createMockOrder({ id: 'order-2', status: OrderStatus.CONFIRMED, paymentAuthority: authority, paymentAmount: 6000000 });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
         paymentService.verifyPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', ref_id: refId },
           errors: [],
-        } as any);
+        } as never);
 
         const input = {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         await resolver.verifyZarinPalPayment(input);
 
@@ -1095,26 +1095,26 @@ describe('PaymentResolver Unit Tests', () => {
           orderNumber: 'ORD-002',
         });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
         paymentService.verifyPayment.mockResolvedValue({
           data: { code: 100, message: 'Success', ref_id: refId },
           errors: [],
-        } as any);
+        } as never);
 
         // First call (order-1) succeeds, second call (order-2) throws
         orderService.confirmOrderPayment
-          .mockResolvedValueOnce(undefined as any)
+          .mockResolvedValueOnce(undefined as never)
           .mockRejectedValueOnce(new BadRequestException('Insufficient stock for order-2'));
 
         // Add updateOrderStatus mock for rollback verification
-        orderService.updateOrderStatus = jest.fn().mockResolvedValue(undefined as any);
+        orderService.updateOrderStatus = jest.fn().mockResolvedValue(undefined as never);
 
         const input = {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         const result = await resolver.verifyZarinPalPayment(input);
 
@@ -1142,7 +1142,7 @@ describe('PaymentResolver Unit Tests', () => {
           amount: 6000000,
           authority: 'NONEXISTENT',
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
           'No orders found for this payment authority'
@@ -1152,13 +1152,13 @@ describe('PaymentResolver Unit Tests', () => {
       it('should reject when authority does not match order', async () => {
         const order1 = createMockOrder({ id: 'order-1', paymentAuthority: 'DIFFERENT_AUTHORITY' });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
 
         const input = {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
           'Payment authority does not match the order payment intent'
@@ -1172,7 +1172,7 @@ describe('PaymentResolver Unit Tests', () => {
           amount: 6000000,
           authority,
           order_id: 'order-1',
-        } as any;
+        } as never;
 
         await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
           'No orders found for this payment authority'
@@ -1220,18 +1220,18 @@ describe('PaymentResolver Unit Tests', () => {
             ],
           });
 
-          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
           paymentService.verifyPayment.mockResolvedValue({
             data: { code: 100, message: 'Success', ref_id: 111222 },
             errors: [],
-          } as any);
+          } as never);
 
           const input = {
             amount: 6000000,
             authority,
             order_id: 'order-1',
-          } as any;
+          } as never;
 
           await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
             'Insufficient stock for product sp-2: required 3, available 1'
@@ -1258,18 +1258,18 @@ describe('PaymentResolver Unit Tests', () => {
             ],
           });
 
-          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
           paymentService.verifyPayment.mockResolvedValue({
             data: { code: 100, message: 'Success', ref_id: 222333 },
             errors: [],
-          } as any);
+          } as never);
 
           const input = {
             amount: 6000000,
             authority,
             order_id: 'order-1',
-          } as any;
+          } as never;
 
           await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
             'Insufficient stock for product sp-1: required 4, available 3'
@@ -1302,27 +1302,27 @@ describe('PaymentResolver Unit Tests', () => {
           });
 
           // Return in unsorted order to test id ASC sorting
-          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order3, order1, order2] as any);
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order3, order1, order2] as never);
 
           paymentService.verifyPayment.mockResolvedValue({
             data: { code: 100, message: 'Verified', ref_id: 777888 },
             errors: [],
-          } as any);
+          } as never);
 
           // order-1 succeeds, order-2 succeeds, order-3 throws
           orderService.confirmOrderPayment
-            .mockResolvedValueOnce(undefined as any) // order-1
-            .mockResolvedValueOnce(undefined as any) // order-2
+            .mockResolvedValueOnce(undefined as never) // order-1
+            .mockResolvedValueOnce(undefined as never) // order-2
             .mockRejectedValueOnce(new BadRequestException('Insufficient stock for product sp-3 during lock'));
 
           // Mock updateOrderStatus for rollback verification
-          orderService.updateOrderStatus = jest.fn().mockResolvedValue(undefined as any);
+          orderService.updateOrderStatus = jest.fn().mockResolvedValue(undefined as never);
 
           const input = {
             amount: 150000,
             authority,
             order_id: 'order-1',
-          } as any;
+          } as never;
 
           const result = await resolver.verifyZarinPalPayment(input);
 
@@ -1357,16 +1357,16 @@ describe('PaymentResolver Unit Tests', () => {
             items: [{ quantity: 1, sellerProduct: { id: 'sp-2', stockQuantity: 10 } }],
           });
 
-          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
           paymentService.verifyPayment.mockResolvedValue({
             data: { code: 100, message: 'Verified', ref_id: 444555 },
             errors: [],
-          } as any);
+          } as never);
 
           // order-1 confirms, order-2 throws
           orderService.confirmOrderPayment
-            .mockResolvedValueOnce(undefined as any) // order-1
+            .mockResolvedValueOnce(undefined as never) // order-1
             .mockRejectedValueOnce(new Error('Confirmation DB failure'));
 
           // updateOrderStatus for rollback ALSO rejects (DB connection lost)
@@ -1376,7 +1376,7 @@ describe('PaymentResolver Unit Tests', () => {
             amount: 100000,
             authority,
             order_id: 'order-1',
-          } as any;
+          } as never;
 
           const result = await resolver.verifyZarinPalPayment(input);
 
@@ -1399,10 +1399,10 @@ describe('PaymentResolver Unit Tests', () => {
         const order2 = createMockOrder({ id: 'order-2', paymentAuthority: authority });
         const order3 = createMockOrder({ id: 'order-3', status: OrderStatus.CANCELLED, paymentAuthority: authority });
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2, order3] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2, order3] as never);
         orderService.cancelPendingOrder
-          .mockResolvedValueOnce(createMockOrder({ id: 'order-1', status: OrderStatus.CANCELLED }) as any)
-          .mockResolvedValueOnce(createMockOrder({ id: 'order-2', status: OrderStatus.CANCELLED }) as any);
+          .mockResolvedValueOnce(createMockOrder({ id: 'order-1', status: OrderStatus.CANCELLED }) as never)
+          .mockResolvedValueOnce(createMockOrder({ id: 'order-2', status: OrderStatus.CANCELLED }) as never);
 
         const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
 

@@ -97,9 +97,9 @@ describe('PaymentResolver Integration Tests', () => {
 
     describe('Successful Payment Flow', () => {
       it('should complete full payment flow: request → verify → confirm order', async () => {
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
         // Step 1: Request payment
         paymentService.requestPayment.mockResolvedValue({
@@ -111,7 +111,7 @@ describe('PaymentResolver Integration Tests', () => {
             fee: 0,
           },
           errors: [],
-        } as any);
+        } as never);
 
         const requestResult = await resolver.requestZarinPalPayment(paymentRequestInput);
 
@@ -151,12 +151,12 @@ describe('PaymentResolver Integration Tests', () => {
             fee: 0,
           },
           errors: [],
-        } as any);
+        } as never);
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
         orderService.confirmOrderPayment.mockResolvedValue(
-          confirmedOrder as any
+          confirmedOrder as never
         );
 
         const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
@@ -187,15 +187,15 @@ describe('PaymentResolver Integration Tests', () => {
             ref_id: 123456789,
           },
           errors: [],
-        } as any);
+        } as never);
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
         orderService.confirmOrderPayment.mockResolvedValue({
           ...mockOrder,
           status: OrderStatus.CONFIRMED,
-        } as any);
+        } as never);
 
         const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
@@ -220,15 +220,15 @@ describe('PaymentResolver Integration Tests', () => {
             message: 'Payment not found',
           },
           errors: [],
-        } as any);
+        } as never);
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
         orderService.cancelPendingOrder.mockResolvedValue({
           ...mockOrder,
           status: OrderStatus.CANCELLED,
-        } as any);
+        } as never);
 
         const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
@@ -254,15 +254,15 @@ describe('PaymentResolver Integration Tests', () => {
             message: 'Invalid amount',
           },
           errors: [],
-        } as any);
+        } as never);
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
         orderService.cancelPendingOrder.mockResolvedValue({
           ...mockOrder,
           status: OrderStatus.CANCELLED,
-        } as any);
+        } as never);
 
         const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
@@ -287,9 +287,9 @@ describe('PaymentResolver Integration Tests', () => {
             ref_id: 123456789,
           },
           errors: [],
-        } as any);
+        } as never);
 
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([] as any);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([] as never);
 
         await expect(
           resolver.verifyZarinPalPayment(verificationInput)
@@ -315,11 +315,11 @@ describe('PaymentResolver Integration Tests', () => {
             ref_id: 123456789,
           },
           errors: [],
-        } as any);
+        } as never);
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
         // Order confirmation fails
         orderService.confirmOrderPayment.mockRejectedValue(
@@ -351,11 +351,11 @@ describe('PaymentResolver Integration Tests', () => {
             message: 'Payment not found',
           },
           errors: [],
-        } as any);
+        } as never);
 
-        orderService.findOne.mockResolvedValue(mockOrder as any);
-        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as any);
-        orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
         // Order cancellation fails
         orderService.cancelPendingOrder.mockRejectedValue(
@@ -379,7 +379,7 @@ describe('PaymentResolver Integration Tests', () => {
         paymentService.getGatewayUrl.mockReturnValue(expectedUrl);
 
         const result = await resolver.getZarinPalGatewayUrl(
-          { id: 'user-1' } as any,
+          { id: 'user-1' } as never,
           authority
         );
 
@@ -424,12 +424,12 @@ describe('PaymentResolver Integration Tests', () => {
           fee: 0,
         },
         errors: [],
-      } as any);
+      } as never);
 
       orderService.findOne.mockResolvedValue({
         ...createPendingOrder(input.order_id!, input.amount),
-      } as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+      } as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
       const result = await resolver.requestZarinPalPayment(input);
 
@@ -462,12 +462,12 @@ describe('PaymentResolver Integration Tests', () => {
           message: 'Success',
           authority: 'A00000000000000000000000000000000000000',
         },
-      } as any);
+      } as never);
 
       orderService.findOne.mockResolvedValue({
         ...createPendingOrder(input.order_id!, input.amount),
-      } as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+      } as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
       const result = await resolver.requestZarinPalPayment(input);
 
@@ -500,12 +500,12 @@ describe('PaymentResolver Integration Tests', () => {
           message: 'Success',
           authority: 'A00000000000000000000000000000000000000',
         },
-      } as any);
+      } as never);
 
       orderService.findOne.mockResolvedValue({
         ...createPendingOrder(input.order_id!, input.amount, 'IRR'),
-      } as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+      } as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
       await resolver.requestZarinPalPayment(input);
 
@@ -525,7 +525,7 @@ describe('PaymentResolver Integration Tests', () => {
       totalUsd: number,
       customerEmail: string,
       status: OrderStatus = OrderStatus.PENDING,
-      items: any[] = [
+      items: Array<Record<string, unknown>> = [
         {
           id: `item-${orderId}`,
           productId: `product-${orderId}`,
@@ -566,9 +566,9 @@ describe('PaymentResolver Integration Tests', () => {
 
       // Step 1: Request batch payment
       orderService.findOne
-        .mockResolvedValueOnce(order1 as any)
-        .mockResolvedValueOnce(order2 as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        .mockResolvedValueOnce(order1 as never)
+        .mockResolvedValueOnce(order2 as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
       paymentService.requestPayment.mockResolvedValue({
         data: {
@@ -579,7 +579,7 @@ describe('PaymentResolver Integration Tests', () => {
           fee: 0,
         },
         errors: [],
-      } as any);
+      } as never);
 
       const requestResult = await resolver.requestZarinPalPayment(basePaymentInput);
 
@@ -620,13 +620,13 @@ describe('PaymentResolver Integration Tests', () => {
           fee: 0,
         },
         errors: [],
-      } as any);
+      } as never);
 
-      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
       orderService.confirmOrderPayment
-        .mockResolvedValueOnce({ ...order1, status: OrderStatus.CONFIRMED } as any)
-        .mockResolvedValueOnce({ ...order2, status: OrderStatus.CONFIRMED } as any);
+        .mockResolvedValueOnce({ ...order1, status: OrderStatus.CONFIRMED } as never)
+        .mockResolvedValueOnce({ ...order2, status: OrderStatus.CONFIRMED } as never);
 
       const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
@@ -655,8 +655,8 @@ describe('PaymentResolver Integration Tests', () => {
       const order2 = createBatchOrder('order-2', 40, 'buyer2@example.com');
 
       orderService.findOne
-        .mockResolvedValueOnce(order1 as any)
-        .mockResolvedValueOnce(order2 as any);
+        .mockResolvedValueOnce(order1 as never)
+        .mockResolvedValueOnce(order2 as never);
 
       await expect(resolver.requestZarinPalPayment(basePaymentInput)).rejects.toThrow(
         'All orders in a batch must belong to the same customer'
@@ -671,8 +671,8 @@ describe('PaymentResolver Integration Tests', () => {
       // order-2 is missing (returns null)
 
       orderService.findOne
-        .mockResolvedValueOnce(order1 as any)
-        .mockResolvedValueOnce(null as any);
+        .mockResolvedValueOnce(order1 as never)
+        .mockResolvedValueOnce(null as never);
 
       await expect(resolver.requestZarinPalPayment(basePaymentInput)).rejects.toThrow(
         'Order(s) not found: order-2'
@@ -687,8 +687,8 @@ describe('PaymentResolver Integration Tests', () => {
       const order2 = createBatchOrder('order-2', 40, 'buyer@example.com', OrderStatus.CONFIRMED);
 
       orderService.findOne
-        .mockResolvedValueOnce(order1 as any)
-        .mockResolvedValueOnce(order2 as any);
+        .mockResolvedValueOnce(order1 as never)
+        .mockResolvedValueOnce(order2 as never);
 
       await expect(resolver.requestZarinPalPayment(basePaymentInput)).rejects.toThrow(
         "Order(s) order-2 are not in PENDING status and cannot be paid"
@@ -703,9 +703,9 @@ describe('PaymentResolver Integration Tests', () => {
       const order2 = createBatchOrder('order-2', 40, 'buyer@example.com');
 
       orderService.findOne
-        .mockResolvedValueOnce(order1 as any)
-        .mockResolvedValueOnce(order2 as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        .mockResolvedValueOnce(order1 as never)
+        .mockResolvedValueOnce(order2 as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
       // Expected: (60 + 40) * 1000 = 100000 IRT
       // Tolerance: max(10, 2 * 2) = 10 Tomans
@@ -727,9 +727,9 @@ describe('PaymentResolver Integration Tests', () => {
       const order2 = createBatchOrder('order-2', 40, 'buyer@example.com');
 
       orderService.findOne
-        .mockResolvedValueOnce(order1 as any)
-        .mockResolvedValueOnce(order2 as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+        .mockResolvedValueOnce(order1 as never)
+        .mockResolvedValueOnce(order2 as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
       // Expected: 100000, Tolerance: 10
       // Client sends 100005 (diff = 5 <= 10) - should accept
@@ -747,7 +747,7 @@ describe('PaymentResolver Integration Tests', () => {
           fee: 0,
         },
         errors: [],
-      } as any);
+      } as never);
 
       const requestResult = await resolver.requestZarinPalPayment(goodInput);
 
@@ -782,9 +782,9 @@ describe('PaymentResolver Integration Tests', () => {
 
     beforeEach(() => {
       orderService.findOne.mockResolvedValue(
-        createPendingOrder(singleOrderInput.order_id!, 100) as any
+        createPendingOrder(singleOrderInput.order_id!, 100) as never
       );
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
     });
 
     it('should reject requestZarinPalPayment when getCurrentExchangeRate returns rate: 0', async () => {
@@ -820,7 +820,7 @@ describe('PaymentResolver Integration Tests', () => {
     });
 
     it('should reject requestZarinPalPayment when getCurrentExchangeRate returns null', async () => {
-      mockCurrencyService.getCurrentExchangeRate.mockResolvedValue(null as any);
+      mockCurrencyService.getCurrentExchangeRate.mockResolvedValue(null as never);
 
       await expect(resolver.requestZarinPalPayment(singleOrderInput)).rejects.toThrow(
         'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
@@ -871,8 +871,8 @@ describe('PaymentResolver Integration Tests', () => {
       const order2 = createOrderForRollback('order-2', 40, 'sp-2', 0); // Out of stock
 
       // Find orders by authority returns both orders
-      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
       // Payment verification would succeed (code 100) but pre-verify stock check fails first
       paymentService.verifyPayment.mockResolvedValue({
@@ -885,7 +885,7 @@ describe('PaymentResolver Integration Tests', () => {
           fee: 0,
         },
         errors: [],
-      } as any);
+      } as never);
 
       // Should throw BadRequestException during pre-verify stock check
       await expect(resolver.verifyZarinPalPayment(verificationInput)).rejects.toThrow(
@@ -903,8 +903,8 @@ describe('PaymentResolver Integration Tests', () => {
       const order2 = createOrderForRollback('order-2', 40, 'sp-2', 10); // Stock available during pre-check
 
       // Find orders by authority returns both orders
-      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
 
       // Payment verification succeeds (code 100)
       paymentService.verifyPayment.mockResolvedValue({
@@ -917,15 +917,15 @@ describe('PaymentResolver Integration Tests', () => {
           fee: 0,
         },
         errors: [],
-      } as any);
+      } as never);
 
       // order-1 confirms successfully, order-2 fails with insufficient stock at confirmation time
       orderService.confirmOrderPayment
-        .mockResolvedValueOnce({ ...order1, status: OrderStatus.CONFIRMED } as any)
+        .mockResolvedValueOnce({ ...order1, status: OrderStatus.CONFIRMED } as never)
         .mockRejectedValueOnce(new Error('Insufficient stock for product sp-2'));
 
       // Rollback via updateOrderStatus for order-1
-      orderService.updateOrderStatus.mockResolvedValue({ ...order1, status: OrderStatus.CANCELLED } as any);
+      orderService.updateOrderStatus.mockResolvedValue({ ...order1, status: OrderStatus.CANCELLED } as never);
 
       const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
@@ -998,7 +998,7 @@ describe('PaymentResolver Integration Tests', () => {
       const order1 = createConfirmedOrder('order-1', 60, true);
       const order2 = createConfirmedOrder('order-2', 40, true);
 
-      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
       paymentService.verifyPayment.mockResolvedValue({
         data: {
@@ -1007,7 +1007,7 @@ describe('PaymentResolver Integration Tests', () => {
           ref_id: 999888,
         },
         errors: [],
-      } as any);
+      } as never);
 
       const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
@@ -1024,9 +1024,9 @@ describe('PaymentResolver Integration Tests', () => {
       const order1 = createConfirmedOrder('order-1', 60, true); // Already confirmed
       const order2 = createPendingOrder('order-2', 40); // Still pending
 
-      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
-      orderService.setPaymentIntent.mockResolvedValue(undefined as any);
-      orderService.confirmOrderPayment.mockResolvedValue({ ...order2, status: OrderStatus.CONFIRMED } as any);
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
+      orderService.confirmOrderPayment.mockResolvedValue({ ...order2, status: OrderStatus.CONFIRMED } as never);
 
       paymentService.verifyPayment.mockResolvedValue({
         data: {
@@ -1035,7 +1035,7 @@ describe('PaymentResolver Integration Tests', () => {
           ref_id: 999888,
         },
         errors: [],
-      } as any);
+      } as never);
 
       const verifyResult = await resolver.verifyZarinPalPayment(verificationInput);
 
@@ -1078,10 +1078,10 @@ describe('PaymentResolver Integration Tests', () => {
       const order2 = createOrder('order-2');
       // order3 is not included - only PENDING orders should be in the matched list for cancellation
 
-      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
       orderService.cancelPendingOrder
-        .mockResolvedValueOnce({ ...order1, status: OrderStatus.CANCELLED } as any)
-        .mockResolvedValueOnce({ ...order2, status: OrderStatus.CANCELLED } as any);
+        .mockResolvedValueOnce({ ...order1, status: OrderStatus.CANCELLED } as never)
+        .mockResolvedValueOnce({ ...order2, status: OrderStatus.CANCELLED } as never);
 
       const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
 
@@ -1095,7 +1095,7 @@ describe('PaymentResolver Integration Tests', () => {
       const order1 = createOrder('order-1', OrderStatus.CANCELLED);
       const order2 = createOrder('order-2', OrderStatus.CANCELLED);
 
-      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as any);
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
 
       const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
 
@@ -1116,8 +1116,8 @@ describe('PaymentResolver Integration Tests', () => {
       const orderByAuthority = createOrder('order-1', OrderStatus.PENDING, authority);
       const orderById = createOrder('order-2', OrderStatus.PENDING, 'DIFFERENT_AUTHORITY');
 
-      orderService.findOrdersByPaymentAuthority.mockResolvedValue([orderByAuthority] as any);
-      orderService.findOne.mockResolvedValue(orderById as any);
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([orderByAuthority] as never);
+      orderService.findOne.mockResolvedValue(orderById as never);
 
       await expect(
         resolver.cancelPendingZarinPalOrder('order-2', authority)
@@ -1127,7 +1127,7 @@ describe('PaymentResolver Integration Tests', () => {
     it('should throw BadRequestException when order is already CONFIRMED', async () => {
       const order1 = createOrder('order-1', OrderStatus.CONFIRMED);
 
-      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as any);
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
 
       await expect(
         resolver.cancelPendingZarinPalOrder(undefined, authority)
