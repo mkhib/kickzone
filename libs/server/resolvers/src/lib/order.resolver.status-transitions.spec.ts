@@ -35,7 +35,7 @@ describe('OrderResolver - Seller Status Transitions', () => {
     isActive: true,
     canManageCatalog: true,
     shippingFee: 10,
-    user: {} as any,
+    user: {} as never,
     sellerProducts: [],
     ...overrides,
   });
@@ -150,13 +150,13 @@ describe('OrderResolver - Seller Status Transitions', () => {
     };
 
     resolver = new OrderResolver(
-      mockOrderService as any,
-      mockSellerService as any
+      mockOrderService as never,
+      mockSellerService as never
     );
   });
 
   describe('updateOrderStatus - Seller allowed transitions', () => {
-    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as any });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
 
     beforeEach(() => {
       mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
@@ -184,12 +184,12 @@ describe('OrderResolver - Seller Status Transitions', () => {
       expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', toStatus);
       // Result should be redacted SellerOrder (no customerEmail)
       expect(result).toEqual(updatedSellerOrder);
-      expect((result as any).customerEmail).toBeUndefined();
+      expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
     });
   });
 
   describe('updateOrderStatus - Seller rejected transitions', () => {
-    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as any });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
 
     beforeEach(() => {
       mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
@@ -231,7 +231,7 @@ describe('OrderResolver - Seller Status Transitions', () => {
   describe('updateOrderStatus - Non-owning seller rejected', () => {
     it('rejects non-owning SELLER on CONFIRMED->PROCESSING with ForbiddenException', async () => {
       const order = createMockOrder({ status: OrderStatus.CONFIRMED, sellerId: 1 });
-      const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as any });
+      const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as never });
 
       mockOrderService.findOne.mockResolvedValue(order);
       mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
@@ -253,7 +253,7 @@ describe('OrderResolver - Seller Status Transitions', () => {
   });
 
   describe('updateOrderStatus - JWT shape { sub, userType: "seller" }', () => {
-    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as any });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as never });
 
     beforeEach(() => {
       mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
@@ -267,19 +267,19 @@ describe('OrderResolver - Seller Status Transitions', () => {
       mockOrderService.findOne.mockResolvedValue(order);
       mockOrderService.updateOrderStatus.mockResolvedValue(updatedOrder);
 
-      const user = { sub: 's-user', userType: 'seller' } as any;
+      const user = { sub: 's-user', userType: 'seller' } as never;
       const result = await resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.PROCESSING });
 
       expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
       expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.PROCESSING);
       expect(result).toEqual(updatedSellerOrder);
-      expect((result as any).customerEmail).toBeUndefined();
+      expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
     });
   });
 
   describe('updateOrderStatus - ADMIN unchanged', () => {
     const mockOrder = createMockOrder({ sellerId: 1 });
-    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as any });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
 
     beforeEach(() => {
       mockOrderService.findOne.mockResolvedValue(mockOrder);
@@ -303,7 +303,7 @@ describe('OrderResolver - Seller Status Transitions', () => {
 
       expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', toStatus);
       expect(result).toEqual(updatedOrder);
-      expect((result as any).customerEmail).toBeDefined(); // Full Order returned for ADMIN
+      expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeDefined(); // Full Order returned for ADMIN
     });
   });
 });

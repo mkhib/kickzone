@@ -27,9 +27,9 @@ describe('UserResolver', () => {
     };
 
     resolver = new UserResolver(
-      mockUserService as any,
-      mockAuthService as any,
-      mockCustomerProfileService as any
+      mockUserService as never,
+      mockAuthService as never,
+      mockCustomerProfileService as never
     );
   });
 

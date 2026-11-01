@@ -43,7 +43,7 @@ describe('OrderResolver - updateOrderTracking', () => {
     isActive: true,
     canManageCatalog: true,
     shippingFee: 10,
-    user: {} as any,
+    user: {} as never,
     sellerProducts: [],
     ...overrides,
   });
@@ -165,13 +165,13 @@ describe('OrderResolver - updateOrderTracking', () => {
     };
 
     resolver = new OrderResolver(
-      mockOrderService as any,
-      mockSellerService as any
+      mockOrderService as never,
+      mockSellerService as never
     );
   });
 
   describe('updateOrderTracking mutation', () => {
-    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as any });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
 
     beforeEach(() => {
       mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
@@ -194,7 +194,7 @@ describe('OrderResolver - updateOrderTracking', () => {
 
     it('rejects SELLER not owning order with ForbiddenException and does not call updateTrackingNumber', async () => {
       const user = createMockSellerUser({ id: 'other-seller-user' });
-      const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as any });
+      const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as never });
       mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
       const order = createMockOrder({ status: OrderStatus.CONFIRMED, sellerId: 1 });
       mockOrderService.findOne.mockResolvedValue(order);
@@ -239,10 +239,10 @@ describe('OrderResolver - updateOrderTracking', () => {
       expect(mockOrderService.findOne).toHaveBeenCalledWith('order-1');
       expect(mockOrderService.updateTrackingNumber).toHaveBeenCalledWith('order-1', 'TRK123');
       expect(result).toEqual(updatedSellerOrder);
-      expect((result as any).customerEmail).toBeUndefined();
-      expect((result as any).customerPhone).toBeUndefined();
-      expect((result as any).customerName).toBeUndefined();
-      expect((result as any).shippingAddress).toBeUndefined();
+      expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
+      expect((result as unknown as Record<string, unknown>)['customerPhone']).toBeUndefined();
+      expect((result as unknown as Record<string, unknown>)['customerName']).toBeUndefined();
+      expect((result as unknown as Record<string, unknown>)['shippingAddress']).toBeUndefined();
     });
 
     it('allows ADMIN on SHIPPED order, returns full Order', async () => {
@@ -257,7 +257,7 @@ describe('OrderResolver - updateOrderTracking', () => {
       expect(mockOrderService.findOne).toHaveBeenCalledWith('order-1');
       expect(mockOrderService.updateTrackingNumber).toHaveBeenCalledWith('order-1', 'TRK123');
       expect(result).toEqual(updatedOrder);
-      expect((result as any).customerEmail).toBeDefined();
+      expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeDefined();
     });
 
     it('rejects PENDING order with BadRequestException and does not call updateTrackingNumber', async () => {
@@ -367,7 +367,7 @@ describe('OrderResolver - updateOrderTracking', () => {
     });
 
     it('allows SELLER with JWT shape { sub, userType: "seller" } owning order', async () => {
-      const user = { sub: 'seller-user-1', userType: 'seller' } as any;
+      const user = { sub: 'seller-user-1', userType: 'seller' } as never;
       const order = createMockOrder({ status: OrderStatus.PROCESSING, sellerId: 1 });
       const updatedOrder = createMockOrder({ status: OrderStatus.PROCESSING, sellerId: 1, trackingNumber: 'TRK123' });
       const updatedSellerOrder = toSellerOrder(updatedOrder);
@@ -379,11 +379,11 @@ describe('OrderResolver - updateOrderTracking', () => {
       expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-1');
       expect(mockOrderService.updateTrackingNumber).toHaveBeenCalledWith('order-1', 'TRK123');
       expect(result).toEqual(updatedSellerOrder);
-      expect((result as any).customerEmail).toBeUndefined();
+      expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
     });
 
     it('rejects UNKNOWN role with ForbiddenException', async () => {
-      const user = { id: 'user-1', userType: 'INVALID' } as any;
+      const user = { id: 'user-1', userType: 'INVALID' } as never;
       const order = createMockOrder({ status: OrderStatus.CONFIRMED });
       mockOrderService.findOne.mockResolvedValue(order);
 
@@ -397,8 +397,8 @@ describe('OrderResolver - updateOrderTracking', () => {
     });
 
     it('rejects SELLER with JWT shape { sub, userType: "seller" } not owning order', async () => {
-      const user = { sub: 'other-s-user', userType: 'seller' } as any;
-      const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as any });
+      const user = { sub: 'other-s-user', userType: 'seller' } as never;
+      const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as never });
       mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
       const order = createMockOrder({ status: OrderStatus.CONFIRMED, sellerId: 1 });
       mockOrderService.findOne.mockResolvedValue(order);
@@ -413,7 +413,7 @@ describe('OrderResolver - updateOrderTracking', () => {
     });
 
     it('rejects CUSTOMER with JWT shape { sub, userType: "customer" }', async () => {
-      const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as any;
+      const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as never;
       const order = createMockOrder({ status: OrderStatus.CONFIRMED });
       mockOrderService.findOne.mockResolvedValue(order);
 
@@ -427,7 +427,7 @@ describe('OrderResolver - updateOrderTracking', () => {
     });
 
     it('allows ADMIN with JWT shape { sub, userType: "admin" } on CONFIRMED order', async () => {
-      const user = { sub: 'a-user', userType: 'admin' } as any;
+      const user = { sub: 'a-user', userType: 'admin' } as never;
       const order = createMockOrder({ status: OrderStatus.CONFIRMED });
       const updatedOrder = createMockOrder({ status: OrderStatus.CONFIRMED, trackingNumber: 'TRK123' });
       mockOrderService.findOne.mockResolvedValue(order);
@@ -437,7 +437,7 @@ describe('OrderResolver - updateOrderTracking', () => {
 
       expect(mockOrderService.updateTrackingNumber).toHaveBeenCalledWith('order-1', 'TRK123');
       expect(result).toEqual(updatedOrder);
-      expect((result as any).customerEmail).toBeDefined();
+      expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeDefined();
     });
   });
 });

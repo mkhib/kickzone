@@ -6,16 +6,20 @@ import { ZodValidationPipe } from './zod-validation.pipe';
 import { UserRole } from '@kickzone-workspace/entities';
 import { userRoleSchema } from '@kickzone-workspace/validation';
 
+import type { ZodType } from 'zod';
+
+type ParamMetadata = { index: number; pipes?: unknown[] };
+
 describe('Auth/User resolver argument validation pipes', () => {
 
   function getParamMetadata(target: object, methodName: string) {
-    const args = Reflect.getMetadata(ROUTE_ARGS_METADATA, (target as any).constructor, methodName) ?? {};
-    return Object.values(args) as Array<any>;
+    const args = Reflect.getMetadata(ROUTE_ARGS_METADATA, target.constructor, methodName) ?? {};
+    return Object.values(args) as ParamMetadata[];
   }
 
-  function findPipeForArg(paramMetadata: Array<any>, argIndex: number): ZodValidationPipe<any> | undefined {
-    const param = paramMetadata.find((p: any) => p.index === argIndex);
-    return param?.pipes?.find((pipe: any) => pipe instanceof ZodValidationPipe);
+  function findPipeForArg(paramMetadata: ParamMetadata[], argIndex: number): ZodValidationPipe<ZodType> | undefined {
+    const param = paramMetadata.find((p) => p.index === argIndex);
+    return param?.pipes?.find((pipe): pipe is ZodValidationPipe<ZodType> => pipe instanceof ZodValidationPipe);
   }
 
   describe('AuthResolver', () => {
@@ -34,7 +38,7 @@ describe('Auth/User resolver argument validation pipes', () => {
 
       it('email pipe validates correctly', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'login');
-        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<ZodType<{ email: string }>>;
         expect(() => pipe.transform('  TEST@EXAMPLE.COM  ')).not.toThrow();
         const result = pipe.transform('  TEST@EXAMPLE.COM  ');
         expect(result).toBe('TEST@EXAMPLE.COM');
@@ -42,19 +46,19 @@ describe('Auth/User resolver argument validation pipes', () => {
 
       it('email pipe rejects invalid email', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'login');
-        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<ZodType>;
         expect(() => pipe.transform('not-an-email')).toThrow(BadRequestException);
       });
 
       it('password pipe accepts short legacy password', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'login');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType>;
         expect(() => pipe.transform('abc')).not.toThrow();
       });
 
       it('password pipe rejects empty', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'login');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType>;
         expect(() => pipe.transform('')).toThrow(BadRequestException);
       });
     });
@@ -80,13 +84,13 @@ describe('Auth/User resolver argument validation pipes', () => {
 
       it('password pipe rejects 7 chars (register uses newPasswordSchema)', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'register');
-        const pipe = findPipeForArg(metadata, 2) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 2) as ZodValidationPipe<ZodType>;
         expect(() => pipe.transform('short7')).toThrow(BadRequestException);
       });
 
       it('password pipe accepts 8 chars', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'register');
-        const pipe = findPipeForArg(metadata, 2) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 2) as ZodValidationPipe<ZodType>;
         expect(() => pipe.transform('validPass')).not.toThrow();
       });
     });
@@ -106,13 +110,13 @@ describe('Auth/User resolver argument validation pipes', () => {
 
       it('baseUrl pipe accepts https URL', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'forgotPassword');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType>;
         expect(() => pipe.transform('https://kickzone.ir/x')).not.toThrow();
       });
 
       it('baseUrl pipe rejects javascript: protocol', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'forgotPassword');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType>;
         expect(() => pipe.transform('javascript:alert(1)')).toThrow(BadRequestException);
       });
     });
@@ -146,13 +150,13 @@ describe('Auth/User resolver argument validation pipes', () => {
 
       it('token pipe rejects whitespace only', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'resetPassword');
-        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<ZodType>;
         expect(() => pipe.transform('  ')).toThrow(BadRequestException);
       });
 
       it('newPassword pipe rejects 7 chars', () => {
         const metadata = getParamMetadata(AuthResolver.prototype, 'resetPassword');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType>;
         expect(() => pipe.transform('short7')).toThrow(BadRequestException);
       });
     });
@@ -182,7 +186,7 @@ describe('Auth/User resolver argument validation pipes', () => {
 
       it('pipe validates createUserInput correctly', () => {
         const metadata = getParamMetadata(UserResolver.prototype, 'createUser');
-        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<ZodType<{ email: string }>>;
         const validInput = {
           name: 'John',
           lastName: 'Doe',
@@ -198,7 +202,7 @@ describe('Auth/User resolver argument validation pipes', () => {
 
       it('pipe rejects invalid role', () => {
         const metadata = getParamMetadata(UserResolver.prototype, 'createUser');
-        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 0) as ZodValidationPipe<ZodType>;
         const invalidInput = {
           name: 'John',
           lastName: 'Doe',

@@ -4,15 +4,19 @@ import { CartResolver } from './cart.resolver';
 import { ZodValidationPipe } from './zod-validation.pipe';
 import { idSchema, addToCartSchema } from '@kickzone-workspace/validation';
 
+import type { ZodType } from 'zod';
+
+type ParamMetadata = { index: number; pipes?: unknown[] };
+
 describe('Cart resolver argument validation pipes', () => {
   function getParamMetadata(target: object, methodName: string) {
-    const args = Reflect.getMetadata(ROUTE_ARGS_METADATA, (target as any).constructor, methodName) ?? {};
-    return Object.values(args) as Array<any>;
+    const args = Reflect.getMetadata(ROUTE_ARGS_METADATA, target.constructor, methodName) ?? {};
+    return Object.values(args) as ParamMetadata[];
   }
 
-  function findPipeForArg(paramMetadata: Array<any>, argIndex: number): ZodValidationPipe<any> | undefined {
-    const param = paramMetadata.find((p: any) => p.index === argIndex);
-    return param?.pipes?.find((pipe: any) => pipe instanceof ZodValidationPipe);
+  function findPipeForArg(paramMetadata: ParamMetadata[], argIndex: number): ZodValidationPipe<ZodType> | undefined {
+    const param = paramMetadata.find((p) => p.index === argIndex);
+    return param?.pipes?.find((pipe): pipe is ZodValidationPipe<ZodType> => pipe instanceof ZodValidationPipe);
   }
 
   describe('CartResolver', () => {
@@ -25,13 +29,13 @@ describe('Cart resolver argument validation pipes', () => {
 
       it('addToCart pipe rejects quantity 0 with BadRequestException', () => {
         const metadata = getParamMetadata(CartResolver.prototype, 'addToCart');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType<{ sellerProductId: string; quantity: number }>>;
         expect(() => pipe.transform({ sellerProductId: 'sp-1', quantity: 0 })).toThrow(BadRequestException);
       });
 
       it('addToCart pipe accepts valid input', () => {
         const metadata = getParamMetadata(CartResolver.prototype, 'addToCart');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType<{ sellerProductId: string; quantity: number }>>;
         const validInput = { sellerProductId: 'sp-1', quantity: 1 };
         expect(() => pipe.transform(validInput)).not.toThrow();
         const result = pipe.transform(validInput);
@@ -55,7 +59,7 @@ describe('Cart resolver argument validation pipes', () => {
 
       it('updateInput pipe accepts all-null', () => {
         const metadata = getParamMetadata(CartResolver.prototype, 'updateCartItem');
-        const pipe = findPipeForArg(metadata, 2) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 2) as ZodValidationPipe<ZodType<{ sellerProductId: string; quantity: number }>>;
         const allNullInput = { quantity: null, color: null, size: null };
         expect(() => pipe.transform(allNullInput)).not.toThrow();
         const result = pipe.transform(allNullInput);
@@ -64,13 +68,13 @@ describe('Cart resolver argument validation pipes', () => {
 
       it('itemId pipe rejects whitespace only', () => {
         const metadata = getParamMetadata(CartResolver.prototype, 'updateCartItem');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType<{ sellerProductId: string; quantity: number }>>;
         expect(() => pipe.transform('  ')).toThrow(BadRequestException);
       });
 
       it('itemId pipe accepts valid id', () => {
         const metadata = getParamMetadata(CartResolver.prototype, 'updateCartItem');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType<{ sellerProductId: string; quantity: number }>>;
         expect(() => pipe.transform('item-123')).not.toThrow();
         const result = pipe.transform('item-123');
         expect(result).toBe('item-123');
@@ -86,13 +90,13 @@ describe('Cart resolver argument validation pipes', () => {
 
       it('itemId pipe rejects whitespace only', () => {
         const metadata = getParamMetadata(CartResolver.prototype, 'removeFromCart');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType<{ sellerProductId: string; quantity: number }>>;
         expect(() => pipe.transform('  ')).toThrow(BadRequestException);
       });
 
       it('itemId pipe accepts valid id', () => {
         const metadata = getParamMetadata(CartResolver.prototype, 'removeFromCart');
-        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<any>;
+        const pipe = findPipeForArg(metadata, 1) as ZodValidationPipe<ZodType<{ sellerProductId: string; quantity: number }>>;
         expect(() => pipe.transform('item-123')).not.toThrow();
         const result = pipe.transform('item-123');
         expect(result).toBe('item-123');

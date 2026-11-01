@@ -12,6 +12,8 @@ import {
 import { OrdersConnection, OrderEdge, SellerOrdersConnection } from '@kickzone-workspace/inputs';
 import { ForbiddenException, BadRequestException, NotFoundException } from '@nestjs/common';
 
+import type { AuthenticatedUser } from '@kickzone-workspace/decorators';
+
 describe('OrderResolver', () => {
   let resolver: OrderResolver;
   let mockOrderService: {
@@ -42,7 +44,7 @@ describe('OrderResolver', () => {
     isActive: true,
     canManageCatalog: true,
     shippingFee: 10,
-    user: {} as any,
+    user: {} as never,
     sellerProducts: [],
     ...overrides,
   });
@@ -163,8 +165,8 @@ describe('OrderResolver', () => {
     };
 
     resolver = new OrderResolver(
-      mockOrderService as any,
-      mockSellerService as any
+      mockOrderService as never,
+      mockSellerService as never
     );
   });
 
@@ -297,7 +299,7 @@ describe('OrderResolver', () => {
 
     describe('JWT Shape & Role Matrix', () => {
       it('succeeds for CUSTOMER with { sub, userType: "customer", email } (lowercase userType, sub instead of id)', async () => {
-        const user = { sub: 'u-1', userType: 'customer', email: 'customer@example.com' } as any;
+        const user = { sub: 'u-1', userType: 'customer', email: 'customer@example.com' } as never;
         const result = await resolver.myOrders(user, 10, undefined);
 
         expect(mockOrderService.getOrdersByCustomerEmail).toHaveBeenCalledWith('customer@example.com', 10, undefined);
@@ -306,31 +308,31 @@ describe('OrderResolver', () => {
       });
 
       it('throws NotFoundException for SELLER with { sub, userType: "seller" }', async () => {
-        const user = { sub: 's-1', userType: 'seller' } as any;
+        const user = { sub: 's-1', userType: 'seller' } as never;
         await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow(NotFoundException);
         await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow('Sellers should use mySellerOrders query instead');
         expect(mockOrderService.getOrdersByCustomerEmail).not.toHaveBeenCalled();
       });
 
       it('throws NotFoundException for ADMIN with { id, role: "ADMIN" }', async () => {
-        const user = { id: 'a-1', role: 'ADMIN' } as any;
+        const user = { id: 'a-1', role: 'ADMIN' } as never;
         await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow(NotFoundException);
         await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow('Sellers should use mySellerOrders query instead');
         expect(mockOrderService.getOrdersByCustomerEmail).not.toHaveBeenCalled();
       });
 
       it('throws NotFoundException for UNKNOWN role', async () => {
-        const user = { sub: 'u-1', userType: 'INVALID' } as any;
+        const user = { sub: 'u-1', userType: 'INVALID' } as never;
         await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow(NotFoundException);
         await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow('Sellers should use mySellerOrders query instead');
       });
 
       it('throws NotFoundException for null user', async () => {
-        await expect(resolver.myOrders(null as any, 10, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.myOrders(null as never, 10, undefined)).rejects.toThrow(NotFoundException);
       });
 
       it('throws NotFoundException for empty object user', async () => {
-        await expect(resolver.myOrders({} as any, 10, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.myOrders({} as never, 10, undefined)).rejects.toThrow(NotFoundException);
       });
     });
   });
@@ -338,7 +340,7 @@ describe('OrderResolver', () => {
   describe('mySellerOrders query', () => {
     const mockOrder = createMockOrder({ id: 'order-1', status: OrderStatus.PENDING });
     const mockOrderDelivered = createMockOrder({ id: 'order-2', status: OrderStatus.DELIVERED });
-    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as any });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
     const mockSellerConnection = createMockSellerConnection([mockOrder, mockOrderDelivered]);
 
     beforeEach(() => {
@@ -390,10 +392,10 @@ describe('OrderResolver', () => {
       // Verify the connection structure and that nodes are SellerOrder (no customer PII)
       expect(result.edges).toHaveLength(2);
       expect(result.edges[0].node).toBeDefined();
-      expect((result.edges[0].node as any).customerEmail).toBeUndefined();
-      expect((result.edges[0].node as any).customerPhone).toBeUndefined();
-      expect((result.edges[0].node as any).customerName).toBeUndefined();
-      expect((result.edges[0].node as any).shippingAddress).toBeUndefined();
+      expect((result.edges[0].node as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
+      expect((result.edges[0].node as unknown as Record<string, unknown>)['customerPhone']).toBeUndefined();
+      expect((result.edges[0].node as unknown as Record<string, unknown>)['customerName']).toBeUndefined();
+      expect((result.edges[0].node as unknown as Record<string, unknown>)['shippingAddress']).toBeUndefined();
     });
 
     it('throws NotFoundException when SELLER has no seller profile', async () => {
@@ -411,7 +413,7 @@ describe('OrderResolver', () => {
     describe('JWT Shape, Status Filter, & PII Redaction Matrix', () => {
       const mockOrderProcessing = createMockOrder({ id: 'order-1', status: OrderStatus.PROCESSING });
       const mockOrderPending = createMockOrder({ id: 'order-2', status: OrderStatus.PENDING });
-      const mockSellerInfo = createMockSellerInfo({ id: 42, user: { id: 'seller-user-42' } as any });
+      const mockSellerInfo = createMockSellerInfo({ id: 42, user: { id: 'seller-user-42' } as never });
       const mockSellerConnection = createMockSellerConnection([mockOrderProcessing, mockOrderPending]);
 
       beforeEach(() => {
@@ -420,7 +422,7 @@ describe('OrderResolver', () => {
       });
 
       it('succeeds for SELLER with { sub, userType: "seller" } (lowercase userType and sub claim)', async () => {
-        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
         const result = await resolver.mySellerOrders(user, 10, undefined, undefined);
 
         expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-42');
@@ -429,51 +431,51 @@ describe('OrderResolver', () => {
       });
 
       it('forwards status filter (PROCESSING) to getOrdersBySeller', async () => {
-        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
         await resolver.mySellerOrders(user, 10, undefined, OrderStatus.PROCESSING);
 
         expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('42', 10, undefined, OrderStatus.PROCESSING);
       });
 
       it('forwards undefined status to getOrdersBySeller', async () => {
-        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
         await resolver.mySellerOrders(user, 10, undefined, undefined);
 
         expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('42', 10, undefined, undefined);
       });
 
       it('strips customer PII via toSellerOrder', async () => {
-        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
         const result = await resolver.mySellerOrders(user, 10, undefined, undefined);
 
         expect(result.edges).toHaveLength(2);
         result.edges.forEach((edge) => {
-          expect((edge.node as any).customerEmail).toBeUndefined();
-          expect((edge.node as any).customerPhone).toBeUndefined();
-          expect((edge.node as any).customerName).toBeUndefined();
-          expect((edge.node as any).shippingAddress).toBeUndefined();
+          expect((edge.node as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
+          expect((edge.node as unknown as Record<string, unknown>)['customerPhone']).toBeUndefined();
+          expect((edge.node as unknown as Record<string, unknown>)['customerName']).toBeUndefined();
+          expect((edge.node as unknown as Record<string, unknown>)['shippingAddress']).toBeUndefined();
         });
       });
 
       it('throws NotFoundException for CUSTOMER with { sub, userType: "customer" }', async () => {
-        const user = { sub: 'c-1', userType: 'customer' } as any;
+        const user = { sub: 'c-1', userType: 'customer' } as never;
         await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
         await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
         expect(mockOrderService.getOrdersBySeller).not.toHaveBeenCalled();
       });
 
       it('throws NotFoundException for null user', async () => {
-        await expect(resolver.mySellerOrders(null as any, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
-        await expect(resolver.mySellerOrders(null as any, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
+        await expect(resolver.mySellerOrders(null as never, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders(null as never, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
       });
 
       it('throws NotFoundException for empty object user', async () => {
-        await expect(resolver.mySellerOrders({} as any, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
-        await expect(resolver.mySellerOrders({} as any, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
+        await expect(resolver.mySellerOrders({} as never, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders({} as never, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
       });
 
       it('throws NotFoundException when sellerService.findOneByUserId returns null', async () => {
-        const user = { sub: 'seller-user-42', userType: 'seller' } as any;
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
         mockSellerService.findOneByUserId.mockResolvedValue(null);
 
         await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
@@ -485,7 +487,7 @@ describe('OrderResolver', () => {
   describe('order query', () => {
     const mockOrder = createMockOrder({ customerEmail: 'customer@example.com', sellerId: 1 });
     const mockSellerOrder = toSellerOrder(mockOrder);
-    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as any });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
 
     beforeEach(() => {
       mockOrderService.findOne.mockResolvedValue(mockOrder);
@@ -510,15 +512,15 @@ describe('OrderResolver', () => {
         expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-1');
         expect(result).toEqual(mockSellerOrder);
         // Verify customer PII is not present
-        expect((result as any).customerEmail).toBeUndefined();
-        expect((result as any).customerPhone).toBeUndefined();
-        expect((result as any).customerName).toBeUndefined();
-        expect((result as any).shippingAddress).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerPhone']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerName']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['shippingAddress']).toBeUndefined();
       });
 
       it('throws ForbiddenException when SELLER tries to read another seller order', async () => {
         const user = createMockSellerUser({ id: 'other-seller-user' });
-        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as any });
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as never });
         mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
 
         await expect(resolver.order(user, 'order-1')).rejects.toThrow(
@@ -574,7 +576,7 @@ describe('OrderResolver', () => {
     describe('JWT Shape { sub, userType } Claims', () => {
       const mockOrder = createMockOrder({ customerEmail: 'customer@example.com', sellerId: 1 });
       const mockSellerOrder = toSellerOrder(mockOrder);
-      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as any });
+      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as never });
 
       beforeEach(() => {
         mockOrderService.findOne.mockResolvedValue(mockOrder);
@@ -582,20 +584,20 @@ describe('OrderResolver', () => {
       });
 
       it('allows SELLER with { sub, userType: "seller" } owning order to receive redacted SellerOrder', async () => {
-        const user = { sub: 's-user', userType: 'seller' } as any;
+        const user = { sub: 's-user', userType: 'seller' } as never;
         const result = await resolver.order(user, 'order-1');
 
         expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
         expect(result).toEqual(mockSellerOrder);
-        expect((result as any).customerEmail).toBeUndefined();
-        expect((result as any).customerPhone).toBeUndefined();
-        expect((result as any).customerName).toBeUndefined();
-        expect((result as any).shippingAddress).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerPhone']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerName']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['shippingAddress']).toBeUndefined();
       });
 
       it('throws ForbiddenException for non-owner SELLER with { sub, userType: "seller" }', async () => {
-        const user = { sub: 'other-s-user', userType: 'seller' } as any;
-        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as any });
+        const user = { sub: 'other-s-user', userType: 'seller' } as never;
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as never });
         mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
 
         await expect(resolver.order(user, 'order-1')).rejects.toThrow(ForbiddenException);
@@ -603,20 +605,20 @@ describe('OrderResolver', () => {
       });
 
       it('allows CUSTOMER with { sub, userType: "customer", email } to read own order', async () => {
-        const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as any;
+        const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as never;
         const result = await resolver.order(user, 'order-1');
 
         expect(result).toEqual(mockOrder);
       });
 
       it('throws ForbiddenException for CUSTOMER with { sub, userType: "customer" } reading another customer order', async () => {
-        const user = { sub: 'other-c-user', userType: 'customer', email: 'other@example.com' } as any;
+        const user = { sub: 'other-c-user', userType: 'customer', email: 'other@example.com' } as never;
         await expect(resolver.order(user, 'order-1')).rejects.toThrow(ForbiddenException);
         await expect(resolver.order(user, 'order-1')).rejects.toThrow('You do not have permission to view this order');
       });
 
       it('allows ADMIN with { sub, userType: "admin" } to read any order', async () => {
-        const user = { sub: 'a-user', userType: 'admin' } as any;
+        const user = { sub: 'a-user', userType: 'admin' } as never;
         const result = await resolver.order(user, 'order-1');
 
         expect(result).toEqual(mockOrder);
@@ -628,7 +630,7 @@ describe('OrderResolver', () => {
     const mockOrder = createMockOrder({ sellerId: 1 });
     const updatedOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
     const updatedSellerOrder = toSellerOrder(updatedOrder);
-    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as any });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
 
     beforeEach(() => {
       mockOrderService.findOne.mockResolvedValue(mockOrder);
@@ -648,7 +650,7 @@ describe('OrderResolver', () => {
 
     it('rejects SELLER trying to update another seller order', async () => {
       const user = createMockSellerUser({ id: 'other-seller-user' });
-      const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as any });
+      const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as never });
       mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
 
       await expect(
@@ -700,7 +702,7 @@ describe('OrderResolver', () => {
       const mockOrder = createMockOrder({ sellerId: 1 });
       const updatedOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
       const updatedSellerOrder = toSellerOrder(updatedOrder);
-      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as any });
+      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as never });
 
       beforeEach(() => {
         mockOrderService.findOne.mockResolvedValue(mockOrder);
@@ -709,7 +711,7 @@ describe('OrderResolver', () => {
       });
 
       it('rejects SELLER with { sub, userType: "seller" } moving own PENDING order to CONFIRMED', async () => {
-        const user = { sub: 's-user', userType: 'seller' } as any;
+        const user = { sub: 's-user', userType: 'seller' } as never;
         await expect(
           resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
         ).rejects.toThrow(BadRequestException);
@@ -719,7 +721,7 @@ describe('OrderResolver', () => {
       });
 
       it('allows ADMIN with { sub, userType: "admin" } to update any order and receive full Order', async () => {
-        const user = { sub: 'a-user', userType: 'admin' } as any;
+        const user = { sub: 'a-user', userType: 'admin' } as never;
         const result = await resolver.updateOrderStatus(user, {
           id: 'order-1',
           status: OrderStatus.SHIPPED,
@@ -727,12 +729,12 @@ describe('OrderResolver', () => {
 
         expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.SHIPPED);
         expect(result).toEqual(updatedOrder);
-        expect((result as any).customerEmail).toBeDefined();
+        expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeDefined();
       });
 
       it('throws ForbiddenException for SELLER with { sub, userType: "seller" } not owning order', async () => {
-        const user = { sub: 'other-s-user', userType: 'seller' } as any;
-        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as any });
+        const user = { sub: 'other-s-user', userType: 'seller' } as never;
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as never });
         mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
 
         await expect(
@@ -744,7 +746,7 @@ describe('OrderResolver', () => {
       });
 
       it('throws ForbiddenException for CUSTOMER with { sub, userType: "customer" }', async () => {
-        const user = { sub: 'c-user', userType: 'customer' } as any;
+        const user = { sub: 'c-user', userType: 'customer' } as never;
         await expect(
           resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
         ).rejects.toThrow(ForbiddenException);
@@ -757,7 +759,7 @@ describe('OrderResolver', () => {
 
   describe('cancelPendingOrder mutation', () => {
     const mockOrder = createMockOrder({ customerEmail: 'customer@example.com', sellerId: 1 });
-    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as any });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
 
     beforeEach(() => {
       mockOrderService.findOne.mockResolvedValue(mockOrder);
@@ -810,7 +812,7 @@ describe('OrderResolver', () => {
 
       it('throws ForbiddenException when SELLER tries to cancel another seller order', async () => {
         const user = createMockSellerUser({ id: 'other-seller-user' });
-        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as any });
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as never });
         mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
 
         await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(
@@ -840,7 +842,7 @@ describe('OrderResolver', () => {
 
     describe('JWT Shape { sub, userType } Claims', () => {
       const mockOrder = createMockOrder({ customerEmail: 'buyer@example.com', sellerId: 1 });
-      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as any });
+      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as never });
 
       beforeEach(() => {
         mockOrderService.findOne.mockResolvedValue(mockOrder);
@@ -849,7 +851,7 @@ describe('OrderResolver', () => {
       });
 
       it('allows SELLER with { sub, userType: "seller" } owning PENDING order to cancel', async () => {
-        const user = { sub: 's-user', userType: 'seller' } as any;
+        const user = { sub: 's-user', userType: 'seller' } as never;
         const result = await resolver.cancelPendingOrder(user, 'order-1');
 
         expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
@@ -858,7 +860,7 @@ describe('OrderResolver', () => {
       });
 
       it('allows CUSTOMER with { sub, userType: "customer", email } to cancel own PENDING order', async () => {
-        const user = { sub: 'c-user', userType: 'customer', email: 'buyer@example.com' } as any;
+        const user = { sub: 'c-user', userType: 'customer', email: 'buyer@example.com' } as never;
         const result = await resolver.cancelPendingOrder(user, 'order-1');
 
         expect(mockOrderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
@@ -869,7 +871,7 @@ describe('OrderResolver', () => {
         const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED, sellerId: 1 });
         mockOrderService.findOne.mockResolvedValue(confirmedOrder);
 
-        const user = { sub: 's-user', userType: 'seller' } as any;
+        const user = { sub: 's-user', userType: 'seller' } as never;
         await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(BadRequestException);
         await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('Only pending orders can be cancelled');
       });
@@ -878,21 +880,21 @@ describe('OrderResolver', () => {
         const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED, customerEmail: 'buyer@example.com' });
         mockOrderService.findOne.mockResolvedValue(confirmedOrder);
 
-        const user = { sub: 'c-user', userType: 'customer', email: 'buyer@example.com' } as any;
+        const user = { sub: 'c-user', userType: 'customer', email: 'buyer@example.com' } as never;
         await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(BadRequestException);
         await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('Only pending orders can be cancelled');
       });
 
       it('throws ForbiddenException for SELLER with { sub, userType: "seller" } not owning order', async () => {
-        const user = { sub: 'other-s-user', userType: 'seller' } as any;
-        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as any });
+        const user = { sub: 'other-s-user', userType: 'seller' } as never;
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as never });
         mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
 
         await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
       });
 
       it('throws ForbiddenException for CUSTOMER with { sub, userType: "customer" } not owning order', async () => {
-        const user = { sub: 'other-c-user', userType: 'customer', email: 'other@example.com' } as any;
+        const user = { sub: 'other-c-user', userType: 'customer', email: 'other@example.com' } as never;
         await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
         await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('You do not have permission to cancel this order');
       });
@@ -914,20 +916,20 @@ describe('OrderResolver', () => {
     it('rejects CUSTOMER with ForbiddenException', async () => {
       const user = createMockUser({ role: UserRole.CUSTOMER });
       await expect(
-        resolver.updateOrder(user, 'order-1', updateInput as any)
+        resolver.updateOrder(user, 'order-1', updateInput as never)
       ).rejects.toThrow(ForbiddenException);
     });
 
     it('rejects SELLER with ForbiddenException', async () => {
       const user = createMockSellerUser();
       await expect(
-        resolver.updateOrder(user, 'order-1', updateInput as any)
+        resolver.updateOrder(user, 'order-1', updateInput as never)
       ).rejects.toThrow(ForbiddenException);
     });
 
     it('allows ADMIN to update order (non-financial fields)', async () => {
       const user = createMockAdminUser();
-      const result = await resolver.updateOrder(user, 'order-1', updateInput as any);
+      const result = await resolver.updateOrder(user, 'order-1', updateInput as never);
 
       expect(mockOrderService.updateOrder).toHaveBeenCalledWith('order-1', updateInput);
       expect(result.customerName).toBe('Jane Doe');
@@ -941,10 +943,10 @@ describe('OrderResolver', () => {
       };
 
       await expect(
-        resolver.updateOrder(user, 'order-1', inputWithItems as any)
+        resolver.updateOrder(user, 'order-1', inputWithItems as never)
       ).rejects.toThrow(BadRequestException);
       await expect(
-        resolver.updateOrder(user, 'order-1', inputWithItems as any)
+        resolver.updateOrder(user, 'order-1', inputWithItems as never)
       ).rejects.toThrow('Order items and financial totals cannot be rewritten after order creation');
     });
 
@@ -954,10 +956,10 @@ describe('OrderResolver', () => {
 
       const user = createMockAdminUser();
       await expect(
-        resolver.updateOrder(user, 'order-1', updateInput as any)
+        resolver.updateOrder(user, 'order-1', updateInput as never)
       ).rejects.toThrow(BadRequestException);
       await expect(
-        resolver.updateOrder(user, 'order-1', updateInput as any)
+        resolver.updateOrder(user, 'order-1', updateInput as never)
       ).rejects.toThrow('Order items and financial totals cannot be rewritten after order creation');
     });
   });
@@ -1037,7 +1039,7 @@ describe('OrderResolver', () => {
 
     it('cancels order with stockReserved flag before deletion', async () => {
       const orderWithReservedStock = createMockOrder({ status: OrderStatus.PENDING });
-      (orderWithReservedStock as any).stockReserved = true;
+      (orderWithReservedStock as unknown as Record<string, unknown>)['stockReserved'] = true;
       mockOrderService.findOne.mockResolvedValue(orderWithReservedStock);
 
       const user = createMockAdminUser();
@@ -1080,13 +1082,13 @@ describe('OrderResolver', () => {
 
       it('calls updateOrderStatus BEFORE deleteOrder for PENDING order with stockReserved=true', async () => {
         const order = createMockOrder({ status: OrderStatus.PENDING });
-        (order as any).stockReserved = true;
+        (order as unknown as Record<string, unknown>)['stockReserved'] = true;
         await verifyCallOrder(order);
       });
 
       it('does NOT call updateOrderStatus for PENDING order with stockReserved=false', async () => {
         const order = createMockOrder({ status: OrderStatus.PENDING });
-        (order as any).stockReserved = false;
+        (order as unknown as Record<string, unknown>)['stockReserved'] = false;
         mockOrderService.findOne.mockResolvedValue(order);
         mockOrderService.deleteOrder.mockResolvedValue(undefined);
 
@@ -1099,7 +1101,7 @@ describe('OrderResolver', () => {
 
       it('does NOT call updateOrderStatus for PENDING order with stockReserved=undefined', async () => {
         const order = createMockOrder({ status: OrderStatus.PENDING });
-        (order as any).stockReserved = undefined;
+        (order as unknown as Record<string, unknown>)['stockReserved'] = undefined;
         mockOrderService.findOne.mockResolvedValue(order);
         mockOrderService.deleteOrder.mockResolvedValue(undefined);
 
@@ -1112,7 +1114,7 @@ describe('OrderResolver', () => {
 
       it('does NOT call updateOrderStatus for DELIVERED order', async () => {
         const order = createMockOrder({ status: OrderStatus.DELIVERED });
-        (order as any).stockReserved = false;
+        (order as unknown as Record<string, unknown>)['stockReserved'] = false;
         mockOrderService.findOne.mockResolvedValue(order);
         mockOrderService.deleteOrder.mockResolvedValue(undefined);
 
@@ -1128,69 +1130,69 @@ describe('OrderResolver', () => {
   describe('getUserId helper', () => {
     it('extracts id from user.id', () => {
       const user = { id: 'user-123' };
-      expect((resolver as any).getUserId(user)).toBe('user-123');
+      expect(resolver['getUserId'](user as AuthenticatedUser)).toBe('user-123');
     });
 
     it('extracts id from user.sub when id is missing', () => {
       const user = { sub: 'sub-456' };
-      expect((resolver as any).getUserId(user)).toBe('sub-456');
+      expect(resolver['getUserId'](user as AuthenticatedUser)).toBe('sub-456');
     });
 
     it('returns empty string when both id and sub are missing', () => {
       const user = {};
-      expect((resolver as any).getUserId(user)).toBe('');
+      expect(resolver['getUserId'](user as AuthenticatedUser)).toBe('');
     });
   });
 
   describe('getUserRole helper', () => {
     it('returns ADMIN for role ADMIN', () => {
-      expect((resolver as any).getUserRole({ role: UserRole.ADMIN })).toBe('ADMIN');
+      expect(resolver['getUserRole']({ role: UserRole.ADMIN } as AuthenticatedUser)).toBe('ADMIN');
     });
 
     it('returns SELLER for role SELLER', () => {
-      expect((resolver as any).getUserRole({ role: UserRole.SELLER })).toBe('SELLER');
+      expect(resolver['getUserRole']({ role: UserRole.SELLER } as AuthenticatedUser)).toBe('SELLER');
     });
 
     it('returns CUSTOMER for role CUSTOMER', () => {
-      expect((resolver as any).getUserRole({ role: UserRole.CUSTOMER })).toBe('CUSTOMER');
+      expect(resolver['getUserRole']({ role: UserRole.CUSTOMER } as AuthenticatedUser)).toBe('CUSTOMER');
     });
 
     it('normalizes lowercase role', () => {
-      expect((resolver as any).getUserRole({ role: 'admin' })).toBe('ADMIN');
-      expect((resolver as any).getUserRole({ role: 'seller' })).toBe('SELLER');
-      expect((resolver as any).getUserRole({ role: 'customer' })).toBe('CUSTOMER');
+      expect(resolver['getUserRole']({ role: 'admin' } as AuthenticatedUser)).toBe('ADMIN');
+      expect(resolver['getUserRole']({ role: 'seller' } as AuthenticatedUser)).toBe('SELLER');
+      expect(resolver['getUserRole']({ role: 'customer' } as AuthenticatedUser)).toBe('CUSTOMER');
     });
 
     it('uses userType when role is missing', () => {
-      expect((resolver as any).getUserRole({ userType: 'ADMIN' })).toBe('ADMIN');
-      expect((resolver as any).getUserRole({ userType: 'seller' })).toBe('SELLER');
+      expect(resolver['getUserRole']({ userType: 'ADMIN' } as AuthenticatedUser)).toBe('ADMIN');
+      expect(resolver['getUserRole']({ userType: 'seller' } as AuthenticatedUser)).toBe('SELLER');
     });
 
     it('returns UNKNOWN for invalid role', () => {
-      expect((resolver as any).getUserRole({ role: 'INVALID' })).toBe('UNKNOWN');
-      expect((resolver as any).getUserRole({})).toBe('UNKNOWN');
+      expect(resolver['getUserRole']({ role: 'INVALID' } as AuthenticatedUser)).toBe('UNKNOWN');
+      expect(resolver['getUserRole']({} as AuthenticatedUser)).toBe('UNKNOWN');
     });
   });
 
   describe('assertAdmin helper', () => {
     it('does not throw for ADMIN', () => {
       const user = createMockAdminUser();
-      expect(() => (resolver as any).assertAdmin(user)).not.toThrow();
+      expect(() => resolver['assertAdmin'](user as AuthenticatedUser)).not.toThrow();
     });
 
     it('throws ForbiddenException for SELLER', () => {
       const user = createMockSellerUser();
-      expect(() => (resolver as any).assertAdmin(user)).toThrow(ForbiddenException);
+      expect(() => resolver['assertAdmin'](user as AuthenticatedUser)).toThrow(ForbiddenException);
     });
 
     it('throws ForbiddenException for CUSTOMER', () => {
       const user = createMockUser({ role: UserRole.CUSTOMER });
-      expect(() => (resolver as any).assertAdmin(user)).toThrow(ForbiddenException);
+      expect(() => resolver['assertAdmin'](user as AuthenticatedUser)).toThrow(ForbiddenException);
     });
 
     it('throws ForbiddenException for UNKNOWN', () => {
       const user = { role: 'INVALID' };
-      expect(() => (resolver as any).assertAdmin(user)).toThrow(ForbiddenException);
+      expect(() => resolver['assertAdmin'](user as AuthenticatedUser)).toThrow(ForbiddenException);
     });
   });
 });

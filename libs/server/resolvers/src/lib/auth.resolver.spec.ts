@@ -42,7 +42,7 @@ describe('AuthResolver', () => {
       cookie: jest.fn(),
       clearCookie: jest.fn(),
     };
-    resolver = new AuthResolver(authService as any);
+    resolver = new AuthResolver(authService as never);
   });
 
   const expectAuthCookies = (access: string, refresh: string) => {
