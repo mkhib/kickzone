@@ -1,5 +1,6 @@
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
+import { isApolloErrorLike } from '@kickzone-workspace/validation';
 import {
   useCartError,
   useCartItems,
@@ -1103,10 +1104,7 @@ export function CustomerShoppingCart() {
 
       // Extract GraphQL errors for auth checking
       const graphQLErrors =
-        typeof error === 'object' && error !== null && 'graphQLErrors' in error
-          ? // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            (error as any).graphQLErrors
-          : undefined;
+        isApolloErrorLike(error) ? error.graphQLErrors : undefined;
 
       // If order creation succeeded but something else failed, cancel created orders
       // (but only if we haven't already rolled back in the try block)

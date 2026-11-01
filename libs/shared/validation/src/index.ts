@@ -11,3 +11,4 @@ export * from './lib/catalog';
 export * from './lib/taxonomy';
 export * from './lib/currency';
 export * from './lib/query';
+export * from './lib/apollo-error';

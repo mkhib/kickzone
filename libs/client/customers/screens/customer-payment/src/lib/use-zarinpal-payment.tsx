@@ -7,6 +7,7 @@ import {
   CANCEL_PENDING_ZARINPAL_ORDER_MUTATION,
 } from '@kickzone-workspace/customers-graphql';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { asApolloErrorLike } from '@kickzone-workspace/validation';
 import {
   getZarinPalErrorMessage,
   type ZarinPalPaymentRequest,
@@ -121,7 +122,7 @@ export function useZarinPalPayment(
               email: request.metadata?.email,
               order_id: request.metadata?.order_id,
               orderIds: request.orderIds,
-            } as any, // Type assertion to bypass GraphQL codegen type until regeneration
+            },
           },
         });
 
@@ -155,11 +156,8 @@ export function useZarinPalPayment(
           errorMessage = err.message;
 
           // Check for GraphQL errors with more details
-          if (
-            'graphQLErrors' in err &&
-            (err as any).graphQLErrors?.length > 0
-          ) {
-            const graphQLError = (err as any).graphQLErrors[0];
+          const graphQLError = asApolloErrorLike(err)?.graphQLErrors?.[0];
+          if (graphQLError) {
             const detailedMessage =
               graphQLError.message ||
               graphQLError.extensions?.message ||
@@ -174,8 +172,8 @@ export function useZarinPalPayment(
           }
 
           // Check for network errors
-          if ('networkError' in err && (err as any).networkError) {
-            const networkError = (err as any).networkError;
+          const networkError = asApolloErrorLike(err)?.networkError;
+          if (networkError) {
             console.error('[PaymentHook] ❌ Network error details:', {
               statusCode: networkError.statusCode,
               statusText: networkError.statusText,
@@ -285,7 +283,7 @@ export function useZarinPalPayment(
           variables: {
             orderId: variables.orderId,
             authority: variables.authority,
-          } as any, // Cast to bypass GraphQL codegen type mismatch
+          },
         });
 
         const result = data?.cancelPendingZarinPalOrder;
