@@ -24,7 +24,7 @@ import PersonAddOutlined from '@mui/icons-material/PersonAddOutlined';
 import { useTheme } from '@mui/material/styles';
 import { useCustomersAuth } from '@kickzone-workspace/customers-auth-context';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
-import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
+import { useI18nContext, useLanguageContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
@@ -56,6 +56,8 @@ export interface OrderData {
   subtotal: number;
   shippingCost: number;
   total: number;
+  shippingMethod?: string;
+  shippingPaymentMode?: 'PAY_ON_DELIVERY' | 'PAY_ONLINE';
   items: OrderItem[];
   notes?: string | null;
   createdAt: string;
@@ -65,6 +67,8 @@ export interface OrderData {
     orderNumber: string;
     total: number;
     trackingNumber?: string | null;
+    shippingMethod?: string;
+    shippingPaymentMode?: 'PAY_ON_DELIVERY' | 'PAY_ONLINE';
   }>;
 }
 
@@ -79,6 +83,7 @@ const displayOrderItemSize = (size?: string | null): string => {
 
 export function CustomerOrderConfirmation() {
   const { LL } = useI18nContext();
+  const { currentLocale } = useLanguageContext();
   usePageTitle(() => LL.pageTitles.orderConfirmation());
   const navigate = useNavigate();
   const location = useLocation();
@@ -306,6 +311,34 @@ export function CustomerOrderConfirmation() {
                 </Typography>
               </Box>
             </Box>
+
+            {/* Pay on Delivery Notice */}
+            {(orderData.shippingPaymentMode !== 'PAY_ONLINE' || orderData.sellerOrders?.some((so) => so.shippingPaymentMode !== 'PAY_ONLINE')) && (
+              <Alert
+                severity="info"
+                data-testid="pay-on-delivery-notice"
+                sx={{
+                  mb: 3.5,
+                  borderRadius: '16px',
+                  backdropFilter: 'blur(20px)',
+                  WebkitBackdropFilter: 'blur(20px)',
+                  background: isDark
+                    ? 'rgba(197, 184, 154, 0.12)'
+                    : 'rgba(143, 132, 104, 0.1)',
+                  border: isDark
+                    ? '1px solid rgba(197, 184, 154, 0.25)'
+                    : '1px solid rgba(143, 132, 104, 0.2)',
+                  color: isDark ? '#f4f4f2' : '#181816',
+                  '& .MuiAlert-message': {
+                    fontWeight: 500,
+                  },
+                }}
+              >
+                {currentLocale === 'fa'
+                  ? '«هزینه ارسال هنگام تحویل مرسوله پستی پرداخت می‌شود»'
+                  : 'Shipping is paid on delivery when you receive the parcel by post'}
+              </Alert>
+            )}
 
             {/* Order Summary Liquid Glass Card */}
             <Card sx={{ ...glassCardSx, mb: 3.5 }}>

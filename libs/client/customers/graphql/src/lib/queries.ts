@@ -36,6 +36,7 @@ export const GET_SELLERS_BY_IDS_QUERY = gql`
         node {
           id
           shippingFee
+          shippingPaymentMode
         }
       }
     }
@@ -84,6 +85,7 @@ export const GET_PRODUCTS_QUERY = gql`
             seller {
               id
               shippingFee
+              shippingPaymentMode
             }
           }
         }
@@ -127,6 +129,8 @@ export const GET_MY_ORDERS_QUERY = gql`
       updatedAt
       sellerPhone
       sellerAddress
+      shippingMethod
+      shippingPaymentMode
       items {
         id
         productId

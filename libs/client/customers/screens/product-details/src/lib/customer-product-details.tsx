@@ -749,6 +749,9 @@ export function CustomerProductDetails() {
       sellerId: seller.id.toString(),
       sellerName: seller.storeName || '',
       sellerShippingFee: seller.shippingFee || 0,
+      sellerShippingPaymentMode:
+        (seller as { shippingPaymentMode?: 'PAY_ON_DELIVERY' | 'PAY_ONLINE' })?.shippingPaymentMode ||
+        'PAY_ON_DELIVERY',
       productInfoId: productInfo.id.toString(),
       sellerProductId: sellerProduct.id.toString(),
       availableStock: sellerProduct.stockQuantity,

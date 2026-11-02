@@ -11,6 +11,7 @@ import {
   SellerInfo,
   ShippingPaymentMode,
   ShippingStrategy,
+  PlatformSettings,
 } from '@kickzone-workspace/entities';
 import { CreateOrderInput, UpdateOrderInput } from '@kickzone-workspace/inputs';
 import {
@@ -2987,19 +2988,14 @@ describe('OrderService - Shipping Security & Payment Modes', () => {
     };
 
     const shippingCalcService = new ShippingCalculationService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      platformSettingsRepository as any
+      platformSettingsRepository as unknown as jest.Mocked<Repository<PlatformSettings>>
     );
 
     const service = new OrderService(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      orderRepository as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      orderItemRepository as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      sellerProductRepository as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      sellerInfoRepository as any,
+      orderRepository as unknown as jest.Mocked<Repository<Order>>,
+      orderItemRepository as unknown as jest.Mocked<Repository<OrderItem>>,
+      sellerProductRepository as unknown as jest.Mocked<Repository<SellerProduct>>,
+      sellerInfoRepository as unknown as jest.Mocked<Repository<SellerInfo>>,
       shippingCalcService,
       undefined
     );
@@ -3135,8 +3131,7 @@ describe('OrderService - Shipping Security & Payment Modes', () => {
       },
     });
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const batchOrders: any[] = [
+    const batchOrders: Partial<Order>[] = [
       {
         id: 'ord-cod-1',
         sellerId: 1,
@@ -3166,7 +3161,7 @@ describe('OrderService - Shipping Security & Payment Modes', () => {
       },
     ];
 
-    const updated = await service.recalculateBatchOrdersShipping(batchOrders);
+    const updated = await service.recalculateBatchOrdersShipping(batchOrders as unknown as Order[]);
     const byId = Object.fromEntries(updated.map((o) => [o.id, o]));
 
     expect(byId['ord-cod-1'].shippingCost).toBe(0);

@@ -134,6 +134,8 @@ export const CREATE_ORDER_MUTATION = gql`
       updatedAt
       sellerPhone
       sellerAddress
+      shippingMethod
+      shippingPaymentMode
       items {
         id
         productId

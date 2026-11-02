@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PaymentResolver } from './payment.resolver';
 import { PaymentService, OrderService, CurrencyService } from '@kickzone-workspace/services';
-import { OrderStatus, ShippingPaymentMode } from '@kickzone-workspace/entities';
+import { OrderStatus, ShippingPaymentMode, Order } from '@kickzone-workspace/entities';
 import { ZarinPalPaymentRequestInput } from './payment.resolver';
 
 describe('PaymentResolver Unit Tests', () => {
@@ -1619,8 +1619,7 @@ it('does NOT treat CONFIRMED orders with stockReserved=undefined as idempotently
 
 describe('PaymentResolver - Batch Shipping Recomputation & Amount Guard', () => {
   function setupResolver() {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const ordersDb: Record<string, any> = {
+    const ordersDb: Record<string, Partial<Order>> = {
       'ord-cod': {
         id: 'ord-cod',
         orderNumber: 'ORD-1',
@@ -1660,8 +1659,7 @@ describe('PaymentResolver - Batch Shipping Recomputation & Amount Guard', () => 
 
     const orderService = {
       findOne: jest.fn(async (id: string) => ordersDb[id] ?? null),
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      recalculateBatchOrdersShipping: jest.fn(async (orders: any[]) => {
+      recalculateBatchOrdersShipping: jest.fn(async (orders: Partial<Order>[]) => {
         for (const o of orders) {
           if (o.id === 'ord-cod') {
             o.shippingCost = 0;
@@ -1671,7 +1669,7 @@ describe('PaymentResolver - Batch Shipping Recomputation & Amount Guard', () => 
             o.total = 54.5;
           }
         }
-        return orders;
+        return orders as Order[];
       }),
       setPaymentIntent: jest.fn(async () => ({})),
     };
@@ -1681,12 +1679,9 @@ describe('PaymentResolver - Batch Shipping Recomputation & Amount Guard', () => 
     };
 
     const resolver = new PaymentResolver(
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      paymentService as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      orderService as any,
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      currencyService as any,
+      paymentService as unknown as PaymentService,
+      orderService as unknown as OrderService,
+      currencyService as unknown as CurrencyService,
     );
 
     return { resolver, paymentService, orderService };

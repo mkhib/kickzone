@@ -15,6 +15,7 @@ export interface CartItem {
   sellerId: string;
   sellerName: string;
   sellerShippingFee: number; // Seller's shipping fee
+  sellerShippingPaymentMode?: 'PAY_ON_DELIVERY' | 'PAY_ONLINE'; // Seller's shipping payment mode
   productInfoId: string;
   sellerProductId: string; // SellerProduct ID for stock management
   availableStock: number; // Available stock quantity

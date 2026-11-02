@@ -69,6 +69,9 @@ export function CustomersHome({
         sellerId: String(sp.seller?.id || 1),
         sellerName: '',
         sellerShippingFee: sp.seller?.shippingFee || 0,
+        sellerShippingPaymentMode:
+          (sp.seller as { shippingPaymentMode?: 'PAY_ON_DELIVERY' | 'PAY_ONLINE' })?.shippingPaymentMode ||
+          'PAY_ON_DELIVERY',
         productInfoId: pInfo ? String(pInfo.id) : '',
         sellerProductId: String(sp.id),
         availableStock: sp.stockQuantity || 1,

@@ -21,6 +21,8 @@ interface Order {
   trackingNumber?: string;
   createdAt: string;
   updatedAt: string;
+  shippingMethod?: string;
+  shippingPaymentMode?: 'PAY_ON_DELIVERY' | 'PAY_ONLINE';
   items: OrderItem[];
 }
 

@@ -43,6 +43,7 @@ export const HOME_PAGE_QUERY = gql`
             seller {
               id
               shippingFee
+              shippingPaymentMode
             }
           }
         }

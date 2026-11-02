@@ -169,6 +169,9 @@ const fa = {
     processing: 'در حال پردازش...',
     paymentInitializationFailed:
       'راه‌اندازی پرداخت ناموفق بود. لطفاً دوباره تلاش کنید.',
+    shippingPayOnDeliveryNotice:
+      '«هزینه ارسال هنگام تحویل مرسوله پستی پرداخت می‌شود»',
+    paidOnDelivery: 'پرداخت در محل (هنگام تحویل)',
   },
 
   // Product management

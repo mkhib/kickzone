@@ -67,6 +67,8 @@ interface Order {
   trackingNumber: string | null;
   createdAt: string;
   updatedAt: string;
+  shippingMethod?: string;
+  shippingPaymentMode?: 'PAY_ON_DELIVERY' | 'PAY_ONLINE';
   items: OrderItem[];
 }
 
@@ -500,6 +502,33 @@ export function CustomerOrders() {
                               />
                             </Typography>
                           </Box>
+                          {/* Pay on Delivery Notice */}
+                          {order.shippingPaymentMode !== 'PAY_ONLINE' && (
+                            <Alert
+                              severity="info"
+                              data-testid="pay-on-delivery-notice"
+                              sx={{
+                                mb: 1.5,
+                                borderRadius: '12px',
+                                backdropFilter: 'blur(20px)',
+                                WebkitBackdropFilter: 'blur(20px)',
+                                background: isDark
+                                  ? 'rgba(197, 184, 154, 0.12)'
+                                  : 'rgba(143, 132, 104, 0.1)',
+                                border: isDark
+                                  ? '1px solid rgba(197, 184, 154, 0.25)'
+                                  : '1px solid rgba(143, 132, 104, 0.2)',
+                                color: isDark ? '#f4f4f2' : '#181816',
+                                '& .MuiAlert-message': {
+                                  fontWeight: 500,
+                                },
+                              }}
+                            >
+                              {currentLocale === 'fa'
+                                ? '«هزینه ارسال هنگام تحویل مرسوله پستی پرداخت می‌شود»'
+                                : 'Shipping is paid on delivery when you receive the parcel by post'}
+                            </Alert>
+                          )}
                           <Divider sx={{ my: 1 }} />
                           <Box
                             sx={{

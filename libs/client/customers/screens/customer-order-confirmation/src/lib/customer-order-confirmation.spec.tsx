@@ -64,6 +64,9 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
       },
     },
   }),
+  useLanguageContext: () => ({
+    currentLocale: 'en',
+  }),
   usePageTitle: vi.fn(),
 }));
 

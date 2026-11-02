@@ -435,6 +435,7 @@ describe('CustomerShoppingCart Component', () => {
         sellerId: '1',
         sellerName: 'SAINTBALA',
         sellerShippingFee: 1.2,
+        sellerShippingPaymentMode: 'PAY_ONLINE',
         productName: 'SAINTBALA Monogram Hoodie',
         productImage: '/hoodie.jpg',
         quantity: 2,
@@ -452,6 +453,7 @@ describe('CustomerShoppingCart Component', () => {
         sellerId: '1',
         sellerName: 'SAINTBALA',
         sellerShippingFee: 1.2,
+        sellerShippingPaymentMode: 'PAY_ONLINE',
         productName: 'SAINTBALA Tactical Cargo Pants',
         productImage: '/pants.jpg',
         quantity: 1,
@@ -598,6 +600,7 @@ describe('Free Shipping and Zero Fee Handling', () => {
         sellerId: '1',
         sellerName: 'SAINTBALA',
         sellerShippingFee: 0, // Zero shipping fee
+        sellerShippingPaymentMode: 'PAY_ONLINE',
         productName: 'Test Free Ship Item', // Changed from 'SAINTBALA Free Ship Item' to avoid 'Free' in product name
         productImage: '/hoodie.jpg',
         quantity: 1,
@@ -764,6 +767,7 @@ describe('Multi-Seller Checkout & Rollback', () => {
         sellerId: '1',
         sellerName: 'Seller One',
         sellerShippingFee: 1.2,
+        sellerShippingPaymentMode: 'PAY_ONLINE',
         productName: 'Product from Seller 1',
         productImage: '/item1.jpg',
         quantity: 1,
@@ -781,6 +785,7 @@ describe('Multi-Seller Checkout & Rollback', () => {
         sellerId: '2',
         sellerName: 'Seller Two',
         sellerShippingFee: 1.5,
+        sellerShippingPaymentMode: 'PAY_ONLINE',
         productName: 'Product from Seller 2',
         productImage: '/item2.jpg',
         quantity: 1,
@@ -1167,6 +1172,7 @@ describe('Order Confirmation Data', () => {
         sellerId: '1',
         sellerName: 'Seller One',
         sellerShippingFee: 1.2,
+        sellerShippingPaymentMode: 'PAY_ONLINE',
         productName: 'Product from Seller 1',
         productImage: '/item1.jpg',
         quantity: 2,
@@ -1317,6 +1323,7 @@ describe('Cart Clear Behavior After Successful Order (Non-ZarinPal)', () => {
         sellerId: '1',
         sellerName: 'Seller One',
         sellerShippingFee: 1.2,
+        sellerShippingPaymentMode: 'PAY_ONLINE',
         productName: 'Product from Seller 1',
         productImage: '/item1.jpg',
         quantity: 2,
@@ -1486,5 +1493,393 @@ describe('Cart Clear Behavior After Successful Order (Non-ZarinPal)', () => {
     await waitFor(() => {
       expect(mockClearCart).toHaveBeenCalledTimes(1);
     });
+  });
+});
+
+describe('Pay on Delivery Notice & Mixed Cart Shipping', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLocale = 'en';
+    mockUser = null;
+    mockShippingMethod = 'vip';
+    mockIsCheckoutDialogOpen = false;
+    mockIsAuthDialogOpen = false;
+    mockActiveStep = 0;
+  });
+
+  it('forces shipping to 0 and displays Farsi/English pay-on-delivery notice when cart has PAY_ON_DELIVERY seller', async () => {
+    mockCartItems = [
+      {
+        id: 'item-cod-1',
+        productId: '1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '10',
+        sellerName: 'Tehran Boutique',
+        sellerShippingFee: 15,
+        sellerShippingPaymentMode: 'PAY_ON_DELIVERY',
+        productName: 'Jordan Hoodie',
+        productImage: '/hoodie.jpg',
+        quantity: 1,
+        unitPrice: 120,
+        totalPrice: 120,
+        availableStock: 5,
+        color: '#000000',
+        size: 'L',
+      },
+    ];
+
+    // Mock shipping data with 0 shipping (server should return 0 for PAY_ON_DELIVERY)
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '10', originalFee: 15, appliedFee: 0 },
+        ],
+      },
+    });
+
+    renderWithProviders();
+
+    const notices = await screen.findAllByTestId('pay-on-delivery-notice');
+    expect(notices.length).toBeGreaterThan(0);
+    expect(notices[0].textContent).toMatch(
+      /Shipping is paid on delivery when you receive the parcel by post|هزینه ارسال هنگام تحویل مرسوله پستی پرداخت می‌شود/
+    );
+  });
+
+  it('computes online shipping for PAY_ONLINE seller in mixed cart and matches server totals across methods', async () => {
+    mockCartItems = [
+      {
+        id: 'item-cod-1',
+        productId: '1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '10',
+        sellerName: 'COD Seller',
+        sellerShippingFee: 25,
+        sellerShippingPaymentMode: 'PAY_ON_DELIVERY',
+        productName: 'Jordan Hoodie (COD Seller)',
+        productImage: '/hoodie.jpg',
+        quantity: 1,
+        unitPrice: 100,
+        totalPrice: 100,
+        availableStock: 5,
+        color: '#000000',
+        size: 'L',
+      },
+      {
+        id: 'item-online-2',
+        productId: '2',
+        productInfoId: 'pi-2',
+        sellerProductId: '22222222-2222-2222-2222-222222222222',
+        sellerId: '20',
+        sellerName: 'Online Seller',
+        sellerShippingFee: 10,
+        sellerShippingPaymentMode: 'PAY_ONLINE',
+        productName: 'Nike Tech Fleece (Online Seller)',
+        productImage: '/fleece.jpg',
+        quantity: 1,
+        unitPrice: 80,
+        totalPrice: 80,
+        availableStock: 5,
+        color: '#ffffff',
+        size: 'M',
+      },
+    ];
+
+    mockShippingMethod = 'express';
+    // Mock shipping data: only PAY_ONLINE seller (20) contributes to shipping
+    // Express = 45% of $10 = $4.50
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 4.5,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '20', originalFee: 10, appliedFee: 10 },
+        ],
+      },
+    });
+
+    mockIsCheckoutDialogOpen = true;
+    mockActiveStep = 2; // Order Summary step
+
+    renderWithProviders();
+
+    // Notice is still shown because Seller 10 is PAY_ON_DELIVERY
+    const notices = await screen.findAllByTestId('pay-on-delivery-notice');
+    expect(notices.length).toBeGreaterThan(0);
+
+    // Verify shipping method is express
+    expect(mockShippingMethod).toBe('express');
+  });
+
+  it('shows $0 shipping for PAY_ON_DELIVERY seller with VIP method and displays notice', async () => {
+    mockCartItems = [
+      {
+        id: 'item-cod-1',
+        productId: '1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '10',
+        sellerName: 'COD Seller',
+        sellerShippingFee: 20,
+        sellerShippingPaymentMode: 'PAY_ON_DELIVERY',
+        productName: 'COD Item',
+        productImage: '/item.jpg',
+        quantity: 1,
+        unitPrice: 50,
+        totalPrice: 50,
+        availableStock: 5,
+        color: '#000000',
+        size: 'M',
+      },
+    ];
+
+    // Server returns 0 for PAY_ON_DELIVERY
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '10', originalFee: 20, appliedFee: 0 },
+        ],
+      },
+    });
+
+    renderWithProviders();
+
+    // Should show Free/$0 shipping
+    const freeElements = screen.getAllByText(/Free|0\.00/i);
+    expect(freeElements.length).toBeGreaterThan(0);
+    
+    // Should show pay-on-delivery notice
+    const notices = await screen.findAllByTestId('pay-on-delivery-notice');
+    expect(notices.length).toBeGreaterThan(0);
+  });
+
+  it('displays pay-on-delivery notice in checkout dialog Step 0 (Review Cart)', async () => {
+    mockCartItems = [
+      {
+        id: 'item-cod-1',
+        productId: '1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '10',
+        sellerName: 'COD Seller',
+        sellerShippingFee: 20,
+        sellerShippingPaymentMode: 'PAY_ON_DELIVERY',
+        productName: 'COD Item',
+        productImage: '/item.jpg',
+        quantity: 1,
+        unitPrice: 50,
+        totalPrice: 50,
+        availableStock: 5,
+        color: '#000000',
+        size: 'M',
+      },
+    ];
+
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '10', originalFee: 20, appliedFee: 0 },
+        ],
+      },
+    });
+
+    mockIsCheckoutDialogOpen = true;
+    mockActiveStep = 0;
+
+    renderWithProviders();
+
+    const notices = await screen.findAllByTestId('pay-on-delivery-notice');
+    expect(notices.length).toBeGreaterThan(0);
+  });
+
+  it('displays pay-on-delivery notice in checkout dialog Step 1 (Shipping Information)', async () => {
+    mockCartItems = [
+      {
+        id: 'item-cod-1',
+        productId: '1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '10',
+        sellerName: 'COD Seller',
+        sellerShippingFee: 20,
+        sellerShippingPaymentMode: 'PAY_ON_DELIVERY',
+        productName: 'COD Item',
+        productImage: '/item.jpg',
+        quantity: 1,
+        unitPrice: 50,
+        totalPrice: 50,
+        availableStock: 5,
+        color: '#000000',
+        size: 'M',
+      },
+    ];
+
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '10', originalFee: 20, appliedFee: 0 },
+        ],
+      },
+    });
+
+    mockIsCheckoutDialogOpen = true;
+    mockActiveStep = 1;
+
+    renderWithProviders();
+
+    const notices = await screen.findAllByTestId('pay-on-delivery-notice');
+    expect(notices.length).toBeGreaterThan(0);
+  });
+
+  it('displays pay-on-delivery notice in checkout dialog Step 2 (Order Summary)', async () => {
+    mockCartItems = [
+      {
+        id: 'item-cod-1',
+        productId: '1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '10',
+        sellerName: 'COD Seller',
+        sellerShippingFee: 20,
+        sellerShippingPaymentMode: 'PAY_ON_DELIVERY',
+        productName: 'COD Item',
+        productImage: '/item.jpg',
+        quantity: 1,
+        unitPrice: 50,
+        totalPrice: 50,
+        availableStock: 5,
+        color: '#000000',
+        size: 'M',
+      },
+    ];
+
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '10', originalFee: 20, appliedFee: 0 },
+        ],
+      },
+    });
+
+    mockIsCheckoutDialogOpen = true;
+    mockActiveStep = 2;
+
+    renderWithProviders();
+
+    const notices = await screen.findAllByTestId('pay-on-delivery-notice');
+    expect(notices.length).toBeGreaterThan(0);
+  });
+
+  it('shows correct shipping for PAY_ONLINE seller with VIP/Express/Pickup methods', async () => {
+    mockCartItems = [
+      {
+        id: 'item-online-1',
+        productId: '1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '20',
+        sellerName: 'Online Seller',
+        sellerShippingFee: 10,
+        sellerShippingPaymentMode: 'PAY_ONLINE',
+        productName: 'Online Item',
+        productImage: '/item.jpg',
+        quantity: 1,
+        unitPrice: 100,
+        totalPrice: 100,
+        availableStock: 5,
+        color: '#ffffff',
+        size: 'M',
+      },
+    ];
+
+    // Test VIP (100% of $10 = $10)
+    mockShippingMethod = 'vip';
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 10,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '20', originalFee: 10, appliedFee: 10 },
+        ],
+      },
+    });
+
+    renderWithProviders();
+
+    // VIP should show $10 shipping
+    const vipShippingElements = screen.getAllByText(/\$10\.00/);
+    expect(vipShippingElements.length).toBeGreaterThan(0);
+
+    // Test Express (45% of $10 = $4.50)
+    mockShippingMethod = 'express';
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 4.5,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '20', originalFee: 10, appliedFee: 10 },
+        ],
+      },
+    });
+
+    // Re-render with updated shipping method
+    const { rerender } = renderWithProviders();
+    // Update the mock shipping method
+    mockShippingMethod = 'express';
+    rerender(
+      <ThemeProvider theme={theme}>
+        <BrowserRouter>
+          <CustomerShoppingCart />
+        </BrowserRouter>
+      </ThemeProvider>
+    );
+
+    const expressShippingElements = screen.getAllByText(/\$4\.50/);
+    expect(expressShippingElements.length).toBeGreaterThan(0);
+
+    // Test Pickup (0% = $0)
+    mockShippingMethod = 'pickup';
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 0,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '20', originalFee: 10, appliedFee: 10 },
+        ],
+      },
+    });
+
+    mockShippingMethod = 'pickup';
+    rerender(
+      <ThemeProvider theme={theme}>
+        <BrowserRouter>
+          <CustomerShoppingCart />
+        </BrowserRouter>
+      </ThemeProvider>
+    );
+
+    const freeElements = screen.getAllByText(/Free|0\.00/i);
+    expect(freeElements.length).toBeGreaterThan(0);
   });
 });

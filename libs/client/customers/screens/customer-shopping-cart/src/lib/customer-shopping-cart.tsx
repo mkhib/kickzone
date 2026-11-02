@@ -449,22 +449,45 @@ export function CustomerShoppingCart() {
   const updateItemQuantity = useUpdateItemQuantity();
   const clearCartAction = useClearCart();
 
+  // Helper to determine if an item's seller is PAY_ONLINE
+  const isOnlineSellerItem = (item: CartItem) => item.sellerShippingPaymentMode === 'PAY_ONLINE';
+
+  // Determine cart-level flags
+  const hasPayOnDeliverySellers = useMemo(() => {
+    return cartItems.some((item) => !isOnlineSellerItem(item));
+  }, [cartItems]);
+
+  const hasPayOnlineSellers = useMemo(() => {
+    return cartItems.some((item) => isOnlineSellerItem(item));
+  }, [cartItems]);
+
   // Calculate shipping costs using smart shipping logic
+  // Only include PAY_ONLINE sellers in sellerShippingFees
   const sellerShippingFees = useMemo(() => {
     const sellerMap = new Map<string, { fee: number }>();
     cartItems.forEach((item) => {
+      if (!isOnlineSellerItem(item)) {
+        return; // Skip PAY_ON_DELIVERY sellers
+      }
       if (!sellerMap.has(item.sellerId)) {
-        // Use ?? instead of || to handle 0 values correctly
         const fee = item.sellerShippingFee ?? 0;
-        sellerMap.set(item.sellerId, {
-          fee,
-        });
+        sellerMap.set(item.sellerId, { fee });
       }
     });
-    return Array.from(sellerMap.entries()).map(([sellerId, info]) => ({
-      sellerId,
-      shippingFee: info.fee,
-    }));
+    // Sort deterministically by sellerId ASC (numeric)
+    return Array.from(sellerMap.entries())
+      .sort((a, b) => Number(a[0]) - Number(b[0]))
+      .map(([sellerId, info]) => ({
+        sellerId,
+        shippingFee: info.fee,
+      }));
+  }, [cartItems]);
+
+  // Compute online cart subtotal (sum of PAY_ONLINE items only)
+  const onlineCartSubtotal = useMemo(() => {
+    return cartItems
+      .filter((item) => isOnlineSellerItem(item))
+      .reduce((sum, item) => sum + item.totalPrice, 0);
   }, [cartItems]);
 
   const cartSubtotal = useMemo(() => {
@@ -490,7 +513,7 @@ export function CustomerShoppingCart() {
     CALCULATE_SHIPPING_COST_QUERY,
     {
       variables: {
-        cartSubtotal,
+        cartSubtotal: onlineCartSubtotal,
         sellerShippingFees,
       },
       skip: sellerShippingFees.length === 0 || cartItems.length === 0,
@@ -498,8 +521,12 @@ export function CustomerShoppingCart() {
     }
   );
 
-  // Base calculated shipping costs (VIP Courier)
+  // Base calculated shipping costs (VIP Courier) - only for PAY_ONLINE sellers
   const baseShippingCost = useMemo(() => {
+    if (!hasPayOnlineSellers) {
+      // All sellers are PAY_ON_DELIVERY, shipping is 0
+      return 0;
+    }
     const fallbackTotal = sellerShippingFees.reduce(
       (sum, seller) => sum + (seller.shippingFee || 0),
       0
@@ -518,13 +545,16 @@ export function CustomerShoppingCart() {
 
     // Fallback: sum all shipping fees
     return fallbackTotal;
-  }, [shippingData, sellerShippingFees]);
+  }, [shippingData, sellerShippingFees, hasPayOnlineSellers]);
 
   const vipShippingCost = baseShippingCost >= 0 ? baseShippingCost : 0;
   const expressShippingCost = Math.round(vipShippingCost * 0.45 * 100) / 100;
   const pickupShippingCost = 0;
 
   const totalShippingCost = useMemo(() => {
+    if (!hasPayOnlineSellers) {
+      return 0;
+    }
     if (shippingMethod === 'pickup') {
       return pickupShippingCost;
     }
@@ -532,10 +562,13 @@ export function CustomerShoppingCart() {
       return expressShippingCost;
     }
     return vipShippingCost;
-  }, [shippingMethod, pickupShippingCost, expressShippingCost, vipShippingCost]);
+  }, [shippingMethod, pickupShippingCost, expressShippingCost, vipShippingCost, hasPayOnlineSellers]);
 
   // Create a map of sellerId -> calculated shipping cost for order creation
   const shippingCostsBySeller = useMemo(() => {
+    if (!hasPayOnlineSellers) {
+      return {};
+    }
     const breakdown =
       shippingData?.calculateShippingCost?.shippingBreakdown || [];
     const map: Record<string, number> = {};
@@ -564,7 +597,7 @@ export function CustomerShoppingCart() {
       });
     }
     return map;
-  }, [shippingData, sellerShippingFees, shippingMethod]);
+  }, [shippingData, sellerShippingFees, shippingMethod, hasPayOnlineSellers]);
 
   const grandTotal = cartTotal + totalShippingCost;
 
@@ -880,6 +913,9 @@ export function CustomerShoppingCart() {
             ? `[GuestToken: ${guestToken}]`
             : '';
 
+          // Check if this seller's items are PAY_ONLINE
+          const isSellerOnline = items.some((item) => isOnlineSellerItem(item));
+
           return createOrderMutation({
             customerName: shippingInfo.customerName || '',
             customerEmail: shippingInfo.customerEmail || '',
@@ -891,8 +927,9 @@ export function CustomerShoppingCart() {
             country: shippingInfo.country || '',
             notes: orderNotes,
             sellerId: parseInt(sellerId, 10),
-            // Pass calculated shipping cost (from smart shipping logic)
-            shippingCost: shippingCostsBySeller[sellerId] || 0,
+            shippingMethod: shippingMethod,
+            // Pass calculated shipping cost (from smart shipping logic), 0 for PAY_ON_DELIVERY sellers
+            shippingCost: isSellerOnline ? (shippingCostsBySeller[sellerId] || 0) : 0,
             // Map cart items to order items
             items: items.map((item) => ({
               productId: item.productId,
@@ -957,6 +994,9 @@ export function CustomerShoppingCart() {
         totalOrders: orderResults.length,
       });
 
+      // Compute authoritative USD total from server's created orders
+      const serverBatchTotalUsd = orderResults.reduce((sum, o) => sum + Number(o.total), 0);
+
       // Build order confirmation data from fulfilled createOrder results
       // Type assertion needed because orderResults contains fulfilled Promise results
       const orderConfirmationData = buildOrderConfirmationData(
@@ -1019,12 +1059,17 @@ export function CustomerShoppingCart() {
       // IRR amounts in our currency system are already Toman (تومان).
       // ZarinPal `currency: IRT` expects Toman — send the converted amount as-is.
       // Official docs: https://www.zarinpal.com/docs/paymentGateway/moreFeatures/currency.html
-      const amountInToman = Math.round(totalInToman);
+      // Use server-authoritative USD total to ensure client payment matches server order totals
+      const amountInToman =
+        serverBatchTotalUsd > 0
+          ? Math.round(serverBatchTotalUsd * (rate || 0))
+          : Math.round(totalInToman);
 
       console.log(`[Checkout] 💱 Currency conversion:`, {
         amountInUSD: grandTotal,
+        serverBatchTotalUsd,
         amountInToman,
-        conversionRate: grandTotal > 0 ? totalInToman / grandTotal : 0,
+        conversionRate: serverBatchTotalUsd > 0 ? amountInToman / serverBatchTotalUsd : 0,
       });
 
       // Block ZarinPal checkout if exchange rate is invalid (<= 1 or falsy)
@@ -1056,7 +1101,7 @@ export function CustomerShoppingCart() {
         orderIds: allOrderIds,
         orderNumbers: orderResults.map((o) => o!.orderNumber).join(', '),
         amountInToman,
-        amountInUSD: grandTotal,
+        amountInUSD: serverBatchTotalUsd > 0 ? serverBatchTotalUsd : grandTotal,
         callbackUrl,
       });
 
@@ -1891,6 +1936,34 @@ export function CustomerShoppingCart() {
 
                 <Divider sx={{ my: 2 }} />
 
+                {/* Pay on Delivery Notice */}
+                {hasPayOnDeliverySellers && (
+                  <Alert
+                    severity="info"
+                    data-testid="pay-on-delivery-notice"
+                    sx={{
+                      mb: 2,
+                      borderRadius: '12px',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      background: isDark
+                        ? 'rgba(197, 184, 154, 0.12)'
+                        : 'rgba(143, 132, 104, 0.1)',
+                      border: isDark
+                        ? '1px solid rgba(197, 184, 154, 0.25)'
+                        : '1px solid rgba(143, 132, 104, 0.2)',
+                      color: isDark ? '#f4f4f2' : '#181816',
+                      '& .MuiAlert-message': {
+                        fontWeight: 500,
+                      },
+                    }}
+                  >
+                    {currentLocale === 'fa'
+                      ? '«هزینه ارسال هنگام تحویل مرسوله پستی پرداخت می‌شود»'
+                      : 'Shipping is paid on delivery when you receive the parcel by post'}
+                  </Alert>
+                )}
+
                 <Box
                   sx={{
                     display: 'flex',
@@ -2290,6 +2363,32 @@ export function CustomerShoppingCart() {
                 >
                   {LL.checkout.reviewCart()}
                 </Typography>
+                {hasPayOnDeliverySellers && (
+                  <Alert
+                    severity="info"
+                    data-testid="pay-on-delivery-notice"
+                    sx={{
+                      mb: 2,
+                      borderRadius: '12px',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      background: isDark
+                        ? 'rgba(197, 184, 154, 0.12)'
+                        : 'rgba(143, 132, 104, 0.1)',
+                      border: isDark
+                        ? '1px solid rgba(197, 184, 154, 0.25)'
+                        : '1px solid rgba(143, 132, 104, 0.2)',
+                      color: isDark ? '#f4f4f2' : '#181816',
+                      '& .MuiAlert-message': {
+                        fontWeight: 500,
+                      },
+                    }}
+                  >
+                    {currentLocale === 'fa'
+                      ? '«هزینه ارسال هنگام تحویل مرسوله پستی پرداخت می‌شود»'
+                      : 'Shipping is paid on delivery when you receive the parcel by post'}
+                  </Alert>
+                )}
                 <Box sx={{ mb: 2 }}>
                   {cartItems.map((item: CartItem) => (
                     <Box
@@ -2514,6 +2613,32 @@ export function CustomerShoppingCart() {
                 >
                   {LL.checkout.shippingInformation()}
                 </Typography>
+                {hasPayOnDeliverySellers && (
+                  <Alert
+                    severity="info"
+                    data-testid="pay-on-delivery-notice"
+                    sx={{
+                      mb: 2,
+                      borderRadius: '12px',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      background: isDark
+                        ? 'rgba(197, 184, 154, 0.12)'
+                        : 'rgba(143, 132, 104, 0.1)',
+                      border: isDark
+                        ? '1px solid rgba(197, 184, 154, 0.25)'
+                        : '1px solid rgba(143, 132, 104, 0.2)',
+                      color: isDark ? '#f4f4f2' : '#181816',
+                      '& .MuiAlert-message': {
+                        fontWeight: 500,
+                      },
+                    }}
+                  >
+                    {currentLocale === 'fa'
+                      ? '«هزینه ارسال هنگام تحویل مرسوله پستی پرداخت می‌شود»'
+                      : 'Shipping is paid on delivery when you receive the parcel by post'}
+                  </Alert>
+                )}
                 <Grid container spacing={{ xs: 1.5, sm: 2 }}>
                   <Grid size={{ xs: 12, sm: 6 }}>
                     <TextField
@@ -2745,6 +2870,33 @@ export function CustomerShoppingCart() {
                 >
                   {LL.checkout.orderSummary()}
                 </Typography>
+
+                {hasPayOnDeliverySellers && (
+                  <Alert
+                    severity="info"
+                    data-testid="pay-on-delivery-notice"
+                    sx={{
+                      mb: 2,
+                      borderRadius: '12px',
+                      backdropFilter: 'blur(20px)',
+                      WebkitBackdropFilter: 'blur(20px)',
+                      background: isDark
+                        ? 'rgba(197, 184, 154, 0.12)'
+                        : 'rgba(143, 132, 104, 0.1)',
+                      border: isDark
+                        ? '1px solid rgba(197, 184, 154, 0.25)'
+                        : '1px solid rgba(143, 132, 104, 0.2)',
+                      color: isDark ? '#f4f4f2' : '#181816',
+                      '& .MuiAlert-message': {
+                        fontWeight: 500,
+                      },
+                    }}
+                  >
+                    {currentLocale === 'fa'
+                      ? '«هزینه ارسال هنگام تحویل مرسوله پستی پرداخت می‌شود»'
+                      : 'Shipping is paid on delivery when you receive the parcel by post'}
+                  </Alert>
+                )}
 
                 {/* Shipping address review card */}
                 {shippingInfo.shippingAddress && (

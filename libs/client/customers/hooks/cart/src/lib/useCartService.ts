@@ -112,6 +112,28 @@ export function useCustomersCartService() {
     return map;
   }, [sellersData]);
 
+  // Create a map of sellerId -> shippingPaymentMode
+  const sellerShippingModeMap = useMemo(() => {
+    const map = new Map<number, 'PAY_ON_DELIVERY' | 'PAY_ONLINE'>();
+    if (sellersData?.sellers?.edges) {
+      sellersData.sellers.edges.forEach((edge) => {
+        if (edge?.node?.id !== undefined) {
+          const sellerId =
+            typeof edge.node.id === 'string'
+              ? parseInt(edge.node.id, 10)
+              : edge.node.id;
+          const shippingPaymentMode =
+            (edge.node.shippingPaymentMode as 'PAY_ON_DELIVERY' | 'PAY_ONLINE') ||
+            'PAY_ON_DELIVERY';
+          if (!isNaN(sellerId)) {
+            map.set(sellerId, shippingPaymentMode);
+          }
+        }
+      });
+    }
+    return map;
+  }, [sellersData]);
+
   // Handle login state changes
   // Only clear cart when user actually logs OUT (not when they're just not logged in)
   // This allows unauthenticated users to maintain their local cart for guest checkout
@@ -173,6 +195,15 @@ export function useCustomersCartService() {
           }
           // If shippingFee is 0 from map, use it (seller explicitly has no fee)
 
+          // Get shipping payment mode from sellerShippingModeMap
+          let shippingMode = sellerShippingModeMap.get(sellerIdNum);
+          if (shippingMode === undefined) {
+            const key = `${item.sellerId}-${item.sellerProductId}`;
+            const existingItem = localItemsMap.get(key);
+            shippingMode =
+              existingItem?.sellerShippingPaymentMode ?? 'PAY_ON_DELIVERY';
+          }
+
           const cartItem: CartItem = {
             id: item.id,
             productId: item.productId,
@@ -186,6 +217,7 @@ export function useCustomersCartService() {
             sellerId: item.sellerId,
             sellerName: '', // Not displayed to customers
             sellerShippingFee: shippingFee,
+            sellerShippingPaymentMode: shippingMode,
             productInfoId: item.productInfoId || '',
             sellerProductId: item.sellerProductId || item.productId,
             availableStock: item.availableStock || 0,
@@ -198,7 +230,7 @@ export function useCustomersCartService() {
       // Update local store with server data
       useCartStore.getState().setItems(localItems);
     },
-    [sellerShippingFeeMap]
+    [sellerShippingFeeMap, sellerShippingModeMap]
   );
 
   // Sync server cart to local store when data changes or seller shipping fees are loaded
@@ -308,6 +340,8 @@ export function useCustomersCartService() {
             sellerId: removedItem.sellerId,
             sellerName: removedItem.sellerName,
             sellerShippingFee: removedItem.sellerShippingFee,
+            sellerShippingPaymentMode:
+              removedItem.sellerShippingPaymentMode ?? 'PAY_ON_DELIVERY',
             productInfoId: removedItem.productInfoId,
             sellerProductId: removedItem.sellerProductId,
             availableStock: removedItem.availableStock,

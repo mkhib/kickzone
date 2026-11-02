@@ -2,6 +2,7 @@ import { Reflector } from '@nestjs/core';
 import { ExecutionContext } from '@nestjs/common';
 import { RolesGuard } from '@kickzone-workspace/guards';
 import { SellerResolver } from './seller-info.resolver';
+import { SellerService, ProductService } from '@kickzone-workspace/services';
 import { ShippingPaymentMode, UserRole } from '@kickzone-workspace/entities';
 
 jest.mock('@nestjs/graphql', () => {
@@ -51,8 +52,10 @@ describe('SellerResolver - Admin-Only shippingPaymentMode Guard & Mutation', () 
         shippingPaymentMode: input.shippingPaymentMode,
       })),
     };
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const resolver = new SellerResolver(sellerService as any, {} as any);
+    const resolver = new SellerResolver(
+      sellerService as unknown as SellerService,
+      {} as unknown as ProductService
+    );
 
     const updated = await resolver.updateSeller({
       id: 7,

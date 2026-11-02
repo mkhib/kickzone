@@ -169,6 +169,9 @@ const en = {
     processing: 'Processing...',
     paymentInitializationFailed:
       'Failed to initialize payment. Please try again.',
+    shippingPayOnDeliveryNotice:
+      'Shipping is paid on delivery when you receive the parcel by post',
+    paidOnDelivery: 'Paid on Delivery',
   },
 
   // Product management
