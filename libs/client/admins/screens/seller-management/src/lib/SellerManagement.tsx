@@ -61,7 +61,13 @@ import {
 type Seller = NonNullable<KickzoneGraphqlTypes.SellerInfo>;
 type CreateSellerInput = KickzoneGraphqlTypes.CreateSellerInput;
 type SellerFilterInput = KickzoneGraphqlTypes.SellerFilterInput;
-type SellerFormData = Partial<CreateSellerInput> & { canManageCatalog?: boolean };
+// Form validation uses 'PAY_ON_DELIVERY' | 'PAY_ONLINE' (matches server enum)
+type ShippingPaymentMode = 'PAY_ON_DELIVERY' | 'PAY_ONLINE';
+// Use Omit to avoid conflict with GraphQL enum type in CreateSellerInput
+type SellerFormData = Omit<Partial<CreateSellerInput>, 'shippingPaymentMode'> & { 
+  canManageCatalog?: boolean;
+  shippingPaymentMode?: ShippingPaymentMode;
+};
 
 export const SellerManagement = () => {
   const { LL } = useI18nContext();
@@ -161,6 +167,7 @@ export const SellerManagement = () => {
     address: formData.address,
     shippingFee: formData.shippingFee,
     canManageCatalog: formData.canManageCatalog,
+    shippingPaymentMode: formData.shippingPaymentMode ?? 'PAY_ON_DELIVERY',
   };
   const createForm = useForm<SellerCreateFormInput>({
     values: sellerFormValues,
@@ -227,6 +234,19 @@ export const SellerManagement = () => {
         Cell: ({ row }) => `$${row.original.shippingFee?.toFixed(2) || '0.00'}`,
       },
       {
+        accessorKey: 'shippingPaymentMode',
+        header: currentLocale === 'fa' ? 'نحوه پرداخت ارسال' : 'Shipping Payment',
+        ...getRTLColumnProps(alignment),
+        Cell: ({ row }) =>
+          row.original.shippingPaymentMode === 'PAY_ONLINE'
+            ? currentLocale === 'fa'
+              ? 'پرداخت آنلاین'
+              : 'Pay Online'
+            : currentLocale === 'fa'
+            ? 'پرداخت در محل (پست)'
+            : 'Pay on Delivery',
+      },
+      {
         ...createRTLStatusColumn<Seller>('isActive', LL.table.status(), {
           alignment,
           activeColor: 'success.main',
@@ -283,6 +303,7 @@ export const SellerManagement = () => {
                   address: row.original.address,
                   shippingFee: row.original.shippingFee,
                   canManageCatalog: row.original.canManageCatalog,
+                  shippingPaymentMode: row.original.shippingPaymentMode || 'PAY_ON_DELIVERY',
                 });
                 setEditModalOpen(true);
               }}
@@ -444,6 +465,8 @@ export const SellerManagement = () => {
               ? shippingFeeValue
               : 0,
             canManageCatalog: formData.canManageCatalog ?? false,
+            // Form string literal -> generated GraphQL enum type (same values)
+            shippingPaymentMode: (formData.shippingPaymentMode ?? 'PAY_ON_DELIVERY') as KickzoneGraphqlTypes.ShippingPaymentMode,
             password: 'defaultPassword123',
           } as CreateSellerInput,
         },
@@ -479,6 +502,8 @@ export const SellerManagement = () => {
                 ? Number(formData.shippingFee)
                 : undefined,
             canManageCatalog: formData.canManageCatalog,
+            // Form string literal -> generated GraphQL enum type (same values)
+            shippingPaymentMode: formData.shippingPaymentMode as KickzoneGraphqlTypes.ShippingPaymentMode,
           },
         },
       });
@@ -595,6 +620,26 @@ export const SellerManagement = () => {
           />
         }
         label="Can manage catalog (define products)"
+      />
+      <FormControlLabel
+        control={
+          <Switch
+            checked={formData.shippingPaymentMode === 'PAY_ONLINE'}
+            onChange={(e) => {
+              setFormData((prev: SellerFormData) => ({
+                ...prev,
+                shippingPaymentMode: e.target.checked ? 'PAY_ONLINE' : 'PAY_ON_DELIVERY',
+              }));
+            }}
+            data-testid="seller-shipping-payment-mode-switch"
+            name="shippingPaymentMode"
+          />
+        }
+        label={
+          currentLocale === 'fa'
+            ? 'دریافت آنلاین هزینه ارسال (در غیر این صورت: پرداخت در محل به پست)'
+            : 'Charge shipping online (otherwise: Pay on Delivery)'
+        }
       />
     </>
   );

@@ -14,6 +14,7 @@ export const SELLER_INFO_FRAGMENT = gql`
     address
     isActive
     canManageCatalog
+    shippingPaymentMode
     user {
       ...UserFields
     }

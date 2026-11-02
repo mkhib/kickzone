@@ -9,6 +9,7 @@ export const SELLER_FIELDS = gql`
     isActive
     canManageCatalog
     shippingFee
+    shippingPaymentMode
     user {
       id
       name
