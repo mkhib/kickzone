@@ -206,10 +206,10 @@ export class ProductService implements OnModuleInit {
     if (filter?.categorySlugs?.length) {
       query.andWhere(
         `EXISTS (
-          SELECT 1 FROM product_category pc
-          JOIN category c ON pc."categoryId" = c.id
-          WHERE pc."productId" = product.id
-            AND (LOWER(c.slug) IN (:...catSlugs) OR LOWER(c.name) IN (:...catSlugs))
+          SELECT 1 FROM product_categories_categories pcc
+          JOIN categories c ON pcc."categoriesId" = c.id
+          WHERE pcc."productId" = product.id
+            AND LOWER(c.slug) IN (:...catSlugs)
         )`,
         { catSlugs: filter.categorySlugs.map((slug) => slug.toLowerCase()) }
       );
@@ -252,10 +252,10 @@ export class ProductService implements OnModuleInit {
       const {
         size,
         sizeKind,
-        price,
-        costPrice,
         colorId,
         weight,
+        price,
+        costPrice,
         discount,
         stockQuantity,
       } = filter.productInfoFilter;
@@ -263,11 +263,6 @@ export class ProductService implements OnModuleInit {
         query.andWhere('productInfo.size IN (:...size)', { size });
       if (sizeKind)
         query.andWhere('productInfo.sizeKind = :sizeKind', { sizeKind });
-      if (price) query.andWhere('productInfo.price IN (:...price)', { price });
-      if (costPrice)
-        query.andWhere('productInfo.costPrice IN (:...costPrice)', {
-          costPrice,
-        });
       if (colorId)
         query.andWhere(
           `EXISTS (
@@ -279,10 +274,18 @@ export class ProductService implements OnModuleInit {
         );
       if (weight)
         query.andWhere('productInfo.weight IN (:...weight)', { weight });
+      if (price)
+        query.andWhere('sellerProduct.price IN (:...price)', { price });
+      if (costPrice)
+        query.andWhere('sellerProduct.costPrice IN (:...costPrice)', {
+          costPrice,
+        });
       if (discount)
-        query.andWhere('productInfo.discount IN (:...discount)', { discount });
+        query.andWhere('sellerProduct.discount IN (:...discount)', {
+          discount,
+        });
       if (stockQuantity)
-        query.andWhere('productInfo.stockQuantity IN (:...stockQuantity)', {
+        query.andWhere('sellerProduct.stockQuantity IN (:...stockQuantity)', {
           stockQuantity,
         });
     }
@@ -304,7 +307,7 @@ export class ProductService implements OnModuleInit {
         } else if (filter.sort === 'discount') {
           query.orderBy('sellerProduct.discount', order);
         } else if (filter.sort === 'color') {
-          query.orderBy('color.name', order);
+          query.orderBy('color.hexCode', order);
         } else {
           query.orderBy('product.name', order);
         }
@@ -1192,10 +1195,10 @@ export class ProductService implements OnModuleInit {
       const {
         size,
         sizeKind,
-        price,
-        costPrice,
         colorId,
         weight,
+        price,
+        costPrice,
         discount,
         stockQuantity,
       } = filter.productInfoFilter;
@@ -1203,11 +1206,6 @@ export class ProductService implements OnModuleInit {
         query.andWhere('productInfo.size IN (:...size)', { size });
       if (sizeKind)
         query.andWhere('productInfo.sizeKind = :sizeKind', { sizeKind });
-      if (price) query.andWhere('productInfo.price IN (:...price)', { price });
-      if (costPrice)
-        query.andWhere('productInfo.costPrice IN (:...costPrice)', {
-          costPrice,
-        });
       if (colorId)
         query.andWhere(
           `EXISTS (
@@ -1219,10 +1217,18 @@ export class ProductService implements OnModuleInit {
         );
       if (weight)
         query.andWhere('productInfo.weight IN (:...weight)', { weight });
+      if (price)
+        query.andWhere('sellerProduct.price IN (:...price)', { price });
+      if (costPrice)
+        query.andWhere('sellerProduct.costPrice IN (:...costPrice)', {
+          costPrice,
+        });
       if (discount)
-        query.andWhere('productInfo.discount IN (:...discount)', { discount });
+        query.andWhere('sellerProduct.discount IN (:...discount)', {
+          discount,
+        });
       if (stockQuantity)
-        query.andWhere('productInfo.stockQuantity IN (:...stockQuantity)', {
+        query.andWhere('sellerProduct.stockQuantity IN (:...stockQuantity)', {
           stockQuantity,
         });
     }
@@ -1234,7 +1240,7 @@ export class ProductService implements OnModuleInit {
       } else if (filter.sort === 'discount') {
         query.addOrderBy('sellerProduct.discount', order);
       } else if (filter.sort === 'color') {
-        query.addOrderBy('color.name', order);
+        query.addOrderBy('color.hexCode', order);
       } else {
         query.addOrderBy('product.name', order);
       }

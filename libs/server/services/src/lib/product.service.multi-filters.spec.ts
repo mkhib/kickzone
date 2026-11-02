@@ -208,16 +208,44 @@ describe('ProductService - multi-select storefront filters', () => {
   const whereCalls = (qb: Record<string, jest.Mock>) =>
     qb['andWhere'].mock.calls as Array<[string, Record<string, unknown>?]>;
 
+  const allSqlCalls = (qb: Record<string, jest.Mock>) => {
+    const calls: Array<[string, Record<string, unknown>?]> = [];
+    calls.push(...(qb['andWhere'].mock.calls as Array<[string, Record<string, unknown>?]>));
+    calls.push(...(qb['orderBy'].mock.calls as Array<[string, Record<string, unknown>?]>));
+    calls.push(...(qb['addOrderBy'].mock.calls as Array<[string, Record<string, unknown>?]>));
+    return calls;
+  };
+
   it('matches products in ANY of the listed category slugs with one lowercased IN clause', async () => {
     const qb = makeQueryBuilder();
     productRepo.createQueryBuilder.mockReturnValue(qb as never);
 
     await service.getProducts({ categorySlugs: ['Men', 'T-Shirts'] });
 
-    const catCalls = whereCalls(qb).filter(([sql]) => sql.includes('product_category'));
+    const catCalls = whereCalls(qb).filter(([sql]) => sql.includes('product_categories_categories'));
     expect(catCalls).toHaveLength(1);
     expect(catCalls[0][0]).toContain('IN (:...catSlugs)');
     expect(catCalls[0][1]).toEqual({ catSlugs: ['men', 't-shirts'] });
+  });
+
+  it('categorySlugs filter uses correct join table and column names (LOCKED)', async () => {
+    const qb = makeQueryBuilder();
+    productRepo.createQueryBuilder.mockReturnValue(qb as never);
+
+    await service.getProducts({ categorySlugs: ['Men', 'T-Shirts'] });
+
+    const catCalls = whereCalls(qb).filter(([sql]) => sql.includes('product_categories_categories'));
+    expect(catCalls).toHaveLength(1);
+    const sql = catCalls[0][0];
+    // Must contain correct table/column names
+    expect(sql).toContain('product_categories_categories');
+    expect(sql).toContain('JOIN categories c');
+    expect(sql).toContain('categoriesId');
+    expect(sql).toContain('LOWER(c.slug) IN (:...catSlugs)');
+    // Must NOT contain old/bad names
+    expect(sql).not.toContain('product_category ');
+    expect(sql).not.toContain('categoryId');
+    expect(sql).not.toContain('c.name');
   });
 
   it('filters by ANY of the listed brands with a lowercased IN clause', async () => {
@@ -239,7 +267,7 @@ describe('ProductService - multi-select storefront filters', () => {
     await service.getProducts({ brands: [], categorySlugs: [] });
 
     const calls = whereCalls(qb).filter(
-      ([sql]) => sql.includes('brandSlugs') || sql.includes('product_category')
+      ([sql]) => sql.includes('brandSlugs') || sql.includes('product_categories_categories')
     );
     expect(calls).toHaveLength(0);
   });
@@ -252,6 +280,92 @@ describe('ProductService - multi-select storefront filters', () => {
 
     expect(qb['andWhere']).toHaveBeenCalledWith('LOWER(brand.slug) = :brandSlug', {
       brandSlug: 'nike',
+    });
+  });
+
+  it('getProducts productInfoFilter does not reference removed ProductInfo columns', async () => {
+    const qb = makeQueryBuilder();
+    productRepo.createQueryBuilder.mockReturnValue(qb as never);
+
+    await service.getProducts({
+      productInfoFilter: {
+        price: [100],
+        costPrice: [50],
+        discount: [10],
+        stockQuantity: [5],
+      },
+    });
+
+    const sqls = allSqlCalls(qb).map(([sql]) => sql);
+    const forbidden = [
+      'productInfo.price',
+      'productInfo.costPrice',
+      'productInfo.discount',
+      'productInfo.stockQuantity',
+    ];
+    for (const f of forbidden) {
+      expect(sqls.some((s) => s.includes(f))).toBe(false);
+    }
+    // Should use sellerProduct alias for price/costPrice/discount/stockQuantity
+    const whereCallsList = whereCalls(qb);
+    expect(whereCallsList.some(([sql, params]) => sql === 'sellerProduct.price IN (:...price)' && JSON.stringify(params?.['price']) === JSON.stringify([100]))).toBe(true);
+    expect(whereCallsList.some(([sql, params]) => sql === 'sellerProduct.costPrice IN (:...costPrice)' && JSON.stringify(params?.['costPrice']) === JSON.stringify([50]))).toBe(true);
+    expect(whereCallsList.some(([sql, params]) => sql === 'sellerProduct.discount IN (:...discount)' && JSON.stringify(params?.['discount']) === JSON.stringify([10]))).toBe(true);
+    expect(whereCallsList.some(([sql, params]) => sql === 'sellerProduct.stockQuantity IN (:...stockQuantity)' && JSON.stringify(params?.['stockQuantity']) === JSON.stringify([5]))).toBe(true);
+  });
+
+  it('getProducts sort by color uses color.hexCode not color.name', async () => {
+    const qb = makeQueryBuilder();
+    productRepo.createQueryBuilder.mockReturnValue(qb as never);
+
+    await service.getProducts({ sort: 'color' });
+
+    const sqls = allSqlCalls(qb).map(([sql]) => sql);
+    expect(sqls.some((s) => s.includes('color.name'))).toBe(false);
+    expect(sqls.some((s) => s.includes('color.hexCode'))).toBe(true);
+  });
+
+  describe('getSellerProducts', () => {
+    it('productInfoFilter does not reference removed ProductInfo columns', async () => {
+      const qb = makeQueryBuilder();
+      productRepo.createQueryBuilder.mockReturnValue(qb as never);
+
+      await service.getSellerProducts(1, {
+        productInfoFilter: {
+          price: [100],
+          costPrice: [50],
+          discount: [10],
+          stockQuantity: [5],
+        },
+      });
+
+      const sqls = allSqlCalls(qb).map(([sql]) => sql);
+      const forbidden = [
+        'productInfo.price',
+        'productInfo.costPrice',
+        'productInfo.discount',
+        'productInfo.stockQuantity',
+      ];
+      for (const f of forbidden) {
+        expect(sqls.some((s) => s.includes(f))).toBe(false);
+      }
+      // Should use sellerProduct alias for price/costPrice/discount/stockQuantity
+      const whereCallsList = whereCalls(qb);
+      expect(whereCallsList.some(([sql, params]) => sql === 'sellerProduct.price IN (:...price)' && JSON.stringify(params?.['price']) === JSON.stringify([100]))).toBe(true);
+      expect(whereCallsList.some(([sql, params]) => sql === 'sellerProduct.costPrice IN (:...costPrice)' && JSON.stringify(params?.['costPrice']) === JSON.stringify([50]))).toBe(true);
+      expect(whereCallsList.some(([sql, params]) => sql === 'sellerProduct.discount IN (:...discount)' && JSON.stringify(params?.['discount']) === JSON.stringify([10]))).toBe(true);
+      expect(whereCallsList.some(([sql, params]) => sql === 'sellerProduct.stockQuantity IN (:...stockQuantity)' && JSON.stringify(params?.['stockQuantity']) === JSON.stringify([5]))).toBe(true);
+    });
+
+    it('sort by color uses color.hexCode not color.name', async () => {
+      const qb = makeQueryBuilder();
+      productRepo.createQueryBuilder.mockReturnValue(qb as never);
+
+      await service.getSellerProducts(1, { sort: 'color' });
+
+      const sqls = allSqlCalls(qb).map(([sql]) => sql);
+      expect(sqls.some((s) => s.includes('color.name'))).toBe(false);
+      expect(sqls.some((s) => s.includes('color.hexCode'))).toBe(true);
     });
   });
 });
