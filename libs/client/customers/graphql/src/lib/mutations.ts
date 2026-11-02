@@ -220,7 +220,7 @@ export const GET_ZARINPAL_GATEWAY_URL_MUTATION = gql`
 `;
 
 export const CANCEL_PENDING_ZARINPAL_ORDER_MUTATION = gql`
-  mutation CancelPendingZarinPalOrder($orderId: String, $authority: String!) {
-    cancelPendingZarinPalOrder(orderId: $orderId, authority: $authority)
+  mutation CancelPendingZarinPalOrder($orderId: String, $authority: String, $guestToken: String) {
+    cancelPendingZarinPalOrder(orderId: $orderId, authority: $authority, guestToken: $guestToken)
   }
 `;

@@ -68,7 +68,7 @@ describe('CustomerPaymentCallback - Guest ZarinPal Cancel', () => {
         {
           request: {
             query: CANCEL_PENDING_ZARINPAL_ORDER_MUTATION,
-            variables: { orderId, authority },
+            variables: { orderId, authority, guestToken: undefined },
           },
           result: { data: { cancelPendingZarinPalOrder: true } },
         },
@@ -101,7 +101,7 @@ describe('CustomerPaymentCallback - Guest ZarinPal Cancel', () => {
         {
           request: {
             query: CANCEL_PENDING_ZARINPAL_ORDER_MUTATION,
-            variables: { orderId: null, authority },
+            variables: { orderId: null, authority, guestToken: undefined },
           },
           result: { data: { cancelPendingZarinPalOrder: true } },
         },
@@ -130,7 +130,7 @@ describe('CustomerPaymentCallback - Guest ZarinPal Cancel', () => {
         {
           request: {
             query: CANCEL_PENDING_ZARINPAL_ORDER_MUTATION,
-            variables: { orderId, authority },
+            variables: { orderId, authority, guestToken: undefined },
           },
           error: new Error('Network error'),
         },
@@ -158,7 +158,7 @@ describe('CustomerPaymentCallback - Guest ZarinPal Cancel', () => {
         {
           request: {
             query: CANCEL_PENDING_ZARINPAL_ORDER_MUTATION,
-            variables: { orderId, authority },
+            variables: { orderId, authority, guestToken: undefined },
           },
           result: { data: { cancelPendingZarinPalOrder: true } },
         },
@@ -677,6 +677,7 @@ describe('CustomerPaymentCallback - SessionStorage & URL Fallback', () => {
             variables: expect.objectContaining({
               orderId: orderId, // Uses first orderId from sessionStorage
               authority,
+              guestToken: undefined,
             }),
           },
           result: { data: { cancelPendingZarinPalOrder: true } },
@@ -701,6 +702,55 @@ describe('CustomerPaymentCallback - SessionStorage & URL Fallback', () => {
         expect(mockSessionStorage.getItem(`order_${orderId}`)).toBeNull();
         expect(mockSessionStorage.getItem(`order_${orderId2}`)).toBeNull();
       });
+    });
+  });
+});
+
+describe('GuestToken in cancelPendingZarinPalOrder mutation', () => {
+  const authority = 'A00000123';
+  const orderId = 'order-123';
+  const guestToken = 'guest_123456789_abc123';
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSessionStorage.clear();
+  });
+
+  it('should include guestToken in mutation variables when order data contains guestToken (expected behavior)', async () => {
+    // Set up order data with guestToken (as stored by customer-shopping-cart.tsx)
+    mockSessionStorage.setItem(
+      `order_${orderId}`,
+      JSON.stringify({
+        orderId,
+        orderNumber: 'ORD-123456',
+        amount: 50000,
+        guestToken,
+      })
+    );
+
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: CANCEL_PENDING_ZARINPAL_ORDER_MUTATION,
+          variables: { orderId, authority, guestToken },
+        },
+        result: { data: { cancelPendingZarinPalOrder: true } },
+      },
+    ];
+
+    renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+    await act(async () => {
+      window.history.pushState({}, '', `/?Status=NOK&Authority=${authority}&orderId=${orderId}`);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText('پرداخت لغو شد')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(mocks[0].result?.data).toEqual({ cancelPendingZarinPalOrder: true });
     });
   });
 });

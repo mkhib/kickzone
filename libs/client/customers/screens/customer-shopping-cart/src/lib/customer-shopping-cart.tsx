@@ -784,6 +784,8 @@ export function CustomerShoppingCart() {
     // Declare orderResults outside try block for access in catch
     let orderResults: NonNullable<Awaited<ReturnType<typeof createOrderMutation>>>[] = [];
     let rollbackExecuted = false;
+    // Declare guestToken outside try block for access in catch (rollback)
+    let guestToken: string | null = null;
 
     try {
       console.log('[Checkout] 🛒 Starting order creation and payment process');
@@ -852,7 +854,7 @@ export function CustomerShoppingCart() {
       );
 
       // Process shipping information with a guest session / temporary guest checkout token
-      let guestToken =
+      guestToken =
         typeof window !== 'undefined'
           ? sessionStorage.getItem('guest_checkout_token')
           : null;
@@ -922,7 +924,7 @@ export function CustomerShoppingCart() {
         rollbackExecuted = true;
         for (const order of fulfilledOrders) {
           try {
-            await cancelPendingOrderHook({ orderId: order.id, authority: '' });
+            await cancelPendingOrderHook({ orderId: order.id, authority: '', guestToken: guestToken || undefined });
           } catch (cancelError) {
             console.error(
               `[Checkout] Failed to cancel order ${order.id} after sibling order creation failure:`,
@@ -1044,7 +1046,7 @@ export function CustomerShoppingCart() {
         // If payment initiation fails, cancel all created orders to avoid orphan PENDING orders
         for (const orderId of allOrderIds) {
           try {
-            await cancelPendingOrderHook({ orderId, authority: '' });
+            await cancelPendingOrderHook({ orderId, authority: '', guestToken: guestToken || undefined });
           } catch (cancelError) {
             console.error(
               `[Checkout] Failed to cancel order ${orderId} after payment initiation failure:`,
@@ -1112,7 +1114,7 @@ export function CustomerShoppingCart() {
         rollbackExecuted = true;
         for (const order of orderResults) {
           try {
-            await cancelPendingOrderHook({ orderId: order!.id, authority: '' });
+            await cancelPendingOrderHook({ orderId: order!.id, authority: '', guestToken: guestToken || undefined });
           } catch (cancelError) {
             console.error(
               `[Checkout] Failed to cancel order ${order!.id} after error:`,

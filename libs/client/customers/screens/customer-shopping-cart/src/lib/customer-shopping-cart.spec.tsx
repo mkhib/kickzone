@@ -866,6 +866,133 @@ describe('Multi-Seller Checkout & Rollback', () => {
     expect(mockRequestPayment).not.toHaveBeenCalled();
   });
 
+  it('Test 5: Guest checkout - payment request fails -> cancelPendingOrder called with guestToken from sessionStorage', async () => {
+    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
+    const orderSeller2 = { id: 'order-seller-2', orderNumber: 'ORD-2', total: 50 };
+    const guestToken = 'guest_123456789_abc123';
+
+    // Set up guest token in sessionStorage (simulating guest checkout)
+    sessionStorage.setItem('guest_checkout_token', guestToken);
+
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockResolvedValueOnce(orderSeller2);
+    // requestPayment returns null (payment initiation failure)
+    mockRequestPayment.mockResolvedValue(null);
+    mockCancelPendingOrder.mockResolvedValue(true);
+    mockRedirectToGateway.mockResolvedValue(undefined);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for both createOrder calls
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    // Wait for requestPayment to be called and return null
+    await waitFor(() => {
+      expect(mockRequestPayment).toHaveBeenCalledTimes(1);
+    });
+
+    // Verify cancelPendingOrder called for BOTH orders with guestToken
+    await waitFor(() => {
+      expect(mockCancelPendingOrder).toHaveBeenCalledTimes(2);
+    });
+    expect(mockCancelPendingOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ orderId: 'order-seller-1', authority: '', guestToken })
+    );
+    expect(mockCancelPendingOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ orderId: 'order-seller-2', authority: '', guestToken })
+    );
+
+    // Verify redirectToGateway NOT called
+    expect(mockRedirectToGateway).not.toHaveBeenCalled();
+  });
+
+  it('Test 6: Logged-in checkout - payment request fails -> cancelPendingOrder called with guestToken undefined', async () => {
+    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
+    const orderSeller2 = { id: 'order-seller-2', orderNumber: 'ORD-2', total: 50 };
+
+    // Logged-in user (not guest)
+    mockUser = { id: 'user-1', name: 'John Doe', email: 'john@example.com' };
+    // Clear any guest token
+    sessionStorage.removeItem('guest_checkout_token');
+
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockResolvedValueOnce(orderSeller2);
+    // requestPayment returns null (payment initiation failure)
+    mockRequestPayment.mockResolvedValue(null);
+    mockCancelPendingOrder.mockResolvedValue(true);
+    mockRedirectToGateway.mockResolvedValue(undefined);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for both createOrder calls
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    // Wait for requestPayment to be called and return null
+    await waitFor(() => {
+      expect(mockRequestPayment).toHaveBeenCalledTimes(1);
+    });
+
+    // Verify cancelPendingOrder called for BOTH orders with guestToken undefined
+    await waitFor(() => {
+      expect(mockCancelPendingOrder).toHaveBeenCalledTimes(2);
+    });
+    expect(mockCancelPendingOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ orderId: 'order-seller-1', authority: '', guestToken: undefined })
+    );
+    expect(mockCancelPendingOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ orderId: 'order-seller-2', authority: '', guestToken: undefined })
+    );
+
+    // Verify redirectToGateway NOT called
+    expect(mockRedirectToGateway).not.toHaveBeenCalled();
+  });
+
+  it('Test 7: Mid-batch createOrder failure for guest -> cancelPendingOrder called with guestToken', async () => {
+    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
+    const createOrderError = new Error('Out of stock for seller 2');
+    const guestToken = 'guest_123456789_abc123';
+
+    // Set up guest token in sessionStorage
+    sessionStorage.setItem('guest_checkout_token', guestToken);
+
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockRejectedValueOnce(createOrderError);
+    mockCancelPendingOrder.mockResolvedValue(true);
+    mockRequestPayment.mockResolvedValue('AUTH123');
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for both createOrder calls
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    // Component uses Promise.allSettled - captures fulfilled orders, cancels them, then throws
+    // So cancelPendingOrder IS called for the successful order with guestToken
+    await waitFor(() => {
+      expect(mockCancelPendingOrder).toHaveBeenCalledTimes(1);
+    });
+    expect(mockCancelPendingOrder).toHaveBeenCalledWith(
+      expect.objectContaining({ orderId: 'order-seller-1', authority: '', guestToken })
+    );
+
+    // Verify requestPayment NOT called
+    expect(mockRequestPayment).not.toHaveBeenCalled();
+  });
+
   it('Test 3: requestPayment returns null after 2 seller orders created -> cancels ALL created orders', async () => {
     const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
     const orderSeller2 = { id: 'order-seller-2', orderNumber: 'ORD-2', total: 50 };

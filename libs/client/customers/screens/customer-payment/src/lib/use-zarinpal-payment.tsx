@@ -283,6 +283,7 @@ export function useZarinPalPayment(
           variables: {
             orderId: variables.orderId,
             authority: variables.authority,
+            guestToken: variables.guestToken ?? undefined,
           },
         });
 

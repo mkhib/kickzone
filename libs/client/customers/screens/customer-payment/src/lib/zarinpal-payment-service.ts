@@ -127,4 +127,5 @@ export function getZarinPalErrorMessage(code: number): string {
 export interface CancelPendingOrderVariables {
   orderId?: string | null;
   authority: string;
+  guestToken?: string | null;
 }

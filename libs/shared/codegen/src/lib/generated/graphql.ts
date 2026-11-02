@@ -351,6 +351,7 @@ export type MutationCancelPendingOrderArgs = {
 
 export type MutationCancelPendingZarinPalOrderArgs = {
   authority?: InputMaybe<Scalars['String']['input']>;
+  guestToken?: InputMaybe<Scalars['String']['input']>;
   orderId?: InputMaybe<Scalars['String']['input']>;
 };
 
