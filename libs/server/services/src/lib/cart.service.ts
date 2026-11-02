@@ -119,18 +119,16 @@ export class CartService {
     );
 
     if (existingItem) {
-      // Update quantity - coerce existing values
+      // Update quantity and refresh catalog price/stock
       existingItem.quantity = Math.max(
         0,
         Math.trunc(this.toDecimalNumber(existingItem.quantity)) +
           Math.max(0, Math.trunc(this.toDecimalNumber(addToCartInput.quantity)))
       );
-      existingItem.unitPrice = this.roundMoney(
-        this.toDecimalNumber(existingItem.unitPrice)
-      );
+      existingItem.unitPrice = finalPrice;
+      existingItem.availableStock = sellerProduct.stockQuantity;
       existingItem.totalPrice = this.roundMoney(
-        this.toDecimalNumber(existingItem.quantity) *
-          this.toDecimalNumber(existingItem.unitPrice)
+        this.toDecimalNumber(existingItem.quantity) * finalPrice
       );
       await this.cartItemRepository.save(existingItem);
     } else {
@@ -176,21 +174,30 @@ export class CartService {
       throw new NotFoundException('Cart item not found');
     }
 
-    if (updateInput.quantity !== undefined) {
+    if (updateInput.quantity !== undefined && updateInput.quantity !== null) {
+      const requestedQuantity = Number(updateInput.quantity);
+      if (!Number.isInteger(requestedQuantity) || requestedQuantity <= 0) {
+        throw new BadRequestException('Quantity must be a positive integer');
+      }
       if (cartItem.sellerProductId) {
         const sellerProduct = await this.sellerProductRepository.findOne({
           where: { id: cartItem.sellerProductId },
         });
-        if (
-          sellerProduct &&
-          updateInput.quantity > this.toDecimalNumber(sellerProduct.stockQuantity)
-        ) {
-          throw new NotFoundException(
-            `Insufficient stock. Available: ${this.toDecimalNumber(sellerProduct.stockQuantity)}, Requested: ${updateInput.quantity}`
+        if (sellerProduct) {
+          if (requestedQuantity > this.toDecimalNumber(sellerProduct.stockQuantity)) {
+            throw new NotFoundException(
+              `Insufficient stock. Available: ${this.toDecimalNumber(sellerProduct.stockQuantity)}, Requested: ${requestedQuantity}`
+            );
+          }
+          const price = this.toDecimalNumber(sellerProduct.price);
+          const discount = this.toDecimalNumber(sellerProduct.discount);
+          cartItem.unitPrice = this.roundMoney(
+            discount > 0 ? price - (price * discount) / 100 : price
           );
+          cartItem.availableStock = sellerProduct.stockQuantity;
         }
       }
-      cartItem.quantity = Math.max(0, Math.trunc(this.toDecimalNumber(updateInput.quantity)));
+      cartItem.quantity = requestedQuantity;
       cartItem.unitPrice = this.roundMoney(this.toDecimalNumber(cartItem.unitPrice));
       cartItem.totalPrice = this.roundMoney(
         this.toDecimalNumber(cartItem.quantity) *

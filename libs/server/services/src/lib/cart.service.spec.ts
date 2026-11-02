@@ -3,7 +3,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository, DeepPartial, SaveOptions } from 'typeorm';
 import { CartService } from './cart.service';
 import { Cart, CartItem, SellerProduct } from '@kickzone-workspace/entities';
-import { NotFoundException } from '@nestjs/common';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
 
 type PrivateMethods = Record<string, (...args: unknown[]) => Promise<unknown>>;
 
@@ -305,6 +305,60 @@ describe('CartService', () => {
         service.addToCart('user-1', { sellerProductId: 'sp-1', quantity: 10 })
       ).rejects.toThrow(NotFoundException);
     });
+
+    it('should refresh unitPrice and totalPrice when sellerProduct price/discount changed on existing item', async () => {
+      // Initial state: product price 100, discount 20 -> unitPrice 80
+      const sellerProductInitial = mockSellerProduct({
+        price: '100.00' as never,
+        discount: '20' as never,
+        stockQuantity: 100,
+      });
+
+      const existingItem = mockCartItem({
+        id: 'ci-existing',
+        quantity: 1,
+        unitPrice: 80.00,
+        totalPrice: '80.00' as never,
+        sellerProductId: 'sp-1',
+        availableStock: 100,
+      });
+
+      const cart = mockCart({ items: [existingItem] });
+      cartRepository.findOne.mockResolvedValue(cart);
+      cartRepository.save.mockResolvedValue(cart);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductInitial);
+      cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
+      jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
+
+      // First addToCart - adds 1 more to existing item (qty becomes 2)
+      await service.addToCart('user-1', {
+        sellerProductId: 'sp-1',
+        quantity: 1,
+      });
+
+      // Now sellerProduct price changed to 150, discount 10 -> new unitPrice = 135
+      const sellerProductChanged = mockSellerProduct({
+        price: '150.00' as never,
+        discount: '10' as never,
+        stockQuantity: 100,
+      });
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductChanged);
+
+      // Add more quantity - should refresh price (adds 2 more, qty becomes 4)
+      await service.addToCart('user-1', {
+        sellerProductId: 'sp-1',
+        quantity: 2,
+      });
+
+      const savedItem = cartItemRepository.save.mock.calls[1][0];
+      // quantity = 1 (existing) + 1 (first add) + 2 (second add) = 4
+      // new unitPrice = 150 - (150 * 10 / 100) = 135
+      // totalPrice = 4 * 135 = 540
+      expect(savedItem.quantity).toBe(4);
+      expect(savedItem.unitPrice).toBe(135.00);
+      expect(savedItem.totalPrice).toBe(540.00);
+      expect(savedItem.availableStock).toBe(100);
+    });
   });
 
   describe('updateCartItem', () => {
@@ -386,17 +440,90 @@ describe('CartService', () => {
       ).rejects.toThrow(NotFoundException);
     });
 
-    it('should not allow negative quantity', async () => {
-      const cartItem = mockCartItem({ id: 'ci-1' });
+    it('should throw BadRequestException when quantity is negative (legacy test updated)', async () => {
+      const cartItem = mockCartItem({ id: 'ci-1', sellerProductId: 'sp-1' });
       const cart = mockCart({ items: [cartItem] });
       cartRepository.findOne.mockResolvedValue(cart);
+
+      const sellerProduct = mockSellerProduct({ stockQuantity: 100 });
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+
+      await expect(
+        service.updateCartItem('user-1', 'ci-1', { quantity: -5 })
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should refresh unitPrice from sellerProduct when sellerProduct exists', async () => {
+      const cartItem = mockCartItem({
+        id: 'ci-1',
+        quantity: 2,
+        unitPrice: 50.00,
+        totalPrice: '100.00' as never,
+        sellerProductId: 'sp-1',
+      });
+
+      const cart = mockCart({ items: [cartItem] });
+      cartRepository.findOne.mockResolvedValue(cart);
+      cartRepository.save.mockResolvedValue(cart);
       cartItemRepository.save.mockImplementation((item: DeepPartial<CartItem>, _options?: SaveOptions) => Promise.resolve(item as DeepPartial<CartItem> & CartItem));
+
+      // sellerProduct has new price/discount
+      const sellerProduct = mockSellerProduct({
+        price: '200.00' as never,
+        discount: '25' as never, // 200 - 50 = 150
+        stockQuantity: 50,
+      });
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+
       jest.spyOn(service as unknown as PrivateMethods, 'recalculateCartTotals').mockResolvedValue(undefined);
 
-      await service.updateCartItem('user-1', 'ci-1', { quantity: -5 });
+      await service.updateCartItem('user-1', 'ci-1', { quantity: 3 });
 
       const savedItem = cartItemRepository.save.mock.calls[0][0];
-      expect(savedItem.quantity).toBe(0); // Math.max(0, ...) ensures non-negative
+      // unitPrice refreshed to 150 (200 - 25%)
+      expect(savedItem.unitPrice).toBe(150.00);
+      expect(savedItem.quantity).toBe(3);
+      expect(savedItem.totalPrice).toBe(450.00); // 3 * 150
+      expect(savedItem.availableStock).toBe(50);
+    });
+
+    it('should throw BadRequestException when quantity is 0', async () => {
+      const cartItem = mockCartItem({ id: 'ci-1', sellerProductId: 'sp-1' });
+      const cart = mockCart({ items: [cartItem] });
+      cartRepository.findOne.mockResolvedValue(cart);
+
+      const sellerProduct = mockSellerProduct({ stockQuantity: 100 });
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+
+      await expect(
+        service.updateCartItem('user-1', 'ci-1', { quantity: 0 })
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when quantity is negative', async () => {
+      const cartItem = mockCartItem({ id: 'ci-1', sellerProductId: 'sp-1' });
+      const cart = mockCart({ items: [cartItem] });
+      cartRepository.findOne.mockResolvedValue(cart);
+
+      const sellerProduct = mockSellerProduct({ stockQuantity: 100 });
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+
+      await expect(
+        service.updateCartItem('user-1', 'ci-1', { quantity: -5 })
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('should throw BadRequestException when quantity is a float (1.5)', async () => {
+      const cartItem = mockCartItem({ id: 'ci-1', sellerProductId: 'sp-1' });
+      const cart = mockCart({ items: [cartItem] });
+      cartRepository.findOne.mockResolvedValue(cart);
+
+      const sellerProduct = mockSellerProduct({ stockQuantity: 100 });
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+
+      await expect(
+        service.updateCartItem('user-1', 'ci-1', { quantity: 1.5 })
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

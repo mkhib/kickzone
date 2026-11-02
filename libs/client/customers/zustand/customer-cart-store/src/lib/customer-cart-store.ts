@@ -210,11 +210,28 @@ export const useCartStore = create<CartStore>()(
 
       // Bulk operations
       addMultipleItems: (itemsData) => {
-        const newItems: CartItem[] = itemsData.map((itemData) => ({
-          ...itemData,
-          id: generateId(),
-          totalPrice: itemData.unitPrice * itemData.quantity,
-        }));
+        const newItems: CartItem[] = [];
+        for (const itemData of itemsData) {
+          const rawQty = Math.trunc(Number(itemData.quantity));
+          if (!Number.isFinite(rawQty) || rawQty <= 0) {
+            continue;
+          }
+          const maxStock =
+            typeof itemData.availableStock === 'number' && itemData.availableStock > 0
+              ? itemData.availableStock
+              : undefined;
+          const clampedQuantity =
+            maxStock !== undefined ? Math.min(rawQty, maxStock) : rawQty;
+          if (clampedQuantity <= 0) {
+            continue;
+          }
+          newItems.push({
+            ...itemData,
+            id: generateId(),
+            quantity: clampedQuantity,
+            totalPrice: itemData.unitPrice * clampedQuantity,
+          });
+        }
 
         set((state) => ({
           items: [...state.items, ...newItems],

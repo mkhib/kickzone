@@ -123,5 +123,34 @@ describe('useCartStore', () => {
     expect(remaining[0].size).toBe('42');
     expect(remaining[1].size).toBe('44');
   });
+
+  it('addMultipleItems ignores items with quantity <= 0 and clamps to availableStock', () => {
+    const itemsData = [
+      { ...baseItem, quantity: 2, availableStock: 5 }, // valid
+      { ...baseItem, productId: 'p2', productInfoId: 'pi2', quantity: 0, availableStock: 5 }, // zero quantity - should be ignored
+      { ...baseItem, productId: 'p3', productInfoId: 'pi3', quantity: -3, availableStock: 5 }, // negative quantity - should be ignored
+      { ...baseItem, productId: 'p4', productInfoId: 'pi4', quantity: 1.5, availableStock: 5 }, // float - should be truncated to 1
+      { ...baseItem, productId: 'p5', productInfoId: 'pi5', quantity: 10, availableStock: 3 }, // exceeds stock - should be clamped to 3
+      { ...baseItem, productId: 'p6', productInfoId: 'pi6', quantity: NaN, availableStock: 5 }, // NaN - should be ignored
+    ];
+
+    useCartStore.getState().addMultipleItems(itemsData as Parameters<ReturnType<typeof useCartStore.getState>['addMultipleItems']>[0]);
+
+    const items = useCartStore.getState().items;
+    // Only 3 items should be added: p1 (qty 2), p4 (qty 1), p5 (qty 3 clamped)
+    expect(items).toHaveLength(3);
+
+    expect(items[0].productId).toBe('p1');
+    expect(items[0].quantity).toBe(2);
+    expect(items[0].totalPrice).toBe(200);
+
+    expect(items[1].productId).toBe('p4');
+    expect(items[1].quantity).toBe(1);
+    expect(items[1].totalPrice).toBe(100);
+
+    expect(items[2].productId).toBe('p5');
+    expect(items[2].quantity).toBe(3); // clamped to availableStock
+    expect(items[2].totalPrice).toBe(300);
+  });
 });
 
