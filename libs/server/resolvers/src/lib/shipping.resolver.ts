@@ -8,7 +8,6 @@ import {
 } from '@nestjs/graphql';
 import {
   ShippingCalculationService,
-  SellerShippingInfo,
 } from '@kickzone-workspace/services';
 import { ObjectType } from '@nestjs/graphql';
 
@@ -22,6 +21,9 @@ export class SellerShippingInfoInput {
 
   @Field(() => String, { nullable: true })
   sellerName?: string;
+
+  @Field(() => String, { nullable: true })
+  shippingPaymentMode?: string;
 }
 
 @ObjectType()
@@ -77,6 +79,7 @@ export class ShippingResolver {
         sellerId: f.sellerId,
         shippingFee: f.shippingFee,
         sellerName: f.sellerName,
+        shippingPaymentMode: f.shippingPaymentMode,
       }))
     );
 

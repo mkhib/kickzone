@@ -8,6 +8,9 @@ const requiredText = z.string().min(1);
 const optionalText = z.string().nullish();
 const optionalFlag = z.boolean().nullish();
 
+export const SHIPPING_PAYMENT_MODES = ['PAY_ON_DELIVERY', 'PAY_ONLINE'] as const;
+export const shippingPaymentModeSchema = z.enum(SHIPPING_PAYMENT_MODES);
+
 export const createSellerSchema = z.object({
   name: requiredText,
   lastName: requiredText,
@@ -18,6 +21,7 @@ export const createSellerSchema = z.object({
   phone: optionalText,
   address: optionalText,
   shippingFee: z.number().nullish(),
+  shippingPaymentMode: shippingPaymentModeSchema.nullish(),
   canManageCatalog: optionalFlag,
 });
 
@@ -31,6 +35,7 @@ export const updateSellerSchema = z.object({
   phone: optionalText,
   address: optionalText,
   shippingFee: z.number().nullish(),
+  shippingPaymentMode: shippingPaymentModeSchema.nullish(),
   isActive: optionalFlag,
   canManageCatalog: optionalFlag,
 });
@@ -90,6 +95,7 @@ export const sellerCreateFormSchema = z.object({
   phone: z.string().nullish(),
   address: z.string().nullish(),
   shippingFee: sellerFeeSchema,
+  shippingPaymentMode: shippingPaymentModeSchema.nullish(),
   canManageCatalog: optionalFlag,
 });
 
@@ -103,6 +109,7 @@ export const sellerEditFormSchema = z.object({
   phone: z.string().nullish(),
   address: z.string().nullish(),
   shippingFee: sellerFeeSchema,
+  shippingPaymentMode: shippingPaymentModeSchema.nullish(),
   canManageCatalog: optionalFlag,
 });
 

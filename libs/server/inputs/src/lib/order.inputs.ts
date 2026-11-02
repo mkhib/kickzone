@@ -66,6 +66,9 @@ export class CreateOrderInput {
   @Field(() => String, { nullable: true })
   notes?: string;
 
+  @Field(() => String, { nullable: true })
+  shippingMethod?: string;
+
   // Optional: Override shipping cost (calculated by smart shipping logic)
   // If not provided, will use seller's shippingFee
   @Field(() => Float, { nullable: true })

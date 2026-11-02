@@ -7,6 +7,7 @@ import {
   ProductInfo,
   User,
   UserRole,
+  ShippingPaymentMode,
 } from '@kickzone-workspace/entities';
 import {
   CreateSellerInput,
@@ -88,6 +89,9 @@ export class SellerService {
       phone: createSellerInput.phone,
       address: createSellerInput.address,
       shippingFee: createSellerInput.shippingFee ?? 0,
+      shippingPaymentMode:
+        createSellerInput.shippingPaymentMode ??
+        ShippingPaymentMode.PAY_ON_DELIVERY,
       canManageCatalog: createSellerInput.canManageCatalog ?? false,
       user,
     });
@@ -187,6 +191,8 @@ export class SellerService {
     if (updateSellerInput.address) seller.address = updateSellerInput.address;
     if (updateSellerInput.shippingFee !== undefined)
       seller.shippingFee = updateSellerInput.shippingFee;
+    if (updateSellerInput.shippingPaymentMode !== undefined)
+      seller.shippingPaymentMode = updateSellerInput.shippingPaymentMode;
     if (updateSellerInput.isActive !== undefined)
       seller.isActive = updateSellerInput.isActive;
     if (updateSellerInput.canManageCatalog !== undefined)

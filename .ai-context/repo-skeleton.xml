@@ -384,7 +384,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Product } from './product.entity';
-import { SellerInfo } from './seller-info.entity';
+import { SellerInfo, ShippingPaymentMode } from './seller-info.entity';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
@@ -398,6 +398,16 @@ export enum OrderStatus {
 
 registerEnumType(OrderStatus, {
   name: 'OrderStatus',
+});
+
+export enum OrderShippingMethod {
+  VIP = 'vip',
+  EXPRESS = 'express',
+  PICKUP = 'pickup',
+}
+
+registerEnumType(OrderShippingMethod, {
+  name: 'OrderShippingMethod',
 });
 
 @ObjectType()
@@ -462,6 +472,20 @@ export class Order {
   @Field(() => Float)
   @Column('decimal', { precision: 10, scale: 2 })
   shippingCost: number;
+
+  @Field(() => String, { defaultValue: 'vip' })
+  @Column({ type: 'varchar', length: 20, default: 'vip' })
+  shippingMethod?: string;
+
+  @Field(() => ShippingPaymentMode, {
+    defaultValue: ShippingPaymentMode.PAY_ON_DELIVERY,
+  })
+  @Column({
+    type: 'enum',
+    enum: ShippingPaymentMode,
+    default: ShippingPaymentMode.PAY_ON_DELIVERY,
+  })
+  shippingPaymentMode?: ShippingPaymentMode;
 
   @Field(() => Float)
   @Column('decimal', { precision: 10, scale: 2 })
@@ -824,7 +848,7 @@ export class ProductConnection extends ConnectionType<Product> {
 </file>
 
 <file path="libs/server/entities/src/lib/seller-info.entity.ts">
-import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+import { ObjectType, Field, Int, Float, registerEnumType } from '@nestjs/graphql';
 import {
   Entity,
   Column,
@@ -837,6 +861,15 @@ import {
 import { User } from './user.entity';
 import { SellerProduct } from './seller-product.entity';
 import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
+
+export enum ShippingPaymentMode {
+  PAY_ON_DELIVERY = 'PAY_ON_DELIVERY',
+  PAY_ONLINE = 'PAY_ONLINE',
+}
+
+registerEnumType(ShippingPaymentMode, {
+  name: 'ShippingPaymentMode',
+});
 
 @ObjectType()
 @Entity()
@@ -888,6 +921,16 @@ export class SellerInfo {
   @Field(() => Float, { defaultValue: 0 })
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   shippingFee: number;
+
+  @Field(() => ShippingPaymentMode, {
+    defaultValue: ShippingPaymentMode.PAY_ON_DELIVERY,
+  })
+  @Column({
+    type: 'enum',
+    enum: ShippingPaymentMode,
+    default: ShippingPaymentMode.PAY_ON_DELIVERY,
+  })
+  shippingPaymentMode?: ShippingPaymentMode;
 
   @Field(() => User)
   @OneToOne(() => User)
@@ -1731,6 +1774,7 @@ export class UpdateCartItemInput {
 
 <file path="libs/server/inputs/src/lib/seller.input.ts">
 import { Field, InputType, Int, Float } from '@nestjs/graphql';
+import { ShippingPaymentMode } from '@kickzone-workspace/entities';
 
 @InputType()
 export class CreateSellerInput {
@@ -1763,6 +1807,9 @@ export class CreateSellerInput {
 
   @Field({ nullable: true })
   canManageCatalog?: boolean;
+
+  @Field(() => ShippingPaymentMode, { nullable: true })
+  shippingPaymentMode?: ShippingPaymentMode;
 }
 
 @InputType()
@@ -1799,6 +1846,9 @@ export class UpdateSellerInput {
 
   @Field({ nullable: true })
   canManageCatalog?: boolean;
+
+  @Field(() => ShippingPaymentMode, { nullable: true })
+  shippingPaymentMode?: ShippingPaymentMode;
 }
 
 @InputType()
@@ -1939,6 +1989,9 @@ export class CreateOrderInput {
 
   @Field(() => String, { nullable: true })
   notes?: string;
+
+  @Field(() => String, { nullable: true })
+  shippingMethod?: string;
 
   // Optional: Override shipping cost (calculated by smart shipping logic)
   // If not provided, will use seller's shippingFee

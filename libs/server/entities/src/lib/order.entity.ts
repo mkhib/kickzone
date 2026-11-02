@@ -17,7 +17,7 @@ import {
   UpdateDateColumn,
 } from 'typeorm';
 import { Product } from './product.entity';
-import { SellerInfo } from './seller-info.entity';
+import { SellerInfo, ShippingPaymentMode } from './seller-info.entity';
 
 export enum OrderStatus {
   PENDING = 'PENDING',
@@ -31,6 +31,16 @@ export enum OrderStatus {
 
 registerEnumType(OrderStatus, {
   name: 'OrderStatus',
+});
+
+export enum OrderShippingMethod {
+  VIP = 'vip',
+  EXPRESS = 'express',
+  PICKUP = 'pickup',
+}
+
+registerEnumType(OrderShippingMethod, {
+  name: 'OrderShippingMethod',
 });
 
 @ObjectType()
@@ -95,6 +105,20 @@ export class Order {
   @Field(() => Float)
   @Column('decimal', { precision: 10, scale: 2 })
   shippingCost: number;
+
+  @Field(() => String, { defaultValue: 'vip' })
+  @Column({ type: 'varchar', length: 20, default: 'vip' })
+  shippingMethod?: string;
+
+  @Field(() => ShippingPaymentMode, {
+    defaultValue: ShippingPaymentMode.PAY_ON_DELIVERY,
+  })
+  @Column({
+    type: 'enum',
+    enum: ShippingPaymentMode,
+    default: ShippingPaymentMode.PAY_ON_DELIVERY,
+  })
+  shippingPaymentMode?: ShippingPaymentMode;
 
   @Field(() => Float)
   @Column('decimal', { precision: 10, scale: 2 })

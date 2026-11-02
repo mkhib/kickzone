@@ -1,5 +1,6 @@
 import { ObjectType, Field, ID, Float, Int } from '@nestjs/graphql';
 import { Order, OrderItem, OrderStatus } from './order.entity';
+import { ShippingPaymentMode } from './seller-info.entity';
 
 @ObjectType()
 export class SellerOrder {
@@ -17,6 +18,14 @@ export class SellerOrder {
 
   @Field(() => Float)
   shippingCost: number;
+
+  @Field(() => String, { defaultValue: 'vip' })
+  shippingMethod?: string;
+
+  @Field(() => ShippingPaymentMode, {
+    defaultValue: ShippingPaymentMode.PAY_ON_DELIVERY,
+  })
+  shippingPaymentMode?: ShippingPaymentMode;
 
   @Field(() => Float)
   total: number;
@@ -58,6 +67,9 @@ export function toSellerOrder(order: Order): SellerOrder {
     status: order.status,
     subtotal: order.subtotal,
     shippingCost: order.shippingCost,
+    shippingMethod: order.shippingMethod || 'vip',
+    shippingPaymentMode:
+      order.shippingPaymentMode || ShippingPaymentMode.PAY_ON_DELIVERY,
     total: order.total,
     notes: order.notes,
     trackingNumber: order.trackingNumber,

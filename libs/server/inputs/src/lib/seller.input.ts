@@ -1,4 +1,5 @@
 import { Field, InputType, Int, Float } from '@nestjs/graphql';
+import { ShippingPaymentMode } from '@kickzone-workspace/entities';
 
 @InputType()
 export class CreateSellerInput {
@@ -31,6 +32,9 @@ export class CreateSellerInput {
 
   @Field({ nullable: true })
   canManageCatalog?: boolean;
+
+  @Field(() => ShippingPaymentMode, { nullable: true })
+  shippingPaymentMode?: ShippingPaymentMode;
 }
 
 @InputType()
@@ -67,6 +71,9 @@ export class UpdateSellerInput {
 
   @Field({ nullable: true })
   canManageCatalog?: boolean;
+
+  @Field(() => ShippingPaymentMode, { nullable: true })
+  shippingPaymentMode?: ShippingPaymentMode;
 }
 
 @InputType()

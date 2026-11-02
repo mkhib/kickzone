@@ -1,4 +1,4 @@
-import { ObjectType, Field, Int, Float } from '@nestjs/graphql';
+import { ObjectType, Field, Int, Float, registerEnumType } from '@nestjs/graphql';
 import {
   Entity,
   Column,
@@ -11,6 +11,15 @@ import {
 import { User } from './user.entity';
 import { SellerProduct } from './seller-product.entity';
 import { Connection, Edge, PageInfo } from '@kickzone-workspace/utils';
+
+export enum ShippingPaymentMode {
+  PAY_ON_DELIVERY = 'PAY_ON_DELIVERY',
+  PAY_ONLINE = 'PAY_ONLINE',
+}
+
+registerEnumType(ShippingPaymentMode, {
+  name: 'ShippingPaymentMode',
+});
 
 @ObjectType()
 @Entity()
@@ -62,6 +71,16 @@ export class SellerInfo {
   @Field(() => Float, { defaultValue: 0 })
   @Column('decimal', { precision: 10, scale: 2, default: 0 })
   shippingFee: number;
+
+  @Field(() => ShippingPaymentMode, {
+    defaultValue: ShippingPaymentMode.PAY_ON_DELIVERY,
+  })
+  @Column({
+    type: 'enum',
+    enum: ShippingPaymentMode,
+    default: ShippingPaymentMode.PAY_ON_DELIVERY,
+  })
+  shippingPaymentMode?: ShippingPaymentMode;
 
   @Field(() => User)
   @OneToOne(() => User)

@@ -4,12 +4,14 @@ import { Repository } from 'typeorm';
 import {
   PlatformSettings,
   ShippingStrategy,
+  ShippingPaymentMode,
 } from '@kickzone-workspace/entities';
 
 export interface SellerShippingInfo {
   sellerId: string | number;
   shippingFee: number;
   sellerName?: string;
+  shippingPaymentMode?: ShippingPaymentMode | string;
 }
 
 export interface ShippingCalculationResult {
@@ -22,6 +24,21 @@ export interface ShippingCalculationResult {
   }>;
   freeShippingApplied: boolean;
   strategyUsed: ShippingStrategy;
+}
+
+export function applyShippingMethodMultiplier(
+  baseFee: number,
+  shippingMethod?: string | null
+): number {
+  const normalized = String(shippingMethod || 'vip').toLowerCase();
+  const safeBase = Number.isFinite(Number(baseFee)) && Number(baseFee) > 0 ? Number(baseFee) : 0;
+  if (normalized === 'pickup') {
+    return 0;
+  }
+  if (normalized === 'express') {
+    return Math.round(safeBase * 0.45 * 100) / 100;
+  }
+  return Math.round(safeBase * 100) / 100;
 }
 
 @Injectable()
@@ -44,6 +61,7 @@ export class ShippingCalculationService {
   /**
    * Calculate shipping costs for multi-seller cart
    * Implements smart shipping strategies similar to Amazon/eBay
+   * PAY_ON_DELIVERY sellers are excluded from online shipping calculation
    */
   async calculateShippingCost(
     cartSubtotal: number,
@@ -52,7 +70,18 @@ export class ShippingCalculationService {
     // Get platform settings or use defaults
     const settings = await this.getPlatformSettings();
 
-    // Check for free shipping threshold
+    // Separate PAY_ON_DELIVERY and PAY_ONLINE sellers
+    // Only explicitly PAY_ON_DELIVERY (case-insensitive) are treated as COD; missing/undefined = PAY_ONLINE (legacy behavior)
+    const onlineSellers = sellerShippingFees.filter(
+      (s) =>
+        s.shippingPaymentMode !== undefined &&
+        s.shippingPaymentMode !== null &&
+        String(s.shippingPaymentMode).toUpperCase() === ShippingPaymentMode.PAY_ON_DELIVERY
+          ? false
+          : true
+    );
+
+    // Check for free shipping threshold (applies only to online sellers)
     if (
       settings.freeShippingEnabled &&
       settings.freeShippingThreshold &&
@@ -71,141 +100,153 @@ export class ShippingCalculationService {
       };
     }
 
-    // Calculate shipping based on strategy
-    let shippingBreakdown: ShippingCalculationResult['shippingBreakdown'] = [];
+    // Calculate shipping based on strategy for ONLINE sellers only
+    let onlineBreakdown: ShippingCalculationResult['shippingBreakdown'] = [];
     let totalShippingCost = 0;
 
-    switch (settings.shippingStrategy) {
-      case ShippingStrategy.FULL_SUM:
-        // Current behavior: sum all fees
-        shippingBreakdown = sellerShippingFees.map((seller) => ({
-          sellerId: seller.sellerId,
-          sellerName: seller.sellerName,
-          originalFee: Number(seller.shippingFee) || 0,
-          appliedFee: Number(seller.shippingFee) || 0,
-        }));
-        totalShippingCost = sellerShippingFees.reduce(
-          (sum, seller) => sum + (Number(seller.shippingFee) || 0),
-          0
-        );
-        break;
-
-      case ShippingStrategy.TIERED_DISCOUNT:
-        // First seller: full fee, others: discounted
-        shippingBreakdown = sellerShippingFees.map((seller, index) => {
-          const originalFee = Number(seller.shippingFee) || 0;
-          if (index === 0) {
-            // First seller pays full fee
-            return {
-              sellerId: seller.sellerId,
-              sellerName: seller.sellerName,
-              originalFee,
-              appliedFee: originalFee,
-            };
-          } else {
-            // Additional sellers get discount
-            const discount = settings.additionalSellerDiscount || 0;
-            const appliedFee = originalFee * (1 - discount);
-            return {
-              sellerId: seller.sellerId,
-              sellerName: seller.sellerName,
-              originalFee,
-              appliedFee: Math.max(0, Math.round(appliedFee * 100) / 100),
-            };
-          }
-        });
-        totalShippingCost = shippingBreakdown.reduce(
-          (sum, item) => sum + item.appliedFee,
-          0
-        );
-        break;
-
-      case ShippingStrategy.TIERED_FIXED: {
-        // First seller: full fee, others: fixed fee
-        const fixedFee = Number(settings.additionalSellerFixedFee) || 0;
-        shippingBreakdown = sellerShippingFees.map((seller, index) => {
-          const originalFee = Number(seller.shippingFee) || 0;
-          if (index === 0) {
-            return {
-              sellerId: seller.sellerId,
-              sellerName: seller.sellerName,
-              originalFee,
-              appliedFee: originalFee,
-            };
-          } else {
-            return {
-              sellerId: seller.sellerId,
-              sellerName: seller.sellerName,
-              originalFee,
-              appliedFee: Math.round(fixedFee * 100) / 100,
-            };
-          }
-        });
-        totalShippingCost = shippingBreakdown.reduce(
-          (sum, item) => sum + item.appliedFee,
-          0
-        );
-        break;
-      }
-
-      case ShippingStrategy.HIGHEST_ONLY: {
-        // Charge only the highest shipping fee
-        const fees = sellerShippingFees.map((s) => Number(s.shippingFee) || 0);
-        const highestFee = Math.max(...fees, 0);
-        shippingBreakdown = sellerShippingFees.map((seller, index) => {
-          const originalFee = Number(seller.shippingFee) || 0;
-          return {
+    const computeStrategy = (
+      sellers: SellerShippingInfo[]
+    ): ShippingCalculationResult['shippingBreakdown'] => {
+      switch (settings.shippingStrategy) {
+        case ShippingStrategy.FULL_SUM:
+          return sellers.map((seller) => ({
             sellerId: seller.sellerId,
             sellerName: seller.sellerName,
-            originalFee,
-            appliedFee: index === 0 ? Math.round(highestFee * 100) / 100 : 0,
-          };
-        });
-        totalShippingCost = Math.round(highestFee * 100) / 100;
-        break;
-      }
+            originalFee: Number(seller.shippingFee) || 0,
+            appliedFee: Number(seller.shippingFee) || 0,
+          }));
 
-      case ShippingStrategy.AVERAGE: {
-        // Charge average of all shipping fees
-        const fees = sellerShippingFees.map((s) => Number(s.shippingFee) || 0);
-        const averageFee =
-          fees.reduce((sum, fee) => sum + fee, 0) / (fees.length || 1);
-        const roundedAverage = Math.round(averageFee * 100) / 100;
-        shippingBreakdown = sellerShippingFees.map((seller, index) => {
-          const originalFee = Number(seller.shippingFee) || 0;
-          return {
+        case ShippingStrategy.TIERED_DISCOUNT: {
+          return sellers.map((seller, index) => {
+            const originalFee = Number(seller.shippingFee) || 0;
+            if (index === 0) {
+              return {
+                sellerId: seller.sellerId,
+                sellerName: seller.sellerName,
+                originalFee,
+                appliedFee: originalFee,
+              };
+            } else {
+              const discount = settings.additionalSellerDiscount || 0;
+              const appliedFee = originalFee * (1 - discount);
+              return {
+                sellerId: seller.sellerId,
+                sellerName: seller.sellerName,
+                originalFee,
+                appliedFee: Math.max(0, Math.round(appliedFee * 100) / 100),
+              };
+            }
+          });
+        }
+
+        case ShippingStrategy.TIERED_FIXED: {
+          const fixedFee = Number(settings.additionalSellerFixedFee) || 0;
+          return sellers.map((seller, index) => {
+            const originalFee = Number(seller.shippingFee) || 0;
+            if (index === 0) {
+              return {
+                sellerId: seller.sellerId,
+                sellerName: seller.sellerName,
+                originalFee,
+                appliedFee: originalFee,
+              };
+            } else {
+              return {
+                sellerId: seller.sellerId,
+                sellerName: seller.sellerName,
+                originalFee,
+                appliedFee: Math.round(fixedFee * 100) / 100,
+              };
+            }
+          });
+        }
+
+        case ShippingStrategy.HIGHEST_ONLY: {
+          const fees = sellers.map((s) => Number(s.shippingFee) || 0);
+          const highestFee = Math.max(...fees, 0);
+          return sellers.map((seller, index) => {
+            const originalFee = Number(seller.shippingFee) || 0;
+            return {
+              sellerId: seller.sellerId,
+              sellerName: seller.sellerName,
+              originalFee,
+              appliedFee: index === 0 ? Math.round(highestFee * 100) / 100 : 0,
+            };
+          });
+        }
+
+        case ShippingStrategy.AVERAGE: {
+          const fees = sellers.map((s) => Number(s.shippingFee) || 0);
+          const averageFee =
+            fees.reduce((sum, fee) => sum + fee, 0) / (fees.length || 1);
+          const roundedAverage = Math.round(averageFee * 100) / 100;
+          return sellers.map((seller, index) => {
+            const originalFee = Number(seller.shippingFee) || 0;
+            return {
+              sellerId: seller.sellerId,
+              sellerName: seller.sellerName,
+              originalFee,
+              appliedFee: index === 0 ? roundedAverage : 0,
+            };
+          });
+        }
+
+        default:
+          return sellers.map((seller) => ({
             sellerId: seller.sellerId,
             sellerName: seller.sellerName,
-            originalFee,
-            appliedFee: index === 0 ? roundedAverage : 0,
-          };
-        });
-        totalShippingCost = roundedAverage;
-        break;
+            originalFee: Number(seller.shippingFee) || 0,
+            appliedFee: Number(seller.shippingFee) || 0,
+          }));
       }
+    };
+
+    if (onlineSellers.length > 0) {
+      onlineBreakdown = computeStrategy(onlineSellers);
+      totalShippingCost = onlineBreakdown.reduce(
+        (sum, item) => sum + item.appliedFee,
+        0
+      );
     }
 
-    // Apply maximum shipping cap if enabled
+    // Apply maximum shipping cap if enabled (only to online sellers)
     if (
       settings.maxShippingCapEnabled &&
       settings.maxShippingCap &&
       totalShippingCost > settings.maxShippingCap
     ) {
       const capRatio = settings.maxShippingCap / totalShippingCost;
-      shippingBreakdown = shippingBreakdown.map((item) => ({
+      onlineBreakdown = onlineBreakdown.map((item) => ({
         ...item,
         appliedFee: Math.round(item.appliedFee * capRatio * 100) / 100,
       }));
       totalShippingCost = Math.round(settings.maxShippingCap * 100) / 100;
     }
 
+    // Merge COD sellers with 0 fees, preserving original order
+    const breakdownMap = new Map<string, number>();
+    for (const item of onlineBreakdown) {
+      breakdownMap.set(String(item.sellerId), item.appliedFee);
+    }
+
+    const finalBreakdown = sellerShippingFees.map((seller) => {
+      const isCod =
+        seller.shippingPaymentMode !== undefined &&
+        seller.shippingPaymentMode !== null &&
+        String(seller.shippingPaymentMode).toUpperCase() === ShippingPaymentMode.PAY_ON_DELIVERY;
+      const originalFee = Number(seller.shippingFee) || 0;
+      const appliedFee = isCod ? 0 : breakdownMap.get(String(seller.sellerId)) ?? 0;
+      return {
+        sellerId: seller.sellerId,
+        sellerName: seller.sellerName,
+        originalFee: isCod ? 0 : Math.round(originalFee * 100) / 100,
+        appliedFee: Math.round(appliedFee * 100) / 100,
+      };
+    });
+
     return {
-      totalShippingCost: Math.round(totalShippingCost * 100) / 100, // Round to 2 decimals
-      shippingBreakdown: shippingBreakdown.map((item) => ({
-        ...item,
-        originalFee: Math.round(item.originalFee * 100) / 100,
-        appliedFee: Math.round(item.appliedFee * 100) / 100,
-      })),
+      totalShippingCost: Math.round(totalShippingCost * 100) / 100,
+      shippingBreakdown: finalBreakdown,
       freeShippingApplied: false,
       strategyUsed: settings.shippingStrategy,
     };

@@ -31,6 +31,9 @@ export const ORDER_STATUSES = [
   'REFUNDED',
 ] as const;
 
+export const SHIPPING_METHODS = ['vip', 'express', 'pickup'] as const;
+export const shippingMethodSchema = z.enum(SHIPPING_METHODS);
+
 const lettersPattern = /^[\p{L}\s'-]+$/u;
 
 export const shippingNameSchema = z
@@ -100,6 +103,7 @@ export const createOrderSchema = shippingAddressSchema.extend({
     .min(ORDER_LIMITS.items.min)
     .max(ORDER_LIMITS.items.max),
   notes: z.string().max(ORDER_LIMITS.notes.max).nullish(),
+  shippingMethod: shippingMethodSchema.nullish(),
   shippingCost: moneySchema.nullish(),
 });
 
