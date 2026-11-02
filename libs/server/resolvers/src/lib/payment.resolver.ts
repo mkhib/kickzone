@@ -1,5 +1,5 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
-import { UseGuards, BadRequestException } from '@nestjs/common';
+import { UseGuards, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { OrderStatus, type OrderItem } from '@kickzone-workspace/entities';
 
 /** OrderItem with the sellerProduct relation loaded (not declared on the entity class). */
@@ -8,7 +8,7 @@ type OrderItemWithSellerProduct = OrderItem & {
 };
 import { PaymentService, OrderService, CurrencyService } from '@kickzone-workspace/services';
 import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
-import { CurrentUser } from '@kickzone-workspace/decorators';
+import { CurrentUser, type OptionalAuthenticatedUser } from '@kickzone-workspace/decorators';
 import { ObjectType, Field, Int, InputType } from '@nestjs/graphql';
 
 @ObjectType()
@@ -475,61 +475,114 @@ export class PaymentResolver {
    * Cancel a pending order when the buyer aborts on ZarinPal (Status=NOK).
    * Per ZarinPal docs, verify must not be called when Status is NOK.
    *
-   * Guest-compatible: authenticated users can call with orderId only.
-   * Unauthenticated guests MUST provide the ZarinPal `authority` token
-   * which is verified against the order's `paymentAuthority`.
+   * Two authorization paths:
+   * 1. With non-empty `authority`: any caller (guest or authenticated) may cancel
+   *    all PENDING orders bound to that authority. This preserves the existing
+   *    guest-compatible behavior where the authority token proves possession.
+   * 2. Without `authority` (empty/undefined): caller MUST provide `orderId` and be
+   *    authorized as the order owner. Authorization succeeds if:
+   *    - `user?.email` is non-empty and equals `order.customerEmail` (authenticated customer), OR
+   *    - `guestToken` (trimmed, length >= 16) is found in `order.notes` as the literal
+   *      substring `[GuestToken: <token>]` (guest who placed the order).
    *
-   * @param orderId - Optional order ID (required for authenticated callers without authority)
-   * @param authority - ZarinPal authority token (required for unauthenticated callers)
+   * @param orderId - Order ID (required when authority is not provided)
+   * @param authority - ZarinPal authority token; if non-empty, authorizes via authority match
+   * @param user - Current authenticated user (optional, from @CurrentUser decorator)
+   * @param guestToken - Guest token for unauthenticated callers (optional)
    * @returns true if cancellation succeeded (idempotent for already-cancelled orders)
+   * @throws BadRequestException if orderId missing without authority, or order not PENDING/already paid
+   * @throws ForbiddenException if caller is not the order owner (without authority)
    */
   @Mutation(() => Boolean)
   async cancelPendingZarinPalOrder(
     @Args('orderId', { type: () => String, nullable: true }) orderId?: string,
-    @Args('authority', { type: () => String, nullable: true }) authority?: string
+    @Args('authority', { type: () => String, nullable: true }) authority?: string,
+    @CurrentUser() user?: OptionalAuthenticatedUser,
+    @Args('guestToken', { type: () => String, nullable: true }) guestToken?: string
   ) {
-    // Require at least a valid non-empty authority for unauthenticated callers
-    // If only orderId is provided without authority, the caller must be authenticated
-    // (GraphQL context would have user), but since we removed the guard, we enforce
-    // authority verification for all callers to prevent guessing orderId UUIDs.
-    if (!authority || authority.trim() === '') {
-      throw new BadRequestException('Payment authority is required to cancel a pending order');
+    // Path 1: Non-empty authority provided -> keep EXACT existing logic
+    if (authority && authority.trim() !== '') {
+      // Look up orders matching the authority
+      const ordersByAuthority = await this.orderService.findOrdersByPaymentAuthority(authority);
+
+      // If orderId was also passed, verify it matches the authority
+      let matchedOrders = ordersByAuthority;
+      if (orderId) {
+        const orderById = await this.orderService.findOne(orderId);
+        if (orderById.paymentAuthority !== authority) {
+          throw new BadRequestException('Order does not match the provided payment authority');
+        }
+        // Ensure the orderById is in the matched list (in case findOrdersByPaymentAuthority missed it)
+        if (!matchedOrders.some((o) => o.id === orderId)) {
+          matchedOrders = [orderById, ...matchedOrders];
+        }
+      }
+
+      if (matchedOrders.length === 0) {
+        throw new BadRequestException('No matching order found for payment authority');
+      }
+
+      // Cancel each matched order that is PENDING
+      for (const order of matchedOrders) {
+        if (order.status === OrderStatus.CANCELLED) {
+          // Idempotent: already cancelled, treat as success
+          continue;
+        }
+        if (order.status !== OrderStatus.PENDING) {
+          throw new BadRequestException(
+            `Cannot cancel order ${order.id} with status ${order.status}. Only PENDING orders can be cancelled.`
+          );
+        }
+        await this.orderService.cancelPendingOrder(order.id);
+      }
+
+      return true;
     }
 
-    // Look up orders matching the authority
-    const ordersByAuthority = await this.orderService.findOrdersByPaymentAuthority(authority);
-
-    // If orderId was also passed, verify it matches the authority
-    let matchedOrders = ordersByAuthority;
-    if (orderId) {
-      const orderById = await this.orderService.findOne(orderId);
-      if (orderById.paymentAuthority !== authority) {
-        throw new BadRequestException('Order does not match the provided payment authority');
-      }
-      // Ensure the orderById is in the matched list (in case findOrdersByPaymentAuthority missed it)
-      if (!matchedOrders.some((o) => o.id === orderId)) {
-        matchedOrders = [orderById, ...matchedOrders];
-      }
+    // Path 2: No authority (or empty) -> require orderId and ownership authorization
+    if (!orderId || orderId.trim() === '') {
+      throw new BadRequestException('Order ID is required when payment authority is not provided');
     }
 
-    if (matchedOrders.length === 0) {
-      throw new BadRequestException('No matching order found for payment authority');
+    let order;
+    try {
+      order = await this.orderService.findOne(orderId);
+    } catch (error) {
+      if (error instanceof NotFoundException) {
+        throw new ForbiddenException('Not allowed to cancel this order');
+      }
+      throw error;
     }
 
-    // Cancel each matched order that is PENDING
-    for (const order of matchedOrders) {
-      if (order.status === OrderStatus.CANCELLED) {
-        // Idempotent: already cancelled, treat as success
-        continue;
-      }
-      if (order.status !== OrderStatus.PENDING) {
-        throw new BadRequestException(
-          `Cannot cancel order ${order.id} with status ${order.status}. Only PENDING orders can be cancelled.`
-        );
-      }
-      await this.orderService.cancelPendingOrder(order.id);
+    // Authorization check
+    const userEmail = user?.email?.trim();
+    const providedGuestToken = guestToken?.trim();
+
+    const isOwnerByEmail = Boolean(userEmail && userEmail.length > 0 && order.customerEmail?.toLowerCase() === userEmail.toLowerCase());
+
+    const isOwnerByGuestToken = Boolean(
+      providedGuestToken &&
+      providedGuestToken.length >= 16 &&
+      (order.notes ?? '').includes(`[GuestToken: ${providedGuestToken}]`)
+    );
+
+    if (!isOwnerByEmail && !isOwnerByGuestToken) {
+      throw new ForbiddenException('Not allowed to cancel this order');
     }
 
+    // Status checks
+    if (order.status === OrderStatus.CANCELLED) {
+      // Idempotent: already cancelled, treat as success
+      return true;
+    }
+
+    if (order.status !== OrderStatus.PENDING || order.paymentVerifiedAt) {
+      throw new BadRequestException(
+        `Cannot cancel order ${order.id} with status ${order.status}. Only unpaid PENDING orders can be cancelled.`
+      );
+    }
+
+    await this.orderService.cancelPendingOrder(order.id);
     return true;
   }
 }

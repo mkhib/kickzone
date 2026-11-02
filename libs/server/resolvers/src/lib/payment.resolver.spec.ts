@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { BadRequestException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PaymentResolver } from './payment.resolver';
 import { PaymentService, OrderService, CurrencyService } from '@kickzone-workspace/services';
 import { OrderStatus } from '@kickzone-workspace/entities';
@@ -472,20 +472,27 @@ describe('PaymentResolver Unit Tests', () => {
         expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
       });
 
-      it('should reject when caller passes orderId without authority', async () => {
+      it('should reject when caller passes orderId without authority (no ownership proof)', async () => {
+        const pendingOrder = createPendingOrder();
+        orderService.findOne.mockResolvedValue(pendingOrder as never);
+
         await expect(resolver.cancelPendingZarinPalOrder(orderId, undefined)).rejects.toThrow(
-          'Payment authority is required to cancel a pending order'
+          ForbiddenException
         );
 
-        expect(orderService.findOrdersByPaymentAuthority).not.toHaveBeenCalled();
+        expect(orderService.findOne).toHaveBeenCalledWith(orderId);
         expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
       });
 
-      it('should reject when caller passes empty authority string', async () => {
+      it('should reject when caller passes empty authority string (no ownership proof)', async () => {
+        const pendingOrder = createPendingOrder();
+        orderService.findOne.mockResolvedValue(pendingOrder as never);
+
         await expect(resolver.cancelPendingZarinPalOrder(orderId, '')).rejects.toThrow(
-          'Payment authority is required to cancel a pending order'
+          ForbiddenException
         );
 
+        expect(orderService.findOne).toHaveBeenCalledWith(orderId);
         expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
       });
 
@@ -565,6 +572,177 @@ describe('PaymentResolver Unit Tests', () => {
         expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
         expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-2');
         expect(result).toBe(true);
+      });
+    });
+
+    // --- New authorization path: no authority, require orderId + ownership ---
+    describe('Owner Authorization Without Authority', () => {
+      const orderId = 'order-123';
+      const customerEmail = 'customer@example.com';
+      const guestToken = 'abcdefghijklmnop'; // 16 chars
+
+      const createPendingOrderWithEmail = (overrides: Partial<{
+        id: string;
+        status: OrderStatus;
+        customerEmail: string | null;
+        notes: string | null;
+        paymentVerifiedAt: Date | null;
+      }> = {}) => ({
+        id: orderId,
+        status: OrderStatus.PENDING,
+        customerEmail,
+        notes: `[GuestToken: ${guestToken}]`,
+        paymentVerifiedAt: null,
+        ...overrides,
+      });
+
+      const createCancelledOrderWithEmail = (overrides: Partial<{
+        id: string;
+        status: OrderStatus;
+        customerEmail: string | null;
+        notes: string | null;
+      }> = {}) => ({
+        id: orderId,
+        status: OrderStatus.CANCELLED,
+        customerEmail,
+        notes: `[GuestToken: ${guestToken}]`,
+        ...overrides,
+      });
+
+      beforeEach(() => {
+        jest.clearAllMocks();
+        orderService.cancelPendingOrder.mockResolvedValue(undefined as never);
+      });
+
+      it('should succeed when owner email matches and no authority provided', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined);
+
+        expect(orderService.findOne).toHaveBeenCalledWith(orderId);
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith(orderId);
+        expect(result).toBe(true);
+      });
+
+      it('should reject with ForbiddenException when logged-in user email differs and no guestToken', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-2', email: 'other@example.com' }, undefined)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject with ForbiddenException when anonymous (no user) and no guestToken', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, undefined)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject with ForbiddenException when anonymous with wrong guestToken', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail, notes: '[GuestToken: wrongtoken12345]' });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, 'wrongtoken12345')
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should succeed when anonymous with correct guestToken in notes', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail, notes: `[GuestToken: ${guestToken}]` });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, guestToken);
+
+        expect(orderService.findOne).toHaveBeenCalledWith(orderId);
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith(orderId);
+        expect(result).toBe(true);
+      });
+
+      it('should reject prefix trick: notes has longer token, caller provides prefix (< full token)', async () => {
+        const longToken = 'abcdefghijklmnopXYZ'; // 19 chars
+        const prefixToken = 'abcdefghijklmnop'; // 16 chars, prefix of longToken
+        const order = createPendingOrderWithEmail({ customerEmail, notes: `[GuestToken: ${longToken}]` });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, prefixToken)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject short token (< 16 chars) even if present in notes', async () => {
+        const shortToken = 'abc123'; // 6 chars
+        const order = createPendingOrderWithEmail({ customerEmail, notes: `[GuestToken: ${shortToken}]` });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, shortToken)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject when no orderId and no authority provided', async () => {
+        await expect(
+          resolver.cancelPendingZarinPalOrder(undefined, undefined, undefined, undefined)
+        ).rejects.toThrow(BadRequestException);
+
+        expect(orderService.findOne).not.toHaveBeenCalled();
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject with BadRequestException when owner but order is CONFIRMED', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail, status: OrderStatus.CONFIRMED });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined)
+        ).rejects.toThrow(BadRequestException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should succeed idempotently when owner and order is already CANCELLED', async () => {
+        const order = createCancelledOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+        expect(result).toBe(true);
+      });
+
+      it('should reject with BadRequestException when owner but order has paymentVerifiedAt set', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail, paymentVerifiedAt: new Date() });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined)
+        ).rejects.toThrow(BadRequestException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should convert NotFoundException from findOne to ForbiddenException', async () => {
+        orderService.findOne.mockRejectedValue(new NotFoundException('Order not found'));
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
       });
     });
   });
