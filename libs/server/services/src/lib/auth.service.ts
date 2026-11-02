@@ -16,6 +16,25 @@ import {
 export const ACCESS_TOKEN_MAX_AGE_MS = 15 * 60 * 1000; // 15 minutes
 export const REFRESH_TOKEN_MAX_AGE_MS = 2629800000; // ~30.4 days
 
+export const ALLOWED_ORIGINS = [
+  // Development origins (127.0.0.1 preferred; localhost kept for browser redirects)
+  'https://127.0.0.1:4300',
+  'https://127.0.0.1:4400',
+  'https://127.0.0.1:4500',
+  'https://localhost:4300',
+  'https://localhost:4400',
+  'https://localhost:4500',
+  // Production origins
+  'https://saintbala.com',
+  'https://www.saintbala.com',
+  'https://admins.saintbala.com',
+  'https://seller.saintbala.com',
+  'https://masterskey.store',
+  'https://www.masterskey.store',
+  'https://admins.masterskey.store',
+  'https://seller.masterskey.store',
+];
+
 export interface AdminCreateUserParams {
   name: string;
   lastName: string;
@@ -40,6 +59,24 @@ export class AuthService {
     @InjectRepository(RefreshToken)
     private refreshTokenRepository: Repository<RefreshToken>
   ) {}
+
+  private validateBaseUrl(baseUrl: string): string {
+    let parsed: URL;
+    try {
+      parsed = new URL(baseUrl);
+    } catch {
+      throw new BadRequestException('Invalid baseUrl');
+    }
+    const origin = parsed.origin;
+    const envOrigins = process.env['ALLOWED_ORIGINS']
+      ? process.env['ALLOWED_ORIGINS'].split(',').map((o) => o.trim())
+      : [];
+    const allowlist = [...ALLOWED_ORIGINS, ...envOrigins];
+    if (!allowlist.includes(origin)) {
+      throw new BadRequestException('Invalid baseUrl');
+    }
+    return origin;
+  }
 
   async validateUser(email: string, pass: string): Promise<User | null> {
     const user = await this.userService.findByEmail(email);
@@ -103,12 +140,13 @@ export class AuthService {
       const decoded = this.jwtService.verify(token);
       // Always get the full user from the database
       return this.userService.getUserById(decoded.sub);
-    } catch (_) {
+    } catch {
       return null;
     }
   }
 
   async initiatePasswordSetup(email: string, baseUrl: string): Promise<void> {
+    const validatedOrigin = this.validateBaseUrl(baseUrl);
     const user = await this.userService.findByEmail(email);
     if (!user) {
       throw new BadRequestException('User not found');
@@ -120,7 +158,7 @@ export class AuthService {
       user.role,
       'password_setup'
     );
-    const setupLink = `${baseUrl}/setup-password/${token}`;
+    const setupLink = `${validatedOrigin}/setup-password/${token}`;
     const locale = (user.locale as 'en' | 'fa') || 'en';
     const { subject, html } = getPasswordSetupEmailTemplate(setupLink, locale);
 
@@ -202,6 +240,7 @@ export class AuthService {
   }
 
   async initiateForgotPassword(email: string, baseUrl: string): Promise<void> {
+    const validatedOrigin = this.validateBaseUrl(baseUrl);
     const user = await this.userService.findByEmail(email);
     if (!user) {
       // Don't reveal if email exists for security
@@ -214,7 +253,7 @@ export class AuthService {
       user.role,
       'password_reset'
     );
-    const resetLink = `${baseUrl}/reset-password/${token}`;
+    const resetLink = `${validatedOrigin}/reset-password/${token}`;
     const locale = (user.locale as 'en' | 'fa') || 'en';
     const { subject, html } = getPasswordResetEmailTemplate(resetLink, locale);
 

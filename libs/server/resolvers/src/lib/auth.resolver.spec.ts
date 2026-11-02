@@ -6,6 +6,7 @@ import {
   REFRESH_TOKEN_MAX_AGE_MS,
 } from '@kickzone-workspace/services';
 import { User, UserRole } from '@kickzone-workspace/entities';
+import { GraphqlAuthGuard, RolesGuard } from '@kickzone-workspace/guards';
 
 describe('AuthResolver', () => {
   let resolver: AuthResolver;
@@ -258,6 +259,15 @@ describe('AuthResolver', () => {
 
       expect(result).toBeNull();
       expect(res.clearCookie).toHaveBeenCalled();
+    });
+  });
+
+  describe('initiatePasswordSetup guards', () => {
+    it('has GraphqlAuthGuard and RolesGuard in correct order with ADMIN role', () => {
+      const guards = Reflect.getMetadata('__guards__', AuthResolver.prototype.initiatePasswordSetup);
+      expect(guards).toEqual([GraphqlAuthGuard, RolesGuard]);
+      const roles = Reflect.getMetadata('roles', AuthResolver.prototype.initiatePasswordSetup);
+      expect(roles).toEqual([UserRole.ADMIN]);
     });
   });
 });

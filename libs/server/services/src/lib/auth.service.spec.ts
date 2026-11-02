@@ -275,7 +275,7 @@ describe('AuthService', () => {
       userService.findByEmail.mockResolvedValue(mockUser);
       tokenService.generateToken.mockReturnValue('setup-token-abc');
 
-      await service.initiatePasswordSetup('user@test.com', 'https://app.example.com');
+      await service.initiatePasswordSetup('user@test.com', 'https://saintbala.com');
 
       expect(tokenService.generateToken).toHaveBeenCalledWith(
         mockUser.id,
@@ -288,10 +288,75 @@ describe('AuthService', () => {
     it('throws when user not found', async () => {
       userService.findByEmail.mockResolvedValue(null);
 
-      await expect(service.initiatePasswordSetup('unknown@test.com', 'https://app.example.com'))
+      await expect(service.initiatePasswordSetup('unknown@test.com', 'https://saintbala.com'))
         .rejects.toBeInstanceOf(BadRequestException);
     });
-  });
+
+    it('rejects attacker origin and does not call userService or emailService', async () => {
+      const emailService = { sendEmail: jest.fn().mockResolvedValue(undefined) };
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthService,
+          { provide: UserService, useValue: userService },
+          { provide: JwtService, useValue: jwtService },
+          { provide: EmailService, useValue: emailService },
+          { provide: TokenService, useValue: tokenService },
+          {
+            provide: getRepositoryToken(RefreshToken),
+            useValue: refreshTokenRepository,
+          },
+        ],
+      }).compile();
+
+      const svc = module.get(AuthService);
+
+      await expect(svc.initiatePasswordSetup('user@test.com', 'https://evil.com'))
+        .rejects.toBeInstanceOf(BadRequestException);
+
+      expect(userService.findByEmail).not.toHaveBeenCalled();
+      expect(emailService.sendEmail).not.toHaveBeenCalled();
+    });
+
+    it('accepts origin from ALLOWED_ORIGINS env', async () => {
+      process.env['ALLOWED_ORIGINS'] = 'https://custom.example.com';
+      try {
+        userService.findByEmail.mockResolvedValue(mockUser);
+        tokenService.generateToken.mockReturnValue('setup-token-abc');
+
+        await service.initiatePasswordSetup('user@test.com', 'https://custom.example.com');
+
+        expect(tokenService.generateToken).toHaveBeenCalled();
+      } finally {
+        delete process.env['ALLOWED_ORIGINS'];
+      }
+    });
+
+    it('strips path from baseUrl and builds link from origin only', async () => {
+      const emailService = { sendEmail: jest.fn().mockResolvedValue(undefined) };
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthService,
+          { provide: UserService, useValue: userService },
+          { provide: JwtService, useValue: jwtService },
+          { provide: EmailService, useValue: emailService },
+          { provide: TokenService, useValue: tokenService },
+          {
+            provide: getRepositoryToken(RefreshToken),
+            useValue: refreshTokenRepository,
+          },
+        ],
+      }).compile();
+      const svc = module.get(AuthService);
+      userService.findByEmail.mockResolvedValue(mockUser);
+      tokenService.generateToken.mockReturnValue('setup-token-abc');
+
+      await svc.initiatePasswordSetup('user@test.com', 'https://saintbala.com/some/path');
+
+      expect(emailService.sendEmail).toHaveBeenCalledTimes(1);
+      const html = emailService.sendEmail.mock.calls[0][2] as string;
+      expect(html).toContain('https://saintbala.com/setup-password/setup-token-abc');
+      expect(html).not.toContain('/some/path');
+    });  });
 
   describe('setupPassword', () => {
     it('validates token, updates password, and revokes all refresh tokens', async () => {
@@ -372,7 +437,7 @@ describe('AuthService', () => {
       userService.findByEmail.mockResolvedValue(mockUser);
       tokenService.generateToken.mockReturnValue('reset-token-xyz');
 
-      await service.initiateForgotPassword('user@test.com', 'https://app.example.com');
+      await service.initiateForgotPassword('user@test.com', 'https://saintbala.com');
 
       expect(tokenService.generateToken).toHaveBeenCalledWith(
         mockUser.id,
@@ -385,10 +450,75 @@ describe('AuthService', () => {
     it('silently returns when user does not exist (security)', async () => {
       userService.findByEmail.mockResolvedValue(null);
 
-      await expect(service.initiateForgotPassword('unknown@test.com', 'https://app.example.com'))
+      await expect(service.initiateForgotPassword('unknown@test.com', 'https://saintbala.com'))
         .resolves.toBeUndefined();
     });
-  });
+
+    it('rejects attacker origin and does not call userService or emailService', async () => {
+      const emailService = { sendEmail: jest.fn().mockResolvedValue(undefined) };
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthService,
+          { provide: UserService, useValue: userService },
+          { provide: JwtService, useValue: jwtService },
+          { provide: EmailService, useValue: emailService },
+          { provide: TokenService, useValue: tokenService },
+          {
+            provide: getRepositoryToken(RefreshToken),
+            useValue: refreshTokenRepository,
+          },
+        ],
+      }).compile();
+
+      const svc = module.get(AuthService);
+
+      await expect(svc.initiateForgotPassword('user@test.com', 'https://evil.com'))
+        .rejects.toBeInstanceOf(BadRequestException);
+
+      expect(userService.findByEmail).not.toHaveBeenCalled();
+      expect(emailService.sendEmail).not.toHaveBeenCalled();
+    });
+
+    it('accepts origin from ALLOWED_ORIGINS env', async () => {
+      process.env['ALLOWED_ORIGINS'] = 'https://custom.example.com';
+      try {
+        userService.findByEmail.mockResolvedValue(mockUser);
+        tokenService.generateToken.mockReturnValue('reset-token-xyz');
+
+        await service.initiateForgotPassword('user@test.com', 'https://custom.example.com');
+
+        expect(tokenService.generateToken).toHaveBeenCalled();
+      } finally {
+        delete process.env['ALLOWED_ORIGINS'];
+      }
+    });
+
+    it('strips path from baseUrl and builds link from origin only', async () => {
+      const emailService = { sendEmail: jest.fn().mockResolvedValue(undefined) };
+      const module: TestingModule = await Test.createTestingModule({
+        providers: [
+          AuthService,
+          { provide: UserService, useValue: userService },
+          { provide: JwtService, useValue: jwtService },
+          { provide: EmailService, useValue: emailService },
+          { provide: TokenService, useValue: tokenService },
+          {
+            provide: getRepositoryToken(RefreshToken),
+            useValue: refreshTokenRepository,
+          },
+        ],
+      }).compile();
+      const svc = module.get(AuthService);
+      userService.findByEmail.mockResolvedValue(mockUser);
+      tokenService.generateToken.mockReturnValue('reset-token-xyz');
+
+      await svc.initiateForgotPassword('user@test.com', 'https://saintbala.com/some/path');
+
+      expect(emailService.sendEmail).toHaveBeenCalledTimes(1);
+      const html = emailService.sendEmail.mock.calls[0][2] as string;
+      expect(html).toContain('https://saintbala.com/reset-password/reset-token-xyz');
+      expect(html).not.toContain('/some/path');
+    });  });
 
   describe('resetPassword', () => {
     it('validates token, updates password, revokes all refresh tokens, and consumes token', async () => {

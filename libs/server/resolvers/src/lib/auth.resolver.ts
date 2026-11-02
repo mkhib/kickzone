@@ -4,9 +4,9 @@ import {
   AuthService,
   REFRESH_TOKEN_MAX_AGE_MS,
 } from '@kickzone-workspace/services';
-import { User } from '@kickzone-workspace/entities';
+import { User, UserRole } from '@kickzone-workspace/entities';
 import { Response, Request } from 'express';
-import { UnauthorizedException } from '@nestjs/common';
+import { UnauthorizedException, UseGuards, SetMetadata } from '@nestjs/common';
 import { ZodValidationPipe } from './zod-validation.pipe';
 import {
   emailSchema,
@@ -16,6 +16,7 @@ import {
   baseUrlSchema,
   tokenSchema,
 } from '@kickzone-workspace/validation';
+import { GraphqlAuthGuard, RolesGuard } from '@kickzone-workspace/guards';
 
 const COOKIE_BASE = {
   httpOnly: true,
@@ -126,6 +127,8 @@ export class AuthResolver {
   }
 
   @Mutation(() => Boolean)
+  @UseGuards(GraphqlAuthGuard, RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
   async initiatePasswordSetup(
     @Args('email', new ZodValidationPipe(emailSchema)) email: string,
     @Args('baseUrl', new ZodValidationPipe(baseUrlSchema)) baseUrl: string
