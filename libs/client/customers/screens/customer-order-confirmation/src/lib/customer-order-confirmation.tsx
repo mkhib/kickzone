@@ -30,7 +30,7 @@ import { PriceDisplay } from '@kickzone-workspace/price-display';
 import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
 import { formatSizeLabel, SizeKind } from '@kickzone-workspace/product-sizes';
 
-interface OrderItem {
+export interface OrderItem {
   productId: string;
   productName: string;
   productImage?: string | null;
@@ -41,7 +41,7 @@ interface OrderItem {
   size?: string | null;
 }
 
-interface OrderData {
+export interface OrderData {
   id: string;
   orderNumber: string;
   trackingNumber: string;
@@ -59,6 +59,13 @@ interface OrderData {
   items: OrderItem[];
   notes?: string | null;
   createdAt: string;
+  // Optional seller orders for multi-seller checkout display
+  sellerOrders?: Array<{
+    id: string;
+    orderNumber: string;
+    total: number;
+    trackingNumber?: string | null;
+  }>;
 }
 
 const CANONICAL_PANTS_SIZE_RE = /^[1-9]\d?x[1-9]\d?$/;

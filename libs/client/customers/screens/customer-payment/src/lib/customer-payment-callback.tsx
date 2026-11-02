@@ -44,6 +44,40 @@ export function CustomerPaymentCallback() {
     orderIds?: string[];
     orderNumber: string;
     amount: number;
+    orderConfirmation?: {
+      id: string;
+      orderNumber: string;
+      trackingNumber: string;
+      customerEmail: string;
+      customerPhone: string;
+      customerName: string;
+      shippingAddress: string;
+      city: string;
+      state: string;
+      zipCode: string;
+      country: string;
+      subtotal: number;
+      shippingCost: number;
+      total: number;
+      items: Array<{
+        productId: string;
+        productName: string;
+        productImage?: string | null;
+        quantity: number;
+        unitPrice: number;
+        totalPrice: number;
+        color?: string | null;
+        size?: string | null;
+      }>;
+      notes?: string | null;
+      createdAt: string;
+      sellerOrders?: Array<{
+        id: string;
+        orderNumber: string;
+        total: number;
+        trackingNumber?: string | null;
+      }>;
+    } | null;
   } | null>(null);
 
   useEffect(() => {
@@ -230,10 +264,17 @@ export function CustomerPaymentCallback() {
 
   const handleContinue = () => {
     if (verificationStatus === 'success' && orderData) {
-      // Navigate to order confirmation with order ID
-      navigate(CUSTOMER_ROUTES.ORDER_CONFIRMATION, {
-        state: { orderId: orderData.orderId, refId },
-      });
+      // Check if orderConfirmation data is available
+      const orderConfirmation = orderData.orderConfirmation;
+      if (orderConfirmation) {
+        // Navigate to order confirmation with full order data
+        navigate(CUSTOMER_ROUTES.ORDER_CONFIRMATION, {
+          state: { orderId: orderData.orderId, refId, orderData: orderConfirmation },
+        });
+      } else {
+        // No orderConfirmation data (fresh tab / URL fallback) - navigate to orders page
+        navigate(CUSTOMER_ROUTES.ORDERS);
+      }
     } else {
       // Navigate to orders page
       navigate(CUSTOMER_ROUTES.ORDERS);

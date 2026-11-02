@@ -94,6 +94,14 @@ const orderData = {
   createdAt: '2026-09-08T00:00:00.000Z',
 };
 
+const orderDataWithSellerOrders = {
+  ...orderData,
+  sellerOrders: [
+    { id: '1', orderNumber: 'ORD-001', total: 90, trackingNumber: 'TRK-001' },
+    { id: '2', orderNumber: 'ORD-002', total: 50, trackingNumber: 'TRK-002' },
+  ],
+};
+
 describe('CustomerOrderConfirmation', () => {
   it('should render successfully', () => {
     const { baseElement } = render(
@@ -103,5 +111,26 @@ describe('CustomerOrderConfirmation', () => {
     );
 
     expect(baseElement).toBeTruthy();
+  });
+
+  it('should render successfully with sellerOrders', () => {
+    const { baseElement } = render(
+      <MemoryRouter initialEntries={[{ pathname: '/', state: { orderData: orderDataWithSellerOrders } }]}>
+        <CustomerOrderConfirmation />
+      </MemoryRouter>
+    );
+
+    expect(baseElement).toBeTruthy();
+  });
+
+  it('should return null (and redirect) when orderData is absent', () => {
+    const { baseElement } = render(
+      <MemoryRouter initialEntries={[{ pathname: '/' }]}>
+        <CustomerOrderConfirmation />
+      </MemoryRouter>
+    );
+
+    // When no orderData in state, component returns null (redirect handled by useEffect)
+    expect(baseElement.querySelector('[data-testid="customers-layout"]')).toBeFalsy();
   });
 });

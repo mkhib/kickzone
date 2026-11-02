@@ -110,6 +110,39 @@ const mockSetValidationErrors = vi.fn();
 const mockClearAllValidationErrors = vi.fn();
 const mockShowSnackbar = vi.fn();
 
+// Helper to create a full mock createOrder result (module-level for all tests)
+const createMockOrderResult = (overrides: Record<string, unknown> = {}) => ({
+  id: 'order-1',
+  orderNumber: 'ORD-1001',
+  trackingNumber: 'TRK-1001',
+  customerEmail: 'test@example.com',
+  customerPhone: '09121234567',
+  customerName: 'Test User',
+  shippingAddress: '123 Test St',
+  city: 'Tehran',
+  state: 'Tehran',
+  zipCode: '1234567890',
+  country: 'Iran',
+  subtotal: 100,
+  shippingCost: 10,
+  total: 110,
+  notes: 'Test notes',
+  createdAt: '2026-01-01T00:00:00.000Z',
+  items: [
+    {
+      productId: 'prod-1',
+      productName: 'Test Product',
+      productImage: '/img.jpg',
+      quantity: 1,
+      unitPrice: 100,
+      totalPrice: 100,
+      color: '#121212',
+      size: 'L',
+    },
+  ],
+  ...overrides,
+});
+
 // Default shipping data for tests
 let mockShippingData = {
   calculateShippingCost: {
@@ -782,8 +815,8 @@ describe('Multi-Seller Checkout & Rollback', () => {
   };
 
   it('Test 1: Multi-seller batch checkout happy path - creates orders for each seller, requests payment once, redirects to gateway', async () => {
-    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
-    const orderSeller2 = { id: 'order-seller-2', orderNumber: 'ORD-2', total: 50 };
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
+    const orderSeller2 = createMockOrderResult({ id: 'order-seller-2', orderNumber: 'ORD-2', total: 60 });
     const authority = 'A000000000000000000000000000000000000123';
 
     mockCreateOrderMutation
@@ -835,7 +868,7 @@ describe('Multi-Seller Checkout & Rollback', () => {
   }, 15000);
 
   it('Test 2: Mid-batch createOrder failure rolls back already-created seller order (via Promise.allSettled)', async () => {
-    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
     const createOrderError = new Error('Out of stock for seller 2');
 
     mockCreateOrderMutation
@@ -867,8 +900,8 @@ describe('Multi-Seller Checkout & Rollback', () => {
   });
 
   it('Test 5: Guest checkout - payment request fails -> cancelPendingOrder called with guestToken from sessionStorage', async () => {
-    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
-    const orderSeller2 = { id: 'order-seller-2', orderNumber: 'ORD-2', total: 50 };
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
+    const orderSeller2 = createMockOrderResult({ id: 'order-seller-2', orderNumber: 'ORD-2', total: 60 });
     const guestToken = 'guest_123456789_abc123';
 
     // Set up guest token in sessionStorage (simulating guest checkout)
@@ -912,8 +945,8 @@ describe('Multi-Seller Checkout & Rollback', () => {
   });
 
   it('Test 6: Logged-in checkout - payment request fails -> cancelPendingOrder called with guestToken undefined', async () => {
-    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
-    const orderSeller2 = { id: 'order-seller-2', orderNumber: 'ORD-2', total: 50 };
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
+    const orderSeller2 = createMockOrderResult({ id: 'order-seller-2', orderNumber: 'ORD-2', total: 60 });
 
     // Logged-in user (not guest)
     mockUser = { id: 'user-1', name: 'John Doe', email: 'john@example.com' };
@@ -958,7 +991,7 @@ describe('Multi-Seller Checkout & Rollback', () => {
   });
 
   it('Test 7: Mid-batch createOrder failure for guest -> cancelPendingOrder called with guestToken', async () => {
-    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
     const createOrderError = new Error('Out of stock for seller 2');
     const guestToken = 'guest_123456789_abc123';
 
@@ -994,8 +1027,8 @@ describe('Multi-Seller Checkout & Rollback', () => {
   });
 
   it('Test 3: requestPayment returns null after 2 seller orders created -> cancels ALL created orders', async () => {
-    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 100 };
-    const orderSeller2 = { id: 'order-seller-2', orderNumber: 'ORD-2', total: 50 };
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
+    const orderSeller2 = createMockOrderResult({ id: 'order-seller-2', orderNumber: 'ORD-2', total: 60 });
 
     mockCreateOrderMutation
       .mockResolvedValueOnce(orderSeller1)
@@ -1035,7 +1068,7 @@ describe('Multi-Seller Checkout & Rollback', () => {
   });
 
   it('Test 4: Single-seller multiple items grouped into a single createOrder call', async () => {
-    const orderSeller1 = { id: 'order-seller-1', orderNumber: 'ORD-1', total: 150 };
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 160 });
     const authority = 'A000000000000000000000000000000000000123';
 
     // Override cart items: 2 items from SAME seller
@@ -1112,6 +1145,156 @@ describe('Multi-Seller Checkout & Rollback', () => {
     // Verify requestPayment called once
     await waitFor(() => {
       expect(mockRequestPayment).toHaveBeenCalledTimes(1);
+    });
+  });
+});
+
+describe('Order Confirmation Data', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLocale = 'en'; // Non-Farsi locale for non-ZarinPal path
+    mockUser = null;
+    mockShippingMethod = 'vip';
+    mockIsCheckoutDialogOpen = true;
+    mockIsAuthDialogOpen = false;
+    mockActiveStep = 2;
+    mockCartItems = [
+      {
+        id: 'cart-item-1',
+        productId: 'prod-1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '1',
+        sellerName: 'Seller One',
+        sellerShippingFee: 1.2,
+        productName: 'Product from Seller 1',
+        productImage: '/item1.jpg',
+        quantity: 2,
+        unitPrice: 100,
+        totalPrice: 200,
+        availableStock: 5,
+        color: '#121212',
+        size: 'L',
+      },
+    ];
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 1.2,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 1.2, appliedFee: 1.2 },
+        ],
+      },
+    });
+  });
+
+  // Helper to click "Proceed to Payment" on Order Summary (step 2)
+  const proceedToPayment = async () => {
+    const proceedBtn = screen.getByText(/proceed to payment/i);
+    await act(async () => {
+      fireEvent.click(proceedBtn);
+    });
+  };
+
+  it('non-ZarinPal success writes orderConfirmation with items/total into sessionStorage order_<id>', async () => {
+    const orderSeller1 = createMockOrderResult({
+      id: 'order-seller-1',
+      orderNumber: 'ORD-1',
+      total: 210,
+      subtotal: 200,
+      shippingCost: 10,
+      items: [
+        {
+          productId: 'prod-1',
+          productName: 'Product from Seller 1',
+          productImage: '/item1.jpg',
+          quantity: 2,
+          unitPrice: 100,
+          totalPrice: 200,
+          color: '#121212',
+          size: 'L',
+        },
+      ],
+    });
+    const authority = 'A000000000000000000000000000000000000123';
+
+    mockCreateOrderMutation.mockResolvedValue(orderSeller1);
+    mockRequestPayment.mockResolvedValue(authority);
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for order creation and sessionStorage write
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      const stored = sessionStorage.getItem('order_order-seller-1');
+      expect(stored).not.toBeNull();
+      const parsed = JSON.parse(stored as string);
+      expect(parsed.orderConfirmation).toBeDefined();
+      expect(parsed.orderConfirmation.items).toHaveLength(1);
+      expect(parsed.orderConfirmation.items[0].productId).toBe('prod-1');
+      expect(parsed.orderConfirmation.total).toBe(210);
+      expect(parsed.orderConfirmation.subtotal).toBe(200);
+      expect(parsed.orderConfirmation.shippingCost).toBe(10);
+      expect(parsed.orderConfirmation.sellerOrders).toHaveLength(1);
+    });
+  });
+
+  it('ZarinPal path writes orderConfirmation with items/total into sessionStorage order_<id>', async () => {
+    mockLocale = 'fa'; // Farsi locale for ZarinPal path
+    const orderSeller1 = createMockOrderResult({
+      id: 'order-seller-1',
+      orderNumber: 'ORD-1',
+      total: 210,
+      subtotal: 200,
+      shippingCost: 10,
+      items: [
+        {
+          productId: 'prod-1',
+          productName: 'Product from Seller 1',
+          productImage: '/item1.jpg',
+          quantity: 2,
+          unitPrice: 100,
+          totalPrice: 200,
+          color: '#121212',
+          size: 'L',
+        },
+      ],
+    });
+    const authority = 'A000000000000000000000000000000000000123';
+
+    mockCreateOrderMutation.mockResolvedValue(orderSeller1);
+    mockRequestPayment.mockResolvedValue(authority);
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for order creation and sessionStorage write
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(1);
+    });
+
+    await waitFor(() => {
+      const stored = sessionStorage.getItem('order_order-seller-1');
+      expect(stored).not.toBeNull();
+      const parsed = JSON.parse(stored as string);
+      expect(parsed.orderConfirmation).toBeDefined();
+      expect(parsed.orderConfirmation.items).toHaveLength(1);
+      expect(parsed.orderConfirmation.items[0].productId).toBe('prod-1');
+      expect(parsed.orderConfirmation.total).toBe(210);
+      expect(parsed.orderConfirmation.subtotal).toBe(200);
+      expect(parsed.orderConfirmation.shippingCost).toBe(10);
+      expect(parsed.orderConfirmation.sellerOrders).toHaveLength(1);
     });
   });
 });

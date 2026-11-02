@@ -1,6 +1,7 @@
 import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isApolloErrorLike } from '@kickzone-workspace/validation';
+import { buildOrderConfirmationData, type CreateOrderResult, type OrderConfirmationData } from './build-order-confirmation-data';
 import {
   useCartError,
   useCartItems,
@@ -91,7 +92,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Skeleton from '@mui/material/Skeleton';
 import { getLtrTextFieldProps } from '@kickzone-workspace/language-components';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation } from '@apollo/client/react';
 import { useZarinPalPayment, type CancelPendingOrderVariables } from '@kickzone-workspace/customer-payment';
@@ -435,6 +436,9 @@ export function CustomerShoppingCart() {
   const setCreatedOrder = useSetCreatedOrder();
   const setPaymentAuthority = useSetPaymentAuthority();
   const resetCheckout = useResetCheckout();
+
+  // Ref to hold order confirmation data for non-ZarinPal success dialog
+  const orderConfirmationDataRef = useRef<OrderConfirmationData | null>(null);
 
   // Use cart store
   const cartItems = useCartItems();
@@ -953,6 +957,15 @@ export function CustomerShoppingCart() {
         totalOrders: orderResults.length,
       });
 
+      // Build order confirmation data from fulfilled createOrder results
+      // Type assertion needed because orderResults contains fulfilled Promise results
+      const orderConfirmationData = buildOrderConfirmationData(
+        orderResults as Array<CreateOrderResult | null | undefined>
+      );
+
+      // Store in ref for non-ZarinPal success dialog access
+      orderConfirmationDataRef.current = orderConfirmationData;
+
       setCreatedOrder({
         id: firstOrder.id,
         orderNumber: firstOrder.orderNumber,
@@ -969,6 +982,24 @@ export function CustomerShoppingCart() {
             cartError
           );
         }
+
+        // Store order confirmation data in sessionStorage for success dialog
+        sessionStorage.setItem(
+          `order_${firstOrder.id}`,
+          JSON.stringify({
+            orderId: firstOrder.id,
+            orderIds: allOrderIds,
+            orderNumber: firstOrder.orderNumber,
+            orderNumbers: orderResults.map((o) => o!.orderNumber).join(', '),
+            amount: 0, // Not used for non-ZarinPal
+            isGuest: !user,
+            guestEmail: shippingInfo.customerEmail || '',
+            guestName: shippingInfo.customerName || '',
+            guestPhone: shippingInfo.customerPhone || '',
+            guestToken: guestToken || undefined,
+            orderConfirmation: orderConfirmationData,
+          })
+        );
 
         setActiveStep(3);
         setIsCreatingOrder(false);
@@ -1081,6 +1112,8 @@ export function CustomerShoppingCart() {
           guestName: shippingInfo.customerName || '',
           guestPhone: shippingInfo.customerPhone || '',
           guestToken: guestToken || undefined,
+          // Include full order confirmation data for the order confirmation page
+          orderConfirmation: orderConfirmationData,
         })
       );
 
@@ -3037,8 +3070,19 @@ export function CustomerShoppingCart() {
                       onClick={() => {
                         closeCheckoutDialog();
                         resetCheckout();
+                        // Read order confirmation data from sessionStorage
+                        let orderDataForNavigation = null;
+                        try {
+                          const stored = sessionStorage.getItem(`order_${createdOrder.id}`);
+                          if (stored) {
+                            const parsed = JSON.parse(stored);
+                            orderDataForNavigation = parsed.orderConfirmation;
+                          }
+                        } catch (e) {
+                          console.warn('Failed to read order confirmation data:', e);
+                        }
                         navigate(CUSTOMER_ROUTES.ORDER_CONFIRMATION, {
-                          state: { orderId: createdOrder.id },
+                          state: { orderId: createdOrder.id, orderData: orderDataForNavigation },
                         });
                       }}
                     >

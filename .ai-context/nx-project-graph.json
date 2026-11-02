@@ -17053,6 +17053,11 @@
       "customer-shopping-cart": [
         {
           "source": "customer-shopping-cart",
+          "target": "customer-order-confirmation",
+          "type": "static"
+        },
+        {
+          "source": "customer-shopping-cart",
           "target": "customer-cart-store",
           "type": "static"
         },

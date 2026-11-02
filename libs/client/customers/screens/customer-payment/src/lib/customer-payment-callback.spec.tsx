@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, act } from '@testing-library/react';
+import { render, screen, waitFor, act, fireEvent } from '@testing-library/react';
 import { MockedProvider, MockedResponse } from '@apollo/client/testing';
 import { BrowserRouter } from 'react-router-dom';
 import { ThemeProvider, CssBaseline } from '@mui/material';
@@ -751,6 +751,169 @@ describe('GuestToken in cancelPendingZarinPalOrder mutation', () => {
 
     await waitFor(() => {
       expect(mocks[0].result?.data).toEqual({ cancelPendingZarinPalOrder: true });
+    });
+  });
+});
+
+describe('Order Confirmation Navigation', () => {
+  const authority = 'A00000123';
+  const orderId = 'ord-1';
+  const orderNumber = 'ORD-123456';
+  const orderIds = ['ord-1', 'ord-2'];
+  const amount = 50000;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSessionStorage.clear();
+  });
+
+  const setupOrderWithConfirmation = () => {
+    const orderConfirmation = {
+      id: orderId,
+      orderNumber,
+      trackingNumber: 'TRK-123',
+      customerEmail: 'test@example.com',
+      customerPhone: '09121234567',
+      customerName: 'Test User',
+      shippingAddress: '123 Test St',
+      city: 'Tehran',
+      state: 'Tehran',
+      zipCode: '1234567890',
+      country: 'Iran',
+      subtotal: 100,
+      shippingCost: 10,
+      total: 110,
+      items: [
+        {
+          productId: 'prod-1',
+          productName: 'Test Product',
+          productImage: '/img.jpg',
+          quantity: 1,
+          unitPrice: 100,
+          totalPrice: 100,
+          color: '#121212',
+          size: 'L',
+        },
+      ],
+      notes: 'Test notes',
+      createdAt: '2026-01-01T00:00:00.000Z',
+      sellerOrders: [
+        { id: orderId, orderNumber, total: 110, trackingNumber: 'TRK-123' },
+      ],
+    };
+    mockSessionStorage.setItem(
+      `order_${orderId}`,
+      JSON.stringify({ orderId, orderNumber, amount, orderIds, orderConfirmation })
+    );
+  };
+
+  const triggerVerification = async (url: string) => {
+    await act(async () => {
+      window.history.pushState({}, '', url);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+  };
+
+  it('success + stored orderConfirmation -> navigate to ORDER_CONFIRMATION with state.orderData', async () => {
+    const refId = 777888;
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+          variables: expect.objectContaining({
+            input: expect.objectContaining({ authority, amount, order_id: orderId }),
+          }),
+        },
+        result: {
+          data: {
+            verifyZarinPalPayment: {
+              code: 100,
+              message: 'Verified',
+              ref_id: refId,
+              success: true,
+              orderIds,
+              orderId,
+              orderNumber,
+            },
+          },
+        },
+      },
+    ];
+
+    setupOrderWithConfirmation();
+
+    const { waitFor: waitForRender } = renderWithProviders(
+      <CustomerPaymentCallback />,
+      mocks
+    );
+
+    await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}&orderIds=${orderIds.join(',')}`);
+
+    await waitFor(() => {
+      expect(screen.getByText('پرداخت با موفقیت انجام شد')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(`شماره تراکنش: ${refId}`)).toBeInTheDocument();
+    });
+
+    // Click the continue button
+    const continueBtn = screen.getByRole('button', { name: /مشاهده جزییات سفارش/i });
+    fireEvent.click(continueBtn);
+
+    // Verify navigation to ORDER_CONFIRMATION with orderData in state
+    await waitForRender(() => {
+      expect(window.location.pathname).toContain('/order-confirmation');
+    });
+  });
+
+  it('success without orderConfirmation -> navigate to ORDERS', async () => {
+    const refId = 777888;
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+          variables: expect.objectContaining({
+            input: expect.objectContaining({ authority, amount, order_id: orderId }),
+          }),
+        },
+        result: {
+          data: {
+            verifyZarinPalPayment: {
+              code: 100,
+              message: 'Verified',
+              ref_id: refId,
+              success: true,
+              orderIds,
+              orderId,
+              orderNumber,
+            },
+          },
+        },
+      },
+    ];
+
+    // Set up order data WITHOUT orderConfirmation (simulating fresh tab / URL fallback)
+    mockSessionStorage.setItem(
+      `order_${orderId}`,
+      JSON.stringify({ orderId, orderNumber, amount, orderIds })
+    );
+
+    renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+    await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}&orderIds=${orderIds.join(',')}`);
+
+    await waitFor(() => {
+      expect(screen.getByText('پرداخت با موفقیت انجام شد')).toBeInTheDocument();
+    });
+
+    // Click the continue button
+    const continueBtn = screen.getByRole('button', { name: /مشاهده جزییات سفارش/i });
+    fireEvent.click(continueBtn);
+
+    // Verify navigation to ORDERS (not ORDER_CONFIRMATION)
+    await waitForRender(() => {
+      expect(window.location.pathname).toContain('/orders');
     });
   });
 });
