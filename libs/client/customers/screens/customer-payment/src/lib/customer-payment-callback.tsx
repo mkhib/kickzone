@@ -214,12 +214,14 @@ export function CustomerPaymentCallback() {
           if (!cartClearedRef.current) {
             cartClearedRef.current = true;
             try {
+              // Try to clear server cart (requires auth). If it fails, log but don't block.
               await clearCart();
-              clearCartAction();
             } catch (error) {
               // Log error but don't fail - payment was successful
-              console.error('Failed to clear cart after payment:', error);
+              console.error('Failed to clear server cart after payment:', error);
             }
+            // Always clear local cart (guest or logged in) after successful payment
+            clearCartAction();
           }
 
           // Clean up sessionStorage for all order IDs after successful payment

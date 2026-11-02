@@ -974,14 +974,18 @@ export function CustomerShoppingCart() {
       // Non-Farsi: place pending order and contact customer for payment (no ZarinPal)
       if (!usesZarinPal) {
         try {
-          await clearCartMutation();
-          clearCartAction();
+          // Only clear server cart if user is logged in; guest cart is local only
+          if (user) {
+            await clearCartMutation();
+          }
         } catch (cartError) {
           console.error(
-            '[Checkout] Failed to clear cart after order creation:',
+            '[Checkout] Failed to clear server cart after order creation:',
             cartError
           );
         }
+        // Always clear local cart (guest or logged in) after successful order creation
+        clearCartAction();
 
         // Store order confirmation data in sessionStorage for success dialog
         sessionStorage.setItem(

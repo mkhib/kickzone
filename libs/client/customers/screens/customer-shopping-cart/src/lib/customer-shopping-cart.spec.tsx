@@ -1298,3 +1298,193 @@ describe('Order Confirmation Data', () => {
     });
   });
 });
+
+describe('Cart Clear Behavior After Successful Order (Non-ZarinPal)', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLocale = 'en'; // Non-Farsi locale for non-ZarinPal path
+    mockUser = null;
+    mockShippingMethod = 'vip';
+    mockIsCheckoutDialogOpen = true;
+    mockIsAuthDialogOpen = false;
+    mockActiveStep = 2;
+    mockCartItems = [
+      {
+        id: 'cart-item-1',
+        productId: 'prod-1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '1',
+        sellerName: 'Seller One',
+        sellerShippingFee: 1.2,
+        productName: 'Product from Seller 1',
+        productImage: '/item1.jpg',
+        quantity: 2,
+        unitPrice: 100,
+        totalPrice: 200,
+        availableStock: 5,
+        color: '#121212',
+        size: 'L',
+      },
+    ];
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 1.2,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 1.2, appliedFee: 1.2 },
+        ],
+      },
+    });
+  });
+
+  // Helper to click "Proceed to Payment" on Order Summary (step 2)
+  const proceedToPayment = async () => {
+    const proceedBtn = screen.getByText(/proceed to payment/i);
+    await act(async () => {
+      fireEvent.click(proceedBtn);
+    });
+  };
+
+  it('guest successful order -> local clear-cart store action called once; server clearCart mutation NOT called', async () => {
+    mockUser = null; // Guest user
+
+    const orderSeller1 = createMockOrderResult({
+      id: 'order-seller-1',
+      orderNumber: 'ORD-1',
+      total: 210,
+      subtotal: 200,
+      shippingCost: 10,
+      items: [
+        {
+          productId: 'prod-1',
+          productName: 'Product from Seller 1',
+          productImage: '/item1.jpg',
+          quantity: 2,
+          unitPrice: 100,
+          totalPrice: 200,
+          color: '#121212',
+          size: 'L',
+        },
+      ],
+    });
+
+    mockCreateOrderMutation.mockResolvedValue(orderSeller1);
+    mockRequestPayment.mockResolvedValue('AUTH123');
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Local clearCart action should be called once
+    await waitFor(() => {
+      expect(mockClearCart).toHaveBeenCalledTimes(1);
+    });
+
+    // Server clearCart mutation should NOT be called for guest
+    expect(mockClearCartMutation).not.toHaveBeenCalled();
+  });
+
+  it('logged-in user successful order -> server clearCart mutation called once AND local clear called once', async () => {
+    mockUser = { id: 'user-1', name: 'John Doe', email: 'john@example.com' }; // Logged-in user
+
+    const orderSeller1 = createMockOrderResult({
+      id: 'order-seller-1',
+      orderNumber: 'ORD-1',
+      total: 210,
+      subtotal: 200,
+      shippingCost: 10,
+      items: [
+        {
+          productId: 'prod-1',
+          productName: 'Product from Seller 1',
+          productImage: '/item1.jpg',
+          quantity: 2,
+          unitPrice: 100,
+          totalPrice: 200,
+          color: '#121212',
+          size: 'L',
+        },
+      ],
+    });
+
+    mockCreateOrderMutation.mockResolvedValue(orderSeller1);
+    mockRequestPayment.mockResolvedValue('AUTH123');
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Server clearCart mutation should be called once for logged-in user
+    await waitFor(() => {
+      expect(mockClearCartMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Local clearCart action should also be called once
+    await waitFor(() => {
+      expect(mockClearCart).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('logged-in, server clearCart rejects -> local clear still called once', async () => {
+    mockUser = { id: 'user-1', name: 'John Doe', email: 'john@example.com' }; // Logged-in user
+
+    const orderSeller1 = createMockOrderResult({
+      id: 'order-seller-1',
+      orderNumber: 'ORD-1',
+      total: 210,
+      subtotal: 200,
+      shippingCost: 10,
+      items: [
+        {
+          productId: 'prod-1',
+          productName: 'Product from Seller 1',
+          productImage: '/item1.jpg',
+          quantity: 2,
+          unitPrice: 100,
+          totalPrice: 200,
+          color: '#121212',
+          size: 'L',
+        },
+      ],
+    });
+
+    mockCreateOrderMutation.mockResolvedValue(orderSeller1);
+    mockRequestPayment.mockResolvedValue('AUTH123');
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+    // Server clearCart rejects
+    mockClearCartMutation.mockRejectedValueOnce(new Error('Network error'));
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Server clearCart mutation should be called once (and reject)
+    await waitFor(() => {
+      expect(mockClearCartMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Local clearCart action should still be called once despite server rejection
+    await waitFor(() => {
+      expect(mockClearCart).toHaveBeenCalledTimes(1);
+    });
+  });
+});

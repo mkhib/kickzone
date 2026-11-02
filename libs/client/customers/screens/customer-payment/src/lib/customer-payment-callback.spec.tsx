@@ -13,19 +13,11 @@ const mockTheme = {
   },
 };
 
-// Wrapper for React Router, Apollo Provider, and MUI Theme
-const renderWithProviders = (ui: React.ReactElement, mocks: MockedResponse[] = []) => {
-  return render(
-    <MockedProvider mocks={mocks} addTypename={false}>
-      <BrowserRouter>
-        <ThemeProvider theme={mockTheme}>
-          <CssBaseline />
-          {ui}
-        </ThemeProvider>
-      </BrowserRouter>
-    </MockedProvider>
-  );
-};
+// Mock for useCustomersCartMutations
+const mockClearCartMutation = jest.fn<Promise<unknown>, []>().mockResolvedValue({});
+
+// Mock for useCartStore
+const mockClearCartAction = jest.fn<void, []>();
 
 // Mock sessionStorage
 const mockSessionStorage = (() => {
@@ -42,6 +34,33 @@ Object.defineProperty(window, 'sessionStorage', {
   value: mockSessionStorage,
   writable: true,
 });
+
+// Mock the cart hooks
+jest.mock('@kickzone-workspace/customers-cart-hook', () => ({
+  useCustomersCartMutations: () => ({
+    clearCart: mockClearCartMutation,
+  }),
+}));
+
+jest.mock('@kickzone-workspace/customer-cart-store', () => ({
+  useCartStore: (selector: (state: { clearCart: () => void }) => { clearCart: () => void }) => selector({
+    clearCart: mockClearCartAction,
+  }),
+}));
+
+// Wrapper for React Router, Apollo Provider, and MUI Theme
+const renderWithProviders = (ui: React.ReactElement, mocks: MockedResponse[] = []) => {
+  return render(
+    <MockedProvider mocks={mocks} addTypename={false}>
+      <BrowserRouter>
+        <ThemeProvider theme={mockTheme}>
+          <CssBaseline />
+          {ui}
+        </ThemeProvider>
+      </BrowserRouter>
+    </MockedProvider>
+  );
+};
 
 describe('CustomerPaymentCallback - Guest ZarinPal Cancel', () => {
   const authority = 'A00000123';
@@ -915,5 +934,146 @@ describe('Order Confirmation Navigation', () => {
     await waitForRender(() => {
       expect(window.location.pathname).toContain('/orders');
     });
+  });
+});
+
+describe('Cart Clear Behavior After Successful Payment Verification', () => {
+  const authority = 'A00000123';
+  const orderId = 'ord-1';
+  const orderNumber = 'ORD-123456';
+  const orderIds = ['ord-1', 'ord-2'];
+  const amount = 50000;
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockSessionStorage.clear();
+    mockClearCartMutation.mockResolvedValue({});
+    mockClearCartAction.mockClear();
+  });
+
+  const setupOrderInSessionStorage = () => {
+    mockSessionStorage.setItem(
+      `order_${orderId}`,
+      JSON.stringify({ orderId, orderNumber, amount, orderIds })
+    );
+  };
+
+  const triggerVerification = async (url: string) => {
+    await act(async () => {
+      window.history.pushState({}, '', url);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+    });
+  };
+
+  it('verified success (success === true) where server clearCart rejects -> local cart store clearCart still called once', async () => {
+    const refId = 777888;
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+          variables: expect.objectContaining({
+            input: expect.objectContaining({ authority, amount, order_id: orderId }),
+          }),
+        },
+        result: {
+          data: {
+            verifyZarinPalPayment: {
+              code: 100,
+              message: 'Verified',
+              ref_id: refId,
+              success: true,
+              orderIds,
+              orderId,
+              orderNumber,
+            },
+          },
+        },
+      },
+    ];
+
+    setupOrderInSessionStorage();
+
+    // Server clearCart rejects
+    mockClearCartMutation.mockRejectedValueOnce(new Error('Network error'));
+
+    renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+    await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}&orderIds=${orderIds.join(',')}`);
+
+    await waitFor(() => {
+      expect(screen.getByText('پرداخت با موفقیت انجام شد')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(`شماره تراکنش: ${refId}`)).toBeInTheDocument();
+    });
+
+    // Server clearCart mutation should be called once (and reject)
+    await waitFor(() => {
+      expect(mockClearCartMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Local clearCart action should still be called once despite server rejection
+    await waitFor(() => {
+      expect(mockClearCartAction).toHaveBeenCalledTimes(1);
+    });
+
+    // sessionStorage should be cleared for all orderIds
+    await waitFor(() => {
+      expect(mockSessionStorage.getItem(`order_${orderIds[0]}`)).toBeNull();
+      expect(mockSessionStorage.getItem(`order_${orderIds[1]}`)).toBeNull();
+    });
+  });
+
+  it('success === false -> local clearCart NOT called', async () => {
+    const refId = 555666;
+    const serverMessage = 'Order confirmation failed';
+    const mocks: MockedResponse[] = [
+      {
+        request: {
+          query: VERIFY_ZARINPAL_PAYMENT_MUTATION,
+          variables: expect.objectContaining({
+            input: expect.objectContaining({ authority, amount, order_id: orderId }),
+          }),
+        },
+        result: {
+          data: {
+            verifyZarinPalPayment: {
+              code: 100,
+              message: serverMessage,
+              ref_id: refId,
+              success: false,
+              orderIds,
+              orderId,
+              orderNumber,
+            },
+          },
+        },
+      },
+    ];
+
+    setupOrderInSessionStorage();
+
+    renderWithProviders(<CustomerPaymentCallback />, mocks);
+
+    await triggerVerification(`/?Status=OK&Authority=${authority}&orderId=${orderId}&orderIds=${orderIds.join(',')}`);
+
+    await waitFor(() => {
+      expect(screen.getByText('خطا در پرداخت')).toBeInTheDocument();
+    });
+
+    await waitFor(() => {
+      expect(screen.getByText(serverMessage)).toBeInTheDocument();
+    });
+
+    // Server clearCart mutation should NOT be called
+    expect(mockClearCartMutation).not.toHaveBeenCalled();
+
+    // Local clearCart action should NOT be called
+    expect(mockClearCartAction).not.toHaveBeenCalled();
+
+    // sessionStorage should NOT be cleared
+    expect(mockSessionStorage.getItem(`order_${orderId}`)).not.toBeNull();
+    expect(mockSessionStorage.getItem(`order_${orderIds[1]}`)).not.toBeNull();
   });
 });
