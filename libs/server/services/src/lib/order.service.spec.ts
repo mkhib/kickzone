@@ -43,6 +43,7 @@ describe('OrderService', () => {
 
   const mockSellerProductRepository = {
     findOne: jest.fn(),
+    findBy: jest.fn(),
     save: jest.fn(),
   };
 
@@ -2637,7 +2638,7 @@ describe('OrderService', () => {
 
       expect(orderRepository.find).toHaveBeenCalledWith({
         where: { paymentAuthority: authority },
-        relations: ['items', 'items.sellerProduct', 'customer', 'seller'],
+        relations: ['items', 'seller'],
         order: { id: 'ASC' },
       });
       expect(result).toHaveLength(2);
@@ -2660,9 +2661,221 @@ describe('OrderService', () => {
       expect(result).toEqual([]);
       expect(orderRepository.find).toHaveBeenCalledWith({
         where: { paymentAuthority: 'non-existent' },
-        relations: ['items', 'items.sellerProduct', 'customer', 'seller'],
+        relations: ['items', 'seller'],
         order: { id: 'ASC' },
       });
+    });
+
+    // Locked Test: relations passed to orderRepository.find are EXACTLY ['items', 'seller']
+    it('Locked: relations passed to find are EXACTLY [\'items\', \'seller\'] without unknown relations', async () => {
+      const mockOrders: Order[] = [
+        {
+          id: 'order-1',
+          orderNumber: 'ORD-1',
+          paymentAuthority: authority,
+          items: [
+            {
+              id: 'item-1',
+              orderId: 'order-1',
+              productId: 'product-1',
+              sellerProductId: 'sp-1',
+              productName: 'Test Product',
+              quantity: 1,
+              unitPrice: 100,
+              totalPrice: 100,
+            } as OrderItem,
+          ],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 100,
+          shippingCost: 10,
+          total: 110,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date(),
+        } as Order,
+      ];
+
+      orderRepository.find.mockResolvedValue(mockOrders);
+      sellerProductRepository.findBy.mockResolvedValue([]);
+
+      await service.findOrdersByPaymentAuthority(authority);
+
+      const findCall = orderRepository.find.mock.calls[0][0] as {
+        relations?: string[];
+      };
+      const relations = findCall.relations ?? [];
+      // LOCKED: Order has only items/seller relations; unknown relations make TypeORM throw
+      expect(relations).toEqual(['items', 'seller']);
+      expect(relations).not.toContain('customer');
+      expect(relations).not.toContain('items.sellerProduct');
+    });
+
+    it('hydrates sellerProduct on items when sellerProductId exists', async () => {
+      const mockSellerProduct1: SellerProduct = {
+        id: 'sp-1',
+        price: 100,
+        discount: 0,
+        stockQuantity: 10,
+        productInfoId: 1,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
+      } as SellerProduct;
+      const mockSellerProduct2: SellerProduct = {
+        id: 'sp-2',
+        price: 200,
+        discount: 10,
+        stockQuantity: 5,
+        productInfoId: 2,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
+      } as SellerProduct;
+
+      const mockOrders: Order[] = [
+        {
+          id: 'order-1',
+          orderNumber: 'ORD-1',
+          paymentAuthority: authority,
+          items: [
+            {
+              id: 'item-1',
+              orderId: 'order-1',
+              productId: 'product-1',
+              sellerProductId: 'sp-1',
+              productName: 'Product 1',
+              quantity: 1,
+              unitPrice: 100,
+              totalPrice: 100,
+            } as OrderItem,
+            {
+              id: 'item-2',
+              orderId: 'order-1',
+              productId: 'product-2',
+              sellerProductId: 'sp-2',
+              productName: 'Product 2',
+              quantity: 2,
+              unitPrice: 200,
+              totalPrice: 400,
+            } as OrderItem,
+            {
+              id: 'item-3',
+              orderId: 'order-1',
+              productId: 'product-3',
+              sellerProductId: 'sp-unknown',
+              productName: 'Product 3',
+              quantity: 1,
+              unitPrice: 50,
+              totalPrice: 50,
+            } as OrderItem,
+          ],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 550,
+          shippingCost: 10,
+          total: 560,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date(),
+        } as Order,
+      ];
+
+      orderRepository.find.mockResolvedValue(mockOrders);
+      sellerProductRepository.findBy.mockResolvedValue([
+        mockSellerProduct1,
+        mockSellerProduct2,
+      ]);
+
+      const result = await service.findOrdersByPaymentAuthority(authority);
+
+      // findBy called with unique ids
+      expect(sellerProductRepository.findBy).toHaveBeenCalledTimes(1);
+      const findByArg = sellerProductRepository.findBy.mock.calls[0][0] as FindOptionsWhere<SellerProduct>;
+      // TypeORM In operator creates a FindOperator, check its value
+      const inOperator = findByArg.id as unknown as { _value?: string[] };
+      expect(inOperator._value?.sort()).toEqual(['sp-1', 'sp-2', 'sp-unknown'].sort());
+
+      // sellerProduct attached to items
+      const order = result[0];
+      expect((order.items[0] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toEqual(mockSellerProduct1);
+      expect((order.items[1] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toEqual(mockSellerProduct2);
+      // unknown id gets null
+      expect((order.items[2] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toBeNull();
+    });
+
+    it('does NOT call findBy when no item has a sellerProductId', async () => {
+      const mockOrders: Order[] = [
+        {
+          id: 'order-1',
+          orderNumber: 'ORD-1',
+          paymentAuthority: authority,
+          items: [
+            {
+              id: 'item-1',
+              orderId: 'order-1',
+              productId: 'product-1',
+              sellerProductId: '',
+              productName: 'Product 1',
+              quantity: 1,
+              unitPrice: 100,
+              totalPrice: 100,
+            } as OrderItem,
+            {
+              id: 'item-2',
+              orderId: 'order-1',
+              productId: 'product-2',
+              sellerProductId: undefined,
+              productName: 'Product 2',
+              quantity: 1,
+              unitPrice: 200,
+              totalPrice: 200,
+            } as OrderItem,
+          ],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 300,
+          shippingCost: 10,
+          total: 310,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date(),
+        } as Order,
+      ];
+
+      orderRepository.find.mockResolvedValue(mockOrders);
+
+      const result = await service.findOrdersByPaymentAuthority(authority);
+
+      expect(sellerProductRepository.findBy).not.toHaveBeenCalled();
+      expect(result).toHaveLength(1);
+      expect(result[0].items).toHaveLength(2);
+      // sellerProduct should be undefined/null since findBy wasn't called
+      expect((result[0].items[0] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toBeUndefined();
+      expect((result[0].items[1] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toBeUndefined();
     });
   });
 });

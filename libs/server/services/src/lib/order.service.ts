@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, Optional, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, DataSource, EntityManager } from 'typeorm';
+import { Repository, DataSource, EntityManager, In } from 'typeorm';
 import {
   Order,
   OrderItem,
@@ -626,11 +626,37 @@ export class OrderService {
 
   async findOrdersByPaymentAuthority(authority: string): Promise<Order[]> {
     if (!authority) return [];
-    return this.orderRepository.find({
+    const orders = await this.orderRepository.find({
       where: { paymentAuthority: authority },
-      relations: ['items', 'items.sellerProduct', 'customer', 'seller'],
+      relations: ['items', 'seller'],
       order: { id: 'ASC' },
     });
+
+    // Collect unique non-empty sellerProductId from all order items
+    const sellerProductIds = new Set<string>();
+    for (const order of orders) {
+      for (const item of order.items || []) {
+        if (item.sellerProductId) {
+          sellerProductIds.add(item.sellerProductId);
+        }
+      }
+    }
+
+    if (sellerProductIds.size > 0) {
+      const sellerProducts = await this.sellerProductRepository.findBy({
+        id: In(Array.from(sellerProductIds)),
+      });
+      const sellerProductMap = new Map(sellerProducts.map((sp) => [sp.id, sp]));
+
+      for (const order of orders) {
+        for (const item of order.items || []) {
+          (item as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct =
+            item.sellerProductId ? sellerProductMap.get(item.sellerProductId) ?? null : null;
+        }
+      }
+    }
+
+    return orders;
   }
 
   async cancelPendingOrder(orderId: string): Promise<Order> {
