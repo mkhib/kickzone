@@ -128,6 +128,7 @@ export type CreateOrderInput = {
   sellerId: Scalars['Int']['input'];
   shippingAddress: Scalars['String']['input'];
   shippingCost?: InputMaybe<Scalars['Float']['input']>;
+  shippingMethod?: InputMaybe<Scalars['String']['input']>;
   state: Scalars['String']['input'];
   zipCode: Scalars['String']['input'];
 };
@@ -171,6 +172,7 @@ export type CreateSellerInput = {
   password: Scalars['String']['input'];
   phone?: InputMaybe<Scalars['String']['input']>;
   shippingFee?: InputMaybe<Scalars['Float']['input']>;
+  shippingPaymentMode?: InputMaybe<ShippingPaymentMode>;
   storeName: Scalars['String']['input'];
   username: Scalars['String']['input'];
 };
@@ -662,6 +664,8 @@ export type Order = {
   sellerStoreName?: Maybe<Scalars['String']['output']>;
   shippingAddress: Scalars['String']['output'];
   shippingCost: Scalars['Float']['output'];
+  shippingMethod: Scalars['String']['output'];
+  shippingPaymentMode: ShippingPaymentMode;
   state: Scalars['String']['output'];
   status: OrderStatus;
   stockReserved: Scalars['Boolean']['output'];
@@ -704,6 +708,11 @@ export enum OrderStatus {
   Processing = 'PROCESSING',
   Refunded = 'REFUNDED',
   Shipped = 'SHIPPED'
+}
+
+export enum ShippingPaymentMode {
+  PayOnDelivery = 'PAY_ON_DELIVERY',
+  PayOnline = 'PAY_ONLINE'
 }
 
 export type OrdersConnection = {
@@ -1087,6 +1096,7 @@ export type SellerInfo = {
   phone?: Maybe<Scalars['String']['output']>;
   sellerProducts: Array<SellerProduct>;
   shippingFee: Scalars['Float']['output'];
+  shippingPaymentMode: ShippingPaymentMode;
   state?: Maybe<Scalars['String']['output']>;
   storeName: Scalars['String']['output'];
   user: User;
@@ -1105,6 +1115,8 @@ export type SellerOrder = {
   sellerPhone?: Maybe<Scalars['String']['output']>;
   sellerStoreName?: Maybe<Scalars['String']['output']>;
   shippingCost: Scalars['Float']['output'];
+  shippingMethod: Scalars['String']['output'];
+  shippingPaymentMode: ShippingPaymentMode;
   status: OrderStatus;
   subtotal: Scalars['Float']['output'];
   total: Scalars['Float']['output'];
@@ -1152,6 +1164,7 @@ export type SellerShippingInfoInput = {
   sellerId: Scalars['String']['input'];
   sellerName?: InputMaybe<Scalars['String']['input']>;
   shippingFee: Scalars['Float']['input'];
+  shippingPaymentMode?: InputMaybe<ShippingPaymentMode>;
 };
 
 export type SetExchangeRateInput = {
@@ -1313,6 +1326,7 @@ export type UpdateSellerInput = {
   name?: InputMaybe<Scalars['String']['input']>;
   phone?: InputMaybe<Scalars['String']['input']>;
   shippingFee?: InputMaybe<Scalars['Float']['input']>;
+  shippingPaymentMode?: InputMaybe<ShippingPaymentMode>;
   storeName?: InputMaybe<Scalars['String']['input']>;
   username?: InputMaybe<Scalars['String']['input']>;
 };

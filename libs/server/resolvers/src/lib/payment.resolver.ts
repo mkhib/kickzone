@@ -188,6 +188,11 @@ export class PaymentResolver {
       }
     }
 
+    // Recompute server-authoritative shipping across the entire batch before summing totals
+    if (typeof this.orderService.recalculateBatchOrdersShipping === 'function') {
+      await this.orderService.recalculateBatchOrdersShipping(orders);
+    }
+
     // Sum the USD totals across all orders in the batch
     const batchTotalUsd = orders.reduce(
       (sum, o) => sum + Number(o.total),

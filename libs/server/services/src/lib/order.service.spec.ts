@@ -9,8 +9,14 @@ import {
   OrderStatus,
   SellerProduct,
   SellerInfo,
+  ShippingPaymentMode,
+  ShippingStrategy,
 } from '@kickzone-workspace/entities';
 import { CreateOrderInput, UpdateOrderInput } from '@kickzone-workspace/inputs';
+import {
+  ShippingCalculationService,
+  applyShippingMethodMultiplier,
+} from './shipping-calculation.service';
 
 describe('OrderService', () => {
   let service: OrderService;
@@ -252,20 +258,25 @@ describe('OrderService', () => {
           { ...createOrderInput.items[0], sellerProductId: 'seller-product-1', totalPrice: 100 },
           { ...createOrderInput.items[0], productId: 'product-2', sellerProductId: 'seller-product-2', totalPrice: 50 },
         ],
+        shippingMethod: 'vip',
       };
       // Catalog prices: product-1 = 50, product-2 = 25 (different from client prices)
       const sellerProduct1 = { ...mockSellerProduct, id: 'seller-product-1', price: 50, discount: 0, seller: { id: 1 } as unknown as SellerProduct['seller'] } as SellerProduct;
       const sellerProduct2 = { ...mockSellerProduct, id: 'seller-product-2', price: 25, discount: 0, seller: { id: 1 } as unknown as SellerProduct['seller'] } as SellerProduct;
       const mockOrderItem1 = { ...mockOrderItem, totalPrice: 100, id: 'item-1', unitPrice: 50 } as OrderItem;
       const mockOrderItem2 = { ...mockOrderItem, productId: 'product-2', totalPrice: 50, id: 'item-2', unitPrice: 25 } as OrderItem;
+      const onlineSeller = { ...mockSeller, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE, shippingFee: 10 };
       const orderWithoutItems = {
         ...mockSavedOrder,
         items: undefined,
         subtotal: 150, // 50*2 + 25*2 = 100 + 50 = 150
-        total: 160,
+        total: 160, // 150 + 10 (vip = full fee)
+        shippingCost: 10,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
       } as never;
       orderRepository.create.mockReturnValue(orderWithoutItems);
-      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
       sellerProductRepository.findOne
         .mockResolvedValueOnce(sellerProduct1)
         .mockResolvedValueOnce(sellerProduct2);
@@ -279,48 +290,56 @@ describe('OrderService', () => {
       expect(result.items).toHaveLength(2);
     });
 
-    it('should use provided shipping cost over seller shipping fee', async () => {
+    it('should compute server shipping cost for PAY_ONLINE seller ignoring client shippingCost', async () => {
       const inputWithShipping = {
         ...createOrderInput,
-        shippingCost: 20,
+        shippingCost: 20, // This should be ignored
+        shippingMethod: 'vip',
       };
+      const onlineSeller = { ...mockSeller, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE, shippingFee: 10 };
       const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
-      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
       orderRepository.save.mockResolvedValue({
         ...orderWithoutItems,
-        shippingCost: 20,
-        total: 120,
+        shippingCost: 10, // Server computed: vip = 100% of 10
+        total: 110,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
       });
       orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
 
       const result = await service.createOrder(inputWithShipping);
 
-      expect(result.shippingCost).toBe(20);
-      expect(result.total).toBe(120);
+      expect(result.shippingCost).toBe(10); // Server computed, not client's 20
+      expect(result.total).toBe(110);
     });
 
-    it('should use seller shipping fee when shipping cost is not provided', async () => {
+    it('should compute zero shipping for PAY_ON_DELIVERY seller regardless of shippingFee', async () => {
       const inputWithoutShipping = {
         ...createOrderInput,
         shippingCost: undefined,
+        shippingMethod: 'vip',
       };
+      const codSeller = { ...mockSeller, shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY, shippingFee: 15 };
       const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
       orderRepository.create.mockReturnValue(orderWithoutItems);
-      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerInfoRepository.findOne.mockResolvedValue(codSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
       orderRepository.save.mockResolvedValue({
         ...orderWithoutItems,
-        shippingCost: 15,
-        total: 115,
+        shippingCost: 0,
+        total: 100,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY,
       });
       orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
 
       const result = await service.createOrder(inputWithoutShipping);
 
-      expect(result.shippingCost).toBe(15);
-      expect(result.total).toBe(115);
+      expect(result.shippingCost).toBe(0);
+      expect(result.total).toBe(100);
     });
 
     it('should preserve seller snapshot information', async () => {
@@ -566,20 +585,31 @@ describe('OrderService', () => {
       );
     });
 
-    it('should reject negative shipping cost', async () => {
+    it('should ignore client shippingCost (negative value is ignored, server computes based on seller mode)', async () => {
       const inputNegativeShipping = {
         ...createOrderInput,
         shippingCost: -5,
+        shippingMethod: 'vip',
       };
-
-      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
-      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      const onlineSeller = { ...mockSeller, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE, shippingFee: 10 };
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
       sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...orderWithoutItems,
+        shippingCost: 10,
+        total: 110,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+      });
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
 
-      await expect(service.createOrder(inputNegativeShipping)).rejects.toThrow(BadRequestException);
-      await expect(service.createOrder(inputNegativeShipping)).rejects.toThrow(
-        /Shipping cost cannot be negative/,
-      );
+      const result = await service.createOrder(inputNegativeShipping);
+
+      // Client shippingCost (-5) is ignored; server computes 10 for PAY_ONLINE + vip
+      expect(result.shippingCost).toBe(10);
+      expect(result.total).toBe(110);
     });
 
     it('should reject insufficient stock at create', async () => {
@@ -886,9 +916,10 @@ describe('OrderService', () => {
       // Locked Test 7: tampered client fields (unitPrice 0.01, totalPrice 0.01, subtotal 0.01, total 0.01 as any), qty 2, price 200, discount 25, stock 10, seller.shippingFee 10, shippingCost undefined -> order.save objectContaining({ subtotal: 300, shippingCost: 10, total: 310 }); orderItem.save [objectContaining({ unitPrice: 150, totalPrice: 300, originalPrice: 200, discountPercentage: 25 })]
       it('Locked Test 7: tampered client prices are ignored; catalog pricing and shippingFee fallback used', async () => {
         const sellerProduct = makeSellerProduct({ price: 200, discount: 25, stockQuantity: 10 });
-        const heavy6SellerWithFee = { ...heavy6Seller, shippingFee: 10 };
+        const heavy6SellerWithFee = { ...heavy6Seller, shippingFee: 10, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE };
         const input = baseInput({
           shippingCost: undefined,
+          shippingMethod: 'vip',
           items: [{
             ...baseItem,
             quantity: 2,
@@ -896,7 +927,7 @@ describe('OrderService', () => {
             totalPrice: 0.01,
           }],
         });
-        setupSuccessMocks(sellerProduct, { subtotal: 300, shippingCost: 10, total: 310 });
+        setupSuccessMocks(sellerProduct, { subtotal: 300, shippingCost: 10, total: 310, shippingMethod: 'vip', shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE });
         sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee);
 
         const result = await service.createOrder(input);
@@ -917,11 +948,13 @@ describe('OrderService', () => {
       // Locked Test 8: price 99.99, discount 15, stock 10, qty 3, shippingCost 0 -> orderItem.save [objectContaining({ unitPrice: 84.99, totalPrice: 254.97 })]; order.save objectContaining({ subtotal: 254.97, shippingCost: 0, total: 254.97 })
       it('Locked Test 8: precision pricing with discount and zero shippingCost', async () => {
         const sellerProduct = makeSellerProduct({ price: 99.99, discount: 15, stockQuantity: 10 });
+        const codSeller = { ...heavy6Seller, shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY };
         const input = baseInput({
           shippingCost: 0,
+          shippingMethod: 'vip',
           items: [{ ...baseItem, quantity: 3 }],
         });
-        setupSuccessMocks(sellerProduct, { subtotal: 254.97, shippingCost: 0, total: 254.97 });
+        setupSuccessMocks(sellerProduct, { subtotal: 254.97, shippingCost: 0, total: 254.97, shippingMethod: 'vip', shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY });
 
         const result = await service.createOrder(input);
 
@@ -936,40 +969,41 @@ describe('OrderService', () => {
         expect(result.total).toBe(254.97);
       });
 
-      // Locked Test 9: seller.shippingFee 15, item subtotal 100: (a) shippingCost 0 -> { subtotal: 100, shippingCost: 0, total: 100 }; (b) shippingCost null -> { subtotal: 100, shippingCost: 15, total: 115 }; (c) shippingCost NaN -> rejects 'Shipping cost must be a valid number'; (d) shippingCost -5 -> rejects 'Shipping cost cannot be negative'
-      it('Locked Test 9: shippingCost 0, null, NaN, negative handling', async () => {
+      // Locked Test 9: seller.shippingFee 15, item subtotal 100: client shippingCost is ignored; server computes based on seller shippingPaymentMode
+      it('Locked Test 9: client shippingCost ignored; server computes based on seller shippingPaymentMode', async () => {
         const sellerProduct = makeSellerProduct({ price: 100, discount: 0, stockQuantity: 10 });
-        const heavy6SellerWithFee15 = { ...heavy6Seller, shippingFee: 15 };
 
-        // (a) shippingCost 0 -> free shipping preserved
-        const inputZero = baseInput({ shippingCost: 0, items: [{ ...baseItem, quantity: 1 }] });
-        setupSuccessMocks(sellerProduct, { subtotal: 100, shippingCost: 0, total: 100 });
-        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
+        // (a) PAY_ON_DELIVERY seller: any client shippingCost -> shippingCost = 0
+        const codSeller = { ...heavy6Seller, shippingFee: 15, shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY };
+        const inputZero = baseInput({ shippingCost: 0, shippingMethod: 'vip', items: [{ ...baseItem, quantity: 1 }] });
+        setupSuccessMocks(sellerProduct, { subtotal: 100, shippingCost: 0, total: 100, shippingMethod: 'vip', shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY });
+        sellerInfoRepository.findOne.mockResolvedValue(codSeller);
         let result = await service.createOrder(inputZero);
         expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 0, total: 100 }));
 
-        // (b) shippingCost null -> falls back to seller.shippingFee (15)
-        const inputNull = baseInput({ shippingCost: null as never, items: [{ ...baseItem, quantity: 1 }] });
-        setupSuccessMocks(sellerProduct, { subtotal: 100, shippingCost: 15, total: 115 });
-        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
+        // (b) PAY_ONLINE seller with vip: client shippingCost null -> server computes full fee (15)
+        const onlineSeller = { ...heavy6Seller, shippingFee: 15, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE };
+        const inputNull = baseInput({ shippingCost: null as never, shippingMethod: 'vip', items: [{ ...baseItem, quantity: 1 }] });
+        setupSuccessMocks(sellerProduct, { subtotal: 100, shippingCost: 15, total: 115, shippingMethod: 'vip', shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE });
+        sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
         result = await service.createOrder(inputNull);
         expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 15, total: 115 }));
 
-        // (c) shippingCost NaN -> rejects 'Shipping cost must be a valid number'
-        const inputNaN = baseInput({ shippingCost: NaN, items: [{ ...baseItem, quantity: 1 }] });
+        // (c) PAY_ONLINE seller: client shippingCost NaN -> ignored, server computes
+        const inputNaN = baseInput({ shippingCost: NaN, shippingMethod: 'vip', items: [{ ...baseItem, quantity: 1 }] });
         orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
-        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
+        sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
         sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
-        await expect(service.createOrder(inputNaN)).rejects.toThrow(BadRequestException);
-        await expect(service.createOrder(inputNaN)).rejects.toThrow('Shipping cost must be a valid number');
+        result = await service.createOrder(inputNaN);
+        expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 15, total: 115 }));
 
-        // (d) shippingCost -5 -> rejects 'Shipping cost cannot be negative'
-        const inputNegative = baseInput({ shippingCost: -5, items: [{ ...baseItem, quantity: 1 }] });
+        // (d) PAY_ONLINE seller: client shippingCost -5 -> ignored, server computes
+        const inputNegative = baseInput({ shippingCost: -5, shippingMethod: 'vip', items: [{ ...baseItem, quantity: 1 }] });
         orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
-        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee15);
+        sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
         sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
-        await expect(service.createOrder(inputNegative)).rejects.toThrow(BadRequestException);
-        await expect(service.createOrder(inputNegative)).rejects.toThrow('Shipping cost cannot be negative');
+        result = await service.createOrder(inputNegative);
+        expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 15, total: 115 }));
       });
     });
   });
@@ -2877,5 +2911,271 @@ describe('OrderService', () => {
       expect((result[0].items[0] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toBeUndefined();
       expect((result[0].items[1] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toBeUndefined();
     });
+  });
+});
+
+describe('OrderService - Shipping Security & Payment Modes', () => {
+  const baseOrderInput = {
+    customerName: 'Ali Rezaei',
+    customerEmail: 'ali@example.com',
+    customerPhone: '+989121234567',
+    shippingAddress: 'Valiasr St 123',
+    city: 'Tehran',
+    state: 'Tehran',
+    zipCode: '1968633111',
+    country: 'Iran',
+    sellerId: 1,
+    items: [
+      {
+        productId: '10',
+        sellerProductId: '11111111-1111-4111-8111-111111111111',
+        productName: 'Nike Tech Fleece',
+        quantity: 2,
+        unitPrice: 50,
+        totalPrice: 100,
+      },
+    ],
+  };
+
+  function createHarness(options?: {
+    sellers?: Record<number, { id: number; storeName: string; shippingFee: number; shippingPaymentMode?: ShippingPaymentMode }>;
+    platformSettings?: Partial<{
+      freeShippingEnabled: boolean;
+      freeShippingThreshold: number;
+      shippingStrategy: ShippingStrategy;
+      additionalSellerDiscount: number;
+      maxShippingCapEnabled: boolean;
+      maxShippingCap: number;
+    }>;
+  }) {
+    const sellersMap = options?.sellers ?? {
+      1: { id: 1, storeName: 'Seller One', shippingFee: 10 },
+    };
+
+    const orderRepository = {
+      create: jest.fn((dto) => ({ ...dto })),
+      save: jest.fn(async (entity) => ({ id: entity.id || 'order-1', ...entity })),
+      findOne: jest.fn(),
+    };
+    const orderItemRepository = {
+      save: jest.fn(async (items) => items),
+    };
+    const sellerProductRepository = {
+      findOne: jest.fn(async ({ where: { id } }) => ({
+        id,
+        price: 50,
+        discount: 0,
+        stockQuantity: 10,
+        productInfoId: 100,
+        seller: sellersMap[1],
+      })),
+    };
+    const sellerInfoRepository = {
+      findOne: jest.fn(async ({ where: { id } }) => sellersMap[id] ?? null),
+    };
+    const platformSettingsRepository = {
+      findOne: jest.fn(async () => ({
+        id: 1,
+        freeShippingEnabled: false,
+        freeShippingThreshold: 500,
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        additionalSellerDiscount: 0.5,
+        maxShippingCapEnabled: false,
+        maxShippingCap: 50,
+        ...options?.platformSettings,
+      })),
+    };
+
+    const shippingCalcService = new ShippingCalculationService(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      platformSettingsRepository as any
+    );
+
+    const service = new OrderService(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      orderRepository as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      orderItemRepository as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      sellerProductRepository as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      sellerInfoRepository as any,
+      shippingCalcService,
+      undefined
+    );
+
+    return { service, orderRepository, sellerProductRepository };
+  }
+
+  it('1. defaults seller shippingPaymentMode to PAY_ON_DELIVERY and forces shippingCost to 0', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: { id: 1, storeName: 'Default Mode Seller', shippingFee: 15 },
+      },
+    });
+
+    const order = await service.createOrder({
+      ...baseOrderInput,
+      shippingMethod: 'vip',
+    });
+
+    expect(order.shippingPaymentMode).toBe(ShippingPaymentMode.PAY_ON_DELIVERY);
+    expect(order.shippingCost).toBe(0);
+    expect(order.subtotal).toBe(100);
+    expect(order.total).toBe(100);
+  });
+
+  it('2. ignores any client shippingCost (0, positive, or huge) for a PAY_ON_DELIVERY seller and yields 0', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: {
+          id: 1,
+          storeName: 'COD Seller',
+          shippingFee: 20,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY,
+        },
+      },
+    });
+
+    for (const clientFee of [0, 12.5, 999.99]) {
+      const order = await service.createOrder({
+        ...baseOrderInput,
+        shippingCost: clientFee,
+        shippingMethod: 'vip',
+      });
+      expect(order.shippingCost).toBe(0);
+      expect(order.total).toBe(100);
+    }
+  });
+
+  it('3. computes server fee for PAY_ONLINE sellers per method (pickup = 0, express = 45%, vip = 100%) ignoring client 0', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: {
+          id: 1,
+          storeName: 'Online Seller',
+          shippingFee: 10,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+        },
+      },
+    });
+
+    const pickupOrder = await service.createOrder({
+      ...baseOrderInput,
+      shippingCost: 0,
+      shippingMethod: 'pickup',
+    });
+    expect(pickupOrder.shippingCost).toBe(0);
+    expect(pickupOrder.total).toBe(100);
+
+    const expressOrder = await service.createOrder({
+      ...baseOrderInput,
+      shippingCost: 0,
+      shippingMethod: 'express',
+    });
+    expect(expressOrder.shippingCost).toBe(4.5);
+    expect(expressOrder.total).toBe(104.5);
+
+    const vipOrder = await service.createOrder({
+      ...baseOrderInput,
+      shippingCost: 0,
+      shippingMethod: 'vip',
+    });
+    expect(vipOrder.shippingCost).toBe(10);
+    expect(vipOrder.total).toBe(110);
+  });
+
+  it('4. overrides a higher client shippingCost on a PAY_ONLINE seller with the exact server-computed fee', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: {
+          id: 1,
+          storeName: 'Online Seller',
+          shippingFee: 10,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+        },
+      },
+    });
+
+    const order = await service.createOrder({
+      ...baseOrderInput,
+      shippingCost: 500,
+      shippingMethod: 'express',
+    });
+
+    expect(order.shippingCost).toBe(4.5);
+    expect(order.total).toBe(104.5);
+  });
+
+  it('5. recalculates mixed cart batch properly: PAY_ON_DELIVERY gets 0 and does not consume first-seller tier for PAY_ONLINE sellers', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: {
+          id: 1,
+          storeName: 'COD Seller 1',
+          shippingFee: 25,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY,
+        },
+        2: {
+          id: 2,
+          storeName: 'Online Seller 2',
+          shippingFee: 10,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+        },
+        3: {
+          id: 3,
+          storeName: 'Online Seller 3',
+          shippingFee: 8,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+        },
+      },
+      platformSettings: {
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        additionalSellerDiscount: 0.5, // 50% off for 2nd online seller
+      },
+    });
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const batchOrders: any[] = [
+      {
+        id: 'ord-cod-1',
+        sellerId: 1,
+        subtotal: 100,
+        shippingCost: 25, // poisoned initial value
+        total: 125,
+        shippingMethod: 'vip',
+        status: OrderStatus.PENDING,
+      },
+      {
+        id: 'ord-on-3',
+        sellerId: 3,
+        subtotal: 50,
+        shippingCost: 0,
+        total: 50,
+        shippingMethod: 'express', // 45% of (8 * 0.5 = 4) => 1.80
+        status: OrderStatus.PENDING,
+      },
+      {
+        id: 'ord-on-2',
+        sellerId: 2,
+        subtotal: 80,
+        shippingCost: 0,
+        total: 80,
+        shippingMethod: 'vip', // 1st online seller (id 2 < id 3): full 10
+        status: OrderStatus.PENDING,
+      },
+    ];
+
+    const updated = await service.recalculateBatchOrdersShipping(batchOrders);
+    const byId = Object.fromEntries(updated.map((o) => [o.id, o]));
+
+    expect(byId['ord-cod-1'].shippingCost).toBe(0);
+    expect(byId['ord-cod-1'].total).toBe(100);
+
+    expect(byId['ord-on-2'].shippingCost).toBe(10);
+    expect(byId['ord-on-2'].total).toBe(90);
+
+    expect(byId['ord-on-3'].shippingCost).toBe(1.8);
+    expect(byId['ord-on-3'].total).toBe(51.8);
   });
 });

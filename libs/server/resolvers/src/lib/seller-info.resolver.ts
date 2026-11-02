@@ -5,6 +5,7 @@ import {
   SellerProduct,
   User,
   UserRole,
+  ShippingPaymentMode,
 } from '@kickzone-workspace/entities';
 import { RolesGuard } from '@kickzone-workspace/guards';
 import {
@@ -263,5 +264,10 @@ export class SellerResolver {
   @ResolveField(() => Number)
   shippingFee(@Parent() seller: SellerInfo) {
     return seller.shippingFee;
+  }
+
+  @ResolveField(() => ShippingPaymentMode)
+  shippingPaymentMode(@Parent() seller: SellerInfo): ShippingPaymentMode {
+    return seller.shippingPaymentMode ?? ShippingPaymentMode.PAY_ON_DELIVERY;
   }
 }

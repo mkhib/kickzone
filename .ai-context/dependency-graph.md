@@ -1363,173 +1363,174 @@ R1["product-validation.spec.ts"]
 R2["product.resolver.spec.ts"]
 R3["query-args-validation.spec.ts"]
 R4["seller-info-validation.spec.ts"]
-R5["taxonomy-validation.spec.ts"]
-R6["translation.resolver.guards.spec.ts"]
-subgraph R7["types"]
-R8["graphql-upload.d.ts"]
+R5["seller-info.resolver.spec.ts"]
+R6["taxonomy-validation.spec.ts"]
+R7["translation.resolver.guards.spec.ts"]
+subgraph R8["types"]
+R9["graphql-upload.d.ts"]
 end
-R9["user.resolver.spec.ts"]
-RA["zod-validation.pipe.spec.ts"]
-end
-end
-end
-subgraph RB["services"]
-RC["jest.config.ts"]
-subgraph RD["src"]
-RE["index.ts"]
-subgraph RF["lib"]
-RG["auth.service.ts"]
-RH["brand.service.ts"]
-RI["cart.service.ts"]
-RJ["product-info-colors.util.ts"]
-RK["category.service.ts"]
-RL["color.service.ts"]
-RM["currency.service.ts"]
-RN["customer-profile.service.ts"]
-RO["email.service.ts"]
-RP["image-upload.service.ts"]
-RQ["order.service.ts"]
-RR["payment-logger.service.ts"]
-RS["payment.service.ts"]
-RT["product.service.ts"]
-RU["seller-info.service.ts"]
-RV["shipping-calculation.service.ts"]
-RW["site-language.service.ts"]
-RX["token.service.ts"]
-RY["translation.service.ts"]
-RZ["user.service.ts"]
-S0["auth.service.password-policy.spec.ts"]
-S1["auth.service.spec.ts"]
-S2["cart.service.add-quantity.spec.ts"]
-S3["cart.service.null-relations.spec.ts"]
-S4["cart.service.spec.ts"]
-S5["order.service.spec.ts"]
-S6["order.service.tracking.spec.ts"]
-S7["product-info-colors.util.spec.ts"]
-S8["product.service.multi-filters.spec.ts"]
-S9["product.service.only-discounted.spec.ts"]
-SA["product.service.pants.spec.ts"]
-SB["product.service.spec.ts"]
-SC["relay-connection.spec.ts"]
-SD["seller-info.service.price-validation.spec.ts"]
-SE["shipping-calculation.service.spec.ts"]
-SF["token.service.spec.ts"]
+RA["user.resolver.spec.ts"]
+RB["zod-validation.pipe.spec.ts"]
 end
 end
 end
-subgraph SG["strategies"]
-subgraph SH["src"]
-SI["index.ts"]
-subgraph SJ["lib"]
-SK["local.strategy.ts"]
+subgraph RC["services"]
+RD["jest.config.ts"]
+subgraph RE["src"]
+RF["index.ts"]
+subgraph RG["lib"]
+RH["auth.service.ts"]
+RI["brand.service.ts"]
+RJ["cart.service.ts"]
+RK["product-info-colors.util.ts"]
+RL["category.service.ts"]
+RM["color.service.ts"]
+RN["currency.service.ts"]
+RO["customer-profile.service.ts"]
+RP["email.service.ts"]
+RQ["image-upload.service.ts"]
+RR["order.service.ts"]
+RS["shipping-calculation.service.ts"]
+RT["payment-logger.service.ts"]
+RU["payment.service.ts"]
+RV["product.service.ts"]
+RW["seller-info.service.ts"]
+RX["site-language.service.ts"]
+RY["token.service.ts"]
+RZ["translation.service.ts"]
+S0["user.service.ts"]
+S1["auth.service.password-policy.spec.ts"]
+S2["auth.service.spec.ts"]
+S3["cart.service.add-quantity.spec.ts"]
+S4["cart.service.null-relations.spec.ts"]
+S5["cart.service.spec.ts"]
+S6["order.service.spec.ts"]
+S7["order.service.tracking.spec.ts"]
+S8["product-info-colors.util.spec.ts"]
+S9["product.service.multi-filters.spec.ts"]
+SA["product.service.only-discounted.spec.ts"]
+SB["product.service.pants.spec.ts"]
+SC["product.service.spec.ts"]
+SD["relay-connection.spec.ts"]
+SE["seller-info.service.price-validation.spec.ts"]
+SF["shipping-calculation.service.spec.ts"]
+SG["token.service.spec.ts"]
 end
 end
 end
-subgraph SL["utils"]
-subgraph SM["src"]
-SN["index.ts"]
-subgraph SO["lib"]
-SP["email-templates.ts"]
-SQ["relay-connection.ts"]
-SR["pagination.ts"]
+subgraph SH["strategies"]
+subgraph SI["src"]
+SJ["index.ts"]
+subgraph SK["lib"]
+SL["local.strategy.ts"]
 end
 end
 end
-end
-subgraph SS["shared"]
-subgraph ST["codegen"]
-SU["jest.config.ts"]
-subgraph SV["src"]
-SW["index.ts"]
-subgraph SX["lib"]
-subgraph SY["generated"]
-SZ["graphql.ts"]
+subgraph SM["utils"]
+subgraph SN["src"]
+SO["index.ts"]
+subgraph SP["lib"]
+SQ["email-templates.ts"]
+SR["relay-connection.ts"]
+SS["pagination.ts"]
 end
 end
 end
 end
-subgraph T0["graphql-schema"]
-T1["jest.config.ts"]
-subgraph T2["src"]
-T3["index.ts"]
-end
-end
-subgraph T4["product-sizes"]
-subgraph T5["src"]
-T6["index.ts"]
-subgraph T7["lib"]
-T8["product-sizes.ts"]
-T9["product-sizes.pants-formats.spec.ts"]
-TA["product-sizes.pants-label.spec.ts"]
-TB["product-sizes.pants-strict.spec.ts"]
-TC["product-sizes.spec.ts"]
+subgraph ST["shared"]
+subgraph SU["codegen"]
+SV["jest.config.ts"]
+subgraph SW["src"]
+SX["index.ts"]
+subgraph SY["lib"]
+subgraph SZ["generated"]
+T0["graphql.ts"]
 end
 end
 end
-subgraph TD["shared-i18n"]
-subgraph TE["src"]
-TF["index.ts"]
-subgraph TG["lib"]
-TH["language-context.tsx"]
-TI["language-detector.ts"]
-subgraph TJ["locales"]
-TK["i18n-react.tsx"]
-TL["i18n-util.ts"]
-TM["i18n-util.async.ts"]
-subgraph TN["en"]
-TO["index.ts"]
 end
-subgraph TQ["fa"]
-TR["index.ts"]
+subgraph T1["graphql-schema"]
+T2["jest.config.ts"]
+subgraph T3["src"]
+T4["index.ts"]
 end
-TS["formatters.ts"]
-TT["i18n-types.ts"]
-TU["i18n-util.sync.ts"]
-TV["navigator-detector.ts"]
 end
-TP["site-name.ts"]
-TW["table-localization.ts"]
-TX["theme-provider.tsx"]
-TY["use-page-title.ts"]
+subgraph T5["product-sizes"]
+subgraph T6["src"]
+T7["index.ts"]
+subgraph T8["lib"]
+T9["product-sizes.ts"]
+TA["product-sizes.pants-formats.spec.ts"]
+TB["product-sizes.pants-label.spec.ts"]
+TC["product-sizes.pants-strict.spec.ts"]
+TD["product-sizes.spec.ts"]
 end
 end
 end
-subgraph TZ["validation"]
-subgraph U0["src"]
-U1["index.ts"]
-subgraph U2["lib"]
-U3["apollo-error.ts"]
-U4["auth.ts"]
-U5["limits.ts"]
-U6["primitives.ts"]
-U7["auth-forms.ts"]
-U8["cart.ts"]
-U9["catalog.ts"]
-UA["contact.ts"]
-UB["currency.ts"]
-UC["taxonomy.ts"]
-UD["errors.ts"]
-UE["order.ts"]
-UF["profile.ts"]
-UG["query.ts"]
-UH["seller.ts"]
-UI["auth-forms.admin.spec.ts"]
-UJ["auth-forms.login.spec.ts"]
-UK["auth-forms.recovery.spec.ts"]
-UL["auth-forms.seller.spec.ts"]
-UM["auth-forms.spec.ts"]
-UN["auth.spec.ts"]
-UO["cart.spec.ts"]
-UP["catalog.spec.ts"]
-UQ["contact.spec.ts"]
-UR["currency.spec.ts"]
-US["errors.spec.ts"]
-UT["order.spec.ts"]
-UU["primitives.spec.ts"]
-UV["profile.spec.ts"]
-UW["query.spec.ts"]
-UX["seller.spec.ts"]
-UY["taxonomy.spec.ts"]
+subgraph TE["shared-i18n"]
+subgraph TF["src"]
+TG["index.ts"]
+subgraph TH["lib"]
+TI["language-context.tsx"]
+TJ["language-detector.ts"]
+subgraph TK["locales"]
+TL["i18n-react.tsx"]
+TM["i18n-util.ts"]
+TN["i18n-util.async.ts"]
+subgraph TO["en"]
+TP["index.ts"]
+end
+subgraph TR["fa"]
+TS["index.ts"]
+end
+TT["formatters.ts"]
+TU["i18n-types.ts"]
+TV["i18n-util.sync.ts"]
+TW["navigator-detector.ts"]
+end
+TQ["site-name.ts"]
+TX["table-localization.ts"]
+TY["theme-provider.tsx"]
+TZ["use-page-title.ts"]
+end
+end
+end
+subgraph U0["validation"]
+subgraph U1["src"]
+U2["index.ts"]
+subgraph U3["lib"]
+U4["apollo-error.ts"]
+U5["auth.ts"]
+U6["limits.ts"]
+U7["primitives.ts"]
+U8["auth-forms.ts"]
+U9["cart.ts"]
+UA["catalog.ts"]
+UB["contact.ts"]
+UC["currency.ts"]
+UD["taxonomy.ts"]
+UE["errors.ts"]
+UF["order.ts"]
+UG["profile.ts"]
+UH["query.ts"]
+UI["seller.ts"]
+UJ["auth-forms.admin.spec.ts"]
+UK["auth-forms.login.spec.ts"]
+UL["auth-forms.recovery.spec.ts"]
+UM["auth-forms.seller.spec.ts"]
+UN["auth-forms.spec.ts"]
+UO["auth.spec.ts"]
+UP["cart.spec.ts"]
+UQ["catalog.spec.ts"]
+UR["contact.spec.ts"]
+US["currency.spec.ts"]
+UT["errors.spec.ts"]
+UU["order.spec.ts"]
+UV["primitives.spec.ts"]
+UW["profile.spec.ts"]
+UX["query.spec.ts"]
+UY["seller.spec.ts"]
+UZ["taxonomy.spec.ts"]
 end
 end
 end
@@ -2068,142 +2069,145 @@ R3-->QJ
 R3-->Q8
 R4-->QJ
 R4-->Q8
-R5-->Q9
-R5-->QB
-R5-->QC
-R5-->QL
-R5-->Q8
-R6-->QN
-R9-->QO
-RA-->Q8
-RE-->RG
-RE-->RH
-RE-->RI
-RE-->RK
-RE-->RL
-RE-->RM
-RE-->RN
-RE-->RO
-RE-->RP
-RE-->RQ
-RE-->RR
-RE-->RS
-RE-->RJ
-RE-->RT
-RE-->RU
-RE-->RV
-RE-->RW
-RE-->RX
-RE-->RY
-RE-->RZ
-RI-->RJ
-RT-->RJ
-RU-->RJ
-S0-->RG
-S0-->RO
-S0-->RX
-S0-->RZ
-S1-->RG
-S1-->RO
-S1-->RX
-S1-->RZ
-S2-->RI
-S3-->RI
-S4-->RI
-S5-->RQ
-S6-->RQ
-S7-->RJ
-S8-->RT
-S8-->RY
-S9-->RT
-S9-->RY
-SA-->RT
-SA-->RY
-SB-->RT
-SB-->RY
-SD-->RG
-SD-->RU
-SE-->RV
-SF-->RX
-SI-->SK
-SN-->SP
-SN-->SQ
-SW-->SZ
-T6-->T8
-T9-->T8
-TA-->T8
-TB-->T8
-TC-->T8
-TF-->TH
-TF-->TI
-TF-->TK
-TF-->TT
-TF-->TL
-TF-->TM
-TF-->TU
-TF-->TV
-TF-->TP
-TF-->TW
-TF-->TX
-TF-->TY
-TH-->TI
-TH-->TK
-TH-->TM
-TK-->TL
-TM-->TO
-TM-->TR
-TM-->TS
-TM-->TL
-TO-->TP
-TR-->TP
-TU-->TO
-TU-->TR
-TU-->TS
-TU-->TL
-TW-->TK
-TX-->TH
-TY-->TK
-U1-->U3
-U1-->U4
-U1-->U7
-U1-->U8
-U1-->U9
-U1-->UA
-U1-->UB
-U1-->UD
-U1-->U5
-U1-->UE
-U1-->U6
-U1-->UF
-U1-->UG
-U1-->UH
-U1-->UC
-U4-->U5
-U4-->U6
-U6-->U5
-U7-->U4
-U8-->U6
-UB-->UC
-UE-->U4
-UE-->U8
-UE-->U6
-UF-->UE
-UG-->U6
-UI-->U7
-UJ-->U7
-UK-->U7
-UL-->U7
-UM-->U7
-UN-->U4
-UO-->U8
+R5-->QJ
+R6-->Q9
+R6-->QB
+R6-->QC
+R6-->QL
+R6-->Q8
+R7-->QN
+RA-->QO
+RB-->Q8
+RF-->RH
+RF-->RI
+RF-->RJ
+RF-->RL
+RF-->RM
+RF-->RN
+RF-->RO
+RF-->RP
+RF-->RQ
+RF-->RR
+RF-->RT
+RF-->RU
+RF-->RK
+RF-->RV
+RF-->RW
+RF-->RS
+RF-->RX
+RF-->RY
+RF-->RZ
+RF-->S0
+RJ-->RK
+RR-->RS
+RV-->RK
+RW-->RK
+S1-->RH
+S1-->RP
+S1-->RY
+S1-->S0
+S2-->RH
+S2-->RP
+S2-->RY
+S2-->S0
+S3-->RJ
+S4-->RJ
+S5-->RJ
+S6-->RR
+S6-->RS
+S7-->RR
+S8-->RK
+S9-->RV
+S9-->RZ
+SA-->RV
+SA-->RZ
+SB-->RV
+SB-->RZ
+SC-->RV
+SC-->RZ
+SE-->RH
+SE-->RW
+SF-->RS
+SG-->RY
+SJ-->SL
+SO-->SQ
+SO-->SR
+SX-->T0
+T7-->T9
+TA-->T9
+TB-->T9
+TC-->T9
+TD-->T9
+TG-->TI
+TG-->TJ
+TG-->TL
+TG-->TU
+TG-->TM
+TG-->TN
+TG-->TV
+TG-->TW
+TG-->TQ
+TG-->TX
+TG-->TY
+TG-->TZ
+TI-->TJ
+TI-->TL
+TI-->TN
+TL-->TM
+TN-->TP
+TN-->TS
+TN-->TT
+TN-->TM
+TP-->TQ
+TS-->TQ
+TV-->TP
+TV-->TS
+TV-->TT
+TV-->TM
+TX-->TL
+TY-->TI
+TZ-->TL
+U2-->U4
+U2-->U5
+U2-->U8
+U2-->U9
+U2-->UA
+U2-->UB
+U2-->UC
+U2-->UE
+U2-->U6
+U2-->UF
+U2-->U7
+U2-->UG
+U2-->UH
+U2-->UI
+U2-->UD
+U5-->U6
+U5-->U7
+U7-->U6
+U8-->U5
+U9-->U7
+UC-->UD
+UF-->U5
+UF-->U9
+UF-->U7
+UG-->UF
+UH-->U7
+UJ-->U8
+UK-->U8
+UL-->U8
+UM-->U8
+UN-->U8
+UO-->U5
 UP-->U9
 UQ-->UA
 UR-->UB
-US-->UD
+US-->UC
 UT-->UE
-UU-->U5
-UU-->U6
-UV-->UF
+UU-->UF
+UV-->U6
+UV-->U7
 UW-->UG
 UX-->UH
-UY-->UC
+UY-->UI
+UZ-->UD

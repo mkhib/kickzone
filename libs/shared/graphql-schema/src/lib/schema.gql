@@ -163,6 +163,7 @@ type SellerInfo {
   isActive: Boolean!
   canManageCatalog: Boolean!
   shippingFee: Float!
+  shippingPaymentMode: ShippingPaymentMode!
   user: User!
   sellerProducts: [SellerProduct!]!
 }
@@ -193,6 +194,8 @@ type Order {
   stockReserved: Boolean!
   subtotal: Float!
   shippingCost: Float!
+  shippingMethod: String!
+  shippingPaymentMode: ShippingPaymentMode!
   total: Float!
   paymentAmount: Float
   paymentCurrency: String
@@ -217,6 +220,11 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   REFUNDED
+}
+
+enum ShippingPaymentMode {
+  PAY_ON_DELIVERY
+  PAY_ONLINE
 }
 
 type OrderItem {
@@ -329,6 +337,8 @@ type SellerOrder {
   status: OrderStatus!
   subtotal: Float!
   shippingCost: Float!
+  shippingMethod: String!
+  shippingPaymentMode: ShippingPaymentMode!
   total: Float!
   notes: String
   trackingNumber: String
@@ -494,6 +504,7 @@ input SellerShippingInfoInput {
   sellerId: String!
   shippingFee: Float!
   sellerName: String
+  shippingPaymentMode: ShippingPaymentMode
 }
 
 type Mutation {
@@ -679,6 +690,7 @@ input CreateSellerInput {
   phone: String
   address: String
   shippingFee: Float
+  shippingPaymentMode: ShippingPaymentMode
   canManageCatalog: Boolean
 }
 
@@ -692,6 +704,7 @@ input UpdateSellerInput {
   phone: String
   address: String
   shippingFee: Float
+  shippingPaymentMode: ShippingPaymentMode
   isActive: Boolean
   canManageCatalog: Boolean
 }
@@ -729,7 +742,8 @@ input CreateOrderInput {
   sellerId: Int!
   items: [CreateOrderItemInput!]!
   notes: String
-  shippingCost: Float
+  shippingCost: Float @deprecated(reason: "Ignored; computed server-side")
+  shippingMethod: String
 }
 
 input CreateOrderItemInput {

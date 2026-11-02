@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { PaymentResolver } from './payment.resolver';
 import { PaymentService, OrderService, CurrencyService } from '@kickzone-workspace/services';
-import { OrderStatus } from '@kickzone-workspace/entities';
+import { OrderStatus, ShippingPaymentMode } from '@kickzone-workspace/entities';
 import { ZarinPalPaymentRequestInput } from './payment.resolver';
 
 describe('PaymentResolver Unit Tests', () => {
@@ -1614,5 +1614,121 @@ it('does NOT treat CONFIRMED orders with stockReserved=undefined as idempotently
         expect(result).toBe(true);
       });
     });
+  });
+});
+
+describe('PaymentResolver - Batch Shipping Recomputation & Amount Guard', () => {
+  function setupResolver() {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const ordersDb: Record<string, any> = {
+      'ord-cod': {
+        id: 'ord-cod',
+        orderNumber: 'ORD-1',
+        customerEmail: 'buyer@example.com',
+        status: OrderStatus.PENDING,
+        sellerId: 1,
+        subtotal: 100,
+        shippingCost: 15, // stale/poisoned value before recalculation
+        total: 115,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY,
+      },
+      'ord-online': {
+        id: 'ord-online',
+        orderNumber: 'ORD-2',
+        customerEmail: 'buyer@example.com',
+        status: OrderStatus.PENDING,
+        sellerId: 2,
+        subtotal: 50,
+        shippingCost: 0, // client tried to send 0
+        total: 50,
+        shippingMethod: 'express', // 45% of $10 = $4.50
+        shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+      },
+    };
+
+    const paymentService = {
+      requestPayment: jest.fn(async () => ({
+        data: {
+          code: 100,
+          message: 'Success',
+          authority: 'A00000000000000000000000000000000000',
+        },
+        errors: [],
+      })),
+    };
+
+    const orderService = {
+      findOne: jest.fn(async (id: string) => ordersDb[id] ?? null),
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      recalculateBatchOrdersShipping: jest.fn(async (orders: any[]) => {
+        for (const o of orders) {
+          if (o.id === 'ord-cod') {
+            o.shippingCost = 0;
+            o.total = 100;
+          } else if (o.id === 'ord-online') {
+            o.shippingCost = 4.5;
+            o.total = 54.5;
+          }
+        }
+        return orders;
+      }),
+      setPaymentIntent: jest.fn(async () => ({})),
+    };
+
+    const currencyService = {
+      getCurrentExchangeRate: jest.fn(async () => ({ rate: 60000 })),
+    };
+
+    const resolver = new PaymentResolver(
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      paymentService as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      orderService as any,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      currencyService as any,
+    );
+
+    return { resolver, paymentService, orderService };
+  }
+
+  it('recomputes batch totals (COD = 0, Online Express = 4.50) and requests exact server Toman amount', async () => {
+    const { resolver, paymentService, orderService } = setupResolver();
+
+    // Server total = $100 (COD) + $54.50 (Online) = $154.50 * 60,000 = 9,270,000 Tomans
+    const expectedTomans = Math.round(154.5 * 60000);
+
+    const res = await resolver.requestZarinPalPayment({
+      amount: expectedTomans,
+      callback_url: 'https://saintbala.com/payment-callback',
+      description: 'Batch Order Payment',
+      currency: 'IRT',
+      orderIds: ['ord-cod', 'ord-online'],
+    });
+
+    expect(orderService.recalculateBatchOrdersShipping).toHaveBeenCalledTimes(1);
+    expect(paymentService.requestPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: 9270000,
+      }),
+    );
+    expect(res.authority).toBeDefined();
+  });
+
+  it('rejects payment request when client amount omits PAY_ONLINE shipping cost', async () => {
+    const { resolver } = setupResolver();
+
+    // Client tries to pay only item subtotals ($150 * 60,000 = 9,000,000) without the $4.50 online shipping
+    const tamperedClientAmount = Math.round(150 * 60000);
+
+    await expect(
+      resolver.requestZarinPalPayment({
+        amount: tamperedClientAmount,
+        callback_url: 'https://saintbala.com/payment-callback',
+        description: 'Tampered Payment',
+        currency: 'IRT',
+        orderIds: ['ord-cod', 'ord-online'],
+      }),
+    ).rejects.toThrow(BadRequestException);
   });
 });

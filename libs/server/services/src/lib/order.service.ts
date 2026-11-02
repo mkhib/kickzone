@@ -7,6 +7,7 @@ import {
   OrderStatus,
   SellerProduct,
   SellerInfo,
+  ShippingPaymentMode,
 } from '@kickzone-workspace/entities';
 import {
   CreateOrderInput,
@@ -14,6 +15,10 @@ import {
   OrdersConnection,
   OrderEdge,
 } from '@kickzone-workspace/inputs';
+import {
+  ShippingCalculationService,
+  applyShippingMethodMultiplier,
+} from './shipping-calculation.service';
 
 @Injectable()
 export class OrderService {
@@ -48,6 +53,8 @@ export class OrderService {
     private sellerProductRepository: Repository<SellerProduct>,
     @InjectRepository(SellerInfo)
     private sellerInfoRepository: Repository<SellerInfo>,
+    @Optional()
+    private readonly shippingCalculationService?: ShippingCalculationService,
     @Optional()
     @Inject(DataSource)
     private readonly dataSource?: DataSource,
@@ -172,19 +179,36 @@ export class OrderService {
       validatedItems.reduce((sum, item) => sum + item.catalogTotalPrice, 0).toFixed(2),
     );
 
-    // Validate shipping cost (must be finite and non-negative if provided; null/undefined falls back to seller.shippingFee || 0)
-    const shippingCost =
-      createOrderInput.shippingCost !== undefined &&
-      createOrderInput.shippingCost !== null
-        ? Number(createOrderInput.shippingCost)
-        : Number(seller.shippingFee || 0);
+    // Validate and normalize shipping method
+    const shippingMethod = this.normalizeShippingMethod(
+      createOrderInput.shippingMethod,
+    );
 
-    if (!Number.isFinite(shippingCost)) {
-      throw new BadRequestException('Shipping cost must be a valid number');
-    }
+    // Read seller's shipping payment mode
+    const paymentMode =
+      seller.shippingPaymentMode ?? ShippingPaymentMode.PAY_ON_DELIVERY;
 
-    if (shippingCost < 0) {
-      throw new BadRequestException('Shipping cost cannot be negative');
+    order.shippingMethod = shippingMethod;
+    order.shippingPaymentMode = paymentMode;
+
+    let shippingCost = 0;
+    if (paymentMode === ShippingPaymentMode.PAY_ONLINE) {
+      let baseFee = Number(seller.shippingFee || 0);
+      if (this.shippingCalculationService) {
+        const calc = await this.shippingCalculationService.calculateShippingCost(
+          order.subtotal,
+          [
+            {
+              sellerId: seller.id,
+              shippingFee: baseFee,
+              sellerName: seller.storeName,
+              shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+            },
+          ],
+        );
+        baseFee = calc.totalShippingCost;
+      }
+      shippingCost = applyShippingMethodMultiplier(baseFee, shippingMethod);
     }
 
     order.shippingCost = shippingCost;
@@ -213,6 +237,147 @@ export class OrderService {
     savedOrder.items = savedItems;
 
     return savedOrder;
+  }
+
+  private normalizeShippingMethod(
+    method?: string | null,
+  ): 'vip' | 'express' | 'pickup' {
+    if (method === undefined || method === null || method === '') {
+      return 'vip';
+    }
+    const normalized = String(method).trim().toLowerCase();
+    if (
+      normalized === 'vip' ||
+      normalized === 'express' ||
+      normalized === 'pickup'
+    ) {
+      return normalized;
+    }
+    throw new BadRequestException(`Invalid shipping method: ${method}`);
+  }
+
+  async recalculateBatchOrdersShipping(orders: Order[]): Promise<Order[]> {
+    if (!Array.isArray(orders) || orders.length === 0) {
+      return [];
+    }
+
+    // Load SellerInfo for each order if not already attached
+    const sellerMap = new Map<number, SellerInfo>();
+    for (const order of orders) {
+      if (order.seller) {
+        sellerMap.set(Number(order.sellerId), order.seller);
+      } else if (!sellerMap.has(Number(order.sellerId))) {
+        const found = await this.sellerInfoRepository.findOne({
+          where: { id: Number(order.sellerId) },
+        });
+        if (found) {
+          sellerMap.set(Number(order.sellerId), found);
+        }
+      }
+    }
+
+    const onlineOrders: Order[] = [];
+    const codOrders: Order[] = [];
+
+    for (const order of orders) {
+      const seller = sellerMap.get(Number(order.sellerId));
+      const mode =
+        seller?.shippingPaymentMode ??
+        order.shippingPaymentMode ??
+        ShippingPaymentMode.PAY_ON_DELIVERY;
+
+      if (mode === ShippingPaymentMode.PAY_ONLINE) {
+        onlineOrders.push(order);
+      } else {
+        codOrders.push(order);
+      }
+    }
+
+    // 1. Force all PAY_ON_DELIVERY orders to 0 shipping
+    for (const order of codOrders) {
+      const subtotal = Number(Number(order.subtotal).toFixed(2));
+      const changed =
+        Number(order.shippingCost) !== 0 ||
+        Number(order.total) !== subtotal ||
+        order.shippingPaymentMode !== ShippingPaymentMode.PAY_ON_DELIVERY;
+
+      order.shippingPaymentMode = ShippingPaymentMode.PAY_ON_DELIVERY;
+      order.shippingCost = 0;
+      order.total = subtotal;
+
+      if (changed) {
+        await this.orderRepository.save(order);
+      }
+    }
+
+    // 2. Recompute online shipping across all PAY_ONLINE orders in deterministic sellerId ASC order
+    if (onlineOrders.length > 0) {
+      const sortedOnline = [...onlineOrders].sort((a, b) => {
+        const diff = Number(a.sellerId) - Number(b.sellerId);
+        return diff !== 0 ? diff : String(a.id).localeCompare(String(b.id));
+      });
+
+      const onlineSubtotal = sortedOnline.reduce(
+        (sum, o) => sum + Number(o.subtotal),
+        0,
+      );
+
+      const sellerFeesInput = sortedOnline.map((o) => {
+        const seller = sellerMap.get(Number(o.sellerId));
+        return {
+          sellerId: Number(o.sellerId),
+          shippingFee: Number(seller?.shippingFee ?? 0),
+          sellerName: seller?.storeName ?? o.sellerStoreName,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+        };
+      });
+
+      const breakdownBySellerId = new Map<string, number>();
+      if (this.shippingCalculationService) {
+        const calc =
+          await this.shippingCalculationService.calculateShippingCost(
+            onlineSubtotal,
+            sellerFeesInput,
+          );
+        for (const item of calc.shippingBreakdown) {
+          breakdownBySellerId.set(String(item.sellerId), item.appliedFee);
+        }
+      } else {
+        for (const item of sellerFeesInput) {
+          breakdownBySellerId.set(String(item.sellerId), item.shippingFee);
+        }
+      }
+
+      for (const order of sortedOnline) {
+        const appliedBaseFee =
+          breakdownBySellerId.get(String(order.sellerId)) ?? 0;
+        const method = this.normalizeShippingMethod(order.shippingMethod);
+        const computedShipping = applyShippingMethodMultiplier(
+          appliedBaseFee,
+          method,
+        );
+        const computedTotal = Number(
+          (Number(order.subtotal) + computedShipping).toFixed(2),
+        );
+
+        const changed =
+          Number(order.shippingCost) !== computedShipping ||
+          Number(order.total) !== computedTotal ||
+          order.shippingPaymentMode !== ShippingPaymentMode.PAY_ONLINE ||
+          order.shippingMethod !== method;
+
+        order.shippingMethod = method;
+        order.shippingPaymentMode = ShippingPaymentMode.PAY_ONLINE;
+        order.shippingCost = computedShipping;
+        order.total = computedTotal;
+
+        if (changed) {
+          await this.orderRepository.save(order);
+        }
+      }
+    }
+
+    return orders;
   }
 
   async findAll(
