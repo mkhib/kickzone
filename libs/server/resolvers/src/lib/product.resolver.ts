@@ -173,8 +173,16 @@ export class ProductResolver {
     const imageUrls: string[] = [];
     for (const file of uploadedFiles) {
       const { createReadStream, filename } = file;
-      const uniqueName = `${Date.now()}-${filename}`;
-      const filePath = path.join(uploadDir, uniqueName);
+      const baseName = path.basename(String(filename).replace(/\\/g, '/'));
+      const sanitizedName = baseName.replace(/[^A-Za-z0-9._-]/g, '_');
+      const safeName = sanitizedName && !/^\.+$/.test(sanitizedName) ? sanitizedName : 'file';
+      const uniqueName = `${Date.now()}-${safeName}`;
+      const resolvedUploadDir = path.resolve(uploadDir);
+      const filePath = path.resolve(uploadDir, uniqueName);
+      if (!filePath.startsWith(resolvedUploadDir + path.sep)) {
+        console.error('Path traversal attempt detected:', filename);
+        throw new Error('Invalid filename');
+      }
       try {
         await new Promise<void>((resolve, reject) => {
           const stream = createReadStream();
@@ -211,7 +219,15 @@ export class ProductResolver {
     @Args('imageName') imageName: string
   ): Promise<boolean> {
     const uploadDir = path.join(process.cwd(), 'uploads', 'products');
-    const filePath = path.join(uploadDir, imageName);
+    const safeName = path.basename(String(imageName).replace(/\\/g, '/'));
+    if (!safeName || safeName === '.' || safeName === '..' || safeName !== imageName) {
+      return false;
+    }
+    const resolvedUploadDir = path.resolve(uploadDir);
+    const filePath = path.resolve(uploadDir, safeName);
+    if (!filePath.startsWith(resolvedUploadDir + path.sep)) {
+      return false;
+    }
 
     try {
       // Remove the file from the filesystem
@@ -222,7 +238,7 @@ export class ProductResolver {
       // Remove the image URL from the product info
       await this.productService.removeImageFromProductInfo(
         productInfoId,
-        `/uploads/products/${imageName}`
+        `/uploads/products/${safeName}`
       );
       return true;
     } catch (error) {
