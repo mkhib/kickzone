@@ -402,9 +402,7 @@ export const CustomersProductCard: React.FC<ProductCardProps> = ({
         productInfo: activeVariant.productInfo,
         sellerProduct: activeVariant.sellerProduct,
       });
-    }
-
-    if (onAddToCart) {
+    } else if (onAddToCart) {
       onAddToCart(product);
     }
 

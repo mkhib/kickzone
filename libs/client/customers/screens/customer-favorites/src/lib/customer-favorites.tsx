@@ -12,7 +12,7 @@ import { Link as RouterLink } from 'react-router-dom';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CustomersProductCard } from '@kickzone-workspace/customers-product-card';
 import { useProductById } from '@kickzone-workspace/products-hook';
-import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
+import { useCustomersCartService, getDiscountedUnitPrice } from '@kickzone-workspace/customers-cart-hook';
 import {
   CUSTOMER_ROUTES,
 } from '@kickzone-workspace/customers-routes';
@@ -51,8 +51,8 @@ function FavoriteProductItem({
           productName: product.name,
           productImage: productInfo.images?.[0] || null,
           quantity: 1,
-          unitPrice: sellerProduct.price,
-          color: productInfo.colors?.[0]?.name || null,
+          unitPrice: getDiscountedUnitPrice(sellerProduct.price, sellerProduct.discount),
+          color: productInfo.colors?.[0]?.hexCode || productInfo.colors?.[0]?.name || null,
           size: productInfo.size || null,
           sellerId: String(sellerProduct.seller?.id || 1),
           sellerName: '',

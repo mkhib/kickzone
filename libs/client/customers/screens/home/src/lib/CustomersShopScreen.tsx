@@ -24,7 +24,7 @@ import ClearIcon from '@mui/icons-material/Clear';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CustomersProductCard } from '@kickzone-workspace/customers-product-card';
 import { useProductsQuery } from '@kickzone-workspace/products-hook';
-import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
+import { useCustomersCartService, getDiscountedUnitPrice } from '@kickzone-workspace/customers-cart-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useI18nContext,
@@ -689,8 +689,8 @@ export function CustomersShopScreen() {
                     productName: p.name,
                     productImage: pInfo?.images?.[0] || null,
                     quantity: 1,
-                    unitPrice: sp.price,
-                    color: pInfo?.colors?.[0]?.name || null,
+                    unitPrice: getDiscountedUnitPrice(sp.price, sp.discount),
+                    color: pInfo?.colors?.[0]?.hexCode || pInfo?.colors?.[0]?.name || null,
                     size: pInfo?.size || null,
                     sellerId: String(sp.seller?.id || 1),
                     sellerName: '',

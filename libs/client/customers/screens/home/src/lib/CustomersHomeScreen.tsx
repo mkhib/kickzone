@@ -2,7 +2,7 @@ import React, { useMemo, useCallback } from 'react';
 import { useQuery } from '@apollo/client/react';
 import Box from '@mui/material/Box';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
-import { useCustomersCartService } from '@kickzone-workspace/customers-cart-hook';
+import { useCustomersCartService, getDiscountedUnitPrice } from '@kickzone-workspace/customers-cart-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 
 import {
@@ -55,7 +55,7 @@ export function CustomersHome({
         ) || product.productInfos?.[0];
 
       const size = pInfo?.size || preferredSize || null;
-      const color = pInfo?.colors?.[0]?.name || null;
+      const color = pInfo?.colors?.[0]?.hexCode || pInfo?.colors?.[0]?.name || null;
       const image = pInfo?.images?.[0] || null;
 
       addItem({
@@ -63,7 +63,7 @@ export function CustomersHome({
         productName: product.name,
         productImage: image,
         quantity: 1,
-        unitPrice: sp.price,
+        unitPrice: getDiscountedUnitPrice(sp.price, sp.discount),
         color,
         size,
         sellerId: String(sp.seller?.id || 1),

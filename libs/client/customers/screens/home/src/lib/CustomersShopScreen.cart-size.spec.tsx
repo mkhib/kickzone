@@ -9,12 +9,25 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 const mockAddItem = vi.fn();
 const mockUseProductsQuery = vi.fn();
 
-vi.mock('@kickzone-workspace/customers-cart-hook', () => ({
-  useCustomersCartService: () => ({
-    addItem: mockAddItem,
-  }),
-  useWishlistSync: vi.fn(),
-}));
+vi.mock('@kickzone-workspace/customers-cart-hook', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useCustomersCartService: () => ({
+      addItem: mockAddItem,
+    }),
+    useWishlistSync: vi.fn(),
+    getDiscountedUnitPrice: (price: number, discount: number) => {
+      const basePrice = Number(price) || 0;
+      const discountPercent = Number(discount) || 0;
+      if (discountPercent <= 0) {
+        return Number(basePrice.toFixed(2));
+      }
+      const discounted = basePrice * (1 - discountPercent / 100);
+      return Number(discounted.toFixed(2));
+    },
+  };
+});
 
 vi.mock('@kickzone-workspace/snackbar-hook', () => ({
   useSnackbar: () => ({

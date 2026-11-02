@@ -266,5 +266,113 @@ describe('CustomersProductCard', () => {
 
     expect(screen.getByText('Air Jordan 1 Retro High OG')).toBeInTheDocument();
   });
+
+  describe('add to cart callback mutual exclusivity', () => {
+    it('calls onAddVariantToCart only when both callbacks provided and variant exists', () => {
+      const handleAddToCart = vi.fn();
+      const handleAddVariantToCart = vi.fn();
+
+      render(
+        <MemoryRouter>
+          <CustomersProductCard
+            product={mockProduct}
+            onAddToCart={handleAddToCart}
+            onAddVariantToCart={handleAddVariantToCart}
+          />
+        </MemoryRouter>
+      );
+
+      const addButtons = screen.getAllByRole('button');
+      const addToCartButton = addButtons.find(
+        (btn) =>
+          btn.textContent?.includes('افزودن به سبد') ||
+          btn.getAttribute('aria-label')?.includes('افزودن به سبد')
+      );
+      expect(addToCartButton).toBeDefined();
+
+      if (addToCartButton) {
+        fireEvent.click(addToCartButton);
+        // onAddVariantToCart should be called once (activeVariant exists)
+        expect(handleAddVariantToCart).toHaveBeenCalledTimes(1);
+        // onAddToCart should NOT be called
+        expect(handleAddToCart).not.toHaveBeenCalled();
+      }
+    });
+
+    it('calls onAddToCart only when onAddVariantToCart is not provided', () => {
+      const handleAddToCart = vi.fn();
+
+      render(
+        <MemoryRouter>
+          <CustomersProductCard
+            product={mockProduct}
+            onAddToCart={handleAddToCart}
+          />
+        </MemoryRouter>
+      );
+
+      const addButtons = screen.getAllByRole('button');
+      const addToCartButton = addButtons.find(
+        (btn) =>
+          btn.textContent?.includes('افزودن به سبد') ||
+          btn.getAttribute('aria-label')?.includes('افزودن به سبد')
+      );
+      expect(addToCartButton).toBeDefined();
+
+      if (addToCartButton) {
+        fireEvent.click(addToCartButton);
+        expect(handleAddToCart).toHaveBeenCalledTimes(1);
+      }
+    });
+
+    it('calls onAddToCart when onAddVariantToCart provided but no active variant', () => {
+      const handleAddToCart = vi.fn();
+      const handleAddVariantToCart = vi.fn();
+
+      // Product with no sellerProducts so no activeVariant
+      const productNoVariant: KickzoneGraphqlTypes.Product = {
+        ...mockProduct,
+        sellerProducts: [],
+        productInfos: [
+          {
+            id: 201,
+            productId: 101,
+            sku: 'AJ1-HIGH-01',
+            size: '42',
+            colors: [{ id: 1, name: 'Black', hexCode: '#000000', createdAt: '', updatedAt: '' }],
+            images: ['https://example.com/aj1.jpg'],
+            createdAt: '',
+            updatedAt: '',
+          },
+        ],
+      };
+
+      render(
+        <MemoryRouter>
+          <CustomersProductCard
+            product={productNoVariant}
+            onAddToCart={handleAddToCart}
+            onAddVariantToCart={handleAddVariantToCart}
+          />
+        </MemoryRouter>
+      );
+
+      const addButtons = screen.getAllByRole('button');
+      const addToCartButton = addButtons.find(
+        (btn) =>
+          btn.textContent?.includes('افزودن به سبد') ||
+          btn.getAttribute('aria-label')?.includes('افزودن به سبد')
+      );
+      expect(addToCartButton).toBeDefined();
+
+      if (addToCartButton) {
+        fireEvent.click(addToCartButton);
+        // onAddVariantToCart should NOT be called (no activeVariant)
+        expect(handleAddVariantToCart).not.toHaveBeenCalled();
+        // onAddToCart should be called
+        expect(handleAddToCart).toHaveBeenCalledTimes(1);
+      }
+    });
+  });
 });
 

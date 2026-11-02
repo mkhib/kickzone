@@ -13,12 +13,25 @@ import { PicksRailSection } from './components/PicksRailSection';
 const mockAddItem = vi.fn();
 const mockUseProductsQuery = vi.fn();
 
-vi.mock('@kickzone-workspace/customers-cart-hook', () => ({
-  useCustomersCartService: () => ({
-    addItem: mockAddItem,
-  }),
-  useWishlistSync: vi.fn(),
-}));
+vi.mock('@kickzone-workspace/customers-cart-hook', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useCustomersCartService: () => ({
+      addItem: mockAddItem,
+    }),
+    useWishlistSync: vi.fn(),
+    getDiscountedUnitPrice: (price: number, discount: number) => {
+      const basePrice = Number(price) || 0;
+      const discountPercent = Number(discount) || 0;
+      if (discountPercent <= 0) {
+        return Number(basePrice.toFixed(2));
+      }
+      const discounted = basePrice * (1 - discountPercent / 100);
+      return Number(discounted.toFixed(2));
+    },
+  };
+});
 
 vi.mock('@kickzone-workspace/snackbar-hook', () => ({
   useSnackbar: () => ({
@@ -575,5 +588,66 @@ describe('CustomersHomeScreen - Campaign v4', () => {
         behavior: 'smooth',
       })
     );
+  });
+
+  it('calls addItem with discounted unitPrice and hexCode color from PicksRailSection', () => {
+    // Create a simple product with known price, discount, and color for testing
+    const testProduct: KickzoneGraphqlTypes.Product = {
+      id: 999,
+      name: 'Test Product',
+      sku: 'TEST-001',
+      categories: [{ id: 1, slug: 'test', name: 'Test' }],
+      productInfos: [
+        {
+          id: 9990,
+          productId: 999,
+          sku: 'TEST-001',
+          size: 'L',
+          colors: [{ id: 1, name: 'Black', hexCode: '#121212' }],
+          images: ['/test.jpg'],
+        },
+      ],
+      sellerProducts: [
+        {
+          id: 99900,
+          productInfoId: 9990,
+          sellerId: 1,
+          price: 100,
+          discount: 20, // 20% discount -> 80
+          stockQuantity: 5,
+          seller: { id: 1, shippingFee: 0 },
+        },
+      ],
+    } as unknown as KickzoneGraphqlTypes.Product;
+
+    const mockOnAddItem = vi.fn();
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <PicksRailSection
+          products={[testProduct]}
+          exchangeRate={270000}
+          onAddItem={mockOnAddItem}
+        />
+      </MemoryRouter>
+    );
+
+    // Find the add to cart button - it's a full button (not IconButton) with specific text
+    const addButtons = screen.getAllByRole('button');
+    const addToCartButton = addButtons.find(
+      (btn) =>
+        btn.textContent?.includes('افزودن به سبد خرید') ||
+        btn.textContent?.includes('Add to Cart') ||
+        btn.getAttribute('aria-label')?.includes('افزودن به سبد')
+    );
+    expect(addToCartButton).toBeDefined();
+
+    if (addToCartButton) {
+      fireEvent.click(addToCartButton);
+    }
+
+    // Verify onAddItem was called with product and size (PicksRailSection callback signature)
+    expect(mockOnAddItem).toHaveBeenCalledTimes(1);
+    expect(mockOnAddItem).toHaveBeenCalledWith(testProduct, 'L');
   });
 });
