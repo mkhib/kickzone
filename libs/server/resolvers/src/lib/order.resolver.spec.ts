@@ -25,6 +25,7 @@ describe('OrderResolver', () => {
     cancelPendingOrder: jest.Mock;
     getOrdersBySeller: jest.Mock;
     getOrdersByCustomerEmail: jest.Mock;
+    recalculateBatchOrdersShipping: jest.Mock;
   };
   let mockSellerService: {
     findOneByUserId: jest.Mock;
@@ -159,6 +160,7 @@ describe('OrderResolver', () => {
       cancelPendingOrder: jest.fn(),
       getOrdersBySeller: jest.fn(),
       getOrdersByCustomerEmail: jest.fn(),
+      recalculateBatchOrdersShipping: jest.fn(),
     };
     mockSellerService = {
       findOneByUserId: jest.fn(),
@@ -1312,6 +1314,203 @@ describe('OrderResolver', () => {
       const user = { sub: 'c-user', userType: 'customer', email: '' } as AuthenticatedUser;
       await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
       await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('You do not have permission to cancel this order');
+    });
+  });
+
+  describe('recalculateBatchOrdersShipping mutation', () => {
+    const mockOrder1 = createMockOrder({
+      id: 'order-1',
+      orderNumber: 'ORD-001',
+      customerEmail: 'customer@example.com',
+      status: OrderStatus.PENDING,
+      notes: 'Test order [GuestToken: guest_abc123]',
+      total: 110,
+      shippingCost: 10,
+    });
+    const mockOrder2 = createMockOrder({
+      id: 'order-2',
+      orderNumber: 'ORD-002',
+      customerEmail: 'customer@example.com',
+      sellerId: 2,
+      sellerStoreName: 'Store 2',
+      status: OrderStatus.PENDING,
+      notes: 'Test order [GuestToken: guest_abc123]',
+      total: 220,
+      shippingCost: 15,
+    });
+    const recalculatedOrders = [
+      { ...mockOrder1, shippingCost: 8, total: 108 },
+      { ...mockOrder2, shippingCost: 12, total: 217 },
+    ];
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return mockOrder1;
+        if (id === 'order-2') return mockOrder2;
+        return null;
+      });
+      mockOrderService.recalculateBatchOrdersShipping.mockResolvedValue(recalculatedOrders);
+    });
+
+    it('recalculates shipping across multiple PENDING orders for same guest token', async () => {
+      const result = await resolver.recalculateBatchOrdersShipping(
+        ['order-1', 'order-2'],
+        undefined, // no user
+        'guest_abc123'
+      );
+
+      expect(mockOrderService.findOne).toHaveBeenCalledTimes(2);
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith([
+        mockOrder1,
+        mockOrder2,
+      ]);
+      expect(result).toEqual(recalculatedOrders);
+      expect(result[0].shippingCost).toBe(8);
+      expect(result[1].shippingCost).toBe(12);
+    });
+
+    it('recalculates shipping for authenticated customer (no guest token)', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as AuthenticatedUser;
+      const ordersNoGuest = [
+        { ...mockOrder1, notes: 'Test order' },
+        { ...mockOrder2, notes: 'Test order' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersNoGuest[0];
+        if (id === 'order-2') return ordersNoGuest[1];
+        return null;
+      });
+
+      const result = await resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined);
+
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith(ordersNoGuest);
+      expect(result).toEqual(recalculatedOrders);
+    });
+
+    it('throws BadRequestException when no orderIds provided', async () => {
+      await expect(resolver.recalculateBatchOrdersShipping([], undefined, undefined)).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping([], undefined, undefined)).rejects.toThrow(
+        'At least one orderId is required'
+      );
+    });
+
+    it('throws BadRequestException when orderIds contain only whitespace', async () => {
+      await expect(resolver.recalculateBatchOrdersShipping(['   ', ''], undefined, undefined)).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['   ', ''], undefined, undefined)).rejects.toThrow(
+        'At least one orderId is required'
+      );
+    });
+
+    it('throws BadRequestException when an order is not PENDING', async () => {
+      const confirmedOrder = createMockOrder({
+        id: 'order-1',
+        customerEmail: 'customer@example.com',
+        status: OrderStatus.CONFIRMED,
+        notes: '[GuestToken: guest_abc123]',
+      });
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return confirmedOrder;
+        if (id === 'order-2') return mockOrder2;
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        'Order order-1 is not in PENDING status'
+      );
+    });
+
+    it('throws BadRequestException when orders have different customer emails', async () => {
+      const otherEmailOrder = createMockOrder({
+        id: 'order-2',
+        customerEmail: 'other@example.com',
+        status: OrderStatus.PENDING,
+        notes: '[GuestToken: guest_abc123]',
+      });
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return mockOrder1;
+        if (id === 'order-2') return otherEmailOrder;
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        'All orders in a batch must belong to the same customer'
+      );
+    });
+
+    it('throws BadRequestException when orders have different guest tokens', async () => {
+      const differentTokenOrder = createMockOrder({
+        id: 'order-2',
+        customerEmail: 'customer@example.com',
+        status: OrderStatus.PENDING,
+        notes: '[GuestToken: guest_different]',
+      });
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return mockOrder1;
+        if (id === 'order-2') return differentTokenOrder;
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        'All orders in a batch must share the same guest checkout token'
+      );
+    });
+
+    it('throws ForbiddenException when guest token is provided but does not match', async () => {
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'wrong_token')).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'wrong_token')).rejects.toThrow(
+        'Invalid guest token for batch shipping recalculation'
+      );
+    });
+
+    it('throws ForbiddenException when guest token is missing for guest checkout', async () => {
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, undefined)).rejects.toThrow(
+        'Invalid guest token for batch shipping recalculation'
+      );
+    });
+
+    it('throws ForbiddenException when authenticated user email does not match order email', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: 'different@example.com' } as AuthenticatedUser;
+      const ordersNoGuest = [
+        { ...mockOrder1, notes: 'Test order' },
+        { ...mockOrder2, notes: 'Test order' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersNoGuest[0];
+        if (id === 'order-2') return ordersNoGuest[1];
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        'Not allowed to recalculate shipping for this order batch'
+      );
+    });
+
+    it('deduplicates orderIds and preserves order', async () => {
+      await resolver.recalculateBatchOrdersShipping(['order-1', 'order-2', 'order-1'], undefined, 'guest_abc123');
+
+      expect(mockOrderService.findOne).toHaveBeenCalledTimes(2);
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith([mockOrder1, mockOrder2]);
     });
   });
 });

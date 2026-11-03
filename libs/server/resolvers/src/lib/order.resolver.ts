@@ -490,6 +490,66 @@ export class OrderResolver {
     return role === 'SELLER' ? toSellerOrder(updated) : updated;
   }
 
+  @Mutation(() => [Order])
+  async recalculateBatchOrdersShipping(
+    @Args('orderIds', { type: () => [String] }) orderIds: string[],
+    @CurrentUser() user?: OptionalAuthenticatedUser,
+    @Args('guestToken', { type: () => String, nullable: true }) guestToken?: string
+  ): Promise<Order[]> {
+    const uniqueOrderIds = Array.from(
+      new Set(
+        (orderIds ?? []).filter(
+          (id): id is string => typeof id === 'string' && id.trim().length > 0
+        )
+      )
+    );
+    if (uniqueOrderIds.length === 0) {
+      throw new BadRequestException('At least one orderId is required');
+    }
+
+    const orders = await Promise.all(
+      uniqueOrderIds.map((id) => this.orderService.findOne(id))
+    );
+
+    const firstEmail = String(orders[0].customerEmail ?? '').trim().toLowerCase();
+    const extractToken = (notes?: string | null) => {
+      const m = /\[GuestToken:\s*([^\]]+)\]/.exec(notes ?? '');
+      return m ? m[1].trim() : null;
+    };
+    const firstToken = extractToken(orders[0].notes);
+
+    for (const order of orders) {
+      if (order.status !== OrderStatus.PENDING) {
+        throw new BadRequestException(
+          `Order ${order.id} is not in PENDING status`
+        );
+      }
+      if (String(order.customerEmail ?? '').trim().toLowerCase() !== firstEmail) {
+        throw new BadRequestException(
+          'All orders in a batch must belong to the same customer'
+        );
+      }
+      if (extractToken(order.notes) !== firstToken) {
+        throw new BadRequestException(
+          'All orders in a batch must share the same guest checkout token'
+        );
+      }
+      if (firstToken) {
+        const provided = guestToken?.trim();
+        if (!provided || provided !== firstToken) {
+          throw new ForbiddenException('Invalid guest token for batch shipping recalculation');
+        }
+      } else {
+        const userEmail = String(user?.email ?? '').trim().toLowerCase();
+        if (!userEmail || !firstEmail || firstEmail !== userEmail) {
+          throw new ForbiddenException('Not allowed to recalculate shipping for this order batch');
+        }
+      }
+    }
+
+    return this.orderService.recalculateBatchOrdersShipping(orders);
+  }
+
   @ResolveField(() => [OrderItem])
   async items(@Parent() order: Order) {
     return order.items;
