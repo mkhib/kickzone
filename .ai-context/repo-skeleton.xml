@@ -1042,33 +1042,6 @@ import { RefreshToken } from '@kickzone-workspace/entities';
 export class GraphqlContextModule {}
 </file>
 
-<file path="libs/server/modules/src/lib/order.module.ts">
-import { Module } from '@nestjs/common';
-import { TypeOrmModule } from '@nestjs/typeorm';
-import {
-  Order,
-  OrderItem,
-  SellerProduct,
-  SellerInfo,
-} from '@kickzone-workspace/entities';
-import { OrderService } from '@kickzone-workspace/services';
-import { OrderResolver } from '@kickzone-workspace/resolvers';
-import { SellerInfoModule } from './seller-info.module';
-import { PlatformSettingsModule } from './platform-settings.module';
-
-@Module({
-  imports: [
-    TypeOrmModule.forFeature([Order, OrderItem, SellerProduct, SellerInfo]),
-    SellerInfoModule,
-    PlatformSettingsModule,
-  ],
-  providers: [OrderService, OrderResolver],
-  controllers: [],
-  exports: [OrderService],
-})
-export class OrderModule {}
-</file>
-
 <file path="libs/server/modules/src/lib/platform-settings.module.ts">
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
@@ -1726,6 +1699,33 @@ export class UpdateUserInput {
   @Field(() => UserRole, { nullable: true })
   role?: UserRole;
 }
+</file>
+
+<file path="libs/server/modules/src/lib/order.module.ts">
+import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import {
+  Order,
+  OrderItem,
+  SellerProduct,
+  SellerInfo,
+} from '@kickzone-workspace/entities';
+import { OrderService } from '@kickzone-workspace/services';
+import { OrderResolver } from '@kickzone-workspace/resolvers';
+import { SellerInfoModule } from './seller-info.module';
+import { PlatformSettingsModule } from './platform-settings.module';
+
+@Module({
+  imports: [
+    TypeOrmModule.forFeature([Order, OrderItem, SellerProduct, SellerInfo]),
+    SellerInfoModule,
+    PlatformSettingsModule,
+  ],
+  providers: [OrderService, OrderResolver],
+  controllers: [],
+  exports: [OrderService],
+})
+export class OrderModule {}
 </file>
 
 <file path="libs/server/modules/src/lib/payment.module.ts">

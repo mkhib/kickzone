@@ -2,6 +2,16 @@ import { ObjectType, Field, ID, Float, Int } from '@nestjs/graphql';
 import { Order, OrderItem, OrderStatus } from './order.entity';
 import { ShippingPaymentMode } from './seller-info.entity';
 
+const GUEST_TOKEN_TAG_RE = /\s*\[GuestToken:\s*[^\]]+\]/g;
+
+export function stripGuestTokenFromNotes(notes?: string | null): string | undefined {
+  if (notes === undefined || notes === null) {
+    return undefined;
+  }
+  const cleaned = notes.replace(GUEST_TOKEN_TAG_RE, '').trim();
+  return cleaned;
+}
+
 @ObjectType()
 export class SellerOrder {
   @Field(() => ID)
@@ -71,7 +81,7 @@ export function toSellerOrder(order: Order): SellerOrder {
     shippingPaymentMode:
       order.shippingPaymentMode || ShippingPaymentMode.PAY_ON_DELIVERY,
     total: order.total,
-    notes: order.notes,
+    notes: stripGuestTokenFromNotes(order.notes),
     trackingNumber: order.trackingNumber,
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,

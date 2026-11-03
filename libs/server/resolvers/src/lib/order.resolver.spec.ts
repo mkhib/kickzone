@@ -1195,4 +1195,123 @@ describe('OrderResolver', () => {
       expect(() => resolver['assertAdmin'](user as AuthenticatedUser)).toThrow(ForbiddenException);
     });
   });
+
+  describe('isCustomerOrderOwner helper', () => {
+    it('returns true when both emails match (case-insensitive)', () => {
+      const user = { email: 'Customer@Example.COM' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(true);
+    });
+
+    it('returns false when emails differ', () => {
+      const user = { email: 'other@example.com' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when user email is empty string', () => {
+      const user = { email: '' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when order customerEmail is empty string', () => {
+      const user = { email: 'customer@example.com' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: '' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when both emails are empty strings', () => {
+      const user = { email: '' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: '' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when user email is undefined', () => {
+      const user = {} as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when order customerEmail is undefined', () => {
+      const user = { email: 'customer@example.com' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: undefined as never });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when user is null', () => {
+      const user = null as never;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+  });
+
+  describe('toSellerOrder GuestToken redaction', () => {
+    it('strips [GuestToken: ...] from notes while preserving regular text', () => {
+      const order = createMockOrder({
+        notes: 'Customer note [GuestToken: guest_1234567890abcdef] end note',
+      });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBe('Customer note end note');
+    });
+
+    it('strips [GuestToken: ...] when it is the only content', () => {
+      const order = createMockOrder({
+        notes: '[GuestToken: guest_1234567890abcdef]',
+      });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBe('');
+    });
+
+    it('handles undefined notes', () => {
+      const order = createMockOrder({ notes: undefined });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBeUndefined();
+    });
+
+    it('handles null notes', () => {
+      const order = createMockOrder({ notes: null as never });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBeUndefined();
+    });
+
+    it('preserves notes without GuestToken tag', () => {
+      const order = createMockOrder({ notes: 'Just a regular note' });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBe('Just a regular note');
+    });
+  });
+
+  describe('order query - empty email edge case', () => {
+    const mockOrder = createMockOrder({ customerEmail: '', sellerId: 1 });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockResolvedValue(mockOrder);
+      mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+    });
+
+    it('throws ForbiddenException when CUSTOMER email is empty string and order email is empty string', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: '' } as AuthenticatedUser;
+      await expect(resolver.order(user, 'order-1')).rejects.toThrow(ForbiddenException);
+      await expect(resolver.order(user, 'order-1')).rejects.toThrow('You do not have permission to view this order');
+    });
+  });
+
+  describe('cancelPendingOrder mutation - empty email edge case', () => {
+    const mockOrder = createMockOrder({ customerEmail: '', sellerId: 1 });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockResolvedValue(mockOrder);
+      mockOrderService.cancelPendingOrder.mockResolvedValue(true);
+      mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+    });
+
+    it('throws ForbiddenException when CUSTOMER email is empty string and order email is empty string', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: '' } as AuthenticatedUser;
+      await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
+      await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('You do not have permission to cancel this order');
+    });
+  });
 });

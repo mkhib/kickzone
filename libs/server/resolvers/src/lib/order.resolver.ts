@@ -66,6 +66,19 @@ export class OrderResolver {
   }
 
   /**
+   * Check if the customer user owns the order by comparing emails.
+   * Returns false if either email is empty/undefined to prevent empty-email matches.
+   */
+  private isCustomerOrderOwner(
+    user: OptionalAuthenticatedUser,
+    order: Order
+  ): boolean {
+    const userEmail = String(user?.email ?? '').trim().toLowerCase();
+    const orderEmail = String(order?.customerEmail ?? '').trim().toLowerCase();
+    return userEmail.length > 0 && orderEmail.length > 0 && userEmail === orderEmail;
+  }
+
+  /**
    * Normalize user role to uppercase standard values.
    */
   private getUserRole(user: OptionalAuthenticatedUser): 'ADMIN' | 'SELLER' | 'CUSTOMER' | 'UNKNOWN' {
@@ -140,7 +153,7 @@ export class OrderResolver {
 
       case 'CUSTOMER': {
         // Customer ownership is determined by email
-        if (order.customerEmail !== user.email) {
+        if (!this.isCustomerOrderOwner(user, order)) {
           throw new ForbiddenException('You do not have permission to view this order');
         }
         return order;
@@ -170,6 +183,9 @@ export class OrderResolver {
   ) {
     // For CUSTOMER: Get orders by customer email
     if (this.getUserRole(user) === 'CUSTOMER') {
+      if (!user?.email || String(user.email).trim() === '') {
+        return [];
+      }
       const result = await this.orderService.getOrdersByCustomerEmail(
         user.email,
         first,
@@ -382,8 +398,8 @@ export class OrderResolver {
     if (role === 'ADMIN') {
       isOwner = true;
     } else if (role === 'CUSTOMER') {
-      // Customer ownership by email
-      isOwner = order.customerEmail === user.email;
+      // Customer ownership by email (prevents empty-email matches)
+      isOwner = this.isCustomerOrderOwner(user, order);
     } else if (role === 'SELLER') {
       // Seller ownership via SellerInfo
       const seller = await this.sellerService.findOneByUserId(this.getUserId(user));

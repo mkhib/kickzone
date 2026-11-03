@@ -896,7 +896,11 @@ export function CustomerShoppingCart() {
           ? sessionStorage.getItem('guest_checkout_token')
           : null;
       if (!user && !guestToken) {
-        guestToken = `guest_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+        const randomPart =
+          typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+            ? crypto.randomUUID().replace(/-/g, '')
+            : `${Date.now().toString(36)}_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+        guestToken = `guest_${randomPart}`;
         if (typeof window !== 'undefined') {
           sessionStorage.setItem('guest_checkout_token', guestToken);
         }
