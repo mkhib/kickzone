@@ -226,3 +226,47 @@ export const CANCEL_PENDING_ZARINPAL_ORDER_MUTATION = gql`
     cancelPendingZarinPalOrder(orderId: $orderId, authority: $authority, guestToken: $guestToken)
   }
 `;
+
+export const RECALCULATE_BATCH_ORDERS_SHIPPING_MUTATION = gql`
+  mutation RecalculateBatchOrdersShipping($orderIds: [String!]!, $guestToken: String) {
+    recalculateBatchOrdersShipping(orderIds: $orderIds, guestToken: $guestToken) {
+      id
+      orderNumber
+      customerEmail
+      customerPhone
+      customerName
+      shippingAddress
+      city
+      state
+      zipCode
+      country
+      status
+      subtotal
+      shippingCost
+      total
+      notes
+      trackingNumber
+      createdAt
+      updatedAt
+      sellerPhone
+      sellerAddress
+      shippingMethod
+      shippingPaymentMode
+      items {
+        id
+        productId
+        productName
+        productImage
+        quantity
+        unitPrice
+        totalPrice
+        color
+        size
+        originalPrice
+        discountPercentage
+        productInfoId
+        sellerProductId
+      }
+    }
+  }
+`;

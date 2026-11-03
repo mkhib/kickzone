@@ -2,6 +2,7 @@ import { useForm, type Resolver } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { isApolloErrorLike } from '@kickzone-workspace/validation';
 import { buildOrderConfirmationData, type CreateOrderResult, type OrderConfirmationData } from './build-order-confirmation-data';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useCartError,
   useCartItems,
@@ -46,6 +47,7 @@ import {
   GET_MY_PROFILE,
   UPDATE_MY_PROFILE,
   CALCULATE_SHIPPING_COST_QUERY,
+  RECALCULATE_BATCH_ORDERS_SHIPPING_MUTATION,
 } from '@kickzone-workspace/customers-graphql';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import { PriceDisplay } from '@kickzone-workspace/price-display';
@@ -671,6 +673,18 @@ export function CustomerShoppingCart() {
     }
   >(UPDATE_MY_PROFILE);
 
+  // Recalculate batch orders shipping mutation - used for multi-seller checkout
+  // to recompute shipping/total on the server after orders are created
+  const [recalculateBatchOrdersShippingMutation] = useMutation<
+    {
+      recalculateBatchOrdersShipping: Array<KickzoneGraphqlTypes.Mutation['createOrder'] | null>;
+    },
+    {
+      orderIds: string[];
+      guestToken?: string;
+    }
+  >(RECALCULATE_BATCH_ORDERS_SHIPPING_MUTATION);
+
   // Load profile data into shipping form when available
   useEffect(() => {
     if (profileData?.myProfile && user) {
@@ -985,8 +999,50 @@ export function CustomerShoppingCart() {
         throw new Error('One or more seller orders failed to create');
       }
 
+      // If multiple orders were created, recalculate shipping/totals on the server
+      // This ensures authoritative totals for payment and confirmation
+      if (orderResults.length > 1) {
+        console.log(`[Checkout] 🔄 Recalculating batch shipping for ${orderResults.length} orders`);
+        const recalcResult = await recalculateBatchOrdersShippingMutation({
+          variables: {
+            orderIds: orderResults.map((o) => o.id),
+            guestToken: guestToken || undefined,
+          },
+        });
+
+        if (!recalcResult.data || !recalcResult.data.recalculateBatchOrdersShipping) {
+          throw new Error('Recalculate batch orders shipping returned no data');
+        }
+
+        const recalculatedOrders = recalcResult.data.recalculateBatchOrdersShipping;
+
+        // Verify we got back all orders
+        if (recalculatedOrders.length !== orderResults.length) {
+          throw new Error(
+            `Recalculate batch orders shipping returned ${recalculatedOrders.length} orders, expected ${orderResults.length}`
+          );
+        }
+
+        // Verify all order IDs are present (match by id, preserve order of original orderIds)
+        const originalIds = orderResults.map((o) => o.id);
+        const returnedIds = recalculatedOrders.map((o) => o?.id).filter(Boolean) as string[];
+        const missingIds = originalIds.filter((id) => !returnedIds.includes(id));
+        if (missingIds.length > 0) {
+          throw new Error(`Recalculate batch orders shipping missing order IDs: ${missingIds.join(', ')}`);
+        }
+
+        // Replace orderResults with recalculated orders (matched by id, same order as original)
+        // Filter out null entries first
+        const validRecalculatedOrders = recalculatedOrders.filter((o): o is KickzoneGraphqlTypes.Mutation['createOrder'] => o != null);
+        const recalculatedMap = new Map(validRecalculatedOrders.map((o) => [o.id, o]));
+        // All IDs verified present above, so map.get will always return a value
+        orderResults = originalIds.map((id) => recalculatedMap.get(id) as KickzoneGraphqlTypes.Mutation['createOrder']);
+
+        console.log(`[Checkout] ✅ Batch shipping recalculated successfully`);
+      }
+
       // Get all order IDs for multi-seller batch payment
-      const allOrderIds = orderResults.map((o) => o!.id);
+      const allOrderIds = orderResults.map((o) => o.id);
       const firstOrder = orderResults[0];
       if (!firstOrder) {
         throw new Error('No order was created');
@@ -994,7 +1050,7 @@ export function CustomerShoppingCart() {
 
       console.log(`[Checkout] ✅ Order created successfully:`, {
         orderIds: allOrderIds,
-        orderNumbers: orderResults.map((o) => o!.orderNumber).join(', '),
+        orderNumbers: orderResults.map((o) => o.orderNumber).join(', '),
         totalOrders: orderResults.length,
       });
 
@@ -1038,7 +1094,7 @@ export function CustomerShoppingCart() {
             orderId: firstOrder.id,
             orderIds: allOrderIds,
             orderNumber: firstOrder.orderNumber,
-            orderNumbers: orderResults.map((o) => o!.orderNumber).join(', '),
+            orderNumbers: orderResults.map((o) => o.orderNumber).join(', '),
             amount: 0, // Not used for non-ZarinPal
             isGuest: !user,
             guestEmail: shippingInfo.customerEmail || '',
@@ -1103,7 +1159,7 @@ export function CustomerShoppingCart() {
 
       console.log(`[Checkout] 💳 Requesting payment from ZarinPal:`, {
         orderIds: allOrderIds,
-        orderNumbers: orderResults.map((o) => o!.orderNumber).join(', '),
+        orderNumbers: orderResults.map((o) => o.orderNumber).join(', '),
         amountInToman,
         amountInUSD: serverBatchTotalUsd > 0 ? serverBatchTotalUsd : grandTotal,
         callbackUrl,
@@ -1113,7 +1169,7 @@ export function CustomerShoppingCart() {
       const authority = await requestPayment({
         amount: amountInToman,
         callback_url: callbackUrl,
-        description: `پرداخت سفارش ${orderResults.map((o) => o!.orderNumber).join(', ')}`,
+        description: `پرداخت سفارش ${orderResults.map((o) => o.orderNumber).join(', ')}`,
         currency: 'IRT', // Toman per ZarinPal currency docs
         orderIds: allOrderIds,
         metadata: {
@@ -1158,7 +1214,7 @@ export function CustomerShoppingCart() {
           orderId: firstOrder.id,
           orderIds: allOrderIds,
           orderNumber: firstOrder.orderNumber,
-          orderNumbers: orderResults.map((o) => o!.orderNumber).join(', '),
+          orderNumbers: orderResults.map((o) => o.orderNumber).join(', '),
           amount: amountInToman,
           isGuest: !user,
           guestEmail: shippingInfo.customerEmail || '',
@@ -1200,10 +1256,10 @@ export function CustomerShoppingCart() {
         rollbackExecuted = true;
         for (const order of orderResults) {
           try {
-            await cancelPendingOrderHook({ orderId: order!.id, authority: '', guestToken: guestToken || undefined });
+            await cancelPendingOrderHook({ orderId: order.id, authority: '', guestToken: guestToken || undefined });
           } catch (cancelError) {
             console.error(
-              `[Checkout] Failed to cancel order ${order!.id} after error:`,
+              `[Checkout] Failed to cancel order ${order.id} after error:`,
               cancelError
             );
           }

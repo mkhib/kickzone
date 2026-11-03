@@ -15,6 +15,11 @@ const mockCancelPendingOrder = vi.fn().mockResolvedValue(true);
 const mockUpdateCartItem = vi.fn();
 const mockRemoveFromCart = vi.fn().mockResolvedValue({});
 const mockClearCartMutation = vi.fn().mockResolvedValue({});
+const mockRecalculateBatchOrdersShippingMutation = vi.fn().mockResolvedValue({
+  data: {
+    recalculateBatchOrdersShipping: [],
+  },
+});
 
 // Polyfill canvas getContext before any lottie imports
 if (typeof window !== 'undefined' && window.HTMLCanvasElement) {
@@ -376,7 +381,14 @@ vi.mock('@apollo/client/react', () => ({
     data: mockShippingData,
     loading: false,
   }),
-  useMutation: () => [vi.fn().mockResolvedValue({}), { loading: false }],
+  useMutation: (mutation: { definitions?: ReadonlyArray<{ name?: { value: string } }> }) => {
+    // Route only the RecalculateBatchOrdersShipping operation to its dedicated mock
+    const opName = mutation.definitions?.[0]?.name?.value;
+    if (opName === 'RecalculateBatchOrdersShipping') {
+      return [mockRecalculateBatchOrdersShippingMutation, { loading: false }];
+    }
+    return [vi.fn().mockResolvedValue({}), { loading: false }];
+  },
 }));
 
 vi.mock('@kickzone-workspace/lottie-empty-cart', () => ({
@@ -830,6 +842,12 @@ describe('Multi-Seller Checkout & Rollback', () => {
     mockRequestPayment.mockResolvedValue(authority);
     mockRedirectToGateway.mockResolvedValue(undefined);
     mockCancelPendingOrder.mockResolvedValue(true);
+    // Mock recalculate mutation to return the same orders (no change in totals)
+    mockRecalculateBatchOrdersShippingMutation.mockResolvedValue({
+      data: {
+        recalculateBatchOrdersShipping: [orderSeller1, orderSeller2],
+      },
+    });
 
     renderWithProviders();
 
@@ -919,6 +937,12 @@ describe('Multi-Seller Checkout & Rollback', () => {
     mockRequestPayment.mockResolvedValue(null);
     mockCancelPendingOrder.mockResolvedValue(true);
     mockRedirectToGateway.mockResolvedValue(undefined);
+    // Mock recalculate mutation to return the same orders
+    mockRecalculateBatchOrdersShippingMutation.mockResolvedValue({
+      data: {
+        recalculateBatchOrdersShipping: [orderSeller1, orderSeller2],
+      },
+    });
 
     renderWithProviders();
 
@@ -965,6 +989,12 @@ describe('Multi-Seller Checkout & Rollback', () => {
     mockRequestPayment.mockResolvedValue(null);
     mockCancelPendingOrder.mockResolvedValue(true);
     mockRedirectToGateway.mockResolvedValue(undefined);
+    // Mock recalculate mutation to return the same orders
+    mockRecalculateBatchOrdersShippingMutation.mockResolvedValue({
+      data: {
+        recalculateBatchOrdersShipping: [orderSeller1, orderSeller2],
+      },
+    });
 
     renderWithProviders();
 
@@ -1042,6 +1072,12 @@ describe('Multi-Seller Checkout & Rollback', () => {
     mockRequestPayment.mockResolvedValue(null);
     mockCancelPendingOrder.mockResolvedValue(true);
     mockRedirectToGateway.mockResolvedValue(undefined);
+    // Mock recalculate mutation to return the same orders
+    mockRecalculateBatchOrdersShippingMutation.mockResolvedValue({
+      data: {
+        recalculateBatchOrdersShipping: [orderSeller1, orderSeller2],
+      },
+    });
 
     renderWithProviders();
 
@@ -1150,6 +1186,277 @@ describe('Multi-Seller Checkout & Rollback', () => {
     // Verify requestPayment called once
     await waitFor(() => {
       expect(mockRequestPayment).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('Test 8: Multi-seller checkout calls recalculateBatchOrdersShipping once with both order IDs and guestToken, uses recalculated totals for payment and confirmation', async () => {
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110, subtotal: 100, shippingCost: 10 });
+    const orderSeller2 = createMockOrderResult({ id: 'order-seller-2', orderNumber: 'ORD-2', total: 60, subtotal: 50, shippingCost: 10 });
+    const authority = 'A000000000000000000000000000000000000123';
+    const guestToken = 'guest_test123';
+
+    // Set up guest token in sessionStorage
+    sessionStorage.setItem('guest_checkout_token', guestToken);
+
+    // createOrder returns initial totals
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockResolvedValueOnce(orderSeller2);
+    mockRequestPayment.mockResolvedValue(authority);
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    // Recalculate returns DIFFERENT totals (proving server recalc is used)
+    const recalculatedOrder1 = createMockOrderResult({
+      id: 'order-seller-1',
+      orderNumber: 'ORD-1',
+      total: 115, // Different from createOrder's 110
+      subtotal: 100,
+      shippingCost: 15, // Shipping recalculated
+    });
+    const recalculatedOrder2 = createMockOrderResult({
+      id: 'order-seller-2',
+      orderNumber: 'ORD-2',
+      total: 65, // Different from createOrder's 60
+      subtotal: 50,
+      shippingCost: 15, // Shipping recalculated
+    });
+    mockRecalculateBatchOrdersShippingMutation.mockResolvedValue({
+      data: {
+        recalculateBatchOrdersShipping: [recalculatedOrder1, recalculatedOrder2],
+      },
+    });
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for order creation
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    // Verify recalculateBatchOrdersShipping called once with both order IDs and guestToken
+    await waitFor(() => {
+      expect(mockRecalculateBatchOrdersShippingMutation).toHaveBeenCalledTimes(1);
+    });
+    expect(mockRecalculateBatchOrdersShippingMutation).toHaveBeenCalledWith({
+      variables: {
+        orderIds: ['order-seller-1', 'order-seller-2'],
+        guestToken,
+      },
+    });
+
+    // Verify requestPayment called with recalculated total (115 + 65 = 180)
+    // The amount in Toman should be based on recalculated USD total
+    await waitFor(() => {
+      expect(mockRequestPayment).toHaveBeenCalledTimes(1);
+    }, { timeout: 5000 });
+    expect(mockRequestPayment).toHaveBeenCalledWith(expect.objectContaining({
+      // 180 USD * 300000 rate = 54000000 Toman
+      amount: 54000000,
+      orderIds: ['order-seller-1', 'order-seller-2'],
+    }));
+
+    // Verify sessionStorage has order metadata with recalculated confirmation data
+    await waitFor(() => {
+      const stored = sessionStorage.getItem('order_order-seller-1');
+      expect(stored).not.toBeNull();
+      const parsed = JSON.parse(stored as string);
+      expect(parsed.orderConfirmation).toBeDefined();
+      // Total should be recalculated total (115 + 65 = 180)
+      expect(parsed.orderConfirmation.total).toBe(180);
+      expect(parsed.orderConfirmation.shippingCost).toBe(30); // 15 + 15
+      expect(parsed.orderConfirmation.subtotal).toBe(150); // 100 + 50
+    });
+  }, 15000);
+
+  it('Test 9: Single-order checkout does NOT call recalculateBatchOrdersShipping', async () => {
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
+    const authority = 'A000000000000000000000000000000000000123';
+
+    // Single seller cart
+    mockCartItems = [
+      {
+        id: 'cart-item-1',
+        productId: 'prod-1',
+        productInfoId: 'pi-1',
+        sellerProductId: '11111111-1111-1111-1111-111111111111',
+        sellerId: '1',
+        sellerName: 'Seller One',
+        sellerShippingFee: 1.2,
+        sellerShippingPaymentMode: 'PAY_ONLINE',
+        productName: 'Product from Seller 1',
+        productImage: '/item1.jpg',
+        quantity: 1,
+        unitPrice: 100,
+        totalPrice: 100,
+        availableStock: 5,
+        color: '#121212',
+        size: 'L',
+      },
+    ];
+
+    // Update shipping data for single seller
+    setShippingData({
+      calculateShippingCost: {
+        totalShippingCost: 1.2,
+        freeShippingApplied: false,
+        strategyUsed: 'TIERED_DISCOUNT',
+        shippingBreakdown: [
+          { sellerId: '1', originalFee: 1.2, appliedFee: 1.2 },
+        ],
+      },
+    });
+
+    mockCreateOrderMutation.mockResolvedValue(orderSeller1);
+    mockRequestPayment.mockResolvedValue(authority);
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for order creation
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Verify recalculateBatchOrdersShipping was NOT called
+    expect(mockRecalculateBatchOrdersShippingMutation).not.toHaveBeenCalled();
+
+    // Verify requestPayment called once
+    await waitFor(() => {
+      expect(mockRequestPayment).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  it('Test 10: When recalc mutation errors, checkout does not proceed to payment/success', async () => {
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
+    const orderSeller2 = createMockOrderResult({ id: 'order-seller-2', orderNumber: 'ORD-2', total: 60 });
+    const guestToken = 'guest_test123';
+
+    sessionStorage.setItem('guest_checkout_token', guestToken);
+
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockResolvedValueOnce(orderSeller2);
+    mockRequestPayment.mockResolvedValue('AUTH123');
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    // Recalculate mutation throws an error
+    mockRecalculateBatchOrdersShippingMutation.mockRejectedValue(new Error('Server error'));
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    // Wait for order creation
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    // Verify recalculateBatchOrdersShipping was called
+    await waitFor(() => {
+      expect(mockRecalculateBatchOrdersShippingMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Verify requestPayment was NOT called (checkout should not proceed)
+    expect(mockRequestPayment).not.toHaveBeenCalled();
+
+    // Verify redirectToGateway was NOT called
+    expect(mockRedirectToGateway).not.toHaveBeenCalled();
+
+    // Verify cancelPendingOrder was called for both orders (rollback in catch block)
+    await waitFor(() => {
+      expect(mockCancelPendingOrder).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('Test 11: When recalc mutation returns no data, checkout does not proceed', async () => {
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
+    const orderSeller2 = createMockOrderResult({ id: 'order-seller-2', orderNumber: 'ORD-2', total: 60 });
+    const guestToken = 'guest_test123';
+
+    sessionStorage.setItem('guest_checkout_token', guestToken);
+
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockResolvedValueOnce(orderSeller2);
+    mockRequestPayment.mockResolvedValue('AUTH123');
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    // Recalculate mutation returns no data
+    mockRecalculateBatchOrdersShippingMutation.mockResolvedValue({
+      data: null,
+    });
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    await waitFor(() => {
+      expect(mockRecalculateBatchOrdersShippingMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Should not proceed to payment
+    expect(mockRequestPayment).not.toHaveBeenCalled();
+    expect(mockRedirectToGateway).not.toHaveBeenCalled();
+
+    // Rollback should happen
+    await waitFor(() => {
+      expect(mockCancelPendingOrder).toHaveBeenCalledTimes(2);
+    });
+  });
+
+  it('Test 12: When recalc mutation returns incomplete orders (missing ID), checkout does not proceed', async () => {
+    const orderSeller1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 110 });
+    const orderSeller2 = createMockOrderResult({ id: 'order-seller-2', orderNumber: 'ORD-2', total: 60 });
+    const guestToken = 'guest_test123';
+
+    sessionStorage.setItem('guest_checkout_token', guestToken);
+
+    mockCreateOrderMutation
+      .mockResolvedValueOnce(orderSeller1)
+      .mockResolvedValueOnce(orderSeller2);
+    mockRequestPayment.mockResolvedValue('AUTH123');
+    mockRedirectToGateway.mockResolvedValue(undefined);
+    mockCancelPendingOrder.mockResolvedValue(true);
+
+    // Recalculate mutation returns only one order (missing order-seller-2)
+    const recalculatedOrder1 = createMockOrderResult({ id: 'order-seller-1', orderNumber: 'ORD-1', total: 115 });
+    mockRecalculateBatchOrdersShippingMutation.mockResolvedValue({
+      data: {
+        recalculateBatchOrdersShipping: [recalculatedOrder1],
+      },
+    });
+
+    renderWithProviders();
+
+    await proceedToPayment();
+
+    await waitFor(() => {
+      expect(mockCreateOrderMutation).toHaveBeenCalledTimes(2);
+    });
+
+    await waitFor(() => {
+      expect(mockRecalculateBatchOrdersShippingMutation).toHaveBeenCalledTimes(1);
+    });
+
+    // Should not proceed to payment
+    expect(mockRequestPayment).not.toHaveBeenCalled();
+    expect(mockRedirectToGateway).not.toHaveBeenCalled();
+
+    // Rollback should happen
+    await waitFor(() => {
+      expect(mockCancelPendingOrder).toHaveBeenCalledTimes(2);
     });
   });
 });
@@ -1546,7 +1853,7 @@ describe('Pay on Delivery Notice & Mixed Cart Shipping', () => {
     const notices = await screen.findAllByTestId('pay-on-delivery-notice');
     expect(notices.length).toBeGreaterThan(0);
     expect(notices[0].textContent).toMatch(
-      /Shipping is paid on delivery when you receive the parcel by post|هزینه ارسال هنگام تحویل مرسوله پستی پرداخت می‌شود/
+      /Shipping is paid on delivery when you receive the parcel by post|ظ‡ط²غŒظ†ظ‡ ط§ط±ط³ط§ظ„ ظ‡ظ†ع¯ط§ظ… طھط­ظˆغŒظ„ ظ…ط±ط³ظˆظ„ظ‡ ظ¾ط³طھغŒ ظ¾ط±ط¯ط§ط®طھ ظ…غŒâ€Œط´ظˆط¯/
     );
   });
 

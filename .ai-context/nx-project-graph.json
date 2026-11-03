@@ -17073,6 +17073,11 @@
         },
         {
           "source": "customer-shopping-cart",
+          "target": "codegen",
+          "type": "static"
+        },
+        {
+          "source": "customer-shopping-cart",
           "target": "customers-cart-hook",
           "type": "static"
         },
