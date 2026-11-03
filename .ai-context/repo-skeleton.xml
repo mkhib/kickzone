@@ -2471,6 +2471,11 @@ type SellerInfo {
   sellerProducts: [SellerProduct!]!
 }
 
+enum ShippingPaymentMode {
+  PAY_ON_DELIVERY
+  PAY_ONLINE
+}
+
 type SellerEdge {
   node: SellerInfo!
   cursor: String!
@@ -2523,11 +2528,6 @@ enum OrderStatus {
   DELIVERED
   CANCELLED
   REFUNDED
-}
-
-enum ShippingPaymentMode {
-  PAY_ON_DELIVERY
-  PAY_ONLINE
 }
 
 type OrderItem {
@@ -2720,21 +2720,24 @@ type Query {
   users(first: Int, after: String, searchTerm: String, role: UserRole): UserConnection!
   customers(first: Int, after: String, searchTerm: String): UserConnection!
   me: User
+  myProfile: CustomerProfile!
   products(filter: ProductFilterInput): ProductConnection!
   distinctProductSizes(sizeKind: SizeKind): [String!]!
   sellerProductsForMe(filter: ProductFilterInput): ProductConnection!
   categories: [Category!]!
   product(id: Int!): Product
   sellerProductsByProduct(productId: Int!): [SellerProduct!]!
-  myProfile: CustomerProfile!
+  getTranslation(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String): String!
+  getEntityTranslations(entityType: String!, entityId: Int!): [Translation!]!
+  getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
   brands(onlyWithProducts: Boolean): [Brand!]!
   brand(id: Int!): Brand
-  colors: [Color!]!
-  color(id: Int!): Color
   sellers(filter: SellerFilterInput, first: Int! = 100, after: String): SellerConnection!
   findOne(id: Int!): SellerInfo
   mySellerInfo: SellerInfo
   mySellerProductById(id: String!): SellerProduct
+  colors: [Color!]!
+  color(id: Int!): Color
   orders(first: Int! = 10, after: String, sellerId: String, status: OrderStatus): OrdersConnection!
   order(id: String!): Order!
   myOrders(first: Int! = 10, after: String): [Order!]!
@@ -2742,9 +2745,7 @@ type Query {
   adminSellerOrders(sellerId: String!, first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
   allSellerOrders(first: Int! = 10, after: String, status: OrderStatus): OrdersConnection!
   myCart: Cart!
-  getTranslation(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String): String!
-  getEntityTranslations(entityType: String!, entityId: Int!): [Translation!]!
-  getTranslationWithFallback(entityType: String!, entityId: Int!, locale: String!, fieldName: String!, fallback: String!): String!
+  calculateShippingCost(cartSubtotal: Float!, sellerShippingFees: [SellerShippingInfoInput!]!): ShippingCalculationResult!
   currencies: [Currency!]!
   currency(id: Int!): Currency
   currencyByCode(code: String!): Currency
@@ -2752,7 +2753,6 @@ type Query {
   exchangeRateHistory(fromCurrencyCode: String!, toCurrencyCode: String!, limit: Int): [ExchangeRate!]!
   currencyPreferences: [CurrencyPreference!]!
   currencyPreferenceByLocale(locale: String!): CurrencyPreference
-  calculateShippingCost(cartSubtotal: Float!, sellerShippingFees: [SellerShippingInfoInput!]!): ShippingCalculationResult!
   siteLanguages(activeOnly: Boolean): [SiteLanguage!]!
   siteLanguage(code: String!): SiteLanguage
 }
@@ -2807,7 +2807,7 @@ input SellerShippingInfoInput {
   sellerId: String!
   shippingFee: Float!
   sellerName: String
-  shippingPaymentMode: ShippingPaymentMode
+  shippingPaymentMode: String
 }
 
 type Mutation {
@@ -2821,6 +2821,10 @@ type Mutation {
   register(name: String!, email: String!, password: String!): User!
   forgotPassword(email: String!, baseUrl: String!): Boolean!
   resetPassword(token: String!, newPassword: String!): User!
+  updateMyProfile(input: UpdateCustomerProfileInput!): CustomerProfile!
+  createCategory(input: CreateCategoryInput!, name: String): Category!
+  updateCategory(input: UpdateCategoryInput!, name: String): Category!
+  deleteCategory(id: Int!): Boolean!
   createProduct(input: CreateProductInput!): Product!
   createProductInfo(input: CreateProductInfoInput!): Product!
   uploadProductInfoImages(productInfoId: Int!, files: [Upload!]!): [String!]!
@@ -2830,16 +2834,12 @@ type Mutation {
   deleteProduct(id: Int!): Boolean!
   updateProduct(input: UpdateProductInput!): Product!
   subscribeNewsletter(email: String!): Boolean!
-  updateMyProfile(input: UpdateCustomerProfileInput!): CustomerProfile!
-  createCategory(input: CreateCategoryInput!, name: String): Category!
-  updateCategory(input: UpdateCategoryInput!, name: String): Category!
-  deleteCategory(id: Int!): Boolean!
+  setTranslation(input: TranslationInput!): Translation!
+  bulkTranslateEntities(input: BulkTranslationInput!): Boolean!
+  deleteEntityTranslations(entityType: String!, entityId: Int!): Boolean!
   createBrand(input: CreateBrandInput!, name: String): Brand!
   updateBrand(input: UpdateBrandInput!, name: String): Brand!
   deleteBrand(id: Int!): Boolean!
-  createColor(input: CreateColorInput!, name: String): Color!
-  updateColor(id: Int!, input: UpdateColorInput!, name: String): Color!
-  deleteColor(id: Int!): Boolean!
   createSeller(createSellerInput: CreateSellerInput!): SellerInfo!
   updateSeller(updateSellerInput: UpdateSellerInput!): SellerInfo!
   toggleSellerActive(id: Int!): SellerInfo!
@@ -2847,19 +2847,20 @@ type Mutation {
   updateSellerProduct(sellerId: Int!, input: UpdateSellerProductInput!): SellerProduct!
   createMySellerProduct(input: CreateSellerProductInput!): SellerProduct!
   updateMySellerProduct(input: UpdateSellerProductInput!): SellerProduct!
+  createColor(input: CreateColorInput!, name: String): Color!
+  updateColor(id: Int!, input: UpdateColorInput!, name: String): Color!
+  deleteColor(id: Int!): Boolean!
   createOrder(createOrderInput: CreateOrderInput!): Order!
   updateOrder(id: String!, updateOrderInput: UpdateOrderInput!): Order!
   updateOrderStatus(updateOrderStatusInput: UpdateOrderStatusInput!): Order!
   cancelPendingOrder(orderId: String!): Boolean!
   deleteOrder(id: String!): Boolean!
   updateOrderTracking(id: String!, trackingNumber: String!): Order!
+  recalculateBatchOrdersShipping(orderIds: [String!]!, guestToken: String): [Order!]!
   addToCart(addToCartInput: AddToCartInput!): Cart!
   updateCartItem(itemId: String!, updateInput: UpdateCartItemInput!): Cart!
   removeFromCart(itemId: String!): Cart!
   clearCart: Cart!
-  setTranslation(input: TranslationInput!): Translation!
-  bulkTranslateEntities(input: BulkTranslationInput!): Boolean!
-  deleteEntityTranslations(entityType: String!, entityId: Int!): Boolean!
   createCurrency(input: CreateCurrencyInput!): Currency!
   updateCurrency(id: Int!, input: UpdateCurrencyInput!): Currency!
   setExchangeRate(input: SetExchangeRateInput!): ExchangeRate!
@@ -2868,7 +2869,7 @@ type Mutation {
   requestZarinPalPayment(input: ZarinPalPaymentRequestInput!): ZarinPalPaymentResponse!
   verifyZarinPalPayment(input: ZarinPalVerificationRequestInput!): ZarinPalVerificationResponse!
   getZarinPalGatewayUrl(authority: String!): GatewayUrlResponse!
-  cancelPendingZarinPalOrder(orderId: String, authority: String): Boolean!
+  cancelPendingZarinPalOrder(orderId: String, authority: String, guestToken: String): Boolean!
   createSiteLanguage(input: CreateSiteLanguageInput!): SiteLanguage!
   updateSiteLanguage(id: Int!, input: UpdateSiteLanguageInput!): SiteLanguage!
   deleteSiteLanguage(id: Int!): Boolean!
@@ -2881,6 +2882,30 @@ input CreateUserInput {
   email: String!
   password: String!
   role: UserRole!
+}
+
+input UpdateCustomerProfileInput {
+  phone: String
+  address: String
+  city: String
+  state: String
+  zipCode: String
+  country: String
+  clothingSize: String
+  shoeSize: String
+  favorites: String
+}
+
+input CreateCategoryInput {
+  slug: String!
+  sortOrder: Int = 0
+}
+
+input UpdateCategoryInput {
+  id: Int!
+  slug: String
+  sortOrder: Int
+  isActive: Boolean
 }
 
 input CreateProductInput {
@@ -2936,28 +2961,21 @@ input UpdateProductInput {
   variants: [ProductVariantInput!]
 }
 
-input UpdateCustomerProfileInput {
-  phone: String
-  address: String
-  city: String
-  state: String
-  zipCode: String
-  country: String
-  clothingSize: String
-  shoeSize: String
-  favorites: String
+input TranslationInput {
+  entityType: String!
+  entityId: Int!
+  locale: String!
+  fieldName: String!
+  value: String!
+  isAutoTranslated: Boolean = false
+  translatedBy: Int
 }
 
-input CreateCategoryInput {
-  slug: String!
-  sortOrder: Int = 0
-}
-
-input UpdateCategoryInput {
-  id: Int!
-  slug: String
-  sortOrder: Int
-  isActive: Boolean
+input BulkTranslationInput {
+  entityType: String!
+  entityIds: [Int!]!
+  sourceLocale: String!
+  targetLocales: [String!]!
 }
 
 input CreateBrandInput {
@@ -2972,17 +2990,6 @@ input UpdateBrandInput {
   isActive: Boolean
 }
 
-input CreateColorInput {
-  hexCode: String!
-  sortOrder: Int = 0
-}
-
-input UpdateColorInput {
-  hexCode: String!
-  sortOrder: Int
-  isActive: Boolean
-}
-
 input CreateSellerInput {
   name: String!
   lastName: String!
@@ -2993,8 +3000,8 @@ input CreateSellerInput {
   phone: String
   address: String
   shippingFee: Float
-  shippingPaymentMode: ShippingPaymentMode
   canManageCatalog: Boolean
+  shippingPaymentMode: ShippingPaymentMode
 }
 
 input UpdateSellerInput {
@@ -3007,9 +3014,9 @@ input UpdateSellerInput {
   phone: String
   address: String
   shippingFee: Float
-  shippingPaymentMode: ShippingPaymentMode
   isActive: Boolean
   canManageCatalog: Boolean
+  shippingPaymentMode: ShippingPaymentMode
 }
 
 input CreateSellerProductInput {
@@ -3033,6 +3040,17 @@ input UpdateSellerProductInput {
   boxLess: Boolean
 }
 
+input CreateColorInput {
+  hexCode: String!
+  sortOrder: Int = 0
+}
+
+input UpdateColorInput {
+  hexCode: String!
+  sortOrder: Int
+  isActive: Boolean
+}
+
 input CreateOrderInput {
   customerEmail: String!
   customerPhone: String!
@@ -3045,8 +3063,8 @@ input CreateOrderInput {
   sellerId: Int!
   items: [CreateOrderItemInput!]!
   notes: String
-  shippingCost: Float @deprecated(reason: "Ignored; computed server-side")
   shippingMethod: String
+  shippingCost: Float
 }
 
 input CreateOrderItemInput {
@@ -3102,23 +3120,6 @@ input UpdateCartItemInput {
   quantity: Int
   color: String
   size: String
-}
-
-input TranslationInput {
-  entityType: String!
-  entityId: Int!
-  locale: String!
-  fieldName: String!
-  value: String!
-  isAutoTranslated: Boolean = false
-  translatedBy: Int
-}
-
-input BulkTranslationInput {
-  entityType: String!
-  entityIds: [Int!]!
-  sourceLocale: String!
-  targetLocales: [String!]!
 }
 
 input CreateCurrencyInput {

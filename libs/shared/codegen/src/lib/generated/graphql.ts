@@ -294,6 +294,7 @@ export type Mutation = {
   initiatePasswordSetup: Scalars['Boolean']['output'];
   login: User;
   logout: Scalars['Boolean']['output'];
+  recalculateBatchOrdersShipping: Array<Order>;
   refresh: Scalars['Boolean']['output'];
   register: User;
   removeFromCart: Cart;
@@ -483,6 +484,12 @@ export type MutationInitiatePasswordSetupArgs = {
 export type MutationLoginArgs = {
   email: Scalars['String']['input'];
   password: Scalars['String']['input'];
+};
+
+
+export type MutationRecalculateBatchOrdersShippingArgs = {
+  guestToken?: InputMaybe<Scalars['String']['input']>;
+  orderIds: Array<Scalars['String']['input']>;
 };
 
 
@@ -708,11 +715,6 @@ export enum OrderStatus {
   Processing = 'PROCESSING',
   Refunded = 'REFUNDED',
   Shipped = 'SHIPPED'
-}
-
-export enum ShippingPaymentMode {
-  PayOnDelivery = 'PAY_ON_DELIVERY',
-  PayOnline = 'PAY_ONLINE'
 }
 
 export type OrdersConnection = {
@@ -1164,7 +1166,7 @@ export type SellerShippingInfoInput = {
   sellerId: Scalars['String']['input'];
   sellerName?: InputMaybe<Scalars['String']['input']>;
   shippingFee: Scalars['Float']['input'];
-  shippingPaymentMode?: InputMaybe<ShippingPaymentMode>;
+  shippingPaymentMode?: InputMaybe<Scalars['String']['input']>;
 };
 
 export type SetExchangeRateInput = {
@@ -1182,6 +1184,11 @@ export type ShippingCalculationResult = {
   strategyUsed: Scalars['String']['output'];
   totalShippingCost: Scalars['Float']['output'];
 };
+
+export enum ShippingPaymentMode {
+  PayOnline = 'PAY_ONLINE',
+  PayOnDelivery = 'PAY_ON_DELIVERY'
+}
 
 export type SiteLanguage = {
   __typename?: 'SiteLanguage';
