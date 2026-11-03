@@ -450,23 +450,54 @@ export class OrderService {
   ): Promise<Order> {
     const order = await this.findOne(id);
 
-    Object.assign(order, updateOrderInput);
+    const inputWithItems = updateOrderInput as UpdateOrderInput & {
+      items?: unknown;
+      subtotal?: unknown;
+      total?: unknown;
+      shippingCost?: unknown;
+    };
 
-    if (updateOrderInput.items) {
-      await this.orderItemRepository.delete({ orderId: id });
-
-      const orderItems = updateOrderInput.items.map((item) => ({
-        ...item,
-        orderId: id,
-      }));
-
-      await this.orderItemRepository.save(orderItems);
-
-      order.subtotal = orderItems.reduce(
-        (sum, item) => sum + item.totalPrice,
-        0,
+    if (
+      inputWithItems.items != null ||
+      inputWithItems.subtotal != null ||
+      inputWithItems.total != null ||
+      inputWithItems.shippingCost != null ||
+      order.status !== OrderStatus.PENDING
+    ) {
+      throw new BadRequestException(
+        'Order items and financial totals cannot be rewritten after order creation',
       );
-      order.total = order.subtotal + order.shippingCost;
+    }
+
+    if (updateOrderInput.customerEmail !== undefined) {
+      order.customerEmail = updateOrderInput.customerEmail;
+    }
+    if (updateOrderInput.customerPhone !== undefined) {
+      order.customerPhone = updateOrderInput.customerPhone;
+    }
+    if (updateOrderInput.customerName !== undefined) {
+      order.customerName = updateOrderInput.customerName;
+    }
+    if (updateOrderInput.shippingAddress !== undefined) {
+      order.shippingAddress = updateOrderInput.shippingAddress;
+    }
+    if (updateOrderInput.city !== undefined) {
+      order.city = updateOrderInput.city;
+    }
+    if (updateOrderInput.state !== undefined) {
+      order.state = updateOrderInput.state;
+    }
+    if (updateOrderInput.zipCode !== undefined) {
+      order.zipCode = updateOrderInput.zipCode;
+    }
+    if (updateOrderInput.country !== undefined) {
+      order.country = updateOrderInput.country;
+    }
+    if (updateOrderInput.notes !== undefined) {
+      order.notes = updateOrderInput.notes;
+    }
+    if (updateOrderInput.trackingNumber !== undefined) {
+      order.trackingNumber = updateOrderInput.trackingNumber;
     }
 
     return this.orderRepository.save(order);
@@ -537,6 +568,7 @@ export class OrderService {
       const order = await orderRepo.findOne({
         where: { id },
         relations: ['items'],
+        lock: manager ? { mode: 'pessimistic_write' } : undefined,
       });
 
       if (!order) {
@@ -836,6 +868,7 @@ export class OrderService {
       const order = await orderRepo.findOne({
         where: { id: orderId },
         relations: ['items'],
+        lock: manager ? { mode: 'pessimistic_write' } : undefined,
       });
 
       if (!order) {

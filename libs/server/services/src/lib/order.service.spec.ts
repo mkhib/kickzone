@@ -1283,7 +1283,7 @@ describe('OrderService', () => {
       expect(result).toEqual({ ...existingOrder, ...updateInput });
     });
 
-    it('should update order items and recalculate totals', async () => {
+    it('should throw BadRequestException when items are provided', async () => {
       const updateInputWithItems: UpdateOrderInput = {
         items: [
           {
@@ -1293,33 +1293,71 @@ describe('OrderService', () => {
             unitPrice: 50,
             totalPrice: 150,
           },
-          {
-            productId: 'product-2',
-            productName: 'Product 2',
-            quantity: 1,
-            unitPrice: 30,
-            totalPrice: 30,
-          },
         ],
       };
 
       orderRepository.findOne.mockResolvedValue(existingOrder);
-      orderItemRepository.delete.mockResolvedValue({ affected: 0 } as never);
-      orderItemRepository.save.mockResolvedValue([] as never);
-      orderRepository.save.mockResolvedValue({
-        ...existingOrder,
-        subtotal: 180,
-        total: 190,
-      } as Order);
 
-      const result = await service.updateOrder(orderId, updateInputWithItems);
+      await expect(service.updateOrder(orderId, updateInputWithItems)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInputWithItems)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
 
-      expect(orderItemRepository.delete).toHaveBeenCalledWith({
-        orderId,
-      });
-      expect(orderItemRepository.save).toHaveBeenCalled();
-      expect(result.subtotal).toBe(180);
-      expect(result.total).toBe(190);
+    it('should throw BadRequestException when subtotal is provided', async () => {
+      const updateInputWithSubtotal = { ...updateInput, subtotal: 200 as unknown };
+
+      orderRepository.findOne.mockResolvedValue(existingOrder);
+
+      await expect(service.updateOrder(orderId, updateInputWithSubtotal)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInputWithSubtotal)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+    });
+
+    it('should throw BadRequestException when total is provided', async () => {
+      const updateInputWithTotal = { ...updateInput, total: 200 as unknown };
+
+      orderRepository.findOne.mockResolvedValue(existingOrder);
+
+      await expect(service.updateOrder(orderId, updateInputWithTotal)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInputWithTotal)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+    });
+
+    it('should throw BadRequestException when shippingCost is provided', async () => {
+      const updateInputWithShippingCost = { ...updateInput, shippingCost: 20 as unknown };
+
+      orderRepository.findOne.mockResolvedValue(existingOrder);
+
+      await expect(service.updateOrder(orderId, updateInputWithShippingCost)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInputWithShippingCost)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+    });
+
+    it('should throw BadRequestException when order status is not PENDING', async () => {
+      const confirmedOrder = { ...existingOrder, status: OrderStatus.CONFIRMED };
+
+      orderRepository.findOne.mockResolvedValue(confirmedOrder);
+
+      await expect(service.updateOrder(orderId, updateInput)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInput)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+      expect(orderRepository.save).not.toHaveBeenCalled();
     });
   });
 
@@ -1894,6 +1932,7 @@ describe('OrderService', () => {
       expect(orderRepository.findOne).toHaveBeenCalledWith({
         where: { id: orderId },
         relations: ['items'],
+        lock: { mode: 'pessimistic_write' },
       });
       expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
         where: { id: 'seller-product-1' },
@@ -2394,6 +2433,43 @@ describe('OrderService', () => {
       await expect(service.cancelPendingOrder(orderId)).rejects.toThrow(
         NotFoundException,
       );
+    });
+
+    it('should pass pessimistic_write lock when running inside a DataSource transaction', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      // Simulate transaction by providing a manager
+      const transactionOrderRepo = {
+        findOne: jest.fn().mockResolvedValue(order),
+        save: jest.fn().mockResolvedValue({
+          ...order,
+          status: OrderStatus.CANCELLED,
+          stockReserved: false,
+        }),
+      };
+      const transactionSellerProductRepo = {
+        findOne: jest.fn(),
+        save: jest.fn(),
+      };
+      mockTransactionManager.getRepository.mockImplementation((entity: unknown) => {
+        if (entity === Order) return transactionOrderRepo;
+        if (entity === SellerProduct) return transactionSellerProductRepo;
+        return mockOrderRepository;
+      });
+
+      const result = await service.cancelPendingOrder(orderId);
+
+      expect(transactionOrderRepo.findOne).toHaveBeenCalledWith({
+        where: { id: orderId },
+        relations: ['items'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(result.status).toBe(OrderStatus.CANCELLED);
     });
   });
 

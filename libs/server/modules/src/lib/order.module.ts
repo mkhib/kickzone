@@ -8,7 +8,6 @@ import {
 } from '@kickzone-workspace/entities';
 import { OrderService } from '@kickzone-workspace/services';
 import { OrderResolver } from '@kickzone-workspace/resolvers';
-import { OrderController } from '@kickzone-workspace/controllers';
 import { SellerInfoModule } from './seller-info.module';
 import { PlatformSettingsModule } from './platform-settings.module';
 
@@ -19,7 +18,7 @@ import { PlatformSettingsModule } from './platform-settings.module';
     PlatformSettingsModule,
   ],
   providers: [OrderService, OrderResolver],
-  controllers: [OrderController],
+  controllers: [],
   exports: [OrderService],
 })
 export class OrderModule {}
