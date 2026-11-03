@@ -758,6 +758,7 @@ describe('PaymentResolver Unit Tests', () => {
       paymentAmount: number | null;
       paymentCurrency: string | null;
       orderNumber: string;
+      notes: string | null;
     }> = {}) => ({
       id: 'order-123',
       status: OrderStatus.PENDING,
@@ -768,6 +769,7 @@ describe('PaymentResolver Unit Tests', () => {
       paymentAmount: null,
       paymentCurrency: null,
       orderNumber: 'ORD-123',
+      notes: null,
       ...overrides,
     });
 
@@ -776,6 +778,16 @@ describe('PaymentResolver Unit Tests', () => {
 
     beforeEach(() => {
       jest.clearAllMocks();
+      orderService.findOne.mockReset();
+      orderService.findOrdersByPaymentAuthority.mockReset();
+      orderService.setPaymentIntent.mockReset();
+      orderService.confirmOrderPayment.mockReset();
+      orderService.cancelPendingOrder.mockReset();
+      orderService.updateOrderStatus?.mockReset();
+      paymentService.requestPayment.mockReset();
+      paymentService.verifyPayment.mockReset();
+      currencyService.getCurrentExchangeRate.mockReset();
+
       orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
       orderService.setPaymentIntent.mockResolvedValue(undefined as never);
       orderService.confirmOrderPayment.mockResolvedValue(undefined as never);
@@ -883,6 +895,81 @@ describe('PaymentResolver Unit Tests', () => {
         expect(paymentService.requestPayment).not.toHaveBeenCalled();
       });
 
+      it('should reject javascript: or malformed callback_url', async () => {
+        const order1 = createMockOrder({ id: 'order-1', total: 40 });
+        const order2 = createMockOrder({ id: 'order-2', total: 60 });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        // Test javascript: protocol
+        const inputJs = {
+          amount: 6000000,
+          callback_url: 'javascript:alert(1)',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(inputJs)).rejects.toThrow(
+          'Invalid callback_url protocol'
+        );
+
+        // Test malformed URL
+        const inputMalformed = {
+          amount: 6000000,
+          callback_url: 'not-a-url',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(inputMalformed)).rejects.toThrow(
+          'Invalid callback_url'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+      });
+
+      it('should reject when guest orders in batch have different GuestToken tags', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          total: 40,
+          customerEmail: '',
+          notes: '[GuestToken: token-A]',
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          total: 60,
+          customerEmail: '',
+          notes: '[GuestToken: token-B]',
+        });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        const input = {
+          amount: 6000000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'All orders in a batch must share the same guest checkout token'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+        expect(orderService.setPaymentIntent).not.toHaveBeenCalled();
+      });
+
       it('should reject when any order does not exist', async () => {
         const order1 = createMockOrder({ id: 'order-1' });
 
@@ -973,6 +1060,124 @@ describe('PaymentResolver Unit Tests', () => {
     });
 
     describe('verifyZarinPalPayment - Multi-Seller Batch', () => {
+      it('should reject when any order for the authority is already CANCELLED', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          status: OrderStatus.CANCELLED,
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          status: OrderStatus.PENDING,
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-2',
+        } as never;
+
+        await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+          'Cannot verify payment for cancelled or refunded order(s): order-1'
+        );
+
+        expect(paymentService.verifyPayment).not.toHaveBeenCalled();
+        expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+      });
+
+      it('should reject when any order for the authority is already REFUNDED', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          status: OrderStatus.REFUNDED,
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          status: OrderStatus.PENDING,
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-2',
+        } as never;
+
+        await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+          'Cannot verify payment for cancelled or refunded order(s): order-1'
+        );
+
+        expect(paymentService.verifyPayment).not.toHaveBeenCalled();
+        expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+      });
+
+      it('should serialize concurrent verifyZarinPalPayment calls for the same authority and call confirmOrderPayment only once', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+          status: OrderStatus.PENDING,
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-002',
+          status: OrderStatus.PENDING,
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', ref_id: refId },
+          errors: [],
+        } as never);
+
+        orderService.confirmOrderPayment.mockResolvedValue(undefined as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        // Fire two concurrent verify calls with the same authority
+        const [result1, result2] = await Promise.all([
+          resolver.verifyZarinPalPayment(input),
+          resolver.verifyZarinPalPayment(input),
+        ]);
+
+        // Both should return the same successful result
+        expect(result1.success).toBe(true);
+        expect(result2.success).toBe(true);
+        expect(result1.ref_id).toBe(refId);
+        expect(result2.ref_id).toBe(refId);
+
+        // verifyPayment should only be called ONCE (the second call awaits the first)
+        expect(paymentService.verifyPayment).toHaveBeenCalledTimes(1);
+
+        // confirmOrderPayment should be called for each order exactly once (total 2)
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(2);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-2');
+      });
+
       it('should confirm ALL sibling orders when payment succeeds', async () => {
         const order1 = createMockOrder({
           id: 'order-1',

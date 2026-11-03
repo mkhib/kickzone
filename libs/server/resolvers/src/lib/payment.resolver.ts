@@ -118,6 +118,16 @@ export class PaymentResolver {
     private readonly currencyService: CurrencyService
   ) {}
 
+  private readonly inFlightVerifications = new Map<
+    string,
+    Promise<ZarinPalVerificationResponse>
+  >();
+
+  private extractGuestToken(notes?: string | null): string | null {
+    const match = /\[GuestToken:\s*([^\]]+)\]/.exec(notes ?? '');
+    return match ? match[1].trim() : null;
+  }
+
   @Mutation(() => ZarinPalPaymentResponse)
   async requestZarinPalPayment(
     @Args('input') input: ZarinPalPaymentRequestInput
@@ -132,6 +142,20 @@ export class PaymentResolver {
 
     if (targetOrderIds.length === 0) {
       throw new BadRequestException('At least one orderId is required');
+    }
+
+    // Validate callback_url early - before any database lookups
+    let parsedCallbackUrl: URL;
+    try {
+      parsedCallbackUrl = new URL(input.callback_url);
+    } catch {
+      throw new BadRequestException('Invalid callback_url');
+    }
+    if (
+      parsedCallbackUrl.protocol !== 'http:' &&
+      parsedCallbackUrl.protocol !== 'https:'
+    ) {
+      throw new BadRequestException('Invalid callback_url protocol');
     }
 
     const isSingleOrder = targetOrderIds.length === 1 && !input.orderIds;
@@ -177,12 +201,19 @@ export class PaymentResolver {
       const firstOrder = orders[0];
       const firstCustomerEmail = String(firstOrder.customerEmail ?? '')
         .toLowerCase();
+      const firstGuestToken = this.extractGuestToken(firstOrder.notes);
 
       for (const order of orders) {
         const customerEmail = String(order.customerEmail ?? '').toLowerCase();
         if (customerEmail !== firstCustomerEmail) {
           throw new BadRequestException(
             'All orders in a batch must belong to the same customer'
+          );
+        }
+        const orderGuestToken = this.extractGuestToken(order.notes);
+        if (firstGuestToken !== orderGuestToken) {
+          throw new BadRequestException(
+            'All orders in a batch must share the same guest checkout token'
           );
         }
       }
@@ -279,7 +310,22 @@ export class PaymentResolver {
   async verifyZarinPalPayment(
     @Args('input') input: ZarinPalVerificationRequestInput
   ) {
-    // Look up ALL orders bound to this authority
+    const existingInFlight = this.inFlightVerifications.get(input.authority);
+    if (existingInFlight) {
+      return existingInFlight;
+    }
+    const verificationPromise = this.executeVerifyZarinPalPayment(input).finally(
+      () => {
+        this.inFlightVerifications.delete(input.authority);
+      }
+    );
+    this.inFlightVerifications.set(input.authority, verificationPromise);
+    return verificationPromise;
+  }
+
+  private async executeVerifyZarinPalPayment(
+    input: ZarinPalVerificationRequestInput
+  ): Promise<ZarinPalVerificationResponse> {
     const orders = this.orderService.findOrdersByPaymentAuthority
       ? await this.orderService.findOrdersByPaymentAuthority(input.authority)
       : input.order_id
@@ -301,6 +347,19 @@ export class PaymentResolver {
           'Payment authority does not match the order payment intent'
         );
       }
+    }
+
+    // Reject before calling the gateway if any order bound to this authority is already CANCELLED or REFUNDED
+    const cancelledOrRefunded = orders.filter(
+      (o) =>
+        o.status === OrderStatus.CANCELLED || o.status === OrderStatus.REFUNDED
+    );
+    if (cancelledOrRefunded.length > 0) {
+      throw new BadRequestException(
+        `Cannot verify payment for cancelled or refunded order(s): ${cancelledOrRefunded
+          .map((o) => o.id)
+          .join(', ')}`
+      );
     }
 
     // Pre-verify: ensure every PENDING order has sufficient stock on all items
@@ -349,11 +408,16 @@ export class PaymentResolver {
 
     // If payment verification was successful (code 100 or 101)
     if (response.data.code === 100 || response.data.code === 101) {
-      // Handle code 101 idempotently: if every order for this authority is already CONFIRMED
+      // Handle code 101 idempotently: if every order for this authority is already in a paid status
       // and has stock reserved, return success without re-decrementing stock.
+      const paidStatuses = new Set<OrderStatus>([
+        OrderStatus.CONFIRMED,
+        OrderStatus.PROCESSING,
+        OrderStatus.SHIPPED,
+        OrderStatus.DELIVERED,
+      ]);
       const allOrdersConfirmedAndStockReserved = orders.every(
-        (o) =>
-          o.status === OrderStatus.CONFIRMED && o.stockReserved === true
+        (o) => paidStatuses.has(o.status) && o.stockReserved === true
       );
 
       if (response.data.code === 101 && allOrdersConfirmedAndStockReserved) {
@@ -562,6 +626,11 @@ export class PaymentResolver {
     // Authorization check
     const userEmail = user?.email?.trim();
     const providedGuestToken = guestToken?.trim();
+
+    // Validate guestToken format: no ']' or newlines to prevent injection
+    if (providedGuestToken && /[\]\r\n]/.test(providedGuestToken)) {
+      throw new BadRequestException('Invalid guest token format');
+    }
 
     const isOwnerByEmail = Boolean(userEmail && userEmail.length > 0 && order.customerEmail?.toLowerCase() === userEmail.toLowerCase());
 

@@ -795,6 +795,7 @@ export class OrderService {
       await this.decreaseStock(order, sellerProductRepo);
       order.stockReserved = true;
       order.status = OrderStatus.CONFIRMED;
+      order.paymentVerifiedAt = new Date();
 
       return orderRepo.save(order);
     });
