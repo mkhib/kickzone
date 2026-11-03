@@ -1512,5 +1512,77 @@ describe('OrderResolver', () => {
       expect(mockOrderService.findOne).toHaveBeenCalledTimes(2);
       expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith([mockOrder1, mockOrder2]);
     });
+
+    it('throws ForbiddenException for anonymous user with no guestToken on orders without GuestToken but with customerEmail', async () => {
+      const ordersNoGuest = [
+        { ...mockOrder1, notes: 'Test order', customerEmail: 'a@x.com' },
+        { ...mockOrder2, notes: 'Test order', customerEmail: 'a@x.com' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersNoGuest[0];
+        if (id === 'order-2') return ordersNoGuest[1];
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, undefined)).rejects.toThrow(
+        'Not allowed to recalculate shipping for this order batch'
+      );
+      expect(mockOrderService.recalculateBatchOrdersShipping).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when batch has GuestToken but logged-in caller provides no guestToken', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as AuthenticatedUser;
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        'Invalid guest token for batch shipping recalculation'
+      );
+      expect(mockOrderService.recalculateBatchOrdersShipping).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when logged-in user has empty email and orders have empty customerEmail (no token)', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: '' } as AuthenticatedUser;
+      const ordersEmptyEmail = [
+        { ...mockOrder1, notes: 'Test order', customerEmail: '' },
+        { ...mockOrder2, notes: 'Test order', customerEmail: '' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersEmptyEmail[0];
+        if (id === 'order-2') return ordersEmptyEmail[1];
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        'Not allowed to recalculate shipping for this order batch'
+      );
+      expect(mockOrderService.recalculateBatchOrdersShipping).not.toHaveBeenCalled();
+    });
+
+    it('succeeds for logged-in owner with case-insensitive email match (A@x.com vs a@x.com) and no token', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: 'A@x.com' } as AuthenticatedUser;
+      const ordersNoGuest = [
+        { ...mockOrder1, notes: 'Test order', customerEmail: 'a@x.com' },
+        { ...mockOrder2, notes: 'Test order', customerEmail: 'a@x.com' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersNoGuest[0];
+        if (id === 'order-2') return ordersNoGuest[1];
+        return null;
+      });
+
+      const result = await resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined);
+
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledTimes(1);
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith(ordersNoGuest);
+      expect(result).toEqual(recalculatedOrders);
+    });
   });
 });
