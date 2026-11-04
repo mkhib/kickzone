@@ -17,6 +17,7 @@ export const APPAREL_SIZES = [
   'XL',
   'XXL',
   'XXXL',
+  '4XL',
 ] as const;
 
 export type ApparelSizeCode = (typeof APPAREL_SIZES)[number];

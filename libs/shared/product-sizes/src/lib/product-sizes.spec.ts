@@ -81,7 +81,48 @@ describe('product-sizes', () => {
       'XL',
       'XXL',
       'XXXL',
+      '4XL',
     ]);
+  });
+
+  it('includes 4XL immediately after XXXL in apparel sizes', () => {
+    const xxxlIndex = APPAREL_SIZES.indexOf('XXXL');
+    const fourXlIndex = APPAREL_SIZES.indexOf('4XL');
+    expect(xxxlIndex).toBeGreaterThanOrEqual(0);
+    expect(fourXlIndex).toBe(xxxlIndex + 1);
+  });
+
+  it('identifies 4XL as apparel size kind', () => {
+    expect(normalizeSizeCode(SizeKind.Apparel, '4xl')).toBe('4XL');
+    expect(normalizeSizeCode(SizeKind.Apparel, ' 4XL ')).toBe('4XL');
+    expect(inferSizeKindFromRaw('4xl')).toEqual({
+      sizeKind: SizeKind.Apparel,
+      size: '4XL',
+    });
+    expect(inferSizeKindFromRaw('4XL')).toEqual({
+      sizeKind: SizeKind.Apparel,
+      size: '4XL',
+    });
+  });
+
+  it('sorts unsorted apparel sizes with 4XL after XXXL', () => {
+    const unsorted = ['4XL', 'M', 'XXXL', 'S', 'XXL'];
+    const sorted = sortSizeCodes(SizeKind.Apparel, unsorted);
+    expect(sorted).toEqual(['S', 'M', 'XXL', 'XXXL', '4XL']);
+  });
+
+  it('sorts mixed sizes with 4XL after XXXL and before footwear/pants', () => {
+    const mixed = [
+      '42', // footwear EU
+      '4XL',
+      'XXXL',
+      '32x34', // pants
+      'M',
+      '42.5', // footwear EU
+      'XXL',
+    ];
+    const sorted = sortSizeCodes(SizeKind.Apparel, mixed.filter((s) => normalizeSizeCode(SizeKind.Apparel, s)));
+    expect(sorted).toEqual(['M', 'XXL', 'XXXL', '4XL']);
   });
 
   // ── Pants / composite sizing (Waist x Inseam) ──────────────────────
