@@ -540,7 +540,7 @@ describe('ProductService - Pants Size Persistence', () => {
       };
 
       await expect(service.createProduct(createInput, adminUser)).rejects.toThrow(
-        'Invalid apparel size. Use XS–XXXL.'
+        'Invalid apparel size. Use XS–4XL.'
       );
     });
 

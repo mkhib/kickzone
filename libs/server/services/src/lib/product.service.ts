@@ -497,7 +497,7 @@ export class ProductService implements OnModuleInit {
     if (!normalizedSize) {
       throw new Error(
         sizeKind === SizeKind.Apparel
-          ? 'Invalid apparel size. Use XS–XXXL.'
+          ? 'Invalid apparel size. Use XS–4XL.'
           : sizeKind === SizeKind.Pants
             ? 'Invalid pants size. Use waist and inseam between 1 and 99 (e.g. 32x34).'
             : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'
@@ -666,7 +666,7 @@ export class ProductService implements OnModuleInit {
     if (!normalizedSize) {
       throw new BadRequestException(
         sizeKind === SizeKind.Apparel
-          ? 'Invalid apparel size. Use XS–XXXL.'
+          ? 'Invalid apparel size. Use XS–4XL.'
           : sizeKind === SizeKind.Pants
             ? 'Invalid pants size. Use waist and inseam between 1 and 99 (e.g. 32x34).'
             : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'

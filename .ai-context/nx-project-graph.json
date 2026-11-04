@@ -19850,6 +19850,11 @@
           "source": "kickzone-api",
           "target": "inputs",
           "type": "static"
+        },
+        {
+          "source": "kickzone-api",
+          "target": "product-sizes",
+          "type": "static"
         }
       ],
       "utils": []

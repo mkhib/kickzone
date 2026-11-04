@@ -835,7 +835,7 @@ describe('ProductService - Color Handling', () => {
 
       await expect(
         service.updateProduct(invalidSizeInput, adminUser)
-      ).rejects.toThrow('Invalid apparel size. Use XS–XXXL.');
+      ).rejects.toThrow('Invalid apparel size. Use XS–4XL.');
 
       // Assert no variant was persisted
       expect(productInfoRepo.save).not.toHaveBeenCalled();

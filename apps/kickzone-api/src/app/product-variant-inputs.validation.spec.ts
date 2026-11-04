@@ -2,6 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 import { ZodValidationPipe } from '@kickzone-workspace/resolvers';
 import { createProductSchema } from '@kickzone-workspace/validation';
 import { CreateProductInput, ProductVariantInput } from '@kickzone-workspace/inputs';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
 
 describe('Product Variant Inputs Validation', () => {
   const pipe = new ZodValidationPipe(createProductSchema);
@@ -23,6 +24,11 @@ describe('Product Variant Inputs Validation', () => {
   describe('CreateProductInput with ProductVariantInput', () => {
     it('should resolve valid variant input', () => {
       expect(pipe.transform(validCreateBase)).toEqual(validCreateBase);
+    });
+
+    it('should resolve variant with size 4XL', () => {
+      const input = withVariant({ size: '4XL', sizeKind: SizeKind.Apparel });
+      expect(pipe.transform(input)).toEqual(input);
     });
 
     it('should reject discount 101 via BadRequestException', () => {
