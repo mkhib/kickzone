@@ -18071,17 +18071,17 @@
         },
         {
           "source": "sellers-manage-product-screen",
+          "target": "sellers-products-hooks",
+          "type": "static"
+        },
+        {
+          "source": "sellers-manage-product-screen",
           "target": "sellers-auth-context",
           "type": "static"
         },
         {
           "source": "sellers-manage-product-screen",
           "target": "sellers-layout",
-          "type": "static"
-        },
-        {
-          "source": "sellers-manage-product-screen",
-          "target": "sellers-products-hooks",
           "type": "static"
         },
         {
@@ -18868,6 +18868,11 @@
         {
           "source": "customers-home-screen",
           "target": "customers-routes",
+          "type": "static"
+        },
+        {
+          "source": "customers-home-screen",
+          "target": "product-sizes",
           "type": "static"
         },
         {

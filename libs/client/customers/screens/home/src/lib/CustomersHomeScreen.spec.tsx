@@ -165,6 +165,10 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
           allCategories: () => 'همه',
           clearFilters: () => 'پاک کردن فیلترها',
           noProducts: () => 'محصولی یافت نشد.',
+          sizeLabel: () => 'سایز',
+          allSizes: () => 'همه سایزها',
+          apparelSizes: () => 'پوشاک',
+          footwearSizes: () => 'کفش',
         },
         footer: {
           tagline: () => 'پوشاک ورزشی اورجینال برای بانوان و آقایان.',

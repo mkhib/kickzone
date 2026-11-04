@@ -970,5 +970,99 @@ describe('AdminProductEditor', () => {
       'APPAREL'
     );
   });
+
+  it('shows 4XL as a selectable apparel size immediately after XXXL in the size dropdown', async () => {
+    renderEditor();
+
+    // Open the size dropdown for Apparel (default size kind)
+    const sizeSelect = screen.getByRole('combobox', { name: /^Size$/i });
+    fireEvent.mouseDown(sizeSelect);
+
+    // Find all apparel size options in the dropdown
+    const xxxlOption = await screen.findByRole('option', { name: 'XXXL' });
+    expect(xxxlOption).toBeInTheDocument();
+
+    // 4XL should be present and right after XXXL
+    const fourXLOption = await screen.findByRole('option', { name: '4XL' });
+    expect(fourXLOption).toBeInTheDocument();
+
+    // Verify ordering: get all apparel size options and check 4XL follows XXXL
+    const sizeOptions = screen.getAllByRole('option');
+    const apparelSizes = sizeOptions
+      .map((opt) => opt.textContent)
+      .filter((text): text is string => text !== null && /^(XS|S|M|L|XL|XXL|XXXL|4XL)$/.test(text));
+    const xxxlIndex = apparelSizes.indexOf('XXXL');
+    const fourXLIndex = apparelSizes.indexOf('4XL');
+    expect(xxxlIndex).toBeGreaterThanOrEqual(0);
+    expect(fourXLIndex).toBe(xxxlIndex + 1);
+  });
+
+  it('allows selecting 4XL for a variant and submits it correctly', async () => {
+    mockCreateProductWithInfos.mockResolvedValue({
+      product: { id: 1, name: 'Large Size Product' },
+      productInfos: [
+        {
+          id: 10,
+          size: '4XL',
+          sizeKind: 'Apparel',
+          colors: [{ id: 1, name: 'Red', hexCode: '#ff0000' }],
+          weight: 400,
+        },
+      ],
+    });
+
+    const { container } = renderEditor();
+
+    // Fill required product fields
+    const nameInput = container.querySelector('#product-name') as HTMLInputElement;
+    fireEvent.change(nameInput, { target: { value: 'Large Size Product' } });
+    const skuInput = container.querySelector('#product-sku') as HTMLInputElement;
+    fireEvent.change(skuInput, { target: { value: 'LARGE-4XL-01' } });
+
+    const categoryInput = container.querySelector(
+      '#categories-autocomplete'
+    ) as HTMLInputElement;
+    fireEvent.focus(categoryInput);
+    fireEvent.keyDown(categoryInput, { key: 'ArrowDown' });
+    fireEvent.click(await screen.findByText('Category 1'));
+
+    // Select 4XL size
+    const sizeSelect = screen.getByRole('combobox', { name: /^Size$/i });
+    fireEvent.mouseDown(sizeSelect);
+    const fourXLOption = await screen.findByRole('option', { name: '4XL' });
+    fireEvent.click(fourXLOption);
+
+    // Select color
+    const colorInput = screen.getByLabelText(/Color/i);
+    fireEvent.focus(colorInput);
+    fireEvent.keyDown(colorInput, { key: 'ArrowDown' });
+    fireEvent.click(await screen.findByText('Red'));
+
+    // Fill weight
+    const weightInput = container.querySelector(
+      'input[name="weight"]'
+    ) as HTMLInputElement;
+    fireEvent.change(weightInput, { target: { value: '400' } });
+
+    // Submit form
+    fireEvent.submit(screen.getByLabelText('Product Editor Form'));
+
+    await waitFor(() => {
+      expect(mockCreateProductWithInfos).toHaveBeenCalledTimes(1);
+    });
+
+    // Verify 4XL was submitted correctly
+    expect(mockCreateProductWithInfos).toHaveBeenCalledWith(
+      expect.objectContaining({ name: 'Large Size Product', sku: 'LARGE-4XL-01' }),
+      [
+        expect.objectContaining({
+          size: '4XL',
+          sizeKind: 'Apparel',
+          colorIds: [1],
+          weight: 400,
+        }),
+      ]
+    );
+  });
 });
 

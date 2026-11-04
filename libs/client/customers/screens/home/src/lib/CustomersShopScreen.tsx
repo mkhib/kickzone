@@ -36,6 +36,7 @@ import {
   getCustomerBrandRoute,
 } from '@kickzone-workspace/customers-routes';
 import { resolveCategoryLabel, HomeCategory } from './home-selectors';
+import { APPAREL_SIZES, FOOTWEAR_EU_SIZES } from '@kickzone-workspace/product-sizes';
 
 const SHOP_CATEGORIES_QUERY = gql`
   query ShopCategories {
@@ -150,6 +151,7 @@ export function CustomersShopScreen() {
   const brandFromQuery = searchParams.get('brand') || '';
   const brandParam = (brandSlugParam || brandFromQuery || '').toLowerCase();
   const brandsFromQuery = searchParams.get('brands') || '';
+  const sizesFromQuery = searchParams.get('sizes') || '';
   const selectedCategories = useMemo(
     () => splitList(categoryParam),
     [categoryParam]
@@ -157,6 +159,10 @@ export function CustomersShopScreen() {
   const selectedBrands = useMemo(
     () => uniqueList([brandParam, ...splitList(brandsFromQuery)]),
     [brandParam, brandsFromQuery]
+  );
+  const selectedSizes = useMemo(
+    () => splitList(sizesFromQuery),
+    [sizesFromQuery]
   );
   const sortParam = searchParams.get('sort') || '';
   const searchParam = searchParams.get('search') || '';
@@ -217,9 +223,10 @@ export function CustomersShopScreen() {
       sort: string;
       categories: string[];
       brands: string[];
+      sizes?: string[];
     }) => {
       const next = new URLSearchParams(searchParams);
-      ['search', 'sort', 'category', 'brand', 'brands'].forEach((key) =>
+      ['search', 'sort', 'category', 'brand', 'brands', 'sizes'].forEach((key) =>
         next.delete(key)
       );
       if (state.search) next.set('search', state.search);
@@ -228,6 +235,8 @@ export function CustomersShopScreen() {
         next.set('category', state.categories.join(','));
       // A single brand keeps its SEO-friendly /brands/:slug route.
       if (state.brands.length > 1) next.set('brands', state.brands.join(','));
+      if (state.sizes && state.sizes.length > 0)
+        next.set('sizes', state.sizes.join(','));
       const base =
         state.brands.length === 1
           ? getCustomerBrandRoute(state.brands[0])
@@ -244,6 +253,7 @@ export function CustomersShopScreen() {
       sort?: string;
       categories?: string[];
       brands?: string[];
+      sizes?: string[];
     }) => {
       navigate(
         buildShopUrl({
@@ -251,6 +261,7 @@ export function CustomersShopScreen() {
           sort: patch.sort !== undefined ? patch.sort : selectedSort,
           categories: patch.categories ?? selectedCategories,
           brands: patch.brands ?? selectedBrands,
+          sizes: patch.sizes ?? selectedSizes,
         }),
         { replace: true }
       );
@@ -261,6 +272,7 @@ export function CustomersShopScreen() {
       selectedSort,
       selectedCategories,
       selectedBrands,
+      selectedSizes,
       navigate,
     ]
   );
@@ -284,6 +296,8 @@ export function CustomersShopScreen() {
       selectedCategories.length > 1 ? selectedCategories : undefined,
     brand: selectedBrands.length === 1 ? selectedBrands[0] : undefined,
     brands: selectedBrands.length > 1 ? selectedBrands : undefined,
+    size: selectedSizes.length === 1 ? selectedSizes[0] : undefined,
+    sizes: selectedSizes.length > 1 ? selectedSizes : undefined,
     sort: productsSort.sort,
     sortOrder: productsSort.sortOrder,
     pageSize: 16,
@@ -558,6 +572,71 @@ export function CustomersShopScreen() {
                 <MenuItem value="price_desc">
                   {LL.home.shop.mostExpensive()}
                 </MenuItem>
+              </Select>
+            </FormControl>
+
+            <FormControl
+              size="small"
+              sx={{
+                minWidth: 160,
+                width: { xs: '100%', sm: 180 },
+                ...filterControlSx,
+              }}
+            >
+              <InputLabel id="shop-size-label">
+                {LL.home.shop.sizeLabel()}
+              </InputLabel>
+              <Select
+                labelId="shop-size-label"
+                multiple
+                value={selectedSizes}
+                label={LL.home.shop.sizeLabel()}
+                renderValue={(selected) =>
+                  selected.length === 0
+                    ? LL.home.shop.allSizes()
+                    : selected.join(', ')
+                }
+                onChange={(e) => {
+                  const value = e.target.value;
+                  const picked =
+                    typeof value === 'string' ? splitList(value) : value;
+                  syncUrl({
+                    sizes: picked.includes('')
+                      ? []
+                      : uniqueList(picked.map((v) => v.toLowerCase())),
+                  });
+                }}
+                MenuProps={{
+                  PaperProps: {
+                    sx: {
+                      bgcolor: 'var(--paper)',
+                      color: 'var(--ink)',
+                      border: '1px solid var(--hair)',
+                    },
+                  },
+                }}
+              >
+                <MenuItem value="">{LL.home.shop.allSizes()}</MenuItem>
+                <MenuItem disabled>
+                  <Typography variant="caption" color="text.secondary">
+                    {LL.home.shop.apparelSizes()}
+                  </Typography>
+                </MenuItem>
+                {APPAREL_SIZES.map((size) => (
+                  <MenuItem key={size} value={size}>
+                    {size}
+                  </MenuItem>
+                ))}
+                <MenuItem disabled>
+                  <Typography variant="caption" color="text.secondary">
+                    {LL.home.shop.footwearSizes()}
+                  </Typography>
+                </MenuItem>
+                {FOOTWEAR_EU_SIZES.map((size) => (
+                  <MenuItem key={size} value={size}>
+                    EU {size}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
           </Box>
