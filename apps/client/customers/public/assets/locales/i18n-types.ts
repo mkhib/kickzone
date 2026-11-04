@@ -3814,6 +3814,22 @@ export type TranslationFunctions = {
 		 */
 		sizes: () => LocalizedString
 		/**
+		 * Size
+		 */
+		sizeLabel: () => LocalizedString
+		/**
+		 * All Sizes
+		 */
+		allSizes: () => LocalizedString
+		/**
+		 * Apparel
+		 */
+		apparelSizes: () => LocalizedString
+		/**
+		 * Footwear
+		 */
+		footwearSizes: () => LocalizedString
+		/**
 		 * No color
 		 */
 		noColor: () => LocalizedString
@@ -4097,7 +4113,661 @@ export type TranslationFunctions = {
 		 * Define the item first, then enter how many you have of each variant.
 		 */
 		defineProductThenStock: () => LocalizedString
-	}
+	},
+	shop: {
+		/**
+		 * فروشگاه SAINTBALA
+		 */
+		kicker: () => LocalizedString
+		/**
+		 * All Products
+		 */
+		allProducts: () => LocalizedString
+		/**
+		 * Products in category
+		 */
+		productsInCategory: (arg: { category: unknown }) => LocalizedString
+		/**
+		 * Products by brand
+		 */
+		productsByBrand: (arg: { brand: unknown }) => LocalizedString
+		/**
+		 * Search products...
+		 */
+		searchPlaceholder: () => LocalizedString
+		/**
+		 * Brand
+		 */
+		brandLabel: () => LocalizedString
+		/**
+		 * All Brands
+		 */
+		allBrands: () => LocalizedString
+		/**
+		 * Sort
+		 */
+		sortLabel: () => LocalizedString
+		/**
+		 * Newest
+		 */
+		newest: () => LocalizedString
+		/**
+		 * Cheapest
+		 */
+		cheapest: () => LocalizedString
+		/**
+		 * Most Expensive
+		 */
+		mostExpensive: () => LocalizedString
+		/**
+		 * All Categories
+		 */
+		allCategories: () => LocalizedString
+		/**
+		 * Clear Filters
+		 */
+		clearFilters: () => LocalizedString
+		/**
+		 * No products found
+		 */
+		noProducts: () => LocalizedString
+		/**
+		 * Size
+		 */
+		sizeLabel: () => LocalizedString
+		/**
+		 * All Sizes
+		 */
+		allSizes: () => LocalizedString
+		/**
+		 * Apparel
+		 */
+		apparelSizes: () => LocalizedString
+		/**
+		 * Footwear
+		 */
+		footwearSizes: () => LocalizedString
+	},
+	products: {
+		/**
+		 * Loading your products...
+		 */
+		loadingProducts: () => LocalizedString
+		/**
+		 * No products found
+		 */
+		noProductsFound: () => LocalizedString
+		/**
+		 * Product Variants
+		 */
+		productVariants: () => LocalizedString
+		/**
+		 * Colors
+		 */
+		colors: () => LocalizedString
+		/**
+		 * Select Images
+		 */
+		selectImages: () => LocalizedString
+		/**
+		 * Selected Images (not yet uploaded):
+		 */
+		selectedImagesNotUploaded: () => LocalizedString
+		/**
+		 * Upload Images
+		 */
+		uploadImages: () => LocalizedString
+		/**
+		 * Uploaded Images:
+		 */
+		uploadedImages: () => LocalizedString
+		/**
+		 * selected image
+		 */
+		selectedImage: () => LocalizedString
+		/**
+		 * uploaded image
+		 */
+		uploadedImage: () => LocalizedString
+		/**
+		 * You must save the product before selecting images.
+		 */
+		saveProductFirst: () => LocalizedString
+		/**
+		 * Edit Category
+		 */
+		editCategory: () => LocalizedString
+		/**
+		 * My Products
+		 */
+		myProducts: () => LocalizedString
+		/**
+		 * Add Product
+		 */
+		addProduct: () => LocalizedString
+		/**
+		 * Add Your First Product
+		 */
+		addYourFirstProduct: () => LocalizedString
+		/**
+		 * Search products
+		 */
+		searchProducts: () => LocalizedString
+		/**
+		 * All Categories
+		 */
+		allCategories: () => LocalizedString
+		/**
+		 * Sort by
+		 */
+		sortBy: () => LocalizedString
+		/**
+		 * Default
+		 */
+		'default': () => LocalizedString
+		/**
+		 * Name
+		 */
+		name: () => LocalizedString
+		/**
+		 * Price
+		 */
+		price: () => LocalizedString
+		/**
+		 * Date Created
+		 */
+		dateCreated: () => LocalizedString
+		/**
+		 * Active
+		 */
+		active: () => LocalizedString
+		/**
+		 * Archived
+		 */
+		archived: () => LocalizedString
+		/**
+		 * All
+		 */
+		all: () => LocalizedString
+		/**
+		 * Start by adding your first product to sell
+		 */
+		startByAddingFirstProduct: () => LocalizedString
+		/**
+		 * View Details
+		 */
+		viewDetails: () => LocalizedString
+		/**
+		 * Edit this variant
+		 */
+		editThisVariant: () => LocalizedString
+		/**
+		 * No color specified
+		 */
+		noColorSpecified: () => LocalizedString
+		/**
+		 * Product Information
+		 */
+		productInformation: () => LocalizedString
+		/**
+		 * Your Product Variants
+		 */
+		yourProductVariants: () => LocalizedString
+		/**
+		 * Your Variant
+		 */
+		yourVariant: () => LocalizedString
+		/**
+		 * Size
+		 */
+		size: () => LocalizedString
+		/**
+		 * Size type
+		 */
+		sizeKind: () => LocalizedString
+		/**
+		 * Apparel
+		 */
+		sizeKindApparel: () => LocalizedString
+		/**
+		 * Footwear
+		 */
+		sizeKindFootwear: () => LocalizedString
+		/**
+		 * Select size
+		 */
+		selectSize: () => LocalizedString
+		/**
+		 * EU
+		 */
+		sizeSystemEu: () => LocalizedString
+		/**
+		 * US
+		 */
+		sizeSystemUs: () => LocalizedString
+		/**
+		 * US equivalent: {us}
+		 */
+		usEquivalent: (arg: { us: unknown }) => LocalizedString
+		/**
+		 * Color
+		 */
+		color: () => LocalizedString
+		/**
+		 * Weight
+		 */
+		weight: () => LocalizedString
+		/**
+		 * Your Price
+		 */
+		yourPrice: () => LocalizedString
+		/**
+		 * Cost Price
+		 */
+		costPrice: () => LocalizedString
+		/**
+		 * Discount
+		 */
+		discount: () => LocalizedString
+		/**
+		 * Final Price
+		 */
+		finalPrice: () => LocalizedString
+		/**
+		 * Stock
+		 */
+		stock: () => LocalizedString
+		/**
+		 * units
+		 */
+		units: () => LocalizedString
+		/**
+		 * units in stock
+		 */
+		unitsInStock: () => LocalizedString
+		/**
+		 * Images
+		 */
+		images: () => LocalizedString
+		/**
+		 * image
+		 */
+		image: () => LocalizedString
+		/**
+		 * Categories
+		 */
+		categories: () => LocalizedString
+		/**
+		 * No categories
+		 */
+		noCategories: () => LocalizedString
+		/**
+		 * Your Variants
+		 */
+		yourVariants: () => LocalizedString
+		/**
+		 * Sizes
+		 */
+		sizes: () => LocalizedString
+		/**
+		 * No color
+		 */
+		noColor: () => LocalizedString
+		/**
+		 * Weight Range
+		 */
+		weightRange: () => LocalizedString
+		/**
+		 * N/A
+		 */
+		notAvailable: () => LocalizedString
+		/**
+		 * Product Information
+		 */
+		productInformationTitle: () => LocalizedString
+		/**
+		 * Item Code (SKU)
+		 */
+		itemCodeSku: () => LocalizedString
+		/**
+		 * Your Product Variants
+		 */
+		yourProductVariantsTitle: () => LocalizedString
+		/**
+		 * Variant
+		 */
+		variant: () => LocalizedString
+		/**
+		 * Add Variant
+		 */
+		addVariant: () => LocalizedString
+		/**
+		 * Save Product
+		 */
+		saveProduct: () => LocalizedString
+		/**
+		 * Price Range
+		 */
+		priceRange: () => LocalizedString
+		/**
+		 * Total Stock
+		 */
+		totalStock: () => LocalizedString
+		/**
+		 * Variants
+		 */
+		variants: () => LocalizedString
+		/**
+		 * different pricing
+		 */
+		differentPricing: () => LocalizedString
+		/**
+		 * Load More
+		 */
+		loadMore: () => LocalizedString
+		/**
+		 * Start by adding your first product to sell
+		 */
+		startBySelling: () => LocalizedString
+		/**
+		 * Add Your First Product
+		 */
+		addFirstProduct: () => LocalizedString
+		/**
+		 * Select Product
+		 */
+		selectProduct: () => LocalizedString
+		/**
+		 * Select Variant
+		 */
+		selectVariant: () => LocalizedString
+		/**
+		 * Edit Product
+		 */
+		editProduct: () => LocalizedString
+		/**
+		 * Product Details
+		 */
+		productDetails: () => LocalizedString
+		/**
+		 * Pricing Information
+		 */
+		pricingInformation: () => LocalizedString
+		/**
+		 * Enter discount percentage (0-100)
+		 */
+		discountHelper: () => LocalizedString
+		/**
+		 * Final Price (after discount)
+		 */
+		finalPriceAfterDiscount: () => LocalizedString
+		/**
+		 * Original
+		 */
+		original: () => LocalizedString
+		/**
+		 * Close
+		 */
+		close: () => LocalizedString
+		/**
+		 * Search products...
+		 */
+		searchProductsPlaceholder: () => LocalizedString
+		/**
+		 * No sellers available
+		 */
+		noSellersAvailable: () => LocalizedString
+		/**
+		 * Check back later
+		 */
+		checkBackLater: () => LocalizedString
+		/**
+		 * Price not available
+		 */
+		priceNotAvailable: () => LocalizedString
+		/**
+		 * Contact seller
+		 */
+		contactSeller: () => LocalizedString
+		/**
+		 * Out of Stock
+		 */
+		outOfStock: () => LocalizedString
+		/**
+		 * Add to Cart
+		 */
+		addToCart: () => LocalizedString
+		/**
+		 * No Sellers
+		 */
+		noSellers: () => LocalizedString
+		/**
+		 * Available Variants
+		 */
+		availableVariants: () => LocalizedString
+		/**
+		 * Multiple variants available
+		 */
+		multipleVariants: () => LocalizedString
+		/**
+		 * more
+		 */
+		more: () => LocalizedString
+		/**
+		 * by
+		 */
+		by: () => LocalizedString
+		/**
+		 * left
+		 */
+		left: () => LocalizedString
+		/**
+		 * Unknown Seller
+		 */
+		unknownSeller: () => LocalizedString
+		/**
+		 * Search by name
+		 */
+		searchByName: () => LocalizedString
+		/**
+		 * None
+		 */
+		none: () => LocalizedString
+		/**
+		 * Ascending
+		 */
+		ascending: () => LocalizedString
+		/**
+		 * Descending
+		 */
+		descending: () => LocalizedString
+		/**
+		 * Archive Product
+		 */
+		archiveProduct: () => LocalizedString
+		/**
+		 * Are you sure you want to archive this product?
+		 */
+		archiveProductConfirm: () => LocalizedString
+		/**
+		 * Delete Product
+		 */
+		deleteProduct: () => LocalizedString
+		/**
+		 * This permanently deletes "{name}" and cannot be undone. Type the product name to confirm.
+		 */
+		deleteProductConfirm: (arg: { name: unknown }) => LocalizedString
+		/**
+		 * Product name does not match
+		 */
+		deleteProductNameMismatch: () => LocalizedString
+		/**
+		 * Product deleted successfully
+		 */
+		deleteProductSuccess: () => LocalizedString
+		/**
+		 * This product still has active seller inventory and cannot be deleted.
+		 */
+		deleteProductBlockedActiveSelling: () => LocalizedString
+		/**
+		 * Showing {count} of {total} products
+		 */
+		showingProducts: (arg: { count: unknown, total: unknown }) => LocalizedString
+		/**
+		 * Error loading products
+		 */
+		errorLoadingProducts: () => LocalizedString
+		/**
+		 * Savings
+		 */
+		savings: () => LocalizedString
+		/**
+		 * Manage Images
+		 */
+		manageImages: () => LocalizedString
+		/**
+		 * Are you sure you want to delete the image "{imageName}"? This action cannot be undone.
+		 */
+		deleteImageConfirmMessage: (arg: { imageName: unknown }) => LocalizedString
+		/**
+		 * Current Images ({count})
+		 */
+		currentImages: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * No images uploaded for this variant yet.
+		 */
+		noImagesUploaded: () => LocalizedString
+		/**
+		 * Add New Images
+		 */
+		addNewImages: () => LocalizedString
+		/**
+		 * Selected files ({count}):
+		 */
+		selectedFiles: (arg: { count: unknown }) => LocalizedString
+		/**
+		 * Image Previews:
+		 */
+		imagePreviews: () => LocalizedString
+		/**
+		 * Images uploaded successfully
+		 */
+		imagesUploadedSuccessfully: () => LocalizedString
+		/**
+		 * Image removed successfully
+		 */
+		imageRemovedSuccessfully: () => LocalizedString
+		/**
+		 * Only image files (JPEG, PNG, GIF, WEBP) are allowed
+		 */
+		onlyImageFilesAllowed: () => LocalizedString
+		/**
+		 * Some files exceed the maximum size of 5MB
+		 */
+		filesExceedMaxSize: () => LocalizedString
+		/**
+		 * Without box
+		 */
+		boxLess: () => LocalizedString
+		/**
+		 * Enable if this item is sold without its original packaging box
+		 */
+		boxLessHelper: () => LocalizedString
+		/**
+		 * Define a new product
+		 */
+		defineNewProduct: () => LocalizedString
+		/**
+		 * Sell an existing product
+		 */
+		sellExistingProduct: () => LocalizedString
+		/**
+		 * Set your stock and prices
+		 */
+		setYourInventory: () => LocalizedString
+		/**
+		 * Set stock to 0 to skip listing this variant.
+		 */
+		skipVariantHint: () => LocalizedString
+		/**
+		 * Define the item first, then enter how many you have of each variant.
+		 */
+		defineProductThenStock: () => LocalizedString
+	},
+	shop: {
+		/**
+		 * فروشگاه SAINTBALA
+		 */
+		kicker: () => LocalizedString
+		/**
+		 * All Products
+		 */
+		allProducts: () => LocalizedString
+		/**
+		 * Products in category
+		 */
+		productsInCategory: (arg: { category: unknown }) => LocalizedString
+		/**
+		 * Products by brand
+		 */
+		productsByBrand: (arg: { brand: unknown }) => LocalizedString
+		/**
+		 * Search products...
+		 */
+		searchPlaceholder: () => LocalizedString
+		/**
+		 * Brand
+		 */
+		brandLabel: () => LocalizedString
+		/**
+		 * All Brands
+		 */
+		allBrands: () => LocalizedString
+		/**
+		 * Sort
+		 */
+		sortLabel: () => LocalizedString
+		/**
+		 * Newest
+		 */
+		newest: () => LocalizedString
+		/**
+		 * Cheapest
+		 */
+		cheapest: () => LocalizedString
+		/**
+		 * Most Expensive
+		 */
+		mostExpensive: () => LocalizedString
+		/**
+		 * All Categories
+		 */
+		allCategories: () => LocalizedString
+		/**
+		 * Clear Filters
+		 */
+		clearFilters: () => LocalizedString
+		/**
+		 * No products found
+		 */
+		noProducts: () => LocalizedString
+		/**
+		 * Size
+		 */
+		sizeLabel: () => LocalizedString
+		/**
+		 * All Sizes
+		 */
+		allSizes: () => LocalizedString
+		/**
+		 * Apparel
+		 */
+		apparelSizes: () => LocalizedString
+		/**
+		 * Footwear
+		 */
+		footwearSizes: () => LocalizedString
+	},
 	orders: {
 		/**
 		 * My Orders

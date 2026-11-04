@@ -599,4 +599,77 @@ describe('CustomerProductDetails Pants Size Formatting', () => {
     const bodyText = document.body.textContent || '';
     expect(bodyText).not.toMatch(/W[۰-۹0-9]/);
   });
+
+  // T6: 4XL apparel size displays and sorts immediately after 3XL
+  it('T6: renders 4XL apparel size immediately after 3XL', () => {
+    const apparelProduct = {
+      ...mockProduct,
+      productInfos: [
+        {
+          id: 201,
+          size: '3XL',
+          sizeKind: 'APPAREL',
+          colors: [{ id: 1, name: 'زیتونی روشن', hexCode: '#556b2f' }],
+          images: ['/olive-1.jpg'],
+        },
+        {
+          id: 202,
+          size: '4XL',
+          sizeKind: 'APPAREL',
+          colors: [{ id: 1, name: 'زیتونی روشن', hexCode: '#556b2f' }],
+          images: ['/olive-1.jpg'],
+        },
+      ],
+      sellerProducts: [
+        {
+          id: 301,
+          productInfoId: 201,
+          price: 14982500,
+          discount: 0,
+          stockQuantity: 1,
+          seller: { id: 1, storeName: 'SaintBala Official', shippingFee: 0 },
+        },
+        {
+          id: 302,
+          productInfoId: 202,
+          price: 14982500,
+          discount: 0,
+          stockQuantity: 4,
+          seller: { id: 1, storeName: 'SaintBala Official', shippingFee: 0 },
+        },
+      ],
+    };
+
+    mockUseProductById.mockReturnValue({
+      product: apparelProduct,
+      loading: false,
+      error: null,
+    });
+
+    render(<CustomerProductDetails />);
+
+    // Both 3XL and 4XL should be displayed (with Persian digits in fa locale)
+    const xxxlPersian = toFarsiDigits('3XL'); // '۳XL'
+    const fourXLPersian = toFarsiDigits('4XL'); // '۴XL'
+    expect(screen.getByText(xxxlPersian)).toBeInTheDocument();
+    expect(screen.getByText(fourXLPersian)).toBeInTheDocument();
+
+    // 4XL should appear after 3XL in the size buttons (sorted via sortSizeCodes)
+    const sizeButtons = screen.getAllByText(new RegExp(`(${xxxlPersian}|${fourXLPersian})`));
+    expect(sizeButtons.length).toBe(2);
+
+    // Verify 4XL is selectable
+    const fourXLButton = screen.getByText(fourXLPersian);
+    fireEvent.click(fourXLButton);
+
+    const addToCartButton = screen.getByText('افزودن به سبد خرید');
+    fireEvent.click(addToCartButton);
+
+    expect(mockAddItem).toHaveBeenCalledWith(
+      expect.objectContaining({
+        productId: '101',
+        size: '4XL', // Raw size code sent to cart
+      })
+    );
+  });
 });

@@ -603,6 +603,14 @@ type RootTranslation = {
 		 * F​a​i​l​e​d​ ​t​o​ ​i​n​i​t​i​a​l​i​z​e​ ​p​a​y​m​e​n​t​.​ ​P​l​e​a​s​e​ ​t​r​y​ ​a​g​a​i​n​.
 		 */
 		paymentInitializationFailed: string
+		/**
+		 * S​h​i​p​p​i​n​g​ ​i​s​ ​p​a​i​d​ ​o​n​ ​d​e​l​i​v​e​r​y​ ​w​h​e​n​ ​y​o​u​ ​r​e​c​e​i​v​e​ ​t​h​e​ ​p​a​r​c​e​l​ ​b​y​ ​p​o​s​t
+		 */
+		shippingPayOnDeliveryNotice: string
+		/**
+		 * P​a​i​d​ ​o​n​ ​D​e​l​i​v​e​r​y
+		 */
+		paidOnDelivery: string
 	}
 	products: {
 		card: {
@@ -4109,6 +4117,14 @@ export type TranslationFunctions = {
 		 * Failed to initialize payment. Please try again.
 		 */
 		paymentInitializationFailed: () => LocalizedString
+		/**
+		 * Shipping is paid on delivery when you receive the parcel by post
+		 */
+		shippingPayOnDeliveryNotice: () => LocalizedString
+		/**
+		 * Paid on Delivery
+		 */
+		paidOnDelivery: () => LocalizedString
 	}
 	products: {
 		card: {
@@ -4685,7 +4701,81 @@ export type TranslationFunctions = {
 		 * Define the item first, then enter how many you have of each variant.
 		 */
 		defineProductThenStock: () => LocalizedString
-	}
+	},
+	shop: {
+		/**
+		 * فروشگاه SAINTBALA
+		 */
+		kicker: () => LocalizedString
+		/**
+		 * All Products
+		 */
+		allProducts: () => LocalizedString
+		/**
+		 * Products in category
+		 */
+		productsInCategory: (arg: { category: unknown }) => LocalizedString
+		/**
+		 * Products by brand
+		 */
+		productsByBrand: (arg: { brand: unknown }) => LocalizedString
+		/**
+		 * Search products...
+		 */
+		searchPlaceholder: () => LocalizedString
+		/**
+		 * Brand
+		 */
+		brandLabel: () => LocalizedString
+		/**
+		 * All Brands
+		 */
+		allBrands: () => LocalizedString
+		/**
+		 * Sort
+		 */
+		sortLabel: () => LocalizedString
+		/**
+		 * Newest
+		 */
+		newest: () => LocalizedString
+		/**
+		 * Cheapest
+		 */
+		cheapest: () => LocalizedString
+		/**
+		 * Most Expensive
+		 */
+		mostExpensive: () => LocalizedString
+		/**
+		 * All Categories
+		 */
+		allCategories: () => LocalizedString
+		/**
+		 * Clear Filters
+		 */
+		clearFilters: () => LocalizedString
+		/**
+		 * No products found
+		 */
+		noProducts: () => LocalizedString
+		/**
+		 * Size
+		 */
+		sizeLabel: () => LocalizedString
+		/**
+		 * All Sizes
+		 */
+		allSizes: () => LocalizedString
+		/**
+		 * Apparel
+		 */
+		apparelSizes: () => LocalizedString
+		/**
+		 * Footwear
+		 */
+		footwearSizes: () => LocalizedString
+	},
 	orders: {
 		/**
 		 * My Orders

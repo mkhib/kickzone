@@ -20,6 +20,8 @@ export function useProductsQuery({
   categorySlugs,
   brand,
   brands,
+  size,
+  sizes,
   sort = '',
   sortOrder = 'asc',
   pageSize = 12,
@@ -35,6 +37,8 @@ export function useProductsQuery({
   categorySlugs?: string[];
   brand?: string;
   brands?: string[];
+  size?: string;
+  sizes?: string[];
   sort?: string;
   sortOrder?: 'asc' | 'desc';
   pageSize?: number;
@@ -53,6 +57,10 @@ export function useProductsQuery({
         categorySlugs && categorySlugs.length > 0 ? categorySlugs : undefined,
       brand: brand || undefined,
       brands: brands && brands.length > 0 ? brands : undefined,
+      productInfoFilter:
+        size || (sizes && sizes.length > 0)
+          ? { size: size ? [size] : sizes }
+          : undefined,
       first: pageSize,
       after,
       sort,
@@ -69,6 +77,8 @@ export function useProductsQuery({
       category,
       categorySlugs,
       brand,
+      size,
+      sizes,
       pageSize,
       sort,
       sortOrder,

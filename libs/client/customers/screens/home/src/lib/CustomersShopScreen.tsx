@@ -374,10 +374,10 @@ export function CustomersShopScreen() {
   );
 
   const heading = selectedCategories.length > 0
-    ? LL.home.shop.productsInCategory({ category: categoryLabel })
+    ? LL.shop.productsInCategory({ category: categoryLabel })
     : selectedBrands.length > 0
-    ? LL.home.shop.productsByBrand({ brand: brandLabel })
-    : LL.home.shop.allProducts();
+    ? LL.shop.productsByBrand({ brand: brandLabel })
+    : LL.shop.allProducts();
 
   const hasActiveFilters = Boolean(
     selectedCategories.length > 0 ||
@@ -459,7 +459,7 @@ export function CustomersShopScreen() {
           <TextField
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            placeholder={LL.home.shop.searchPlaceholder()}
+            placeholder={LL.shop.searchPlaceholder()}
             variant="outlined"
             size="small"
             sx={{
@@ -504,14 +504,14 @@ export function CustomersShopScreen() {
               }}
             >
               <InputLabel id="shop-brand-label">
-                {LL.home.shop.brandLabel()}
+                {LL.shop.brandLabel()}
               </InputLabel>
               <Select
                 labelId="shop-brand-label"
                 multiple
                 value={selectedBrands}
-                label={LL.home.shop.brandLabel()}
-                renderValue={() => brandLabel || LL.home.shop.allBrands()}
+                label={LL.shop.brandLabel()}
+                renderValue={() => brandLabel || LL.shop.allBrands()}
                 onChange={(e) => {
                   const value = e.target.value;
                   const picked =
@@ -532,7 +532,7 @@ export function CustomersShopScreen() {
                   },
                 }}
               >
-                <MenuItem value="">{LL.home.shop.allBrands()}</MenuItem>
+                <MenuItem value="">{LL.shop.allBrands()}</MenuItem>
                 {brands.map((b) => (
                   <MenuItem key={b.id} value={b.slug.toLowerCase()}>
                     {b.name}
@@ -550,12 +550,12 @@ export function CustomersShopScreen() {
               }}
             >
               <InputLabel id="shop-sort-label">
-                {LL.home.shop.sortLabel()}
+                {LL.shop.sortLabel()}
               </InputLabel>
               <Select
                 labelId="shop-sort-label"
                 value={selectedSort}
-                label={LL.home.shop.sortLabel()}
+                label={LL.shop.sortLabel()}
                 onChange={(e) => setSelectedSort(e.target.value)}
                 MenuProps={{
                   PaperProps: {
@@ -567,10 +567,10 @@ export function CustomersShopScreen() {
                   },
                 }}
               >
-                <MenuItem value="newest">{LL.home.shop.newest()}</MenuItem>
-                <MenuItem value="price_asc">{LL.home.shop.cheapest()}</MenuItem>
+                <MenuItem value="newest">{LL.shop.newest()}</MenuItem>
+                <MenuItem value="price_asc">{LL.shop.cheapest()}</MenuItem>
                 <MenuItem value="price_desc">
-                  {LL.home.shop.mostExpensive()}
+                  {LL.shop.mostExpensive()}
                 </MenuItem>
               </Select>
             </FormControl>
@@ -584,16 +584,16 @@ export function CustomersShopScreen() {
               }}
             >
               <InputLabel id="shop-size-label">
-                {LL.home.shop.sizeLabel()}
+                {LL.shop.sizeLabel()}
               </InputLabel>
               <Select
                 labelId="shop-size-label"
                 multiple
                 value={selectedSizes}
-                label={LL.home.shop.sizeLabel()}
+                label={LL.shop.sizeLabel()}
                 renderValue={(selected) =>
                   selected.length === 0
-                    ? LL.home.shop.allSizes()
+                    ? LL.shop.allSizes()
                     : selected.join(', ')
                 }
                 onChange={(e) => {
@@ -616,10 +616,10 @@ export function CustomersShopScreen() {
                   },
                 }}
               >
-                <MenuItem value="">{LL.home.shop.allSizes()}</MenuItem>
+                <MenuItem value="">{LL.shop.allSizes()}</MenuItem>
                 <MenuItem disabled>
                   <Typography variant="caption" color="text.secondary">
-                    {LL.home.shop.apparelSizes()}
+                    {LL.shop.apparelSizes()}
                   </Typography>
                 </MenuItem>
                 {APPAREL_SIZES.map((size) => (
@@ -629,7 +629,7 @@ export function CustomersShopScreen() {
                 ))}
                 <MenuItem disabled>
                   <Typography variant="caption" color="text.secondary">
-                    {LL.home.shop.footwearSizes()}
+                    {LL.shop.footwearSizes()}
                   </Typography>
                 </MenuItem>
                 {FOOTWEAR_EU_SIZES.map((size) => (
@@ -654,7 +654,7 @@ export function CustomersShopScreen() {
           }}
         >
           <Chip
-            label={LL.home.shop.allCategories()}
+            label={LL.shop.allCategories()}
             clickable
             component={RouterLink}
             to={buildShopUrl({
@@ -718,7 +718,7 @@ export function CustomersShopScreen() {
                 textTransform: 'none',
               }}
             >
-              {LL.home.shop.clearFilters()}
+              {LL.shop.clearFilters()}
             </Button>
           )}
         </Box>
@@ -736,7 +736,7 @@ export function CustomersShopScreen() {
                 fontFamily: 'var(--font-sans)',
               }}
             >
-              {LL.home.shop.noProducts()}
+              {LL.shop.noProducts()}
             </Typography>
           </Box>
         ) : (

@@ -336,4 +336,58 @@ describe('CustomersProductCard - pants size display', () => {
     expect(calls).toContain('30x32');
     expect(calls).not.toContain('W30/L32');
   });
+
+  // T6: 4XL apparel size displays correctly (fa locale)
+  it('T6: renders 4XL apparel size immediately after 3XL', () => {
+    const apparelProduct: KickzoneGraphqlTypes.Product = {
+      ...baseProduct,
+      productInfos: [
+        {
+          ...baseProduct.productInfos[0],
+          id: 201,
+          size: '3XL',
+          sizeKind: 'APPAREL',
+        },
+        {
+          ...baseProduct.productInfos[1],
+          id: 202,
+          size: '4XL',
+          sizeKind: 'APPAREL',
+        },
+      ],
+      sellerProducts: [
+        {
+          ...baseProduct.sellerProducts[0],
+          id: 301,
+          productInfoId: 201,
+        },
+        {
+          ...baseProduct.sellerProducts[1],
+          id: 302,
+          productInfoId: 202,
+        },
+      ],
+    } as unknown as KickzoneGraphqlTypes.Product;
+
+    render(
+      <MemoryRouter>
+        <CustomersProductCard product={apparelProduct} onAddToCart={vi.fn()} />
+      </MemoryRouter>
+    );
+
+    // Both 3XL and 4XL should be displayed (with Persian digits)
+    const xxxlPersian = toFarsiDigits('3XL'); // '۳XL'
+    const fourXLPersian = toFarsiDigits('4XL'); // '۴XL'
+    expect(screen.getByText(xxxlPersian)).toBeInTheDocument();
+    expect(screen.getByText(fourXLPersian)).toBeInTheDocument();
+
+    // 4XL should appear after 3XL in the size chips
+    const sizeChips = screen.getAllByText(new RegExp(`(${xxxlPersian}|${fourXLPersian})`));
+    expect(sizeChips.length).toBe(2);
+    // Verify order: 3XL appears before 4XL in the DOM
+    const bodyText = document.body.textContent || '';
+    const xxxlIndex = bodyText.indexOf(xxxlPersian);
+    const fourXLIndex = bodyText.indexOf(fourXLPersian);
+    expect(xxxlIndex).toBeLessThan(fourXLIndex);
+  });
 });

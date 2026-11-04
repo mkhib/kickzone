@@ -196,4 +196,31 @@ describe('CustomerOrderConfirmation pants size formatting', () => {
     const redText = screen.getByText('Red');
     expect(redText.textContent).toBe('Red');
   });
+
+  // T6: 4XL apparel size displays correctly
+  it('T6: renders 4XL apparel size immediately after 3XL', () => {
+    const testOrderData = {
+      ...orderData,
+      items: [
+        { ...baseItem, color: 'Black', size: '3XL' },
+        { ...baseItem, color: 'White', size: '4XL' },
+      ],
+    };
+
+    render(
+      <MemoryRouter initialEntries={[{ pathname: '/', state: { orderData: testOrderData } }]}>
+        <CustomerOrderConfirmation />
+      </MemoryRouter>
+    );
+
+    // Both 3XL and 4XL should be displayed
+    expect(screen.getByText(/Black.*3XL/)).toBeInTheDocument();
+    expect(screen.getByText(/White.*4XL/)).toBeInTheDocument();
+
+    // 4XL should appear after 3XL in the document
+    const bodyText = document.body.textContent || '';
+    const xxxlIndex = bodyText.indexOf('3XL');
+    const fourXLIndex = bodyText.indexOf('4XL');
+    expect(xxxlIndex).toBeLessThan(fourXLIndex);
+  });
 });

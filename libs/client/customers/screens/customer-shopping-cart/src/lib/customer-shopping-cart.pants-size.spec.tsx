@@ -490,4 +490,39 @@ describe('CustomerShoppingCart Pants Size Formatting', () => {
     expect(body()).not.toContain('W32/L34');
     expect(body()).toContain('XL');
   });
+
+  // T6: 4XL apparel size displays correctly (en locale)
+  it('T6: renders 4XL apparel size immediately after 3XL', () => {
+    mockCartItems[0].size = '3XL';
+    mockCartItems[1].size = '4XL';
+    renderWithProviders();
+
+    // Both 3XL and 4XL should be displayed
+    expect(screen.getByText('3XL')).toBeInTheDocument();
+    expect(screen.getByText('4XL')).toBeInTheDocument();
+
+    // 4XL should appear after 3XL in the cart items
+    const bodyText = body();
+    const xxxlIndex = bodyText.indexOf('3XL');
+    const fourXLIndex = bodyText.indexOf('4XL');
+    expect(xxxlIndex).toBeLessThan(fourXLIndex);
+  });
+
+  // T7: 4XL apparel size in fa locale remains as-is (only pure numbers get Persian digits)
+  it('T7: renders 4XL apparel size in Persian locale (non-numeric sizes stay as-is)', () => {
+    mockLocale = 'fa';
+    mockCartItems[0].size = '3XL';
+    mockCartItems[1].size = '4XL';
+    renderWithProviders();
+
+    // Both 3XL and 4XL should be displayed as-is (non-numeric sizes don't get digit conversion)
+    expect(body()).toContain('3XL');
+    expect(body()).toContain('4XL');
+
+    // 4XL should appear after 3XL
+    const bodyText = body();
+    const xxxlIndex = bodyText.indexOf('3XL');
+    const fourXLIndex = bodyText.indexOf('4XL');
+    expect(xxxlIndex).toBeLessThan(fourXLIndex);
+  });
 });

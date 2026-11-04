@@ -71,6 +71,28 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
         login: () => 'ورود',
         logout: () => 'خروج',
       },
+      shop: {
+        kicker: () => 'فروشگاه SAINTBALA',
+        allProducts: () => 'تمامی محصولات',
+        productsInCategory: ({ category }: { category: string }) =>
+          `محصولات ${category}`,
+        productsByBrand: ({ brand }: { brand: string }) =>
+          `محصولات ${brand}`,
+        searchPlaceholder: () => 'جستجوی مدل یا کد محصول...',
+        brandLabel: () => 'برند',
+        allBrands: () => 'همه برندها',
+        sortLabel: () => 'مرتب‌سازی',
+        newest: () => 'جدیدترین',
+        cheapest: () => 'ارزان‌ترین',
+        mostExpensive: () => 'گران‌ترین',
+        allCategories: () => 'همه',
+        clearFilters: () => 'پاک کردن فیلترها',
+        noProducts: () => 'محصولی یافت نشد.',
+        sizeLabel: () => 'سایز',
+        allSizes: () => 'همه سایزها',
+        apparelSizes: () => 'پوشاک',
+        footwearSizes: () => 'کفش',
+      },
       home: {
         nav: {
           newArrivals: () => 'تازه‌ها',
@@ -143,28 +165,6 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
           subscribe: () => 'عضویت',
           success: () => 'ممنون! ایمیلت ثبت شد.',
           error: () => 'خطایی رخ داد. لطفاً دوباره تلاش کنید.',
-        },
-        shop: {
-          kicker: () => 'فروشگاه SAINTBALA',
-          allProducts: () => 'تمامی محصولات',
-          productsInCategory: ({ category }: { category: string }) =>
-            `محصولات ${category}`,
-          productsByBrand: ({ brand }: { brand: string }) =>
-            `محصولات ${brand}`,
-          searchPlaceholder: () => 'جستجوی مدل یا کد محصول...',
-          brandLabel: () => 'برند',
-          allBrands: () => 'همه برندها',
-          sortLabel: () => 'مرتب‌سازی',
-          newest: () => 'جدیدترین',
-          cheapest: () => 'ارزان‌ترین',
-          mostExpensive: () => 'گران‌ترین',
-          allCategories: () => 'همه',
-          clearFilters: () => 'پاک کردن فیلترها',
-          noProducts: () => 'محصولی یافت نشد.',
-          sizeLabel: () => 'سایز',
-          allSizes: () => 'همه سایزها',
-          apparelSizes: () => 'پوشاک',
-          footwearSizes: () => 'کفش',
         },
         footer: {
           tagline: () => 'پوشاک ورزشی اورجینال برای بانوان و آقایان.',

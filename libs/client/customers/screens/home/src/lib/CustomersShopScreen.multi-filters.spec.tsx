@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import '@testing-library/jest-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { MemoryRouter } from 'react-router-dom';
@@ -56,6 +56,28 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
       button: {
         login: () => 'ورود',
         logout: () => 'خروج',
+      },
+      shop: {
+        kicker: () => 'فروشگاه SAINTBALA',
+        allProducts: () => 'تمامی محصولات',
+        productsInCategory: ({ category }: { category: string }) =>
+          `محصولات ${category}`,
+        productsByBrand: ({ brand }: { brand: string }) =>
+          `محصولات ${brand}`,
+        searchPlaceholder: () => 'جستجوی مدل یا کد محصول...',
+        brandLabel: () => 'برند',
+        allBrands: () => 'همه برندها',
+        sortLabel: () => 'مرتب‌سازی',
+        newest: () => 'جدیدترین',
+        cheapest: () => 'ارزان‌ترین',
+        mostExpensive: () => 'گران‌ترین',
+        allCategories: () => 'همه',
+        clearFilters: () => 'پاک کردن فیلترها',
+        noProducts: () => 'محصولی یافت نشد.',
+        sizeLabel: () => 'سایز',
+        allSizes: () => 'همه سایزها',
+        apparelSizes: () => 'پوشاک',
+        footwearSizes: () => 'کفش',
       },
       home: {
         nav: {
@@ -130,28 +152,6 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
           success: () => 'ممنون! ایمیلت ثبت شد.',
           error: () => 'خطایی رخ داد. لطفاً دوباره تلاش کنید.',
         },
-        shop: {
-          kicker: () => 'فروشگاه SAINTBALA',
-          allProducts: () => 'تمامی محصولات',
-          productsInCategory: ({ category }: { category: string }) =>
-            `محصولات ${category}`,
-          productsByBrand: ({ brand }: { brand: string }) =>
-            `محصولات ${brand}`,
-          searchPlaceholder: () => 'جستجوی مدل یا کد محصول...',
-          brandLabel: () => 'برند',
-          allBrands: () => 'همه برندها',
-          sortLabel: () => 'مرتب‌سازی',
-          newest: () => 'جدیدترین',
-          cheapest: () => 'ارزان‌ترین',
-          mostExpensive: () => 'گران‌ترین',
-          allCategories: () => 'همه',
-          clearFilters: () => 'پاک کردن فیلترها',
-          noProducts: () => 'محصولی یافت نشد.',
-          sizeLabel: () => 'سایز',
-          allSizes: () => 'همه سایزها',
-          apparelSizes: () => 'پوشاک',
-          footwearSizes: () => 'کفش',
-        },
         footer: {
           tagline: () => 'پوشاک ورزشی اورجینال برای بانوان و آقایان.',
           store: () => 'فروشگاه',
@@ -205,6 +205,8 @@ type ProductsArgs = {
   categorySlugs?: string[];
   brand?: string;
   brands?: string[];
+  size?: string;
+  sizes?: string[];
   onlyDiscounted?: boolean;
 };
 
@@ -330,5 +332,39 @@ describe('CustomersShopScreen - multi-select filters', () => {
     setDiscounted(true);
     renderAt('/shop');
     expect(screen.getByText('cat-sale')).toBeInTheDocument();
+  });
+
+  it('sends sizes when several sizes are selected', () => {
+    renderAt('/shop?sizes=xl,3xl,4xl');
+    expect(mainCall()).toEqual(
+      expect.objectContaining({ sizes: ['xl', '3xl', '4xl'], size: undefined })
+    );
+  });
+
+  it('keeps the single size filter for one size', () => {
+    renderAt('/shop?sizes=4xl');
+    expect(mainCall()).toEqual(
+      expect.objectContaining({ size: '4xl', sizes: undefined })
+    );
+  });
+
+  it('renders size filter with 4XL after 3XL in the dropdown', () => {
+    renderAt('/shop');
+    const sizeSelect = screen.getByLabelText(/سایز/i);
+    expect(sizeSelect).toBeInTheDocument();
+  });
+
+  it('selecting 4XL in size filter sends size=4xl to the products query', () => {
+    renderAt('/shop?sizes=4xl');
+    expect(mainCall()).toEqual(
+      expect.objectContaining({ size: '4xl', sizes: undefined })
+    );
+  });
+
+  it('selecting multiple sizes including 4XL sends sizes array to the products query', () => {
+    renderAt('/shop?sizes=xl,3xl,4xl');
+    expect(mainCall()).toEqual(
+      expect.objectContaining({ sizes: ['xl', '3xl', '4xl'], size: undefined })
+    );
   });
 });
