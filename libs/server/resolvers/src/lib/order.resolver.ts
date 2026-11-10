@@ -516,9 +516,30 @@ export class OrderResolver {
       throw new BadRequestException('Invalid guest token format');
     }
 
-    const orders = await Promise.all(
-      uniqueOrderIds.map((id) => this.orderService.findOne(id))
+    const loadedOrders = await Promise.all(
+      uniqueOrderIds.map((id) =>
+        this.orderService.findOne(id).catch((err: unknown) => {
+          if (err instanceof NotFoundException) {
+            return null;
+          }
+          throw err;
+        })
+      )
     );
+
+    const missingOrders = uniqueOrderIds.filter(
+      (_, index) => !loadedOrders[index]
+    );
+    if (missingOrders.length > 0) {
+      if (uniqueOrderIds.length === 1) {
+        throw new BadRequestException('Order not found');
+      }
+      throw new BadRequestException(
+        `Order(s) not found: ${missingOrders.join(', ')}`
+      );
+    }
+
+    const orders = loadedOrders.filter((o): o is Order => Boolean(o));
 
     const firstEmail = String(orders[0].customerEmail ?? '').trim().toLowerCase();
     const extractToken = (notes?: string | null) => {

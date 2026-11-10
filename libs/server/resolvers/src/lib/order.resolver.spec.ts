@@ -1606,5 +1606,29 @@ describe('OrderResolver', () => {
 
       expect(mockOrderService.recalculateBatchOrdersShipping).not.toHaveBeenCalled();
     });
+
+    it('should reject with BadRequestException when orderService.findOne throws NotFoundException in multi-order batch', async () => {
+      mockOrderService.findOne
+        .mockResolvedValueOnce(mockOrder1)
+        .mockRejectedValueOnce(new NotFoundException('Order with ID order-999 not found'));
+
+      await expect(
+        resolver.recalculateBatchOrdersShipping(['order-1', 'order-999'], undefined, 'guest_abc123')
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        resolver.recalculateBatchOrdersShipping(['order-1', 'order-999'], undefined, 'guest_abc123')
+      ).rejects.toThrow('Order(s) not found: order-999');
+    });
+
+    it('should reject with BadRequestException when recalculateBatchOrdersShipping called for single missing order', async () => {
+      mockOrderService.findOne.mockRejectedValue(new NotFoundException('Order with ID order-999 not found'));
+
+      await expect(
+        resolver.recalculateBatchOrdersShipping(['order-999'], undefined, 'guest_abc123')
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        resolver.recalculateBatchOrdersShipping(['order-999'], undefined, 'guest_abc123')
+      ).rejects.toThrow('Order not found');
+    });
   });
 });

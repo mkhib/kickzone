@@ -242,6 +242,32 @@ describe('PaymentResolver Unit Tests', () => {
 
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow('Order not found');
       });
+
+      it('should reject with BadRequestException when orderService.findOne throws NotFoundException for single order', async () => {
+        const input = createPaymentRequestInput({ order_id: 'nonexistent' });
+
+        orderService.findOne.mockRejectedValue(new NotFoundException('Order with ID nonexistent not found'));
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(BadRequestException);
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow('Order not found');
+      });
+
+      it('should reject with BadRequestException when orderService.findOne throws NotFoundException in multi-order batch', async () => {
+        const input = createPaymentRequestInput({
+          orderIds: ['order-1', 'order-2'],
+          order_id: undefined,
+        });
+
+        orderService.findOne.mockImplementation((id: string) => {
+          if (id === 'order-1') {
+            return Promise.resolve(createMockOrder({ id: 'order-1' }) as never);
+          }
+          return Promise.reject(new NotFoundException(`Order with ID ${id} not found`));
+        });
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(BadRequestException);
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow('Order(s) not found: order-2');
+      });
     });
 
     describe('Valid Server-Computed Amount Tests', () => {

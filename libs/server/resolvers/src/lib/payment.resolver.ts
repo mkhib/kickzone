@@ -161,13 +161,20 @@ export class PaymentResolver {
     const isSingleOrder = targetOrderIds.length === 1 && !input.orderIds;
 
     // Load all orders in targetOrderIds
-    const orders = await Promise.all(
-      targetOrderIds.map((id) => this.orderService.findOne(id))
+    const loadedOrders = await Promise.all(
+      targetOrderIds.map((id) =>
+        this.orderService.findOne(id).catch((err: unknown) => {
+          if (err instanceof NotFoundException) {
+            return null;
+          }
+          throw err;
+        })
+      )
     );
 
     // Verify all orders exist
     const missingOrders = targetOrderIds.filter(
-      (_, index) => !orders[index]
+      (_, index) => !loadedOrders[index]
     );
     if (missingOrders.length > 0) {
       if (isSingleOrder) {
@@ -177,6 +184,8 @@ export class PaymentResolver {
         `Order(s) not found: ${missingOrders.join(', ')}`
       );
     }
+
+    const orders = loadedOrders.filter((o): o is NonNullable<typeof o> => Boolean(o));
 
     // Verify all orders are PENDING
     const nonPendingOrders = orders.filter(
