@@ -23,6 +23,8 @@ describe('PaymentResolver Unit Tests', () => {
     setPaymentIntent: jest.fn(),
     confirmOrderPayment: jest.fn(),
     cancelPendingOrder: jest.fn(),
+    reopenRolledBackOrder: jest.fn(),
+    updateOrderStatus: jest.fn(),
   };
 
   const mockCurrencyService = {
@@ -906,6 +908,30 @@ describe('PaymentResolver Unit Tests', () => {
     const authority = 'A00000000000000000000000000000000000000';
     const refId = 123456;
 
+    const createMockOrderWithItems = (overrides: Partial<{
+      id: string;
+      status: OrderStatus;
+      paymentAuthority: string | null;
+      paymentAmount: number | null;
+      paymentCurrency: string | null;
+      orderNumber: string;
+      items: Array<{
+        quantity: number;
+        sellerProductId?: string;
+        productId?: string;
+        sellerProduct: { id: string; stockQuantity: number } | null;
+      }>;
+    }> = {}) => ({
+      id: 'order-123',
+      status: OrderStatus.PENDING,
+      paymentAuthority: authority,
+      paymentAmount: 6000000,
+      paymentCurrency: 'IRT',
+      orderNumber: 'ORD-123',
+      items: [],
+      ...overrides,
+    });
+
     beforeEach(() => {
       jest.clearAllMocks();
       orderService.findOne.mockReset();
@@ -1667,6 +1693,128 @@ it('does NOT treat CONFIRMED orders with stockReserved=undefined as idempotently
         // Verify rollback was called for order-1
         expect(orderService.updateOrderStatus).toHaveBeenCalledTimes(1);
         expect(orderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+        expect(orderService.reopenRolledBackOrder).toHaveBeenCalledTimes(1);
+        expect(orderService.reopenRolledBackOrder).toHaveBeenCalledWith('order-1');
+      });
+
+      it('should call reopenRolledBackOrder for each rolled-back order in a 3-order batch where the third fails', async () => {
+        // Input orders: order-3, order-1, order-2 (unsorted)
+        // After sort: order-1, order-2, order-3
+        // order-1 confirms, order-2 confirms, order-3 throws
+        const order1 = createMockOrderWithItems({
+          id: 'order-1',
+          orderNumber: 'ORD-001',
+          paymentAmount: 150000,
+          items: [{ quantity: 1, sellerProduct: { id: 'sp-x', stockQuantity: 10 } }],
+        });
+        const order2 = createMockOrderWithItems({
+          id: 'order-2',
+          orderNumber: 'ORD-002',
+          paymentAmount: 150000,
+          items: [{ quantity: 1, sellerProduct: { id: 'sp-x', stockQuantity: 10 } }],
+        });
+        const order3 = createMockOrderWithItems({
+          id: 'order-3',
+          orderNumber: 'ORD-003',
+          paymentAmount: 150000,
+          items: [{ quantity: 1, sellerProduct: { id: 'sp-3', stockQuantity: 10 } }],
+        });
+
+        // Return in unsorted order to test id ASC sorting
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order3, order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 100, message: 'Verified', ref_id: 777888 },
+          errors: [],
+        } as never);
+
+        // order-1 succeeds, order-2 succeeds, order-3 throws
+        orderService.confirmOrderPayment
+          .mockResolvedValueOnce(undefined as never) // order-1
+          .mockResolvedValueOnce(undefined as never) // order-2
+          .mockRejectedValueOnce(new BadRequestException('Insufficient stock for product sp-3 during lock'));
+
+        // Mock updateOrderStatus and reopenRolledBackOrder for rollback verification
+        orderService.updateOrderStatus = jest.fn().mockResolvedValue(undefined as never);
+        orderService.reopenRolledBackOrder = jest.fn().mockResolvedValue(undefined as never);
+
+        const input = {
+          amount: 150000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        // Confirm calls should be in id ASC order: order-1, order-2, order-3
+        expect(orderService.confirmOrderPayment).toHaveBeenNthCalledWith(1, 'order-1');
+        expect(orderService.confirmOrderPayment).toHaveBeenNthCalledWith(2, 'order-2');
+        expect(orderService.confirmOrderPayment).toHaveBeenNthCalledWith(3, 'order-3');
+
+        // Rollback should be called for BOTH order-1 and order-2
+        expect(orderService.updateOrderStatus).toHaveBeenCalledTimes(2);
+        expect(orderService.updateOrderStatus).toHaveBeenNthCalledWith(1, 'order-1', OrderStatus.CANCELLED);
+        expect(orderService.updateOrderStatus).toHaveBeenNthCalledWith(2, 'order-2', OrderStatus.CANCELLED);
+
+        // reopenRolledBackOrder should be called for BOTH order-1 and order-2
+        expect(orderService.reopenRolledBackOrder).toHaveBeenCalledTimes(2);
+        expect(orderService.reopenRolledBackOrder).toHaveBeenNthCalledWith(1, 'order-1');
+        expect(orderService.reopenRolledBackOrder).toHaveBeenNthCalledWith(2, 'order-2');
+
+        // Must return success: false with ref_id
+        expect(result.success).toBe(false);
+        expect(result.code).toBe(100);
+        expect(result.ref_id).toBe(777888);
+        expect(result.message).toContain('777888');
+      });
+
+      it('should allow retry with code: 101 after rollback and reopen - order-1 and order-2 both PENDING', async () => {
+        // Setup: order-1 and order-2 are both PENDING (after rollback + reopen)
+        const order1 = createMockOrder({
+          id: 'order-1',
+          status: OrderStatus.PENDING,
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          status: OrderStatus.PENDING,
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-002',
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 101, message: 'Already verified', ref_id: refId },
+          errors: [],
+        } as never);
+
+        orderService.confirmOrderPayment.mockResolvedValue(undefined as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        // Should NOT hit the cancelledOrRefunded guard (orders are PENDING)
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        // Should call confirmOrderPayment for both orders (they are PENDING)
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(2);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-2');
+
+        // Should return success
+        expect(result.success).toBe(true);
+        expect(result.code).toBe(101);
+        expect(result.ref_id).toBe(refId);
       });
 
       it('should reject when no orders found for authority', async () => {

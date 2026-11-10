@@ -1705,7 +1705,7 @@ describe('OrderService', () => {
       expect(result.status).toBe(OrderStatus.PROCESSING);
     });
 
-    it('should allow CONFIRMED -> CANCELLED transition with stock restore', async () => {
+    it('should allow CONFIRMED -> CANCELLED transition with stock restore and clear paymentVerifiedAt', async () => {
       const sellerProduct: SellerProduct = {
         id: 'seller-product-1',
         stockQuantity: 8,
@@ -1715,6 +1715,7 @@ describe('OrderService', () => {
         id: orderId,
         status: OrderStatus.CONFIRMED,
         stockReserved: true,
+        paymentVerifiedAt: new Date('2024-01-01'),
         items: mockOrderItems,
       } as Order;
 
@@ -1728,6 +1729,7 @@ describe('OrderService', () => {
         ...order,
         status: OrderStatus.CANCELLED,
         stockReserved: false,
+        paymentVerifiedAt: null,
       });
 
       const result = await service.updateOrderStatus(
@@ -1737,9 +1739,10 @@ describe('OrderService', () => {
 
       expect(result.status).toBe(OrderStatus.CANCELLED);
       expect(result.stockReserved).toBe(false);
+      expect(result.paymentVerifiedAt).toBeNull();
     });
 
-    it('should allow CONFIRMED -> REFUNDED transition with stock restore', async () => {
+    it('should allow CONFIRMED -> REFUNDED transition with stock restore and clear paymentVerifiedAt', async () => {
       const sellerProduct: SellerProduct = {
         id: 'seller-product-1',
         stockQuantity: 8,
@@ -1749,6 +1752,7 @@ describe('OrderService', () => {
         id: orderId,
         status: OrderStatus.CONFIRMED,
         stockReserved: true,
+        paymentVerifiedAt: new Date('2024-01-01'),
         items: mockOrderItems,
       } as Order;
 
@@ -1762,6 +1766,7 @@ describe('OrderService', () => {
         ...order,
         status: OrderStatus.REFUNDED,
         stockReserved: false,
+        paymentVerifiedAt: null,
       });
 
       const result = await service.updateOrderStatus(
@@ -1771,6 +1776,7 @@ describe('OrderService', () => {
 
       expect(result.status).toBe(OrderStatus.REFUNDED);
       expect(result.stockReserved).toBe(false);
+      expect(result.paymentVerifiedAt).toBeNull();
     });
 
     it('should allow PROCESSING -> SHIPPED transition', async () => {
@@ -1936,6 +1942,94 @@ describe('OrderService', () => {
 
       expect(result).toEqual(order);
       expect(orderRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('reopenRolledBackOrder', () => {
+    const orderId = 'order-1';
+    const mockOrderItems: OrderItem[] = [
+      {
+        id: 'item-1',
+        productId: 'product-1',
+        sellerProductId: 'seller-product-1',
+        quantity: 2,
+      } as OrderItem,
+    ];
+
+    it('should reopen a CANCELLED order with stockReserved = false to PENDING', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+        paymentVerifiedAt: new Date('2024-01-01'),
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        paymentVerifiedAt: null,
+      });
+
+      const result = await service.reopenRolledBackOrder(orderId);
+
+      expect(orderRepository.findOne).toHaveBeenCalledWith({
+        where: { id: orderId },
+        relations: ['items'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(result.status).toBe(OrderStatus.PENDING);
+      expect(result.stockReserved).toBe(false);
+      expect(result.paymentVerifiedAt).toBeNull();
+    });
+
+    it('should throw NotFoundException if order does not exist', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.reopenRolledBackOrder(orderId)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.reopenRolledBackOrder(orderId)).rejects.toThrow(
+        `Order with ID ${orderId} not found`,
+      );
+    });
+
+    it('should throw BadRequestException if order status is not CANCELLED', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.reopenRolledBackOrder(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.reopenRolledBackOrder(orderId)).rejects.toThrow(
+        `Cannot reopen order ${orderId} from status ${OrderStatus.PENDING}`,
+      );
+    });
+
+    it('should throw BadRequestException if order stockReserved is true', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CANCELLED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.reopenRolledBackOrder(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.reopenRolledBackOrder(orderId)).rejects.toThrow(
+        `Cannot reopen order ${orderId} from status ${OrderStatus.CANCELLED}`,
+      );
     });
   });
 

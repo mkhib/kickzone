@@ -560,6 +560,10 @@ export class OrderService {
         order.stockReserved = false;
       }
 
+      if (status === OrderStatus.CANCELLED || status === OrderStatus.REFUNDED) {
+        order.paymentVerifiedAt = null;
+      }
+
       order.status = status;
       return orderRepo.save(order);
     });
@@ -792,6 +796,36 @@ export class OrderService {
         await sellerProductRepo.save(sellerProduct);
       }
     }
+  }
+
+  async reopenRolledBackOrder(orderId: string): Promise<Order> {
+    return this.runInTransaction(async (manager) => {
+      const orderRepo = manager
+        ? manager.getRepository(Order)
+        : this.orderRepository;
+
+      const order = await orderRepo.findOne({
+        where: { id: orderId },
+        relations: ['items'],
+        lock: manager ? { mode: 'pessimistic_write' } : undefined,
+      });
+
+      if (!order) {
+        throw new NotFoundException(`Order with ID ${orderId} not found`);
+      }
+
+      if (order.status !== OrderStatus.CANCELLED || order.stockReserved) {
+        throw new BadRequestException(
+          `Cannot reopen order ${orderId} from status ${order.status}`
+        );
+      }
+
+      order.status = OrderStatus.PENDING;
+      order.stockReserved = false;
+      order.paymentVerifiedAt = null;
+
+      return orderRepo.save(order);
+    });
   }
 
   async confirmOrderPayment(

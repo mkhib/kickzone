@@ -483,6 +483,9 @@ export class PaymentResolver {
               if (this.orderService.updateOrderStatus) {
                 await this.orderService.updateOrderStatus(confirmedId, OrderStatus.CANCELLED);
               }
+              if (this.orderService.reopenRolledBackOrder) {
+                await this.orderService.reopenRolledBackOrder(confirmedId);
+              }
             } catch (rollbackError) {
               console.error(
                 `Rollback failed for order ${confirmedId}:`,
