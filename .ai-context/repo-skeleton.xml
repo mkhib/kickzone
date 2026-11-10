@@ -1657,6 +1657,31 @@ export class SellerConnection implements Connection<SellerInfo> {
 }
 </file>
 
+<file path="libs/server/inputs/src/lib/cart.inputs.ts">
+import { InputType, Field, Int } from '@nestjs/graphql';
+
+@InputType()
+export class AddToCartInput {
+  @Field(() => String)
+  sellerProductId: string;
+
+  @Field(() => Int)
+  quantity: number;
+}
+
+@InputType()
+export class UpdateCartItemInput {
+  @Field(() => Int, { nullable: true })
+  quantity?: number;
+
+  @Field(() => String, { nullable: true })
+  color?: string;
+
+  @Field(() => String, { nullable: true })
+  size?: string;
+}
+</file>
+
 <file path="libs/server/inputs/src/lib/user.input.ts">
 import { InputType, Field } from '@nestjs/graphql';
 import { UserRole } from '@kickzone-workspace/entities';
@@ -1744,31 +1769,6 @@ import { OrderModule } from './order.module';
   exports: [PaymentService],
 })
 export class PaymentModule {}
-</file>
-
-<file path="libs/server/inputs/src/lib/cart.inputs.ts">
-import { InputType, Field, Int } from '@nestjs/graphql';
-
-@InputType()
-export class AddToCartInput {
-  @Field(() => String)
-  sellerProductId: string;
-
-  @Field(() => Int)
-  quantity: number;
-}
-
-@InputType()
-export class UpdateCartItemInput {
-  @Field(() => Int, { nullable: true })
-  quantity?: number;
-
-  @Field(() => String, { nullable: true })
-  color?: string;
-
-  @Field(() => String, { nullable: true })
-  size?: string;
-}
 </file>
 
 <file path="libs/server/inputs/src/lib/seller.input.ts">
