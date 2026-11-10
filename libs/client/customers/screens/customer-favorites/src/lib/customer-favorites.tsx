@@ -71,7 +71,7 @@ export function CustomerFavorites() {
   const isEn = currentLocale === 'en';
   const isRTL = currentLocale === 'fa';
 
-  usePageTitle(() => (isEn ? 'Favorites — SAINTBALA' : 'علاقه‌مندی‌ها — SAINTBALA'));
+  usePageTitle(() => (isEn ? 'Favorites' : 'علاقه‌مندی‌ها'));
 
   // Defensive array guard: always guaranteed to be an array
   const rawItems = useWishlistItems();

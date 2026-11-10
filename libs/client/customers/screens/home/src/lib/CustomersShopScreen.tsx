@@ -136,13 +136,6 @@ export function CustomersShopScreen() {
   const { isRTL, currentLocale } = useLanguageContext();
   const isEn = currentLocale === 'en';
 
-  usePageTitle(
-    useCallback(
-      () => (isEn ? 'Shop & Catalog' : 'فروشگاه و محصولات'),
-      [isEn]
-    )
-  );
-
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { brandSlug: brandSlugParam } = useParams<{ brandSlug?: string }>();
@@ -378,6 +371,24 @@ export function CustomersShopScreen() {
     : selectedBrands.length > 0
     ? LL.shop.productsByBrand({ brand: brandLabel })
     : LL.shop.allProducts();
+
+  // Filter-aware page title (computed alongside heading using same logic)
+  const pageTitle = useMemo(() => {
+    if (debouncedSearch) {
+      return isEn
+        ? `Search: ${debouncedSearch} — Shop`
+        : `جستجو: ${debouncedSearch} — فروشگاه`;
+    }
+    if (selectedCategories.length > 0) {
+      return LL.shop.productsInCategory({ category: categoryLabel });
+    }
+    if (selectedBrands.length > 0) {
+      return LL.shop.productsByBrand({ brand: brandLabel });
+    }
+    return isEn ? 'Shop & Catalog' : 'فروشگاه و محصولات';
+  }, [debouncedSearch, selectedCategories, selectedBrands, categoryLabel, brandLabel, isEn, LL]);
+
+  usePageTitle(() => pageTitle);
 
   const hasActiveFilters = Boolean(
     selectedCategories.length > 0 ||

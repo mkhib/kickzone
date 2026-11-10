@@ -4,6 +4,10 @@ import Box from '@mui/material/Box';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { useCustomersCartService, getDiscountedUnitPrice } from '@kickzone-workspace/customers-cart-hook';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import {
+  useI18nContext,
+  usePageTitle,
+} from '@kickzone-workspace/shared-i18n';
 
 import {
   HOME_PAGE_QUERY,
@@ -27,6 +31,8 @@ export function CustomersHome({
   initialData,
   mockLoading,
 }: CustomersHomeProps) {
+  const { LL } = useI18nContext();
+  usePageTitle(() => LL.navigation.home());
   useScrollProgress();
 
   const { data: apolloData, loading: apolloLoading } = useQuery<HomePageData>(

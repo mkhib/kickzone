@@ -412,7 +412,11 @@ export function CustomerProductDetails() {
   }, []);
 
   // Update page title
-  usePageTitle(() => product?.name || LL.navigation.products());
+  usePageTitle(() => {
+    if (loading) return LL.navigation.products();
+    if (error || !product) return isRTL ? 'محصول مورد نظر یافت نشد' : 'Product Not Found';
+    return product?.name || LL.navigation.products();
+  });
 
   // Extract brand & category
   const brand = useMemo(() => {

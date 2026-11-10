@@ -15,7 +15,7 @@ export function CustomerNotFound() {
   const { currentLocale } = useLanguageContext();
   const isEn = currentLocale === 'en';
 
-  usePageTitle(() => (isEn ? 'Page Not Found — SAINTBALA' : 'صفحه یافت نشد — SAINTBALA'));
+  usePageTitle(() => (isEn ? 'Page Not Found' : 'صفحه یافت نشد'));
 
   const content = {
     badge: isEn ? 'ERROR 404' : 'خطای ۴۰۴',
