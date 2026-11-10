@@ -421,10 +421,12 @@ describe('PaymentResolver Unit Tests', () => {
       id: string;
       status: OrderStatus;
       paymentAuthority: string | null;
+      paymentVerifiedAt: Date | null;
     }> = {}) => ({
       id: orderId,
       status: OrderStatus.PENDING,
       paymentAuthority: authority,
+      paymentVerifiedAt: null,
       ...overrides,
     });
 
@@ -598,6 +600,52 @@ describe('PaymentResolver Unit Tests', () => {
         expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
         expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-2');
         expect(result).toBe(true);
+      });
+    });
+
+    describe('Path 1: paymentVerifiedAt Guard (Bug 2 regression)', () => {
+      it('should reject with BadRequestException when order has paymentVerifiedAt set (status PENDING but paid)', async () => {
+        const order = createPendingOrder({ paymentVerifiedAt: new Date() });
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order] as never);
+
+        await expect(resolver.cancelPendingZarinPalOrder(undefined, authority)).rejects.toThrow(
+          BadRequestException,
+        );
+        await expect(resolver.cancelPendingZarinPalOrder(undefined, authority)).rejects.toThrow(
+          'Only PENDING orders can be cancelled.',
+        );
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject with BadRequestException when orderId + authority but order has paymentVerifiedAt set', async () => {
+        const order = createPendingOrder({ paymentVerifiedAt: new Date() });
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order] as never);
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(resolver.cancelPendingZarinPalOrder(orderId, authority)).rejects.toThrow(
+          BadRequestException,
+        );
+        await expect(resolver.cancelPendingZarinPalOrder(orderId, authority)).rejects.toThrow(
+          'Only PENDING orders can be cancelled.',
+        );
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject when findOrdersByPaymentAuthority returns [] but findOne returns order with matching paymentAuthority (empty-lookup fallback removed)', async () => {
+        const order = createPendingOrder(); // paymentAuthority === authority
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(resolver.cancelPendingZarinPalOrder(orderId, authority)).rejects.toThrow(
+          BadRequestException,
+        );
+        await expect(resolver.cancelPendingZarinPalOrder(orderId, authority)).rejects.toThrow(
+          'No matching order found for payment authority',
+        );
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
       });
     });
 

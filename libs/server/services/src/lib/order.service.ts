@@ -910,7 +910,7 @@ export class OrderService {
         throw new NotFoundException(`Order with ID ${orderId} not found`);
       }
 
-      if (order.status !== OrderStatus.PENDING) {
+      if (order.status !== OrderStatus.PENDING || order.paymentVerifiedAt) {
         throw new BadRequestException('Only PENDING orders can be cancelled');
       }
 

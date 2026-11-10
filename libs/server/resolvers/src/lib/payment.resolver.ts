@@ -578,35 +578,39 @@ export class PaymentResolver {
     @CurrentUser() user?: OptionalAuthenticatedUser,
     @Args('guestToken', { type: () => String, nullable: true }) guestToken?: string
   ) {
-    // Path 1: Non-empty authority provided -> keep EXACT existing logic
+    // Path 1: Non-empty authority provided
     if (authority && authority.trim() !== '') {
-      // Look up orders matching the authority
       const ordersByAuthority = await this.orderService.findOrdersByPaymentAuthority(authority);
 
-      // If orderId was also passed, verify it matches the authority
-      let matchedOrders = ordersByAuthority;
       if (orderId) {
-        const orderById = await this.orderService.findOne(orderId);
+        const orderById = await this.orderService.findOne(orderId).catch((err: unknown) => {
+          if (err instanceof NotFoundException) {
+            return null;
+          }
+          throw err;
+        });
+        if (!orderById) {
+          throw new BadRequestException('No matching order found for payment authority');
+        }
         if (orderById.paymentAuthority !== authority) {
           throw new BadRequestException('Order does not match the provided payment authority');
         }
-        // Ensure the orderById is in the matched list (in case findOrdersByPaymentAuthority missed it)
-        if (!matchedOrders.some((o) => o.id === orderId)) {
-          matchedOrders = [orderById, ...matchedOrders];
+        if (!ordersByAuthority.some((o) => o.id === orderId)) {
+          throw new BadRequestException('No matching order found for payment authority');
         }
       }
 
-      if (matchedOrders.length === 0) {
+      if (ordersByAuthority.length === 0) {
         throw new BadRequestException('No matching order found for payment authority');
       }
 
-      // Cancel each matched order that is PENDING
-      for (const order of matchedOrders) {
+      // Cancel each matched order that is PENDING and unpaid
+      for (const order of ordersByAuthority) {
         if (order.status === OrderStatus.CANCELLED) {
           // Idempotent: already cancelled, treat as success
           continue;
         }
-        if (order.status !== OrderStatus.PENDING) {
+        if (order.status !== OrderStatus.PENDING || order.paymentVerifiedAt) {
           throw new BadRequestException(
             `Cannot cancel order ${order.id} with status ${order.status}. Only PENDING orders can be cancelled.`
           );

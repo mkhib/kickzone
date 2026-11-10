@@ -2480,6 +2480,25 @@ describe('OrderService', () => {
       );
     });
 
+    it('should throw BadRequestException when order has paymentVerifiedAt set (status PENDING but paid)', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        paymentVerifiedAt: new Date(),
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.cancelPendingOrder(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.cancelPendingOrder(orderId)).rejects.toThrow(
+        'Only PENDING orders can be cancelled',
+      );
+    });
+
     it('should pass pessimistic_write lock when running inside a DataSource transaction', async () => {
       const order: Order = {
         id: orderId,
