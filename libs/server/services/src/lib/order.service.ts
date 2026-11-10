@@ -409,7 +409,16 @@ export class OrderService {
 
     if (after !== undefined && after !== null) {
       const cursor = await this.decodeCursor(after);
-      queryBuilder.andWhere('order.createdAt < :cursor', { cursor });
+      if (cursor.id) {
+        queryBuilder.andWhere(
+          '(order.createdAt < :cursorDate OR (order.createdAt = :cursorDate AND order.id < :cursorId))',
+          { cursorDate: cursor.date, cursorId: cursor.id },
+        );
+      } else {
+        queryBuilder.andWhere('order.createdAt < :cursor', {
+          cursor: cursor.date,
+        });
+      }
     }
 
     const orders = await queryBuilder.take(first + 1).getMany();
@@ -417,7 +426,7 @@ export class OrderService {
     const hasNextPage = orders.length > first;
     const edges: OrderEdge[] = orders.slice(0, first).map((order) => ({
       node: order,
-      cursor: this.encodeCursor(order.createdAt),
+      cursor: this.encodeCursor(order.createdAt, order.id),
     }));
 
     return {
@@ -615,7 +624,16 @@ export class OrderService {
 
     if (after !== undefined && after !== null) {
       const cursor = await this.decodeCursor(after);
-      queryBuilder.andWhere('order.createdAt < :cursor', { cursor });
+      if (cursor.id) {
+        queryBuilder.andWhere(
+          '(order.createdAt < :cursorDate OR (order.createdAt = :cursorDate AND order.id < :cursorId))',
+          { cursorDate: cursor.date, cursorId: cursor.id },
+        );
+      } else {
+        queryBuilder.andWhere('order.createdAt < :cursor', {
+          cursor: cursor.date,
+        });
+      }
     }
 
     const orders = await queryBuilder.take(first + 1).getMany();
@@ -623,7 +641,7 @@ export class OrderService {
     const hasNextPage = orders.length > first;
     const edges: OrderEdge[] = orders.slice(0, first).map((order) => ({
       node: order,
-      cursor: this.encodeCursor(order.createdAt),
+      cursor: this.encodeCursor(order.createdAt, order.id),
     }));
 
     return {
@@ -654,21 +672,37 @@ export class OrderService {
     return `KZ-${year}${month}${day}-${random}`;
   }
 
-  private encodeCursor(date: Date): string {
-    return Buffer.from(date.toISOString()).toString('base64');
+  private encodeCursor(date: Date, id?: string): string {
+    const payload = id ? `${date.toISOString()}|${id}` : date.toISOString();
+    return Buffer.from(payload).toString('base64');
   }
 
-  private async decodeCursor(cursor: string): Promise<Date> {
+  private async decodeCursor(
+    cursor: string,
+  ): Promise<{ date: Date; id?: string }> {
     if (typeof cursor !== 'string' || cursor.trim() === '') {
       throw new BadRequestException('Invalid cursor');
     }
     try {
       const decoded = Buffer.from(cursor, 'base64').toString();
-      const date = new Date(decoded);
-      if (!decoded || Number.isNaN(date.getTime())) {
+      if (!decoded) {
         throw new BadRequestException('Invalid cursor');
       }
-      return date;
+      const separatorIndex = decoded.indexOf('|');
+      if (separatorIndex !== -1) {
+        const datePart = decoded.slice(0, separatorIndex);
+        const idPart = decoded.slice(separatorIndex + 1).trim();
+        const date = new Date(datePart);
+        if (!datePart || !idPart || Number.isNaN(date.getTime())) {
+          throw new BadRequestException('Invalid cursor');
+        }
+        return { date, id: idPart };
+      }
+      const date = new Date(decoded);
+      if (Number.isNaN(date.getTime())) {
+        throw new BadRequestException('Invalid cursor');
+      }
+      return { date };
     } catch {
       throw new BadRequestException('Invalid cursor');
     }

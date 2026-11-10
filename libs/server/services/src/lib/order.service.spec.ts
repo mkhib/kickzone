@@ -1236,6 +1236,51 @@ describe('OrderService', () => {
       );
       expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('order.id', 'DESC');
     });
+
+    it('should encode compound cursor with createdAt and id on edges', async () => {
+      const mockOrdersWithId: Order[] = [
+        {
+          id: 'order-5',
+          orderNumber: 'ORD-5',
+          createdAt: new Date('2026-01-15T10:00:00.000Z'),
+        } as Order,
+      ];
+      mockQueryBuilder.getMany.mockResolvedValue(mockOrdersWithId);
+      mockQueryBuilder.getCount.mockResolvedValue(1);
+
+      const result = await service.findAll(10);
+
+      expect(result.edges[0].cursor).toBeDefined();
+      const decoded = Buffer.from(result.edges[0].cursor, 'base64').toString();
+      expect(decoded).toBe('2026-01-15T10:00:00.000Z|order-5');
+    });
+
+    it('should filter with compound cursor condition when after is a compound cursor', async () => {
+      const compoundCursor = Buffer.from(
+        '2026-01-15T10:00:00.000Z|order-5',
+      ).toString('base64');
+      await service.findAll(10, compoundCursor);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        '(order.createdAt < :cursorDate OR (order.createdAt = :cursorDate AND order.id < :cursorId))',
+        {
+          cursorDate: new Date('2026-01-15T10:00:00.000Z'),
+          cursorId: 'order-5',
+        },
+      );
+    });
+
+    it('should throw BadRequestException for malformed compound cursor with empty id', async () => {
+      const malformedCursor = Buffer.from(
+        '2026-01-15T10:00:00.000Z|',
+      ).toString('base64');
+      await expect(service.findAll(10, malformedCursor)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.findAll(10, malformedCursor)).rejects.toThrow(
+        'Invalid cursor',
+      );
+    });
   });
 
   describe('updateOrder', () => {
@@ -2606,6 +2651,52 @@ describe('OrderService', () => {
         'DESC',
       );
       expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('order.id', 'DESC');
+    });
+
+    it('should encode compound cursor with createdAt and id on edges', async () => {
+      const mockOrdersWithId: Order[] = [
+        {
+          id: 'order-5',
+          orderNumber: 'ORD-5',
+          customerEmail,
+          createdAt: new Date('2026-01-15T10:00:00.000Z'),
+        } as Order,
+      ];
+      mockQueryBuilder.getMany.mockResolvedValue(mockOrdersWithId);
+      orderRepository.count.mockResolvedValue(1);
+
+      const result = await service.getOrdersByCustomerEmail(customerEmail, 10);
+
+      expect(result.edges[0].cursor).toBeDefined();
+      const decoded = Buffer.from(result.edges[0].cursor, 'base64').toString();
+      expect(decoded).toBe('2026-01-15T10:00:00.000Z|order-5');
+    });
+
+    it('should filter with compound cursor condition when after is a compound cursor', async () => {
+      const compoundCursor = Buffer.from(
+        '2026-01-15T10:00:00.000Z|order-5',
+      ).toString('base64');
+      await service.getOrdersByCustomerEmail(customerEmail, 10, compoundCursor);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        '(order.createdAt < :cursorDate OR (order.createdAt = :cursorDate AND order.id < :cursorId))',
+        {
+          cursorDate: new Date('2026-01-15T10:00:00.000Z'),
+          cursorId: 'order-5',
+        },
+      );
+    });
+
+    it('should throw BadRequestException for malformed compound cursor with empty id', async () => {
+      const malformedCursor = Buffer.from(
+        '2026-01-15T10:00:00.000Z|',
+      ).toString('base64');
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, malformedCursor),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, malformedCursor),
+      ).rejects.toThrow('Invalid cursor');
     });
   });
 
