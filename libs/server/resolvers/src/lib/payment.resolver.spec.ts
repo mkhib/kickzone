@@ -1723,7 +1723,9 @@ it('does NOT treat CONFIRMED orders with stockReserved=undefined as idempotently
           orderNumber: string;
           items: Array<{
             quantity: number;
-            sellerProduct: { id: string; stockQuantity: number };
+            sellerProductId?: string;
+            productId?: string;
+            sellerProduct: { id: string; stockQuantity: number } | null;
           }>;
         }> = {}) => ({
           id: 'order-123',
@@ -1923,6 +1925,77 @@ it('does NOT treat CONFIRMED orders with stockReserved=undefined as idempotently
           expect(result.code).toBe(100);
           expect(result.ref_id).toBe(444555);
           expect(result.message).toContain('Confirmation DB failure');
+        });
+
+        it('should reject with NotFoundException BEFORE verifyPayment when any PENDING order item has sellerProduct: null (deleted from catalog)', async () => {
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            items: [
+              { quantity: 1, sellerProductId: 'sp-deleted', productId: 'prod-1', sellerProduct: null },
+            ],
+          });
+
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Success', ref_id: 999888 },
+            errors: [],
+          } as never);
+
+          const input = {
+            amount: 6000000,
+            authority,
+            order_id: 'order-1',
+          } as never;
+
+          await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+            NotFoundException,
+          );
+          await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+            'SellerProduct with ID sp-deleted not found',
+          );
+          expect(paymentService.verifyPayment).not.toHaveBeenCalled();
+          expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+        });
+
+        it('should reject with NotFoundException BEFORE verifyPayment in multi-seller batch when second order has sellerProduct: null', async () => {
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            items: [
+              { quantity: 1, sellerProduct: { id: 'sp-1', stockQuantity: 5 } },
+            ],
+          });
+          const order2 = createMockOrderWithItems({
+            id: 'order-2',
+            orderNumber: 'ORD-002',
+            items: [
+              { quantity: 2, sellerProductId: 'sp-missing', productId: 'prod-2', sellerProduct: null },
+            ],
+          });
+
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Success', ref_id: 888777 },
+            errors: [],
+          } as never);
+
+          const input = {
+            amount: 6000000,
+            authority,
+            order_id: 'order-1',
+          } as never;
+
+          await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+            NotFoundException,
+          );
+          await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+            'SellerProduct with ID sp-missing not found',
+          );
+          expect(paymentService.verifyPayment).not.toHaveBeenCalled();
+          expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
         });
       });
     });

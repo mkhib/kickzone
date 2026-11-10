@@ -377,7 +377,15 @@ export class PaymentResolver {
     const stockRequirements = new Map<string, number>(); // sellerProductId -> requiredQty
     for (const order of pendingOrders) {
       for (const item of order.items ?? []) {
-        const sp = (item as OrderItemWithSellerProduct).sellerProduct;
+        const typedItem = item as OrderItemWithSellerProduct;
+        const sp = typedItem.sellerProduct;
+        if (sp === null) {
+          const missingProductId =
+            typedItem.sellerProductId || typedItem.productId || 'unknown';
+          throw new NotFoundException(
+            `SellerProduct with ID ${missingProductId} not found`
+          );
+        }
         if (sp?.id != null && typeof sp.stockQuantity === 'number') {
           const current = stockRequirements.get(sp.id) ?? 0;
           stockRequirements.set(sp.id, current + (item.quantity ?? 0));
