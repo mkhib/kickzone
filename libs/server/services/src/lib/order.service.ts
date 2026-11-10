@@ -877,7 +877,7 @@ export class OrderService {
   }): Promise<Order> {
     const order = await this.findOne(params.orderId);
 
-    if (order.status !== OrderStatus.PENDING) {
+    if (order.status !== OrderStatus.PENDING || order.paymentVerifiedAt) {
       throw new BadRequestException(
         `Cannot create payment intent for order with status ${order.status}`,
       );

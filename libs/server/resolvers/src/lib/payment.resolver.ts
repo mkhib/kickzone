@@ -158,7 +158,7 @@ export class PaymentResolver {
       throw new BadRequestException('Invalid callback_url protocol');
     }
 
-    const isSingleOrder = targetOrderIds.length === 1 && !input.orderIds;
+    const isSingleOrder = targetOrderIds.length === 1;
 
     // Load all orders in targetOrderIds
     const loadedOrders = await Promise.all(
@@ -233,19 +233,27 @@ export class PaymentResolver {
       await this.orderService.recalculateBatchOrdersShipping(orders);
     }
 
+    // Validate every order total in the request (single or batch)
+    for (const order of orders) {
+      const orderTotalUsd = Number(order.total);
+      if (!Number.isFinite(orderTotalUsd) || orderTotalUsd <= 0) {
+        throw new BadRequestException('Order total is invalid or missing');
+      }
+    }
+
+    // Check that no order in the batch already has paymentVerifiedAt set
+    const alreadyVerifiedOrders = orders.filter((order) => Boolean(order.paymentVerifiedAt));
+    if (alreadyVerifiedOrders.length > 0) {
+      throw new BadRequestException(
+        `Order(s) ${alreadyVerifiedOrders.map((o) => o.id).join(', ')} have already been verified`
+      );
+    }
+
     // Sum the USD totals across all orders in the batch
     const batchTotalUsd = orders.reduce(
       (sum, o) => sum + Number(o.total),
       0
     );
-
-    // For single order, also validate the individual order total
-    if (isSingleOrder) {
-      const orderTotalUsd = Number(orders[0].total);
-      if (!Number.isFinite(orderTotalUsd) || orderTotalUsd <= 0) {
-        throw new BadRequestException('Order total is invalid or missing');
-      }
-    }
 
     // Fetch current USD -> IRR exchange rate (IRR represents Toman for ZarinPal)
     const rateRecord = await this.currencyService.getCurrentExchangeRate(

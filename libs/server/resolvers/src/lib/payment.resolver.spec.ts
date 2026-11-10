@@ -69,6 +69,7 @@ describe('PaymentResolver Unit Tests', () => {
     paymentAuthority: string | null;
     paymentAmount: number | null;
     paymentCurrency: string | null;
+    paymentVerifiedAt: Date | null;
   }> = {}) => ({
     id: 'order-123',
     status: OrderStatus.PENDING,
@@ -76,6 +77,7 @@ describe('PaymentResolver Unit Tests', () => {
     paymentAuthority: null,
     paymentAmount: null,
     paymentCurrency: null,
+    paymentVerifiedAt: null,
     ...overrides,
   });
 
@@ -411,6 +413,152 @@ describe('PaymentResolver Unit Tests', () => {
         await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
           'Order total is invalid or missing'
         );
+      });
+
+      it('should reject when orderIds single element array has total=0 (orderIds path, not order_id)', async () => {
+        const input = createPaymentRequestInput({
+          orderIds: ['order-123'],
+          order_id: undefined,
+          amount: 50000,
+        });
+        const mockOrder = createMockOrder({ total: 0 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order total is invalid or missing'
+        );
+      });
+
+      it('should reject when orderIds single element array has total=NaN (orderIds path, not order_id)', async () => {
+        const input = createPaymentRequestInput({
+          orderIds: ['order-123'],
+          order_id: undefined,
+          amount: 50000,
+        });
+        const mockOrder = createMockOrder({ total: NaN });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order total is invalid or missing'
+        );
+      });
+
+      it('should use single-order 0.1% tolerance for orderIds single element array ($80 at rate 60000 -> 4800000, accepts 4800005, rejects 4805000)', async () => {
+        const inputAccept = createPaymentRequestInput({
+          orderIds: ['order-123'],
+          order_id: undefined,
+          amount: 4800005, // within 0.1% (4800 Tomans)
+        });
+        const inputReject = createPaymentRequestInput({
+          orderIds: ['order-123'],
+          order_id: undefined,
+          amount: 4805000, // exceeds 0.1% tolerance
+        });
+        const mockOrder = createMockOrder({ total: 80 });
+        const authority = 'A00000000000000000000000000000000000003';
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+        paymentService.requestPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
+          errors: [],
+        } as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
+
+        const result = await resolver.requestZarinPalPayment(inputAccept);
+        expect(result.authority).toBe(authority);
+        expect(paymentService.requestPayment).toHaveBeenCalledWith(
+          expect.objectContaining({ amount: 4800000 })
+        );
+
+        jest.clearAllMocks();
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        await expect(resolver.requestZarinPalPayment(inputReject)).rejects.toThrow(
+          'Payment amount does not match order total'
+        );
+      });
+
+      it('should reject 2-order batch where one order has total=0', async () => {
+        const order1 = createMockOrder({ id: 'order-1', total: 100 });
+        const order2 = createMockOrder({ id: 'order-2', total: 0 });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        const input = {
+          amount: 6000000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order total is invalid or missing'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+      });
+
+      it('should reject 2-order batch where one order has total=-50', async () => {
+        const order1 = createMockOrder({ id: 'order-1', total: 100 });
+        const order2 = createMockOrder({ id: 'order-2', total: -50 });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        const input = {
+          amount: 6000000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order total is invalid or missing'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+      });
+
+      it('should reject when any order in batch already has paymentVerifiedAt set', async () => {
+        const order1 = createMockOrder({ id: 'order-1', total: 100 });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          total: 100,
+          paymentVerifiedAt: new Date('2024-01-01'),
+        });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        const input = {
+          amount: 12000000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order(s) order-2 have already been verified'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
       });
     });
   });

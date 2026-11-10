@@ -3193,6 +3193,59 @@ describe('OrderService', () => {
       expect((result[0].items[1] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toBeUndefined();
     });
   });
+
+  describe('setPaymentIntent', () => {
+    const orderId = 'order-1';
+
+    it('should throw BadRequestException when order.status === PENDING and order.paymentVerifiedAt is a Date', async () => {
+      const order = {
+        id: orderId,
+        orderNumber: 'ORD-123',
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        paymentVerifiedAt: new Date('2024-01-01'),
+        paymentAuthority: null,
+        paymentAmount: null,
+        paymentCurrency: null,
+        items: [],
+        seller: {} as SellerInfo,
+        customerEmail: 'test@example.com',
+        customerPhone: '1234567890',
+        customerName: 'Test User',
+        shippingAddress: '123 Test St',
+        city: 'Test City',
+        state: 'Test State',
+        zipCode: '12345',
+        country: 'Test Country',
+        sellerId: 1,
+        subtotal: 100,
+        shippingCost: 10,
+        total: 110,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(
+        service.setPaymentIntent({
+          orderId,
+          authority: 'A123',
+          amount: 1000,
+        })
+      ).rejects.toThrow(BadRequestException);
+
+      await expect(
+        service.setPaymentIntent({
+          orderId,
+          authority: 'A123',
+          amount: 1000,
+        })
+      ).rejects.toThrow('Cannot create payment intent for order with status PENDING');
+
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
+  });
 });
 
 describe('OrderService - Shipping Security & Payment Modes', () => {
