@@ -285,7 +285,7 @@ describe('PaymentBatch Security Tests', () => {
           orderIds: ['order-1', 'order-2'],
         } as never);
 
-        const result = await paymentResolver.requestZarinPalPayment(input);
+        const result = await paymentResolver.requestZarinPalPayment(input, undefined, guestToken);
 
         expect(result.authority).toBe('A00000000000000000000000000000000000000');
         expect(paymentService.requestPayment).toHaveBeenCalled();

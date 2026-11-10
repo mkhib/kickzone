@@ -82,6 +82,7 @@ describe('PaymentResolver Integration Tests', () => {
       id: orderId,
       status: OrderStatus.PENDING,
       total: 100, // USD, so 100 * 1000 = 100000 IRT amount
+      customerEmail: 'test@example.com',
       paymentAuthority: authority,
       paymentAmount: amount,
       paymentCurrency: 'IRT',
@@ -377,9 +378,18 @@ describe('PaymentResolver Integration Tests', () => {
         const expectedUrl = `https://sandbox.zarinpal.com/pg/StartPay/${authority}`;
 
         paymentService.getGatewayUrl.mockReturnValue(expectedUrl);
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([
+          {
+            id: 'order-123',
+            status: OrderStatus.PENDING,
+            customerEmail: 'owner@example.com',
+            paymentVerifiedAt: null,
+            notes: null,
+          },
+        ] as never);
 
         const result = await resolver.getZarinPalGatewayUrl(
-          { id: 'user-1' } as never,
+          { id: 'user-1', email: 'owner@example.com' },
           authority
         );
 
@@ -398,7 +408,7 @@ describe('PaymentResolver Integration Tests', () => {
       id: orderId,
       status: OrderStatus.PENDING,
       total: total / 1000, // USD, so total * 1000 = paymentAmount (IRT)
-      paymentAuthority: 'A00000000000000000000000000000000000000',
+      paymentAuthority: null,
       paymentAmount: total,
       paymentCurrency,
       items: [],

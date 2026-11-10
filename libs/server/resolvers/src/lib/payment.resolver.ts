@@ -1,5 +1,5 @@
 import { Resolver, Mutation, Args } from '@nestjs/graphql';
-import { UseGuards, BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { OrderStatus, type OrderItem } from '@kickzone-workspace/entities';
 
 /** OrderItem with the sellerProduct relation loaded (not declared on the entity class). */
@@ -7,7 +7,6 @@ type OrderItemWithSellerProduct = OrderItem & {
   sellerProduct?: { id?: string; stockQuantity?: number } | null;
 };
 import { PaymentService, OrderService, CurrencyService } from '@kickzone-workspace/services';
-import { GraphqlAuthGuard } from '@kickzone-workspace/guards';
 import { CurrentUser, type OptionalAuthenticatedUser } from '@kickzone-workspace/decorators';
 import { ObjectType, Field, Int, InputType } from '@nestjs/graphql';
 
@@ -90,6 +89,9 @@ export class ZarinPalPaymentRequestInput {
 
   @Field(() => [String], { nullable: true })
   orderIds?: string[];
+
+  @Field({ nullable: true })
+  guestToken?: string;
 }
 
 @InputType()
@@ -130,7 +132,9 @@ export class PaymentResolver {
 
   @Mutation(() => ZarinPalPaymentResponse)
   async requestZarinPalPayment(
-    @Args('input') input: ZarinPalPaymentRequestInput
+    @Args('input') input: ZarinPalPaymentRequestInput,
+    @CurrentUser() user?: OptionalAuthenticatedUser,
+    @Args('guestToken', { type: () => String, nullable: true }) guestToken?: string
   ) {
     // Normalize the list of order IDs from both orderId (singular) and orderIds (array)
     const targetOrderIds = Array.from(
@@ -209,11 +213,14 @@ export class PaymentResolver {
     if (!isSingleOrder) {
       const firstOrder = orders[0];
       const firstCustomerEmail = String(firstOrder.customerEmail ?? '')
+        .trim()
         .toLowerCase();
       const firstGuestToken = this.extractGuestToken(firstOrder.notes);
 
       for (const order of orders) {
-        const customerEmail = String(order.customerEmail ?? '').toLowerCase();
+        const customerEmail = String(order.customerEmail ?? '')
+          .trim()
+          .toLowerCase();
         if (customerEmail !== firstCustomerEmail) {
           throw new BadRequestException(
             'All orders in a batch must belong to the same customer'
@@ -248,6 +255,17 @@ export class PaymentResolver {
         `Order(s) ${alreadyVerifiedOrders.map((o) => o.id).join(', ')} have already been verified`
       );
     }
+
+    // Validate raw guestToken and input.guestToken format BEFORE trimming
+    const rawGuestToken = guestToken ?? input.guestToken;
+    if (
+      typeof rawGuestToken === 'string' &&
+      rawGuestToken.length > 0 &&
+      /[[\]\r\n\s]/.test(rawGuestToken)
+    ) {
+      throw new BadRequestException('Invalid guest token format');
+    }
+    const providedGuestToken = rawGuestToken?.trim();
 
     // Sum the USD totals across all orders in the batch
     const batchTotalUsd = orders.reduce(
@@ -288,6 +306,42 @@ export class PaymentResolver {
         throw new BadRequestException(
           'Payment amount does not match batch order total'
         );
+      }
+    }
+
+    // Enforce caller ownership after existing checks
+    const firstOrder = orders[0];
+    const firstCustomerEmail = String(firstOrder.customerEmail ?? '')
+      .trim()
+      .toLowerCase();
+    const firstGuestToken = this.extractGuestToken(firstOrder.notes);
+
+    if (firstGuestToken) {
+      if (!providedGuestToken || providedGuestToken !== firstGuestToken) {
+        throw new ForbiddenException('Invalid guest token for payment request');
+      }
+    } else {
+      if (providedGuestToken) {
+        throw new ForbiddenException('Invalid guest token for payment request');
+      }
+      if (user !== undefined && user !== null) {
+        const userEmail = String(user.email ?? '').trim().toLowerCase();
+        if (!userEmail || !firstCustomerEmail || userEmail !== firstCustomerEmail) {
+          throw new ForbiddenException('Not allowed to pay for this order');
+        }
+      }
+      if (input.email && firstCustomerEmail) {
+        const inputEmail = input.email.trim().toLowerCase();
+        if (inputEmail !== firstCustomerEmail) {
+          throw new ForbiddenException('Not allowed to pay for this order');
+        }
+      }
+      if (
+        orders.some((o) => Boolean(o.paymentAuthority)) &&
+        !user?.email &&
+        !(input.email && firstCustomerEmail && input.email.trim().toLowerCase() === firstCustomerEmail)
+      ) {
+        throw new ForbiddenException('Not allowed to overwrite payment intent for this order');
       }
     }
 
@@ -558,11 +612,54 @@ export class PaymentResolver {
   }
 
   @Mutation(() => GatewayUrlResponse)
-  @UseGuards(GraphqlAuthGuard)
   async getZarinPalGatewayUrl(
-    @CurrentUser() _user: { id: string },
-    @Args('authority') authority: string
+    @CurrentUser() user: OptionalAuthenticatedUser | undefined,
+    @Args('authority') authority: string,
+    @Args('guestToken', { type: () => String, nullable: true }) guestToken?: string
   ) {
+    if (!authority || authority.trim() === '') {
+      throw new BadRequestException('Payment authority is required');
+    }
+    if (
+      typeof guestToken === 'string' &&
+      guestToken.length > 0 &&
+      /[[\]\r\n\s]/.test(guestToken)
+    ) {
+      throw new BadRequestException('Invalid guest token format');
+    }
+
+    const orders = await this.orderService.findOrdersByPaymentAuthority(authority);
+    if (orders.length === 0) {
+      throw new BadRequestException('No orders found for this payment authority');
+    }
+
+    for (const order of orders) {
+      if (order.status !== OrderStatus.PENDING || order.paymentVerifiedAt) {
+        throw new BadRequestException(
+          `Cannot get gateway URL for order ${order.id} with status ${order.status}`
+        );
+      }
+    }
+
+    const firstOrder = orders[0];
+    const orderEmail = String(firstOrder.customerEmail ?? '').trim().toLowerCase();
+    const userEmail = String(user?.email ?? '').trim().toLowerCase();
+    const providedGuestToken = guestToken?.trim();
+    const orderGuestToken = this.extractGuestToken(firstOrder.notes);
+
+    const isOwnerByEmail =
+      userEmail.length > 0 && orderEmail.length > 0 && userEmail === orderEmail;
+    const isOwnerByGuestToken = Boolean(
+      providedGuestToken &&
+        providedGuestToken.length >= 16 &&
+        orderGuestToken &&
+        providedGuestToken === orderGuestToken
+    );
+
+    if (!isOwnerByEmail && !isOwnerByGuestToken) {
+      throw new ForbiddenException('Not allowed to access gateway URL for this order');
+    }
+
     return {
       url: this.paymentService.getGatewayUrl(authority),
     };

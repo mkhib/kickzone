@@ -2319,6 +2319,372 @@ it('does NOT treat CONFIRMED orders with stockReserved=undefined as idempotently
       });
     });
   });
+
+  describe('getZarinPalGatewayUrl', () => {
+    const authority = 'A00000000000000000000000000000000000000';
+    const gatewayUrl = 'https://zarinpal.com/pg/StartPay/A00000000000000000000000000000000000000';
+    const guestToken = '550e8400-e29b-41d4-a716-446655440000'; // 36 chars, >= 16
+
+    const createMockOrder = (overrides: Partial<{
+      id: string;
+      status: OrderStatus;
+      total: number;
+      customerEmail: string | null;
+      notes: string | null;
+      paymentVerifiedAt: Date | null;
+    }> = {}) => ({
+      id: 'order-123',
+      status: OrderStatus.PENDING,
+      total: 80,
+      customerEmail: 'test@example.com',
+      notes: null,
+      paymentVerifiedAt: null,
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
+      paymentService.getGatewayUrl.mockReturnValue(gatewayUrl);
+    });
+
+    it('should succeed for unauthenticated guest with matching guestToken (>= 16 chars) in notes', async () => {
+      const mockOrder = createMockOrder({
+        customerEmail: 'customer@example.com',
+        notes: `[GuestToken: ${guestToken}]`,
+      });
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+
+      const result = await resolver.getZarinPalGatewayUrl(undefined, authority, guestToken);
+
+      expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+      expect(paymentService.getGatewayUrl).toHaveBeenCalledWith(authority);
+      expect(result.url).toBe(gatewayUrl);
+    });
+
+    it('should succeed for authenticated owner whose user.email matches order.customerEmail (no guestToken required)', async () => {
+      const mockOrder = createMockOrder({
+        customerEmail: 'customer@example.com',
+        notes: 'Some note without token',
+      });
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+
+      const result = await resolver.getZarinPalGatewayUrl({ id: 'user-1', email: 'customer@example.com' }, authority);
+
+      expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+      expect(paymentService.getGatewayUrl).toHaveBeenCalledWith(authority);
+      expect(result.url).toBe(gatewayUrl);
+    });
+
+    it('should throw ForbiddenException for unauthenticated caller without guestToken', async () => {
+      const mockOrder = createMockOrder({
+        customerEmail: 'customer@example.com',
+        notes: 'Some note without token',
+      });
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, undefined)).rejects.toThrow(
+        'Not allowed to access gateway URL for this order'
+      );
+
+      expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+      expect(paymentService.getGatewayUrl).not.toHaveBeenCalled();
+    });
+
+    it('should throw ForbiddenException for different logged-in user (email mismatch, no valid guestToken)', async () => {
+      const mockOrder = createMockOrder({
+        customerEmail: 'victim@example.com',
+        notes: 'Some note without token',
+      });
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+
+      await expect(resolver.getZarinPalGatewayUrl({ id: 'user-2', email: 'attacker@example.com' }, authority)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.getZarinPalGatewayUrl({ id: 'user-2', email: 'attacker@example.com' }, authority)).rejects.toThrow(
+        'Not allowed to access gateway URL for this order'
+      );
+
+      expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+      expect(paymentService.getGatewayUrl).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for empty authority lookup (no orders found)', async () => {
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
+
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, guestToken)).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, guestToken)).rejects.toThrow(
+        'No orders found for this payment authority'
+      );
+
+      expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+      expect(paymentService.getGatewayUrl).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when order has paymentVerifiedAt set', async () => {
+      const mockOrder = createMockOrder({
+        paymentVerifiedAt: new Date(),
+      });
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, guestToken)).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, guestToken)).rejects.toThrow(
+        `Cannot get gateway URL for order order-123 with status ${OrderStatus.PENDING}`
+      );
+    });
+
+    it('should throw BadRequestException when order is not PENDING', async () => {
+      const mockOrder = createMockOrder({
+        status: OrderStatus.CONFIRMED,
+      });
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, guestToken)).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, guestToken)).rejects.toThrow(
+        `Cannot get gateway URL for order order-123 with status ${OrderStatus.CONFIRMED}`
+      );
+    });
+
+    it('should throw BadRequestException for invalid guest token format (brackets)', async () => {
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, 'token[1]')).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, 'token[1]')).rejects.toThrow(
+        'Invalid guest token format'
+      );
+    });
+
+    it('should throw BadRequestException for invalid guest token format (newline)', async () => {
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, 'token\n')).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, 'token\n')).rejects.toThrow(
+        'Invalid guest token format'
+      );
+    });
+
+    it('should throw ForbiddenException when guestToken is too short (< 16 chars)', async () => {
+      const mockOrder = createMockOrder({
+        notes: '[GuestToken: short]',
+      });
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([mockOrder] as never);
+
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, 'short')).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.getZarinPalGatewayUrl(undefined, authority, 'short')).rejects.toThrow(
+        'Not allowed to access gateway URL for this order'
+      );
+    });
+  });
+
+  describe('requestZarinPalPayment - Guest Token & Ownership Regression', () => {
+    const createMockOrder = (overrides: Partial<{
+      id: string;
+      status: OrderStatus;
+      total: number;
+      customerEmail: string | null;
+      notes: string | null;
+      paymentAuthority: string | null;
+      paymentVerifiedAt: Date | null;
+    }> = {}) => ({
+      id: 'order-123',
+      status: OrderStatus.PENDING,
+      total: 80,
+      customerEmail: 'victim@example.com',
+      notes: null,
+      paymentAuthority: null,
+      paymentVerifiedAt: null,
+      ...overrides,
+    });
+
+    const authority = 'A00000000000000000000000000000000000000';
+    const guestToken = '550e8400-e29b-41d4-a716-446655440000'; // 36 chars
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      orderService.findOne.mockReset();
+      currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+      paymentService.requestPayment.mockResolvedValue({
+        data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
+        errors: [],
+      } as never);
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
+    });
+
+    it('should throw ForbiddenException when order has guestToken in notes but no token provided', async () => {
+      const mockOrder = createMockOrder({
+        notes: `[GuestToken: ${guestToken}]`,
+      });
+      orderService.findOne.mockResolvedValue(mockOrder as never);
+
+      const input = {
+        amount: 4800000,
+        callback_url: 'https://example.com/callback',
+        description: 'Test',
+        currency: 'IRT',
+        order_id: 'order-123',
+      } as never;
+
+      await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(ForbiddenException);
+      await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow('Invalid guest token for payment request');
+    });
+
+    it('should throw ForbiddenException when order has guestToken in notes but wrong token provided', async () => {
+      const mockOrder = createMockOrder({
+        notes: `[GuestToken: ${guestToken}]`,
+      });
+      orderService.findOne.mockResolvedValue(mockOrder as never);
+
+      const input = {
+        amount: 4800000,
+        callback_url: 'https://example.com/callback',
+        description: 'Test',
+        currency: 'IRT',
+        order_id: 'order-123',
+      } as never;
+
+      await expect(resolver.requestZarinPalPayment(input, undefined, 'wrong-token')).rejects.toThrow(ForbiddenException);
+      await expect(resolver.requestZarinPalPayment(input, undefined, 'wrong-token')).rejects.toThrow('Invalid guest token for payment request');
+    });
+
+    it('should succeed when order has guestToken in notes and matching token provided as arg', async () => {
+      const mockOrder = createMockOrder({
+        notes: `[GuestToken: ${guestToken}]`,
+      });
+      orderService.findOne.mockResolvedValue(mockOrder as never);
+
+      const input = {
+        amount: 4800000,
+        callback_url: 'https://example.com/callback',
+        description: 'Test',
+        currency: 'IRT',
+        order_id: 'order-123',
+      } as never;
+
+      const result = await resolver.requestZarinPalPayment(input, undefined, guestToken);
+
+      expect(paymentService.requestPayment).toHaveBeenCalled();
+      expect(orderService.setPaymentIntent).toHaveBeenCalled();
+      expect(result.authority).toBe(authority);
+    });
+
+    it('should succeed when order has guestToken in notes and matching token provided in input.guestToken', async () => {
+      const mockOrder = createMockOrder({
+        notes: `[GuestToken: ${guestToken}]`,
+      });
+      orderService.findOne.mockResolvedValue(mockOrder as never);
+
+      const input = {
+        amount: 4800000,
+        callback_url: 'https://example.com/callback',
+        description: 'Test',
+        currency: 'IRT',
+        order_id: 'order-123',
+        guestToken,
+      } as never;
+
+      const result = await resolver.requestZarinPalPayment(input);
+
+      expect(paymentService.requestPayment).toHaveBeenCalled();
+      expect(orderService.setPaymentIntent).toHaveBeenCalled();
+      expect(result.authority).toBe(authority);
+    });
+
+    it('should throw ForbiddenException when logged-in user email differs from order customerEmail (no guest token on order)', async () => {
+      const mockOrder = createMockOrder({
+        customerEmail: 'victim@example.com',
+        notes: 'Regular note',
+      });
+      orderService.findOne.mockResolvedValue(mockOrder as never);
+
+      const input = {
+        amount: 4800000,
+        callback_url: 'https://example.com/callback',
+        description: 'Test',
+        currency: 'IRT',
+        order_id: 'order-123',
+      } as never;
+
+      await expect(resolver.requestZarinPalPayment(input, { id: 'user-2', email: 'attacker@example.com' })).rejects.toThrow(ForbiddenException);
+      await expect(resolver.requestZarinPalPayment(input, { id: 'user-2', email: 'attacker@example.com' })).rejects.toThrow('Not allowed to pay for this order');
+    });
+
+    it('should succeed when logged-in user email matches order customerEmail (no guest token on order)', async () => {
+      const mockOrder = createMockOrder({
+        customerEmail: 'victim@example.com',
+        notes: 'Regular note',
+      });
+      orderService.findOne.mockResolvedValue(mockOrder as never);
+
+      const input = {
+        amount: 4800000,
+        callback_url: 'https://example.com/callback',
+        description: 'Test',
+        currency: 'IRT',
+        order_id: 'order-123',
+      } as never;
+
+      const result = await resolver.requestZarinPalPayment(input, { id: 'user-1', email: 'victim@example.com' });
+
+      expect(paymentService.requestPayment).toHaveBeenCalled();
+      expect(orderService.setPaymentIntent).toHaveBeenCalled();
+      expect(result.authority).toBe(authority);
+    });
+
+    it('should throw ForbiddenException when unauthenticated caller tries to overwrite order with existing paymentAuthority without ownership proof', async () => {
+      const mockOrder = createMockOrder({
+        customerEmail: 'victim@example.com',
+        notes: 'Regular note',
+        paymentAuthority: 'EXISTING_AUTHORITY',
+      });
+      orderService.findOne.mockResolvedValue(mockOrder as never);
+
+      const input = {
+        amount: 4800000,
+        callback_url: 'https://example.com/callback',
+        description: 'Test',
+        currency: 'IRT',
+        order_id: 'order-123',
+      } as never;
+
+      await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(ForbiddenException);
+      await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow('Not allowed to overwrite payment intent for this order');
+    });
+
+    it('should succeed when unauthenticated caller provides input.email matching order customerEmail to overwrite paymentAuthority', async () => {
+      const mockOrder = createMockOrder({
+        customerEmail: 'victim@example.com',
+        notes: 'Regular note',
+        paymentAuthority: 'EXISTING_AUTHORITY',
+      });
+      orderService.findOne.mockResolvedValue(mockOrder as never);
+
+      const input = {
+        amount: 4800000,
+        callback_url: 'https://example.com/callback',
+        description: 'Test',
+        currency: 'IRT',
+        order_id: 'order-123',
+        email: 'victim@example.com',
+      } as never;
+
+      const result = await resolver.requestZarinPalPayment(input);
+
+      expect(paymentService.requestPayment).toHaveBeenCalled();
+      expect(orderService.setPaymentIntent).toHaveBeenCalled();
+      expect(result.authority).toBe(authority);
+    });
+  });
 });
 
 describe('PaymentResolver - Batch Shipping Recomputation & Amount Guard', () => {
