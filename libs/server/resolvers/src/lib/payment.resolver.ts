@@ -623,14 +623,18 @@ export class PaymentResolver {
       throw error;
     }
 
+    // Validate raw guestToken format before trimming: reject brackets, CR/LF, or any whitespace
+    if (
+      typeof guestToken === 'string' &&
+      guestToken.length > 0 &&
+      /[[\]\r\n\s]/.test(guestToken)
+    ) {
+      throw new BadRequestException('Invalid guest token format');
+    }
+
     // Authorization check
     const userEmail = user?.email?.trim();
     const providedGuestToken = guestToken?.trim();
-
-    // Validate guestToken format: no ']' or newlines to prevent injection
-    if (providedGuestToken && /[\]\r\n]/.test(providedGuestToken)) {
-      throw new BadRequestException('Invalid guest token format');
-    }
 
     const isOwnerByEmail = Boolean(userEmail && userEmail.length > 0 && order.customerEmail?.toLowerCase() === userEmail.toLowerCase());
 

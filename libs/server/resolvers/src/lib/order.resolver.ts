@@ -507,6 +507,15 @@ export class OrderResolver {
       throw new BadRequestException('At least one orderId is required');
     }
 
+    // Validate raw guestToken format before trimming: reject brackets, CR/LF, or any whitespace
+    if (
+      typeof guestToken === 'string' &&
+      guestToken.length > 0 &&
+      /[[\]\r\n\s]/.test(guestToken)
+    ) {
+      throw new BadRequestException('Invalid guest token format');
+    }
+
     const orders = await Promise.all(
       uniqueOrderIds.map((id) => this.orderService.findOne(id))
     );

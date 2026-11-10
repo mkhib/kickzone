@@ -744,6 +744,62 @@ describe('PaymentResolver Unit Tests', () => {
 
         expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
       });
+
+      it('should throw BadRequestException for guestToken with trailing newline (bypass trim guard)', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, 'abcdefghijklmnop\n')
+        ).rejects.toThrow(BadRequestException);
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, 'abcdefghijklmnop\n')
+        ).rejects.toThrow('Invalid guest token format');
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should throw BadRequestException for guestToken with trailing carriage return (bypass trim guard)', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, 'abcdefghijklmnop\r')
+        ).rejects.toThrow(BadRequestException);
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, 'abcdefghijklmnop\r')
+        ).rejects.toThrow('Invalid guest token format');
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should throw BadRequestException for guestToken with leading space (bypass trim guard)', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, ' abcdefghijklmnop')
+        ).rejects.toThrow(BadRequestException);
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, ' abcdefghijklmnop')
+        ).rejects.toThrow('Invalid guest token format');
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should throw BadRequestException for guestToken with bracket (bypass trim guard)', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, 'abcdefghijklmnop[1]')
+        ).rejects.toThrow(BadRequestException);
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, 'abcdefghijklmnop[1]')
+        ).rejects.toThrow('Invalid guest token format');
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
     });
   });
 

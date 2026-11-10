@@ -1584,5 +1584,27 @@ describe('OrderResolver', () => {
       expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith(ordersNoGuest);
       expect(result).toEqual(recalculatedOrders);
     });
+
+    it('should throw BadRequestException for guestToken with trailing newline (bypass trim guard)', async () => {
+      await expect(
+        resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123\n')
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123\n')
+      ).rejects.toThrow('Invalid guest token format');
+
+      expect(mockOrderService.recalculateBatchOrdersShipping).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for guestToken with bracket (bypass trim guard)', async () => {
+      await expect(
+        resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123]')
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123]')
+      ).rejects.toThrow('Invalid guest token format');
+
+      expect(mockOrderService.recalculateBatchOrdersShipping).not.toHaveBeenCalled();
+    });
   });
 });
