@@ -76,6 +76,8 @@ import {
   usePageTitle,
   useSeoMeta,
   CANONICAL_ORIGIN,
+  buildProductJsonLd,
+  useJsonLd,
 } from '@kickzone-workspace/shared-i18n';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
 import '../styles/pdp-glass.css';
@@ -769,6 +771,44 @@ export function CustomerProductDetails() {
   }, [activeVariant, product]);
 
   const isOutOfStock = pricingInfo == null || pricingInfo.stockQuantity === 0;
+
+  // JSON-LD structured data for Product + BreadcrumbList
+  const productJsonLd = useMemo(() => {
+    if (!product || error || loading) return null;
+
+    // Filter out hypebeast placeholder from galleryImages
+    const validImages = galleryImages.filter(
+      (img) => !img.includes('hypebeast.com')
+    );
+
+    const hasStock =
+      product.sellerProducts?.some((sp) => (sp.stockQuantity || 0) > 0) ?? false;
+
+    return buildProductJsonLd({
+      id: product.id,
+      name: product.name,
+      sku: product.sku ?? undefined,
+      description: localizedDescription,
+      brandName: displayBrand,
+      images: validImages.length > 0 ? validImages : undefined,
+      categoryName: primaryCategory?.name,
+      categorySlug: primaryCategory?.slug,
+      price: pricingInfo?.finalPrice ?? 0,
+      priceCurrency: 'USD',
+      inStock: hasStock,
+    });
+  }, [
+    product,
+    error,
+    loading,
+    galleryImages,
+    localizedDescription,
+    displayBrand,
+    primaryCategory,
+    pricingInfo,
+  ]);
+
+  useJsonLd('product-schema', productJsonLd);
 
   // Add to cart handler
   const handleAddToCart = useCallback(() => {

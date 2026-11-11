@@ -8,6 +8,8 @@ import {
   useI18nContext,
   usePageTitle,
   useSeoMeta,
+  buildHomeJsonLd,
+  useJsonLd,
 } from '@kickzone-workspace/shared-i18n';
 
 import {
@@ -39,6 +41,8 @@ export function CustomersHome({
     description: LL.home.hero.subtitle(),
     ogType: 'website',
   });
+  const homeJsonLd = useMemo(() => buildHomeJsonLd(), []);
+  useJsonLd('home-schema', homeJsonLd);
   useScrollProgress();
 
   const { data: apolloData, loading: apolloLoading } = useQuery<HomePageData>(

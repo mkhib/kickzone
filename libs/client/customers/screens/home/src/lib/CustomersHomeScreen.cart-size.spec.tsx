@@ -197,6 +197,8 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
   }),
   usePageTitle: vi.fn(),
   useSeoMeta: vi.fn(),
+  useJsonLd: vi.fn(),
+  buildHomeJsonLd: vi.fn(),
 }));
 
 vi.mock('@kickzone-workspace/products-hook', () => ({
