@@ -5,6 +5,7 @@ import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useLanguageContext, SITE_NAME } from '@kickzone-workspace/shared-i18n';
 import {
   CUSTOMER_ROUTES,
   getCustomerShopRoute,
@@ -55,6 +56,8 @@ export function HeroSection({
   const themeMode = useUIStore((s) => s.theme.mode);
   const isPhone = useMediaQuery('(max-width: 760px)');
   const [hoveredPanel, setHoveredPanel] = useState<'right' | 'center' | 'left' | null>(null);
+  const { currentLocale } = useLanguageContext();
+  const isEn = currentLocale === 'en';
 
   const rightImg = productImage(rightProduct) || rightImage;
   const centerImg = productImage(centerProduct) || centerImage;
@@ -69,6 +72,17 @@ export function HeroSection({
   const leftLink = leftProduct
     ? `/product/${leftProduct.id}`
     : getCustomerShopRoute({ category: 'men' });
+
+  // Localized alt texts for hero images
+  const rightAlt = isEn
+    ? `SAINTBALA Women's Collection`
+    : `مجموعه زنانه ${SITE_NAME}`;
+  const leftAlt = isEn
+    ? `SAINTBALA Men's Collection`
+    : `مجموعه مردانه ${SITE_NAME}`;
+  const centerAlt = isEn
+    ? `SAINTBALA Campaign`
+    : `کمپین ${SITE_NAME}`;
 
   const inkOnPhoto = themeMode === 'dark' ? '#f5f5f7' : '#ffffff';
 
@@ -137,7 +151,7 @@ export function HeroSection({
                 component="img"
                 className="hero-panel-img"
                 src={rightImg}
-                alt=""
+                alt={rightAlt}
                 sx={{
                   width: '100%',
                   height: '100%',
@@ -174,7 +188,7 @@ export function HeroSection({
               className="hero-panel-img"
               src={centerImg}
               fetchPriority="high"
-              alt=""
+              alt={centerAlt}
               sx={{
                 width: '100%',
                 height: '100%',
@@ -210,7 +224,7 @@ export function HeroSection({
                 component="img"
                 className="hero-panel-img"
                 src={leftImg}
-                alt=""
+                alt={leftAlt}
                 sx={{
                   width: '100%',
                   height: '100%',
@@ -261,6 +275,23 @@ export function HeroSection({
             }}
           >
             <bdi dir="ltr">Rise Above</bdi>
+            <span
+              style={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                padding: 0,
+                margin: -1,
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                border: 0,
+              }}
+            >
+              {isEn
+                ? ' — SAINTBALA | Authentic Luxury Streetwear & Sneakers'
+                : ' — SAINTBALA | فروشگاه آنلاین پوشاک، کتانی و استریت‌ویر اورجینال'}
+            </span>
           </Typography>
         </Box>
       </Box>
@@ -291,7 +322,7 @@ export function HeroSection({
               component="img"
               className="hero-panel-img"
               src={rightImg}
-              alt=""
+              alt={rightAlt}
               loading="lazy"
               sx={{
                 width: '100%',
@@ -327,7 +358,7 @@ export function HeroSection({
               component="img"
               className="hero-panel-img"
               src={leftImg}
-              alt=""
+              alt={leftAlt}
               loading="lazy"
               sx={{
                 width: '100%',

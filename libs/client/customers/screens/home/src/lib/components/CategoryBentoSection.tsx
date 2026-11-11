@@ -7,6 +7,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useI18nContext,
   useLanguageContext,
+  SITE_NAME,
 } from '@kickzone-workspace/shared-i18n';
 import {
   getCustomerBrandRoute,
@@ -96,7 +97,7 @@ function BentoTile({
         component="img"
         className="bento-tile-img"
         src={image}
-        alt=""
+        alt={`${title} — ${SITE_NAME}`}
         loading="lazy"
         sx={{
           position: 'absolute',

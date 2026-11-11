@@ -385,7 +385,7 @@ export function ShopTheLookSection({
                     <Box
                       component="img"
                       src={imgSrc}
-                      alt=""
+                      alt={lp.item?.name || lp.typeLabel}
                       loading="lazy"
                       sx={{
                         width: '100%',
