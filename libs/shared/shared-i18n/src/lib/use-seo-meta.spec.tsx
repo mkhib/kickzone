@@ -302,4 +302,16 @@ describe('useSeoMeta', () => {
   it('CANONICAL_ORIGIN is exported and correct', () => {
     expect(CANONICAL_ORIGIN).toBe('https://saintbala.com');
   });
+
+  it('does not upsert robots when skipRobots is true', () => {
+    const { rerender } = render(<TestComponent options={{ noindex: true }} />);
+    expect(document.head.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe(
+      'noindex, nofollow'
+    );
+
+    rerender(<TestComponent options={{ noindex: false, skipRobots: true }} />);
+    expect(document.head.querySelector('meta[name="robots"]')?.getAttribute('content')).toBe(
+      'noindex, nofollow'
+    );
+  });
 });

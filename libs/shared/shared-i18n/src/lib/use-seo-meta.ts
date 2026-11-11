@@ -7,6 +7,8 @@ export interface SeoMetaOptions {
   ogType?: 'website' | 'product';
   ogImage?: string;
   noindex?: boolean;
+  /** When true, do not upsert the robots meta tag (leave a leaf screen's value in place). */
+  skipRobots?: boolean;
 }
 
 export const CANONICAL_ORIGIN = 'https://saintbala.com' as const;
@@ -67,6 +69,7 @@ export function useSeoMeta(options: SeoMetaOptions): void {
     ogType = 'website',
     ogImage,
     noindex = false,
+    skipRobots = false,
   } = options;
 
   useEffect(() => {
@@ -103,8 +106,10 @@ export function useSeoMeta(options: SeoMetaOptions): void {
     }
     upsertMetaTag('twitter:image', finalOgImage);
 
-    // Robots meta tag
-    upsertMetaTag('robots', noindex ? 'noindex, nofollow' : 'index, follow');
+    // Robots meta tag — skip so a parent manager cannot overwrite a leaf noindex
+    if (!skipRobots) {
+      upsertMetaTag('robots', noindex ? 'noindex, nofollow' : 'index, follow');
+    }
 
-  }, [title, description, canonicalPath, ogType, ogImage, noindex]);
+  }, [title, description, canonicalPath, ogType, ogImage, noindex, skipRobots]);
 }

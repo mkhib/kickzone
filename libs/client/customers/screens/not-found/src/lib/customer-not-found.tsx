@@ -9,6 +9,7 @@ import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
 import {
   useLanguageContext,
   usePageTitle,
+  useSeoMeta,
 } from '@kickzone-workspace/shared-i18n';
 
 export function CustomerNotFound() {
@@ -16,6 +17,9 @@ export function CustomerNotFound() {
   const isEn = currentLocale === 'en';
 
   usePageTitle(() => (isEn ? 'Page Not Found' : 'صفحه یافت نشد'));
+
+  // Belt-and-suspenders: ensure 404 pages are noindexed even if router logic changes
+  useSeoMeta({ noindex: true });
 
   const content = {
     badge: isEn ? 'ERROR 404' : 'خطای ۴۰۴',

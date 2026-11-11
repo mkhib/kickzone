@@ -2,6 +2,54 @@ import { render, screen } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import '@testing-library/jest-dom';
 import CustomersRouter from './CustomersRouter';
+import * as sharedI18n from '@kickzone-workspace/shared-i18n';
+
+// Mock shared-i18n to provide useSeoMeta and other hooks
+vi.mock('@kickzone-workspace/shared-i18n', () => ({
+  SITE_NAME: 'SAINTBALA',
+  useLanguageContext: () => ({ currentLocale: 'en', formatNumber: vi.fn() }),
+  usePageTitle: vi.fn(),
+  useSeoMeta: vi.fn(),
+  useI18nContext: () => ({
+    LL: {
+      appNames: { siteName: () => 'SAINTBALA' },
+      home: {
+        nav: { mainAria: () => 'Navigation', women: () => 'Women', men: () => 'Men' },
+        footer: {
+          tagline: () => 'Authentic luxury sportswear',
+          store: () => 'Shop',
+          women: () => 'Women',
+          men: () => 'Men',
+          hoodies: () => 'Hoodies',
+          pants: () => 'Pants',
+          brands: () => 'Brands',
+          guide: () => 'Help',
+          authenticity: () => 'Authenticity',
+          sizeGuide: () => 'Size Guide',
+          payment: () => 'Payment',
+          account: () => 'Account',
+          loginWithEmail: () => 'Login',
+          cart: () => 'Cart',
+          favorites: () => 'Favorites',
+          copyright: () => '© SAINTBALA',
+          paymentOnline: () => 'Online payment',
+        },
+        searchPlaceholder: () => 'Search...',
+      },
+      navigation: {
+        home: () => 'Home',
+        shoppingCart: () => 'Cart',
+        profile: () => 'Profile',
+        menu: () => 'Menu',
+      },
+      orders: { myOrders: () => 'My Orders' },
+      button: { login: () => 'Login', logout: () => 'Logout' },
+      products: { searchPlaceholder: () => 'Search...' },
+    },
+  }),
+}));
+
+const useSeoMetaMock = vi.mocked(sharedI18n.useSeoMeta);
 
 // Mock all dependent screens and heavy libraries
 vi.mock('@kickzone-workspace/customers-home-screen', () => ({
@@ -182,5 +230,237 @@ describe('CustomersRouter Integration', () => {
     render(<CustomersRouter />);
 
     expect(screen.getByTestId('mock-customer-not-found')).toBeInTheDocument();
+  });
+});
+
+describe('Legacy /product/:id redirect', () => {
+  beforeEach(() => {
+    window.scrollTo = vi.fn();
+    vi.clearAllMocks();
+  });
+
+  it('redirects /product/42 to /products/42 with replace', () => {
+    window.history.pushState({}, 'Product', '/product/42');
+    render(<CustomersRouter />);
+
+    // Should redirect to /products/42 (CustomerProductDetails renders)
+    expect(screen.getByTestId('mock-product-details')).toBeInTheDocument();
+  });
+
+  it('preserves query string and hash during redirect', () => {
+    window.history.pushState({}, 'Product', '/product/42?color=red#details');
+    render(<CustomersRouter />);
+
+    // Should redirect preserving search and hash
+    expect(screen.getByTestId('mock-product-details')).toBeInTheDocument();
+  });
+});
+
+describe('RobotsMetaManager - route-aware noindex', () => {
+  beforeEach(() => {
+    window.scrollTo = vi.fn();
+    vi.clearAllMocks();
+    useSeoMetaMock.mockClear();
+  });
+
+  it('sets noindex, nofollow on private routes (/cart)', () => {
+    window.history.pushState({}, 'Cart', '/cart');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/login)', () => {
+    window.history.pushState({}, 'Login', '/login');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/signup)', () => {
+    window.history.pushState({}, 'Signup', '/signup');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/forgot-password)', () => {
+    window.history.pushState({}, 'ForgotPassword', '/forgot-password');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/reset-password/token)', () => {
+    window.history.pushState({}, 'ResetPassword', '/reset-password/abc123');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/orders)', () => {
+    window.history.pushState({}, 'Orders', '/orders');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/profile)', () => {
+    window.history.pushState({}, 'Profile', '/profile');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/favorites)', () => {
+    window.history.pushState({}, 'Favorites', '/favorites');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/unauthorized)', () => {
+    window.history.pushState({}, 'Unauthorized', '/unauthorized');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/language-settings)', () => {
+    window.history.pushState({}, 'LanguageSettings', '/language-settings');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/order-confirmation)', () => {
+    window.history.pushState({}, 'OrderConfirmation', '/order-confirmation');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on private routes (/payment-callback)', () => {
+    window.history.pushState({}, 'PaymentCallback', '/payment-callback');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets noindex, nofollow on unknown / 404 routes', () => {
+    window.history.pushState({}, 'Unknown', '/any/completely/unknown/page-404');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: true })
+    );
+  });
+
+  it('sets index, follow on public route (/)', () => {
+    window.history.pushState({}, 'Home', '/');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: false })
+    );
+  });
+
+  it('sets index, follow on public route (/shop)', () => {
+    window.history.pushState({}, 'Shop', '/shop');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: false })
+    );
+  });
+
+  it('sets index, follow on public route (/brands/nike)', () => {
+    window.history.pushState({}, 'Brand', '/brands/nike');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: false })
+    );
+  });
+
+  it('sets index, follow on public route (/contact)', () => {
+    window.history.pushState({}, 'Contact', '/contact');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: false })
+    );
+  });
+
+  it('sets index, follow on public route (/guide/authenticity)', () => {
+    window.history.pushState({}, 'GuideAuthenticity', '/guide/authenticity');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: false })
+    );
+  });
+
+  it('sets index, follow on public route (/guide/payment)', () => {
+    window.history.pushState({}, 'GuidePayment', '/guide/payment');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: false })
+    );
+  });
+
+  it('sets index, follow on public route (/shipping-returns)', () => {
+    window.history.pushState({}, 'ShippingReturns', '/shipping-returns');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: false })
+    );
+  });
+
+  it('sets index, follow on public route (/privacy-policy)', () => {
+    window.history.pushState({}, 'PrivacyPolicy', '/privacy-policy');
+    render(<CustomersRouter />);
+
+    expect(useSeoMetaMock).toHaveBeenCalledWith(
+      expect.objectContaining({ noindex: false })
+    );
+  });
+
+  it('does NOT call useSeoMeta on /products/:id (leaves to CustomerProductDetails)', () => {
+    window.history.pushState({}, 'ProductDetails', '/products/42');
+    render(<CustomersRouter />);
+
+    // Should not call useSeoMeta with noindex for product details route
+    // (CustomerProductDetails handles its own robots logic)
+    const noindexCalls = useSeoMetaMock.mock.calls.filter(
+      (call) => call[0]?.noindex === true
+    );
+    expect(noindexCalls.length).toBe(0);
   });
 });

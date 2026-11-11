@@ -19303,6 +19303,11 @@
       "customers-router": [
         {
           "source": "customers-router",
+          "target": "shared-i18n",
+          "type": "static"
+        },
+        {
+          "source": "customers-router",
           "target": "customers-home-screen",
           "type": "static"
         },

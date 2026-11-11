@@ -11,6 +11,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
   SITE_NAME: 'SAINTBALA',
   useLanguageContext: () => ({ currentLocale: mockLocale }),
   usePageTitle: vi.fn(),
+  useSeoMeta: vi.fn(),
   useI18nContext: () => ({
     LL: {
       appNames: { siteName: () => 'SAINTBALA' },

@@ -26,12 +26,16 @@ import { CustomerPrivacyPolicy } from '@kickzone-workspace/customer-privacy-poli
 import { CustomerNotFound } from '@kickzone-workspace/customer-not-found';
 import { ErrorBoundary } from '@kickzone-workspace/error-boundary';
 import { ScrollToTop } from './ScrollToTop';
+import { ProductLegacyRedirect } from './ProductLegacyRedirect';
+import { RobotsMetaManager } from './RobotsMetaManager';
 
 export function CustomersRouter() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
         <ScrollToTop />
+        {/* Route-aware robots meta manager - must be inside BrowserRouter for useLocation */}
+        <RobotsMetaManager />
         <Routes>
           <Route path={CUSTOMER_ROUTES.HOME} element={<CustomersHome />} />
           <Route
@@ -44,7 +48,8 @@ export function CustomersRouter() {
             path={CUSTOMER_ROUTES.PRODUCT_DETAILS}
             element={<CustomerProductDetails />}
           />
-          <Route path="/product/:id" element={<CustomerProductDetails />} />
+          {/* Legacy /product/:id redirect to /products/:id (preserves search/hash) */}
+          <Route path="/product/:id" element={<ProductLegacyRedirect />} />
           <Route path={CUSTOMER_ROUTES.LOGIN} element={<CustomersLogin />} />
           <Route path={CUSTOMER_ROUTES.SIGNUP} element={<CustomerSignup />} />
           <Route
