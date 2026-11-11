@@ -30,6 +30,7 @@ import {
   useI18nContext,
   useLanguageContext,
   usePageTitle,
+  useSeoMeta,
 } from '@kickzone-workspace/shared-i18n';
 import {
   CUSTOMER_ROUTES,
@@ -389,6 +390,44 @@ export function CustomersShopScreen() {
   }, [debouncedSearch, selectedCategories, selectedBrands, categoryLabel, brandLabel, isEn, LL]);
 
   usePageTitle(() => pageTitle);
+
+  // SEO Meta - canonicalPath: /brands/:brandSlug on brand routes, /shop?category=... for single category, else /shop
+  const canonicalPath = useMemo(() => {
+    if (selectedBrands.length === 1) {
+      return `/brands/${selectedBrands[0]}`;
+    }
+    if (selectedCategories.length === 1) {
+      return `/shop?category=${encodeURIComponent(selectedCategories[0])}`;
+    }
+    return '/shop';
+  }, [selectedBrands, selectedCategories]);
+
+  const seoDescription = useMemo(() => {
+    if (debouncedSearch) {
+      return isEn
+        ? `Search results for "${debouncedSearch}" — SAINTBALA Shop`
+        : `نتایج جستجو برای «${debouncedSearch}» — فروشگاه SAINTBALA`;
+    }
+    if (selectedCategories.length === 1) {
+      return isEn
+        ? `Shop ${categoryLabel} collection — Authentic Luxury Streetwear`
+        : `مجموعه ${categoryLabel} — استریت‌ویر لوکس اورجینال`;
+    }
+    if (selectedBrands.length === 1) {
+      return isEn
+        ? `${brandLabel} collection — Authentic Nike, Jordan & Luxury Streetwear`
+        : `مجموعه ${brandLabel} — نایک، جردن و استریت‌ویر لوکس اورجینال`;
+    }
+    return isEn
+      ? 'SAINTBALA — Authentic Luxury Streetwear & Sneakers Shop'
+      : 'SAINTBALA — فروشگاه استریت‌ویر لوکس اورجینال و کفش';
+  }, [debouncedSearch, selectedCategories, selectedBrands, categoryLabel, brandLabel, isEn]);
+
+  useSeoMeta({
+    canonicalPath,
+    description: seoDescription,
+    ogType: 'website',
+  });
 
   const hasActiveFilters = Boolean(
     selectedCategories.length > 0 ||

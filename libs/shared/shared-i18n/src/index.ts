@@ -15,3 +15,4 @@ export * from './lib/theme-provider';
 export * from './lib/table-localization';
 export * from './lib/site-name';
 export * from './lib/use-page-title';
+export * from './lib/use-seo-meta';

@@ -7,6 +7,7 @@ import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
 import {
   useI18nContext,
   usePageTitle,
+  useSeoMeta,
 } from '@kickzone-workspace/shared-i18n';
 
 import {
@@ -33,6 +34,11 @@ export function CustomersHome({
 }: CustomersHomeProps) {
   const { LL } = useI18nContext();
   usePageTitle(() => LL.navigation.home());
+  useSeoMeta({
+    canonicalPath: '/',
+    description: LL.home.hero.subtitle(),
+    ogType: 'website',
+  });
   useScrollProgress();
 
   const { data: apolloData, loading: apolloLoading } = useQuery<HomePageData>(

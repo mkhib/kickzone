@@ -98,6 +98,8 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
   }),
   useLanguageContext: () => mockLanguage,
   usePageTitle: vi.fn(),
+  useSeoMeta: vi.fn(),
+  CANONICAL_ORIGIN: 'https://saintbala.com',
   saintbalaBrand: {
     dark: { background: '#0f0f0e' },
     light: { background: '#f2f1ef' },

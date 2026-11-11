@@ -184,6 +184,7 @@ vi.mock('@kickzone-workspace/shared-i18n', () => ({
     isRTL: true,
   }),
   usePageTitle: vi.fn(),
+  useSeoMeta: vi.fn(),
 }));
 
 vi.mock('@kickzone-workspace/products-hook', () => ({

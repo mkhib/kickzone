@@ -74,6 +74,8 @@ import {
   useI18nContext,
   useLanguageContext,
   usePageTitle,
+  useSeoMeta,
+  CANONICAL_ORIGIN,
 } from '@kickzone-workspace/shared-i18n';
 import { useUIStore } from '@kickzone-workspace/shared-ui-store';
 import '../styles/pdp-glass.css';
@@ -697,6 +699,44 @@ export function CustomerProductDetails() {
         } — الهام‌گرفته از میراث شیکاگو جردن. برش راحت و آزاد با کمر کشی و بند تنظیم‌شونده در مچ، مناسب استایل روزمره و استریت.\n\nپارچه ریپ‌استاپ سبک و مقاوم در برابر پارگی، با جیب‌های کارگو کاربردی روی ران. این مدل اورجینال نایکی/جردن است و از تأمین‌کننده معتبر سنت‌بالا عرضه می‌شود.`
       : `${product.name} delivers athletic style, relaxed comfort, and durable ripstop fabric. Engineered with adjustable waistband and cargo pockets for effortless everyday streetstyle.`;
   }, [product, currentLocale, isRTL, activeColorway]);
+
+  // SEO Meta for Product Details
+  const seoCanonicalPath = useMemo(() => {
+    if (product) return `/products/${product.id}`;
+    if (productId) return `/products/${productId}`;
+    return '/shop';
+  }, [product, productId]);
+
+  const seoDescription = useMemo(() => {
+    if (!product) return '';
+    // Truncate localizedDescription to ~155 chars for meta description
+    const desc = localizedDescription || product.name;
+    if (desc.length <= 155) return desc;
+    return desc.slice(0, 152).trim() + '...';
+  }, [localizedDescription, product]);
+
+  const seoOgImage = useMemo(() => {
+    if (!product) return undefined;
+    const firstImage = galleryImages[0];
+    if (!firstImage) return undefined;
+    // Make absolute if root-relative
+    if (firstImage.startsWith('/')) {
+      return `${CANONICAL_ORIGIN}${firstImage}`;
+    }
+    return firstImage;
+  }, [galleryImages, product]);
+
+  const seoNoIndex = useMemo(() => {
+    return !loading && (!!error || !product);
+  }, [loading, error, product]);
+
+  useSeoMeta({
+    canonicalPath: seoCanonicalPath,
+    description: seoDescription,
+    ogType: 'product',
+    ogImage: seoOgImage,
+    noindex: seoNoIndex,
+  });
 
   // Stock and Pricing calculations
   const pricingInfo = useMemo(() => {
