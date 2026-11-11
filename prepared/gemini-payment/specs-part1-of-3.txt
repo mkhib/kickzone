@@ -1,0 +1,2514 @@
+
+===== FILE: libs/shared/validation/src/lib/order.spec.ts =====
+import {
+  ORDER_STATUSES,
+  createOrderSchema,
+  shippingAddressSchema,
+  updateOrderSchema,
+  updateOrderStatusSchema,
+} from './order';
+
+const shipping = {
+  customerName: 'Ali Rezaei',
+  customerEmail: '',
+  customerPhone: '+98 912 123 4567',
+  shippingAddress: 'Valiasr St, No 12',
+  city: 'Tehran',
+  state: 'Tehran',
+  zipCode: '1234567890',
+  country: 'Iran',
+};
+
+const item = {
+  productId: '101',
+  sellerProductId: '301',
+  productName: 'Air Jordan 1',
+  productImage: null,
+  quantity: 2,
+  unitPrice: 100,
+  totalPrice: 200,
+  color: 'Black',
+  size: '42',
+};
+
+const order = { ...shipping, sellerId: 1, items: [item], notes: '', shippingCost: 0 };
+
+describe('shippingAddressSchema', () => {
+  it('accepts a valid address with an empty optional email', () => {
+    expect(shippingAddressSchema.safeParse(shipping).success).toBe(true);
+  });
+
+  it('accepts Farsi letters in name, city and state', () => {
+    const fa = { ...shipping, customerName: 'علی رضایی', city: 'تهران', state: 'تهران' };
+    expect(shippingAddressSchema.safeParse(fa).success).toBe(true);
+  });
+
+  it('accepts a valid email and keeps its case', () => {
+    const r = shippingAddressSchema.parse({ ...shipping, customerEmail: ' Ali@Example.com ' });
+    expect(r.customerEmail).toBe('Ali@Example.com');
+  });
+
+  it.each([
+    ['customerName', 'A'],
+    ['customerName', 'Ali123'],
+    ['customerEmail', 'not-an-email'],
+    ['customerPhone', '12'],
+    ['customerPhone', 'abc-defg-hij'],
+    ['shippingAddress', 'ab'],
+    ['city', 'T1'],
+    ['state', ''],
+    ['zipCode', '12'],
+    ['zipCode', '12#45'],
+    ['country', 'I'],
+  ])('rejects invalid %s=%j', (field, value) => {
+    expect(shippingAddressSchema.safeParse({ ...shipping, [field]: value }).success).toBe(false);
+  });
+
+  it('trims surrounding whitespace', () => {
+    const r = shippingAddressSchema.parse({ ...shipping, city: '  Tehran  ' });
+    expect(r.city).toBe('Tehran');
+  });
+});
+
+describe('createOrderSchema', () => {
+  it('accepts a valid order, including a guest-token note', () => {
+    const r = createOrderSchema.safeParse({ ...order, notes: '[GuestToken: abc]' });
+    expect(r.success).toBe(true);
+  });
+
+  it('rejects an order without items', () => {
+    expect(createOrderSchema.safeParse({ ...order, items: [] }).success).toBe(false);
+  });
+
+  it('rejects sellerId 0, negative shipping cost and negative prices', () => {
+    expect(createOrderSchema.safeParse({ ...order, sellerId: 0 }).success).toBe(false);
+    expect(createOrderSchema.safeParse({ ...order, shippingCost: -1 }).success).toBe(false);
+    expect(
+      createOrderSchema.safeParse({ ...order, items: [{ ...item, unitPrice: -5 }] }).success
+    ).toBe(false);
+  });
+
+  it('rejects item quantity 0 and above the cart cap', () => {
+    expect(createOrderSchema.safeParse({ ...order, items: [{ ...item, quantity: 0 }] }).success).toBe(false);
+    expect(createOrderSchema.safeParse({ ...order, items: [{ ...item, quantity: 1000 }] }).success).toBe(false);
+  });
+
+  it('allows a missing shipping cost and notes', () => {
+    const { notes: _n, shippingCost: _s, ...rest } = order;
+    expect(createOrderSchema.safeParse(rest).success).toBe(true);
+  });
+});
+
+describe('updateOrderSchema', () => {
+  it('accepts an empty patch and all-null fields', () => {
+    expect(updateOrderSchema.safeParse({}).success).toBe(true);
+    expect(
+      updateOrderSchema.safeParse({ city: null, notes: null, trackingNumber: null, items: null }).success
+    ).toBe(true);
+  });
+
+  it('keeps items so the resolver can still reject item rewrites', () => {
+    const r = updateOrderSchema.parse({ items: [item] });
+    expect(r.items).toHaveLength(1);
+  });
+
+  it('rejects an invalid field in the patch', () => {
+    expect(updateOrderSchema.safeParse({ zipCode: '1' }).success).toBe(false);
+    expect(updateOrderSchema.safeParse({ trackingNumber: '' }).success).toBe(false);
+  });
+});
+
+describe('updateOrderStatusSchema', () => {
+  it('accepts every known status', () => {
+    for (const status of ORDER_STATUSES) {
+      expect(updateOrderStatusSchema.safeParse({ id: 'o-1', status }).success).toBe(true);
+    }
+  });
+
+  it('rejects unknown status and empty id', () => {
+    expect(updateOrderStatusSchema.safeParse({ id: 'o-1', status: 'LOST' }).success).toBe(false);
+    expect(updateOrderStatusSchema.safeParse({ id: ' ', status: 'PENDING' }).success).toBe(false);
+  });
+});
+
+===== FILE: libs/server/resolvers/src/lib/order.resolver.spec.ts =====
+import { OrderResolver } from './order.resolver';
+import {
+  Order,
+  OrderItem,
+  OrderStatus,
+  User,
+  UserRole,
+  toSellerOrder,
+  SellerOrder,
+  SellerInfo,
+} from '@kickzone-workspace/entities';
+import { OrdersConnection, OrderEdge, SellerOrdersConnection } from '@kickzone-workspace/inputs';
+import { ForbiddenException, BadRequestException, NotFoundException } from '@nestjs/common';
+
+import type { AuthenticatedUser } from '@kickzone-workspace/decorators';
+
+describe('OrderResolver', () => {
+  let resolver: OrderResolver;
+  let mockOrderService: {
+    findAll: jest.Mock;
+    findOne: jest.Mock;
+    updateOrder: jest.Mock;
+    updateOrderStatus: jest.Mock;
+    deleteOrder: jest.Mock;
+    cancelPendingOrder: jest.Mock;
+    getOrdersBySeller: jest.Mock;
+    getOrdersByCustomerEmail: jest.Mock;
+    recalculateBatchOrdersShipping: jest.Mock;
+  };
+  let mockSellerService: {
+    findOneByUserId: jest.Mock;
+  };
+
+  // Test data factories
+  const createMockSellerInfo = (overrides: Partial<SellerInfo> = {}): SellerInfo => ({
+    id: 1,
+    storeName: 'Test Store',
+    phone: '09123456789',
+    address: 'Seller Address',
+    city: 'Tehran',
+    state: 'Tehran',
+    zipCode: '12345',
+    country: 'Iran',
+    businessName: 'Test Business',
+    isActive: true,
+    canManageCatalog: true,
+    shippingFee: 10,
+    user: {} as never,
+    sellerProducts: [],
+    ...overrides,
+  });
+
+  const createMockOrder = (overrides: Partial<Order> = {}): Order => ({
+    id: 'order-1',
+    orderNumber: 'ORD-123',
+    customerEmail: 'customer@example.com',
+    customerPhone: '1234567890',
+    customerName: 'John Doe',
+    shippingAddress: '123 Main St',
+    city: 'Tehran',
+    state: 'Tehran',
+    zipCode: '12345',
+    country: 'Iran',
+    status: OrderStatus.PENDING,
+    subtotal: 100,
+    shippingCost: 10,
+    total: 110,
+    sellerId: 1,
+    sellerStoreName: 'Test Store',
+    sellerPhone: '09123456789',
+    sellerAddress: 'Seller Address',
+    notes: 'Test order',
+    trackingNumber: 'TRACK-123',
+    stockReserved: false,
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    items: [
+      {
+        id: 'item-1',
+        orderId: 'order-1',
+        productId: 'prod-1',
+        productName: 'Product 1',
+        quantity: 2,
+        unitPrice: 50,
+        totalPrice: 100,
+        sellerProductId: 'seller-prod-1',
+      } as OrderItem,
+    ],
+    seller: createMockSellerInfo(),
+    ...overrides,
+  });
+
+  const createMockUser = (overrides: Partial<User> = {}): User => ({
+    id: 'user-1',
+    name: 'John',
+    lastName: 'Doe',
+    username: 'johndoe',
+    email: 'john@example.com',
+    password: 'hashed',
+    role: UserRole.CUSTOMER,
+    locale: 'en',
+    ...overrides,
+  });
+
+  const createMockSellerUser = (overrides: Partial<User> = {}): User =>
+    createMockUser({
+      id: 'seller-user-1',
+      email: 'seller@example.com',
+      username: 'seller',
+      role: UserRole.SELLER,
+      ...overrides,
+    });
+
+  const createMockAdminUser = (overrides: Partial<User> = {}): User =>
+    createMockUser({
+      id: 'admin-user-1',
+      email: 'admin@example.com',
+      username: 'admin',
+      role: UserRole.ADMIN,
+      ...overrides,
+    });
+
+  const createMockSellerOrder = (overrides: Partial<SellerOrder> = {}): SellerOrder => ({
+    id: 'order-1',
+    orderNumber: 'ORD-123',
+    status: OrderStatus.PENDING,
+    subtotal: 100,
+    shippingCost: 10,
+    total: 110,
+    notes: 'Test order',
+    trackingNumber: 'TRACK-123',
+    createdAt: new Date('2024-01-01'),
+    updatedAt: new Date('2024-01-01'),
+    sellerId: 1,
+    sellerStoreName: 'Test Store',
+    sellerPhone: '09123456789',
+    sellerAddress: 'Seller Address',
+    items: [
+      {
+        id: 'item-1',
+        orderId: 'order-1',
+        productId: 'prod-1',
+        productName: 'Product 1',
+        quantity: 2,
+        unitPrice: 50,
+        totalPrice: 100,
+        sellerProductId: 'seller-prod-1',
+      } as OrderItem,
+    ],
+    ...overrides,
+  });
+
+  beforeEach(() => {
+    mockOrderService = {
+      findAll: jest.fn(),
+      findOne: jest.fn(),
+      updateOrder: jest.fn(),
+      updateOrderStatus: jest.fn(),
+      deleteOrder: jest.fn(),
+      cancelPendingOrder: jest.fn(),
+      getOrdersBySeller: jest.fn(),
+      getOrdersByCustomerEmail: jest.fn(),
+      recalculateBatchOrdersShipping: jest.fn(),
+    };
+    mockSellerService = {
+      findOneByUserId: jest.fn(),
+    };
+
+    resolver = new OrderResolver(
+      mockOrderService as never,
+      mockSellerService as never
+    );
+  });
+
+  // Helper to create mock connection
+  const createMockConnection = (orders: Order[] = []): OrdersConnection => ({
+    edges: orders.map((order, index) => ({
+      node: order,
+      cursor: `cursor-${index}`,
+    })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+      endCursor: orders.length > 0 ? `cursor-${orders.length - 1}` : undefined,
+    },
+    totalCount: orders.length,
+  });
+
+  const createMockSellerConnection = (orders: Order[] = []): SellerOrdersConnection => ({
+    edges: orders.map((order, index) => ({
+      node: toSellerOrder(order),
+      cursor: `cursor-${index}`,
+    })),
+    pageInfo: {
+      hasNextPage: false,
+      hasPreviousPage: false,
+      endCursor: orders.length > 0 ? `cursor-${orders.length - 1}` : undefined,
+    },
+    totalCount: orders.length,
+  });
+
+  describe('orders query', () => {
+    const mockConnection = createMockConnection([createMockOrder()]);
+
+    beforeEach(() => {
+      mockOrderService.findAll.mockResolvedValue(mockConnection);
+    });
+
+    it('rejects CUSTOMER with ForbiddenException', async () => {
+      const user = createMockUser({ role: UserRole.CUSTOMER });
+      await expect(resolver.orders(user, 10, undefined, undefined, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      expect(mockOrderService.findAll).not.toHaveBeenCalled();
+    });
+
+    it('rejects SELLER with ForbiddenException', async () => {
+      const user = createMockSellerUser();
+      await expect(resolver.orders(user, 10, undefined, undefined, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      expect(mockOrderService.findAll).not.toHaveBeenCalled();
+    });
+
+    it('allows ADMIN and calls findAll', async () => {
+      const user = createMockAdminUser();
+      const result = await resolver.orders(user, 10, 'cursor-1', 'seller-1', OrderStatus.CONFIRMED);
+
+      expect(mockOrderService.findAll).toHaveBeenCalledWith(10, 'cursor-1', 'seller-1', OrderStatus.CONFIRMED);
+      expect(result).toEqual(mockConnection);
+    });
+  });
+
+  describe('adminSellerOrders query', () => {
+    const mockConnection = createMockConnection([createMockOrder()]);
+
+    beforeEach(() => {
+      mockOrderService.findAll.mockResolvedValue(mockConnection);
+    });
+
+    it('rejects CUSTOMER with ForbiddenException', async () => {
+      const user = createMockUser({ role: UserRole.CUSTOMER });
+      await expect(
+        resolver.adminSellerOrders(user, 'seller-1', 10, undefined, undefined)
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects SELLER with ForbiddenException', async () => {
+      const user = createMockSellerUser();
+      await expect(
+        resolver.adminSellerOrders(user, 'seller-1', 10, undefined, undefined)
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows ADMIN and calls findAll with sellerId', async () => {
+      const user = createMockAdminUser();
+      const result = await resolver.adminSellerOrders(user, 'seller-1', 10, 'cursor-1', OrderStatus.SHIPPED);
+
+      expect(mockOrderService.findAll).toHaveBeenCalledWith(10, 'cursor-1', 'seller-1', OrderStatus.SHIPPED);
+      expect(result).toEqual(mockConnection);
+    });
+  });
+
+  describe('allSellerOrders query', () => {
+    const mockConnection = createMockConnection([createMockOrder()]);
+
+    beforeEach(() => {
+      mockOrderService.findAll.mockResolvedValue(mockConnection);
+    });
+
+    it('rejects CUSTOMER with ForbiddenException', async () => {
+      const user = createMockUser({ role: UserRole.CUSTOMER });
+      await expect(resolver.allSellerOrders(user, 10, undefined, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+    });
+
+    it('rejects SELLER with ForbiddenException', async () => {
+      const user = createMockSellerUser();
+      await expect(resolver.allSellerOrders(user, 10, undefined, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+    });
+
+    it('allows ADMIN and calls findAll without sellerId', async () => {
+      const user = createMockAdminUser();
+      const result = await resolver.allSellerOrders(user, 10, 'cursor-1', OrderStatus.DELIVERED);
+
+      expect(mockOrderService.findAll).toHaveBeenCalledWith(10, 'cursor-1', undefined, OrderStatus.DELIVERED);
+      expect(result).toEqual(mockConnection);
+    });
+  });
+
+  describe('myOrders query', () => {
+    const mockOrder = createMockOrder({ customerEmail: 'customer@example.com' });
+    const mockConnection = createMockConnection([mockOrder]);
+
+    beforeEach(() => {
+      mockOrderService.getOrdersByCustomerEmail.mockResolvedValue(mockConnection);
+    });
+
+    describe('JWT Shape & Role Matrix', () => {
+      it('succeeds for CUSTOMER with { sub, userType: "customer", email } (lowercase userType, sub instead of id)', async () => {
+        const user = { sub: 'u-1', userType: 'customer', email: 'customer@example.com' } as never;
+        const result = await resolver.myOrders(user, 10, undefined);
+
+        expect(mockOrderService.getOrdersByCustomerEmail).toHaveBeenCalledWith('customer@example.com', 10, undefined);
+        expect(result).toHaveLength(1);
+        expect(result[0]).toEqual(mockOrder);
+      });
+
+      it('throws NotFoundException for SELLER with { sub, userType: "seller" }', async () => {
+        const user = { sub: 's-1', userType: 'seller' } as never;
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow('Sellers should use mySellerOrders query instead');
+        expect(mockOrderService.getOrdersByCustomerEmail).not.toHaveBeenCalled();
+      });
+
+      it('throws NotFoundException for ADMIN with { id, role: "ADMIN" }', async () => {
+        const user = { id: 'a-1', role: 'ADMIN' } as never;
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow('Sellers should use mySellerOrders query instead');
+        expect(mockOrderService.getOrdersByCustomerEmail).not.toHaveBeenCalled();
+      });
+
+      it('throws NotFoundException for UNKNOWN role', async () => {
+        const user = { sub: 'u-1', userType: 'INVALID' } as never;
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.myOrders(user, 10, undefined)).rejects.toThrow('Sellers should use mySellerOrders query instead');
+      });
+
+      it('throws NotFoundException for null user', async () => {
+        await expect(resolver.myOrders(null as never, 10, undefined)).rejects.toThrow(NotFoundException);
+      });
+
+      it('throws NotFoundException for empty object user', async () => {
+        await expect(resolver.myOrders({} as never, 10, undefined)).rejects.toThrow(NotFoundException);
+      });
+    });
+  });
+
+  describe('mySellerOrders query', () => {
+    const mockOrder = createMockOrder({ id: 'order-1', status: OrderStatus.PENDING });
+    const mockOrderDelivered = createMockOrder({ id: 'order-2', status: OrderStatus.DELIVERED });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
+    const mockSellerConnection = createMockSellerConnection([mockOrder, mockOrderDelivered]);
+
+    beforeEach(() => {
+      mockOrderService.getOrdersBySeller.mockResolvedValue(mockSellerConnection);
+      mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+    });
+
+    it('rejects CUSTOMER with NotFoundException', async () => {
+      const user = createMockUser({ role: UserRole.CUSTOMER });
+      await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(
+        NotFoundException
+      );
+      await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(
+        'Only sellers can access seller orders'
+      );
+      expect(mockOrderService.getOrdersBySeller).not.toHaveBeenCalled();
+    });
+
+    it('rejects ADMIN with NotFoundException', async () => {
+      const user = createMockAdminUser();
+      await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(
+        NotFoundException
+      );
+      expect(mockOrderService.getOrdersBySeller).not.toHaveBeenCalled();
+    });
+
+    it('allows SELLER and calls getOrdersBySeller without status', async () => {
+      const user = createMockSellerUser({ id: 'seller-user-1' });
+      const result = await resolver.mySellerOrders(user, 10, 'cursor-1', undefined);
+
+      expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-1');
+      expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('1', 10, 'cursor-1', undefined);
+      expect(result).toEqual(mockSellerConnection);
+    });
+
+    it('allows SELLER and calls getOrdersBySeller with status filter', async () => {
+      const user = createMockSellerUser({ id: 'seller-user-1' });
+      const result = await resolver.mySellerOrders(user, 10, 'cursor-1', OrderStatus.DELIVERED);
+
+      expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-1');
+      expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('1', 10, 'cursor-1', OrderStatus.DELIVERED);
+      expect(result).toEqual(mockSellerConnection);
+    });
+
+    it('maps nodes with toSellerOrder (redacts customer PII)', async () => {
+      const user = createMockSellerUser({ id: 'seller-user-1' });
+      const result = await resolver.mySellerOrders(user, 10, undefined, undefined);
+
+      // Verify the connection structure and that nodes are SellerOrder (no customer PII)
+      expect(result.edges).toHaveLength(2);
+      expect(result.edges[0].node).toBeDefined();
+      expect((result.edges[0].node as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
+      expect((result.edges[0].node as unknown as Record<string, unknown>)['customerPhone']).toBeUndefined();
+      expect((result.edges[0].node as unknown as Record<string, unknown>)['customerName']).toBeUndefined();
+      expect((result.edges[0].node as unknown as Record<string, unknown>)['shippingAddress']).toBeUndefined();
+    });
+
+    it('throws NotFoundException when SELLER has no seller profile', async () => {
+      const user = createMockSellerUser({ id: 'seller-user-1' });
+      mockSellerService.findOneByUserId.mockResolvedValue(null);
+
+      await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(
+        NotFoundException
+      );
+      await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(
+        'Seller not found for this user'
+      );
+    });
+
+    describe('JWT Shape, Status Filter, & PII Redaction Matrix', () => {
+      const mockOrderProcessing = createMockOrder({ id: 'order-1', status: OrderStatus.PROCESSING });
+      const mockOrderPending = createMockOrder({ id: 'order-2', status: OrderStatus.PENDING });
+      const mockSellerInfo = createMockSellerInfo({ id: 42, user: { id: 'seller-user-42' } as never });
+      const mockSellerConnection = createMockSellerConnection([mockOrderProcessing, mockOrderPending]);
+
+      beforeEach(() => {
+        mockOrderService.getOrdersBySeller.mockResolvedValue(mockSellerConnection);
+        mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+      });
+
+      it('succeeds for SELLER with { sub, userType: "seller" } (lowercase userType and sub claim)', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
+        const result = await resolver.mySellerOrders(user, 10, undefined, undefined);
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-42');
+        expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('42', 10, undefined, undefined);
+        expect(result).toEqual(mockSellerConnection);
+      });
+
+      it('forwards status filter (PROCESSING) to getOrdersBySeller', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
+        await resolver.mySellerOrders(user, 10, undefined, OrderStatus.PROCESSING);
+
+        expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('42', 10, undefined, OrderStatus.PROCESSING);
+      });
+
+      it('forwards undefined status to getOrdersBySeller', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
+        await resolver.mySellerOrders(user, 10, undefined, undefined);
+
+        expect(mockOrderService.getOrdersBySeller).toHaveBeenCalledWith('42', 10, undefined, undefined);
+      });
+
+      it('strips customer PII via toSellerOrder', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
+        const result = await resolver.mySellerOrders(user, 10, undefined, undefined);
+
+        expect(result.edges).toHaveLength(2);
+        result.edges.forEach((edge) => {
+          expect((edge.node as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
+          expect((edge.node as unknown as Record<string, unknown>)['customerPhone']).toBeUndefined();
+          expect((edge.node as unknown as Record<string, unknown>)['customerName']).toBeUndefined();
+          expect((edge.node as unknown as Record<string, unknown>)['shippingAddress']).toBeUndefined();
+        });
+      });
+
+      it('throws NotFoundException for CUSTOMER with { sub, userType: "customer" }', async () => {
+        const user = { sub: 'c-1', userType: 'customer' } as never;
+        await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
+        expect(mockOrderService.getOrdersBySeller).not.toHaveBeenCalled();
+      });
+
+      it('throws NotFoundException for null user', async () => {
+        await expect(resolver.mySellerOrders(null as never, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders(null as never, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
+      });
+
+      it('throws NotFoundException for empty object user', async () => {
+        await expect(resolver.mySellerOrders({} as never, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders({} as never, 10, undefined, undefined)).rejects.toThrow('Only sellers can access seller orders');
+      });
+
+      it('throws NotFoundException when sellerService.findOneByUserId returns null', async () => {
+        const user = { sub: 'seller-user-42', userType: 'seller' } as never;
+        mockSellerService.findOneByUserId.mockResolvedValue(null);
+
+        await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow(NotFoundException);
+        await expect(resolver.mySellerOrders(user, 10, undefined, undefined)).rejects.toThrow('Seller not found for this user');
+      });
+    });
+  });
+
+  describe('order query', () => {
+    const mockOrder = createMockOrder({ customerEmail: 'customer@example.com', sellerId: 1 });
+    const mockSellerOrder = toSellerOrder(mockOrder);
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockResolvedValue(mockOrder);
+      mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+    });
+
+    describe('ADMIN role', () => {
+      it('allows ADMIN to read any order', async () => {
+        const user = createMockAdminUser();
+        const result = await resolver.order(user, 'order-1');
+
+        expect(mockOrderService.findOne).toHaveBeenCalledWith('order-1');
+        expect(result).toEqual(mockOrder);
+      });
+    });
+
+    describe('SELLER role', () => {
+      it('allows SELLER to read own order and returns redacted SellerOrder', async () => {
+        const user = createMockSellerUser({ id: 'seller-user-1' });
+        const result = await resolver.order(user, 'order-1');
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-1');
+        expect(result).toEqual(mockSellerOrder);
+        // Verify customer PII is not present
+        expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerPhone']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerName']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['shippingAddress']).toBeUndefined();
+      });
+
+      it('throws ForbiddenException when SELLER tries to read another seller order', async () => {
+        const user = createMockSellerUser({ id: 'other-seller-user' });
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as never });
+        mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
+
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(
+          ForbiddenException
+        );
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(
+          'You do not have permission to view this order'
+        );
+      });
+
+      it('throws ForbiddenException when SELLER has no seller profile', async () => {
+        const user = createMockSellerUser({ id: 'seller-user-1' });
+        mockSellerService.findOneByUserId.mockResolvedValue(null);
+
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(
+          ForbiddenException
+        );
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(
+          'You do not have permission to view this order'
+        );
+      });
+    });
+
+    describe('CUSTOMER role', () => {
+      it('allows CUSTOMER to read own order', async () => {
+        const user = createMockUser({ email: 'customer@example.com' });
+        const result = await resolver.order(user, 'order-1');
+
+        expect(result).toEqual(mockOrder);
+      });
+
+      it('throws ForbiddenException when CUSTOMER tries to read another customer order', async () => {
+        const user = createMockUser({ email: 'other@example.com' });
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(
+          ForbiddenException
+        );
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(
+          'You do not have permission to view this order'
+        );
+      });
+    });
+
+    describe('UNKNOWN role', () => {
+      it('throws ForbiddenException for unknown role', async () => {
+        const user = { id: 'user-1', userType: 'INVALID' };
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(
+          ForbiddenException
+        );
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow('Access denied');
+      });
+    });
+
+    describe('JWT Shape { sub, userType } Claims', () => {
+      const mockOrder = createMockOrder({ customerEmail: 'customer@example.com', sellerId: 1 });
+      const mockSellerOrder = toSellerOrder(mockOrder);
+      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as never });
+
+      beforeEach(() => {
+        mockOrderService.findOne.mockResolvedValue(mockOrder);
+        mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+      });
+
+      it('allows SELLER with { sub, userType: "seller" } owning order to receive redacted SellerOrder', async () => {
+        const user = { sub: 's-user', userType: 'seller' } as never;
+        const result = await resolver.order(user, 'order-1');
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
+        expect(result).toEqual(mockSellerOrder);
+        expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerPhone']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['customerName']).toBeUndefined();
+        expect((result as unknown as Record<string, unknown>)['shippingAddress']).toBeUndefined();
+      });
+
+      it('throws ForbiddenException for non-owner SELLER with { sub, userType: "seller" }', async () => {
+        const user = { sub: 'other-s-user', userType: 'seller' } as never;
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as never });
+        mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
+
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(ForbiddenException);
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow('You do not have permission to view this order');
+      });
+
+      it('allows CUSTOMER with { sub, userType: "customer", email } to read own order', async () => {
+        const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as never;
+        const result = await resolver.order(user, 'order-1');
+
+        expect(result).toEqual(mockOrder);
+      });
+
+      it('throws ForbiddenException for CUSTOMER with { sub, userType: "customer" } reading another customer order', async () => {
+        const user = { sub: 'other-c-user', userType: 'customer', email: 'other@example.com' } as never;
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow(ForbiddenException);
+        await expect(resolver.order(user, 'order-1')).rejects.toThrow('You do not have permission to view this order');
+      });
+
+      it('allows ADMIN with { sub, userType: "admin" } to read any order', async () => {
+        const user = { sub: 'a-user', userType: 'admin' } as never;
+        const result = await resolver.order(user, 'order-1');
+
+        expect(result).toEqual(mockOrder);
+      });
+    });
+  });
+
+  describe('updateOrderStatus mutation', () => {
+    const mockOrder = createMockOrder({ sellerId: 1 });
+    const updatedOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
+    const updatedSellerOrder = toSellerOrder(updatedOrder);
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockResolvedValue(mockOrder);
+      mockOrderService.updateOrderStatus.mockResolvedValue(updatedOrder);
+      mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+    });
+
+    it('rejects CUSTOMER with ForbiddenException', async () => {
+      const user = createMockUser({ role: UserRole.CUSTOMER });
+      await expect(
+        resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+      ).rejects.toThrow('Customers are not allowed to update order status');
+    });
+
+    it('rejects SELLER trying to update another seller order', async () => {
+      const user = createMockSellerUser({ id: 'other-seller-user' });
+      const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as never });
+      mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
+
+      await expect(
+        resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+      ).rejects.toThrow(ForbiddenException);
+      await expect(
+        resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+      ).rejects.toThrow('You can only update status for your own seller orders');
+    });
+
+    it('rejects SELLER with no seller profile', async () => {
+      const user = createMockSellerUser({ id: 'seller-user-1' });
+      mockSellerService.findOneByUserId.mockResolvedValue(null);
+
+      await expect(
+        resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects SELLER moving own PENDING order to CONFIRMED (payment flow confirms orders)', async () => {
+      const user = createMockSellerUser({ id: 'seller-user-1' });
+      await expect(
+        resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+      ).rejects.toThrow(BadRequestException);
+
+      expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-1');
+      expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+    });
+
+    it('allows ADMIN to update any order and returns full Order', async () => {
+      const user = createMockAdminUser();
+      const result = await resolver.updateOrderStatus(user, {
+        id: 'order-1',
+        status: OrderStatus.SHIPPED,
+      });
+
+      expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.SHIPPED);
+      expect(result).toEqual(updatedOrder);
+    });
+
+    it('rejects UNKNOWN role', async () => {
+      const user = { id: 'user-1', userType: 'INVALID' };
+      await expect(
+        resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    describe('JWT Shape { sub, userType } Claims', () => {
+      const mockOrder = createMockOrder({ sellerId: 1 });
+      const updatedOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
+      const updatedSellerOrder = toSellerOrder(updatedOrder);
+      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as never });
+
+      beforeEach(() => {
+        mockOrderService.findOne.mockResolvedValue(mockOrder);
+        mockOrderService.updateOrderStatus.mockResolvedValue(updatedOrder);
+        mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+      });
+
+      it('rejects SELLER with { sub, userType: "seller" } moving own PENDING order to CONFIRMED', async () => {
+        const user = { sub: 's-user', userType: 'seller' } as never;
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow(BadRequestException);
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
+        expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+      });
+
+      it('allows ADMIN with { sub, userType: "admin" } to update any order and receive full Order', async () => {
+        const user = { sub: 'a-user', userType: 'admin' } as never;
+        const result = await resolver.updateOrderStatus(user, {
+          id: 'order-1',
+          status: OrderStatus.SHIPPED,
+        });
+
+        expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.SHIPPED);
+        expect(result).toEqual(updatedOrder);
+        expect((result as unknown as Record<string, unknown>)['customerEmail']).toBeDefined();
+      });
+
+      it('throws ForbiddenException for SELLER with { sub, userType: "seller" } not owning order', async () => {
+        const user = { sub: 'other-s-user', userType: 'seller' } as never;
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as never });
+        mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
+
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow(ForbiddenException);
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow('You can only update status for your own seller orders');
+      });
+
+      it('throws ForbiddenException for CUSTOMER with { sub, userType: "customer" }', async () => {
+        const user = { sub: 'c-user', userType: 'customer' } as never;
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow(ForbiddenException);
+        await expect(
+          resolver.updateOrderStatus(user, { id: 'order-1', status: OrderStatus.CONFIRMED })
+        ).rejects.toThrow('Customers are not allowed to update order status');
+      });
+    });
+  });
+
+  describe('cancelPendingOrder mutation', () => {
+    const mockOrder = createMockOrder({ customerEmail: 'customer@example.com', sellerId: 1 });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockResolvedValue(mockOrder);
+      mockOrderService.cancelPendingOrder.mockResolvedValue(true);
+      mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+    });
+
+    describe('CUSTOMER role', () => {
+      it('allows CUSTOMER to cancel own PENDING order', async () => {
+        const user = createMockUser({ email: 'customer@example.com' });
+        const result = await resolver.cancelPendingOrder(user, 'order-1');
+
+        expect(mockOrderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(result).toBe(true);
+      });
+
+      it('throws ForbiddenException when CUSTOMER tries to cancel another customer order', async () => {
+        const user = createMockUser({ email: 'other@example.com' });
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(
+          ForbiddenException
+        );
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(
+          'You do not have permission to cancel this order'
+        );
+      });
+
+      it('throws BadRequestException when CUSTOMER tries to cancel CONFIRMED order', async () => {
+        const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED, customerEmail: 'customer@example.com' });
+        mockOrderService.findOne.mockResolvedValue(confirmedOrder);
+
+        const user = createMockUser({ email: 'customer@example.com' });
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(
+          BadRequestException
+        );
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(
+          'Only pending orders can be cancelled'
+        );
+      });
+    });
+
+    describe('SELLER role', () => {
+      it('allows SELLER to cancel own PENDING order', async () => {
+        const user = createMockSellerUser({ id: 'seller-user-1' });
+        const result = await resolver.cancelPendingOrder(user, 'order-1');
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('seller-user-1');
+        expect(mockOrderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(result).toBe(true);
+      });
+
+      it('throws ForbiddenException when SELLER tries to cancel another seller order', async () => {
+        const user = createMockSellerUser({ id: 'other-seller-user' });
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-seller-user' } as never });
+        mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
+
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(
+          ForbiddenException
+        );
+      });
+
+      it('throws ForbiddenException when SELLER has no seller profile', async () => {
+        const user = createMockSellerUser({ id: 'seller-user-1' });
+        mockSellerService.findOneByUserId.mockResolvedValue(null);
+
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(
+          ForbiddenException
+        );
+      });
+    });
+
+    describe('ADMIN role', () => {
+      it('allows ADMIN to cancel any PENDING order', async () => {
+        const user = createMockAdminUser();
+        const result = await resolver.cancelPendingOrder(user, 'order-1');
+
+        expect(mockOrderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('JWT Shape { sub, userType } Claims', () => {
+      const mockOrder = createMockOrder({ customerEmail: 'buyer@example.com', sellerId: 1 });
+      const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 's-user' } as never });
+
+      beforeEach(() => {
+        mockOrderService.findOne.mockResolvedValue(mockOrder);
+        mockOrderService.cancelPendingOrder.mockResolvedValue(true);
+        mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+      });
+
+      it('allows SELLER with { sub, userType: "seller" } owning PENDING order to cancel', async () => {
+        const user = { sub: 's-user', userType: 'seller' } as never;
+        const result = await resolver.cancelPendingOrder(user, 'order-1');
+
+        expect(mockSellerService.findOneByUserId).toHaveBeenCalledWith('s-user');
+        expect(mockOrderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(result).toBe(true);
+      });
+
+      it('allows CUSTOMER with { sub, userType: "customer", email } to cancel own PENDING order', async () => {
+        const user = { sub: 'c-user', userType: 'customer', email: 'buyer@example.com' } as never;
+        const result = await resolver.cancelPendingOrder(user, 'order-1');
+
+        expect(mockOrderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(result).toBe(true);
+      });
+
+      it('throws BadRequestException for non-PENDING order (CONFIRMED) for SELLER', async () => {
+        const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED, sellerId: 1 });
+        mockOrderService.findOne.mockResolvedValue(confirmedOrder);
+
+        const user = { sub: 's-user', userType: 'seller' } as never;
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(BadRequestException);
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('Only pending orders can be cancelled');
+      });
+
+      it('throws BadRequestException for non-PENDING order (CONFIRMED) for CUSTOMER', async () => {
+        const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED, customerEmail: 'buyer@example.com' });
+        mockOrderService.findOne.mockResolvedValue(confirmedOrder);
+
+        const user = { sub: 'c-user', userType: 'customer', email: 'buyer@example.com' } as never;
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(BadRequestException);
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('Only pending orders can be cancelled');
+      });
+
+      it('throws ForbiddenException for SELLER with { sub, userType: "seller" } not owning order', async () => {
+        const user = { sub: 'other-s-user', userType: 'seller' } as never;
+        const otherSellerInfo = createMockSellerInfo({ id: 999, user: { id: 'other-s-user' } as never });
+        mockSellerService.findOneByUserId.mockResolvedValue(otherSellerInfo);
+
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
+      });
+
+      it('throws ForbiddenException for CUSTOMER with { sub, userType: "customer" } not owning order', async () => {
+        const user = { sub: 'other-c-user', userType: 'customer', email: 'other@example.com' } as never;
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
+        await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('You do not have permission to cancel this order');
+      });
+    });
+  });
+
+  describe('updateOrder mutation', () => {
+    const mockOrder = createMockOrder();
+    const updateInput = {
+      customerName: 'Jane Doe',
+      notes: 'Updated notes',
+    };
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockResolvedValue(mockOrder);
+      mockOrderService.updateOrder.mockResolvedValue({ ...mockOrder, ...updateInput });
+    });
+
+    it('rejects CUSTOMER with ForbiddenException', async () => {
+      const user = createMockUser({ role: UserRole.CUSTOMER });
+      await expect(
+        resolver.updateOrder(user, 'order-1', updateInput as never)
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects SELLER with ForbiddenException', async () => {
+      const user = createMockSellerUser();
+      await expect(
+        resolver.updateOrder(user, 'order-1', updateInput as never)
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows ADMIN to update order (non-financial fields)', async () => {
+      const user = createMockAdminUser();
+      const result = await resolver.updateOrder(user, 'order-1', updateInput as never);
+
+      expect(mockOrderService.updateOrder).toHaveBeenCalledWith('order-1', updateInput);
+      expect(result.customerName).toBe('Jane Doe');
+    });
+
+    it('throws BadRequestException when ADMIN tries to update items', async () => {
+      const user = createMockAdminUser();
+      const inputWithItems = {
+        ...updateInput,
+        items: [{ productId: 'prod-1', quantity: 1, unitPrice: 50, totalPrice: 50 }],
+      };
+
+      await expect(
+        resolver.updateOrder(user, 'order-1', inputWithItems as never)
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        resolver.updateOrder(user, 'order-1', inputWithItems as never)
+      ).rejects.toThrow('Order items and financial totals cannot be rewritten after order creation');
+    });
+
+    it('throws BadRequestException when ADMIN tries to update CONFIRMED order', async () => {
+      const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
+      mockOrderService.findOne.mockResolvedValue(confirmedOrder);
+
+      const user = createMockAdminUser();
+      await expect(
+        resolver.updateOrder(user, 'order-1', updateInput as never)
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        resolver.updateOrder(user, 'order-1', updateInput as never)
+      ).rejects.toThrow('Order items and financial totals cannot be rewritten after order creation');
+    });
+  });
+
+  describe('deleteOrder mutation', () => {
+    beforeEach(() => {
+      mockOrderService.deleteOrder.mockResolvedValue(undefined);
+      mockOrderService.updateOrderStatus.mockResolvedValue(undefined);
+    });
+
+    it('rejects CUSTOMER with ForbiddenException', async () => {
+      const user = createMockUser({ role: UserRole.CUSTOMER });
+      await expect(resolver.deleteOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('rejects SELLER with ForbiddenException', async () => {
+      const user = createMockSellerUser();
+      await expect(resolver.deleteOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
+    });
+
+    it('allows ADMIN to delete PENDING order directly', async () => {
+      const pendingOrder = createMockOrder({ status: OrderStatus.PENDING });
+      mockOrderService.findOne.mockResolvedValue(pendingOrder);
+
+      const user = createMockAdminUser();
+      const result = await resolver.deleteOrder(user, 'order-1');
+
+      expect(mockOrderService.findOne).toHaveBeenCalledWith('order-1');
+      expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+      expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+      expect(result).toBe(true);
+    });
+
+    it('allows ADMIN to delete CANCELLED order directly', async () => {
+      const cancelledOrder = createMockOrder({ status: OrderStatus.CANCELLED });
+      mockOrderService.findOne.mockResolvedValue(cancelledOrder);
+
+      const user = createMockAdminUser();
+      await resolver.deleteOrder(user, 'order-1');
+
+      expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+      expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+    });
+
+    it('cancels CONFIRMED order before deletion to restore stock', async () => {
+      const confirmedOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
+      mockOrderService.findOne.mockResolvedValue(confirmedOrder);
+
+      const user = createMockAdminUser();
+      await resolver.deleteOrder(user, 'order-1');
+
+      expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+      expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+    });
+
+    it('cancels PROCESSING order before deletion to restore stock', async () => {
+      const processingOrder = createMockOrder({ status: OrderStatus.PROCESSING });
+      mockOrderService.findOne.mockResolvedValue(processingOrder);
+
+      const user = createMockAdminUser();
+      await resolver.deleteOrder(user, 'order-1');
+
+      expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+      expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+    });
+
+    it('cancels SHIPPED order before deletion to restore stock', async () => {
+      const shippedOrder = createMockOrder({ status: OrderStatus.SHIPPED });
+      mockOrderService.findOne.mockResolvedValue(shippedOrder);
+
+      const user = createMockAdminUser();
+      await resolver.deleteOrder(user, 'order-1');
+
+      expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+      expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+    });
+
+    it('cancels order with stockReserved flag before deletion', async () => {
+      const orderWithReservedStock = createMockOrder({ status: OrderStatus.PENDING });
+      (orderWithReservedStock as unknown as Record<string, unknown>)['stockReserved'] = true;
+      mockOrderService.findOne.mockResolvedValue(orderWithReservedStock);
+
+      const user = createMockAdminUser();
+      await resolver.deleteOrder(user, 'order-1');
+
+      expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+      expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+    });
+
+    describe('Stock Restoration Guard - Call Order Verification', () => {
+      const verifyCallOrder = async (order: Order) => {
+        mockOrderService.findOne.mockResolvedValue(order);
+        mockOrderService.updateOrderStatus.mockResolvedValue(undefined);
+        mockOrderService.deleteOrder.mockResolvedValue(undefined);
+
+        const user = createMockAdminUser();
+        await resolver.deleteOrder(user, 'order-1');
+
+        const updateCalls = mockOrderService.updateOrderStatus.mock.invocationCallOrder;
+        const deleteCalls = mockOrderService.deleteOrder.mock.invocationCallOrder;
+
+        expect(updateCalls).toBeDefined();
+        expect(deleteCalls).toBeDefined();
+        expect(updateCalls[0]).toBeLessThan(deleteCalls[0]);
+        expect(mockOrderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+        expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+      };
+
+      it('calls updateOrderStatus BEFORE deleteOrder for CONFIRMED order', async () => {
+        await verifyCallOrder(createMockOrder({ status: OrderStatus.CONFIRMED }));
+      });
+
+      it('calls updateOrderStatus BEFORE deleteOrder for PROCESSING order', async () => {
+        await verifyCallOrder(createMockOrder({ status: OrderStatus.PROCESSING }));
+      });
+
+      it('calls updateOrderStatus BEFORE deleteOrder for SHIPPED order', async () => {
+        await verifyCallOrder(createMockOrder({ status: OrderStatus.SHIPPED }));
+      });
+
+      it('calls updateOrderStatus BEFORE deleteOrder for PENDING order with stockReserved=true', async () => {
+        const order = createMockOrder({ status: OrderStatus.PENDING });
+        (order as unknown as Record<string, unknown>)['stockReserved'] = true;
+        await verifyCallOrder(order);
+      });
+
+      it('does NOT call updateOrderStatus for PENDING order with stockReserved=false', async () => {
+        const order = createMockOrder({ status: OrderStatus.PENDING });
+        (order as unknown as Record<string, unknown>)['stockReserved'] = false;
+        mockOrderService.findOne.mockResolvedValue(order);
+        mockOrderService.deleteOrder.mockResolvedValue(undefined);
+
+        const user = createMockAdminUser();
+        await resolver.deleteOrder(user, 'order-1');
+
+        expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+        expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+      });
+
+      it('does NOT call updateOrderStatus for PENDING order with stockReserved=undefined', async () => {
+        const order = createMockOrder({ status: OrderStatus.PENDING });
+        (order as unknown as Record<string, unknown>)['stockReserved'] = undefined;
+        mockOrderService.findOne.mockResolvedValue(order);
+        mockOrderService.deleteOrder.mockResolvedValue(undefined);
+
+        const user = createMockAdminUser();
+        await resolver.deleteOrder(user, 'order-1');
+
+        expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+        expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+      });
+
+      it('does NOT call updateOrderStatus for DELIVERED order', async () => {
+        const order = createMockOrder({ status: OrderStatus.DELIVERED });
+        (order as unknown as Record<string, unknown>)['stockReserved'] = false;
+        mockOrderService.findOne.mockResolvedValue(order);
+        mockOrderService.deleteOrder.mockResolvedValue(undefined);
+
+        const user = createMockAdminUser();
+        await resolver.deleteOrder(user, 'order-1');
+
+        expect(mockOrderService.updateOrderStatus).not.toHaveBeenCalled();
+        expect(mockOrderService.deleteOrder).toHaveBeenCalledWith('order-1');
+      });
+    });
+  });
+
+  describe('getUserId helper', () => {
+    it('extracts id from user.id', () => {
+      const user = { id: 'user-123' };
+      expect(resolver['getUserId'](user as AuthenticatedUser)).toBe('user-123');
+    });
+
+    it('extracts id from user.sub when id is missing', () => {
+      const user = { sub: 'sub-456' };
+      expect(resolver['getUserId'](user as AuthenticatedUser)).toBe('sub-456');
+    });
+
+    it('returns empty string when both id and sub are missing', () => {
+      const user = {};
+      expect(resolver['getUserId'](user as AuthenticatedUser)).toBe('');
+    });
+  });
+
+  describe('getUserRole helper', () => {
+    it('returns ADMIN for role ADMIN', () => {
+      expect(resolver['getUserRole']({ role: UserRole.ADMIN } as AuthenticatedUser)).toBe('ADMIN');
+    });
+
+    it('returns SELLER for role SELLER', () => {
+      expect(resolver['getUserRole']({ role: UserRole.SELLER } as AuthenticatedUser)).toBe('SELLER');
+    });
+
+    it('returns CUSTOMER for role CUSTOMER', () => {
+      expect(resolver['getUserRole']({ role: UserRole.CUSTOMER } as AuthenticatedUser)).toBe('CUSTOMER');
+    });
+
+    it('normalizes lowercase role', () => {
+      expect(resolver['getUserRole']({ role: 'admin' } as AuthenticatedUser)).toBe('ADMIN');
+      expect(resolver['getUserRole']({ role: 'seller' } as AuthenticatedUser)).toBe('SELLER');
+      expect(resolver['getUserRole']({ role: 'customer' } as AuthenticatedUser)).toBe('CUSTOMER');
+    });
+
+    it('uses userType when role is missing', () => {
+      expect(resolver['getUserRole']({ userType: 'ADMIN' } as AuthenticatedUser)).toBe('ADMIN');
+      expect(resolver['getUserRole']({ userType: 'seller' } as AuthenticatedUser)).toBe('SELLER');
+    });
+
+    it('returns UNKNOWN for invalid role', () => {
+      expect(resolver['getUserRole']({ role: 'INVALID' } as AuthenticatedUser)).toBe('UNKNOWN');
+      expect(resolver['getUserRole']({} as AuthenticatedUser)).toBe('UNKNOWN');
+    });
+  });
+
+  describe('assertAdmin helper', () => {
+    it('does not throw for ADMIN', () => {
+      const user = createMockAdminUser();
+      expect(() => resolver['assertAdmin'](user as AuthenticatedUser)).not.toThrow();
+    });
+
+    it('throws ForbiddenException for SELLER', () => {
+      const user = createMockSellerUser();
+      expect(() => resolver['assertAdmin'](user as AuthenticatedUser)).toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException for CUSTOMER', () => {
+      const user = createMockUser({ role: UserRole.CUSTOMER });
+      expect(() => resolver['assertAdmin'](user as AuthenticatedUser)).toThrow(ForbiddenException);
+    });
+
+    it('throws ForbiddenException for UNKNOWN', () => {
+      const user = { role: 'INVALID' };
+      expect(() => resolver['assertAdmin'](user as AuthenticatedUser)).toThrow(ForbiddenException);
+    });
+  });
+
+  describe('isCustomerOrderOwner helper', () => {
+    it('returns true when both emails match (case-insensitive)', () => {
+      const user = { email: 'Customer@Example.COM' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(true);
+    });
+
+    it('returns false when emails differ', () => {
+      const user = { email: 'other@example.com' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when user email is empty string', () => {
+      const user = { email: '' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when order customerEmail is empty string', () => {
+      const user = { email: 'customer@example.com' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: '' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when both emails are empty strings', () => {
+      const user = { email: '' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: '' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when user email is undefined', () => {
+      const user = {} as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when order customerEmail is undefined', () => {
+      const user = { email: 'customer@example.com' } as AuthenticatedUser;
+      const order = createMockOrder({ customerEmail: undefined as never });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+
+    it('returns false when user is null', () => {
+      const user = null as never;
+      const order = createMockOrder({ customerEmail: 'customer@example.com' });
+      expect(resolver['isCustomerOrderOwner'](user, order)).toBe(false);
+    });
+  });
+
+  describe('toSellerOrder GuestToken redaction', () => {
+    it('strips [GuestToken: ...] from notes while preserving regular text', () => {
+      const order = createMockOrder({
+        notes: 'Customer note [GuestToken: guest_1234567890abcdef] end note',
+      });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBe('Customer note end note');
+    });
+
+    it('strips [GuestToken: ...] when it is the only content', () => {
+      const order = createMockOrder({
+        notes: '[GuestToken: guest_1234567890abcdef]',
+      });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBe('');
+    });
+
+    it('handles undefined notes', () => {
+      const order = createMockOrder({ notes: undefined });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBeUndefined();
+    });
+
+    it('handles null notes', () => {
+      const order = createMockOrder({ notes: null as never });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBeUndefined();
+    });
+
+    it('preserves notes without GuestToken tag', () => {
+      const order = createMockOrder({ notes: 'Just a regular note' });
+      const sellerOrder = toSellerOrder(order);
+      expect(sellerOrder.notes).toBe('Just a regular note');
+    });
+  });
+
+  describe('order query - empty email edge case', () => {
+    const mockOrder = createMockOrder({ customerEmail: '', sellerId: 1 });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockResolvedValue(mockOrder);
+      mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+    });
+
+    it('throws ForbiddenException when CUSTOMER email is empty string and order email is empty string', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: '' } as AuthenticatedUser;
+      await expect(resolver.order(user, 'order-1')).rejects.toThrow(ForbiddenException);
+      await expect(resolver.order(user, 'order-1')).rejects.toThrow('You do not have permission to view this order');
+    });
+  });
+
+  describe('cancelPendingOrder mutation - empty email edge case', () => {
+    const mockOrder = createMockOrder({ customerEmail: '', sellerId: 1 });
+    const mockSellerInfo = createMockSellerInfo({ id: 1, user: { id: 'seller-user-1' } as never });
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockResolvedValue(mockOrder);
+      mockOrderService.cancelPendingOrder.mockResolvedValue(true);
+      mockSellerService.findOneByUserId.mockResolvedValue(mockSellerInfo);
+    });
+
+    it('throws ForbiddenException when CUSTOMER email is empty string and order email is empty string', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: '' } as AuthenticatedUser;
+      await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow(ForbiddenException);
+      await expect(resolver.cancelPendingOrder(user, 'order-1')).rejects.toThrow('You do not have permission to cancel this order');
+    });
+  });
+
+  describe('recalculateBatchOrdersShipping mutation', () => {
+    const mockOrder1 = createMockOrder({
+      id: 'order-1',
+      orderNumber: 'ORD-001',
+      customerEmail: 'customer@example.com',
+      status: OrderStatus.PENDING,
+      notes: 'Test order [GuestToken: guest_abc123]',
+      total: 110,
+      shippingCost: 10,
+    });
+    const mockOrder2 = createMockOrder({
+      id: 'order-2',
+      orderNumber: 'ORD-002',
+      customerEmail: 'customer@example.com',
+      sellerId: 2,
+      sellerStoreName: 'Store 2',
+      status: OrderStatus.PENDING,
+      notes: 'Test order [GuestToken: guest_abc123]',
+      total: 220,
+      shippingCost: 15,
+    });
+    const recalculatedOrders = [
+      { ...mockOrder1, shippingCost: 8, total: 108 },
+      { ...mockOrder2, shippingCost: 12, total: 217 },
+    ];
+
+    beforeEach(() => {
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return mockOrder1;
+        if (id === 'order-2') return mockOrder2;
+        return null;
+      });
+      mockOrderService.recalculateBatchOrdersShipping.mockResolvedValue(recalculatedOrders);
+    });
+
+    it('recalculates shipping across multiple PENDING orders for same guest token', async () => {
+      const result = await resolver.recalculateBatchOrdersShipping(
+        ['order-1', 'order-2'],
+        undefined, // no user
+        'guest_abc123'
+      );
+
+      expect(mockOrderService.findOne).toHaveBeenCalledTimes(2);
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith([
+        mockOrder1,
+        mockOrder2,
+      ]);
+      expect(result).toEqual(recalculatedOrders);
+      expect(result[0].shippingCost).toBe(8);
+      expect(result[1].shippingCost).toBe(12);
+    });
+
+    it('recalculates shipping for authenticated customer (no guest token)', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as AuthenticatedUser;
+      const ordersNoGuest = [
+        { ...mockOrder1, notes: 'Test order' },
+        { ...mockOrder2, notes: 'Test order' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersNoGuest[0];
+        if (id === 'order-2') return ordersNoGuest[1];
+        return null;
+      });
+
+      const result = await resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined);
+
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith(ordersNoGuest);
+      expect(result).toEqual(recalculatedOrders);
+    });
+
+    it('throws BadRequestException when no orderIds provided', async () => {
+      await expect(resolver.recalculateBatchOrdersShipping([], undefined, undefined)).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping([], undefined, undefined)).rejects.toThrow(
+        'At least one orderId is required'
+      );
+    });
+
+    it('throws BadRequestException when orderIds contain only whitespace', async () => {
+      await expect(resolver.recalculateBatchOrdersShipping(['   ', ''], undefined, undefined)).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['   ', ''], undefined, undefined)).rejects.toThrow(
+        'At least one orderId is required'
+      );
+    });
+
+    it('throws BadRequestException when an order is not PENDING', async () => {
+      const confirmedOrder = createMockOrder({
+        id: 'order-1',
+        customerEmail: 'customer@example.com',
+        status: OrderStatus.CONFIRMED,
+        notes: '[GuestToken: guest_abc123]',
+      });
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return confirmedOrder;
+        if (id === 'order-2') return mockOrder2;
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        'Order order-1 is not in PENDING status'
+      );
+    });
+
+    it('throws BadRequestException when orders have different customer emails', async () => {
+      const otherEmailOrder = createMockOrder({
+        id: 'order-2',
+        customerEmail: 'other@example.com',
+        status: OrderStatus.PENDING,
+        notes: '[GuestToken: guest_abc123]',
+      });
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return mockOrder1;
+        if (id === 'order-2') return otherEmailOrder;
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        'All orders in a batch must belong to the same customer'
+      );
+    });
+
+    it('throws BadRequestException when orders have different guest tokens', async () => {
+      const differentTokenOrder = createMockOrder({
+        id: 'order-2',
+        customerEmail: 'customer@example.com',
+        status: OrderStatus.PENDING,
+        notes: '[GuestToken: guest_different]',
+      });
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return mockOrder1;
+        if (id === 'order-2') return differentTokenOrder;
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        BadRequestException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'guest_abc123')).rejects.toThrow(
+        'All orders in a batch must share the same guest checkout token'
+      );
+    });
+
+    it('throws ForbiddenException when guest token is provided but does not match', async () => {
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'wrong_token')).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, 'wrong_token')).rejects.toThrow(
+        'Invalid guest token for batch shipping recalculation'
+      );
+    });
+
+    it('throws ForbiddenException when guest token is missing for guest checkout', async () => {
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, undefined)).rejects.toThrow(
+        'Invalid guest token for batch shipping recalculation'
+      );
+    });
+
+    it('throws ForbiddenException when authenticated user email does not match order email', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: 'different@example.com' } as AuthenticatedUser;
+      const ordersNoGuest = [
+        { ...mockOrder1, notes: 'Test order' },
+        { ...mockOrder2, notes: 'Test order' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersNoGuest[0];
+        if (id === 'order-2') return ordersNoGuest[1];
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        'Not allowed to recalculate shipping for this order batch'
+      );
+    });
+
+    it('deduplicates orderIds and preserves order', async () => {
+      await resolver.recalculateBatchOrdersShipping(['order-1', 'order-2', 'order-1'], undefined, 'guest_abc123');
+
+      expect(mockOrderService.findOne).toHaveBeenCalledTimes(2);
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith([mockOrder1, mockOrder2]);
+    });
+
+    it('throws ForbiddenException for anonymous user with no guestToken on orders without GuestToken but with customerEmail', async () => {
+      const ordersNoGuest = [
+        { ...mockOrder1, notes: 'Test order', customerEmail: 'a@x.com' },
+        { ...mockOrder2, notes: 'Test order', customerEmail: 'a@x.com' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersNoGuest[0];
+        if (id === 'order-2') return ordersNoGuest[1];
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], undefined, undefined)).rejects.toThrow(
+        'Not allowed to recalculate shipping for this order batch'
+      );
+      expect(mockOrderService.recalculateBatchOrdersShipping).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when batch has GuestToken but logged-in caller provides no guestToken', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: 'customer@example.com' } as AuthenticatedUser;
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        'Invalid guest token for batch shipping recalculation'
+      );
+      expect(mockOrderService.recalculateBatchOrdersShipping).not.toHaveBeenCalled();
+    });
+
+    it('throws ForbiddenException when logged-in user has empty email and orders have empty customerEmail (no token)', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: '' } as AuthenticatedUser;
+      const ordersEmptyEmail = [
+        { ...mockOrder1, notes: 'Test order', customerEmail: '' },
+        { ...mockOrder2, notes: 'Test order', customerEmail: '' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersEmptyEmail[0];
+        if (id === 'order-2') return ordersEmptyEmail[1];
+        return null;
+      });
+
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        ForbiddenException
+      );
+      await expect(resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined)).rejects.toThrow(
+        'Not allowed to recalculate shipping for this order batch'
+      );
+      expect(mockOrderService.recalculateBatchOrdersShipping).not.toHaveBeenCalled();
+    });
+
+    it('succeeds for logged-in owner with case-insensitive email match (A@x.com vs a@x.com) and no token', async () => {
+      const user = { sub: 'c-user', userType: 'customer', email: 'A@x.com' } as AuthenticatedUser;
+      const ordersNoGuest = [
+        { ...mockOrder1, notes: 'Test order', customerEmail: 'a@x.com' },
+        { ...mockOrder2, notes: 'Test order', customerEmail: 'a@x.com' },
+      ];
+      mockOrderService.findOne.mockImplementation(async (id: string) => {
+        if (id === 'order-1') return ordersNoGuest[0];
+        if (id === 'order-2') return ordersNoGuest[1];
+        return null;
+      });
+
+      const result = await resolver.recalculateBatchOrdersShipping(['order-1', 'order-2'], user, undefined);
+
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledTimes(1);
+      expect(mockOrderService.recalculateBatchOrdersShipping).toHaveBeenCalledWith(ordersNoGuest);
+      expect(result).toEqual(recalculatedOrders);
+    });
+  });
+});
+===== FILE: libs/server/resolvers/src/lib/payment.resolver.spec.ts =====
+import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException, ForbiddenException, NotFoundException } from '@nestjs/common';
+import { PaymentResolver } from './payment.resolver';
+import { PaymentService, OrderService, CurrencyService } from '@kickzone-workspace/services';
+import { OrderStatus, ShippingPaymentMode, Order } from '@kickzone-workspace/entities';
+import { ZarinPalPaymentRequestInput } from './payment.resolver';
+
+describe('PaymentResolver Unit Tests', () => {
+  let resolver: PaymentResolver;
+  let paymentService: jest.Mocked<PaymentService>;
+  let orderService: jest.Mocked<OrderService>;
+  let currencyService: jest.Mocked<CurrencyService>;
+
+  const mockPaymentService = {
+    requestPayment: jest.fn(),
+    verifyPayment: jest.fn(),
+    getGatewayUrl: jest.fn(),
+  };
+
+  const mockOrderService = {
+    findOne: jest.fn(),
+    findOrdersByPaymentAuthority: jest.fn(),
+    setPaymentIntent: jest.fn(),
+    confirmOrderPayment: jest.fn(),
+    cancelPendingOrder: jest.fn(),
+  };
+
+  const mockCurrencyService = {
+    getCurrentExchangeRate: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        PaymentResolver,
+        { provide: PaymentService, useValue: mockPaymentService },
+        { provide: OrderService, useValue: mockOrderService },
+        { provide: CurrencyService, useValue: mockCurrencyService },
+      ],
+    }).compile();
+
+    resolver = module.get<PaymentResolver>(PaymentResolver);
+    paymentService = module.get(PaymentService);
+    orderService = module.get(OrderService);
+    currencyService = module.get(CurrencyService);
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  const createPaymentRequestInput = (overrides: Partial<ZarinPalPaymentRequestInput> = {}): ZarinPalPaymentRequestInput => ({
+    amount: 50000,
+    callback_url: 'https://example.com/payment/callback',
+    description: 'Test Order Payment',
+    currency: 'IRT',
+    mobile: '09123456789',
+    email: 'test@example.com',
+    order_id: 'order-123',
+    ...overrides,
+  });
+
+  const createMockOrder = (overrides: Partial<{
+    id: string;
+    status: OrderStatus;
+    total: number;
+    paymentAuthority: string | null;
+    paymentAmount: number | null;
+    paymentCurrency: string | null;
+  }> = {}) => ({
+    id: 'order-123',
+    status: OrderStatus.PENDING,
+    total: 80, // USD
+    paymentAuthority: null,
+    paymentAmount: null,
+    paymentCurrency: null,
+    ...overrides,
+  });
+
+  describe('requestZarinPalPayment', () => {
+    describe('Tampered Amount Tests', () => {
+      it('should reject when client sends amount=80 for $80 order with rate 60000 (expected 4800000)', async () => {
+        const input = createPaymentRequestInput({ amount: 80, order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 80 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Payment amount does not match order total'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+        expect(orderService.setPaymentIntent).not.toHaveBeenCalled();
+      });
+
+      it('should reject when client sends amount=1000 for $2000 order with rate 50000 (expected 100000000)', async () => {
+        const input = createPaymentRequestInput({ amount: 1000, order_id: 'order-456' });
+        const mockOrder = createMockOrder({ id: 'order-456', total: 2000 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 50000 } as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Payment amount does not match order total'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+        expect(orderService.setPaymentIntent).not.toHaveBeenCalled();
+      });
+
+      it('should reject when client sends amount=0', async () => {
+        const input = createPaymentRequestInput({ amount: 0, order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 80 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Payment amount does not match order total'
+        );
+      });
+    });
+
+    describe('Missing / Unseeded Exchange Rate Tests (Fail-Closed)', () => {
+      it('should reject when CurrencyService returns null (no exchange rate configured)', async () => {
+        const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 80 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue(null);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+        expect(orderService.setPaymentIntent).not.toHaveBeenCalled();
+      });
+
+      it('should reject when CurrencyService returns rate = 1', async () => {
+        const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 80 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 1 } as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
+        );
+      });
+
+      it('should reject when CurrencyService returns rate = 0', async () => {
+        const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 80 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 0 } as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
+        );
+      });
+
+      it('should reject when CurrencyService returns negative rate', async () => {
+        const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 80 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: -100 } as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
+        );
+      });
+
+      it('should reject when CurrencyService returns NaN rate', async () => {
+        const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 80 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: NaN } as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
+        );
+      });
+
+      it('should reject when CurrencyService returns Infinity rate', async () => {
+        const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 80 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: Infinity } as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Exchange rate is not configured or invalid. Cannot process ZarinPal payment.'
+        );
+      });
+    });
+
+    describe('Non-Pending Order Tests', () => {
+      it('should reject when order status is CONFIRMED', async () => {
+        const input = createPaymentRequestInput({ order_id: 'order-123' });
+        const mockOrder = createMockOrder({ status: OrderStatus.CONFIRMED });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order order-123 is not in PENDING status and cannot be paid'
+        );
+
+        expect(currencyService.getCurrentExchangeRate).not.toHaveBeenCalled();
+      });
+
+      it('should reject when order status is CANCELLED', async () => {
+        const input = createPaymentRequestInput({ order_id: 'order-123' });
+        const mockOrder = createMockOrder({ status: OrderStatus.CANCELLED });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order order-123 is not in PENDING status and cannot be paid'
+        );
+      });
+
+      it('should reject when order status is SHIPPED', async () => {
+        const input = createPaymentRequestInput({ order_id: 'order-123' });
+        const mockOrder = createMockOrder({ status: OrderStatus.SHIPPED });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order order-123 is not in PENDING status and cannot be paid'
+        );
+      });
+
+      it('should reject when order does not exist', async () => {
+        const input = createPaymentRequestInput({ order_id: 'nonexistent' });
+
+        orderService.findOne.mockResolvedValue(undefined as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow('Order not found');
+      });
+    });
+
+    describe('Valid Server-Computed Amount Tests', () => {
+      it('should succeed with valid order, valid rate, and matching client amount', async () => {
+        const input = createPaymentRequestInput({ amount: 4800000, order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 80 });
+        const authority = 'A00000000000000000000000000000000000000';
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+        paymentService.requestPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
+          errors: [],
+        } as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
+
+        const result = await resolver.requestZarinPalPayment(input);
+
+        expect(currencyService.getCurrentExchangeRate).toHaveBeenCalledWith('USD', 'IRR');
+        expect(paymentService.requestPayment).toHaveBeenCalledWith(
+          expect.objectContaining({ amount: 4800000 })
+        );
+        expect(orderService.setPaymentIntent).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderId: 'order-123',
+            authority,
+            amount: 4800000,
+          })
+        );
+        expect(result.authority).toBe(authority);
+        expect(result.code).toBe(100);
+      });
+
+      it('should use server-computed amount even when client sends no amount', async () => {
+        const input = createPaymentRequestInput({ order_id: 'order-123' });
+        delete (input as unknown as Record<string, unknown>)['amount'];
+        const mockOrder = createMockOrder({ total: 100 });
+        const authority = 'A00000000000000000000000000000000000001';
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 55000 } as never);
+        paymentService.requestPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
+          errors: [],
+        } as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
+
+        const result = await resolver.requestZarinPalPayment(input);
+
+        expect(paymentService.requestPayment).toHaveBeenCalledWith(
+          expect.objectContaining({ amount: 5500000 }) // 100 * 55000
+        );
+        expect(orderService.setPaymentIntent).toHaveBeenCalledWith(
+          expect.objectContaining({ amount: 5500000 })
+        );
+        expect(result.authority).toBe(authority);
+      });
+
+      it('should allow small rounding tolerance (within 0.1% or 1 Toman)', async () => {
+        const input = createPaymentRequestInput({ amount: 4800005, order_id: 'order-123' }); // Off by 5 Tomans (within 0.1% of 4,800,000)
+        const mockOrder = createMockOrder({ total: 80 });
+        const authority = 'A00000000000000000000000000000000000002';
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+        paymentService.requestPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
+          errors: [],
+        } as never);
+        orderService.setPaymentIntent.mockResolvedValue(undefined as never);
+
+        const result = await resolver.requestZarinPalPayment(input);
+
+        expect(paymentService.requestPayment).toHaveBeenCalledWith(
+          expect.objectContaining({ amount: 4800000 }) // Server uses expectedAmount, not client amount
+        );
+        expect(result.authority).toBe(authority);
+      });
+
+      it('should compute correct amount for different order totals and rates', async () => {
+        const testCases = [
+          { total: 10, rate: 60000, expected: 600000 },
+          { total: 150.5, rate: 58000, expected: 8729000 }, // 150.5 * 58000 = 8,729,000
+          { total: 0.01, rate: 65000, expected: 650 }, // Minimum order
+          { total: 9999.99, rate: 62000, expected: 619999380 }, // Large order
+        ];
+
+        for (const { total, rate, expected } of testCases) {
+          jest.clearAllMocks();
+          const input = createPaymentRequestInput({ amount: expected, order_id: `order-${total}` });
+          const mockOrder = createMockOrder({ id: `order-${total}`, total });
+          const authority = `A${Math.random().toString(36).substring(2, 15)}`;
+
+          orderService.findOne.mockResolvedValue(mockOrder as never);
+          currencyService.getCurrentExchangeRate.mockResolvedValue({ rate } as never);
+          paymentService.requestPayment.mockResolvedValue({
+            data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
+            errors: [],
+          } as never);
+          orderService.setPaymentIntent.mockResolvedValue(undefined as never);
+
+          const result = await resolver.requestZarinPalPayment(input);
+
+          expect(paymentService.requestPayment).toHaveBeenCalledWith(
+            expect.objectContaining({ amount: expected })
+          );
+          expect(result.authority).toBe(authority);
+        }
+      });
+
+      it('should reject when order total is not finite', async () => {
+        const input = createPaymentRequestInput({ order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: NaN });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order total is invalid or missing'
+        );
+      });
+
+      it('should reject when order total is zero', async () => {
+        const input = createPaymentRequestInput({ order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: 0 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order total is invalid or missing'
+        );
+      });
+
+      it('should reject when order total is negative', async () => {
+        const input = createPaymentRequestInput({ order_id: 'order-123' });
+        const mockOrder = createMockOrder({ total: -100 });
+
+        orderService.findOne.mockResolvedValue(mockOrder as never);
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order total is invalid or missing'
+        );
+      });
+    });
+  });
+
+  describe('cancelPendingZarinPalOrder', () => {
+    const authority = 'A00000123';
+    const orderId = 'order-123';
+
+    const createPendingOrder = (overrides: Partial<{
+      id: string;
+      status: OrderStatus;
+      paymentAuthority: string | null;
+    }> = {}) => ({
+      id: orderId,
+      status: OrderStatus.PENDING,
+      paymentAuthority: authority,
+      ...overrides,
+    });
+
+    const createCancelledOrder = (overrides: Partial<{
+      id: string;
+      status: OrderStatus;
+      paymentAuthority: string | null;
+    }> = {}) => ({
+      id: orderId,
+      status: OrderStatus.CANCELLED,
+      paymentAuthority: authority,
+      ...overrides,
+    });
+
+    const createConfirmedOrder = (overrides: Partial<{
+      id: string;
+      status: OrderStatus;
+      paymentAuthority: string | null;
+    }> = {}) => ({
+      id: orderId,
+      status: OrderStatus.CONFIRMED,
+      paymentAuthority: authority,
+      ...overrides,
+    });
+
+    beforeEach(() => {
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
+      orderService.findOne.mockResolvedValue(createPendingOrder() as never);
+      orderService.cancelPendingOrder.mockResolvedValue(createCancelledOrder() as never);
+    });
+
+    describe('Guest Cancel with Valid authority Test', () => {
+      it('should succeed when unauthenticated guest calls with valid authority and orderId', async () => {
+        const pendingOrder = createPendingOrder();
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([pendingOrder] as never);
+        orderService.findOne.mockResolvedValue(pendingOrder as never);
+        orderService.cancelPendingOrder.mockResolvedValue(createCancelledOrder() as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(orderId, authority);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        expect(orderService.findOne).toHaveBeenCalledWith(orderId);
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith(orderId);
+        expect(result).toBe(true);
+      });
+
+      it('should succeed when unauthenticated guest calls with authority only (no orderId in sessionStorage)', async () => {
+        const pendingOrder = createPendingOrder();
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([pendingOrder] as never);
+        orderService.cancelPendingOrder.mockResolvedValue(createCancelledOrder() as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        expect(orderService.findOne).not.toHaveBeenCalled();
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith(orderId);
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('Unauthenticated Caller With Mismatched / Missing authority Test', () => {
+      it('should reject when caller passes orderId with wrong authority', async () => {
+        const pendingOrder = createPendingOrder({ paymentAuthority: authority });
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([pendingOrder] as never);
+        orderService.findOne.mockResolvedValue(pendingOrder as never);
+
+        await expect(resolver.cancelPendingZarinPalOrder(orderId, 'WRONG_AUTHORITY')).rejects.toThrow(
+          'Order does not match the provided payment authority'
+        );
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject when caller passes orderId without authority (no ownership proof)', async () => {
+        const pendingOrder = createPendingOrder();
+        orderService.findOne.mockResolvedValue(pendingOrder as never);
+
+        await expect(resolver.cancelPendingZarinPalOrder(orderId, undefined)).rejects.toThrow(
+          ForbiddenException
+        );
+
+        expect(orderService.findOne).toHaveBeenCalledWith(orderId);
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject when caller passes empty authority string (no ownership proof)', async () => {
+        const pendingOrder = createPendingOrder();
+        orderService.findOne.mockResolvedValue(pendingOrder as never);
+
+        await expect(resolver.cancelPendingZarinPalOrder(orderId, '')).rejects.toThrow(
+          ForbiddenException
+        );
+
+        expect(orderService.findOne).toHaveBeenCalledWith(orderId);
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject when caller passes authority with no matching order', async () => {
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
+
+        await expect(resolver.cancelPendingZarinPalOrder(undefined, 'NONEXISTENT_AUTHORITY')).rejects.toThrow(
+          'No matching order found for payment authority'
+        );
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Already CONFIRMED Order Test', () => {
+      it('should reject when authority belongs to a CONFIRMED order', async () => {
+        const confirmedOrder = createConfirmedOrder();
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([confirmedOrder] as never);
+
+        await expect(resolver.cancelPendingZarinPalOrder(undefined, authority)).rejects.toThrow(
+          `Cannot cancel order ${orderId} with status ${OrderStatus.CONFIRMED}. Only PENDING orders can be cancelled.`
+        );
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject when orderId + authority belongs to a CONFIRMED order', async () => {
+        const confirmedOrder = createConfirmedOrder();
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([confirmedOrder] as never);
+        orderService.findOne.mockResolvedValue(confirmedOrder as never);
+
+        await expect(resolver.cancelPendingZarinPalOrder(orderId, authority)).rejects.toThrow(
+          `Cannot cancel order ${orderId} with status ${OrderStatus.CONFIRMED}. Only PENDING orders can be cancelled.`
+        );
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+    });
+
+    describe('Idempotent Repeat CANCELLED Test', () => {
+      it('should succeed idempotently when order is already CANCELLED (authority only)', async () => {
+        const cancelledOrder = createCancelledOrder();
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([cancelledOrder] as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+        expect(result).toBe(true);
+      });
+
+      it('should succeed idempotently when order is already CANCELLED (orderId + authority)', async () => {
+        const cancelledOrder = createCancelledOrder();
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([cancelledOrder] as never);
+        orderService.findOne.mockResolvedValue(cancelledOrder as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(orderId, authority);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+        expect(result).toBe(true);
+      });
+    });
+
+    describe('Multiple Orders with Same Authority', () => {
+      it('should cancel all PENDING orders sharing the same authority', async () => {
+        const order1 = createPendingOrder({ id: 'order-1' });
+        const order2 = createPendingOrder({ id: 'order-2', paymentAuthority: authority });
+        const order3 = createCancelledOrder({ id: 'order-3', paymentAuthority: authority });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2, order3] as never);
+        orderService.cancelPendingOrder
+          .mockResolvedValueOnce(createCancelledOrder({ id: 'order-1' }) as never)
+          .mockResolvedValueOnce(createCancelledOrder({ id: 'order-2' }) as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
+
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledTimes(2);
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-2');
+        expect(result).toBe(true);
+      });
+    });
+
+    // --- New authorization path: no authority, require orderId + ownership ---
+    describe('Owner Authorization Without Authority', () => {
+      const orderId = 'order-123';
+      const customerEmail = 'customer@example.com';
+      const guestToken = 'abcdefghijklmnop'; // 16 chars
+
+      const createPendingOrderWithEmail = (overrides: Partial<{
+        id: string;
+        status: OrderStatus;
+        customerEmail: string | null;
+        notes: string | null;
+        paymentVerifiedAt: Date | null;
+      }> = {}) => ({
+        id: orderId,
+        status: OrderStatus.PENDING,
+        customerEmail,
+        notes: `[GuestToken: ${guestToken}]`,
+        paymentVerifiedAt: null,
+        ...overrides,
+      });
+
+      const createCancelledOrderWithEmail = (overrides: Partial<{
+        id: string;
+        status: OrderStatus;
+        customerEmail: string | null;
+        notes: string | null;
+      }> = {}) => ({
+        id: orderId,
+        status: OrderStatus.CANCELLED,
+        customerEmail,
+        notes: `[GuestToken: ${guestToken}]`,
+        ...overrides,
+      });
+
+      beforeEach(() => {
+        jest.clearAllMocks();
+        orderService.cancelPendingOrder.mockResolvedValue(undefined as never);
+      });
+
+      it('should succeed when owner email matches and no authority provided', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined);
+
+        expect(orderService.findOne).toHaveBeenCalledWith(orderId);
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith(orderId);
+        expect(result).toBe(true);
+      });
+
+      it('should reject with ForbiddenException when logged-in user email differs and no guestToken', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-2', email: 'other@example.com' }, undefined)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject with ForbiddenException when anonymous (no user) and no guestToken', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, undefined)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject with ForbiddenException when anonymous with wrong guestToken', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail, notes: '[GuestToken: wrongtoken12345]' });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, 'wrongtoken12345')
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should succeed when anonymous with correct guestToken in notes', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail, notes: `[GuestToken: ${guestToken}]` });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, guestToken);
+
+        expect(orderService.findOne).toHaveBeenCalledWith(orderId);
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith(orderId);
+        expect(result).toBe(true);
+      });
+
+      it('should reject prefix trick: notes has longer token, caller provides prefix (< full token)', async () => {
+        const longToken = 'abcdefghijklmnopXYZ'; // 19 chars
+        const prefixToken = 'abcdefghijklmnop'; // 16 chars, prefix of longToken
+        const order = createPendingOrderWithEmail({ customerEmail, notes: `[GuestToken: ${longToken}]` });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, prefixToken)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject short token (< 16 chars) even if present in notes', async () => {
+        const shortToken = 'abc123'; // 6 chars
+        const order = createPendingOrderWithEmail({ customerEmail, notes: `[GuestToken: ${shortToken}]` });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, undefined, shortToken)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject when no orderId and no authority provided', async () => {
+        await expect(
+          resolver.cancelPendingZarinPalOrder(undefined, undefined, undefined, undefined)
+        ).rejects.toThrow(BadRequestException);
+
+        expect(orderService.findOne).not.toHaveBeenCalled();
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should reject with BadRequestException when owner but order is CONFIRMED', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail, status: OrderStatus.CONFIRMED });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined)
+        ).rejects.toThrow(BadRequestException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should succeed idempotently when owner and order is already CANCELLED', async () => {
+        const order = createCancelledOrderWithEmail({ customerEmail });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+        expect(result).toBe(true);
+      });
+
+      it('should reject with BadRequestException when owner but order has paymentVerifiedAt set', async () => {
+        const order = createPendingOrderWithEmail({ customerEmail, paymentVerifiedAt: new Date() });
+        orderService.findOne.mockResolvedValue(order as never);
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined)
+        ).rejects.toThrow(BadRequestException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+
+      it('should convert NotFoundException from findOne to ForbiddenException', async () => {
+        orderService.findOne.mockRejectedValue(new NotFoundException('Order not found'));
+
+        await expect(
+          resolver.cancelPendingZarinPalOrder(orderId, undefined, { id: 'user-1', email: customerEmail }, undefined)
+        ).rejects.toThrow(ForbiddenException);
+
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Multi-Seller Batch orderIds Tests', () => {
+    const createMockOrder = (overrides: Partial<{
+      id: string;
+      status: OrderStatus;
+      total: number;
+      customerId: string | null;
+      customerEmail: string | null;
+      paymentAuthority: string | null;
+      paymentAmount: number | null;
+      paymentCurrency: string | null;
+      orderNumber: string;
+      notes: string | null;
+    }> = {}) => ({
+      id: 'order-123',
+      status: OrderStatus.PENDING,
+      total: 80,
+      customerId: 'cust-A',
+      customerEmail: 'test@example.com',
+      paymentAuthority: null,
+      paymentAmount: null,
+      paymentCurrency: null,
+      orderNumber: 'ORD-123',
+      notes: null,
+      ...overrides,
+    });
+
+    const authority = 'A00000000000000000000000000000000000000';
+    const refId = 123456;
+
+    beforeEach(() => {
+      jest.clearAllMocks();
+      orderService.findOne.mockReset();
+      orderService.findOrdersByPaymentAuthority.mockReset();
+      orderService.setPaymentIntent.mockReset();
+      orderService.confirmOrderPayment.mockReset();
+      orderService.cancelPendingOrder.mockReset();
+      orderService.updateOrderStatus?.mockReset();
+      paymentService.requestPayment.mockReset();
+      paymentService.verifyPayment.mockReset();
+      currencyService.getCurrentExchangeRate.mockReset();
+
+      orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);

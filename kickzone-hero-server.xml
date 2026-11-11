@@ -1,0 +1,3190 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: libs/server/inputs/src/lib/product.input.ts, libs/server/resolvers/src/lib/product.resolver.ts, libs/server/resolvers/src/lib/product.resolver.spec.ts, libs/server/services/src/lib/product.service.ts, libs/server/services/src/lib/product.service.spec.ts, libs/shared/validation/src/lib/catalog.ts
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+libs/
+  server/
+    inputs/
+      src/
+        lib/
+          product.input.ts
+    resolvers/
+      src/
+        lib/
+          product.resolver.spec.ts
+          product.resolver.ts
+    services/
+      src/
+        lib/
+          product.service.spec.ts
+          product.service.ts
+  shared/
+    validation/
+      src/
+        lib/
+          catalog.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="libs/server/resolvers/src/lib/product.resolver.spec.ts">
+import { ProductResolver } from './product.resolver';
+import * as fs from 'fs';
+import * as path from 'path';
+import { FileUpload } from './product.resolver';
+import { Readable } from 'stream';
+
+jest.mock('fs');
+jest.mock('@kickzone-workspace/services');
+
+interface MockWriteStream {
+  on: jest.Mock;
+  once: jest.Mock;
+  removeListener: jest.Mock;
+  emit: jest.Mock;
+  end: jest.Mock;
+  write: jest.Mock;
+}
+
+interface MockSellerService {
+  [key: string]: unknown;
+}
+
+describe('ProductResolver', () => {
+  let resolver: ProductResolver;
+  let mockProductService: {
+    addImagesToProductInfo: jest.Mock;
+    removeImageFromProductInfo: jest.Mock;
+  };
+  let mockSellerService: MockSellerService;
+
+  const uploadDir = path.resolve(process.cwd(), 'uploads', 'products');
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockProductService = {
+      addImagesToProductInfo: jest.fn().mockResolvedValue(undefined),
+      removeImageFromProductInfo: jest.fn().mockResolvedValue(undefined),
+    };
+    mockSellerService = {};
+    resolver = new ProductResolver(
+      mockProductService as never,
+      mockSellerService as never
+    );
+
+    (fs.existsSync as jest.Mock).mockReturnValue(true);
+    (fs.mkdirSync as jest.Mock).mockImplementation(jest.fn());
+    (fs.unlinkSync as jest.Mock).mockImplementation(jest.fn());
+    (fs.createWriteStream as jest.Mock).mockImplementation((): MockWriteStream => {
+      const mockWriteStream: MockWriteStream = {
+        on: jest.fn((_event: string, cb: () => void) => {
+          if (_event === 'finish') {
+            setImmediate(cb);
+          }
+          return mockWriteStream;
+        }),
+        once: jest.fn((_event: string, cb: () => void) => {
+          if (_event === 'finish') {
+            setImmediate(cb);
+          }
+          return mockWriteStream;
+        }),
+        removeListener: jest.fn((_arg: unknown) => {
+          return mockWriteStream;
+        }),
+        emit: jest.fn((_arg: unknown) => {
+          return true;
+        }),
+        end: jest.fn(),
+        write: jest.fn(),
+      };
+      return mockWriteStream;
+    });
+  });
+
+  describe('uploadProductInfoImages', () => {
+    const createMockFile = (filename: string): Promise<FileUpload> => {
+      const readable = new Readable({
+        read() {
+          this.push(null);
+        },
+      });
+      return Promise.resolve({
+        filename,
+        mimetype: 'image/jpeg',
+        encoding: '7bit',
+        createReadStream: () => readable,
+      });
+    };
+
+    it('sanitizes traversal filename like "../../evil.js" to safe basename and writes inside uploadDir', async () => {
+      const files = [createMockFile('../../evil.js')];
+      const result = await resolver.uploadProductInfoImages(1, files);
+
+      expect(result).toHaveLength(1);
+      const savedPath = (fs.createWriteStream as jest.Mock).mock.calls[0][0];
+      expect(savedPath).toContain('uploads' + path.sep + 'products' + path.sep);
+      expect(savedPath).not.toContain('..');
+      expect(result[0]).toMatch(/\/uploads\/products\/\d+-evil\.js$/);
+      expect(result[0].split('/uploads/products/')[1]).not.toContain('/');
+    });
+
+    it('sanitizes traversal filename with backslashes like "..\\..\\x" to safe basename and writes inside uploadDir', async () => {
+      const files = [createMockFile('..\\..\\x')];
+      const result = await resolver.uploadProductInfoImages(1, files);
+
+      expect(result).toHaveLength(1);
+      const savedPath = (fs.createWriteStream as jest.Mock).mock.calls[0][0];
+      expect(savedPath).toContain('uploads' + path.sep + 'products' + path.sep);
+      expect(savedPath).not.toContain('..');
+      expect(result[0]).toMatch(/\/uploads\/products\/\d+-x$/);
+      expect(result[0].split('/uploads/products/')[1]).not.toContain('/');
+    });
+
+    it('sanitizes special characters in filename', async () => {
+      const files = [createMockFile('my file@#$.jpg')];
+      const result = await resolver.uploadProductInfoImages(1, files);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatch(/\/uploads\/products\/\d+-my_file___\.jpg$/);
+    });
+
+    it('falls back to "file" for empty or only-dots filename', async () => {
+      const files = [createMockFile('...')];
+      const result = await resolver.uploadProductInfoImages(1, files);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatch(/\/uploads\/products\/\d+-file$/);
+    });
+
+    it('returns URL with no path traversal after /uploads/products/', async () => {
+      const files = [createMockFile('normal.jpg')];
+      const result = await resolver.uploadProductInfoImages(1, files);
+
+      expect(result).toHaveLength(1);
+      const urlPart = result[0].split('/uploads/products/')[1];
+      expect(urlPart).not.toContain('/');
+      expect(urlPart).not.toContain('..');
+    });
+  });
+
+  describe('removeProductInfoImage', () => {
+    it('rejects traversal imageName like "../../etc/passwd" and does not call unlinkSync or removeImageFromProductInfo', async () => {
+      const result = await resolver.removeProductInfoImage(1, '../../etc/passwd');
+
+      expect(result).toBe(false);
+      expect(fs.unlinkSync).not.toHaveBeenCalled();
+      expect(mockProductService.removeImageFromProductInfo).not.toHaveBeenCalled();
+    });
+
+    it('rejects traversal imageName with backslashes like "..\\..\\x" and does not call unlinkSync or removeImageFromProductInfo', async () => {
+      const result = await resolver.removeProductInfoImage(1, '..\\..\\x');
+
+      expect(result).toBe(false);
+      expect(fs.unlinkSync).not.toHaveBeenCalled();
+      expect(mockProductService.removeImageFromProductInfo).not.toHaveBeenCalled();
+    });
+
+    it('rejects empty imageName', async () => {
+      const result = await resolver.removeProductInfoImage(1, '');
+
+      expect(result).toBe(false);
+      expect(fs.unlinkSync).not.toHaveBeenCalled();
+      expect(mockProductService.removeImageFromProductInfo).not.toHaveBeenCalled();
+    });
+
+    it('rejects "." as imageName', async () => {
+      const result = await resolver.removeProductInfoImage(1, '.');
+
+      expect(result).toBe(false);
+      expect(fs.unlinkSync).not.toHaveBeenCalled();
+      expect(mockProductService.removeImageFromProductInfo).not.toHaveBeenCalled();
+    });
+
+    it('rejects ".." as imageName', async () => {
+      const result = await resolver.removeProductInfoImage(1, '..');
+
+      expect(result).toBe(false);
+      expect(fs.unlinkSync).not.toHaveBeenCalled();
+      expect(mockProductService.removeImageFromProductInfo).not.toHaveBeenCalled();
+    });
+
+    it('rejects imageName that differs from basename (contains path separators)', async () => {
+      const result = await resolver.removeProductInfoImage(1, 'subdir/file.jpg');
+
+      expect(result).toBe(false);
+      expect(fs.unlinkSync).not.toHaveBeenCalled();
+      expect(mockProductService.removeImageFromProductInfo).not.toHaveBeenCalled();
+    });
+
+    it('unlinks file inside uploads/products and calls removeImageFromProductInfo with correct URL for normal name', async () => {
+      const result = await resolver.removeProductInfoImage(1, 'a.jpg');
+
+      expect(result).toBe(true);
+      expect(fs.unlinkSync).toHaveBeenCalledWith(
+        path.resolve(uploadDir, 'a.jpg')
+      );
+      expect(mockProductService.removeImageFromProductInfo).toHaveBeenCalledWith(
+        1,
+        '/uploads/products/a.jpg'
+      );
+    });
+
+    it('returns false and does not call service if fs.unlinkSync throws', async () => {
+      (fs.unlinkSync as jest.Mock).mockImplementationOnce(() => {
+        throw new Error('EACCES');
+      });
+
+      const result = await resolver.removeProductInfoImage(1, 'a.jpg');
+
+      expect(result).toBe(false);
+      expect(mockProductService.removeImageFromProductInfo).not.toHaveBeenCalled();
+    });
+
+    it('returns false and does not call service if removeImageFromProductInfo throws', async () => {
+      mockProductService.removeImageFromProductInfo.mockRejectedValueOnce(
+        new Error('DB error')
+      );
+
+      const result = await resolver.removeProductInfoImage(1, 'a.jpg');
+
+      expect(result).toBe(false);
+      expect(fs.unlinkSync).toHaveBeenCalledWith(
+        path.resolve(uploadDir, 'a.jpg')
+      );
+    });
+  });
+});
+</file>
+
+<file path="libs/server/services/src/lib/product.service.spec.ts">
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository, In, FindOneOptions } from 'typeorm';
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
+import { ProductService } from './product.service';
+import {
+  Brand,
+  Category,
+  Color,
+  OrderItem,
+  Product,
+  ProductInfo,
+  ProductInfoColor,
+  SellerInfo,
+  SellerProduct,
+  ProductDescription,
+  SiteLanguage,
+  User,
+  UserRole,
+} from '@kickzone-workspace/entities';
+import { TranslationService } from './translation.service';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
+import {
+  CreateProductInfoInput,
+  UpdateProductInput,
+} from '@kickzone-workspace/inputs';
+
+describe('ProductService - Color Handling', () => {
+  let service: ProductService;
+  let productRepo: jest.Mocked<Repository<Product>>;
+  let productInfoRepo: jest.Mocked<Repository<ProductInfo>>;
+  let productInfoColorRepo: jest.Mocked<Repository<ProductInfoColor>>;
+  let colorRepo: jest.Mocked<Repository<Color>>;
+  let sellerProductRepo: jest.Mocked<Repository<SellerProduct>>;
+  let sellerInfoRepo: jest.Mocked<Repository<SellerInfo>>;
+
+  const mockColors: Color[] = [
+    { id: 1, name: 'Red', hexCode: '#ff0000', translations: [] } as unknown as Color,
+    { id: 2, name: 'Blue', hexCode: '#0000ff', translations: [] } as unknown as Color,
+    { id: 3, name: 'Green', hexCode: '#00ff00', translations: [] } as unknown as Color,
+  ];
+
+  beforeEach(async () => {
+    const mockProductRepo = {
+      findOne: jest.fn(),
+      findOneBy: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+      createQueryBuilder: jest.fn(),
+    };
+
+    const mockProductInfoRepo = {
+      findOne: jest.fn(),
+      findOneBy: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+      find: jest.fn().mockResolvedValue([]),
+      createQueryBuilder: jest.fn(),
+    };
+
+    const mockProductInfoColorRepo = {
+      delete: jest.fn().mockResolvedValue({ affected: 1, raw: [] }),
+      create: jest.fn().mockImplementation((dto) => dto),
+      save: jest.fn().mockImplementation((links) => Promise.resolve(links)),
+    };
+
+    const mockColorRepo = {
+      findBy: jest.fn(),
+      findOneBy: jest.fn(),
+    };
+
+    const mockCategoryRepo = {
+      findBy: jest.fn(),
+      findOneBy: jest.fn(),
+      create: jest.fn(),
+      save: jest.fn(),
+    };
+
+    const mockSellerProductRepo = {
+      findOne: jest.fn(),
+      find: jest.fn(),
+      count: jest.fn(),
+      create: jest.fn().mockImplementation((dto) => dto),
+      save: jest.fn().mockImplementation((dto) => Promise.resolve(dto)),
+      delete: jest.fn().mockResolvedValue({ affected: 1 }),
+    };
+
+    const mockBrandRepo = {
+      findOneBy: jest.fn(),
+      findOne: jest.fn(),
+      findBy: jest.fn(),
+      create: jest.fn().mockImplementation((dto) => dto),
+      save: jest.fn().mockImplementation((dto) => Promise.resolve(dto)),
+    };
+
+    const mockSellerInfoRepo = {
+      findOne: jest.fn(),
+      findOneBy: jest.fn(),
+      create: jest.fn().mockImplementation((dto) => dto),
+      save: jest.fn().mockImplementation((dto) => Promise.resolve(dto)),
+    };
+
+    const mockOrderItemRepo = {
+      count: jest.fn(),
+    };
+
+    const mockTranslationService = {
+      translateEntity: jest.fn(),
+    };
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ProductService,
+        {
+          provide: getRepositoryToken(Product),
+          useValue: mockProductRepo,
+        },
+        {
+          provide: getRepositoryToken(ProductInfo),
+          useValue: mockProductInfoRepo,
+        },
+        {
+          provide: getRepositoryToken(ProductInfoColor),
+          useValue: mockProductInfoColorRepo,
+        },
+        {
+          provide: getRepositoryToken(Color),
+          useValue: mockColorRepo,
+        },
+        {
+          provide: getRepositoryToken(Category),
+          useValue: mockCategoryRepo,
+        },
+        {
+          provide: getRepositoryToken(Brand),
+          useValue: mockBrandRepo,
+        },
+        {
+          provide: getRepositoryToken(SellerProduct),
+          useValue: mockSellerProductRepo,
+        },
+        {
+          provide: getRepositoryToken(SellerInfo),
+          useValue: mockSellerInfoRepo,
+        },
+        {
+          provide: getRepositoryToken(OrderItem),
+          useValue: mockOrderItemRepo,
+        },
+        {
+          provide: getRepositoryToken(ProductDescription),
+          useValue: {
+            find: jest.fn().mockResolvedValue([]),
+            findOne: jest.fn().mockResolvedValue(null),
+            create: jest.fn().mockImplementation((dto) => dto),
+            save: jest.fn().mockImplementation((dto) => Promise.resolve(dto)),
+            delete: jest.fn().mockResolvedValue({ affected: 1 }),
+          },
+        },
+        {
+          provide: getRepositoryToken(SiteLanguage),
+          useValue: {
+            find: jest.fn().mockResolvedValue([]),
+            findOne: jest.fn().mockResolvedValue(null),
+          },
+        },
+        {
+          provide: TranslationService,
+          useValue: mockTranslationService,
+        },
+      ],
+    }).compile();
+
+    service = module.get<ProductService>(ProductService);
+    productRepo = module.get(getRepositoryToken(Product));
+    productInfoRepo = module.get(getRepositoryToken(ProductInfo));
+    productInfoColorRepo = module.get(getRepositoryToken(ProductInfoColor));
+    colorRepo = module.get(getRepositoryToken(Color));
+    sellerProductRepo = module.get(getRepositoryToken(SellerProduct));
+    sellerInfoRepo = module.get(getRepositoryToken(SellerInfo));
+  });
+
+  describe('createProductInfo with multiple colors', () => {
+    it('sets ALL chosen colors from input to the product variant, not just the first one', async () => {
+      const mockProduct: Product = {
+        id: 100,
+        name: 'Running Shoes',
+        sku: 'RUN-001',
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      };
+
+      const input: CreateProductInfoInput = {
+        productId: 100,
+        size: '42',
+        sizeKind: SizeKind.Footwear,
+        colorIds: [1, 2, 3], // 3 colors chosen from input
+        weight: 350,
+      };
+
+      productRepo.findOneBy.mockResolvedValue(mockProduct);
+      colorRepo.findBy.mockResolvedValue(mockColors);
+
+      const createdProductInfo: ProductInfo = {
+        id: 50,
+        product: mockProduct,
+        size: '42',
+        sizeKind: SizeKind.Footwear,
+        weight: 350,
+        colorLinks: [],
+        colors: [],
+        images: [],
+      };
+
+      productInfoRepo.create.mockReturnValue(createdProductInfo);
+      productInfoRepo.save.mockResolvedValue(createdProductInfo);
+
+      const expectedLinks: Partial<ProductInfoColor>[] = [
+        { productInfo: createdProductInfo, color: mockColors[0], position: 0 },
+        { productInfo: createdProductInfo, color: mockColors[1], position: 1 },
+        { productInfo: createdProductInfo, color: mockColors[2], position: 2 },
+      ];
+
+      // getProductById mock after creating variant
+      const fullProduct: Product = {
+        ...mockProduct,
+        productInfos: [
+          {
+            ...createdProductInfo,
+            colorLinks: expectedLinks as ProductInfoColor[],
+          },
+        ],
+      };
+      productRepo.findOne.mockResolvedValue(fullProduct);
+
+      const result = await service.createProductInfo(input);
+
+      // Verify all colors were queried via repository
+      expect(colorRepo.findBy).toHaveBeenCalledWith({
+        id: In([1, 2, 3]),
+      });
+
+      // Verify productInfoColor was deleted for old links
+      expect(productInfoColorRepo.delete).toHaveBeenCalledWith({
+        productInfo: { id: 50 },
+      });
+
+      // Verify create was called for EACH color in order
+      expect(productInfoColorRepo.create).toHaveBeenCalledTimes(3);
+      expect(productInfoColorRepo.create).toHaveBeenNthCalledWith(1, {
+        productInfo: createdProductInfo,
+        color: mockColors[0],
+        position: 0,
+      });
+      expect(productInfoColorRepo.create).toHaveBeenNthCalledWith(2, {
+        productInfo: createdProductInfo,
+        color: mockColors[1],
+        position: 1,
+      });
+      expect(productInfoColorRepo.create).toHaveBeenNthCalledWith(3, {
+        productInfo: createdProductInfo,
+        color: mockColors[2],
+        position: 2,
+      });
+
+      // Verify save was called with all 3 links, NOT just the first one
+      expect(productInfoColorRepo.save).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ position: 0, color: mockColors[0] }),
+          expect.objectContaining({ position: 1, color: mockColors[1] }),
+          expect.objectContaining({ position: 2, color: mockColors[2] }),
+        ])
+      );
+      const savedLinksArg = productInfoColorRepo.save.mock.calls[0][0] as ProductInfoColor[];
+      expect(savedLinksArg).toHaveLength(3);
+
+      // Verify result has the variant with all color links
+      expect(result.productInfos[0].colorLinks).toHaveLength(3);
+    });
+
+    it('preserves the exact submitted order of chosen colors', async () => {
+      const mockProduct: Product = {
+        id: 100,
+        name: 'Running Shoes',
+        sku: 'RUN-002',
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      };
+
+      // Submitted in reverse order: [3, 1]
+      const input: CreateProductInfoInput = {
+        productId: 100,
+        size: 'L',
+        sizeKind: SizeKind.Apparel,
+        colorIds: [3, 1],
+        weight: 200,
+      };
+
+      productRepo.findOneBy.mockResolvedValue(mockProduct);
+      colorRepo.findBy.mockResolvedValue([mockColors[0], mockColors[2]]);
+
+      const createdProductInfo: ProductInfo = {
+        id: 51,
+        product: mockProduct,
+        size: 'L',
+        sizeKind: SizeKind.Apparel,
+        weight: 200,
+        colorLinks: [],
+        colors: [],
+        images: [],
+      };
+
+      productInfoRepo.create.mockReturnValue(createdProductInfo);
+      productInfoRepo.save.mockResolvedValue(createdProductInfo);
+      productRepo.findOne.mockResolvedValue(mockProduct);
+
+      await service.createProductInfo(input);
+
+      expect(productInfoColorRepo.create).toHaveBeenNthCalledWith(1, {
+        productInfo: createdProductInfo,
+        color: mockColors[2], // ID 3 is first
+        position: 0,
+      });
+      expect(productInfoColorRepo.create).toHaveBeenNthCalledWith(2, {
+        productInfo: createdProductInfo,
+        color: mockColors[0], // ID 1 is second
+        position: 1,
+      });
+    });
+
+    it('deduplicates duplicate chosen colors from input while keeping order', async () => {
+      const mockProduct: Product = {
+        id: 100,
+        name: 'T-Shirt',
+        sku: 'TSHIRT-001',
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      };
+
+      const input: CreateProductInfoInput = {
+        productId: 100,
+        size: 'M',
+        sizeKind: SizeKind.Apparel,
+        colorIds: [1, 2, 1], // duplicate 1
+        weight: 150,
+      };
+
+      productRepo.findOneBy.mockResolvedValue(mockProduct);
+      colorRepo.findBy.mockResolvedValue([mockColors[0], mockColors[1]]);
+
+      const createdProductInfo: ProductInfo = {
+        id: 52,
+        product: mockProduct,
+        size: 'M',
+        sizeKind: SizeKind.Apparel,
+        weight: 150,
+        colorLinks: [],
+        colors: [],
+        images: [],
+      };
+
+      productInfoRepo.create.mockReturnValue(createdProductInfo);
+      productInfoRepo.save.mockResolvedValue(createdProductInfo);
+      productRepo.findOne.mockResolvedValue(mockProduct);
+
+      await service.createProductInfo(input);
+
+      expect(productInfoColorRepo.create).toHaveBeenCalledTimes(2);
+      expect(productInfoColorRepo.create).toHaveBeenNthCalledWith(1, {
+        productInfo: createdProductInfo,
+        color: mockColors[0],
+        position: 0,
+      });
+      expect(productInfoColorRepo.create).toHaveBeenNthCalledWith(2, {
+        productInfo: createdProductInfo,
+        color: mockColors[1],
+        position: 1,
+      });
+    });
+
+    it('throws error when colorIds is empty', async () => {
+      productRepo.findOneBy.mockResolvedValue({ id: 100 } as Product);
+
+      const input: CreateProductInfoInput = {
+        productId: 100,
+        size: 'M',
+        sizeKind: SizeKind.Apparel,
+        colorIds: [],
+        weight: 150,
+      };
+
+      await expect(service.createProductInfo(input)).rejects.toThrow(
+        'At least one color is required.'
+      );
+    });
+
+    it('throws error when one or more chosen color IDs do not exist in database', async () => {
+      productRepo.findOneBy.mockResolvedValue({ id: 100 } as Product);
+      colorRepo.findBy.mockResolvedValue([mockColors[0]]); // only found 1 of 2
+
+      const input: CreateProductInfoInput = {
+        productId: 100,
+        size: 'M',
+        sizeKind: SizeKind.Apparel,
+        colorIds: [1, 999],
+        weight: 150,
+      };
+
+      await expect(service.createProductInfo(input)).rejects.toThrow(
+        'One or more colors were not found.'
+      );
+    });
+  });
+
+  describe('updateProductInfo with multiple colors', () => {
+    it('updates and sets ALL chosen colors for an existing variant', async () => {
+      const existingProductInfo: ProductInfo = {
+        id: 60,
+        size: 'S',
+        sizeKind: SizeKind.Apparel,
+        weight: 100,
+        colorLinks: [],
+        colors: [],
+        images: [],
+        product: { id: 100 } as Product,
+      };
+
+      productInfoRepo.findOne.mockResolvedValue(existingProductInfo);
+      colorRepo.findBy.mockResolvedValue([mockColors[0], mockColors[1]]);
+      productInfoRepo.save.mockResolvedValue(existingProductInfo);
+
+      await service.updateProductInfo(60, 'M', [1, 2], 200);
+
+      expect(productInfoColorRepo.delete).toHaveBeenCalledWith({
+        productInfo: { id: 60 },
+      });
+      expect(productInfoColorRepo.create).toHaveBeenCalledTimes(2);
+      expect(productInfoColorRepo.save).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ color: mockColors[0], position: 0 }),
+          expect.objectContaining({ color: mockColors[1], position: 1 }),
+        ])
+      );
+    });
+  });
+
+  describe('updateProduct with variants (Seller and Admin persistence & security)', () => {
+    it('allows a SELLER to add a new variant to their owned product and persists it with a generated ID', async () => {
+      const sellerUser = {
+        id: 10,
+        role: UserRole.SELLER,
+        username: 'seller_saintbala',
+      } as unknown as User;
+
+      const sellerInfo = {
+        id: 1,
+        user: { id: 10 },
+        storeName: 'SAINTBALA Flagship',
+      } as unknown as SellerInfo;
+
+      const initialProduct: Product = {
+        id: 100,
+        name: 'SAINTBALA Heavyweight Hoodie',
+        sku: 'SB-HOOD-01',
+        sellerId: 1,
+        seller: sellerInfo,
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      } as unknown as Product;
+
+      sellerInfoRepo.findOne.mockResolvedValue(sellerInfo);
+      sellerInfoRepo.findOneBy.mockResolvedValue(sellerInfo);
+      colorRepo.findBy.mockResolvedValue([mockColors[0]]);
+
+      const createdVariant: ProductInfo = {
+        id: 501,
+        size: 'L',
+        sizeKind: SizeKind.Apparel,
+        weight: 650,
+        images: ['https://cdn.saintbala.com/hoodie-l.jpg'],
+        product: initialProduct,
+        colorLinks: [
+          {
+            id: 1,
+            position: 0,
+            color: mockColors[0],
+            productInfo: null as unknown as ProductInfo,
+          } as ProductInfoColor,
+        ],
+        colors: [mockColors[0]],
+      };
+
+      productInfoRepo.create.mockReturnValue(createdVariant);
+      productInfoRepo.save.mockResolvedValue(createdVariant);
+      productRepo.save.mockResolvedValue(initialProduct);
+
+      // getProductById mock after update
+      const refreshedProduct: Product = {
+        ...initialProduct,
+        productInfos: [createdVariant],
+      };
+
+      productRepo.findOne.mockImplementation(
+        async (options?: FindOneOptions<Product>) => {
+          const relations = options?.relations as string[] | undefined;
+          const where = options?.where as { id?: number } | undefined;
+          if (relations?.includes('descriptions')) {
+            return refreshedProduct;
+          }
+          if (where?.id === 100) {
+            return initialProduct;
+          }
+          return null;
+        }
+      );
+
+      const updateInput: UpdateProductInput = {
+        id: 100,
+        name: 'SAINTBALA Heavyweight Hoodie',
+        sku: 'SB-HOOD-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'L',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 650,
+            images: ['https://cdn.saintbala.com/hoodie-l.jpg'],
+            stockQuantity: 20,
+            price: 280,
+            costPrice: 100,
+            discount: 0,
+          },
+        ],
+      };
+
+      const result = await service.updateProduct(updateInput, sellerUser);
+
+      // Assert variant has been generated with server ID
+      expect(result.productInfos).toHaveLength(1);
+      expect(result.productInfos[0].id).toBe(501);
+      expect(result.productInfos[0].size).toBe('L');
+      expect(result.productInfos[0].colors).toContainEqual(mockColors[0]);
+
+      // Assert database persistence
+      expect(productInfoRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          size: 'L',
+          sizeKind: SizeKind.Apparel,
+          weight: 650,
+        })
+      );
+      expect(productInfoRepo.save).toHaveBeenCalledWith(createdVariant);
+      expect(sellerProductRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          seller: sellerInfo,
+          price: 280,
+          stockQuantity: 20,
+        })
+      );
+      expect(sellerProductRepo.save).toHaveBeenCalled();
+    });
+
+    it('rejects with 403 Forbidden when a SELLER attempts to add a variant to a product owned by another seller', async () => {
+      const unauthorizedSellerUser = {
+        id: 20,
+        role: UserRole.SELLER,
+        username: 'intruder_seller',
+      } as unknown as User;
+
+      const unauthorizedSellerInfo = {
+        id: 2,
+        user: { id: 20 },
+        storeName: 'Other Store',
+      } as unknown as SellerInfo;
+
+      const productOwnedByOtherSeller: Product = {
+        id: 200,
+        name: 'SAINTBALA Leather Jacket',
+        sku: 'SB-JKT-01',
+        sellerId: 1, // Owned by seller ID 1!
+        seller: { id: 1 } as SellerInfo,
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      } as unknown as Product;
+
+      sellerInfoRepo.findOne.mockResolvedValue(unauthorizedSellerInfo);
+      productRepo.findOne.mockImplementation(
+        async (options?: FindOneOptions<Product>) => {
+          const where = options?.where as { id?: number } | undefined;
+          if (where?.id === 200) {
+            return productOwnedByOtherSeller;
+          }
+          return null;
+        }
+      );
+
+      const updateInput: UpdateProductInput = {
+        id: 200,
+        name: 'SAINTBALA Leather Jacket',
+        sku: 'SB-JKT-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'M',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 800,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(updateInput, unauthorizedSellerUser)
+      ).rejects.toThrow(ForbiddenException);
+
+      // Verify ZERO database modifications occurred
+      expect(productRepo.save).not.toHaveBeenCalled();
+      expect(productInfoRepo.create).not.toHaveBeenCalled();
+      expect(productInfoRepo.save).not.toHaveBeenCalled();
+      expect(sellerProductRepo.save).not.toHaveBeenCalled();
+    });
+
+    it('allows an ADMIN to add a new variant to any product and persists relational data cleanly', async () => {
+      const adminUser = {
+        id: 1,
+        role: UserRole.ADMIN,
+        username: 'admin',
+      } as unknown as User;
+
+      const productOwnedBySeller: Product = {
+        id: 300,
+        name: 'SAINTBALA Oversized Tee',
+        sku: 'SB-TEE-01',
+        sellerId: 99,
+        seller: { id: 99 } as SellerInfo,
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      } as unknown as Product;
+
+      colorRepo.findBy.mockResolvedValue([mockColors[1]]);
+
+      const adminCreatedVariant: ProductInfo = {
+        id: 701,
+        size: 'XL',
+        sizeKind: SizeKind.Apparel,
+        weight: 300,
+        images: ['https://cdn.saintbala.com/tee-xl.jpg'],
+        product: productOwnedBySeller,
+        colorLinks: [
+          {
+            id: 2,
+            position: 0,
+            color: mockColors[1],
+            productInfo: null as unknown as ProductInfo,
+          } as ProductInfoColor,
+        ],
+        colors: [mockColors[1]],
+      };
+
+      productInfoRepo.create.mockReturnValue(adminCreatedVariant);
+      productInfoRepo.save.mockResolvedValue(adminCreatedVariant);
+      productRepo.save.mockResolvedValue(productOwnedBySeller);
+
+      const refreshedProduct: Product = {
+        ...productOwnedBySeller,
+        productInfos: [adminCreatedVariant],
+      };
+
+      productRepo.findOne.mockImplementation(
+        async (options?: FindOneOptions<Product>) => {
+          const relations = options?.relations as string[] | undefined;
+          const where = options?.where as { id?: number } | undefined;
+          if (relations?.includes('descriptions')) {
+            return refreshedProduct;
+          }
+          if (where?.id === 300) {
+            return productOwnedBySeller;
+          }
+          return null;
+        }
+      );
+
+      const updateInput: UpdateProductInput = {
+        id: 300,
+        name: 'SAINTBALA Oversized Tee',
+        sku: 'SB-TEE-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'XL',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [2],
+            weight: 300,
+            images: ['https://cdn.saintbala.com/tee-xl.jpg'],
+          },
+        ],
+      };
+
+      const result = await service.updateProduct(updateInput, adminUser);
+
+      // Verify admin update succeeded and variant persisted with generated ID
+      expect(result.productInfos).toHaveLength(1);
+      expect(result.productInfos[0].id).toBe(701);
+      expect(result.productInfos[0].size).toBe('XL');
+      expect(result.productInfos[0].colors).toContainEqual(mockColors[1]);
+      expect(productInfoRepo.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          size: 'XL',
+          weight: 300,
+        })
+      );
+      expect(productInfoRepo.save).toHaveBeenCalledWith(adminCreatedVariant);
+    });
+
+    it('rejects with 400 Bad Request when submitting an invalid variant and does not persist', async () => {
+      const adminUser = {
+        id: 1,
+        role: UserRole.ADMIN,
+        username: 'admin',
+      } as unknown as User;
+
+      const targetProduct: Product = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categories: [],
+        productInfos: [],
+        sellerProducts: [],
+        archived: false,
+      } as unknown as Product;
+
+      productRepo.findOne.mockImplementation(
+        async (options?: FindOneOptions<Product>) => {
+          const where = options?.where as { id?: number } | undefined;
+          if (where?.id === 400) {
+            return targetProduct;
+          }
+          return null;
+        }
+      );
+
+      // 1. Negative stock quantity
+      const negativeStockInput: UpdateProductInput = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'M',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 400,
+            stockQuantity: -5,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(negativeStockInput, adminUser)
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateProduct(negativeStockInput, adminUser)
+      ).rejects.toThrow('Stock quantity cannot be negative.');
+
+      // 2. Missing colors
+      const missingColorsInput: UpdateProductInput = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'M',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [],
+            weight: 400,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(missingColorsInput, adminUser)
+      ).rejects.toThrow('Variant must have at least one color.');
+
+      // 3. Negative price
+      const negativePriceInput: UpdateProductInput = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'M',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 400,
+            price: -50,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(negativePriceInput, adminUser)
+      ).rejects.toThrow('Price cannot be negative.');
+
+      // 4. Invalid size
+      const invalidSizeInput: UpdateProductInput = {
+        id: 400,
+        name: 'SAINTBALA Track Pants',
+        sku: 'SB-TRACK-01',
+        categoryIds: [],
+        variants: [
+          {
+            size: 'NON_EXISTENT_SIZE',
+            sizeKind: SizeKind.Apparel,
+            colorIds: [1],
+            weight: 400,
+          },
+        ],
+      };
+
+      await expect(
+        service.updateProduct(invalidSizeInput, adminUser)
+      ).rejects.toThrow('Invalid apparel size. Use XS–4XL.');
+
+      // Assert no variant was persisted
+      expect(productInfoRepo.save).not.toHaveBeenCalled();
+    });
+  });
+});
+</file>
+
+<file path="libs/server/inputs/src/lib/product.input.ts">
+import {
+  InputType,
+  Field,
+  Int,
+  Float,
+  registerEnumType,
+} from '@nestjs/graphql';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
+import { ProductInfoFilterInput } from './product-info-filter.input';
+
+export enum ProductArchivedStatus {
+  ALL = 'ALL',
+  ACTIVE = 'ACTIVE',
+  ARCHIVED = 'ARCHIVED',
+}
+
+registerEnumType(ProductArchivedStatus, {
+  name: 'ProductArchivedStatus',
+});
+
+@InputType()
+export class ProductDescriptionInput {
+  @Field(() => Int, { nullable: true })
+  languageId?: number;
+
+  @Field({ nullable: true })
+  languageCode?: string;
+
+  @Field()
+  description: string;
+}
+
+@InputType()
+export class ProductVariantInput {
+  @Field(() => Int, { nullable: true })
+  id?: number;
+
+  @Field()
+  size: string;
+
+  @Field(() => SizeKind, { nullable: true })
+  sizeKind?: SizeKind;
+
+  @Field(() => [Int])
+  colorIds: number[];
+
+  @Field(() => Float)
+  weight: number;
+
+  @Field({ nullable: true })
+  sku?: string;
+
+  @Field(() => Float, { nullable: true })
+  price?: number;
+
+  @Field(() => Float, { nullable: true })
+  costPrice?: number;
+
+  @Field(() => Float, { nullable: true })
+  discount?: number;
+
+  @Field(() => Int, { nullable: true })
+  stockQuantity?: number;
+
+  @Field({ nullable: true })
+  boxLess?: boolean;
+
+  @Field(() => [String], { nullable: true })
+  images?: string[];
+}
+
+@InputType()
+export class CreateProductInput {
+  @Field()
+  name: string;
+
+  @Field()
+  sku: string;
+
+  @Field(() => [Int])
+  categoryIds: number[];
+
+  @Field(() => Int, { nullable: true })
+  brandId?: number | null;
+
+  @Field({ nullable: true })
+  description?: string;
+
+  @Field(() => [ProductDescriptionInput], { nullable: true })
+  descriptions?: ProductDescriptionInput[];
+
+  @Field(() => [ProductVariantInput], { nullable: true })
+  variants?: ProductVariantInput[];
+}
+
+@InputType()
+export class UpdateProductInput {
+  @Field(() => Int)
+  id: number;
+
+  @Field()
+  name: string;
+
+  @Field()
+  sku: string;
+
+  @Field(() => [Int])
+  categoryIds: number[];
+
+  @Field(() => Int, { nullable: true })
+  brandId?: number | null;
+
+  @Field({ nullable: true })
+  description?: string;
+
+  @Field(() => [ProductDescriptionInput], { nullable: true })
+  descriptions?: ProductDescriptionInput[];
+
+  @Field(() => [ProductVariantInput], { nullable: true })
+  variants?: ProductVariantInput[];
+}
+
+@InputType()
+export class CreateProductInfoInput {
+  @Field(() => Int)
+  productId: number;
+
+  @Field()
+  size: string;
+
+  @Field(() => SizeKind)
+  sizeKind: SizeKind;
+
+  @Field(() => [Int])
+  colorIds: number[];
+
+  @Field(() => Float)
+  weight: number;
+}
+
+@InputType()
+export class ProductFilterInput {
+  @Field({ nullable: true })
+  category?: string;
+
+  @Field(() => [String], { nullable: true })
+  categorySlugs?: string[];
+
+  @Field({ nullable: true })
+  brand?: string;
+
+  @Field(() => [String], { nullable: true })
+  brands?: string[];
+
+  @Field(() => [Int], { nullable: true })
+  ids?: number[];
+
+  @Field({ nullable: true })
+  searchTerm?: string;
+
+  @Field(() => ProductInfoFilterInput, { nullable: true })
+  productInfoFilter?: ProductInfoFilterInput;
+
+  @Field(() => [Int], { nullable: true })
+  categoryIds?: number[];
+
+  @Field({ nullable: true })
+  first?: number;
+
+  @Field({ nullable: true })
+  after?: string;
+
+  @Field(() => Int, { nullable: true })
+  categoryId?: number;
+
+  @Field({ nullable: true })
+  sort?: string;
+
+  @Field({ nullable: true })
+  sortOrder?: 'asc' | 'desc';
+
+  @Field(() => ProductArchivedStatus, { nullable: true })
+  archivedStatus?: ProductArchivedStatus;
+
+  @Field(() => Int, { nullable: true })
+  sellerId?: number;
+
+  @Field({ nullable: true })
+  onlyWithSellers?: boolean;
+
+  @Field({ nullable: true })
+  onlyInStock?: boolean;
+
+  @Field({ nullable: true })
+  onlyDiscounted?: boolean;
+}
+</file>
+
+<file path="libs/server/resolvers/src/lib/product.resolver.ts">
+import {
+  createProductInfoSchema,
+  createProductSchema,
+  productFilterSchema,
+  updateProductSchema,
+} from '@kickzone-workspace/validation';
+import { ZodValidationPipe } from './zod-validation.pipe';
+import {
+  Category,
+  Product,
+  ProductConnection,
+  SellerInfo,
+  SellerProduct,
+  User,
+  UserRole,
+  ProductDescription,
+} from '@kickzone-workspace/entities';
+import { RolesGuard, CatalogGuard } from '@kickzone-workspace/guards';
+import { SizeKind } from '@kickzone-workspace/product-sizes';
+import {
+  CreateProductInfoInput,
+  CreateProductInput,
+  ProductArchivedStatus,
+  ProductFilterInput,
+  UpdateProductInput,
+} from '@kickzone-workspace/inputs';
+import { ProductService, SellerService } from '@kickzone-workspace/services';
+import { createConnection } from '@kickzone-workspace/utils';
+import { SetMetadata, UseGuards } from '@nestjs/common';
+import {
+  Args,
+  Context,
+  Int,
+  Mutation,
+  Parent,
+  Query,
+  ResolveField,
+  Resolver,
+} from '@nestjs/graphql';
+import * as fs from 'fs';
+import GraphQLUpload from 'graphql-upload/GraphQLUpload.js';
+import * as path from 'path';
+
+export interface FileUpload {
+  filename: string;
+  mimetype: string;
+  encoding: string;
+  createReadStream: () => NodeJS.ReadableStream;
+}
+
+@Resolver(() => Product)
+export class ProductResolver {
+  constructor(
+    private readonly productService: ProductService,
+    private readonly sellerService: SellerService
+  ) {}
+
+  @Query(() => ProductConnection)
+  async products(
+    @Args('filter', { nullable: true }, new ZodValidationPipe(productFilterSchema))
+    filter?: ProductFilterInput
+  ): Promise<ProductConnection> {
+    if (!filter) filter = { archivedStatus: ProductArchivedStatus.ACTIVE };
+    if (!filter.archivedStatus)
+      filter.archivedStatus = ProductArchivedStatus.ACTIVE;
+    const [products, totalCount] = await this.productService.getProducts(
+      filter
+    );
+    return createConnection(
+      products,
+      totalCount,
+      filter?.first || 10,
+      filter?.after
+    );
+  }
+
+  @Query(() => [String])
+  async distinctProductSizes(
+    @Args('sizeKind', { type: () => SizeKind, nullable: true })
+    sizeKind?: SizeKind
+  ): Promise<string[]> {
+    return this.productService.getDistinctProductSizes(sizeKind);
+  }
+
+  @Query(() => ProductConnection)
+  async sellerProductsForMe(
+    @Context() context: { req: { user: User } },
+    @Args('filter', { nullable: true }, new ZodValidationPipe(productFilterSchema))
+    filter?: ProductFilterInput
+  ): Promise<ProductConnection> {
+    const user = context.req.user;
+    if (!user) throw new Error('Not authenticated');
+    if (user.role !== UserRole.SELLER) throw new Error('Not a seller');
+
+    const seller = await this.sellerService.findOneByUserId(user.id);
+    if (!seller) throw new Error('Seller info not found');
+
+    const [products, totalCount] = await this.productService.getSellerProducts(
+      seller.id,
+      filter
+    );
+    return createConnection(
+      products,
+      totalCount,
+      filter?.first || 10,
+      filter?.after
+    );
+  }
+
+  @Mutation(() => Product)
+  @UseGuards(CatalogGuard)
+  async createProduct(
+    @Args('input', new ZodValidationPipe(createProductSchema))
+    input: CreateProductInput,
+    @Context() context?: { req: { user?: User } }
+  ): Promise<Product> {
+    const product = await this.productService.createProduct(
+      input,
+      context?.req?.user
+    );
+    if (!product.productInfos) {
+      product.productInfos = [];
+    }
+    return product;
+  }
+
+  @Mutation(() => Product)
+  @UseGuards(CatalogGuard)
+  async createProductInfo(
+    @Args('input', new ZodValidationPipe(createProductInfoSchema))
+    input: CreateProductInfoInput
+  ): Promise<Product> {
+    return this.productService.createProductInfo(input);
+  }
+
+  @Query(() => [Category])
+  async categories(): Promise<Category[]> {
+    return this.productService.getCategories();
+  }
+
+  @Mutation(() => [String])
+  @UseGuards(CatalogGuard)
+  async uploadProductInfoImages(
+    @Args('productInfoId') productInfoId: number,
+    @Args({ name: 'files', type: () => [GraphQLUpload] })
+    files: Promise<FileUpload>[]
+  ): Promise<string[]> {
+    console.log('uploadProductInfoImages called');
+    console.log('productInfoId:', productInfoId);
+    console.log('files:', files);
+    const uploadDir = path.join(process.cwd(), 'uploads', 'products');
+    if (!fs.existsSync(uploadDir)) {
+      console.log('Creating upload directory:', uploadDir);
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+
+    let uploadedFiles;
+    try {
+      uploadedFiles = await Promise.all(files);
+      console.log(
+        'uploadedFiles:',
+        uploadedFiles.map((f) => ({
+          filename: f.filename,
+          mimetype: f.mimetype,
+          encoding: f.encoding,
+        }))
+      );
+    } catch (err) {
+      console.error('Error resolving uploaded files:', err);
+      throw err;
+    }
+
+    const imageUrls: string[] = [];
+    for (const file of uploadedFiles) {
+      const { createReadStream, filename } = file;
+      const baseName = path.basename(String(filename).replace(/\\/g, '/'));
+      const sanitizedName = baseName.replace(/[^A-Za-z0-9._-]/g, '_');
+      const safeName = sanitizedName && !/^\.+$/.test(sanitizedName) ? sanitizedName : 'file';
+      const uniqueName = `${Date.now()}-${safeName}`;
+      const resolvedUploadDir = path.resolve(uploadDir);
+      const filePath = path.resolve(uploadDir, uniqueName);
+      if (!filePath.startsWith(resolvedUploadDir + path.sep)) {
+        console.error('Path traversal attempt detected:', filename);
+        throw new Error('Invalid filename');
+      }
+      try {
+        await new Promise<void>((resolve, reject) => {
+          const stream = createReadStream();
+          stream
+            .pipe(fs.createWriteStream(filePath))
+            .on('finish', () => resolve())
+            .on('error', reject);
+        });
+        imageUrls.push(`/uploads/products/${uniqueName}`);
+        console.log('Saved file:', filePath);
+      } catch (err) {
+        console.error('Error saving file:', filename, err);
+        throw err;
+      }
+    }
+
+    try {
+      await this.productService.addImagesToProductInfo(
+        productInfoId,
+        imageUrls
+      );
+      console.log('Added image URLs to product info:', imageUrls);
+    } catch (err) {
+      console.error('Error adding images to product info:', err);
+      throw err;
+    }
+    return imageUrls;
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(CatalogGuard)
+  async removeProductInfoImage(
+    @Args('productInfoId') productInfoId: number,
+    @Args('imageName') imageName: string
+  ): Promise<boolean> {
+    const uploadDir = path.join(process.cwd(), 'uploads', 'products');
+    const safeName = path.basename(String(imageName).replace(/\\/g, '/'));
+    if (!safeName || safeName === '.' || safeName === '..' || safeName !== imageName) {
+      return false;
+    }
+    const resolvedUploadDir = path.resolve(uploadDir);
+    const filePath = path.resolve(uploadDir, safeName);
+    if (!filePath.startsWith(resolvedUploadDir + path.sep)) {
+      return false;
+    }
+
+    try {
+      // Remove the file from the filesystem
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+
+      // Remove the image URL from the product info
+      await this.productService.removeImageFromProductInfo(
+        productInfoId,
+        `/uploads/products/${safeName}`
+      );
+      return true;
+    } catch (error) {
+      console.error('Error removing product info image:', error);
+      return false;
+    }
+  }
+
+  @Query(() => Product, { nullable: true })
+  async product(
+    @Args('id', { type: () => Int }) id: number
+  ): Promise<Product | null> {
+    return this.productService.getProductById(id);
+  }
+
+  @Query(() => [SellerProduct])
+  @UseGuards(RolesGuard)
+  @SetMetadata('roles', [UserRole.ADMIN])
+  async sellerProductsByProduct(
+    @Args('productId', { type: () => Int }) productId: number
+  ): Promise<SellerProduct[]> {
+    return this.productService.getSellerProductsByProduct(productId);
+  }
+
+  @Mutation(() => Product)
+  @UseGuards(CatalogGuard)
+  async archiveProduct(
+    @Args('id', { type: () => Int }) id: number
+  ): Promise<Product> {
+    return this.productService.archiveProduct(id);
+  }
+
+  @Mutation(() => Product)
+  @UseGuards(CatalogGuard)
+  async unarchiveProduct(
+    @Args('id', { type: () => Int }) id: number
+  ): Promise<Product> {
+    return this.productService.unarchiveProduct(id);
+  }
+
+  @Mutation(() => Boolean)
+  @UseGuards(CatalogGuard)
+  async deleteProduct(
+    @Args('id', { type: () => Int }) id: number
+  ): Promise<boolean> {
+    return this.productService.deleteProduct(id);
+  }
+
+  @Mutation(() => Product)
+  @UseGuards(CatalogGuard)
+  async updateProduct(
+    @Args('input', new ZodValidationPipe(updateProductSchema))
+    input: UpdateProductInput,
+    @Context() context?: { req: { user?: User } }
+  ): Promise<Product> {
+    return this.productService.updateProduct(input, context?.req?.user);
+  }
+
+  @ResolveField(() => String, { nullable: true })
+  async description(
+    @Parent() product: Product,
+    @Context() context?: { req: { locale?: string } }
+  ): Promise<string | null> {
+    return this.productService.resolveProductDescription(
+      product,
+      context?.req?.locale || 'en'
+    );
+  }
+
+  @ResolveField(() => [ProductDescription], { nullable: true })
+  async descriptions(
+    @Parent() product: Product
+  ): Promise<ProductDescription[]> {
+    if (product.descriptions) {
+      return product.descriptions;
+    }
+    return this.productService.getProductDescriptions(product.id);
+  }
+
+  @Mutation(() => Boolean)
+  async subscribeNewsletter(@Args('email') email: string): Promise<boolean> {
+    return this.productService.subscribeNewsletter(email);
+  }
+}
+
+@Resolver(() => SellerProduct)
+export class SellerProductResolver {
+  @ResolveField(() => Number, { nullable: true })
+  async costPrice(
+    @Parent() sellerProduct: SellerProduct,
+    @Context() context: { req: { user?: User } }
+  ): Promise<number | null> {
+    const user = context.req.user;
+    // Only expose costPrice to sellers and admins, not customers
+    if (
+      !user ||
+      (user.role !== UserRole.SELLER && user.role !== UserRole.ADMIN)
+    ) {
+      return null;
+    }
+    return sellerProduct.costPrice;
+  }
+
+  @ResolveField(() => SellerInfo, { nullable: true })
+  seller(@Parent() sellerProduct: SellerProduct) {
+    return sellerProduct.seller;
+  }
+}
+</file>
+
+<file path="libs/shared/validation/src/lib/catalog.ts">
+import { z } from 'zod';
+
+/**
+ * Catalog product rules. They mirror the former class-validator decorators on the
+ * product GraphQL inputs so nothing that is accepted today is rejected.
+ * (`sizeKind` is already restricted to the SizeKind enum by GraphQL.)
+ */
+const requiredText = z.string().min(1);
+
+export const productDescriptionSchema = z.object({
+  languageId: z.number().nullish(),
+  languageCode: z.string().nullish(),
+  description: requiredText,
+});
+
+export const productVariantSchema = z.object({
+  id: z.number().nullish(),
+  size: z.string().min(1, 'Variant size is required'),
+  sizeKind: z.string().nullish(),
+  colorIds: z.array(z.number().int()),
+  weight: z.number().positive('Weight must be greater than 0'),
+  sku: z.string().nullish(),
+  price: z.number().min(0, 'Price cannot be negative').nullish(),
+  costPrice: z.number().min(0, 'Cost price cannot be negative').nullish(),
+  discount: z
+    .number()
+    .min(0, 'Discount cannot be negative')
+    .max(100, 'Discount cannot exceed 100')
+    .nullish(),
+  stockQuantity: z.number().int().min(0, 'Stock quantity cannot be negative').nullish(),
+  boxLess: z.boolean().nullish(),
+  images: z.array(z.string()).nullish(),
+});
+
+export const createProductSchema = z.object({
+  name: requiredText,
+  sku: requiredText,
+  categoryIds: z.array(z.number().int()),
+  brandId: z.number().int().nullish(),
+  description: z.string().nullish(),
+  descriptions: z.array(productDescriptionSchema).nullish(),
+  variants: z.array(productVariantSchema).nullish(),
+});
+
+export const updateProductSchema = createProductSchema.extend({
+  id: z.number(),
+});
+
+export const createProductInfoSchema = z.object({
+  productId: z.number().int(),
+  size: z.string(),
+  sizeKind: z.string(),
+  colorIds: z.array(z.number().int()),
+  weight: z.number(),
+});
+
+export type ProductVariantData = z.output<typeof productVariantSchema>;
+export type CreateProductData = z.output<typeof createProductSchema>;
+export type UpdateProductData = z.output<typeof updateProductSchema>;
+export type CreateProductInfoData = z.output<typeof createProductInfoSchema>;
+/** Admin product editor: required product fields and complete variants. */
+export const productEditorFormSchema = z.object({
+  name: z.string().min(1),
+  sku: z.string().trim().min(1),
+  categoryIds: z.array(z.number().int()).min(1),
+  variants: z.array(
+    z.object({
+      size: z.string().min(1),
+      colorIds: z.array(z.number().int()).min(1),
+      weight: z.number().positive(),
+    })
+  ),
+});
+
+export type ProductEditorFormInput = z.input<typeof productEditorFormSchema>;
+</file>
+
+<file path="libs/server/services/src/lib/product.service.ts">
+import {
+  Injectable,
+  Logger,
+  OnModuleInit,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, In, MoreThan } from 'typeorm';
+import * as fs from 'fs';
+import * as path from 'path';
+import {
+  Product,
+  ProductInfo,
+  ProductInfoColor,
+  Brand,
+  Category,
+  Color,
+  SellerProduct,
+  SellerInfo,
+  OrderItem,
+  ProductDescription,
+  SiteLanguage,
+  User,
+  UserRole,
+} from '@kickzone-workspace/entities';
+import {
+  CreateProductInput,
+  CreateProductInfoInput,
+  CreateCategoryInput,
+  UpdateCategoryInput,
+  ProductFilterInput,
+  UpdateProductInput,
+  ProductVariantInput,
+} from '@kickzone-workspace/inputs';
+import {
+  inferSizeKindFromRaw,
+  normalizeSizeCode,
+  SizeKind,
+} from '@kickzone-workspace/product-sizes';
+import { parseOffset } from '@kickzone-workspace/utils';
+import { TranslationService } from './translation.service';
+import { orderedColorsFromLinks } from './product-info-colors.util';
+
+@Injectable()
+export class ProductService implements OnModuleInit {
+  private readonly logger = new Logger(ProductService.name);
+
+  constructor(
+    @InjectRepository(Product)
+    private readonly productRepository: Repository<Product>,
+    @InjectRepository(ProductInfo)
+    private readonly productInfoRepository: Repository<ProductInfo>,
+    @InjectRepository(ProductInfoColor)
+    private readonly productInfoColorRepository: Repository<ProductInfoColor>,
+    @InjectRepository(Category)
+    private readonly categoryRepository: Repository<Category>,
+    @InjectRepository(Brand)
+    private readonly brandRepository: Repository<Brand>,
+    @InjectRepository(Color)
+    private readonly colorRepository: Repository<Color>,
+    @InjectRepository(SellerProduct)
+    private readonly sellerProductRepository: Repository<SellerProduct>,
+    @InjectRepository(SellerInfo)
+    private readonly sellerInfoRepository: Repository<SellerInfo>,
+    @InjectRepository(OrderItem)
+    private readonly orderItemRepository: Repository<OrderItem>,
+    @InjectRepository(ProductDescription)
+    private readonly productDescriptionRepository: Repository<ProductDescription>,
+    @InjectRepository(SiteLanguage)
+    private readonly siteLanguageRepository: Repository<SiteLanguage>,
+    private readonly translationService: TranslationService
+  ) {}
+
+  async onModuleInit() {
+    await this.normalizeLegacySizes();
+  }
+
+  /** One-time-ish backfill for rows missing sizeKind / free-text sizes. */
+  private async normalizeLegacySizes(): Promise<void> {
+    try {
+      const infos = await this.productInfoRepository.find();
+      let updated = 0;
+      for (const info of infos) {
+        const inferred = inferSizeKindFromRaw(info.size);
+        const nextKind = info.sizeKind || inferred.sizeKind;
+        const normalized =
+          normalizeSizeCode(nextKind, info.size) ?? inferred.size;
+        if (
+          info.sizeKind !== nextKind ||
+          (normalized && info.size !== normalized)
+        ) {
+          info.sizeKind = nextKind;
+          if (normalized) {
+            info.size = normalized;
+          }
+          await this.productInfoRepository.save(info);
+          updated += 1;
+        }
+      }
+      if (updated > 0) {
+        this.logger.log(`Normalized sizeKind/size on ${updated} product infos`);
+      }
+    } catch (error) {
+      this.logger.warn(
+        `Skipped size normalization: ${(error as Error).message}`
+      );
+    }
+  }
+
+  async getProducts(filter?: ProductFilterInput): Promise<[Product[], number]> {
+    const query = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.productInfos', 'productInfo')
+      .leftJoinAndSelect('productInfo.colorLinks', 'colorLink')
+      .leftJoinAndSelect('colorLink.color', 'color')
+      .leftJoinAndSelect('product.categories', 'category')
+      .leftJoinAndSelect('product.brand', 'brand')
+      .leftJoinAndSelect('product.descriptions', 'productDescription')
+      .leftJoinAndSelect('productDescription.language', 'descLanguage');
+
+    // Always use LEFT JOIN for sellerProducts to get all productInfos
+    // We'll filter sellerProducts in the WHERE clause instead
+    query
+      .leftJoinAndSelect('product.sellerProducts', 'sellerProduct')
+      .addSelect('sellerProduct.productInfoId')
+      .leftJoinAndSelect('sellerProduct.seller', 'seller')
+      .leftJoinAndSelect('seller.user', 'sellerUser')
+      .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
+      .leftJoinAndSelect('sellerProductInfo.colorLinks', 'sellerProductColorLink')
+      .leftJoinAndSelect('sellerProductColorLink.color', 'sellerProductColor');
+
+    // Filter by seller availability - use EXISTS subquery to avoid filtering out products
+    // Don't filter sellerProducts in WHERE clause - we'll filter in memory to preserve all productInfos
+    // Use TypeORM's metadata to get correct foreign key column names
+    if (filter?.onlyWithSellers === true) {
+      const productRelation =
+        this.sellerProductRepository.metadata.findRelationWithPropertyPath(
+          'product'
+        );
+      const sellerRelation =
+        this.sellerProductRepository.metadata.findRelationWithPropertyPath(
+          'seller'
+        );
+      const productColumn =
+        productRelation?.joinColumns?.[0]?.databaseName || 'productId';
+      const sellerColumn =
+        sellerRelation?.joinColumns?.[0]?.databaseName || 'sellerId';
+
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM seller_product sp WHERE sp."${productColumn}" = product.id AND sp."${sellerColumn}" IS NOT NULL)`
+      );
+    }
+
+    // Filter by stock availability - use EXISTS subquery to avoid filtering out products
+    // Don't filter sellerProducts in WHERE clause - we'll filter in memory to preserve all productInfos
+    // Use TypeORM's metadata to get correct column names
+    if (filter?.onlyInStock === true) {
+      const productRelation =
+        this.sellerProductRepository.metadata.findRelationWithPropertyPath(
+          'product'
+        );
+      const stockColumn =
+        this.sellerProductRepository.metadata.findColumnWithPropertyName(
+          'stockQuantity'
+        )?.databaseName || 'stockQuantity';
+      const productColumn =
+        productRelation?.joinColumns?.[0]?.databaseName || 'productId';
+
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM seller_product sp WHERE sp."${productColumn}" = product.id AND sp."${stockColumn}" > 0)`
+      );
+    }
+
+    // Only products with at least one discounted seller offer (drives the "sale" chip).
+    if (filter?.onlyDiscounted === true) {
+      const productRelation =
+        this.sellerProductRepository.metadata.findRelationWithPropertyPath(
+          'product'
+        );
+      const discountColumn =
+        this.sellerProductRepository.metadata.findColumnWithPropertyName(
+          'discount'
+        )?.databaseName || 'discount';
+      const productColumn =
+        productRelation?.joinColumns?.[0]?.databaseName || 'productId';
+
+      query.andWhere(
+        `EXISTS (SELECT 1 FROM seller_product sp WHERE sp."${productColumn}" = product.id AND sp."${discountColumn}" > 0)`
+      );
+    }
+
+    // Partitioning hint: The 'archived' column should be used for table partitioning at the DB level.
+    if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
+      query.andWhere('product.archived = :archived', {
+        archived: filter.archivedStatus === 'ARCHIVED',
+      });
+    }
+
+    if (filter?.ids?.length) {
+      query.andWhere('product.id IN (:...ids)', { ids: filter.ids });
+    }
+
+    // Multi-select categories: match products in ANY of the listed categories.
+    if (filter?.categorySlugs?.length) {
+      query.andWhere(
+        `EXISTS (
+          SELECT 1 FROM product_categories_categories pcc
+          JOIN categories c ON pcc."categoriesId" = c.id
+          WHERE pcc."productId" = product.id
+            AND LOWER(c.slug) IN (:...catSlugs)
+        )`,
+        { catSlugs: filter.categorySlugs.map((slug) => slug.toLowerCase()) }
+      );
+    }
+
+    if (filter?.brand) {
+      query.andWhere('LOWER(brand.slug) = :brandSlug', {
+        brandSlug: filter.brand.toLowerCase(),
+      });
+    }
+
+    // Multi-select brands: match products from ANY of the listed brand slugs.
+    if (filter?.brands?.length) {
+      query.andWhere('LOWER(brand.slug) IN (:...brandSlugs)', {
+        brandSlugs: filter.brands.map((slug) => slug.toLowerCase()),
+      });
+    }
+
+    if (filter?.categoryIds?.length) {
+      query.andWhere('category.id IN (:...categoryIds)', {
+        categoryIds: filter.categoryIds,
+      });
+    } else if (filter?.categoryId) {
+      query.andWhere('category.id = :categoryId', {
+        categoryId: filter.categoryId,
+      });
+    } else if (filter?.category) {
+      query.andWhere('LOWER(category.slug) = :category', {
+        category: filter.category.toLowerCase(),
+      });
+    }
+
+    if (filter?.searchTerm) {
+      query.andWhere('LOWER(product.name) LIKE :searchTerm', {
+        searchTerm: `%${filter.searchTerm.toLowerCase()}%`,
+      });
+    }
+
+    if (filter?.productInfoFilter) {
+      const {
+        size,
+        sizeKind,
+        colorId,
+        weight,
+        price,
+        costPrice,
+        discount,
+        stockQuantity,
+      } = filter.productInfoFilter;
+      if (size?.length)
+        query.andWhere('productInfo.size IN (:...size)', { size });
+      if (sizeKind)
+        query.andWhere('productInfo.sizeKind = :sizeKind', { sizeKind });
+      if (colorId)
+        query.andWhere(
+          `EXISTS (
+            SELECT 1 FROM product_info_color pic
+            WHERE pic."productInfoId" = productInfo.id
+              AND pic."colorId" IN (:...colorId)
+          )`,
+          { colorId }
+        );
+      if (weight)
+        query.andWhere('productInfo.weight IN (:...weight)', { weight });
+      if (price)
+        query.andWhere('sellerProduct.price IN (:...price)', { price });
+      if (costPrice)
+        query.andWhere('sellerProduct.costPrice IN (:...costPrice)', {
+          costPrice,
+        });
+      if (discount)
+        query.andWhere('sellerProduct.discount IN (:...discount)', {
+          discount,
+        });
+      if (stockQuantity)
+        query.andWhere('sellerProduct.stockQuantity IN (:...stockQuantity)', {
+          stockQuantity,
+        });
+    }
+
+    // Catalog sort must be primary ORDER BY; relation ordering is secondary only.
+    if (filter?.sort) {
+      if (filter.sort === 'ID_DESC') {
+        query.orderBy('product.id', 'DESC');
+      } else if (filter.sort === 'PRICE_ASC') {
+        query.orderBy('sellerProduct.price', 'ASC');
+      } else if (filter.sort === 'PRICE_DESC') {
+        query.orderBy('sellerProduct.price', 'DESC');
+      } else {
+        const order = filter.sortOrder === 'desc' ? 'DESC' : 'ASC';
+        if (filter.sort === 'price') {
+          query.orderBy('sellerProduct.price', order);
+        } else if (filter.sort === 'id') {
+          query.orderBy('product.id', order);
+        } else if (filter.sort === 'discount') {
+          query.orderBy('sellerProduct.discount', order);
+        } else if (filter.sort === 'color') {
+          query.orderBy('color.hexCode', order);
+        } else {
+          query.orderBy('product.name', order);
+        }
+      }
+      query
+        .addOrderBy('productInfo.id', 'ASC')
+        .addOrderBy('colorLink.position', 'ASC');
+    } else {
+      query
+        .orderBy('productInfo.id', 'ASC')
+        .addOrderBy('colorLink.position', 'ASC');
+    }
+
+    const totalCount = await query.getCount();
+
+    if (filter?.first) {
+      query.take(filter.first);
+    }
+
+    if (filter?.after) {
+      const offset = parseOffset(filter.after);
+      if (offset > 0) {
+        query.skip(offset);
+      }
+    }
+
+    // TypeORM's getMany() should handle deduplication automatically
+    // but with multiple one-to-many joins, we need to be careful
+    const products = await query.getMany();
+
+    // Post-process products to filter sellerProducts based on filters
+    // This ensures all productInfos are returned, but only matching sellerProducts
+    const processedProducts = products.map((product) => {
+      // Filter sellerProducts based on filters
+      let filteredSellerProducts = product.sellerProducts || [];
+
+      if (filter?.onlyWithSellers === true) {
+        filteredSellerProducts = filteredSellerProducts.filter(
+          (sp) => sp.seller != null
+        );
+      }
+
+      if (filter?.onlyInStock === true) {
+        filteredSellerProducts = filteredSellerProducts.filter(
+          (sp) => sp.stockQuantity > 0
+        );
+      }
+
+      return {
+        ...product,
+        sellerProducts: filteredSellerProducts,
+      };
+    });
+
+    return [processedProducts, totalCount];
+  }
+
+  async createProduct(
+    input: CreateProductInput,
+    currentUser?: User
+  ): Promise<Product> {
+    const sku = input.sku?.trim();
+    if (!sku) {
+      throw new BadRequestException('SKU is required.');
+    }
+    if (!input.name || !input.name.trim()) {
+      throw new BadRequestException('Product name is required.');
+    }
+    // Check for duplicate product name
+    const existing = await this.productRepository.findOneBy({
+      name: input.name.trim(),
+    });
+    if (existing) {
+      throw new BadRequestException('A product with this name already exists.');
+    }
+    const existingSku = await this.productRepository.findOneBy({ sku });
+    if (existingSku) {
+      throw new BadRequestException('A product with this SKU already exists.');
+    }
+    const categories = await this.categoryRepository.findBy({
+      id: In(input.categoryIds),
+    });
+    let brand: Brand | null = null;
+    if (input.brandId != null) {
+      brand = await this.brandRepository.findOneBy({ id: input.brandId });
+      if (!brand) {
+        throw new BadRequestException(
+          `Brand with ID ${input.brandId} not found`
+        );
+      }
+    }
+    let fallbackDescription =
+      input.description === '' ? null : input.description;
+    if (!fallbackDescription && input.descriptions?.length) {
+      const enDesc = input.descriptions.find((d) => d.languageCode === 'en');
+      const faDesc = input.descriptions.find((d) => d.languageCode === 'fa');
+      const firstValid = input.descriptions.find((d) => d.description?.trim());
+      fallbackDescription =
+        enDesc?.description ||
+        faDesc?.description ||
+        firstValid?.description ||
+        null;
+    }
+
+    let sellerId: number | null = null;
+    let currentSeller: SellerInfo | null = null;
+    if (currentUser?.role === UserRole.SELLER) {
+      currentSeller = await this.sellerInfoRepository.findOne({
+        where: { user: { id: currentUser.id } },
+      });
+      if (currentSeller) {
+        sellerId = currentSeller.id;
+      }
+    }
+
+    const product = this.productRepository.create({
+      name: input.name.trim(),
+      sku,
+      categories,
+      brand: brand ?? undefined,
+      brandId: brand?.id ?? null,
+      description: fallbackDescription,
+      sellerId,
+      seller: currentSeller ?? undefined,
+    });
+    const savedProduct = await this.productRepository.save(product);
+
+    if (input.descriptions && input.descriptions.length > 0) {
+      await this.saveProductDescriptions(savedProduct.id, input.descriptions);
+    } else if (input.description && input.description.trim()) {
+      const defaultLang = await this.siteLanguageRepository.findOne({
+        where: [{ isDefault: true, isActive: true }, { isActive: true }],
+      });
+      if (defaultLang) {
+        await this.productDescriptionRepository.save(
+          this.productDescriptionRepository.create({
+            productId: savedProduct.id,
+            languageId: defaultLang.id,
+            description: input.description.trim(),
+          })
+        );
+      }
+    }
+
+    if (input.variants && input.variants.length > 0) {
+      for (const variant of input.variants) {
+        await this.validateVariantInput(variant);
+        const sizeKind = variant.sizeKind ?? SizeKind.Apparel;
+        const normalizedSize = normalizeSizeCode(sizeKind, variant.size)!;
+        const colors = await this.resolveOrderedColors(variant.colorIds);
+
+        const newInfo = this.productInfoRepository.create({
+          product: savedProduct,
+          size: normalizedSize,
+          sizeKind,
+          weight: variant.weight,
+          images: variant.images || [],
+        });
+        const savedInfo = await this.productInfoRepository.save(newInfo);
+        await this.replaceProductInfoColors(savedInfo, colors);
+
+        if (
+          currentSeller &&
+          (variant.price != null || variant.stockQuantity != null)
+        ) {
+          await this.upsertSellerProductListing(
+            currentSeller.id,
+            savedInfo,
+            variant
+          );
+        }
+      }
+    }
+
+    return (await this.getProductById(savedProduct.id)) || savedProduct;
+  }
+
+  async createProductInfo(input: CreateProductInfoInput): Promise<Product> {
+    const product = await this.productRepository.findOneBy({
+      id: input.productId,
+    });
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    const sizeKind = input.sizeKind ?? SizeKind.Apparel;
+    const normalizedSize = normalizeSizeCode(sizeKind, input.size);
+    if (!normalizedSize) {
+      throw new Error(
+        sizeKind === SizeKind.Apparel
+          ? 'Invalid apparel size. Use XS–4XL.'
+          : sizeKind === SizeKind.Pants
+            ? 'Invalid pants size. Use waist and inseam between 1 and 99 (e.g. 32x34).'
+            : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'
+      );
+    }
+    const colors = await this.resolveOrderedColors(input.colorIds);
+    const productInfo = this.productInfoRepository.create({
+      product,
+      size: normalizedSize,
+      sizeKind,
+      weight: input.weight,
+    });
+    const savedInfo = await this.productInfoRepository.save(productInfo);
+    await this.replaceProductInfoColors(savedInfo, colors);
+    // Return the full product with relations
+    const fullProduct = await this.getProductById(product.id);
+    if (!fullProduct)
+      throw new Error('Product not found after creating variant');
+    return fullProduct;
+  }
+
+  /** Distinct canonical sizes present in the catalog, optionally by kind. */
+  async getDistinctProductSizes(sizeKind?: SizeKind): Promise<string[]> {
+    const qb = this.productInfoRepository
+      .createQueryBuilder('productInfo')
+      .select('DISTINCT productInfo.size', 'size')
+      .where("productInfo.size IS NOT NULL AND productInfo.size <> ''");
+    if (sizeKind) {
+      qb.andWhere('productInfo.sizeKind = :sizeKind', { sizeKind });
+    }
+    const rows = await qb.getRawMany<{ size: string }>();
+    return rows.map((r) => r.size).filter(Boolean);
+  }
+
+  async createCategory(input: CreateCategoryInput, name?: string) {
+    // Check for duplicate category slug
+    const existing = await this.categoryRepository.findOneBy({
+      slug: input.slug,
+    });
+    if (existing) {
+      throw new Error('A category with this slug already exists.');
+    }
+    const category = this.categoryRepository.create({
+      slug: input.slug,
+      sortOrder: input.sortOrder || 0,
+    });
+    const savedCategory = await this.categoryRepository.save(category);
+
+    // Create a translation entry for the category name if provided
+    if (name) {
+      await this.translationService.setTranslation({
+        entityType: 'category',
+        entityId: savedCategory.id,
+        locale: 'en', // Default to English
+        fieldName: 'name',
+        value: name,
+        isAutoTranslated: false,
+      });
+    }
+
+    return savedCategory;
+  }
+
+  async updateCategory(input: UpdateCategoryInput, name?: string, locale = 'en') {
+    const category = await this.categoryRepository.findOneBy({ id: input.id });
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    // Check for duplicate slug if slug is being updated
+    if (input.slug && input.slug !== category.slug) {
+      const existing = await this.categoryRepository.findOneBy({
+        slug: input.slug,
+      });
+      if (existing) {
+        throw new Error('A category with this slug already exists.');
+      }
+    }
+
+    // Update category properties
+    Object.assign(category, {
+      slug: input.slug || category.slug,
+      sortOrder:
+        input.sortOrder !== undefined ? input.sortOrder : category.sortOrder,
+      isActive:
+        input.isActive !== undefined ? input.isActive : category.isActive,
+    });
+
+    const saved = await this.categoryRepository.save(category);
+
+    const trimmedName = name?.trim();
+    if (trimmedName) {
+      await this.translationService.setTranslation({
+        entityType: 'category',
+        entityId: saved.id,
+        locale,
+        fieldName: 'name',
+        value: trimmedName,
+        isAutoTranslated: false,
+      });
+    }
+
+    return saved;
+  }
+
+  async deleteCategory(id: number) {
+    const category = await this.categoryRepository.findOneBy({ id });
+    if (!category) {
+      throw new Error('Category not found');
+    }
+
+    // Check if category is being used by any products
+    const productsUsingCategory = await this.productRepository
+      .createQueryBuilder('product')
+      .innerJoin('product.categories', 'category')
+      .where('category.id = :categoryId', { categoryId: id })
+      .getCount();
+    if (productsUsingCategory > 0) {
+      throw new Error('Cannot delete category that is being used by products');
+    }
+
+    // Delete all translations for this category
+    await this.translationService.deleteEntityTranslations('category', id);
+
+    return this.categoryRepository.remove(category);
+  }
+
+  async getCategories() {
+    return this.categoryRepository.find({
+      order: { sortOrder: 'ASC', id: 'ASC' },
+    });
+  }
+
+  async addImagesToProductInfo(productInfoId: number, imageUrls: string[]) {
+    const productInfo = await this.productInfoRepository.findOneBy({
+      id: productInfoId,
+    });
+    if (!productInfo) {
+      throw new Error('ProductInfo not found');
+    }
+    productInfo.images = [...(productInfo.images || []), ...imageUrls];
+    return this.productInfoRepository.save(productInfo);
+  }
+
+  async removeImageFromProductInfo(productInfoId: number, imageUrl: string) {
+    const productInfo = await this.productInfoRepository.findOneBy({
+      id: productInfoId,
+    });
+    if (!productInfo) {
+      throw new Error('ProductInfo not found');
+    }
+    productInfo.images = (productInfo.images || []).filter(
+      (url) => url !== imageUrl
+    );
+    return this.productInfoRepository.save(productInfo);
+  }
+
+  private async validateVariantInput(
+    variant: ProductVariantInput
+  ): Promise<void> {
+    if (!variant.size || !variant.size.trim()) {
+      throw new BadRequestException('Variant size is required.');
+    }
+    const sizeKind = variant.sizeKind ?? SizeKind.Apparel;
+    const normalizedSize = normalizeSizeCode(sizeKind, variant.size);
+    if (!normalizedSize) {
+      throw new BadRequestException(
+        sizeKind === SizeKind.Apparel
+          ? 'Invalid apparel size. Use XS–4XL.'
+          : sizeKind === SizeKind.Pants
+            ? 'Invalid pants size. Use waist and inseam between 1 and 99 (e.g. 32x34).'
+            : 'Invalid footwear size. Use an EU size from 35 to 50 (including .5).'
+      );
+    }
+    if (!variant.colorIds || variant.colorIds.length === 0) {
+      throw new BadRequestException('Variant must have at least one color.');
+    }
+    if (variant.weight == null || Number(variant.weight) <= 0) {
+      throw new BadRequestException('Variant weight must be greater than 0.');
+    }
+    if (variant.stockQuantity != null && variant.stockQuantity < 0) {
+      throw new BadRequestException('Stock quantity cannot be negative.');
+    }
+    if (variant.price != null && variant.price < 0) {
+      throw new BadRequestException('Price cannot be negative.');
+    }
+    if (variant.costPrice != null && variant.costPrice < 0) {
+      throw new BadRequestException('Cost price cannot be negative.');
+    }
+    if (
+      variant.discount != null &&
+      (variant.discount < 0 || variant.discount > 100)
+    ) {
+      throw new BadRequestException('Discount must be between 0 and 100.');
+    }
+  }
+
+  private async upsertSellerProductListing(
+    sellerId: number,
+    productInfo: ProductInfo,
+    variant: ProductVariantInput
+  ) {
+    const seller = await this.sellerInfoRepository.findOneBy({ id: sellerId });
+    if (!seller) return;
+
+    let sellerProduct = await this.sellerProductRepository.findOne({
+      where: {
+        seller: { id: sellerId },
+        productInfoId: productInfo.id,
+      },
+    });
+
+    if (sellerProduct) {
+      if (variant.price != null) sellerProduct.price = variant.price;
+      if (variant.costPrice != null) sellerProduct.costPrice = variant.costPrice;
+      if (variant.discount != null) sellerProduct.discount = variant.discount;
+      if (variant.stockQuantity != null)
+        sellerProduct.stockQuantity = variant.stockQuantity;
+      if (variant.boxLess != null) sellerProduct.boxLess = variant.boxLess;
+      await this.sellerProductRepository.save(sellerProduct);
+    } else if (variant.price != null || variant.stockQuantity != null) {
+      sellerProduct = this.sellerProductRepository.create({
+        seller,
+        product: productInfo.product,
+        productInfo,
+        productInfoId: productInfo.id,
+        price: variant.price ?? 0,
+        costPrice: variant.costPrice ?? 0,
+        discount: variant.discount ?? 0,
+        stockQuantity: variant.stockQuantity ?? 0,
+        boxLess: variant.boxLess ?? false,
+      });
+      await this.sellerProductRepository.save(sellerProduct);
+    }
+  }
+
+  async updateProduct(
+    input: UpdateProductInput,
+    currentUser?: User
+  ): Promise<Product> {
+    const product = await this.productRepository.findOne({
+      where: { id: input.id },
+      relations: [
+        'productInfos',
+        'productInfos.colorLinks',
+        'productInfos.colorLinks.color',
+        'sellerProducts',
+        'sellerProducts.seller',
+        'categories',
+        'brand',
+        'seller',
+      ],
+    });
+    if (!product) {
+      throw new NotFoundException(`Product with ID ${input.id} not found`);
+    }
+
+    // Role-based authorization: Sellers can only modify their own products
+    let currentSeller: SellerInfo | null = null;
+    if (currentUser && currentUser.role === UserRole.SELLER) {
+      currentSeller = await this.sellerInfoRepository.findOne({
+        where: { user: { id: currentUser.id } },
+      });
+      if (!currentSeller) {
+        throw new ForbiddenException('Seller profile not found');
+      }
+
+      // Check product ownership
+      const productSellerId =
+        product.sellerId ?? (product.seller ? product.seller.id : null);
+      if (productSellerId != null && productSellerId !== currentSeller.id) {
+        throw new ForbiddenException(
+          'You do not have permission to modify a product owned by another seller.'
+        );
+      }
+
+      // Check if product is associated with other sellers' listings
+      if (
+        productSellerId == null &&
+        product.sellerProducts &&
+        product.sellerProducts.length > 0 &&
+        !product.sellerProducts.some(
+          (sp) => sp.seller && sp.seller.id === currentSeller?.id
+        )
+      ) {
+        throw new ForbiddenException(
+          'You do not have permission to modify a product owned by another seller.'
+        );
+      }
+
+      if (product.sellerId == null) {
+        product.sellerId = currentSeller.id;
+        product.seller = currentSeller;
+      }
+    }
+
+    const sku = input.sku?.trim();
+    if (!sku) {
+      throw new BadRequestException('SKU is required.');
+    }
+    if (!input.name || !input.name.trim()) {
+      throw new BadRequestException('Product name is required.');
+    }
+
+    // Check for duplicate name (excluding current product)
+    const existing = await this.productRepository.findOne({
+      where: { name: input.name.trim() },
+    });
+    if (existing && existing.id !== input.id) {
+      throw new BadRequestException('A product with this name already exists.');
+    }
+    const existingSku = await this.productRepository.findOne({
+      where: { sku },
+    });
+    if (existingSku && existingSku.id !== input.id) {
+      throw new BadRequestException('A product with this SKU already exists.');
+    }
+
+    if (input.categoryIds) {
+      const categories = await this.categoryRepository.findBy({
+        id: In(input.categoryIds),
+      });
+      product.categories = categories;
+    }
+    product.name = input.name.trim();
+    product.sku = sku;
+
+    if (input.brandId !== undefined) {
+      if (input.brandId == null) {
+        product.brand = null;
+        product.brandId = null;
+      } else {
+        const brand = await this.brandRepository.findOneBy({
+          id: input.brandId,
+        });
+        if (!brand) {
+          throw new BadRequestException(
+            `Brand with ID ${input.brandId} not found`
+          );
+        }
+        product.brand = brand;
+        product.brandId = brand.id;
+      }
+    }
+
+    if (input.descriptions && input.descriptions.length > 0) {
+      await this.saveProductDescriptions(product.id, input.descriptions);
+      const enDesc = input.descriptions.find((d) => d.languageCode === 'en');
+      const faDesc = input.descriptions.find((d) => d.languageCode === 'fa');
+      const firstValid = input.descriptions.find((d) => d.description?.trim());
+      product.description =
+        enDesc?.description ||
+        faDesc?.description ||
+        firstValid?.description ||
+        null;
+    } else if (input.description !== undefined) {
+      product.description =
+        input.description === '' ? null : input.description;
+      if (product.description) {
+        const defaultLang = await this.siteLanguageRepository.findOne({
+          where: [{ isDefault: true, isActive: true }, { isActive: true }],
+        });
+        if (defaultLang) {
+          const existingDesc =
+            await this.productDescriptionRepository.findOne({
+              where: { productId: product.id, languageId: defaultLang.id },
+            });
+          if (existingDesc) {
+            existingDesc.description = product.description;
+            await this.productDescriptionRepository.save(existingDesc);
+          } else {
+            await this.productDescriptionRepository.save(
+              this.productDescriptionRepository.create({
+                productId: product.id,
+                languageId: defaultLang.id,
+                description: product.description,
+              })
+            );
+          }
+        }
+      }
+    }
+
+    // Save product basic info
+    await this.productRepository.save(product);
+
+    // Handle variant updates / creation / deletion if input.variants provided
+    if (input.variants !== undefined) {
+      // Validate all variants first
+      for (const variant of input.variants) {
+        await this.validateVariantInput(variant);
+      }
+
+      const retainedIds = new Set<number>();
+
+      for (const variant of input.variants) {
+        const sizeKind = variant.sizeKind ?? SizeKind.Apparel;
+        const normalizedSize =
+          normalizeSizeCode(sizeKind, variant.size) ?? variant.size;
+        const colors = await this.resolveOrderedColors(variant.colorIds);
+
+        if (variant.id) {
+          // Existing variant to update
+          const existingInfo = product.productInfos?.find(
+            (pi) => pi.id === variant.id
+          );
+          if (existingInfo) {
+            existingInfo.size = normalizedSize;
+            existingInfo.sizeKind = sizeKind;
+            existingInfo.weight = variant.weight;
+            if (variant.images) {
+              existingInfo.images = variant.images;
+            }
+            await this.productInfoRepository.save(existingInfo);
+            await this.replaceProductInfoColors(existingInfo, colors);
+            retainedIds.add(existingInfo.id);
+
+            if (
+              currentSeller &&
+              (variant.price != null || variant.stockQuantity != null)
+            ) {
+              await this.upsertSellerProductListing(
+                currentSeller.id,
+                existingInfo,
+                variant
+              );
+            }
+          }
+        } else {
+          // New variant to create
+          const newInfo = this.productInfoRepository.create({
+            product,
+            size: normalizedSize,
+            sizeKind,
+            weight: variant.weight,
+            images: variant.images || [],
+          });
+          const savedInfo = await this.productInfoRepository.save(newInfo);
+          await this.replaceProductInfoColors(savedInfo, colors);
+          retainedIds.add(savedInfo.id);
+
+          if (
+            currentSeller &&
+            (variant.price != null || variant.stockQuantity != null)
+          ) {
+            await this.upsertSellerProductListing(
+              currentSeller.id,
+              savedInfo,
+              variant
+            );
+          }
+        }
+      }
+
+      // Remove deleted variants
+      if (product.productInfos) {
+        for (const existingInfo of product.productInfos) {
+          if (!retainedIds.has(existingInfo.id)) {
+            await this.productInfoColorRepository.delete({
+              productInfo: { id: existingInfo.id },
+            });
+            await this.sellerProductRepository.delete({
+              productInfoId: existingInfo.id,
+            });
+            await this.productInfoRepository.delete({ id: existingInfo.id });
+          }
+        }
+      }
+    }
+
+    return (await this.getProductById(product.id)) || product;
+  }
+
+  async getProductById(id: number): Promise<Product | null> {
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: [
+        'descriptions',
+        'descriptions.language',
+        'productInfos',
+        'categories',
+        'brand',
+        'seller',
+        'productInfos.colorLinks',
+        'productInfos.colorLinks.color',
+        'sellerProducts',
+        'sellerProducts.seller',
+        'sellerProducts.seller.user',
+        'sellerProducts.productInfo',
+        'sellerProducts.productInfo.colorLinks',
+        'sellerProducts.productInfo.colorLinks.color',
+      ],
+      order: {
+        productInfos: {
+          id: 'ASC',
+        },
+      },
+    });
+
+    if (!product) return null;
+
+    if (product.productInfos) {
+      for (const info of product.productInfos) {
+        info.colors = orderedColorsFromLinks(info.colorLinks);
+      }
+    }
+
+    if (product.sellerProducts) {
+      product.sellerProducts = product.sellerProducts.filter(
+        (sp) => sp.productInfo != null
+      );
+    }
+
+    return product;
+  }
+
+  async updateProductInfo(
+    id: number,
+    size: string,
+    colorIds: number[],
+    weight: number
+  ): Promise<ProductInfo> {
+    const productInfo = await this.productInfoRepository.findOne({
+      where: { id },
+      relations: ['colorLinks', 'colorLinks.color'],
+    });
+    if (!productInfo) {
+      throw new Error(`ProductInfo with ID ${id} not found`);
+    }
+    const colors = await this.resolveOrderedColors(colorIds);
+    productInfo.size = size;
+    productInfo.weight = weight;
+    await this.productInfoRepository.save(productInfo);
+    await this.replaceProductInfoColors(productInfo, colors);
+    const updated = await this.productInfoRepository.findOne({
+      where: { id },
+      relations: ['colorLinks', 'colorLinks.color'],
+    });
+    if (!updated) {
+      throw new Error(`ProductInfo with ID ${id} not found after update`);
+    }
+    return updated;
+  }
+
+  // Archive a product (set archived = true)
+  async archiveProduct(id: number): Promise<Product> {
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) throw new Error('Product not found');
+    product.archived = true;
+    return this.productRepository.save(product);
+  }
+
+  // Unarchive a product (set archived = false)
+  async unarchiveProduct(id: number): Promise<Product> {
+    const product = await this.productRepository.findOne({ where: { id } });
+    if (!product) throw new Error('Product not found');
+    product.archived = false;
+    return this.productRepository.save(product);
+  }
+
+  /**
+   * Permanently delete a product. Allowed only when:
+   * - the product is archived
+   * - no seller listings have stockQuantity > 0
+   * - the product is not referenced by order history
+   */
+  async deleteProduct(id: number): Promise<boolean> {
+    const product = await this.productRepository.findOne({
+      where: { id },
+      relations: ['productInfos', 'categories'],
+    });
+    if (!product) {
+      throw new Error('Product not found');
+    }
+    if (!product.archived) {
+      throw new Error('Only archived products can be deleted.');
+    }
+
+    const activeListings = await this.sellerProductRepository.count({
+      where: {
+        product: { id },
+        stockQuantity: MoreThan(0),
+      },
+    });
+    if (activeListings > 0) {
+      throw new Error(
+        'Cannot delete a product that still has active seller inventory.'
+      );
+    }
+
+    const orderHistoryCount = await this.orderItemRepository.count({
+      where: { productId: String(id) },
+    });
+    if (orderHistoryCount > 0) {
+      throw new Error(
+        'Cannot delete a product that appears in order history.'
+      );
+    }
+
+    const uploadDir = path.join(process.cwd(), 'uploads', 'products');
+    for (const info of product.productInfos || []) {
+      for (const imageUrl of info.images || []) {
+        const imageName = path.basename(imageUrl);
+        if (!imageName) continue;
+        const filePath = path.join(uploadDir, imageName);
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (error) {
+          this.logger.warn(
+            `Failed to remove product image ${filePath}: ${(error as Error).message}`
+          );
+        }
+      }
+      await this.productInfoColorRepository.delete({
+        productInfo: { id: info.id },
+      });
+      await this.translationService.deleteEntityTranslations(
+        'productInfo',
+        info.id
+      );
+    }
+
+    await this.sellerProductRepository.delete({ product: { id } });
+    await this.productInfoRepository.delete({ product: { id } });
+    await this.translationService.deleteEntityTranslations('product', id);
+
+    product.categories = [];
+    await this.productRepository.save(product);
+    await this.productRepository.delete(id);
+    return true;
+  }
+
+  async getSellerProducts(
+    sellerId: number,
+    filter?: ProductFilterInput
+  ): Promise<[Product[], number]> {
+    const query = this.productRepository
+      .createQueryBuilder('product')
+      .leftJoinAndSelect('product.productInfos', 'productInfo')
+      .leftJoinAndSelect('productInfo.colorLinks', 'colorLink')
+      .leftJoinAndSelect('colorLink.color', 'color')
+      .leftJoinAndSelect('product.categories', 'category')
+      .leftJoinAndSelect('product.brand', 'brand')
+      .leftJoinAndSelect('product.descriptions', 'productDescription')
+      .leftJoinAndSelect('productDescription.language', 'descLanguage')
+      .leftJoinAndSelect(
+        'product.sellerProducts',
+        'sellerProduct',
+        'sellerProduct.sellerId = :sellerId',
+        { sellerId }
+      )
+      .leftJoinAndSelect('sellerProduct.productInfo', 'sellerProductInfo')
+      .leftJoinAndSelect('sellerProductInfo.colorLinks', 'sellerProductColorLink')
+      .leftJoinAndSelect('sellerProductColorLink.color', 'sellerProductColor')
+      .where('sellerProduct.sellerId = :sellerId', { sellerId })
+      .orderBy('productInfo.id', 'ASC')
+      .addOrderBy('colorLink.position', 'ASC')
+      .addOrderBy('sellerProduct.id', 'ASC');
+
+    if (filter?.archivedStatus && filter.archivedStatus !== 'ALL') {
+      query.andWhere('product.archived = :archived', {
+        archived: filter.archivedStatus === 'ARCHIVED',
+      });
+    }
+
+    if (filter?.brand) {
+      query.andWhere('LOWER(brand.slug) = :brandSlug', {
+        brandSlug: filter.brand.toLowerCase(),
+      });
+    }
+
+    if (filter?.categoryIds?.length) {
+      query.andWhere('category.id IN (:...categoryIds)', {
+        categoryIds: filter.categoryIds,
+      });
+    } else if (filter?.categoryId) {
+      query.andWhere('category.id = :categoryId', {
+        categoryId: filter.categoryId,
+      });
+    } else if (filter?.category) {
+      query.andWhere('LOWER(category.slug) = :category', {
+        category: filter.category.toLowerCase(),
+      });
+    }
+
+    if (filter?.searchTerm) {
+      query.andWhere('LOWER(product.name) LIKE :searchTerm', {
+        searchTerm: `%${filter.searchTerm.toLowerCase()}%`,
+      });
+    }
+
+    if (filter?.productInfoFilter) {
+      const {
+        size,
+        sizeKind,
+        colorId,
+        weight,
+        price,
+        costPrice,
+        discount,
+        stockQuantity,
+      } = filter.productInfoFilter;
+      if (size?.length)
+        query.andWhere('productInfo.size IN (:...size)', { size });
+      if (sizeKind)
+        query.andWhere('productInfo.sizeKind = :sizeKind', { sizeKind });
+      if (colorId)
+        query.andWhere(
+          `EXISTS (
+            SELECT 1 FROM product_info_color pic
+            WHERE pic."productInfoId" = productInfo.id
+              AND pic."colorId" IN (:...colorId)
+          )`,
+          { colorId }
+        );
+      if (weight)
+        query.andWhere('productInfo.weight IN (:...weight)', { weight });
+      if (price)
+        query.andWhere('sellerProduct.price IN (:...price)', { price });
+      if (costPrice)
+        query.andWhere('sellerProduct.costPrice IN (:...costPrice)', {
+          costPrice,
+        });
+      if (discount)
+        query.andWhere('sellerProduct.discount IN (:...discount)', {
+          discount,
+        });
+      if (stockQuantity)
+        query.andWhere('sellerProduct.stockQuantity IN (:...stockQuantity)', {
+          stockQuantity,
+        });
+    }
+
+    if (filter?.sort) {
+      const order = filter.sortOrder === 'desc' ? 'DESC' : 'ASC';
+      if (filter.sort === 'price') {
+        query.addOrderBy('sellerProduct.price', order);
+      } else if (filter.sort === 'discount') {
+        query.addOrderBy('sellerProduct.discount', order);
+      } else if (filter.sort === 'color') {
+        query.addOrderBy('color.hexCode', order);
+      } else {
+        query.addOrderBy('product.name', order);
+      }
+    }
+
+    const totalCount = await query.getCount();
+
+    if (filter?.first) {
+      query.take(filter.first);
+    }
+
+    if (filter?.after) {
+      const offset = parseOffset(filter.after);
+      if (offset > 0) {
+        query.skip(offset);
+      }
+    }
+
+    const products = await query.getMany();
+    return [products, totalCount];
+  }
+
+  async getSellerProductsByProduct(
+    productId: number
+  ): Promise<SellerProduct[]> {
+    return this.sellerProductRepository.find({
+      where: { product: { id: productId } },
+      relations: [
+        'seller',
+        'seller.user',
+        'productInfo',
+        'productInfo.colorLinks',
+        'productInfo.colorLinks.color',
+      ],
+      order: {
+        price: 'ASC',
+        discount: 'DESC',
+      },
+    });
+  }
+
+  private async resolveOrderedColors(colorIds: number[]): Promise<Color[]> {
+    const uniqueIds = [...new Set(colorIds.filter((id) => Number.isFinite(id)))];
+    if (!uniqueIds.length) {
+      throw new Error('At least one color is required.');
+    }
+    const colors = await this.colorRepository.findBy({ id: In(uniqueIds) });
+    if (colors.length !== uniqueIds.length) {
+      throw new Error('One or more colors were not found.');
+    }
+    const byId = new Map(colors.map((c) => [c.id, c]));
+    // Preserve the submitted order (first = primary)
+    return colorIds
+      .map((id) => byId.get(id))
+      .filter((c): c is Color => !!c)
+      .filter(
+        (color, index, arr) => arr.findIndex((c) => c.id === color.id) === index
+      );
+  }
+
+  private async replaceProductInfoColors(
+    productInfo: ProductInfo,
+    colors: Color[]
+  ): Promise<void> {
+    await this.productInfoColorRepository.delete({
+      productInfo: { id: productInfo.id },
+    });
+    const links = colors.map((color, position) =>
+      this.productInfoColorRepository.create({
+        productInfo,
+        color,
+        position,
+      })
+    );
+    await this.productInfoColorRepository.save(links);
+  }
+
+  async saveProductDescriptions(
+    productId: number,
+    descriptions: Array<{ languageId?: number; languageCode?: string; description: string }>
+  ): Promise<void> {
+    for (const descInput of descriptions) {
+      let lang: SiteLanguage | null = null;
+      if (descInput.languageId) {
+        lang = await this.siteLanguageRepository.findOne({
+          where: { id: descInput.languageId },
+        });
+      } else if (descInput.languageCode) {
+        lang = await this.siteLanguageRepository.findOne({
+          where: { code: descInput.languageCode.trim().toLowerCase() },
+        });
+      }
+      if (!lang) continue;
+
+      const trimmed = descInput.description ? descInput.description.trim() : '';
+      const existing = await this.productDescriptionRepository.findOne({
+        where: { productId, languageId: lang.id },
+      });
+
+      if (!trimmed) {
+        if (existing) {
+          await this.productDescriptionRepository.delete(existing.id);
+        }
+      } else {
+        if (existing) {
+          existing.description = trimmed;
+          await this.productDescriptionRepository.save(existing);
+        } else {
+          await this.productDescriptionRepository.save(
+            this.productDescriptionRepository.create({
+              productId,
+              languageId: lang.id,
+              description: trimmed,
+            })
+          );
+        }
+      }
+    }
+  }
+
+  async resolveProductDescription(
+    product: Product,
+    locale: string
+  ): Promise<string | null> {
+    let descs = product.descriptions;
+    if (!descs) {
+      descs = await this.productDescriptionRepository.find({
+        where: { productId: product.id },
+        relations: ['language'],
+      });
+    }
+
+    if (descs && descs.length > 0) {
+      const direct = descs.find(
+        (d) => d.language?.code?.toLowerCase() === locale.toLowerCase()
+      );
+      if (direct && direct.description?.trim()) return direct.description;
+
+      const defaultDesc = descs.find((d) => d.language?.isDefault);
+      if (defaultDesc && defaultDesc.description?.trim())
+        return defaultDesc.description;
+
+      const firstValid = descs.find((d) => d.description?.trim());
+      if (firstValid) return firstValid.description;
+    }
+
+    return product.description || null;
+  }
+
+  async getProductDescriptions(
+    productId: number
+  ): Promise<ProductDescription[]> {
+    return this.productDescriptionRepository.find({
+      where: { productId },
+      relations: ['language'],
+      order: { id: 'ASC' },
+    });
+  }
+
+  private readonly newsletterEmails = new Set<string>();
+
+  async subscribeNewsletter(email: string): Promise<boolean> {
+    const trimmed = (email || '').trim().toLowerCase();
+    if (!trimmed || !trimmed.includes('@')) return false;
+    this.newsletterEmails.add(trimmed);
+    return true;
+  }
+}
+</file>
+
+</files>

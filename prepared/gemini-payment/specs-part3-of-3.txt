@@ -1,0 +1,2513 @@
+        sellerProductId: 'seller-product-1',
+        quantity: 2,
+      } as OrderItem,
+    ];
+
+    it('should update order status successfully PENDING -> CONFIRMED with stock decrease', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 10,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 8,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CONFIRMED,
+      );
+
+      expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'seller-product-1' },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(sellerProductRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stockQuantity: 8,
+        }),
+      );
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+      expect(result.stockReserved).toBe(true);
+    });
+
+    it('should restore stock when cancelling a CONFIRMED order (stockReserved = true)', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CANCELLED,
+      );
+
+      expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'seller-product-1' },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(sellerProductRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stockQuantity: 10,
+        }),
+      );
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should NOT restore stock when cancelling a PENDING order (stockReserved = false)', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 10,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CANCELLED,
+      );
+
+      expect(sellerProductRepository.findOne).not.toHaveBeenCalled();
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should restore stock when refunding a CONFIRMED order (stockReserved = true)', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
+      );
+
+      expect(sellerProductRepository.save).toHaveBeenCalled();
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should not restore stock when order was already cancelled', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue(order);
+
+      await service.updateOrderStatus(orderId, OrderStatus.CANCELLED);
+
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException for invalid transition CANCELLED -> DELIVERED', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.DELIVERED),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.DELIVERED),
+      ).rejects.toThrow('Invalid status transition from CANCELLED to DELIVERED');
+    });
+
+    it('should throw BadRequestException for invalid transition REFUNDED -> CANCELLED', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.CANCELLED),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.CANCELLED),
+      ).rejects.toThrow('Invalid status transition from REFUNDED to CANCELLED');
+    });
+
+    it('should throw BadRequestException for invalid transition PENDING -> PROCESSING', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.PROCESSING),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.updateOrderStatus(orderId, OrderStatus.PROCESSING),
+      ).rejects.toThrow('Invalid status transition from PENDING to PROCESSING');
+    });
+
+    it('should allow PENDING -> CONFIRMED transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CONFIRMED,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CONFIRMED,
+      );
+
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+    });
+
+    it('should allow PENDING -> CANCELLED transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CANCELLED,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CANCELLED,
+      );
+
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+    });
+
+    it('should allow CONFIRMED -> PROCESSING transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.PROCESSING,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.PROCESSING,
+      );
+
+      expect(result.status).toBe(OrderStatus.PROCESSING);
+    });
+
+    it('should allow CONFIRMED -> CANCELLED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CANCELLED,
+      );
+
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should allow CONFIRMED -> REFUNDED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
+      );
+
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should allow PROCESSING -> SHIPPED transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PROCESSING,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.SHIPPED,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.SHIPPED,
+      );
+
+      expect(result.status).toBe(OrderStatus.SHIPPED);
+    });
+
+    it('should allow PROCESSING -> REFUNDED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PROCESSING,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
+      );
+
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should allow SHIPPED -> DELIVERED transition', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.SHIPPED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.DELIVERED,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.DELIVERED,
+      );
+
+      expect(result.status).toBe(OrderStatus.DELIVERED);
+    });
+
+    it('should allow SHIPPED -> REFUNDED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.SHIPPED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
+      );
+
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should allow DELIVERED -> REFUNDED transition with stock restore', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.DELIVERED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.REFUNDED,
+        stockReserved: false,
+      });
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.REFUNDED,
+      );
+
+      expect(result.status).toBe(OrderStatus.REFUNDED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should return order idempotently if status unchanged', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.updateOrderStatus(
+        orderId,
+        OrderStatus.CONFIRMED,
+      );
+
+      expect(result).toEqual(order);
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('deleteOrder', () => {
+    const orderId = 'order-1';
+    const mockOrderItems: OrderItem[] = [
+      {
+        id: 'item-1',
+        productId: 'product-1',
+        sellerProductId: 'seller-product-1',
+        quantity: 2,
+      } as OrderItem,
+    ];
+
+    it('should delete an order and restore stock if stockReserved = true', async () => {
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 8,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        orderNumber: 'ORD-123',
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 10,
+      } as SellerProduct);
+      orderRepository.remove.mockResolvedValue(order);
+
+      await service.deleteOrder(orderId);
+
+      expect(orderRepository.findOne).toHaveBeenCalledWith({
+        where: { id: orderId },
+        relations: ['items'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'seller-product-1' },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(sellerProductRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stockQuantity: 10,
+        }),
+      );
+      expect(orderRepository.remove).toHaveBeenCalledWith(order);
+    });
+
+    it('should delete an order without restoring stock if stockReserved = false', async () => {
+      const order: Order = {
+        id: orderId,
+        orderNumber: 'ORD-123',
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.remove.mockResolvedValue(order);
+
+      await service.deleteOrder(orderId);
+
+      expect(sellerProductRepository.findOne).not.toHaveBeenCalled();
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+      expect(orderRepository.remove).toHaveBeenCalledWith(order);
+    });
+
+    it('should throw NotFoundException if order does not exist', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.deleteOrder(orderId)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.deleteOrder(orderId)).rejects.toThrow(
+        `Order with ID ${orderId} not found`,
+      );
+    });
+  });
+
+  describe('confirmOrderPayment', () => {
+    const orderId = 'order-1';
+    const mockOrderItems: OrderItem[] = [
+      {
+        id: 'item-1',
+        productId: 'product-1',
+        sellerProductId: 'seller-product-1',
+        productName: 'Test Product',
+        quantity: 2,
+      } as OrderItem,
+    ];
+
+    const mockSellerProduct: SellerProduct = {
+      id: 'seller-product-1',
+      stockQuantity: 100,
+    } as SellerProduct;
+
+    it('should confirm payment and decrease stock for PENDING order', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...mockSellerProduct,
+        stockQuantity: 98,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+      });
+
+      const result = await service.confirmOrderPayment(orderId);
+
+      expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'seller-product-1' },
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(sellerProductRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stockQuantity: 98,
+        }),
+      );
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+      expect(result.stockReserved).toBe(true);
+    });
+
+    it('should return order without changes if already CONFIRMED and stockReserved', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.confirmOrderPayment(orderId);
+
+      expect(result).toEqual(order);
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if order is not PENDING', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Cannot confirm payment for order in status CANCELLED',
+      );
+    });
+
+    it('should throw NotFoundException if seller product does not exist', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'SellerProduct with ID seller-product-1 not found',
+      );
+    });
+
+    it('should throw BadRequestException if insufficient stock', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: [
+          {
+            ...mockOrderItems[0],
+            quantity: 150,
+          },
+        ],
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Insufficient stock',
+      );
+    });
+
+    it('should use productId as fallback if sellerProductId is not provided', async () => {
+      const orderItemsWithoutSellerProductId: OrderItem[] = [
+        {
+          id: 'item-1',
+          productId: 'product-1',
+          sellerProductId: undefined,
+          productName: 'Test Product',
+          quantity: 2,
+        } as OrderItem,
+      ];
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: orderItemsWithoutSellerProductId,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+      sellerProductRepository.save.mockResolvedValue({
+        ...mockSellerProduct,
+        stockQuantity: 98,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+      } as Order);
+
+      await service.confirmOrderPayment(orderId);
+
+      expect(sellerProductRepository.findOne).toHaveBeenCalledWith({
+        where: { id: 'product-1' },
+        lock: { mode: 'pessimistic_write' },
+      });
+    });
+
+    it('should decrement stock only once per line item when confirmOrderPayment is called', async () => {
+      const orderItems: OrderItem[] = [
+        {
+          id: 'item-1',
+          productId: 'product-1',
+          sellerProductId: 'seller-product-1',
+          productName: 'Test Product',
+          quantity: 3,
+        } as OrderItem,
+      ];
+
+      const sellerProduct: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 10,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: orderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      // findOne is called twice: once for stock check, once for actual decrement
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(sellerProduct)  // stock check
+        .mockResolvedValueOnce(sellerProduct as never);  // actual decrement
+      sellerProductRepository.save.mockResolvedValue({
+        ...sellerProduct,
+        stockQuantity: 7,
+      } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+      } as Order);
+
+      const result = await service.confirmOrderPayment(orderId);
+
+      expect(sellerProductRepository.findOne).toHaveBeenCalledTimes(2);
+      expect(sellerProductRepository.save).toHaveBeenCalledTimes(1);
+      expect(sellerProductRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({
+          stockQuantity: 7,
+        }),
+      );
+      expect(result.status).toBe(OrderStatus.CONFIRMED);
+    });
+
+    it('should throw BadRequestException for negative quantity', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: [
+          {
+            ...mockOrderItems[0],
+            quantity: -3,
+          },
+        ],
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Order item quantity must be a positive integer',
+      );
+    });
+
+    it('should throw BadRequestException for zero quantity', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: [
+          {
+            ...mockOrderItems[0],
+            quantity: 0,
+          },
+        ],
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Order item quantity must be a positive integer',
+      );
+    });
+
+    it('should throw BadRequestException for non-integer quantity', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: [
+          {
+            ...mockOrderItems[0],
+            quantity: 2.5,
+          },
+        ],
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Order item quantity must be a positive integer',
+      );
+    });
+
+    it('should fail atomically when multi-item stock check fails - no partial deduction', async () => {
+      const orderItems: OrderItem[] = [
+        {
+          id: 'item-1',
+          productId: 'product-1',
+          sellerProductId: 'seller-product-1',
+          productName: 'Product 1',
+          quantity: 2,
+        } as OrderItem,
+        {
+          id: 'item-2',
+          productId: 'product-2',
+          sellerProductId: 'seller-product-2',
+          productName: 'Product 2',
+          quantity: 3,
+        } as OrderItem,
+      ];
+
+      const sellerProduct1: SellerProduct = {
+        id: 'seller-product-1',
+        stockQuantity: 5,
+      } as SellerProduct;
+
+      const sellerProduct2: SellerProduct = {
+        id: 'seller-product-2',
+        stockQuantity: 1,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: orderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      // 4 calls to findOne: 2 for stock check (sorted: seller-product-1, seller-product-2), 
+      // 2 for actual decrement (same order)
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(sellerProduct1)  // check stock for product 1
+        .mockResolvedValueOnce(sellerProduct2)  // check stock for product 2 (fails here)
+        .mockResolvedValueOnce(sellerProduct1)  // would be called for decrement product 1 (not reached)
+        .mockResolvedValueOnce(sellerProduct2); // would be called for decrement product 2 (not reached)
+
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.confirmOrderPayment(orderId)).rejects.toThrow(
+        'Insufficient stock for product seller-product-2',
+      );
+
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should sort sellerProductIds to prevent deadlocks', async () => {
+      const orderItems: OrderItem[] = [
+        {
+          id: 'item-1',
+          productId: 'product-1',
+          sellerProductId: 'seller-product-b',
+          productName: 'Product B',
+          quantity: 1,
+        } as OrderItem,
+        {
+          id: 'item-2',
+          productId: 'product-2',
+          sellerProductId: 'seller-product-a',
+          productName: 'Product A',
+          quantity: 1,
+        } as OrderItem,
+      ];
+
+      const sellerProductA: SellerProduct = {
+        id: 'seller-product-a',
+        stockQuantity: 10,
+      } as SellerProduct;
+
+      const sellerProductB: SellerProduct = {
+        id: 'seller-product-b',
+        stockQuantity: 10,
+      } as SellerProduct;
+
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: orderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(sellerProductA)
+        .mockResolvedValueOnce(sellerProductB);
+      sellerProductRepository.save
+        .mockResolvedValueOnce({ ...sellerProductA, stockQuantity: 9 } as SellerProduct)
+        .mockResolvedValueOnce({ ...sellerProductB, stockQuantity: 9 } as SellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+      } as Order);
+
+      await service.confirmOrderPayment(orderId);
+
+      const findOneCalls = sellerProductRepository.findOne.mock.calls;
+      const firstCallWhere = findOneCalls[0][0].where as FindOptionsWhere<SellerProduct>;
+      const secondCallWhere = findOneCalls[1][0].where as FindOptionsWhere<SellerProduct>;
+      expect(firstCallWhere.id).toBe('seller-product-a');
+      expect(secondCallWhere.id).toBe('seller-product-b');
+    });
+  });
+
+  describe('cancelPendingOrder', () => {
+    const orderId = 'order-1';
+    const mockOrderItems: OrderItem[] = [
+      {
+        id: 'item-1',
+        productId: 'product-1',
+        sellerProductId: 'seller-product-1',
+        quantity: 2,
+      } as OrderItem,
+    ];
+
+    it('should cancel PENDING order without restoring stock (stockReserved = false)', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+      orderRepository.save.mockResolvedValue({
+        ...order,
+        status: OrderStatus.CANCELLED,
+        stockReserved: false,
+      });
+
+      const result = await service.cancelPendingOrder(orderId);
+
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+      expect(result.stockReserved).toBe(false);
+    });
+
+    it('should throw BadRequestException when trying to cancel CONFIRMED order', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.CONFIRMED,
+        stockReserved: true,
+        items: mockOrderItems,
+      } as Order;
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      await expect(service.cancelPendingOrder(orderId)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.cancelPendingOrder(orderId)).rejects.toThrow(
+        'Only PENDING orders can be cancelled',
+      );
+    });
+
+    it('should throw NotFoundException if order does not exist', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.cancelPendingOrder(orderId)).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+
+    it('should pass pessimistic_write lock when running inside a DataSource transaction', async () => {
+      const order: Order = {
+        id: orderId,
+        status: OrderStatus.PENDING,
+        stockReserved: false,
+        items: mockOrderItems,
+      } as Order;
+
+      // Simulate transaction by providing a manager
+      const transactionOrderRepo = {
+        findOne: jest.fn().mockResolvedValue(order),
+        save: jest.fn().mockResolvedValue({
+          ...order,
+          status: OrderStatus.CANCELLED,
+          stockReserved: false,
+        }),
+      };
+      const transactionSellerProductRepo = {
+        findOne: jest.fn(),
+        save: jest.fn(),
+      };
+      mockTransactionManager.getRepository.mockImplementation((entity: unknown) => {
+        if (entity === Order) return transactionOrderRepo;
+        if (entity === SellerProduct) return transactionSellerProductRepo;
+        return mockOrderRepository;
+      });
+
+      const result = await service.cancelPendingOrder(orderId);
+
+      expect(transactionOrderRepo.findOne).toHaveBeenCalledWith({
+        where: { id: orderId },
+        relations: ['items'],
+        lock: { mode: 'pessimistic_write' },
+      });
+      expect(result.status).toBe(OrderStatus.CANCELLED);
+    });
+  });
+
+  describe('getOrdersByCustomerEmail', () => {
+    const customerEmail = 'customer@example.com';
+    const mockOrders: Order[] = [
+      {
+        id: 'order-1',
+        orderNumber: 'ORD-1',
+        customerEmail,
+        createdAt: new Date('2024-01-01'),
+      } as Order,
+    ];
+
+    beforeEach(() => {
+      mockQueryBuilder.getMany.mockResolvedValue(mockOrders);
+      orderRepository.count.mockResolvedValue(1);
+    });
+
+    it('should return orders filtered by customer email', async () => {
+      const result = await service.getOrdersByCustomerEmail(customerEmail, 10);
+
+      expect(mockQueryBuilder.where).toHaveBeenCalledWith(
+        'order.customerEmail = :customerEmail',
+        { customerEmail },
+      );
+      expect(result.edges).toHaveLength(1);
+      expect(result.totalCount).toBe(1);
+    });
+
+    it('should handle pagination with cursor', async () => {
+      const cursor = Buffer.from(new Date().toISOString()).toString('base64');
+      await service.getOrdersByCustomerEmail(customerEmail, 10, cursor);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalled();
+    });
+
+    it('should apply id DESC tie-breaker ordering for deterministic pagination', async () => {
+      await service.getOrdersByCustomerEmail(customerEmail, 10);
+
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'order.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
+        'order.id',
+        'DESC',
+      );
+    });
+
+    it('should throw BadRequestException for invalid cursor', async () => {
+      const invalidCursor = 'not-valid-base64-date';
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, invalidCursor),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, invalidCursor),
+      ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for empty cursor', async () => {
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, ''),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, ''),
+      ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for whitespace-only cursor', async () => {
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, '   '),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, '   '),
+      ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for invalid base64 cursor', async () => {
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, 'not-a-valid-cursor'),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, 'not-a-valid-cursor'),
+      ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for base64-encoded non-date string', async () => {
+      const nonDateCursor = Buffer.from('not-a-date').toString('base64');
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, nonDateCursor),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        service.getOrdersByCustomerEmail(customerEmail, 10, nonDateCursor),
+      ).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should handle valid cursor and set hasPreviousPage to true', async () => {
+      const validDate = new Date('2026-01-15T10:00:00.000Z');
+      const validCursor = Buffer.from(validDate.toISOString()).toString('base64');
+      await service.getOrdersByCustomerEmail(customerEmail, 10, validCursor);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        { cursor: validDate },
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is undefined', async () => {
+      const result = await service.getOrdersByCustomerEmail(customerEmail, 10, undefined);
+
+      expect(result.pageInfo.hasPreviousPage).toBe(false);
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        expect.any(Object),
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is null', async () => {
+      const result = await service.getOrdersByCustomerEmail(customerEmail, 10, null as never);
+
+      expect(result.pageInfo.hasPreviousPage).toBe(false);
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        expect.any(Object),
+      );
+    });
+
+    it('should apply orderBy createdAt DESC and addOrderBy id DESC', async () => {
+      await service.getOrdersByCustomerEmail(customerEmail, 10);
+
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'order.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('order.id', 'DESC');
+    });
+  });
+
+  describe('getOrdersBySeller', () => {
+    it('should call findAll with sellerId', async () => {
+      const findAllSpy = jest.spyOn(service, 'findAll').mockResolvedValue({
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+          endCursor: undefined,
+        },
+        totalCount: 0,
+      });
+
+      await service.getOrdersBySeller('1', 10);
+
+      expect(findAllSpy).toHaveBeenCalledWith(10, undefined, '1', undefined);
+
+      findAllSpy.mockRestore();
+    });
+
+    it('should call findAll with sellerId and status filter', async () => {
+      const findAllSpy = jest.spyOn(service, 'findAll').mockResolvedValue({
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+          endCursor: undefined,
+        },
+        totalCount: 0,
+      });
+
+      await service.getOrdersBySeller('1', 10, undefined, OrderStatus.DELIVERED);
+
+      expect(findAllSpy).toHaveBeenCalledWith(10, undefined, '1', OrderStatus.DELIVERED);
+
+      findAllSpy.mockRestore();
+    });
+
+    it('should call findAll with sellerId and undefined status (no filter)', async () => {
+      const findAllSpy = jest.spyOn(service, 'findAll').mockResolvedValue({
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+          endCursor: undefined,
+        },
+        totalCount: 0,
+      });
+
+      await service.getOrdersBySeller('1', 10, undefined, undefined);
+
+      expect(findAllSpy).toHaveBeenCalledWith(10, undefined, '1', undefined);
+
+      findAllSpy.mockRestore();
+    });
+  });
+
+  describe('getOrdersByStatus', () => {
+    it('should call findAll with status', async () => {
+      const findAllSpy = jest.spyOn(service, 'findAll').mockResolvedValue({
+        edges: [],
+        pageInfo: {
+          hasNextPage: false,
+          hasPreviousPage: false,
+          endCursor: undefined,
+        },
+        totalCount: 0,
+      });
+
+      await service.getOrdersByStatus(OrderStatus.PENDING, 10);
+
+      expect(findAllSpy).toHaveBeenCalledWith(
+        10,
+        undefined,
+        undefined,
+        OrderStatus.PENDING,
+      );
+
+      findAllSpy.mockRestore();
+    });
+  });
+
+  describe('findOrdersByPaymentAuthority', () => {
+    const authority = 'test-authority-123';
+
+    it('should return all orders matching a paymentAuthority', async () => {
+      const mockOrders: Order[] = [
+        {
+          id: 'order-1',
+          orderNumber: 'ORD-1',
+          paymentAuthority: authority,
+          items: [],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 100,
+          shippingCost: 10,
+          total: 110,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date(),
+        } as Order,
+        {
+          id: 'order-2',
+          orderNumber: 'ORD-2',
+          paymentAuthority: authority,
+          items: [],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 2,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 200,
+          shippingCost: 15,
+          total: 215,
+          createdAt: new Date('2024-01-02'),
+          updatedAt: new Date(),
+        } as Order,
+      ];
+
+      orderRepository.find.mockResolvedValue(mockOrders);
+
+      const result = await service.findOrdersByPaymentAuthority(authority);
+
+      expect(orderRepository.find).toHaveBeenCalledWith({
+        where: { paymentAuthority: authority },
+        relations: ['items', 'seller'],
+        order: { id: 'ASC' },
+      });
+      expect(result).toHaveLength(2);
+      expect(result[0].id).toBe('order-1');
+      expect(result[1].id).toBe('order-2');
+    });
+
+    it('should return empty array for empty authority string', async () => {
+      const result = await service.findOrdersByPaymentAuthority('');
+
+      expect(result).toEqual([]);
+      expect(orderRepository.find).not.toHaveBeenCalled();
+    });
+
+    it('should return empty array when no orders match authority', async () => {
+      orderRepository.find.mockResolvedValue([]);
+
+      const result = await service.findOrdersByPaymentAuthority('non-existent');
+
+      expect(result).toEqual([]);
+      expect(orderRepository.find).toHaveBeenCalledWith({
+        where: { paymentAuthority: 'non-existent' },
+        relations: ['items', 'seller'],
+        order: { id: 'ASC' },
+      });
+    });
+
+    // Locked Test: relations passed to orderRepository.find are EXACTLY ['items', 'seller']
+    it('Locked: relations passed to find are EXACTLY [\'items\', \'seller\'] without unknown relations', async () => {
+      const mockOrders: Order[] = [
+        {
+          id: 'order-1',
+          orderNumber: 'ORD-1',
+          paymentAuthority: authority,
+          items: [
+            {
+              id: 'item-1',
+              orderId: 'order-1',
+              productId: 'product-1',
+              sellerProductId: 'sp-1',
+              productName: 'Test Product',
+              quantity: 1,
+              unitPrice: 100,
+              totalPrice: 100,
+            } as OrderItem,
+          ],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 100,
+          shippingCost: 10,
+          total: 110,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date(),
+        } as Order,
+      ];
+
+      orderRepository.find.mockResolvedValue(mockOrders);
+      sellerProductRepository.findBy.mockResolvedValue([]);
+
+      await service.findOrdersByPaymentAuthority(authority);
+
+      const findCall = orderRepository.find.mock.calls[0][0] as {
+        relations?: string[];
+      };
+      const relations = findCall.relations ?? [];
+      // LOCKED: Order has only items/seller relations; unknown relations make TypeORM throw
+      expect(relations).toEqual(['items', 'seller']);
+      expect(relations).not.toContain('customer');
+      expect(relations).not.toContain('items.sellerProduct');
+    });
+
+    it('hydrates sellerProduct on items when sellerProductId exists', async () => {
+      const mockSellerProduct1: SellerProduct = {
+        id: 'sp-1',
+        price: 100,
+        discount: 0,
+        stockQuantity: 10,
+        productInfoId: 1,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
+      } as SellerProduct;
+      const mockSellerProduct2: SellerProduct = {
+        id: 'sp-2',
+        price: 200,
+        discount: 10,
+        stockQuantity: 5,
+        productInfoId: 2,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
+      } as SellerProduct;
+
+      const mockOrders: Order[] = [
+        {
+          id: 'order-1',
+          orderNumber: 'ORD-1',
+          paymentAuthority: authority,
+          items: [
+            {
+              id: 'item-1',
+              orderId: 'order-1',
+              productId: 'product-1',
+              sellerProductId: 'sp-1',
+              productName: 'Product 1',
+              quantity: 1,
+              unitPrice: 100,
+              totalPrice: 100,
+            } as OrderItem,
+            {
+              id: 'item-2',
+              orderId: 'order-1',
+              productId: 'product-2',
+              sellerProductId: 'sp-2',
+              productName: 'Product 2',
+              quantity: 2,
+              unitPrice: 200,
+              totalPrice: 400,
+            } as OrderItem,
+            {
+              id: 'item-3',
+              orderId: 'order-1',
+              productId: 'product-3',
+              sellerProductId: 'sp-unknown',
+              productName: 'Product 3',
+              quantity: 1,
+              unitPrice: 50,
+              totalPrice: 50,
+            } as OrderItem,
+          ],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 550,
+          shippingCost: 10,
+          total: 560,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date(),
+        } as Order,
+      ];
+
+      orderRepository.find.mockResolvedValue(mockOrders);
+      sellerProductRepository.findBy.mockResolvedValue([
+        mockSellerProduct1,
+        mockSellerProduct2,
+      ]);
+
+      const result = await service.findOrdersByPaymentAuthority(authority);
+
+      // findBy called with unique ids
+      expect(sellerProductRepository.findBy).toHaveBeenCalledTimes(1);
+      const findByArg = sellerProductRepository.findBy.mock.calls[0][0] as FindOptionsWhere<SellerProduct>;
+      // TypeORM In operator creates a FindOperator, check its value
+      const inOperator = findByArg.id as unknown as { _value?: string[] };
+      expect(inOperator._value?.sort()).toEqual(['sp-1', 'sp-2', 'sp-unknown'].sort());
+
+      // sellerProduct attached to items
+      const order = result[0];
+      expect((order.items[0] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toEqual(mockSellerProduct1);
+      expect((order.items[1] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toEqual(mockSellerProduct2);
+      // unknown id gets null
+      expect((order.items[2] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toBeNull();
+    });
+
+    it('does NOT call findBy when no item has a sellerProductId', async () => {
+      const mockOrders: Order[] = [
+        {
+          id: 'order-1',
+          orderNumber: 'ORD-1',
+          paymentAuthority: authority,
+          items: [
+            {
+              id: 'item-1',
+              orderId: 'order-1',
+              productId: 'product-1',
+              sellerProductId: '',
+              productName: 'Product 1',
+              quantity: 1,
+              unitPrice: 100,
+              totalPrice: 100,
+            } as OrderItem,
+            {
+              id: 'item-2',
+              orderId: 'order-1',
+              productId: 'product-2',
+              sellerProductId: undefined,
+              productName: 'Product 2',
+              quantity: 1,
+              unitPrice: 200,
+              totalPrice: 200,
+            } as OrderItem,
+          ],
+          seller: {} as SellerInfo,
+          customerEmail: 'test@example.com',
+          customerPhone: '1234567890',
+          customerName: 'Test User',
+          shippingAddress: '123 Test St',
+          city: 'Test City',
+          state: 'Test State',
+          zipCode: '12345',
+          country: 'Test Country',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 300,
+          shippingCost: 10,
+          total: 310,
+          createdAt: new Date('2024-01-01'),
+          updatedAt: new Date(),
+        } as Order,
+      ];
+
+      orderRepository.find.mockResolvedValue(mockOrders);
+
+      const result = await service.findOrdersByPaymentAuthority(authority);
+
+      expect(sellerProductRepository.findBy).not.toHaveBeenCalled();
+      expect(result).toHaveLength(1);
+      expect(result[0].items).toHaveLength(2);
+      // sellerProduct should be undefined/null since findBy wasn't called
+      expect((result[0].items[0] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toBeUndefined();
+      expect((result[0].items[1] as OrderItem & { sellerProduct?: SellerProduct | null }).sellerProduct).toBeUndefined();
+    });
+  });
+});
+
+describe('OrderService - Shipping Security & Payment Modes', () => {
+  const baseOrderInput = {
+    customerName: 'Ali Rezaei',
+    customerEmail: 'ali@example.com',
+    customerPhone: '+989121234567',
+    shippingAddress: 'Valiasr St 123',
+    city: 'Tehran',
+    state: 'Tehran',
+    zipCode: '1968633111',
+    country: 'Iran',
+    sellerId: 1,
+    items: [
+      {
+        productId: '10',
+        sellerProductId: '11111111-1111-4111-8111-111111111111',
+        productName: 'Nike Tech Fleece',
+        quantity: 2,
+        unitPrice: 50,
+        totalPrice: 100,
+      },
+    ],
+  };
+
+  function createHarness(options?: {
+    sellers?: Record<number, { id: number; storeName: string; shippingFee: number; shippingPaymentMode?: ShippingPaymentMode }>;
+    platformSettings?: Partial<{
+      freeShippingEnabled: boolean;
+      freeShippingThreshold: number;
+      shippingStrategy: ShippingStrategy;
+      additionalSellerDiscount: number;
+      maxShippingCapEnabled: boolean;
+      maxShippingCap: number;
+    }>;
+  }) {
+    const sellersMap = options?.sellers ?? {
+      1: { id: 1, storeName: 'Seller One', shippingFee: 10 },
+    };
+
+    const orderRepository = {
+      create: jest.fn((dto) => ({ ...dto })),
+      save: jest.fn(async (entity) => ({ id: entity.id || 'order-1', ...entity })),
+      findOne: jest.fn(),
+    };
+    const orderItemRepository = {
+      save: jest.fn(async (items) => items),
+    };
+    const sellerProductRepository = {
+      findOne: jest.fn(async ({ where: { id } }) => ({
+        id,
+        price: 50,
+        discount: 0,
+        stockQuantity: 10,
+        productInfoId: 100,
+        seller: sellersMap[1],
+      })),
+    };
+    const sellerInfoRepository = {
+      findOne: jest.fn(async ({ where: { id } }) => sellersMap[id] ?? null),
+    };
+    const platformSettingsRepository = {
+      findOne: jest.fn(async () => ({
+        id: 1,
+        freeShippingEnabled: false,
+        freeShippingThreshold: 500,
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        additionalSellerDiscount: 0.5,
+        maxShippingCapEnabled: false,
+        maxShippingCap: 50,
+        ...options?.platformSettings,
+      })),
+    };
+
+    const shippingCalcService = new ShippingCalculationService(
+      platformSettingsRepository as unknown as jest.Mocked<Repository<PlatformSettings>>
+    );
+
+    const service = new OrderService(
+      orderRepository as unknown as jest.Mocked<Repository<Order>>,
+      orderItemRepository as unknown as jest.Mocked<Repository<OrderItem>>,
+      sellerProductRepository as unknown as jest.Mocked<Repository<SellerProduct>>,
+      sellerInfoRepository as unknown as jest.Mocked<Repository<SellerInfo>>,
+      shippingCalcService,
+      undefined
+    );
+
+    return { service, orderRepository, sellerProductRepository };
+  }
+
+  it('1. defaults seller shippingPaymentMode to PAY_ON_DELIVERY and forces shippingCost to 0', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: { id: 1, storeName: 'Default Mode Seller', shippingFee: 15 },
+      },
+    });
+
+    const order = await service.createOrder({
+      ...baseOrderInput,
+      shippingMethod: 'vip',
+    });
+
+    expect(order.shippingPaymentMode).toBe(ShippingPaymentMode.PAY_ON_DELIVERY);
+    expect(order.shippingCost).toBe(0);
+    expect(order.subtotal).toBe(100);
+    expect(order.total).toBe(100);
+  });
+
+  it('2. ignores any client shippingCost (0, positive, or huge) for a PAY_ON_DELIVERY seller and yields 0', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: {
+          id: 1,
+          storeName: 'COD Seller',
+          shippingFee: 20,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY,
+        },
+      },
+    });
+
+    for (const clientFee of [0, 12.5, 999.99]) {
+      const order = await service.createOrder({
+        ...baseOrderInput,
+        shippingCost: clientFee,
+        shippingMethod: 'vip',
+      });
+      expect(order.shippingCost).toBe(0);
+      expect(order.total).toBe(100);
+    }
+  });
+
+  it('3. computes server fee for PAY_ONLINE sellers per method (pickup = 0, express = 45%, vip = 100%) ignoring client 0', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: {
+          id: 1,
+          storeName: 'Online Seller',
+          shippingFee: 10,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+        },
+      },
+    });
+
+    const pickupOrder = await service.createOrder({
+      ...baseOrderInput,
+      shippingCost: 0,
+      shippingMethod: 'pickup',
+    });
+    expect(pickupOrder.shippingCost).toBe(0);
+    expect(pickupOrder.total).toBe(100);
+
+    const expressOrder = await service.createOrder({
+      ...baseOrderInput,
+      shippingCost: 0,
+      shippingMethod: 'express',
+    });
+    expect(expressOrder.shippingCost).toBe(4.5);
+    expect(expressOrder.total).toBe(104.5);
+
+    const vipOrder = await service.createOrder({
+      ...baseOrderInput,
+      shippingCost: 0,
+      shippingMethod: 'vip',
+    });
+    expect(vipOrder.shippingCost).toBe(10);
+    expect(vipOrder.total).toBe(110);
+  });
+
+  it('4. overrides a higher client shippingCost on a PAY_ONLINE seller with the exact server-computed fee', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: {
+          id: 1,
+          storeName: 'Online Seller',
+          shippingFee: 10,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+        },
+      },
+    });
+
+    const order = await service.createOrder({
+      ...baseOrderInput,
+      shippingCost: 500,
+      shippingMethod: 'express',
+    });
+
+    expect(order.shippingCost).toBe(4.5);
+    expect(order.total).toBe(104.5);
+  });
+
+  it('5. recalculates mixed cart batch properly: PAY_ON_DELIVERY gets 0 and does not consume first-seller tier for PAY_ONLINE sellers', async () => {
+    const { service } = createHarness({
+      sellers: {
+        1: {
+          id: 1,
+          storeName: 'COD Seller 1',
+          shippingFee: 25,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY,
+        },
+        2: {
+          id: 2,
+          storeName: 'Online Seller 2',
+          shippingFee: 10,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+        },
+        3: {
+          id: 3,
+          storeName: 'Online Seller 3',
+          shippingFee: 8,
+          shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+        },
+      },
+      platformSettings: {
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        additionalSellerDiscount: 0.5, // 50% off for 2nd online seller
+      },
+    });
+
+    const batchOrders: Partial<Order>[] = [
+      {
+        id: 'ord-cod-1',
+        sellerId: 1,
+        subtotal: 100,
+        shippingCost: 25, // poisoned initial value
+        total: 125,
+        shippingMethod: 'vip',
+        status: OrderStatus.PENDING,
+      },
+      {
+        id: 'ord-on-3',
+        sellerId: 3,
+        subtotal: 50,
+        shippingCost: 0,
+        total: 50,
+        shippingMethod: 'express', // 45% of (8 * 0.5 = 4) => 1.80
+        status: OrderStatus.PENDING,
+      },
+      {
+        id: 'ord-on-2',
+        sellerId: 2,
+        subtotal: 80,
+        shippingCost: 0,
+        total: 80,
+        shippingMethod: 'vip', // 1st online seller (id 2 < id 3): full 10
+        status: OrderStatus.PENDING,
+      },
+    ];
+
+    const updated = await service.recalculateBatchOrdersShipping(batchOrders as unknown as Order[]);
+    const byId = Object.fromEntries(updated.map((o) => [o.id, o]));
+
+    expect(byId['ord-cod-1'].shippingCost).toBe(0);
+    expect(byId['ord-cod-1'].total).toBe(100);
+
+    expect(byId['ord-on-2'].shippingCost).toBe(10);
+    expect(byId['ord-on-2'].total).toBe(90);
+
+    expect(byId['ord-on-3'].shippingCost).toBe(1.8);
+    expect(byId['ord-on-3'].total).toBe(51.8);
+  });
+});
+===== FILE: libs/server/services/src/lib/shipping-calculation.service.spec.ts =====
+import { Test, TestingModule } from '@nestjs/testing';
+import { Repository } from 'typeorm';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { ShippingCalculationService, applyShippingMethodMultiplier } from './shipping-calculation.service';
+import { PlatformSettings, ShippingStrategy, ShippingPaymentMode } from '@kickzone-workspace/entities';
+
+describe('ShippingCalculationService', () => {
+  let service: ShippingCalculationService;
+  let mockSettingsRepository: jest.Mocked<Repository<PlatformSettings>>;
+
+  const mockSettings: PlatformSettings = {
+    id: 1,
+    freeShippingEnabled: true,
+    freeShippingThreshold: 100,
+    shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+    additionalSellerDiscount: 0.5,
+    additionalSellerFixedFee: 2.5,
+    maxShippingCapEnabled: true,
+    maxShippingCap: 15,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  } as PlatformSettings;
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        ShippingCalculationService,
+        {
+          provide: getRepositoryToken(PlatformSettings),
+          useValue: {
+            findOne: jest.fn().mockResolvedValue(mockSettings),
+            create: jest.fn().mockReturnValue(mockSettings),
+            save: jest.fn().mockResolvedValue(mockSettings),
+          },
+        },
+      ],
+    }).compile();
+
+    service = module.get<ShippingCalculationService>(ShippingCalculationService);
+    mockSettingsRepository = module.get(getRepositoryToken(PlatformSettings));
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('Free Shipping', () => {
+    it('should return totalShippingCost: 0 and appliedFee: 0 for all sellers when free shipping threshold is met', async () => {
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 5.0, sellerName: 'Seller 1' },
+        { sellerId: '2', shippingFee: 3.0, sellerName: 'Seller 2' },
+      ];
+
+      const result = await service.calculateShippingCost(150, sellerFees);
+
+      expect(result.totalShippingCost).toBe(0);
+      expect(result.freeShippingApplied).toBe(true);
+      expect(result.shippingBreakdown).toHaveLength(2);
+      result.shippingBreakdown.forEach((item) => {
+        expect(item.appliedFee).toBe(0);
+        expect(item.originalFee).toBeGreaterThanOrEqual(0);
+      });
+    });
+
+    it('should return originalFee as number even when shippingFee is 0', async () => {
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 0, sellerName: 'Free Ship Seller' },
+      ];
+
+      const result = await service.calculateShippingCost(150, sellerFees);
+
+      expect(result.totalShippingCost).toBe(0);
+      expect(result.shippingBreakdown[0].originalFee).toBe(0);
+      expect(result.shippingBreakdown[0].appliedFee).toBe(0);
+    });
+  });
+
+  describe('Zero Shipping Fee Sellers', () => {
+    it('should return 0 for seller with shippingFee: 0 (regular customer)', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 0, sellerName: 'Free Ship Seller' },
+        { sellerId: '2', shippingFee: 10, sellerName: 'Paid Ship Seller' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.shippingBreakdown.find((s) => s.sellerId === '1')?.appliedFee).toBe(0);
+      expect(result.shippingBreakdown.find((s) => s.sellerId === '2')?.appliedFee).toBeGreaterThan(0);
+    });
+
+    it('should return 0 for seller with shippingFee: 0 (VIP customer with TIERED_DISCOUNT)', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        additionalSellerDiscount: 0.5,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 0, sellerName: 'First Seller Free' },
+        { sellerId: '2', shippingFee: 10, sellerName: 'Second Seller' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      // First seller (index 0) pays full fee = 0
+      expect(result.shippingBreakdown[0].appliedFee).toBe(0);
+      // Second seller gets 50% discount on 10 = 5
+      expect(result.shippingBreakdown[1].appliedFee).toBe(5);
+    });
+
+    it('should return 0 for seller with shippingFee: 0 in FULL_SUM strategy', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.FULL_SUM,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 0, sellerName: 'Free Seller' },
+        { sellerId: '2', shippingFee: 5, sellerName: 'Paid Seller' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.totalShippingCost).toBe(5);
+      expect(result.shippingBreakdown.find((s) => s.sellerId === '1')?.appliedFee).toBe(0);
+      expect(result.shippingBreakdown.find((s) => s.sellerId === '2')?.appliedFee).toBe(5);
+    });
+  });
+
+  describe('Regular Shipping Fees', () => {
+    it('should return correct fee for seller with shippingFee: 10 in FULL_SUM', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.FULL_SUM,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'Seller 1' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.totalShippingCost).toBe(10);
+      expect(result.shippingBreakdown[0].appliedFee).toBe(10);
+      expect(result.shippingBreakdown[0].originalFee).toBe(10);
+    });
+
+    it('should apply TIERED_DISCOUNT correctly for VIP customer', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        additionalSellerDiscount: 0.5,
+        maxShippingCapEnabled: false, // Disable cap to test full calculation
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'First Seller' },
+        { sellerId: '2', shippingFee: 10, sellerName: 'Second Seller' },
+        { sellerId: '3', shippingFee: 10, sellerName: 'Third Seller' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      // First seller: 10 (full)
+      // Second: 10 * 0.5 = 5
+      // Third: 10 * 0.5 = 5
+      // Total: 20
+      expect(result.totalShippingCost).toBe(20);
+      expect(result.shippingBreakdown[0].appliedFee).toBe(10);
+      expect(result.shippingBreakdown[1].appliedFee).toBe(5);
+      expect(result.shippingBreakdown[2].appliedFee).toBe(5);
+    });
+
+    it('should apply TIERED_FIXED correctly', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.TIERED_FIXED,
+        additionalSellerFixedFee: 2.5,
+        maxShippingCapEnabled: false, // Disable cap to test full calculation
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'First Seller' },
+        { sellerId: '2', shippingFee: 10, sellerName: 'Second Seller' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.shippingBreakdown[0].appliedFee).toBe(10);
+      expect(result.shippingBreakdown[1].appliedFee).toBe(2.5);
+      expect(result.totalShippingCost).toBe(12.5);
+    });
+
+    it('should apply HIGHEST_ONLY correctly', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.HIGHEST_ONLY,
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 5, sellerName: 'Seller 1' },
+        { sellerId: '2', shippingFee: 15, sellerName: 'Seller 2' },
+        { sellerId: '3', shippingFee: 10, sellerName: 'Seller 3' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.totalShippingCost).toBe(15);
+      expect(result.shippingBreakdown[0].appliedFee).toBe(15);
+      expect(result.shippingBreakdown[1].appliedFee).toBe(0);
+      expect(result.shippingBreakdown[2].appliedFee).toBe(0);
+    });
+
+    it('should apply AVERAGE correctly', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.AVERAGE,
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'Seller 1' },
+        { sellerId: '2', shippingFee: 20, sellerName: 'Seller 2' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      // Average = (10 + 20) / 2 = 15
+      expect(result.totalShippingCost).toBe(15);
+      expect(result.shippingBreakdown[0].appliedFee).toBe(15);
+      expect(result.shippingBreakdown[1].appliedFee).toBe(0);
+    });
+  });
+
+  describe('Rounding and Number Coercion', () => {
+    it('should round all returned values to 2 decimal places', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        additionalSellerDiscount: 0.33, // Creates non-round numbers
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10.123, sellerName: 'Seller 1' },
+        { sellerId: '2', shippingFee: 5.456, sellerName: 'Seller 2' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      // Check totalShippingCost is rounded
+      expect(result.totalShippingCost).toBe(Math.round(result.totalShippingCost * 100) / 100);
+      
+      // Check each breakdown item is rounded
+      result.shippingBreakdown.forEach((item) => {
+        expect(item.originalFee).toBe(Math.round(item.originalFee * 100) / 100);
+        expect(item.appliedFee).toBe(Math.round(item.appliedFee * 100) / 100);
+      });
+    });
+
+    it('should coerce null/undefined shippingFee to 0', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.FULL_SUM,
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: null as never, sellerName: 'Seller 1' },
+        { sellerId: '2', shippingFee: undefined as never, sellerName: 'Seller 2' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.totalShippingCost).toBe(0);
+      result.shippingBreakdown.forEach((item) => {
+        expect(item.originalFee).toBe(0);
+        expect(item.appliedFee).toBe(0);
+      });
+    });
+  });
+
+  describe('Max Shipping Cap', () => {
+    it('should apply max shipping cap and round results', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.FULL_SUM,
+        maxShippingCapEnabled: true,
+        maxShippingCap: 10,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 20, sellerName: 'Seller 1' },
+        { sellerId: '2', shippingFee: 15, sellerName: 'Seller 2' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.totalShippingCost).toBe(10); // Capped at 10
+      // Each fee should be proportionally reduced and rounded
+      result.shippingBreakdown.forEach((item) => {
+        expect(item.appliedFee).toBe(Math.round(item.appliedFee * 100) / 100);
+      });
+    });
+  });
+
+  describe('PAY_ON_DELIVERY vs PAY_ONLINE behavior', () => {
+    it('should treat explicit PAY_ON_DELIVERY seller as COD (appliedFee 0, excluded from first-seller slot)', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.TIERED_DISCOUNT,
+        additionalSellerDiscount: 0.5,
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'COD Seller', shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY },
+        { sellerId: '2', shippingFee: 10, sellerName: 'Online Seller 1', shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE },
+        { sellerId: '3', shippingFee: 10, sellerName: 'Online Seller 2', shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      // COD seller should have appliedFee 0 and originalFee 0
+      const codSeller = result.shippingBreakdown.find((s) => s.sellerId === '1');
+      expect(codSeller?.appliedFee).toBe(0);
+      expect(codSeller?.originalFee).toBe(0);
+
+      // First ONLINE seller (sellerId: '2') should get first-seller slot (full fee = 10)
+      const firstOnline = result.shippingBreakdown.find((s) => s.sellerId === '2');
+      expect(firstOnline?.appliedFee).toBe(10);
+
+      // Second ONLINE seller (sellerId: '3') should get discount (10 * 0.5 = 5)
+      const secondOnline = result.shippingBreakdown.find((s) => s.sellerId === '3');
+      expect(secondOnline?.appliedFee).toBe(5);
+
+      // Total should only include online sellers: 10 + 5 = 15
+      expect(result.totalShippingCost).toBe(15);
+    });
+
+    it('should treat PAY_ONLINE seller as online (legacy behavior)', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.FULL_SUM,
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'Online Seller', shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.totalShippingCost).toBe(10);
+      expect(result.shippingBreakdown[0].appliedFee).toBe(10);
+      expect(result.shippingBreakdown[0].originalFee).toBe(10);
+    });
+
+    it('should treat missing shippingPaymentMode as online (legacy behavior)', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.FULL_SUM,
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'Legacy Seller' }, // No shippingPaymentMode
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.totalShippingCost).toBe(10);
+      expect(result.shippingBreakdown[0].appliedFee).toBe(10);
+      expect(result.shippingBreakdown[0].originalFee).toBe(10);
+    });
+
+    it('should treat undefined shippingPaymentMode as online (legacy behavior)', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.FULL_SUM,
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'Undefined Seller', shippingPaymentMode: undefined },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.totalShippingCost).toBe(10);
+      expect(result.shippingBreakdown[0].appliedFee).toBe(10);
+      expect(result.shippingBreakdown[0].originalFee).toBe(10);
+    });
+
+    it('should treat null shippingPaymentMode as online (legacy behavior)', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.FULL_SUM,
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'Null Seller', shippingPaymentMode: null as never },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.totalShippingCost).toBe(10);
+      expect(result.shippingBreakdown[0].appliedFee).toBe(10);
+      expect(result.shippingBreakdown[0].originalFee).toBe(10);
+    });
+
+    it('should be case-insensitive for PAY_ON_DELIVERY', async () => {
+      mockSettingsRepository.findOne.mockResolvedValueOnce({
+        ...mockSettings,
+        freeShippingEnabled: false,
+        shippingStrategy: ShippingStrategy.FULL_SUM,
+        maxShippingCapEnabled: false,
+      });
+
+      const sellerFees = [
+        { sellerId: '1', shippingFee: 10, sellerName: 'Lowercase COD', shippingPaymentMode: 'pay_on_delivery' },
+        { sellerId: '2', shippingFee: 10, sellerName: 'Mixed Case COD', shippingPaymentMode: 'Pay_On_Delivery' },
+        { sellerId: '3', shippingFee: 10, sellerName: 'Online Seller', shippingPaymentMode: 'pay_online' },
+      ];
+
+      const result = await service.calculateShippingCost(50, sellerFees);
+
+      expect(result.shippingBreakdown.find((s) => s.sellerId === '1')?.appliedFee).toBe(0);
+      expect(result.shippingBreakdown.find((s) => s.sellerId === '2')?.appliedFee).toBe(0);
+      expect(result.shippingBreakdown.find((s) => s.sellerId === '3')?.appliedFee).toBe(10);
+      expect(result.totalShippingCost).toBe(10);
+    });
+  });
+
+  describe('applyShippingMethodMultiplier', () => {
+    it('should return 0 for pickup', () => {
+      expect(applyShippingMethodMultiplier(10, 'pickup')).toBe(0);
+      expect(applyShippingMethodMultiplier(10, 'PICKUP')).toBe(0);
+      expect(applyShippingMethodMultiplier(10, 'Pickup')).toBe(0);
+    });
+
+    it('should return 45% of base fee rounded to 2 decimals for express', () => {
+      expect(applyShippingMethodMultiplier(10, 'express')).toBe(4.5);
+      expect(applyShippingMethodMultiplier(10, 'EXPRESS')).toBe(4.5);
+      expect(applyShippingMethodMultiplier(10, 'Express')).toBe(4.5);
+      // Test rounding: 10 * 0.45 = 4.5 (already 2 decimals)
+      expect(applyShippingMethodMultiplier(11.11, 'express')).toBe(5.0); // 11.11 * 0.45 = 4.9995 -> 5.00
+      expect(applyShippingMethodMultiplier(7.77, 'express')).toBe(3.5); // 7.77 * 0.45 = 3.4965 -> 3.50
+    });
+
+    it('should return full base fee rounded to 2 decimals for vip (default)', () => {
+      expect(applyShippingMethodMultiplier(10, 'vip')).toBe(10);
+      expect(applyShippingMethodMultiplier(10, 'VIP')).toBe(10);
+      expect(applyShippingMethodMultiplier(10, 'Vip')).toBe(10);
+      expect(applyShippingMethodMultiplier(10)).toBe(10); // undefined defaults to vip
+      expect(applyShippingMethodMultiplier(10, null)).toBe(10); // null defaults to vip
+      expect(applyShippingMethodMultiplier(10.123, 'vip')).toBe(10.12); // rounded
+    });
+
+    it('should handle zero and negative base fees', () => {
+      expect(applyShippingMethodMultiplier(0, 'express')).toBe(0);
+      expect(applyShippingMethodMultiplier(-5, 'express')).toBe(0); // safeBase treats negative as 0
+      expect(applyShippingMethodMultiplier(0, 'vip')).toBe(0);
+      expect(applyShippingMethodMultiplier(0, 'pickup')).toBe(0);
+    });
+  });
+});
+===== FILE: libs/client/customers/screens/customer-order-confirmation/src/lib/customer-order-confirmation.spec.tsx =====
+import { render } from '@testing-library/react';
+import { MemoryRouter } from 'react-router-dom';
+import { vi } from 'vitest';
+import CustomerOrderConfirmation from './customer-order-confirmation';
+
+vi.mock('@kickzone-workspace/customers-layout', () => ({
+  CustomersLayout: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="customers-layout">{children}</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/price-display', () => ({
+  PriceDisplay: ({ priceInUSD }: { priceInUSD: number }) => (
+    <span>{priceInUSD}</span>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/glassmorphism-container', () => ({
+  GlassmorphismContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid="glassmorphism-container">{children}</div>
+  ),
+}));
+
+vi.mock('@kickzone-workspace/customers-auth-context', () => ({
+  useCustomersAuth: () => ({ user: null, logout: vi.fn() }),
+}));
+
+vi.mock('@kickzone-workspace/shared-i18n', () => ({
+  useI18nContext: () => ({
+    LL: {
+      pageTitles: { orderConfirmation: () => 'Order Confirmation' },
+      orderConfirmation: {
+        title: () => 'Order confirmed',
+        thankYouMessage: () => 'Thank you',
+        orderSummary: () => 'Order Summary',
+        shippingAddress: () => 'Shipping Address',
+        emailConfirmation: () => 'Email confirmation sent',
+        viewOrders: () => 'View Orders',
+        continueShopping: () => 'Continue Shopping',
+        createAccountPrompt: () => 'Create account for faster tracking',
+        createAccountDescription: () => 'Save your info for future orders',
+      },
+      orders: {
+        trackingNumber: () => 'Tracking Number',
+        orderItems: () => 'Order Items',
+      },
+      checkout: {
+        subtotal: () => 'Subtotal',
+        shipping: () => 'Shipping',
+        total: () => 'Total',
+      },
+      table: {
+        product: () => 'Product',
+        quantity: () => 'Quantity',
+        unitPrice: () => 'Unit Price',
+        total: () => 'Total',
+      },
+      form: {
+        email: () => 'Email',
+        phone: () => 'Phone',
+      },
+      button: {
+        signUp: () => 'Sign Up',
+      },
+    },
+  }),
+  useLanguageContext: () => ({
+    currentLocale: 'en',
+  }),
+  usePageTitle: vi.fn(),
+}));
+
+const orderData = {
+  id: '1',
+  orderNumber: 'ORD-001',
+  trackingNumber: 'TRK-001',
+  customerEmail: 'customer@example.com',
+  customerPhone: '1234567890',
+  customerName: 'Jane Customer',
+  shippingAddress: '123 Test St',
+  city: 'Tehran',
+  state: 'Tehran',
+  zipCode: '12345',
+  country: 'Iran',
+  subtotal: 80,
+  shippingCost: 10,
+  total: 90,
+  items: [
+    {
+      productId: 'p-1',
+      productName: 'Test Product',
+      quantity: 1,
+      unitPrice: 80,
+      totalPrice: 80,
+    },
+  ],
+  createdAt: '2026-09-08T00:00:00.000Z',
+};
+
+const orderDataWithSellerOrders = {
+  ...orderData,
+  sellerOrders: [
+    { id: '1', orderNumber: 'ORD-001', total: 90, trackingNumber: 'TRK-001' },
+    { id: '2', orderNumber: 'ORD-002', total: 50, trackingNumber: 'TRK-002' },
+  ],
+};
+
+describe('CustomerOrderConfirmation', () => {
+  it('should render successfully', () => {
+    const { baseElement } = render(
+      <MemoryRouter initialEntries={[{ pathname: '/', state: { orderData } }]}>
+        <CustomerOrderConfirmation />
+      </MemoryRouter>
+    );
+
+    expect(baseElement).toBeTruthy();
+  });
+
+  it('should render successfully with sellerOrders', () => {
+    const { baseElement } = render(
+      <MemoryRouter initialEntries={[{ pathname: '/', state: { orderData: orderDataWithSellerOrders } }]}>
+        <CustomerOrderConfirmation />
+      </MemoryRouter>
+    );
+
+    expect(baseElement).toBeTruthy();
+  });
+
+  it('should return null (and redirect) when orderData is absent', () => {
+    const { baseElement } = render(
+      <MemoryRouter initialEntries={[{ pathname: '/' }]}>
+        <CustomerOrderConfirmation />
+      </MemoryRouter>
+    );
+
+    // When no orderData in state, component returns null (redirect handled by useEffect)
+    expect(baseElement.querySelector('[data-testid="customers-layout"]')).toBeFalsy();
+  });
+});

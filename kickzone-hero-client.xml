@@ -1,0 +1,5419 @@
+This file is a merged representation of a subset of the codebase, containing specifically included files, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of a subset of the repository's contents that is considered the most important context.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Only files matching these patterns are included: libs/client/customers/screens/home/src/lib/CustomersHomeScreen.tsx, libs/client/customers/screens/home/src/lib/CustomersHomeScreen.spec.tsx, libs/client/customers/screens/home/src/lib/home-selectors.ts, libs/client/customers/screens/home/src/lib/components/HeroSection.tsx, libs/client/customers/screens/home/src/lib/components/CategoryBentoSection.tsx, libs/client/customers/screens/home/src/lib/components/ShopTheLookSection.tsx, libs/client/admins/screens/product-editor/src/lib/AdminProductEditor.tsx, libs/client/shared/hooks/products/src/lib/useProducts.ts
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+libs/
+  client/
+    admins/
+      screens/
+        product-editor/
+          src/
+            lib/
+              AdminProductEditor.tsx
+    customers/
+      screens/
+        home/
+          src/
+            lib/
+              components/
+                CategoryBentoSection.tsx
+                HeroSection.tsx
+                ShopTheLookSection.tsx
+              CustomersHomeScreen.spec.tsx
+              CustomersHomeScreen.tsx
+              home-selectors.ts
+    shared/
+      hooks/
+        products/
+          src/
+            lib/
+              useProducts.ts
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="libs/client/customers/screens/home/src/lib/components/CategoryBentoSection.tsx">
+import React, { useMemo } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import {
+  useI18nContext,
+  useLanguageContext,
+  SITE_NAME,
+} from '@kickzone-workspace/shared-i18n';
+import {
+  getCustomerBrandRoute,
+  getCustomerShopRoute,
+} from '@kickzone-workspace/customers-routes';
+import {
+  HomeCategory,
+  resolveCategoryLabel,
+  toPersianDigits,
+} from '../home-selectors';
+
+const API_BASE_URL =
+  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '';
+
+const resolveImageUrl = (img?: string | null) => {
+  if (!img) return null;
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  if (img.startsWith('//')) return `https:${img}`;
+  if (img.startsWith('/')) {
+    const base =
+      API_BASE_URL && API_BASE_URL.startsWith('http')
+        ? API_BASE_URL
+        : typeof window !== 'undefined'
+        ? window.location.origin
+        : '';
+    return `${base}${img}`;
+  }
+  return img;
+};
+
+interface BentoTileProps {
+  title: string;
+  countLabel: string;
+  link: string;
+  product?: KickzoneGraphqlTypes.Product;
+  isBig?: boolean;
+  kicker?: string;
+  tagline?: string;
+  fallbackImage: string;
+}
+
+function BentoTile({
+  title,
+  countLabel,
+  link,
+  product,
+  isBig = false,
+  kicker,
+  tagline,
+  fallbackImage,
+}: BentoTileProps) {
+  const rawImg =
+    product?.productInfos?.[0]?.images?.[0] ||
+    product?.sellerProducts?.[0]?.productInfo?.images?.[0];
+  const image = resolveImageUrl(rawImg) || fallbackImage;
+
+  return (
+    <Box
+      component={RouterLink}
+      to={link}
+      className="rv"
+      sx={{
+        position: 'relative',
+        borderRadius: '24px',
+        overflow: 'hidden',
+        backgroundColor: 'var(--frame)',
+        textDecoration: 'none',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'flex-end',
+        p: '22px 20px',
+        gridColumn: isBig ? { xs: 'span 2', md: 'span 2' } : 'span 1',
+        gridRow: isBig ? 'span 2' : 'span 1',
+        fontFamily: 'var(--font-sans)',
+        transition: 'transform 0.4s var(--ease)',
+        '&:hover img': {
+          transform: 'scale(1.04)',
+        },
+        '&:hover .bento-arrow': {
+          backgroundColor: '#ffffff',
+          color: '#111111',
+          transform: 'translateX(-4px)',
+        },
+      }}
+    >
+      <Box
+        component="img"
+        className="bento-tile-img"
+        src={image}
+        alt={`${title} — ${SITE_NAME}`}
+        loading="lazy"
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          width: '100%',
+          height: '100%',
+          objectFit: 'cover',
+          objectPosition: '50% 22%',
+          filter: 'brightness(1.12) contrast(1.02)',
+          transition: 'transform 0.9s var(--ease), filter 0.35s var(--ease)',
+        }}
+      />
+
+      <Box
+        sx={{
+          position: 'absolute',
+          inset: 0,
+          background: isBig
+            ? 'linear-gradient(to top, rgba(0,0,0,0.42) 0%, rgba(0,0,0,0.16) 32%, transparent 58%)'
+            : 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 50%)',
+          pointerEvents: 'none',
+        }}
+      />
+
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 2,
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'flex-end',
+          width: '100%',
+        }}
+      >
+        <Box sx={{ color: '#ffffff', maxWidth: isBig ? '75%' : '80%' }}>
+          {isBig && kicker && (
+            <Typography
+              sx={{
+                fontSize: '12px',
+                fontWeight: 700,
+                letterSpacing: '0.22em',
+                color: 'rgba(255, 255, 255, 0.95)',
+                mb: 1,
+                fontFamily: 'var(--font-sans)',
+                textShadow: '0 2px 8px rgba(0, 0, 0, 0.6)',
+              }}
+            >
+              {kicker}
+            </Typography>
+          )}
+
+          <Typography
+            component="h3"
+            sx={{
+              fontSize: isBig ? 'clamp(48px, 5.4vw, 80px)' : '24px',
+              fontWeight: isBig ? 900 : 800,
+              lineHeight: 1.1,
+              color: '#ffffff',
+              mb: 0.5,
+              fontFamily: 'var(--font-sans)',
+              textShadow: '0 2px 14px rgba(0, 0, 0, 0.75)',
+            }}
+          >
+            {title}
+          </Typography>
+
+          {isBig && tagline && (
+            <Typography
+              sx={{
+                fontSize: '16px',
+                fontWeight: 400,
+                color: 'rgba(255, 255, 255, 0.95)',
+                mb: 1,
+                fontFamily: 'var(--font-sans)',
+                textShadow: '0 2px 10px rgba(0, 0, 0, 0.65)',
+              }}
+            >
+              {tagline}
+            </Typography>
+          )}
+
+          <Typography
+            sx={{
+              fontSize: '13px',
+              fontWeight: 500,
+              color: 'rgba(255, 255, 255, 0.9)',
+              fontFamily: 'var(--font-sans)',
+              textShadow: '0 1px 6px rgba(0, 0, 0, 0.6)',
+            }}
+          >
+            {countLabel}
+          </Typography>
+        </Box>
+
+        <Box
+          className="bento-arrow"
+          sx={{
+            width: 44,
+            height: 44,
+            borderRadius: '50%',
+            background: 'rgba(255, 255, 255, 0.2)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)',
+            color: '#ffffff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            flexShrink: 0,
+            transition: 'all 0.25s var(--ease)',
+          }}
+        >
+          <ArrowBackIcon
+            sx={{
+              fontSize: 20,
+              transform: (theme) =>
+                theme.direction === 'rtl' ? 'none' : 'scaleX(-1)',
+            }}
+          />
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+
+interface CategoryBentoSectionProps {
+  bento: {
+    jordan: { product?: KickzoneGraphqlTypes.Product; count: number };
+    women: { product?: KickzoneGraphqlTypes.Product; count: number };
+    men: { product?: KickzoneGraphqlTypes.Product; count: number };
+    hoodies: { product?: KickzoneGraphqlTypes.Product; count: number };
+    pants: { product?: KickzoneGraphqlTypes.Product; count: number };
+  };
+  categories?: HomeCategory[];
+}
+
+export function CategoryBentoSection({
+  bento,
+  categories,
+}: CategoryBentoSectionProps) {
+  const { LL } = useI18nContext();
+  const { currentLocale, formatNumber } = useLanguageContext();
+
+  const labels = useMemo(
+    () => ({
+      women: resolveCategoryLabel(
+        'women',
+        categories,
+        LL.home.categories.women()
+      ),
+      men: resolveCategoryLabel('men', categories, LL.home.categories.men()),
+      hoodies: resolveCategoryLabel(
+        'hoodies',
+        categories,
+        LL.home.categories.hoodies()
+      ),
+      pants: resolveCategoryLabel(
+        'pants',
+        categories,
+        LL.home.categories.pants()
+      ),
+      jordan: LL.home.categories.jordan(),
+    }),
+    [LL, categories]
+  );
+
+  const formatCount = (count: number) => {
+    const n =
+      currentLocale === 'fa'
+        ? toPersianDigits(count)
+        : typeof formatNumber === 'function'
+        ? String(formatNumber(count))
+        : String(count);
+    return LL.home.categories.productCount({ count: n });
+  };
+
+  return (
+    <Box
+      component="section"
+      aria-labelledby="bento-title"
+      sx={{
+        width: 'min(var(--wrap, 1180px), 100% - 2 * clamp(20px, 4vw, 48px))',
+        mx: 'auto',
+        pt: 'clamp(72px, 9vw, 120px)',
+        fontFamily: 'var(--font-sans)',
+      }}
+    >
+      <Box className="rv" sx={{ mb: '32px' }}>
+        <Typography
+          sx={{
+            fontSize: '13px',
+            fontWeight: 500,
+            color: 'var(--accent)',
+            letterSpacing: '0.02em',
+            mb: 0.5,
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          {LL.home.categories.kicker()}
+        </Typography>
+        <Typography
+          id="bento-title"
+          component="h2"
+          sx={{
+            fontSize: 'clamp(28px, 3vw, 40px)',
+            fontWeight: 800,
+            lineHeight: 1.25,
+            letterSpacing: '-0.01em',
+            color: 'var(--ink)',
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          {LL.home.categories.title()}
+        </Typography>
+      </Box>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: 'repeat(2, 1fr)',
+            md: 'repeat(4, 1fr)',
+          },
+          gridAutoRows: {
+            xs: '200px',
+            sm: '220px',
+            md: 'clamp(240px, 22vw, 320px)',
+          },
+          gap: '16px',
+        }}
+      >
+        <BentoTile
+          isBig
+          title={labels.jordan}
+          countLabel={formatCount(bento.jordan.count)}
+          kicker="AIR JORDAN"
+          tagline={LL.home.categories.jordanTagline()}
+          link={getCustomerBrandRoute('jordan')}
+          product={bento.jordan.product}
+          fallbackImage="https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800"
+        />
+
+        <BentoTile
+          title={labels.women}
+          countLabel={formatCount(bento.women.count)}
+          link={getCustomerShopRoute({ category: 'women' })}
+          product={bento.women.product}
+          fallbackImage="https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?w=600"
+        />
+
+        <BentoTile
+          title={labels.men}
+          countLabel={formatCount(bento.men.count)}
+          link={getCustomerShopRoute({ category: 'men' })}
+          product={bento.men.product}
+          fallbackImage="https://images.unsplash.com/photo-1507679799987-c73779587ccf?w=600"
+        />
+
+        <BentoTile
+          title={labels.hoodies}
+          countLabel={formatCount(bento.hoodies.count)}
+          link={getCustomerShopRoute({ category: 'hoodies' })}
+          product={bento.hoodies.product}
+          fallbackImage="https://images.unsplash.com/photo-1556905055-8f358a7a47b2?w=600"
+        />
+
+        <BentoTile
+          title={labels.pants}
+          countLabel={formatCount(bento.pants.count)}
+          link={getCustomerShopRoute({ category: 'pants' })}
+          product={bento.pants.product}
+          fallbackImage="https://images.unsplash.com/photo-1542272604-780c96856592?w=600"
+        />
+      </Box>
+    </Box>
+  );
+}
+</file>
+
+<file path="libs/client/customers/screens/home/src/lib/components/HeroSection.tsx">
+import React, { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { useUIStore } from '@kickzone-workspace/shared-ui-store';
+import { useLanguageContext, SITE_NAME } from '@kickzone-workspace/shared-i18n';
+import {
+  CUSTOMER_ROUTES,
+  getCustomerShopRoute,
+} from '@kickzone-workspace/customers-routes';
+
+const API_BASE_URL =
+  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '';
+
+const resolveImageUrl = (img?: string | null) => {
+  if (!img) return null;
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  if (img.startsWith('//')) return `https:${img}`;
+  if (img.startsWith('/')) {
+    const base =
+      API_BASE_URL && API_BASE_URL.startsWith('http')
+        ? API_BASE_URL
+        : typeof window !== 'undefined'
+        ? window.location.origin
+        : '';
+    return `${base}${img}`;
+  }
+  return img;
+};
+
+const productImage = (product?: KickzoneGraphqlTypes.Product | null) =>
+  resolveImageUrl(
+    product?.productInfos?.[0]?.images?.[0] ||
+      product?.sellerProducts?.[0]?.productInfo?.images?.[0]
+  );
+
+interface HeroSectionProps {
+  rightProduct?: KickzoneGraphqlTypes.Product | null;
+  centerProduct?: KickzoneGraphqlTypes.Product | null;
+  leftProduct?: KickzoneGraphqlTypes.Product | null;
+  rightImage?: string;
+  centerImage?: string;
+  leftImage?: string;
+}
+
+export function HeroSection({
+  rightProduct,
+  centerProduct,
+  leftProduct,
+  rightImage = '/assets/hero/hero-right-women.jpg',
+  centerImage = '/assets/hero/hero-center-jordan.jpg',
+  leftImage = '/assets/hero/hero-left-men.jpg',
+}: HeroSectionProps) {
+  const themeMode = useUIStore((s) => s.theme.mode);
+  const isPhone = useMediaQuery('(max-width: 760px)');
+  const [hoveredPanel, setHoveredPanel] = useState<'right' | 'center' | 'left' | null>(null);
+  const { currentLocale } = useLanguageContext();
+  const isEn = currentLocale === 'en';
+
+  const rightImg = productImage(rightProduct) || rightImage;
+  const centerImg = productImage(centerProduct) || centerImage;
+  const leftImg = productImage(leftProduct) || leftImage;
+
+  const rightLink = rightProduct
+    ? `/product/${rightProduct.id}`
+    : getCustomerShopRoute({ category: 'women' });
+  const centerLink = centerProduct
+    ? `/product/${centerProduct.id}`
+    : CUSTOMER_ROUTES.SHOP;
+  const leftLink = leftProduct
+    ? `/product/${leftProduct.id}`
+    : getCustomerShopRoute({ category: 'men' });
+
+  // Localized alt texts for hero images
+  const rightAlt = isEn
+    ? `SAINTBALA Women's Collection`
+    : `مجموعه زنانه ${SITE_NAME}`;
+  const leftAlt = isEn
+    ? `SAINTBALA Men's Collection`
+    : `مجموعه مردانه ${SITE_NAME}`;
+  const centerAlt = isEn
+    ? `SAINTBALA Campaign`
+    : `کمپین ${SITE_NAME}`;
+
+  const inkOnPhoto = themeMode === 'dark' ? '#f5f5f7' : '#ffffff';
+
+  const scrim = (
+    <Box
+      sx={{
+        position: 'absolute',
+        inset: 0,
+        background:
+          themeMode === 'dark'
+            ? 'linear-gradient(to top, rgba(0,0,0,0.40) 0%, rgba(0,0,0,0.15) 28%, transparent 52%), linear-gradient(rgba(0,0,0,0.08), transparent 18%)'
+            : 'linear-gradient(to top, rgba(0,0,0,0.28) 0%, rgba(0,0,0,0.10) 28%, transparent 52%), linear-gradient(rgba(0,0,0,0.04), transparent 18%)',
+        pointerEvents: 'none',
+      }}
+    />
+  );
+
+  return (
+    <>
+      <Box
+        id="hero"
+        className="hero-campaign"
+        component="section"
+        aria-label="Rise Above"
+        data-theme-mode={themeMode}
+        sx={{
+          position: 'relative',
+          height: isPhone ? '92svh' : '100svh',
+          minHeight: isPhone ? undefined : '620px',
+          maxHeight: isPhone ? undefined : '1000px',
+          overflow: 'clip',
+          width: '100%',
+          fontFamily: 'var(--font-sans)',
+        }}
+      >
+        <Box
+          sx={{
+            position: 'absolute',
+            inset: 0,
+            display: 'grid',
+            gridTemplateColumns: isPhone ? '1fr' : '1fr 1.42fr 1fr',
+            gap: isPhone ? 0 : '3px',
+            height: '100%',
+            width: '100%',
+          }}
+        >
+          {!isPhone && (
+            <Box
+              component={RouterLink}
+              to={rightLink}
+              onMouseEnter={() => setHoveredPanel('right')}
+              onMouseLeave={() => setHoveredPanel(null)}
+              sx={{
+                position: 'relative',
+                height: '100%',
+                overflow: 'hidden',
+                textDecoration: 'none',
+                filter:
+                  hoveredPanel && hoveredPanel !== 'right'
+                    ? 'brightness(0.95) saturate(0.96)'
+                    : 'none',
+                transition: 'filter 0.4s var(--ease)',
+              }}
+            >
+              <Box
+                component="img"
+                className="hero-panel-img"
+                src={rightImg}
+                alt={rightAlt}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: '50% 18%',
+                  transform:
+                    'scale(calc(1.04 + var(--t, 0) * 0.10)) translateY(calc(var(--t, 0) * 6%))',
+                  transition: 'transform 0.4s var(--ease), filter 0.35s var(--ease)',
+                }}
+              />
+              {scrim}
+            </Box>
+          )}
+
+          <Box
+            component={RouterLink}
+            to={centerLink}
+            onMouseEnter={() => setHoveredPanel('center')}
+            onMouseLeave={() => setHoveredPanel(null)}
+            sx={{
+              position: 'relative',
+              height: '100%',
+              overflow: 'hidden',
+              textDecoration: 'none',
+              filter:
+                hoveredPanel && hoveredPanel !== 'center'
+                  ? 'brightness(0.95) saturate(0.96)'
+                  : 'none',
+              transition: 'filter 0.4s var(--ease)',
+            }}
+          >
+            <Box
+              component="img"
+              className="hero-panel-img"
+              src={centerImg}
+              fetchPriority="high"
+              alt={centerAlt}
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: '50% 12%',
+                transform:
+                  'scale(calc(1.04 + var(--t, 0) * 0.10)) translateY(calc(var(--t, 0) * 6%))',
+                transition: 'transform 0.4s var(--ease), filter 0.35s var(--ease)',
+              }}
+            />
+            {scrim}
+          </Box>
+
+          {!isPhone && (
+            <Box
+              component={RouterLink}
+              to={leftLink}
+              onMouseEnter={() => setHoveredPanel('left')}
+              onMouseLeave={() => setHoveredPanel(null)}
+              sx={{
+                position: 'relative',
+                height: '100%',
+                overflow: 'hidden',
+                textDecoration: 'none',
+                filter:
+                  hoveredPanel && hoveredPanel !== 'left'
+                    ? 'brightness(0.95) saturate(0.96)'
+                    : 'none',
+                transition: 'filter 0.4s var(--ease)',
+              }}
+            >
+              <Box
+                component="img"
+                className="hero-panel-img"
+                src={leftImg}
+                alt={leftAlt}
+                sx={{
+                  width: '100%',
+                  height: '100%',
+                  objectFit: 'cover',
+                  objectPosition: '50% 18%',
+                  transform:
+                    'scale(calc(1.04 + var(--t, 0) * 0.10)) translateY(calc(var(--t, 0) * 6%))',
+                  transition: 'transform 0.4s var(--ease), filter 0.35s var(--ease)',
+                }}
+              />
+              {scrim}
+            </Box>
+          )}
+        </Box>
+
+        <Box
+          className="hero-copy"
+          sx={{
+            position: 'absolute',
+            bottom: 0,
+            left: 0,
+            right: 0,
+            zIndex: 3,
+            pb: 'clamp(48px, 8vh, 88px)',
+            px: { xs: 2.5, sm: 4 },
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            textAlign: 'center',
+            opacity: 'calc(1 - var(--t, 0) * 1.6)',
+            transform: 'translateY(calc(var(--t, 0) * -60px))',
+            transition: 'opacity 0.3s var(--ease), transform 0.3s var(--ease)',
+            pointerEvents: 'none',
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          <Typography
+            component="h1"
+            sx={{
+              fontSize: isPhone
+                ? 'clamp(52px, 15vw, 72px)'
+                : 'clamp(56px, 9.2vw, 136px)',
+              fontWeight: 900,
+              lineHeight: 1.02,
+              letterSpacing: '-0.02em',
+              fontFamily: 'var(--font-sans)',
+              color: inkOnPhoto,
+            }}
+          >
+            <bdi dir="ltr">Rise Above</bdi>
+            <span
+              style={{
+                position: 'absolute',
+                width: 1,
+                height: 1,
+                padding: 0,
+                margin: -1,
+                overflow: 'hidden',
+                clip: 'rect(0, 0, 0, 0)',
+                whiteSpace: 'nowrap',
+                border: 0,
+              }}
+            >
+              {isEn
+                ? ' — SAINTBALA | Authentic Luxury Streetwear & Sneakers'
+                : ' — SAINTBALA | فروشگاه آنلاین پوشاک، کتانی و استریت‌ویر اورجینال'}
+            </span>
+          </Typography>
+        </Box>
+      </Box>
+
+      {isPhone && (
+        <Box
+          className="hero-duo"
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: '3px',
+            width: '100%',
+            background: themeMode === 'dark' ? '#0a0a0a' : '#1a1917',
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          <Box
+            component={RouterLink}
+            to="/shop?category=women"
+            sx={{
+              position: 'relative',
+              aspectRatio: '4 / 5',
+              overflow: 'hidden',
+              textDecoration: 'none',
+            }}
+          >
+            <Box
+              component="img"
+              className="hero-panel-img"
+              src={rightImg}
+              alt={rightAlt}
+              loading="lazy"
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+                transition: 'filter 0.35s var(--ease)',
+              }}
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                background:
+                  themeMode === 'dark'
+                    ? 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 55%)'
+                    : 'linear-gradient(to top, rgba(0,0,0,0.24) 0%, transparent 55%)',
+              }}
+            />
+          </Box>
+
+          <Box
+            component={RouterLink}
+            to="/shop?category=men"
+            sx={{
+              position: 'relative',
+              aspectRatio: '4 / 5',
+              overflow: 'hidden',
+              textDecoration: 'none',
+            }}
+          >
+            <Box
+              component="img"
+              className="hero-panel-img"
+              src={leftImg}
+              alt={leftAlt}
+              loading="lazy"
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                objectPosition: 'center',
+                transition: 'filter 0.35s var(--ease)',
+              }}
+            />
+            <Box
+              sx={{
+                position: 'absolute',
+                inset: 0,
+                background:
+                  themeMode === 'dark'
+                    ? 'linear-gradient(to top, rgba(0,0,0,0.35) 0%, transparent 55%)'
+                    : 'linear-gradient(to top, rgba(0,0,0,0.24) 0%, transparent 55%)',
+              }}
+            />
+          </Box>
+        </Box>
+      )}
+    </>
+  );
+}
+
+export default HeroSection;
+</file>
+
+<file path="libs/client/customers/screens/home/src/lib/components/ShopTheLookSection.tsx">
+import React, { useState } from 'react';
+import { Link as RouterLink } from 'react-router-dom';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import AddIcon from '@mui/icons-material/Add';
+import ShoppingBagOutlined from '@mui/icons-material/ShoppingBagOutlined';
+import CheckIcon from '@mui/icons-material/Check';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { formatTomanPrice, isProductInStock } from '../home-selectors';
+
+const API_BASE_URL =
+  (import.meta as unknown as { env?: Record<string, string> }).env?.VITE_API_BASE_URL || '';
+
+const resolveImageUrl = (img?: string | null) => {
+  if (!img) return null;
+  if (img.startsWith('http://') || img.startsWith('https://')) return img;
+  if (img.startsWith('//')) return `https:${img}`;
+  if (img.startsWith('/')) {
+    const base =
+      API_BASE_URL && API_BASE_URL.startsWith('http')
+        ? API_BASE_URL
+        : typeof window !== 'undefined'
+        ? window.location.origin
+        : '';
+    return `${base}${img}`;
+  }
+  return img;
+};
+
+interface LookItemData {
+  item?: KickzoneGraphqlTypes.Product;
+  typeLabel: string;
+  hotspot: { left: string; top: string };
+  size: string;
+}
+
+interface ShopTheLookSectionProps {
+  lookProducts: LookItemData[];
+  exchangeRate: number;
+  onAddItem?: (product: KickzoneGraphqlTypes.Product, size?: string) => void;
+  onAddAll?: (products: KickzoneGraphqlTypes.Product[]) => void;
+}
+
+export function ShopTheLookSection({
+  lookProducts,
+  exchangeRate,
+  onAddItem,
+  onAddAll,
+}: ShopTheLookSectionProps) {
+  const [activeHighlight, setActiveHighlight] = useState<number | null>(null);
+  const [addedItemIdx, setAddedItemIdx] = useState<number | null>(null);
+  const [addedAll, setAddedAll] = useState(false);
+
+  // Fallback photos
+  const fallbackPhotos = [
+    'https://images.unsplash.com/photo-1578632767115-351597cf2477?w=800',
+    'https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800',
+    'https://images.unsplash.com/photo-1503342217505-b0a15ec3261c?w=800',
+  ];
+
+  const getProductPriceUSD = (p?: KickzoneGraphqlTypes.Product) => {
+    if (!p?.sellerProducts || p.sellerProducts.length === 0) return 0;
+    const sp = p.sellerProducts.find((s) => (s.stockQuantity || 0) > 0) || p.sellerProducts[0];
+    const original = sp?.price || 0;
+    const discount = sp?.discount || 0;
+    return discount > 0 ? original * (1 - discount / 100) : original;
+  };
+
+  // Compute sum of in-stock items
+  const inStockItems = lookProducts.filter(
+    (lp) => lp.item && isProductInStock(lp.item)
+  );
+
+  const totalSumUSD = inStockItems.reduce(
+    (sum, lp) => sum + getProductPriceUSD(lp.item),
+    0
+  );
+
+  const handleAddSingle = (idx: number, lp: LookItemData) => {
+    if (!lp.item || !isProductInStock(lp.item)) return;
+    onAddItem?.(lp.item, lp.size);
+    setAddedItemIdx(idx);
+    setTimeout(() => setAddedItemIdx(null), 1800);
+  };
+
+  const handleAddAll = () => {
+    const valid = inStockItems.map((lp) => lp.item as KickzoneGraphqlTypes.Product);
+    if (valid.length === 0) return;
+    onAddAll?.(valid);
+    setAddedAll(true);
+    setTimeout(() => setAddedAll(false), 1800);
+  };
+
+  return (
+    <Box
+      id="look"
+      component="section"
+      aria-labelledby="look-title"
+      sx={{
+        width: 'min(var(--wrap, 1180px), 100% - 2 * clamp(20px, 4vw, 48px))',
+        mx: 'auto',
+        pt: 'clamp(72px, 9vw, 120px)',
+      }}
+    >
+      {/* 2 columns layout: 1.65fr (photos right in RTL) and 1fr (panel left in RTL) */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1.65fr 1fr' },
+          gap: { xs: '32px', md: '40px' },
+          alignItems: 'start',
+        }}
+      >
+        {/* Look Board: 2x2 grid, aspect-ratio 1.12, gap 12px, radius 22px */}
+        <Box
+          className="rv"
+          sx={{
+            position: 'relative',
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gridTemplateRows: '1fr 1fr',
+            gap: '12px',
+            aspectRatio: { xs: '1', sm: '1.12' },
+            width: '100%',
+          }}
+        >
+          {lookProducts.map((lp, idx) => {
+            const rawImg =
+              lp.item?.productInfos?.[0]?.images?.[0] ||
+              lp.item?.sellerProducts?.[0]?.productInfo?.images?.[0];
+            const imgSrc = resolveImageUrl(rawImg) || fallbackPhotos[idx];
+            const isSpanned = idx === 0; // Photo 0 spans both rows
+            const isHighlighted = activeHighlight === idx;
+            const priceUSD = getProductPriceUSD(lp.item);
+            const inStock = lp.item ? isProductInStock(lp.item) : true;
+
+            return (
+              <Box
+                key={idx}
+                onMouseEnter={() => setActiveHighlight(idx)}
+                onMouseLeave={() => setActiveHighlight(null)}
+                sx={{
+                  position: 'relative',
+                  gridRow: isSpanned ? 'span 2' : 'span 1',
+                  borderRadius: '22px',
+                  overflow: 'hidden',
+                  backgroundColor: 'var(--frame)',
+                }}
+              >
+                {/* Photo */}
+                <Box
+                  component="img"
+                  src={imgSrc}
+                  alt={lp.item?.name || lp.typeLabel}
+                  loading="lazy"
+                  sx={{
+                    width: '100%',
+                    height: '100%',
+                    objectFit: 'cover',
+                    objectPosition:
+                      idx === 1 ? '50% 70%' : '50% 25%',
+                    transform: isHighlighted ? 'scale(1.035)' : 'scale(1)',
+                    filter: 'brightness(1.08) contrast(1.02)',
+                    transition: 'transform 0.8s var(--ease), filter 0.3s ease',
+                  }}
+                />
+
+                {/* Hotspot Button */}
+                <Box
+                  component="button"
+                  type="button"
+                  aria-label={lp.item?.name || lp.typeLabel}
+                  aria-describedby={`tooltip-${idx}`}
+                  onClick={() => setActiveHighlight(isHighlighted ? null : idx)}
+                  sx={{
+                    position: 'absolute',
+                    left: lp.hotspot.left,
+                    top: lp.hotspot.top,
+                    width: '30px',
+                    height: '30px',
+                    borderRadius: '50%',
+                    background: '#ffffff',
+                    border: 'none',
+                    cursor: 'pointer',
+                    boxShadow: '0 2px 10px rgba(0,0,0,0.25)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 4,
+                    transform: 'translate(-50%, -50%)',
+                    transition: 'transform 0.2s',
+                    '&:hover': {
+                      transform: 'translate(-50%, -50%) scale(1.12)',
+                    },
+                  }}
+                >
+                  {/* Black 10px dot inside */}
+                  <Box
+                    sx={{
+                      width: '10px',
+                      height: '10px',
+                      borderRadius: '50%',
+                      background: '#111111',
+                    }}
+                  />
+
+                  {/* Pulsing Ring */}
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      inset: '-7px',
+                      borderRadius: '50%',
+                      border: '1.5px solid rgba(255, 255, 255, 0.85)',
+                      pointerEvents: 'none',
+                      animation: 'hotspotPulse 2.4s infinite ease-out',
+                      '@keyframes hotspotPulse': {
+                        '0%': { transform: 'scale(0.7)', opacity: 0.85 },
+                        '100%': { transform: 'scale(1.5)', opacity: 0 },
+                      },
+                      '@media (prefers-reduced-motion: reduce)': {
+                        animation: 'none',
+                        opacity: 0.6,
+                      },
+                    }}
+                  />
+                </Box>
+
+                {/* Hotspot Tooltip */}
+                {isHighlighted && (
+                  <Box
+                    id={`tooltip-${idx}`}
+                    role="tooltip"
+                    sx={{
+                      position: 'absolute',
+                      left: lp.hotspot.left,
+                      bottom: `calc(100% - ${lp.hotspot.top} + 18px)`,
+                      transform: 'translateX(-50%)',
+                      background: 'var(--paper)',
+                      borderRadius: '14px',
+                      p: '10px 14px',
+                      fontSize: '12.5px',
+                      zIndex: 10,
+                      boxShadow: '0 8px 24px rgba(0,0,0,0.2)',
+                      border: '1px solid var(--hair)',
+                      whiteSpace: 'nowrap',
+                      pointerEvents: 'none',
+                      maxWidth: '220px',
+                    }}
+                  >
+                    <Typography
+                      noWrap
+                      sx={{
+                        fontSize: '12px',
+                        color: 'var(--ink)',
+                        direction: 'ltr',
+                        mb: 0.5,
+                      }}
+                    >
+                      <bdi dir="ltr">{lp.item?.name || lp.typeLabel}</bdi>
+                    </Typography>
+                    <Typography
+                      sx={{
+                        fontSize: '13px',
+                        fontWeight: 700,
+                        color: 'var(--ink)',
+                      }}
+                    >
+                      {inStock
+                        ? formatTomanPrice(priceUSD, exchangeRate)
+                        : 'ناموجود'}
+                    </Typography>
+                  </Box>
+                )}
+              </Box>
+            );
+          })}
+        </Box>
+
+        {/* Sticky Panel */}
+        <Box
+          className="rv"
+          sx={{
+            position: { xs: 'static', md: 'sticky' },
+            top: { md: '88px' },
+            background: 'var(--paper)',
+            borderRadius: '28px',
+            p: { xs: '24px', sm: '32px' },
+            boxShadow:
+              '0 0 0 1px var(--hair), 0 30px 60px -40px rgba(0,0,0,0.3)',
+          }}
+        >
+          <Typography
+            sx={{
+              fontSize: '13px',
+              fontWeight: 500,
+              color: 'var(--accent)',
+              letterSpacing: '0.02em',
+              mb: 0.5,
+            }}
+          >
+            ست کامل
+          </Typography>
+          <Typography
+            id="look-title"
+            component="h2"
+            sx={{
+              fontSize: 'clamp(28px, 3vw, 40px)',
+              fontWeight: 800,
+              lineHeight: 1.25,
+              color: 'var(--ink)',
+              mb: 1.5,
+            }}
+          >
+            جردن قرمز
+          </Typography>
+          <Typography
+            sx={{
+              fontSize: '15px',
+              lineHeight: 1.9,
+              color: 'var(--ink-2)',
+              mb: 3,
+            }}
+          >
+            سه تکه از یک رنگ — سویشرت، شلوار فلیس و تی‌شرت جامپمن. جدا یا با هم.
+          </Typography>
+
+          {/* Ordered List of 3 rows */}
+          <Box
+            component="ol"
+            sx={{
+              listStyle: 'none',
+              p: 0,
+              m: 0,
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            {lookProducts.map((lp, idx) => {
+              const rawImg =
+                lp.item?.productInfos?.[0]?.images?.[0] ||
+                lp.item?.sellerProducts?.[0]?.productInfo?.images?.[0];
+              const imgSrc = resolveImageUrl(rawImg) || fallbackPhotos[idx];
+              const priceUSD = getProductPriceUSD(lp.item);
+              const inStock = lp.item ? isProductInStock(lp.item) : true;
+              const isHighlighted = activeHighlight === idx;
+              const isAdded = addedItemIdx === idx;
+
+              return (
+                <Box
+                  component="li"
+                  key={idx}
+                  onMouseEnter={() => setActiveHighlight(idx)}
+                  onMouseLeave={() => setActiveHighlight(null)}
+                  sx={{
+                    display: 'grid',
+                    gridTemplateColumns: '64px 1fr auto',
+                    gap: '14px',
+                    alignItems: 'center',
+                    py: 2,
+                    borderTop: '1px solid var(--hair)',
+                    borderRadius: '16px',
+                    background: isHighlighted
+                      ? 'color-mix(in srgb, var(--accent) 8%, transparent)'
+                      : 'transparent',
+                    px: isHighlighted ? 1 : 0,
+                    transition: 'background-color 0.2s',
+                  }}
+                >
+                  {/* Thumbnail 64px, radius 12 */}
+                  <Box
+                    component={RouterLink}
+                    to={lp.item ? `/product/${lp.item.id}` : '#'}
+                    sx={{
+                      width: 64,
+                      height: 64,
+                      borderRadius: '12px',
+                      overflow: 'hidden',
+                      backgroundColor: 'var(--frame)',
+                      flexShrink: 0,
+                      display: 'block',
+                    }}
+                  >
+                    <Box
+                      component="img"
+                      src={imgSrc}
+                      alt={lp.item?.name || lp.typeLabel}
+                      loading="lazy"
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: 'cover',
+                      }}
+                    />
+                  </Box>
+
+                  {/* Info */}
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography
+                      sx={{
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        color: 'var(--accent)',
+                        mb: 0.25,
+                      }}
+                    >
+                      {lp.typeLabel}
+                    </Typography>
+                    <Typography
+                      component={RouterLink}
+                      to={lp.item ? `/product/${lp.item.id}` : '#'}
+                      noWrap
+                      sx={{
+                        fontSize: '14px',
+                        fontWeight: 600,
+                        color: 'var(--ink)',
+                        textDecoration: 'none',
+                        direction: 'ltr',
+                        display: 'block',
+                        textAlign: 'start',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        mb: 0.5,
+                      }}
+                    >
+                      <bdi dir="ltr">{lp.item?.name || lp.typeLabel}</bdi>
+                    </Typography>
+                    <Typography sx={{ fontSize: '12.5px', color: 'var(--ink-3)' }}>
+                      سایز {lp.size} ·{' '}
+                      {inStock
+                        ? formatTomanPrice(priceUSD, exchangeRate)
+                        : 'ناموجود'}
+                    </Typography>
+                  </Box>
+
+                  {/* 40px Round + Button */}
+                  <IconButton
+                    disabled={!inStock}
+                    onClick={() => handleAddSingle(idx, lp)}
+                    aria-label={`افزودن ${lp.typeLabel} به سبد`}
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      borderRadius: '50%',
+                      background: isAdded ? 'var(--accent)' : 'var(--cta-tint)',
+                      color: isAdded ? '#ffffff' : 'var(--cta-ink)',
+                      border: '1px solid color-mix(in srgb, var(--accent) 30%, transparent)',
+                      transition: 'all 0.2s var(--ease)',
+                      '&:hover': {
+                        background: 'var(--cta-tint-hover)',
+                        transform: 'scale(1.05)',
+                      },
+                    }}
+                  >
+                    {isAdded ? (
+                      <CheckIcon sx={{ fontSize: 18 }} />
+                    ) : (
+                      <AddIcon sx={{ fontSize: 20 }} />
+                    )}
+                  </IconButton>
+                </Box>
+              );
+            })}
+          </Box>
+
+          {/* Total Row */}
+          <Box
+            sx={{
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              py: 2.5,
+              mt: 1,
+              borderTop: '1px solid var(--hair)',
+            }}
+          >
+            <Typography sx={{ fontSize: '16px', fontWeight: 600, color: 'var(--ink)' }}>
+              جمع ست
+            </Typography>
+            <Typography sx={{ fontSize: '22px', fontWeight: 800, color: 'var(--ink)' }}>
+              {formatTomanPrice(totalSumUSD, exchangeRate)}
+            </Typography>
+          </Box>
+
+          {/* Full-width Solid Button */}
+          <Button
+            fullWidth
+            onClick={handleAddAll}
+            disabled={inStockItems.length === 0}
+            startIcon={
+              addedAll ? (
+                <CheckIcon sx={{ fontSize: 20 }} />
+              ) : (
+                <ShoppingBagOutlined sx={{ fontSize: 20 }} />
+              )
+            }
+            sx={{
+              height: 50,
+              borderRadius: '999px',
+              fontSize: '15px',
+              fontWeight: 600,
+              textTransform: 'none',
+              background: addedAll ? 'var(--accent)' : 'var(--ink)',
+              color: 'var(--page)',
+              transition: 'all 0.2s var(--ease)',
+              '&:hover': {
+                background: 'var(--ink-2)',
+                transform: 'scale(1.01)',
+              },
+              '&:active': {
+                transform: 'scale(0.97)',
+              },
+            }}
+          >
+            {addedAll ? 'هر سه به سبد اضافه شدند' : 'افزودن هر سه به سبد'}
+          </Button>
+        </Box>
+      </Box>
+    </Box>
+  );
+}
+</file>
+
+<file path="libs/client/customers/screens/home/src/lib/home-selectors.ts">
+import { gql } from '@apollo/client';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { resolveProductBrand } from '@kickzone-workspace/customers-product-card';
+import { getCustomerBrandRoute } from '@kickzone-workspace/customers-routes';
+
+export const HOME_PAGE_QUERY = gql`
+  query HomePage {
+    all: products(filter: { first: 200, onlyInStock: true, onlyWithSellers: true, archivedStatus: ACTIVE }) {
+      totalCount
+      edges {
+        node {
+          id
+          name
+          sku
+          brandId
+          brand {
+            id
+            slug
+            name
+          }
+          categories {
+            id
+            slug
+            name
+          }
+          productInfos {
+            id
+            size
+            sizeKind
+            images
+            colors {
+              id
+              name
+              hexCode
+            }
+          }
+          sellerProducts {
+            id
+            productInfoId
+            price
+            discount
+            stockQuantity
+            seller {
+              id
+              shippingFee
+              shippingPaymentMode
+            }
+          }
+        }
+      }
+    }
+    categories {
+      id
+      slug
+      name
+    }
+    rate: currentExchangeRate(fromCurrencyCode: "USD", toCurrencyCode: "IRR") {
+      rate
+    }
+  }
+`;
+
+export interface HomePageData {
+  all?: {
+    totalCount: number;
+    edges: Array<{
+      node: KickzoneGraphqlTypes.Product;
+    }>;
+  };
+  categories?: Array<{
+    id: number;
+    slug: string;
+    name: string;
+  }>;
+  rate?: {
+    rate: number;
+  };
+}
+
+/**
+ * Format a number into Persian digits with thousand separators
+ */
+export function toPersianDigits(n: number | string): string {
+  const num = typeof n === 'string' ? parseFloat(n) : n;
+  if (isNaN(num)) return String(n);
+  return new Intl.NumberFormat('fa-IR').format(num);
+}
+
+/**
+ * Format price in Toman
+ */
+export function formatTomanPrice(
+  usdPrice: number,
+  rate = 270000,
+  discount = 0,
+  currencyLabel = 'تومان',
+  locale: 'fa' | 'en' = 'fa'
+): string {
+  const finalUSD = discount > 0 ? usdPrice * (1 - discount / 100) : usdPrice;
+  const toman = Math.round(finalUSD * rate);
+  return `${new Intl.NumberFormat(locale === 'fa' ? 'fa-IR' : 'en-US').format(toman)} ${currencyLabel}`;
+}
+
+export type HomeCategory = {
+  id: number;
+  slug: string;
+  name: string;
+};
+
+/** Resolve a category display name from API (locale-aware) with slug fallback. */
+export function resolveCategoryLabel(
+  slug: string,
+  categories: HomeCategory[] | undefined,
+  fallback: string
+): string {
+  const match = categories?.find(
+    (c) => (c.slug || '').toLowerCase() === slug.toLowerCase()
+  );
+  if (match?.name) {
+    return match.name;
+  }
+  return fallback;
+}
+
+/**
+ * Check whether a product is strictly in-stock with active sellers
+ */
+export function isProductInStock(product: KickzoneGraphqlTypes.Product): boolean {
+  if (!product.sellerProducts || product.sellerProducts.length === 0) return false;
+  return product.sellerProducts.some(
+    (sp) => sp.seller && (sp.stockQuantity || 0) > 0
+  );
+}
+
+/**
+ * Check if product belongs to women category
+ */
+export function isWomenProduct(product: KickzoneGraphqlTypes.Product): boolean {
+  const cats = product.categories || [];
+  return cats.some((c) => {
+    const slug = (c.slug || '').toLowerCase();
+    const name = (c.name || '').toLowerCase();
+    return (
+      slug === 'women' ||
+      slug === 'womens' ||
+      slug.includes('women') ||
+      name.includes('زنانه') ||
+      name.includes('women')
+    );
+  });
+}
+
+/**
+ * Check if product belongs to men category
+ */
+export function isMenProduct(product: KickzoneGraphqlTypes.Product): boolean {
+  if (isWomenProduct(product)) {
+    return false;
+  }
+  const cats = product.categories || [];
+  return cats.some((c) => {
+    const slug = (c.slug || '').toLowerCase();
+    const name = (c.name || '').toLowerCase();
+    return (
+      slug === 'men' ||
+      slug === 'mens' ||
+      /\bmen\b/i.test(slug) ||
+      name.includes('مردانه') ||
+      /\bmen\b/i.test(name)
+    );
+  });
+}
+
+/**
+ * Look up a product by SKU (case-insensitive) or by ID
+ */
+export function findProduct(
+  products: KickzoneGraphqlTypes.Product[],
+  skuOrId: string | number
+): KickzoneGraphqlTypes.Product | undefined {
+  if (typeof skuOrId === 'number') {
+    return products.find((p) => p.id === skuOrId);
+  }
+  const clean = skuOrId.trim().toUpperCase();
+  // match SKU
+  const bySku = products.find(
+    (p) => (p.sku || '').trim().toUpperCase() === clean
+  );
+  if (bySku) return bySku;
+  // match ID string
+  const numId = parseInt(clean, 10);
+  if (!isNaN(numId)) {
+    return products.find((p) => p.id === numId);
+  }
+  return undefined;
+}
+
+/**
+ * Derives all required home page sections data
+ */
+export function selectHomePageData(data?: HomePageData | null) {
+  const rawList = data?.all?.edges?.map((e) => e.node) || [];
+  // Filter only products that are in stock
+  const allInStock = rawList.filter(isProductInStock);
+
+  const exchangeRate = data?.rate?.rate || 270000;
+
+  // 1. Curated Hero Products
+  // Right: DX2324-531 or id 26
+  const heroRight =
+    findProduct(allInStock, 'DX2324-531') ||
+    findProduct(allInStock, 26) ||
+    allInStock.find(isWomenProduct);
+
+  // Center: FV7247-010 or id 91
+  const heroCenter =
+    findProduct(allInStock, 'FV7247-010') ||
+    findProduct(allInStock, 91) ||
+    allInStock[0];
+
+  // Left: HV0959-020 or id 77
+  const heroLeft =
+    findProduct(allInStock, 'HV0959-020') ||
+    findProduct(allInStock, 77) ||
+    allInStock.find(isMenProduct);
+
+  // Set of IDs used in hero
+  const heroIds = new Set<number>(
+    [heroRight?.id, heroCenter?.id, heroLeft?.id].filter(
+      (id): id is number => typeof id === 'number'
+    )
+  );
+
+  // Category Bento Items
+  // Big Jordan: FZ1919-366
+  const bentoJordan = findProduct(allInStock, 'FZ1919-366');
+  // Women: DX0397-277
+  const bentoWomen = findProduct(allInStock, 'DX0397-277');
+  // Men: IF2934-010
+  const bentoMen = findProduct(allInStock, 'IF2934-010');
+  // Hoodies: DM3330-646
+  const bentoHoodies = findProduct(allInStock, 'DM3330-646');
+  // Pants: FD7212-340
+  const bentoPants = findProduct(allInStock, 'FD7212-340');
+
+  // Counts live compute per category
+  let jordanCount = 0;
+  let womenCount = 0;
+  let menCount = 0;
+  let hoodiesCount = 0;
+  let pantsCount = 0;
+
+  allInStock.forEach((p) => {
+    const brandName = resolveProductBrand(p).toLowerCase();
+    if (brandName === 'jordan' || p.brand?.slug === 'jordan') jordanCount++;
+
+    const cats = p.categories || [];
+    let isPWomen = false;
+    let isPHoodie = false;
+    let isPPant = false;
+
+    cats.forEach((c) => {
+      const slug = (c.slug || '').toLowerCase();
+      const name = (c.name || '').toLowerCase();
+      if (
+        slug === 'women' ||
+        slug === 'womens' ||
+        slug.includes('women') ||
+        name.includes('زنانه') ||
+        name.includes('women')
+      ) {
+        isPWomen = true;
+      }
+      if (
+        slug.includes('hoodie') ||
+        name.includes('hoodie') ||
+        name.includes('هودی')
+      ) {
+        isPHoodie = true;
+      }
+      if (
+        slug.includes('pant') ||
+        slug.includes('jogger') ||
+        slug.includes('trouser') ||
+        slug.includes('sweatpant') ||
+        name.includes('pant') ||
+        name.includes('jogger') ||
+        name.includes('trouser') ||
+        name.includes('sweatpant') ||
+        name.includes('شلوار') ||
+        name.includes('اسلش')
+      ) {
+        isPPant = true;
+      }
+    });
+
+    const productNameLower = (p.name || '').toLowerCase();
+    if (
+      productNameLower.includes('pant') ||
+      productNameLower.includes('jogger') ||
+      productNameLower.includes('trouser') ||
+      productNameLower.includes('sweatpant') ||
+      p.name?.includes('شلوار') ||
+      p.name?.includes('اسلش')
+    ) {
+      isPPant = true;
+    }
+
+    const isPMen =
+      !isPWomen &&
+      cats.some((c) => {
+        const slug = (c.slug || '').toLowerCase();
+        const name = (c.name || '').toLowerCase();
+        return (
+          slug === 'men' ||
+          slug === 'mens' ||
+          /\bmen\b/i.test(slug) ||
+          name.includes('مردانه') ||
+          /\bmen\b/i.test(name)
+        );
+      });
+
+    if (isPWomen) womenCount++;
+    if (isPMen) menCount++;
+    if (isPHoodie) hoodiesCount++;
+    if (isPPant) pantsCount++;
+  });
+
+  const bentoData = {
+    jordan: { product: bentoJordan, count: jordanCount },
+    women: { product: bentoWomen, count: womenCount },
+    men: { product: bentoMen, count: menCount },
+    hoodies: { product: bentoHoodies, count: hoodiesCount },
+    pants: { product: bentoPants, count: pantsCount },
+  };
+
+  // 4. Brand Blocks
+  // Nike
+  const nikeMedia = findProduct(allInStock, 'FB8008-063');
+  const nikeMini = [
+    findProduct(allInStock, 'DX2324-531'),
+    findProduct(allInStock, 'BV0507-100'),
+  ].filter((p): p is KickzoneGraphqlTypes.Product => Boolean(p));
+
+  // Jordan
+  const jordanMedia = findProduct(allInStock, 'DQ7544-662');
+  const jordanMini = [
+    findProduct(allInStock, 'CJ0921-011'),
+    findProduct(allInStock, 'DA9854-091'),
+  ].filter((p): p is KickzoneGraphqlTypes.Product => Boolean(p));
+
+  // Adidas (FL0147 only; HM2137 is out of stock so never show it)
+  const adidasMedia = findProduct(allInStock, 'FL0147');
+  const adidasMini = [findProduct(allInStock, 'FL0147')].filter(
+    (p): p is KickzoneGraphqlTypes.Product => Boolean(p)
+  );
+
+  const brandBlocksData = [
+    {
+      brand: 'NIKE',
+      mediaProduct: nikeMedia,
+      lineKey: 'nike' as const,
+      miniProducts: nikeMini,
+      link: getCustomerBrandRoute('nike'),
+    },
+    {
+      brand: 'JORDAN',
+      mediaProduct: jordanMedia,
+      lineKey: 'jordan' as const,
+      miniProducts: jordanMini,
+      link: getCustomerBrandRoute('jordan'),
+    },
+    {
+      brand: 'ADIDAS',
+      mediaProduct: adidasMedia,
+      lineKey: 'adidas' as const,
+      miniProducts: adidasMini,
+      link: getCustomerBrandRoute('adidas'),
+    },
+  ];
+
+  const brandBlockIds = new Set<number>();
+  brandBlocksData.forEach((b) => {
+    if (b.mediaProduct?.id) brandBlockIds.add(b.mediaProduct.id);
+    b.miniProducts.forEach((p) => brandBlockIds.add(p.id));
+  });
+
+  // New Arrivals (Newest by highest product id first)
+  // Exclude products used in hero and brand blocks
+  const excludedIds = new Set<number>([
+    ...Array.from(heroIds),
+    ...Array.from(brandBlockIds),
+  ]);
+
+  const sortedByIdDesc = [...allInStock].sort((a, b) => b.id - a.id);
+
+  const availableWomen = sortedByIdDesc.filter(
+    (p) => isWomenProduct(p) && !excludedIds.has(p.id)
+  );
+  const availableMen = sortedByIdDesc.filter(
+    (p) => isMenProduct(p) && !excludedIds.has(p.id)
+  );
+
+  const newestWomen4 = availableWomen.slice(0, 4);
+  const newestMen4 = availableMen.slice(0, 4);
+
+  // Interleave women, men, women, men... (8 total)
+  const interleaved8: KickzoneGraphqlTypes.Product[] = [];
+  const maxLen = Math.max(newestWomen4.length, newestMen4.length);
+  for (let i = 0; i < maxLen; i++) {
+    if (newestWomen4[i]) interleaved8.push(newestWomen4[i]);
+    if (newestMen4[i]) interleaved8.push(newestMen4[i]);
+  }
+
+  const newArrivals = {
+    all: interleaved8,
+    women: newestWomen4,
+    men: newestMen4,
+  };
+
+  // 6. Picks Rail Products (max 10 in-stock in specified order)
+  const picksOrderSKUs = [
+    'DD5094-133',
+    'DC5276-596',
+    'CZ8528-397',
+    'DR1025-247',
+    'CN3000-100',
+    'DZ6026-448',
+    'CK0160-010',
+    'DQ6304-010',
+    '682852-355',
+    'DR6171-063',
+  ];
+
+  const usedSoFar = new Set<number>([
+    ...Array.from(excludedIds),
+    ...interleaved8.map((p) => p.id),
+  ]);
+
+  const picksList: KickzoneGraphqlTypes.Product[] = [];
+  picksOrderSKUs.forEach((sku) => {
+    const found = findProduct(allInStock, sku);
+    if (found && !usedSoFar.has(found.id)) {
+      picksList.push(found);
+      usedSoFar.add(found.id);
+    }
+  });
+
+  // Fill up to 10 if fewer remain
+  if (picksList.length < 10) {
+    for (const p of sortedByIdDesc) {
+      if (!usedSoFar.has(p.id)) {
+        picksList.push(p);
+        usedSoFar.add(p.id);
+        if (picksList.length >= 10) break;
+      }
+    }
+  }
+
+  return {
+    exchangeRate,
+    categories: (data?.categories || []) as HomeCategory[],
+    hero: {
+      right: heroRight,
+      center: heroCenter,
+      left: heroLeft,
+    },
+    bento: bentoData,
+    brandBlocks: brandBlocksData,
+    newArrivals,
+    picks: picksList,
+  };
+}
+</file>
+
+<file path="libs/client/admins/screens/product-editor/src/lib/AdminProductEditor.tsx">
+import { AdminsLayout } from '@kickzone-workspace/admins-layout';
+import {
+  useCategories,
+  useCategoriesQuery,
+} from '@kickzone-workspace/categories-hook';
+import { useBrandsQuery } from '@kickzone-workspace/brands-hook';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import {
+  useProducts,
+  useProductById,
+  resolveProductImageUrl,
+} from '@kickzone-workspace/products-hook';
+import { useSnackbarContext } from '@kickzone-workspace/snackbar-hook';
+import { useI18nContext, usePageTitle } from '@kickzone-workspace/shared-i18n';
+import { GlassmorphismContainer } from '@kickzone-workspace/glassmorphism-container';
+import {
+  DialogFormContent,
+  getLtrTextFieldProps,
+} from '@kickzone-workspace/language-components';
+import AddIcon from '@mui/icons-material/Add';
+import AddPhotoAlternateIcon from '@mui/icons-material/AddPhotoAlternate';
+import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
+import WarningIcon from '@mui/icons-material/Warning';
+import Autocomplete from '@mui/material/Autocomplete';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import { useSiteLanguages } from '@kickzone-workspace/site-languages-hook';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardMedia from '@mui/material/CardMedia';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogTitle from '@mui/material/DialogTitle';
+import FormControl from '@mui/material/FormControl';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Paper from '@mui/material/Paper';
+import Select, { SelectChangeEvent } from '@mui/material/Select';
+import { styled, useTheme } from '@mui/material/styles';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import {
+  categoryFormSchema,
+  colorFormSchema,
+  productEditorFormSchema,
+  type CategoryFormInput,
+  type ColorFormInput,
+  type ProductEditorFormInput,
+} from '@kickzone-workspace/validation';
+import { useParams } from 'react-router-dom';
+import { useColors } from '@kickzone-workspace/colors-hook';
+import { SketchPicker, ColorResult } from 'react-color';
+import {
+  APPAREL_SIZES,
+  euToUs,
+  FOOTWEAR_EU_SIZES,
+  isFootwearSizeKind,
+  isPantsSizeKind,
+  parsePantsSize,
+  formatPantsSize,
+  SizeKind,
+} from '@kickzone-workspace/product-sizes';
+
+/** Normalize API / GraphQL casing (Apparel vs APPAREL) to product-sizes enum values. */
+function resolveSizeKind(kind?: string | SizeKind | null): SizeKind {
+  if (isPantsSizeKind(kind)) return SizeKind.Pants;
+  if (isFootwearSizeKind(kind)) return SizeKind.Footwear;
+  return SizeKind.Apparel;
+}
+
+/**
+ * Convert product-sizes SizeKind values (APPAREL/FOOTWEAR/PANTS) to GraphQL
+ * SizeKind enum names (Apparel/Footwear/Pants) from schema.gql.
+ * Sending uppercase values makes GraphQL reject the mutation, so create/update
+ * never persists variants (product shell saved, variants missing / wiped).
+ */
+function toGraphQLSizeKind(kind: SizeKind): KickzoneGraphqlTypes.SizeKind {
+  if (isPantsSizeKind(kind)) {
+    return KickzoneGraphqlTypes.SizeKind.Pants;
+  }
+  if (isFootwearSizeKind(kind)) {
+    return KickzoneGraphqlTypes.SizeKind.Footwear;
+  }
+  return KickzoneGraphqlTypes.SizeKind.Apparel;
+}
+
+/** Convert GraphQL SizeKind (Apparel/Footwear/Pants) to product-sizes SizeKind. */
+function fromGraphQLSizeKind(kind: string | undefined): SizeKind | undefined {
+  if (!kind) return undefined;
+  return resolveSizeKind(kind);
+}
+
+/** Keep multi-select Autocomplete open after picks; avoid mobile blur closing it mid-selection. */
+function useMultiSelectAutocompleteOpen() {
+  const [open, setOpen] = useState(false);
+  const ignoreNextBlurRef = useRef(false);
+
+  const onOpen = useCallback(() => setOpen(true), []);
+
+  const onClose = useCallback(
+    (_event: React.SyntheticEvent, reason: string) => {
+      if (reason === 'selectOption' || reason === 'removeOption') {
+        return;
+      }
+      if (reason === 'blur' && ignoreNextBlurRef.current) {
+        ignoreNextBlurRef.current = false;
+        return;
+      }
+      setOpen(false);
+    },
+    []
+  );
+
+  const markSelection = useCallback(() => {
+    ignoreNextBlurRef.current = true;
+  }, []);
+
+  return { open, onOpen, onClose, markSelection };
+}
+
+const multiSelectListboxSlotProps = {
+  sx: {
+    maxHeight: { xs: 280, sm: 320 },
+    '& .MuiAutocomplete-option': {
+      minHeight: { xs: 48, sm: 36 },
+      py: { xs: 1.25, sm: 0.75 },
+    },
+  },
+} as const;
+
+interface CategoryModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (name: string) => void;
+  initialName?: string;
+  title: string;
+  isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
+}
+
+const CategoryModal = ({
+  open,
+  onClose,
+  onSubmit,
+  initialName = '',
+  title,
+  isLoading = false,
+  LL,
+}: CategoryModalProps) => {
+  const [categoryName, setCategoryName] = useState(initialName);
+
+  useEffect(() => {
+    setCategoryName(initialName);
+  }, [initialName]);
+
+  const categoryForm = useForm<CategoryFormInput>({
+    values: { name: categoryName },
+    resolver: zodResolver(categoryFormSchema),
+    mode: 'onSubmit',
+  });
+  const nameError = categoryForm.formState.errors.name;
+
+  const handleSubmit = useCallback(async () => {
+    if (!(await categoryForm.trigger())) return;
+    onSubmit(categoryName);
+    setCategoryName('');
+    onClose();
+  }, [categoryForm, categoryName, onSubmit, onClose]);
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="lg">
+      <DialogTitle>{title}</DialogTitle>
+      <DialogFormContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label={LL.form.categoryName()}
+          fullWidth
+          value={categoryName}
+          onChange={(e) => setCategoryName(e.target.value)}
+          error={Boolean(nameError)}
+        />
+      </DialogFormContent>
+      <DialogActions>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
+        <Button
+          onClick={handleSubmit}
+          loading={isLoading}
+          variant="contained"
+          color="primary"
+        >
+          {LL.button.save()}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+interface DeleteCategoryModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  categoryName: string;
+  isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
+}
+
+const DeleteCategoryModal = ({
+  open,
+  onClose,
+  onConfirm,
+  categoryName,
+  isLoading = false,
+  LL,
+}: DeleteCategoryModalProps) => {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <WarningIcon color="warning" />
+        {LL.categories.deleteCategory()}
+      </DialogTitle>
+      <DialogFormContent>
+        <Typography>
+          {LL.categories.deleteCategoryConfirm({ name: categoryName })}
+        </Typography>
+      </DialogFormContent>
+      <DialogActions>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
+        <Button
+          onClick={onConfirm}
+          loading={isLoading}
+          variant="contained"
+          color="error"
+        >
+          {LL.button.delete()}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+interface DeleteImageModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  imageType: 'preview' | 'uploaded';
+  isLoading?: boolean;
+}
+
+const DeleteImageModal = ({
+  open,
+  onClose,
+  onConfirm,
+  imageType,
+  isLoading = false,
+  LL,
+}: DeleteImageModalProps & { LL: ReturnType<typeof useI18nContext>['LL'] }) => (
+  <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
+    <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+      <WarningIcon color="warning" />
+      {LL.modal.deleteImage()}
+    </DialogTitle>
+    <DialogFormContent>
+      <Typography>
+        {LL.modal.deleteImageConfirm({
+          imageType:
+            imageType === 'preview'
+              ? LL.products.selectedImage()
+              : LL.products.uploadedImage(),
+        })}
+      </Typography>
+    </DialogFormContent>
+    <DialogActions>
+      <Button onClick={onClose} disabled={isLoading}>
+        {LL.button.cancel()}
+      </Button>
+      <Button
+        onClick={onConfirm}
+        variant="contained"
+        color="error"
+        loading={isLoading}
+      >
+        {LL.button.delete()}
+      </Button>
+    </DialogActions>
+  </Dialog>
+);
+
+const VisuallyHiddenInput = styled('input')({
+  clip: 'rect(0 0 0 0)',
+  clipPath: 'inset(50%)',
+  height: 1,
+  overflow: 'hidden',
+  position: 'absolute',
+  bottom: 0,
+  left: 0,
+  whiteSpace: 'nowrap',
+  width: 1,
+});
+
+const ImagePreviewCard = styled(Card)(({ theme }) => ({
+  maxWidth: 200,
+  margin: theme.spacing(1),
+  position: 'relative',
+}));
+
+const ImagePreviewContainer = styled(Box)(({ theme }) => ({
+  display: 'flex',
+  flexWrap: 'wrap',
+  gap: theme.spacing(2),
+  marginTop: theme.spacing(2),
+}));
+
+// Base state without waist/inseam (for type safety)
+interface ProductInfoStateBase {
+  productId: number;
+  size: string;
+  sizeKind: SizeKind;
+  colors: KickzoneGraphqlTypes.Color[];
+  weight: number;
+  images: File[];
+  imagePreviews: string[];
+  uploadedImageUrls: string[];
+  createdId: number | null;
+  isUploading: boolean;
+  newImages: File[];
+  newImagePreviews: { file: File; url: string }[];
+}
+
+// Extended state for pants sizing (waist + inseam) - UI only, not sent to backend
+export type ProductInfoState = ProductInfoStateBase & {
+  waist?: number;
+  inseam?: number;
+};
+
+interface ProductInfoCardProps {
+  info: ProductInfoState;
+  idx: number;
+  onChange: (
+    idx: number,
+    name: keyof Omit<
+      ProductInfoState,
+      | 'colors'
+      | 'images'
+      | 'imagePreviews'
+      | 'uploadedImageUrls'
+      | 'createdId'
+      | 'isUploading'
+      | 'newImages'
+      | 'newImagePreviews'
+    >,
+    value: unknown
+  ) => void;
+  onColorsChange: (idx: number, colors: KickzoneGraphqlTypes.Color[]) => void;
+  availableColors: KickzoneGraphqlTypes.Color[];
+  onRemove: (idx: number) => void;
+  onRemoveImage: (infoIdx: number, imageIdx: number) => void;
+  disableRemove: boolean;
+  onUploadSelectedImages: (infoIdx: number) => void;
+  setProductInfos: React.Dispatch<React.SetStateAction<ProductInfoState[]>>;
+  onManageColors?: () => void;
+  manageColorsDisabled?: boolean;
+}
+
+const ProductInfoCard = React.memo(
+  ({
+    info,
+    idx,
+    onChange,
+    onColorsChange,
+    availableColors,
+    onRemove,
+    onRemoveImage,
+    disableRemove,
+    onUploadSelectedImages,
+    setProductInfos,
+    onManageColors,
+    manageColorsDisabled = false,
+    LL,
+  }: ProductInfoCardProps & {
+    LL: ReturnType<typeof useI18nContext>['LL'];
+  }) => {
+    // Only allow image selection when editing (product info is already created)
+    const isSelectImagesDisabled = info.isUploading || !info.createdId;
+    const theme = useTheme();
+    const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+    const colorsAutocomplete = useMultiSelectAutocompleteOpen();
+    const uploadButton = (
+      <Button
+        component="label"
+        variant="contained"
+        startIcon={<AddPhotoAlternateIcon />}
+        disabled={isSelectImagesDisabled}
+      >
+        {info.isUploading ? LL.status.uploading() : LL.products.selectImages()}
+        <VisuallyHiddenInput
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []);
+            if (files.length > 0) {
+              // Create preview URLs for selected files
+              const newImagePreviews = files.map((file) => ({
+                file,
+                url: URL.createObjectURL(file),
+              }));
+
+              // Update the product info state with new images
+              setProductInfos((prev) => {
+                const updated = [...prev];
+                updated[idx].newImages = [...updated[idx].newImages, ...files];
+                updated[idx].newImagePreviews = [
+                  ...updated[idx].newImagePreviews,
+                  ...newImagePreviews,
+                ];
+                return updated;
+              });
+            }
+            // Reset the value so the same file can be selected again
+            e.target.value = '';
+          }}
+          disabled={isSelectImagesDisabled}
+        />
+      </Button>
+    );
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          mb: 2,
+          p: 2,
+          position: 'relative',
+          backgroundColor:
+            theme.palette.mode === 'dark'
+              ? 'rgba(18, 18, 22, 0.88)'
+              : 'rgba(255, 255, 255, 0.96)',
+          border:
+            theme.palette.mode === 'dark'
+              ? '1px solid rgba(255, 255, 255, 0.08)'
+              : '1px solid rgba(0, 0, 0, 0.08)',
+          borderRadius: '16px',
+          boxShadow:
+            theme.palette.mode === 'dark'
+              ? '0 10px 30px rgba(0,0,0,0.4)'
+              : '0 10px 30px rgba(0,0,0,0.12)',
+        }}
+      >
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: { xs: 'column', md: 'row' },
+            gap: 2,
+            flexWrap: { xs: 'nowrap', md: 'wrap' },
+          }}
+        >
+          <Box
+            sx={{
+              minWidth: 180,
+              width: '100%',
+              flex: { md: 1 },
+              mb: { xs: 2, md: 0 },
+            }}
+          >
+            <Autocomplete
+              multiple
+              disableCloseOnSelect
+              openOnFocus
+              clearOnBlur={false}
+              open={colorsAutocomplete.open}
+              onOpen={colorsAutocomplete.onOpen}
+              onClose={colorsAutocomplete.onClose}
+              options={availableColors}
+              getOptionLabel={(option) => option.name}
+              isOptionEqualToValue={(option, value) => option.id === value.id}
+              value={info.colors}
+              onChange={(_e, newValue, reason) => {
+                if (reason === 'selectOption' || reason === 'removeOption') {
+                  colorsAutocomplete.markSelection();
+                }
+                onColorsChange(idx, newValue);
+              }}
+              filterSelectedOptions
+              slotProps={{
+                listbox: multiSelectListboxSlotProps,
+              }}
+              renderOption={(props, option) => {
+                const { key, ...otherProps } = props;
+                return (
+                  <li key={key} {...otherProps}>
+                    <Box
+                      sx={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 1,
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: '50%',
+                          backgroundColor: option.hexCode,
+                          border: '1px solid rgba(0,0,0,0.2)',
+                          flexShrink: 0,
+                        }}
+                      />
+                      {option.name}
+                    </Box>
+                  </li>
+                );
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label={LL.form.color()}
+                  required
+                  slotProps={{
+                    htmlInput: {
+                      ...params.inputProps,
+                      required: info.colors.length === 0,
+                    },
+                  }}
+                />
+              )}
+              sx={{ width: '100%' }}
+            />
+            {onManageColors ? (
+              <Button
+                variant="outlined"
+                onClick={onManageColors}
+                disabled={manageColorsDisabled}
+                sx={{ mt: 1 }}
+                fullWidth={isMobile}
+              >
+                {LL.colorManagement.manageColors()}
+              </Button>
+            ) : null}
+          </Box>
+          <FormControl
+            required
+            sx={{
+              flex: 1,
+              minWidth: 120,
+              width: isMobile ? '100%' : undefined,
+            }}
+          >
+            <InputLabel id={`size-kind-${idx}`}>
+              {LL.products.sizeKind()}
+            </InputLabel>
+            <Select
+              labelId={`size-kind-${idx}`}
+              label={LL.products.sizeKind()}
+              value={info.sizeKind}
+              onChange={(e: SelectChangeEvent) => {
+                const nextKind = resolveSizeKind(e.target.value);
+                onChange(idx, 'sizeKind', nextKind);
+                onChange(idx, 'size', '');
+                onChange(idx, 'waist', undefined);
+                onChange(idx, 'inseam', undefined);
+              }}
+            >
+              <MenuItem value={SizeKind.Apparel}>
+                {LL.products.sizeKindApparel()}
+              </MenuItem>
+              <MenuItem value={SizeKind.Footwear}>
+                {LL.products.sizeKindFootwear()}
+              </MenuItem>
+              <MenuItem value={SizeKind.Pants}>
+                {LL.products.sizeKindPants()}
+              </MenuItem>
+            </Select>
+          </FormControl>
+          {isPantsSizeKind(info.sizeKind) ? (
+            // Pants: standalone waist/inseam fields (avoid nesting under Size FormControl label)
+            <Box
+              sx={{
+                display: 'flex',
+                gap: { xs: 1, sm: 2 },
+                flex: 1,
+                minWidth: { xs: '100%', sm: 280 },
+                width: isMobile ? '100%' : undefined,
+                flexWrap: { xs: 'wrap', sm: 'nowrap' },
+              }}
+            >
+              <TextField
+                name="waist"
+                type="number"
+                required
+                label={LL.products.waist?.() || 'Waist'}
+                value={info.waist ?? ''}
+                onChange={(e) => {
+                  const waist =
+                    e.target.value === '' ? undefined : Number(e.target.value);
+                  onChange(idx, 'waist', waist);
+                  if (waist !== undefined && info.inseam !== undefined) {
+                    onChange(idx, 'size', formatPantsSize(waist, info.inseam));
+                  } else {
+                    onChange(idx, 'size', '');
+                  }
+                }}
+                placeholder={LL.products.waistPlaceholder?.() || '32'}
+                inputProps={{ min: 1, max: 99, step: 1 }}
+                {...getLtrTextFieldProps({
+                  flex: 1,
+                  minWidth: { xs: '100%', sm: 130 },
+                  sx: {
+                    '& .MuiInputLabel-root': {
+                      whiteSpace: 'nowrap',
+                    },
+                  },
+                })}
+              />
+              <TextField
+                name="inseam"
+                type="number"
+                required
+                label={LL.products.inseam?.() || 'Inseam'}
+                value={info.inseam ?? ''}
+                onChange={(e) => {
+                  const inseam =
+                    e.target.value === '' ? undefined : Number(e.target.value);
+                  onChange(idx, 'inseam', inseam);
+                  if (inseam !== undefined && info.waist !== undefined) {
+                    onChange(idx, 'size', formatPantsSize(info.waist, inseam));
+                  } else {
+                    onChange(idx, 'size', '');
+                  }
+                }}
+                placeholder={LL.products.inseamPlaceholder?.() || '34'}
+                inputProps={{ min: 1, max: 99, step: 1 }}
+                {...getLtrTextFieldProps({
+                  flex: 1,
+                  minWidth: { xs: '100%', sm: 130 },
+                  sx: {
+                    '& .MuiInputLabel-root': {
+                      whiteSpace: 'nowrap',
+                    },
+                  },
+                })}
+              />
+              {/* Hidden composite size for form/tests — synced from waist/inseam */}
+              <input
+                type="hidden"
+                name="size"
+                value={info.size}
+                data-testid="hidden-size-input"
+              />
+            </Box>
+          ) : (
+            <FormControl
+              required
+              sx={{
+                flex: 1,
+                minWidth: 120,
+                width: isMobile ? '100%' : undefined,
+              }}
+            >
+              <InputLabel id={`size-value-${idx}`}>
+                {LL.products.size()}
+              </InputLabel>
+              <Select
+                labelId={`size-value-${idx}`}
+                label={LL.products.size()}
+                value={info.size}
+                onChange={(e: SelectChangeEvent) =>
+                  onChange(idx, 'size', e.target.value)
+                }
+              >
+                {/* Keeps empty value valid without showing a closed-select placeholder */}
+                <MenuItem value="" sx={{ display: 'none' }} />
+                {(isFootwearSizeKind(info.sizeKind)
+                  ? FOOTWEAR_EU_SIZES
+                  : APPAREL_SIZES
+                ).map((code) => (
+                  <MenuItem key={code} value={code}>
+                    {isFootwearSizeKind(info.sizeKind)
+                      ? `EU ${code}${
+                          euToUs(code) ? ` (US ${euToUs(code)})` : ''
+                        }`
+                      : code}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          )}
+          <TextField
+            label={LL.products.weight()}
+            name="weight"
+            type="number"
+            value={info.weight}
+            onChange={(
+              e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+            ) => onChange(idx, 'weight', e.target.value)}
+            required
+            {...getLtrTextFieldProps({
+              flex: 1,
+              minWidth: 100,
+              width: isMobile ? '100%' : undefined,
+            })}
+          />
+        </Box>
+        <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 2 }}>
+          {info.createdId && uploadButton}
+          <IconButton
+            onClick={() => onRemove(idx)}
+            color="error"
+            aria-label="Remove variant"
+            sx={{ ml: 1 }}
+            disabled={disableRemove}
+          >
+            <DeleteIcon />
+          </IconButton>
+        </Box>
+        <ImagePreviewContainer>
+          {/* Selected (not yet uploaded) images */}
+          {info.newImagePreviews.length > 0 && (
+            <Box sx={{ width: '100%' }}>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                sx={{ mb: 1 }}
+              >
+                {LL.products.selectedImagesNotUploaded()}
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {info.newImagePreviews.map((previewObj, imageIdx) => (
+                  <ImagePreviewCard key={imageIdx}>
+                    <CardMedia
+                      component="img"
+                      height="140"
+                      image={previewObj.url}
+                      alt={`Selected image ${imageIdx + 1}`}
+                    />
+                    <CardActions>
+                      <IconButton
+                        size="small"
+                        onClick={() => onRemoveImage(idx, imageIdx)}
+                        sx={{ color: 'error.main' }}
+                        aria-label="Delete selected image"
+                      >
+                        <DeleteIcon />
+                      </IconButton>
+                    </CardActions>
+                  </ImagePreviewCard>
+                ))}
+              </Box>
+              <Button
+                variant="contained"
+                color="primary"
+                sx={{ mt: 1 }}
+                onClick={() => {
+                  onUploadSelectedImages(idx);
+                }}
+                disabled={
+                  info.isUploading ||
+                  info.newImages.length === 0 ||
+                  !info.createdId
+                }
+              >
+                {info.isUploading
+                  ? LL.status.uploading()
+                  : LL.products.uploadImages()}
+              </Button>
+            </Box>
+          )}
+          {/* Uploaded images from server */}
+          {info.uploadedImageUrls.length > 0 && (
+            <Box sx={{ width: '100%', mt: 2 }}>
+              <Typography
+                variant="subtitle2"
+                color="text.secondary"
+                sx={{ mb: 1 }}
+              >
+                {LL.products.uploadedImages()}
+              </Typography>
+              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+                {info.uploadedImageUrls.map(
+                  (preview: string, imageIdx: number) => (
+                    <ImagePreviewCard key={imageIdx}>
+                      <CardMedia
+                        component="img"
+                        height="140"
+                        image={resolveProductImageUrl(preview)}
+                        alt={`Product variant image ${imageIdx + 1}`}
+                      />
+                      <CardActions>
+                        <IconButton
+                          size="small"
+                          onClick={() =>
+                            onRemoveImage(
+                              idx,
+                              info.newImagePreviews.length + imageIdx
+                            )
+                          }
+                          sx={{ color: 'error.main' }}
+                          aria-label="Delete uploaded image"
+                        >
+                          <DeleteIcon />
+                        </IconButton>
+                      </CardActions>
+                    </ImagePreviewCard>
+                  )
+                )}
+              </Box>
+            </Box>
+          )}
+        </ImagePreviewContainer>
+      </Paper>
+    );
+  }
+);
+
+interface ColorModalProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (id: number | null, name: string, hexCode: string) => void;
+  initialColor?: KickzoneGraphqlTypes.Color | null;
+  title: string;
+  isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
+}
+
+const ColorModal = ({
+  open,
+  onClose,
+  onSubmit,
+  initialColor = null,
+  title,
+  isLoading = false,
+  LL,
+}: ColorModalProps) => {
+  const [colorName, setColorName] = useState(initialColor?.name || '');
+  const [hexCode, setHexCode] = useState(initialColor?.hexCode || '#ffffff');
+
+  useEffect(() => {
+    setColorName(initialColor?.name || '');
+    setHexCode(initialColor?.hexCode || '#ffffff');
+  }, [initialColor]);
+
+  const colorForm = useForm<ColorFormInput>({
+    values: { name: colorName, hexCode },
+    resolver: zodResolver(colorFormSchema),
+    mode: 'onSubmit',
+  });
+  const colorErrors = colorForm.formState.errors;
+
+  const handleSubmit = useCallback(async () => {
+    if (!(await colorForm.trigger())) return;
+    onSubmit(initialColor?.id || null, colorName, hexCode);
+    // Reset fields for new colors (when initialColor is null)
+    if (!initialColor) {
+      setColorName('');
+      setHexCode('#ffffff');
+    }
+    onClose();
+  }, [colorForm, initialColor, colorName, hexCode, onSubmit, onClose]);
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{title}</DialogTitle>
+      <DialogFormContent>
+        <TextField
+          autoFocus
+          margin="dense"
+          label={LL.colorManagement.colorName()}
+          fullWidth
+          value={colorName}
+          onChange={(e) => setColorName(e.target.value)}
+          error={Boolean(colorErrors.name)}
+        />
+        <TextField
+          margin="dense"
+          label={LL.colorManagement.hexCode()}
+          fullWidth
+          value={hexCode}
+          onChange={(e) => setHexCode(e.target.value)}
+          error={Boolean(colorErrors.hexCode)}
+          {...getLtrTextFieldProps()}
+        />
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
+          <SketchPicker
+            color={hexCode}
+            onChangeComplete={(color: ColorResult) => setHexCode(color.hex)}
+          />
+        </Box>
+      </DialogFormContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={isLoading}>
+          {LL.button.cancel()}
+        </Button>
+        <Button
+          onClick={handleSubmit}
+          disabled={isLoading}
+          loading={isLoading}
+          variant="contained"
+          color="primary"
+        >
+          {LL.button.save()}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+interface DeleteColorModalProps {
+  open: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  colorName: string;
+  isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
+}
+
+const DeleteColorModal = ({
+  open,
+  onClose,
+  onConfirm,
+  colorName,
+  isLoading = false,
+  LL,
+}: DeleteColorModalProps) => {
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+        <WarningIcon color="warning" />
+        {LL.colorManagement.deleteColor()}
+      </DialogTitle>
+      <DialogFormContent>
+        <Typography>
+          {LL.colorManagement.deleteColorConfirm({ name: colorName })}
+        </Typography>
+      </DialogFormContent>
+      <DialogActions>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
+        <Button
+          onClick={onConfirm}
+          loading={isLoading}
+          variant="contained"
+          color="error"
+        >
+          {LL.button.delete()}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+interface ManageColorsModalProps {
+  open: boolean;
+  onClose: () => void;
+  colors: KickzoneGraphqlTypes.Color[];
+  onAdd: () => void;
+  onEdit: (color: KickzoneGraphqlTypes.Color) => void;
+  onDelete: (color: KickzoneGraphqlTypes.Color) => void;
+  isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
+}
+
+const ManageColorsModal = ({
+  open,
+  onClose,
+  colors,
+  onAdd,
+  onEdit,
+  onDelete,
+  isLoading = false,
+  LL,
+}: ManageColorsModalProps) => {
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setSearch('');
+    }
+  }, [open]);
+
+  const filteredColors = colors.filter((color) =>
+    color.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{LL.colorManagement.manageColors()}</DialogTitle>
+      <DialogFormContent>
+        <TextField
+          fullWidth
+          size="small"
+          label={LL.colorManagement.searchColors()}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+        <Button
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={onAdd}
+          sx={{ mb: 2 }}
+          disabled={isLoading}
+          fullWidth
+        >
+          {LL.colorManagement.addNewColor()}
+        </Button>
+        <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
+          {filteredColors.map((color) => (
+            <Box
+              key={color.id}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                p: 1,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                <Box
+                  sx={{
+                    width: 20,
+                    height: 20,
+                    backgroundColor: color.hexCode,
+                    mr: 1,
+                    border: '1px solid #ccc',
+                  }}
+                />
+                <Typography>{color.name}</Typography>
+              </Box>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(color)}
+                  aria-label={LL.colorManagement.editColor()}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => onDelete(color)}
+                  color="error"
+                  aria-label={LL.colorManagement.deleteColor()}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </DialogFormContent>
+      <DialogActions>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+interface ManageCategoriesModalProps {
+  open: boolean;
+  onClose: () => void;
+  categories: Array<{ id: number; name: string }>;
+  onAdd: () => void;
+  onEdit: (category: { id: number; name: string }) => void;
+  onDelete: (category: { id: number; name: string }) => void;
+  isLoading?: boolean;
+  LL: ReturnType<typeof useI18nContext>['LL'];
+}
+
+const ManageCategoriesModal = ({
+  open,
+  onClose,
+  categories,
+  onAdd,
+  onEdit,
+  onDelete,
+  isLoading = false,
+  LL,
+}: ManageCategoriesModalProps) => {
+  const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    if (!open) {
+      setSearch('');
+    }
+  }, [open]);
+
+  const filteredCategories = categories.filter((category) =>
+    category.name.toLowerCase().includes(search.trim().toLowerCase())
+  );
+
+  return (
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth>
+      <DialogTitle>{LL.categories.manageCategories()}</DialogTitle>
+      <DialogFormContent>
+        <TextField
+          fullWidth
+          size="small"
+          label={LL.categories.searchCategories()}
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          sx={{ mb: 2 }}
+        />
+        <Button
+          variant="outlined"
+          startIcon={<AddIcon />}
+          onClick={onAdd}
+          sx={{ mb: 2 }}
+          disabled={isLoading}
+          fullWidth
+        >
+          {LL.categories.addCategory()}
+        </Button>
+        <Box sx={{ maxHeight: 360, overflowY: 'auto' }}>
+          {filteredCategories.map((category) => (
+            <Box
+              key={category.id}
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                p: 1,
+                borderBottom: '1px solid',
+                borderColor: 'divider',
+              }}
+            >
+              <Typography>{category.name}</Typography>
+              <Box>
+                <IconButton
+                  size="small"
+                  onClick={() => onEdit(category)}
+                  aria-label={LL.categories.editCategory()}
+                >
+                  <EditIcon fontSize="small" />
+                </IconButton>
+                <IconButton
+                  size="small"
+                  onClick={() => onDelete(category)}
+                  color="error"
+                  aria-label={LL.categories.deleteCategory()}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Box>
+            </Box>
+          ))}
+        </Box>
+      </DialogFormContent>
+      <DialogActions>
+        <Button onClick={onClose}>{LL.button.cancel()}</Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+type LayoutComponentType = React.ComponentType<{ children: React.ReactNode }>;
+
+export type CreatedCatalogProduct = {
+  product: { id: number; name: string; sku?: string | null };
+  productInfos: Array<{
+    id: number;
+    size: string;
+    sizeKind?: SizeKind;
+    weight: number;
+    colors?: Array<{
+      id: number;
+      name: string;
+      hexCode: string;
+    }> | null;
+  }>;
+};
+
+export interface AdminProductEditorProps {
+  LayoutComponent?: LayoutComponentType;
+  /** Render without page chrome so it can be nested in another screen. */
+  embedded?: boolean;
+  /** After a new catalog product is created, call this instead of resetting the form. */
+  onCreated?: (result: CreatedCatalogProduct) => void;
+}
+
+export function AdminProductEditor({
+  LayoutComponent = AdminsLayout,
+  embedded = false,
+  onCreated,
+}: AdminProductEditorProps = {}) {
+  const { LL } = useI18nContext();
+  usePageTitle(() =>
+    embedded
+      ? LL.pageTitles.sellerManageProduct()
+      : LL.pageTitles.adminProductEditor()
+  );
+  const { id } = useParams<{ id?: string }>();
+  const productIdNum = id ? Number(id) : undefined;
+  const { product: loadedProduct, refetch: refetchProduct } =
+    useProductById(productIdNum);
+  const { siteLanguages } = useSiteLanguages();
+
+  const languagesToDisplay = React.useMemo(() => {
+    if (siteLanguages && siteLanguages.length > 0) {
+      return siteLanguages;
+    }
+    return [
+      {
+        id: '1',
+        code: 'fa',
+        name: 'Persian',
+        nativeName: 'فارسی',
+        isRTL: true,
+        isActive: true,
+        isDefault: true,
+      },
+      {
+        id: '2',
+        code: 'en',
+        name: 'English',
+        nativeName: 'English',
+        isRTL: false,
+        isActive: true,
+        isDefault: false,
+      },
+    ];
+  }, [siteLanguages]);
+
+  const [activeDescTab, setActiveDescTab] = useState('fa');
+  const [descriptions, setDescriptions] = useState<Record<string, string>>({});
+
+  const [product, setProduct] = useState({
+    name: '',
+    sku: '',
+    categoryIds: [] as number[],
+    brandId: null as number | null,
+    description: '',
+  });
+
+  const [productInfos, setProductInfos] = useState<ProductInfoState[]>([
+    {
+      productId: 0,
+      size: '',
+      sizeKind: SizeKind.Apparel,
+      colors: [],
+      weight: 0,
+      images: [],
+      imagePreviews: [],
+      uploadedImageUrls: [],
+      createdId: null,
+      isUploading: false,
+      newImages: [],
+      newImagePreviews: [],
+    },
+  ]);
+
+  const [, setCreatedProductInfoIds] = useState<(number | null)[]>([null]);
+
+  // Shared Zod rules (react-hook-form) for the required product and variant fields.
+  const editorValues = useMemo<ProductEditorFormInput>(
+    () => ({
+      name: product.name,
+      sku: product.sku,
+      categoryIds: product.categoryIds,
+      variants: productInfos.map((info) => ({
+        // Pants need both waist and inseam (which ensures the size is set).
+        size: isPantsSizeKind(info.sizeKind)
+          ? info.waist !== undefined && info.inseam !== undefined
+            ? formatPantsSize(info.waist, info.inseam)
+            : ''
+          : info.size,
+        colorIds: info.colors.map((c) => c.id),
+        weight: Number(info.weight) || 0,
+      })),
+    }),
+    [product, productInfos]
+  );
+  const editorForm = useForm<ProductEditorFormInput>({
+    values: editorValues,
+    resolver: zodResolver(productEditorFormSchema),
+    mode: 'onSubmit',
+  });
+
+  const [isManageCategoriesModalOpen, setIsManageCategoriesModalOpen] =
+    useState(false);
+  const [isNewCategoryModalOpen, setIsNewCategoryModalOpen] = useState(false);
+  const [isEditCategoryModalOpen, setIsEditCategoryModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+
+  const [isDeleteCategoryModalOpen, setIsDeleteCategoryModalOpen] =
+    useState(false);
+  const [categoryToDelete, setCategoryToDelete] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+
+  const [deleteImageModal, setDeleteImageModal] = useState<{
+    open: boolean;
+    infoIdx: number | null;
+    imageIdx: number | null;
+    imageType: 'preview' | 'uploaded' | null;
+    isLoading: boolean;
+  }>({
+    open: false,
+    infoIdx: null,
+    imageIdx: null,
+    imageType: null,
+    isLoading: false,
+  });
+
+  const [isManageColorsModalOpen, setIsManageColorsModalOpen] = useState(false);
+  const [isNewColorModalOpen, setIsNewColorModalOpen] = useState(false);
+  const [isEditColorModalOpen, setIsEditColorModalOpen] = useState(false);
+  const [selectedColor, setSelectedColor] =
+    useState<KickzoneGraphqlTypes.Color | null>(null);
+
+  const [isDeleteColorModalOpen, setIsDeleteColorModalOpen] = useState(false);
+  const [colorToDelete, setColorToDelete] = useState<{
+    id: number;
+    name: string;
+  } | null>(null);
+
+  const { categories, getCategoriesLoading } = useCategoriesQuery();
+  const { brands, getBrandsLoading } = useBrandsQuery();
+  const {
+    createCategory,
+    updateCategory,
+    deleteCategory,
+    isCreatingCategory,
+    isUpdatingCategory,
+    isDeletingCategory,
+  } = useCategories();
+
+  const {
+    createProductWithInfos,
+    uploadProductInfoImages,
+    removeProductInfoImage,
+    isCreatingProduct,
+    updateProduct,
+  } = useProducts();
+  const { showSnackbar } = useSnackbarContext();
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
+  const categoriesAutocomplete = useMultiSelectAutocompleteOpen();
+
+  const {
+    colors: availableColors,
+    createColor,
+    updateColor,
+    deleteColor,
+    loading: colorMutationsLoading,
+  } = useColors();
+
+  const slugify = useCallback(
+    (name: string) => name.toLowerCase().trim().replace(/\s+/g, '-'),
+    []
+  );
+
+  const resetDeleteImageModal = useCallback(() => {
+    setDeleteImageModal({
+      open: false,
+      infoIdx: null,
+      imageIdx: null,
+      imageType: null,
+      isLoading: false,
+    });
+  }, []);
+
+  // Fetch product if editing
+  useEffect(() => {
+    if (productIdNum && loadedProduct) {
+      const descMap: Record<string, string> = {};
+      if (loadedProduct.descriptions && loadedProduct.descriptions.length > 0) {
+        loadedProduct.descriptions.forEach((d) => {
+          if (d?.language?.code && d?.description) {
+            descMap[d.language.code] = d.description;
+          }
+        });
+      } else if (loadedProduct.description) {
+        descMap['fa'] = loadedProduct.description;
+        descMap['en'] = loadedProduct.description;
+      }
+      setDescriptions(descMap);
+
+      setProduct({
+        name: loadedProduct.name,
+        sku: loadedProduct.sku || '',
+        categoryIds: loadedProduct.categories.map((cat) => cat.id),
+        brandId: loadedProduct.brandId ?? loadedProduct.brand?.id ?? null,
+        description: loadedProduct.description || '',
+      });
+      setProductInfos(
+        loadedProduct.productInfos.map((info) => {
+          const sizeKind = resolveSizeKind(info.sizeKind);
+          const base = {
+            productId: loadedProduct.id,
+            size: info.size,
+            sizeKind,
+            colors: info.colors || [],
+            weight: info.weight,
+            images: [],
+            imagePreviews: [],
+            uploadedImageUrls: info.images || [],
+            createdId: info.id,
+            isUploading: false,
+            newImages: [],
+            newImagePreviews: [],
+          };
+          // Parse pants composite size for waist/inseam fields
+          if (isPantsSizeKind(sizeKind) && info.size) {
+            const parsed = parsePantsSize(info.size);
+            if (parsed) {
+              return { ...base, waist: parsed.waist, inseam: parsed.inseam };
+            }
+          }
+          return base;
+        })
+      );
+      setCreatedProductInfoIds(
+        loadedProduct.productInfos.map((info) => info.id)
+      );
+    }
+  }, [
+    productIdNum,
+    loadedProduct?.id,
+    loadedProduct?.name,
+    loadedProduct?.sku,
+    loadedProduct?.description,
+    loadedProduct?.categories,
+    loadedProduct?.productInfos,
+    loadedProduct,
+  ]);
+
+  // Handlers for product fields
+  const handleProductChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const { name, value } = e.target;
+      setProduct((prev) => ({ ...prev, [name]: value }));
+    },
+    []
+  );
+
+  const handleDescriptionChange = useCallback(
+    (langCode: string, value: string) => {
+      setDescriptions((prev) => ({ ...prev, [langCode]: value }));
+    },
+    []
+  );
+
+  const handleDescTabChange = useCallback(
+    (_event: React.SyntheticEvent, newLocale: string) => {
+      setActiveDescTab(newLocale);
+    },
+    []
+  );
+
+  // Handlers for product info fields
+  const handleProductInfoChange = useCallback(
+    (
+      index: number,
+      name: keyof Omit<
+        ProductInfoState,
+        | 'colors'
+        | 'images'
+        | 'imagePreviews'
+        | 'uploadedImageUrls'
+        | 'createdId'
+        | 'isUploading'
+        | 'newImages'
+        | 'newImagePreviews'
+      >,
+      value: unknown
+    ) => {
+      setProductInfos((prev) => {
+        const updated = [...prev];
+        updated[index] = { ...updated[index], [name]: value };
+        return updated;
+      });
+    },
+    []
+  );
+
+  // Add a new ProductInfo variant
+  const handleAddProductInfo = useCallback(() => {
+    setProductInfos((prev) => [
+      ...prev,
+      {
+        productId: 0,
+        size: '',
+        sizeKind: SizeKind.Apparel,
+        waist: undefined,
+        inseam: undefined,
+        colors: [],
+        weight: 0,
+        images: [],
+        imagePreviews: [],
+        uploadedImageUrls: [],
+        createdId: null,
+        isUploading: false,
+        newImages: [],
+        newImagePreviews: [],
+      } as ProductInfoState,
+    ]);
+    setCreatedProductInfoIds((prev) => [...prev, null]);
+  }, []);
+
+  // Remove a ProductInfo variant
+  const handleRemoveProductInfo = useCallback((index: number) => {
+    setProductInfos((prev) => prev.filter((_, i) => i !== index));
+    setCreatedProductInfoIds((prev) => prev.filter((_, i) => i !== index));
+  }, []);
+
+  // Handle product creation
+  const handleSubmit = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+      try {
+        // Validate required fields
+        if (!(await editorForm.trigger(['name', 'sku', 'categoryIds']))) {
+          showSnackbar('Please fill in all required fields', {
+            severity: 'error',
+          });
+          return;
+        }
+        if (!(await editorForm.trigger('variants'))) {
+          showSnackbar('Please fill in all product variant fields', {
+            severity: 'error',
+          });
+          return;
+        }
+        const descriptionList = languagesToDisplay
+          .map((lang) => ({
+            languageId: Number(lang.id),
+            languageCode: lang.code,
+            description: descriptions[lang.code]?.trim() || '',
+          }))
+          .filter((d) => d.description !== '');
+
+        const primaryDesc =
+          descriptions[activeDescTab]?.trim() ||
+          descriptions['fa']?.trim() ||
+          descriptions['en']?.trim() ||
+          Object.values(descriptions).find((v) => v?.trim())?.trim() ||
+          (product.description === '' ? null : product.description);
+
+        if (productIdNum) {
+          // Editing existing product
+          const variantsPayload: KickzoneGraphqlTypes.ProductVariantInput[] =
+            productInfos.map((info) => ({
+              id: info.createdId || undefined,
+              size:
+                isPantsSizeKind(info.sizeKind) &&
+                info.waist != null &&
+                info.inseam != null
+                  ? formatPantsSize(info.waist, info.inseam)
+                  : info.size,
+              sizeKind: toGraphQLSizeKind(info.sizeKind),
+              colorIds: info.colors.map((c) => c.id),
+              weight: Number(info.weight),
+              images:
+                info.uploadedImageUrls && info.uploadedImageUrls.length > 0
+                  ? info.uploadedImageUrls
+                  : undefined,
+            }));
+
+          const updated = await updateProduct({
+            id: productIdNum,
+            name: product.name,
+            sku: product.sku.trim(),
+            categoryIds: product.categoryIds,
+            brandId: product.brandId,
+            description: primaryDesc,
+            descriptions: descriptionList,
+            variants: variantsPayload,
+          });
+
+          // Upload new images for any variants
+          if (updated?.productInfos) {
+            for (let i = 0; i < productInfos.length; i++) {
+              const info = productInfos[i];
+              const serverInfo = updated.productInfos[i];
+              const variantId = serverInfo?.id || info.createdId;
+              if (variantId && info.newImages && info.newImages.length > 0) {
+                try {
+                  await uploadProductInfoImages(variantId, info.newImages);
+                } catch (imgErr) {
+                  console.error('Failed to upload variant images:', imgErr);
+                }
+              }
+            }
+          }
+
+          // Invalidate and refetch product query to ensure synchronized state
+          await refetchProduct?.();
+
+          // Sync state with server response
+          if (updated?.productInfos) {
+            setCreatedProductInfoIds(updated.productInfos.map((pi) => pi.id));
+            setProductInfos((prev) =>
+              prev.map((info, i) => {
+                const serverInfo = updated.productInfos[i];
+                return {
+                  ...info,
+                  createdId: serverInfo?.id ?? info.createdId,
+                  uploadedImageUrls:
+                    serverInfo?.images ?? info.uploadedImageUrls,
+                  newImages: [],
+                  newImagePreviews: [],
+                };
+              })
+            );
+          }
+
+          showSnackbar('Product updated successfully', { severity: 'success' });
+        } else {
+          // Create product and all product infos
+          const created = await createProductWithInfos(
+            {
+              name: product.name,
+              sku: product.sku.trim(),
+              categoryIds: product.categoryIds,
+              brandId: product.brandId,
+              description: primaryDesc,
+              descriptions:
+                descriptionList.length > 0 ? descriptionList : undefined,
+            },
+            productInfos.map((info) => ({
+              size:
+                isPantsSizeKind(info.sizeKind) &&
+                info.waist != null &&
+                info.inseam != null
+                  ? formatPantsSize(info.waist, info.inseam)
+                  : info.size,
+              sizeKind: toGraphQLSizeKind(info.sizeKind),
+              colorIds: info.colors.map((c) => c.id),
+              weight: Number(info.weight),
+            }))
+          );
+          setCreatedProductInfoIds(created.productInfos.map((pi) => pi.id));
+          setProductInfos((prev) =>
+            prev.map((info, i) => ({
+              ...info,
+              createdId: created.productInfos[i]?.id || null,
+            }))
+          );
+          showSnackbar('Product created successfully', { severity: 'success' });
+          if (onCreated) {
+            onCreated({
+              product: created.product,
+              productInfos: created.productInfos.map((pi) => ({
+                ...pi,
+                sizeKind: fromGraphQLSizeKind(pi.sizeKind),
+              })),
+            });
+            return;
+          }
+          // Reset form to initial state
+          setDescriptions({});
+          setProduct({
+            name: '',
+            sku: '',
+            categoryIds: [],
+            brandId: null,
+            description: '',
+          });
+          setProductInfos([
+            {
+              productId: 0,
+              size: '',
+              sizeKind: SizeKind.Apparel,
+              colors: [],
+              weight: 0,
+              images: [],
+              imagePreviews: [],
+              uploadedImageUrls: [],
+              createdId: null,
+              isUploading: false,
+              newImages: [],
+              newImagePreviews: [],
+            },
+          ]);
+          setCreatedProductInfoIds([null]);
+        }
+      } catch (error) {
+        const message = (error as Error).message;
+        if (message.includes('already exists')) {
+          showSnackbar(message, { severity: 'error' });
+        } else {
+          showSnackbar((error as Error).message, { severity: 'error' });
+        }
+      }
+    },
+    [
+      editorForm,
+      product,
+      productInfos,
+      createProductWithInfos,
+      updateProduct,
+      uploadProductInfoImages,
+      refetchProduct,
+      showSnackbar,
+      productIdNum,
+      onCreated,
+      languagesToDisplay,
+      descriptions,
+      activeDescTab,
+    ]
+  );
+
+  const handleDeleteCategory = useCallback(async () => {
+    if (!categoryToDelete) return;
+    try {
+      await deleteCategory(categoryToDelete.id);
+      setIsDeleteCategoryModalOpen(false);
+      setCategoryToDelete(null);
+      showSnackbar('Category deleted successfully', { severity: 'success' });
+    } catch (error) {
+      const message = (error as Error).message;
+      showSnackbar(message, { severity: 'error' });
+    }
+  }, [categoryToDelete, deleteCategory, showSnackbar]);
+
+  const handleOpenDeleteCategoryModal = useCallback(
+    (category: { id: number; name: string }) => {
+      setCategoryToDelete(category);
+      setIsDeleteCategoryModalOpen(true);
+    },
+    []
+  );
+
+  const handleCloseDeleteCategoryModal = useCallback(() => {
+    setIsDeleteCategoryModalOpen(false);
+    setCategoryToDelete(null);
+  }, []);
+
+  const handleRemoveSelectedImage = useCallback(
+    (infoIdx: number, imageIdx: number) => {
+      setProductInfos((prev) => {
+        const updated = [...prev];
+        updated[infoIdx].newImages.splice(imageIdx, 1);
+        updated[infoIdx].newImagePreviews.splice(imageIdx, 1);
+        return updated;
+      });
+    },
+    []
+  );
+
+  const handleConfirmDeleteImage = useCallback(async () => {
+    if (
+      deleteImageModal.infoIdx === null ||
+      deleteImageModal.imageIdx === null ||
+      !deleteImageModal.imageType
+    ) {
+      resetDeleteImageModal();
+      return;
+    }
+
+    // Set loading state
+    setDeleteImageModal((prev) => ({ ...prev, isLoading: true }));
+
+    const { infoIdx, imageIdx, imageType } = deleteImageModal;
+
+    if (imageType === 'preview') {
+      // Remove selected image (not yet uploaded)
+      handleRemoveSelectedImage(infoIdx, imageIdx);
+      setDeleteImageModal({
+        open: false,
+        infoIdx: null,
+        imageIdx: null,
+        imageType: null,
+        isLoading: false,
+      });
+    } else if (imageType === 'uploaded') {
+      // Remove uploaded image from server
+      const info = productInfos[infoIdx];
+      if (!info.createdId || !info.uploadedImageUrls[imageIdx]) {
+        resetDeleteImageModal();
+        return;
+      }
+
+      const imageUrl = info.uploadedImageUrls[imageIdx];
+      const imageName = imageUrl.split('/').pop();
+      if (!imageName) {
+        resetDeleteImageModal();
+        return;
+      }
+
+      try {
+        await removeProductInfoImage(info.createdId, imageName);
+
+        // Update local state immediately
+        setProductInfos((prev) => {
+          const updated = [...prev];
+          updated[infoIdx].uploadedImageUrls.splice(imageIdx, 1);
+          return updated;
+        });
+
+        showSnackbar('Image removed successfully', { severity: 'success' });
+      } catch (error) {
+        showSnackbar((error as Error).message, { severity: 'error' });
+      } finally {
+        resetDeleteImageModal();
+      }
+    }
+  }, [
+    deleteImageModal,
+    handleRemoveSelectedImage,
+    removeProductInfoImage,
+    productInfos,
+    showSnackbar,
+    resetDeleteImageModal,
+  ]);
+
+  const handleCloseDeleteImageModal = useCallback(() => {
+    resetDeleteImageModal();
+  }, [resetDeleteImageModal]);
+
+  const handleOpenEditColorModal = useCallback(
+    (color: KickzoneGraphqlTypes.Color) => {
+      setSelectedColor(color);
+      setIsEditColorModalOpen(true);
+    },
+    []
+  );
+
+  const handleCloseColorModal = useCallback(() => {
+    setIsNewColorModalOpen(false);
+    setIsEditColorModalOpen(false);
+    setSelectedColor(null);
+  }, []);
+
+  const handleSaveColor = useCallback(
+    async (id: number | null, name: string, hexCode: string) => {
+      try {
+        if (id) {
+          await updateColor(id, name, hexCode);
+          showSnackbar('Color updated successfully', { severity: 'success' });
+        } else {
+          await createColor(name, hexCode);
+          showSnackbar('Color created successfully', { severity: 'success' });
+        }
+        handleCloseColorModal();
+      } catch (error) {
+        showSnackbar((error as Error).message, { severity: 'error' });
+      }
+    },
+    [createColor, updateColor, showSnackbar, handleCloseColorModal]
+  );
+
+  const handleDeleteColor = useCallback(async () => {
+    if (!colorToDelete) return;
+    try {
+      await deleteColor(colorToDelete.id);
+      setIsDeleteColorModalOpen(false);
+      setColorToDelete(null);
+      showSnackbar('Color deleted successfully', { severity: 'success' });
+    } catch (error) {
+      showSnackbar((error as Error).message, { severity: 'error' });
+    }
+  }, [colorToDelete, deleteColor, showSnackbar]);
+
+  const handleOpenDeleteColorModal = useCallback(
+    (color: { id: number; name: string }) => {
+      setColorToDelete(color);
+      setIsDeleteColorModalOpen(true);
+    },
+    []
+  );
+
+  const handleCloseDeleteColorModal = useCallback(() => {
+    setIsDeleteColorModalOpen(false);
+    setColorToDelete(null);
+  }, []);
+
+  const handleUploadSelectedImages = useCallback(
+    async (infoIdx: number) => {
+      const info = productInfos[infoIdx];
+
+      if (!info.newImages.length || !info.createdId) {
+        return;
+      }
+
+      setProductInfos((prev) => {
+        const updated = [...prev];
+        updated[infoIdx].isUploading = true;
+        return updated;
+      });
+
+      try {
+        const uploadedImages = await uploadProductInfoImages(
+          info.createdId,
+          info.newImages
+        );
+
+        // Update local state immediately with the uploaded images
+        setProductInfos((prev) => {
+          const updated = [...prev];
+          updated[infoIdx].newImages = [];
+          updated[infoIdx].newImagePreviews = [];
+          updated[infoIdx].isUploading = false;
+          // Add the newly uploaded images to the uploadedImageUrls array
+          if (uploadedImages && uploadedImages.length > 0) {
+            updated[infoIdx].uploadedImageUrls = [
+              ...updated[infoIdx].uploadedImageUrls,
+              ...uploadedImages,
+            ];
+          }
+          return updated;
+        });
+
+        showSnackbar('Images uploaded successfully', { severity: 'success' });
+      } catch (error) {
+        setProductInfos((prev) => {
+          const updated = [...prev];
+          updated[infoIdx].isUploading = false;
+          return updated;
+        });
+        showSnackbar((error as Error).message, { severity: 'error' });
+      }
+    },
+    [productInfos, uploadProductInfoImages, showSnackbar]
+  );
+
+  const formAndTitle = (
+    <>
+      {!embedded && (
+        <Typography
+          variant="h5"
+          sx={{ mb: 3, color: theme.palette.text.primary }}
+        >
+          {productIdNum ? LL.products.editProduct() : LL.products.addProduct()}
+        </Typography>
+      )}
+      <form aria-label="Product Editor Form" onSubmit={handleSubmit}>
+        <Grid container spacing={3} sx={{ height: '100%' }}>
+          {/* Left Side - Basic Product Info */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              {LL.products.productDetails()}
+            </Typography>
+            <Paper
+              elevation={0}
+              sx={{
+                mb: 2,
+                p: 2,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 2,
+                backgroundColor:
+                  theme.palette.mode === 'dark'
+                    ? 'rgba(18, 18, 22, 0.88)'
+                    : 'rgba(255, 255, 255, 0.96)',
+                border:
+                  theme.palette.mode === 'dark'
+                    ? '1px solid rgba(255, 255, 255, 0.08)'
+                    : '1px solid rgba(0, 0, 0, 0.08)',
+                borderRadius: '16px',
+                boxShadow:
+                  theme.palette.mode === 'dark'
+                    ? '0 10px 30px rgba(0,0,0,0.4)'
+                    : '0 10px 30px rgba(0,0,0,0.12)',
+              }}
+            >
+              <TextField
+                id="product-name"
+                slotProps={{
+                  input: { 'aria-label': 'Product Name' },
+                }}
+                fullWidth
+                label={LL.form.productName()}
+                name="name"
+                value={product.name}
+                onChange={handleProductChange}
+                required
+              />
+              <TextField
+                id="product-sku"
+                fullWidth
+                label={LL.form.sku()}
+                name="sku"
+                value={product.sku}
+                onChange={handleProductChange}
+                required
+                {...getLtrTextFieldProps()}
+                slotProps={{
+                  htmlInput: { dir: 'ltr', 'aria-label': 'SKU' },
+                }}
+              />
+              <Box>
+                <Autocomplete
+                  multiple
+                  disableCloseOnSelect
+                  openOnFocus
+                  clearOnBlur={false}
+                  open={categoriesAutocomplete.open}
+                  onOpen={categoriesAutocomplete.onOpen}
+                  onClose={categoriesAutocomplete.onClose}
+                  id="categories-autocomplete"
+                  options={categories || []}
+                  getOptionLabel={(option) => option.name}
+                  value={
+                    categories?.filter((cat) =>
+                      product.categoryIds.includes(cat.id)
+                    ) || []
+                  }
+                  onChange={(_e, newValue, reason) => {
+                    if (
+                      reason === 'selectOption' ||
+                      reason === 'removeOption'
+                    ) {
+                      categoriesAutocomplete.markSelection();
+                    }
+                    setProduct((prev) => ({
+                      ...prev,
+                      categoryIds: newValue.map((category) => category.id),
+                    }));
+                  }}
+                  loading={getCategoriesLoading}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={LL.form.category()}
+                      slotProps={{
+                        input: {
+                          ...params.InputProps,
+                          'aria-label': 'Category',
+                        },
+                      }}
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                  filterSelectedOptions
+                  slotProps={{
+                    listbox: multiSelectListboxSlotProps,
+                  }}
+                />
+                <Button
+                  variant="outlined"
+                  onClick={() => setIsManageCategoriesModalOpen(true)}
+                  sx={{ mt: 1 }}
+                  fullWidth={isMobile}
+                >
+                  {LL.categories.manageCategories()}
+                </Button>
+              </Box>
+              <Box>
+                <Autocomplete
+                  id="brand-autocomplete"
+                  options={brands || []}
+                  getOptionLabel={(option) => option.name}
+                  value={
+                    brands?.find((b) => b.id === product.brandId) || null
+                  }
+                  onChange={(_e, newValue) => {
+                    setProduct((prev) => ({
+                      ...prev,
+                      brandId: newValue?.id ?? null,
+                    }));
+                  }}
+                  loading={getBrandsLoading}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label={LL.form.brand()}
+                      slotProps={{
+                        input: {
+                          ...params.InputProps,
+                          'aria-label': 'Brand',
+                        },
+                      }}
+                    />
+                  )}
+                  isOptionEqualToValue={(option, value) =>
+                    option.id === value.id
+                  }
+                />
+              </Box>
+              <Box sx={{ mt: 2 }}>
+                <Typography
+                  variant="subtitle2"
+                  sx={{ mb: 1, fontWeight: 600, color: 'text.secondary' }}
+                >
+                  {LL.form.description()}
+                </Typography>
+                <Tabs
+                  value={activeDescTab}
+                  onChange={handleDescTabChange}
+                  variant="scrollable"
+                  scrollButtons="auto"
+                  sx={{ borderBottom: 1, borderColor: 'divider', mb: 1.5 }}
+                >
+                  {languagesToDisplay.map((lang) => {
+                    const hasContent = Boolean(descriptions[lang.code]?.trim());
+                    return (
+                      <Tab
+                        key={lang.code}
+                        value={lang.code}
+                        label={
+                          <Box
+                            sx={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.75,
+                            }}
+                          >
+                            <span>
+                              {lang.nativeName} ({lang.name})
+                            </span>
+                            {hasContent && (
+                              <Chip
+                                size="small"
+                                label="✓"
+                                color="success"
+                                sx={{
+                                  height: 18,
+                                  fontSize: '0.7rem',
+                                  px: 0.25,
+                                }}
+                              />
+                            )}
+                          </Box>
+                        }
+                      />
+                    );
+                  })}
+                </Tabs>
+
+                {languagesToDisplay.map((lang) => {
+                  if (activeDescTab !== lang.code) return null;
+                  return (
+                    <TextField
+                      key={lang.code}
+                      id={`product-description-${lang.code}`}
+                      label={`${LL.form.description()} (${lang.nativeName})`}
+                      name={`description-${lang.code}`}
+                      value={descriptions[lang.code] || ''}
+                      onChange={(e) =>
+                        handleDescriptionChange(lang.code, e.target.value)
+                      }
+                      fullWidth
+                      multiline
+                      minRows={3}
+                      maxRows={8}
+                      dir={lang.isRTL ? 'rtl' : 'ltr'}
+                      slotProps={{
+                        htmlInput: {
+                          'data-testid': `product-description-${lang.code}`,
+                        },
+                      }}
+                      placeholder={
+                        lang.isRTL
+                          ? 'توضیحات محصول را به زبان فارسی وارد کنید...'
+                          : 'Enter product description in English...'
+                      }
+                      helperText={
+                        lang.isDefault
+                          ? 'زبان پیش‌فرض سایت / Default site language'
+                          : undefined
+                      }
+                    />
+                  );
+                })}
+              </Box>
+            </Paper>
+          </Grid>
+          {/* Right Side - ProductInfos Section */}
+          <Grid size={{ xs: 12, md: 6 }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              {LL.products.productVariants()}
+            </Typography>
+            {productInfos.map((info, idx) => (
+              <ProductInfoCard
+                key={idx}
+                info={info}
+                idx={idx}
+                onChange={handleProductInfoChange}
+                onColorsChange={(idx, colors: KickzoneGraphqlTypes.Color[]) =>
+                  setProductInfos((prev) => {
+                    const updated = [...prev];
+                    updated[idx] = { ...updated[idx], colors };
+                    return updated;
+                  })
+                }
+                availableColors={
+                  (availableColors as KickzoneGraphqlTypes.Color[])?.filter(
+                    (color): color is KickzoneGraphqlTypes.Color =>
+                      color != null
+                  ) || []
+                }
+                onManageColors={
+                  idx === 0 ? () => setIsManageColorsModalOpen(true) : undefined
+                }
+                manageColorsDisabled={colorMutationsLoading}
+                onRemove={handleRemoveProductInfo}
+                disableRemove={productInfos.length === 1}
+                onRemoveImage={(infoIdx: number, imageIdx: number) => {
+                  const info = productInfos[infoIdx];
+                  // Check if it's a selected image (newImagePreviews) or uploaded image (uploadedImageUrls)
+                  if (imageIdx < info.newImagePreviews.length) {
+                    // It's a selected image - show confirmation modal
+                    setDeleteImageModal({
+                      open: true,
+                      infoIdx,
+                      imageIdx,
+                      imageType: 'preview',
+                      isLoading: false,
+                    });
+                  } else {
+                    // It's an uploaded image - show confirmation modal
+                    const actualImageIdx =
+                      imageIdx - info.newImagePreviews.length;
+                    setDeleteImageModal({
+                      open: true,
+                      infoIdx,
+                      imageIdx: actualImageIdx,
+                      imageType: 'uploaded',
+                      isLoading: false,
+                    });
+                  }
+                }}
+                onUploadSelectedImages={handleUploadSelectedImages}
+                setProductInfos={setProductInfos}
+                LL={LL}
+              />
+            ))}
+            <Button
+              variant="outlined"
+              startIcon={<AddIcon />}
+              onClick={handleAddProductInfo}
+              sx={{ mt: 2 }}
+              disabled={isCreatingProduct}
+              fullWidth={isMobile}
+            >
+              {LL.products.addVariant()}
+            </Button>
+          </Grid>
+          {/* Save Button */}
+          <Grid size={12} sx={{ mt: 'auto' }}>
+            <Box
+              sx={{
+                display: 'flex',
+                justifyContent: { xs: 'stretch', md: 'flex-end' },
+              }}
+            >
+              <Button
+                type="submit"
+                variant="contained"
+                color="primary"
+                sx={{ textTransform: 'none' }}
+                loading={isCreatingProduct}
+                fullWidth={isMobile}
+              >
+                {LL.products.saveProduct()}
+              </Button>
+            </Box>
+          </Grid>
+        </Grid>
+      </form>
+    </>
+  );
+
+  const modals = (
+    <>
+      <ManageCategoriesModal
+        open={isManageCategoriesModalOpen}
+        onClose={() => setIsManageCategoriesModalOpen(false)}
+        categories={categories || []}
+        onAdd={() => setIsNewCategoryModalOpen(true)}
+        onEdit={(category) => {
+          setSelectedCategory(category);
+          setIsEditCategoryModalOpen(true);
+        }}
+        onDelete={handleOpenDeleteCategoryModal}
+        isLoading={
+          isCreatingCategory || isUpdatingCategory || isDeletingCategory
+        }
+        LL={LL}
+      />
+      <CategoryModal
+        open={isNewCategoryModalOpen}
+        onClose={() => setIsNewCategoryModalOpen(false)}
+        onSubmit={async (name) => {
+          try {
+            const slug = slugify(name);
+            await createCategory(slug, 0, name);
+            setIsNewCategoryModalOpen(false);
+            showSnackbar('Category created successfully', {
+              severity: 'success',
+            });
+          } catch (error) {
+            const message = (error as Error).message;
+            if (message.includes('already exists')) {
+              showSnackbar(message, { severity: 'error' });
+            } else {
+              showSnackbar((error as Error).message, { severity: 'error' });
+            }
+          }
+        }}
+        title={LL.categories.addCategory()}
+        isLoading={isCreatingCategory}
+        LL={LL}
+      />
+      <CategoryModal
+        open={isEditCategoryModalOpen}
+        onClose={() => {
+          setIsEditCategoryModalOpen(false);
+          setSelectedCategory(null);
+        }}
+        onSubmit={async (name) => {
+          try {
+            if (selectedCategory) {
+              const slug = slugify(name);
+              await updateCategory(
+                selectedCategory.id,
+                slug,
+                undefined,
+                undefined,
+                name
+              );
+            }
+            setIsEditCategoryModalOpen(false);
+            setSelectedCategory(null);
+            showSnackbar('Category updated successfully', {
+              severity: 'success',
+            });
+          } catch (error) {
+            const message = (error as Error).message;
+            if (message.includes('already exists')) {
+              showSnackbar(message, { severity: 'error' });
+            } else {
+              showSnackbar((error as Error).message, { severity: 'error' });
+            }
+          }
+        }}
+        initialName={selectedCategory?.name || ''}
+        title={LL.categories.editCategory()}
+        isLoading={isUpdatingCategory}
+        LL={LL}
+      />
+      <DeleteCategoryModal
+        open={isDeleteCategoryModalOpen}
+        onClose={handleCloseDeleteCategoryModal}
+        onConfirm={handleDeleteCategory}
+        categoryName={categoryToDelete?.name || ''}
+        isLoading={isDeletingCategory}
+        LL={LL}
+      />
+      <DeleteImageModal
+        open={deleteImageModal.open}
+        onClose={handleCloseDeleteImageModal}
+        onConfirm={handleConfirmDeleteImage}
+        imageType={
+          deleteImageModal.imageType === 'preview' ? 'preview' : 'uploaded'
+        }
+        isLoading={deleteImageModal.isLoading}
+        LL={LL}
+      />
+      <ManageColorsModal
+        open={isManageColorsModalOpen}
+        onClose={() => setIsManageColorsModalOpen(false)}
+        colors={
+          (availableColors as KickzoneGraphqlTypes.Color[])?.filter(
+            (color): color is KickzoneGraphqlTypes.Color => color != null
+          ) || []
+        }
+        onAdd={() => {
+          setSelectedColor(null);
+          setIsNewColorModalOpen(true);
+        }}
+        onEdit={handleOpenEditColorModal}
+        onDelete={handleOpenDeleteColorModal}
+        isLoading={colorMutationsLoading}
+        LL={LL}
+      />
+      <ColorModal
+        open={isNewColorModalOpen || isEditColorModalOpen}
+        onClose={handleCloseColorModal}
+        onSubmit={handleSaveColor}
+        initialColor={selectedColor}
+        title={
+          selectedColor
+            ? LL.colorManagement.editColor()
+            : LL.colorManagement.addNewColor()
+        }
+        isLoading={colorMutationsLoading}
+        LL={LL}
+      />
+      <DeleteColorModal
+        open={isDeleteColorModalOpen}
+        onClose={handleCloseDeleteColorModal}
+        onConfirm={handleDeleteColor}
+        colorName={colorToDelete?.name || ''}
+        isLoading={colorMutationsLoading}
+        LL={LL}
+      />
+    </>
+  );
+
+  if (embedded) {
+    return (
+      <>
+        {formAndTitle}
+        {modals}
+      </>
+    );
+  }
+
+  return (
+    <LayoutComponent>
+      <GlassmorphismContainer>{formAndTitle}</GlassmorphismContainer>
+      {modals}
+    </LayoutComponent>
+  );
+}
+
+export default AdminProductEditor;
+</file>
+
+<file path="libs/client/shared/hooks/products/src/lib/useProducts.ts">
+import { useMutation, useQuery, useApolloClient } from '@apollo/client/react';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { useCallback } from 'react';
+import {
+  CREATE_PRODUCT,
+  CREATE_PRODUCT_INFO,
+  UPLOAD_PRODUCT_INFO_IMAGES,
+  REMOVE_PRODUCT_INFO_IMAGE,
+  PRODUCTS_QUERY,
+  PRODUCT_BY_ID_QUERY,
+  ARCHIVE_PRODUCT_MUTATION,
+  DELETE_PRODUCT_MUTATION,
+  UPDATE_PRODUCT,
+} from './products.graphql';
+
+export function useProductsQuery({
+  search,
+  categoryId,
+  category,
+  categorySlugs,
+  brand,
+  brands,
+  size,
+  sizes,
+  sort = '',
+  sortOrder = 'asc',
+  pageSize = 12,
+  archivedStatus = KickzoneGraphqlTypes.ProductArchivedStatus.Active,
+  sellerId,
+  onlyWithSellers,
+  onlyInStock,
+  onlyDiscounted,
+}: {
+  search: string;
+  categoryId?: number;
+  category?: string;
+  categorySlugs?: string[];
+  brand?: string;
+  brands?: string[];
+  size?: string;
+  sizes?: string[];
+  sort?: string;
+  sortOrder?: 'asc' | 'desc';
+  pageSize?: number;
+  archivedStatus?: KickzoneGraphqlTypes.ProductArchivedStatus;
+  sellerId?: number;
+  onlyWithSellers?: boolean;
+  onlyInStock?: boolean;
+  onlyDiscounted?: boolean;
+}) {
+  const buildFilter = useCallback(
+    (after?: string) => ({
+      searchTerm: search || undefined,
+      categoryId: categoryId || undefined,
+      category: category || undefined,
+      categorySlugs:
+        categorySlugs && categorySlugs.length > 0 ? categorySlugs : undefined,
+      brand: brand || undefined,
+      brands: brands && brands.length > 0 ? brands : undefined,
+      productInfoFilter:
+        size || (sizes && sizes.length > 0)
+          ? { size: size ? [size] : sizes }
+          : undefined,
+      first: pageSize,
+      after,
+      sort,
+      sortOrder,
+      archivedStatus,
+      sellerId,
+      onlyWithSellers,
+      onlyInStock,
+      onlyDiscounted,
+    }),
+    [
+      search,
+      categoryId,
+      category,
+      categorySlugs,
+      brand,
+      size,
+      sizes,
+      pageSize,
+      sort,
+      sortOrder,
+      archivedStatus,
+      sellerId,
+      onlyWithSellers,
+      onlyInStock,
+      onlyDiscounted,
+      brands,
+    ]
+  );
+
+  const { data, loading, error, fetchMore, refetch, networkStatus } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'products'>,
+    KickzoneGraphqlTypes.QueryProductsArgs
+  >(PRODUCTS_QUERY, {
+    variables: {
+      filter: buildFilter(),
+    },
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const products =
+    data?.products?.edges?.map(
+      (e: KickzoneGraphqlTypes.ProductEdge) => e.node
+    ) || [];
+  const pageInfo = data?.products?.pageInfo;
+  const totalCount = data?.products?.totalCount || 0;
+
+  const loadMore = useCallback(() => {
+    if (pageInfo?.hasNextPage) {
+      return fetchMore({
+        variables: {
+          filter: buildFilter(pageInfo.endCursor ?? undefined),
+        },
+        updateQuery: (prev, { fetchMoreResult }) => {
+          if (!fetchMoreResult?.products) return prev;
+          const existingEdges = prev.products?.edges || [];
+          const newEdges = fetchMoreResult.products?.edges || [];
+          const existingIds = new Set(
+            existingEdges.map((e) => e?.node?.id)
+          );
+          const uniqueNewEdges = newEdges.filter(
+            (e) => e?.node?.id != null && !existingIds.has(e.node.id)
+          );
+          return {
+            ...prev,
+            products: {
+              ...fetchMoreResult.products,
+              edges: [...existingEdges, ...uniqueNewEdges],
+            },
+          };
+        },
+      });
+    }
+  }, [fetchMore, pageInfo, buildFilter]);
+
+  return {
+    products,
+    loading,
+    error,
+    loadMore,
+    hasNextPage: Boolean(pageInfo?.hasNextPage),
+    totalCount,
+    refetch,
+    isFetchingMore: networkStatus === 3,
+  };
+}
+
+export const useProducts = () => {
+  const client = useApolloClient();
+
+  const [createProductMutation, { loading: isCreatingProduct }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'createProduct'>,
+    KickzoneGraphqlTypes.MutationCreateProductArgs
+  >(CREATE_PRODUCT);
+
+  const [createProductInfoMutation, { loading: isCreatingProductInfo }] =
+    useMutation<
+      Pick<KickzoneGraphqlTypes.Mutation, 'createProductInfo'>,
+      KickzoneGraphqlTypes.MutationCreateProductInfoArgs
+    >(CREATE_PRODUCT_INFO);
+
+  const [uploadProductInfoImagesMutation] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'uploadProductInfoImages'>,
+    KickzoneGraphqlTypes.MutationUploadProductInfoImagesArgs
+  >(UPLOAD_PRODUCT_INFO_IMAGES);
+
+  const [removeProductInfoImageMutation] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'removeProductInfoImage'>,
+    KickzoneGraphqlTypes.MutationRemoveProductInfoImageArgs
+  >(REMOVE_PRODUCT_INFO_IMAGE);
+
+  const [archiveProductMutation, { loading: isArchivingProduct }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'archiveProduct'>,
+    KickzoneGraphqlTypes.MutationArchiveProductArgs
+  >(ARCHIVE_PRODUCT_MUTATION);
+
+  const [deleteProductMutation, { loading: isDeletingProduct }] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'deleteProduct'>,
+    KickzoneGraphqlTypes.MutationDeleteProductArgs
+  >(DELETE_PRODUCT_MUTATION);
+
+  const [updateProductMutation] = useMutation<
+    Pick<KickzoneGraphqlTypes.Mutation, 'updateProduct'>,
+    KickzoneGraphqlTypes.MutationUpdateProductArgs
+  >(UPDATE_PRODUCT);
+
+  const createProductWithInfos = useCallback(
+    async (
+      productInput: KickzoneGraphqlTypes.CreateProductInput,
+      productInfos: Omit<
+        KickzoneGraphqlTypes.CreateProductInfoInput,
+        'productId'
+      >[]
+    ) => {
+      const { data: productData } = await createProductMutation({
+        variables: {
+          input: productInput,
+        },
+      });
+      if (!productData?.createProduct?.id) {
+        throw new Error('Failed to create product');
+      }
+      const createdProductInfos = [];
+      for (const info of productInfos) {
+        const { data: productInfoData } = await createProductInfoMutation({
+          variables: {
+            input: {
+              ...info,
+              productId: productData.createProduct.id,
+            },
+          },
+        });
+        if (productInfoData?.createProductInfo?.productInfos) {
+          // The createProductInfo mutation returns the full product with all productInfos
+          // We need to find the newly created productInfo from the array
+          // Since we're creating them sequentially, the last one in the array should be the new one
+          const newProductInfo =
+            productInfoData.createProductInfo.productInfos[
+              productInfoData.createProductInfo.productInfos.length - 1
+            ];
+          if (newProductInfo) {
+            createdProductInfos.push(newProductInfo);
+          }
+        }
+      }
+
+      // Evict and refetch all products queries to ensure the new product appears in the list
+      // This handles all possible filter combinations
+      client.cache.evict({ fieldName: 'products' });
+      client.cache.gc();
+
+      return {
+        product: productData.createProduct,
+        productInfos: createdProductInfos,
+      };
+    },
+    [createProductMutation, createProductInfoMutation, client]
+  );
+
+  const uploadProductInfoImages = useCallback(
+    async (productInfoId: number, files: File[]) => {
+      const { data } = await uploadProductInfoImagesMutation({
+        variables: {
+          productInfoId,
+          files,
+        },
+      });
+      const result = data?.uploadProductInfoImages || [];
+      return result;
+    },
+    [uploadProductInfoImagesMutation]
+  );
+
+  const removeProductInfoImage = useCallback(
+    async (productInfoId: number, imageName: string) => {
+      const { data } = await removeProductInfoImageMutation({
+        variables: {
+          productInfoId,
+          imageName,
+        },
+      });
+      const result = data?.removeProductInfoImage;
+      return result;
+    },
+    [removeProductInfoImageMutation]
+  );
+
+  const archiveProduct = useCallback(
+    async (id: number) => {
+      const { data } = await archiveProductMutation({ variables: { id } });
+      return data?.archiveProduct;
+    },
+    [archiveProductMutation]
+  );
+
+  const deleteProduct = useCallback(
+    async (id: number) => {
+      const { data } = await deleteProductMutation({ variables: { id } });
+      client.cache.evict({ fieldName: 'products' });
+      client.cache.gc();
+      return data?.deleteProduct ?? false;
+    },
+    [deleteProductMutation, client]
+  );
+
+  const updateProduct = useCallback(
+    async (input: KickzoneGraphqlTypes.UpdateProductInput) => {
+      const { data } = await updateProductMutation({
+        variables: { input },
+      });
+      if (input.id) {
+        client.cache.evict({
+          id: client.cache.identify({ __typename: 'Product', id: input.id }),
+        });
+      }
+      client.cache.evict({ fieldName: 'products' });
+      client.cache.evict({ fieldName: 'product' });
+      client.cache.gc();
+      return data?.updateProduct;
+    },
+    [updateProductMutation, client]
+  );
+
+  return {
+    createProductWithInfos,
+    uploadProductInfoImages,
+    removeProductInfoImage,
+    isCreatingProduct: isCreatingProduct || isCreatingProductInfo,
+    archiveProduct,
+    isArchivingProduct,
+    deleteProduct,
+    isDeletingProduct,
+    updateProduct,
+  };
+};
+
+export function useProductById(id: number | undefined) {
+  const isValidId = typeof id === 'number' && !isNaN(id) && id > 0;
+  const { data, loading, error, refetch } = useQuery<
+    Pick<KickzoneGraphqlTypes.Query, 'product'>,
+    KickzoneGraphqlTypes.QueryProductArgs
+  >(PRODUCT_BY_ID_QUERY, {
+    variables: { id: isValidId ? id : 0 },
+    skip: !isValidId,
+  });
+  return { product: data?.product, loading, error, refetch };
+}
+</file>
+
+<file path="libs/client/customers/screens/home/src/lib/CustomersHomeScreen.spec.tsx">
+import React from 'react';
+import { render, screen, fireEvent } from '@testing-library/react';
+import '@testing-library/jest-dom';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
+import { CustomersHome } from './CustomersHomeScreen';
+import { CustomersShopScreen } from './CustomersShopScreen';
+import { HomePageData, selectHomePageData } from './home-selectors';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import { NewArrivalsSection } from './components/NewArrivalsSection';
+import { PicksRailSection } from './components/PicksRailSection';
+
+const mockAddItem = vi.fn();
+const mockUseProductsQuery = vi.fn();
+
+vi.mock('@kickzone-workspace/customers-cart-hook', async (importOriginal) => {
+  const actual = await importOriginal();
+  return {
+    ...actual,
+    useCustomersCartService: () => ({
+      addItem: mockAddItem,
+    }),
+    useWishlistSync: vi.fn(),
+    getDiscountedUnitPrice: (price: number, discount: number) => {
+      const basePrice = Number(price) || 0;
+      const discountPercent = Number(discount) || 0;
+      if (discountPercent <= 0) {
+        return Number(basePrice.toFixed(2));
+      }
+      const discounted = basePrice * (1 - discountPercent / 100);
+      return Number(discounted.toFixed(2));
+    },
+  };
+});
+
+vi.mock('@kickzone-workspace/snackbar-hook', () => ({
+  useSnackbar: () => ({
+    handleClose: vi.fn(),
+    open: false,
+    message: '',
+    severity: 'info',
+    progress: 0,
+  }),
+}));
+
+vi.mock('@kickzone-workspace/customers-auth-context', () => ({
+  useCustomersAuth: () => ({
+    user: null,
+    loading: false,
+    logout: vi.fn(),
+  }),
+}));
+
+vi.mock('@kickzone-workspace/shared-ui-store', () => ({
+  useUIStore: (selector: (s: { theme: { mode: string }; toggleTheme: () => void }) => unknown) =>
+    selector({ theme: { mode: 'light' }, toggleTheme: vi.fn() }),
+}));
+
+vi.mock('@kickzone-workspace/shared-i18n', () => ({
+  SITE_NAME: 'SAINTBALA',
+  useI18nContext: () => ({
+    LL: {
+      appNames: {
+        siteName: () => 'SAINTBALA',
+      },
+      navigation: {
+        home: () => 'خانه',
+        shoppingCart: () => 'سبد خرید',
+        profile: () => 'حساب کاربری',
+      },
+      orders: {
+        myOrders: () => 'سفارش‌های من',
+      },
+      button: {
+        login: () => 'ورود',
+        logout: () => 'خروج',
+      },
+      shop: {
+        kicker: () => 'فروشگاه SAINTBALA',
+        allProducts: () => 'تمامی محصولات',
+        productsInCategory: ({ category }: { category: string }) =>
+          `محصولات ${category}`,
+        productsByBrand: ({ brand }: { brand: string }) =>
+          `محصولات ${brand}`,
+        searchPlaceholder: () => 'جستجوی مدل یا کد محصول...',
+        brandLabel: () => 'برند',
+        allBrands: () => 'همه برندها',
+        sortLabel: () => 'مرتب‌سازی',
+        newest: () => 'جدیدترین',
+        cheapest: () => 'ارزان‌ترین',
+        mostExpensive: () => 'گران‌ترین',
+        allCategories: () => 'همه',
+        clearFilters: () => 'پاک کردن فیلترها',
+        noProducts: () => 'محصولی یافت نشد.',
+        sizeLabel: () => 'سایز',
+        allSizes: () => 'همه سایزها',
+        apparelSizes: () => 'پوشاک',
+        footwearSizes: () => 'کفش',
+      },
+      home: {
+        nav: {
+          newArrivals: () => 'تازه‌ها',
+          women: () => 'زنانه',
+          men: () => 'مردانه',
+          brands: () => 'برندها',
+          mainAria: () => 'منوی اصلی',
+        },
+        searchPlaceholder: () => 'جستجوی پوشاک و محصولات...',
+        hero: {
+          collection: () => 'کلکسیون پاییز ۱۴۰۵',
+          slogan: () => 'اصل باش. اصل بپوش.',
+          sloganLine1: () => 'اصل باش.',
+          sloganLine2: () => 'اصل بپوش.',
+          subtitle: () => 'پوشاک ورزشی اورجینال — برای بانوان و آقایان.',
+          shopWomen: () => 'خرید زنانه',
+          shopMen: () => 'خرید مردانه',
+          women: () => 'زنانه',
+          men: () => 'مردانه',
+          womenAndMen: () => 'زنانه و مردانه',
+          ariaLabel: () => 'کلکسیون پاییز ۱۴۰۵',
+        },
+        newArrivals: {
+          kicker: () => 'تازه‌های فروشگاه',
+          title: () => 'تازه رسیده‌ها',
+          all: () => 'همه',
+          women: () => 'زنانه',
+          men: () => 'مردانه',
+          viewAll: () => 'مشاهده‌ی همه',
+          filterAria: () => 'فیلتر جنسیت تازه‌ها',
+        },
+        categories: {
+          kicker: () => 'دسته‌بندی‌ها',
+          title: () => 'از کجا شروع کنیم؟',
+          women: () => 'زنانه',
+          men: () => 'مردانه',
+          hoodies: () => 'هودی',
+          pants: () => 'شلوار',
+          jordan: () => 'جردن',
+          jordanTagline: () => 'میراث جامپمن، برای هر دو.',
+          productCount: ({ count }: { count: string }) => `${count} محصول`,
+        },
+        brands: {
+          kicker: () => 'برندها',
+          title: () => 'برندهایی که می‌آوریم.',
+          allProducts: ({ brand }: { brand: string }) => `همه‌ی محصولات ${brand}`,
+          lineNike: () => 'از تک‌فلیس تا سووش؛ کلاسیک‌هایی که هر روز پوشیده می‌شوند.',
+          lineJordan: () => 'میراث جامپمن، از زمین بسکتبال تا خیابان.',
+          lineAdidas: () => 'سه خط، یک امضا؛ ساده و ماندگار.',
+        },
+        picks: {
+          kicker: () => 'گزیده',
+          title: () => 'انتخاب‌های SAINTBALA',
+          prev: () => 'قبلی',
+          next: () => 'بعدی',
+        },
+        trust: {
+          ariaLabel: () => 'مزایای خرید از SAINTBALA',
+          authenticityTitle: () => 'اصالت کالا',
+          authenticityLine: () => '۱۰۰٪ اورجینال',
+          paymentTitle: () => 'پرداخت امن',
+          paymentLine: () => 'پرداخت آنلاین با زرین‌پال',
+        },
+        newsletter: {
+          kicker: () => 'خبرنامه',
+          title: () => 'اولین نفر باش.',
+          subtitle: () => 'از رسیدن محصولات تازه باخبر شو.',
+          emailLabel: () => 'ایمیل',
+          emailPlaceholder: () => 'ایمیل شما',
+          subscribe: () => 'عضویت',
+          success: () => 'ممنون! ایمیلت ثبت شد.',
+          error: () => 'خطایی رخ داد. لطفاً دوباره تلاش کنید.',
+        },
+        footer: {
+          tagline: () => 'پوشاک ورزشی اورجینال برای بانوان و آقایان.',
+          store: () => 'فروشگاه',
+          brands: () => 'برندها',
+          guide: () => 'راهنما',
+          account: () => 'حساب',
+          newArrivals: () => 'تازه‌ها',
+          women: () => 'زنانه',
+          men: () => 'مردانه',
+          hoodies: () => 'هودی',
+          pants: () => 'شلوار',
+          authenticity: () => 'اصالت کالا',
+          sizeGuide: () => 'راهنمای سایز',
+          payment: () => 'پرداخت با زرین‌پال',
+          loginWithEmail: () => 'ورود با ایمیل',
+          cart: () => 'سبد خرید',
+          favorites: () => 'علاقه‌مندی‌ها',
+          copyright: ({ year }: { year: string }) => `© ${year} SAINTBALA`,
+          paymentOnline: () => 'پرداخت آنلاین با زرین‌پال',
+        },
+        currency: {
+          toman: () => 'تومان',
+        },
+      },
+    },
+  }),
+  useLanguageContext: () => ({
+    currentLocale: 'fa',
+    formatNumber: (n: number | string) => String(n),
+    isRTL: true,
+  }),
+  usePageTitle: vi.fn(),
+  useSeoMeta: vi.fn(),
+  useJsonLd: vi.fn(),
+  buildHomeJsonLd: vi.fn(),
+}));
+
+vi.mock('@kickzone-workspace/products-hook', () => ({
+  useProductsQuery: (args: unknown) => mockUseProductsQuery(args),
+}));
+
+vi.mock('@apollo/client/react', () => ({
+  useQuery: () => ({ data: undefined, loading: false }),
+  useMutation: () => [
+    vi.fn().mockResolvedValue({ data: { subscribeNewsletter: true } }),
+    { loading: false },
+  ],
+}));
+
+const createMockProduct = (
+  id: number,
+  sku: string,
+  name: string,
+  category: 'women' | 'men' | 'hoodies' | 'pants' = 'men'
+): KickzoneGraphqlTypes.Product =>
+  ({
+    id,
+    sku,
+    name,
+    archived: false,
+    categories: [
+      {
+        id: category === 'women' ? 1 : category === 'men' ? 2 : 3,
+        slug: category,
+        name:
+          category === 'women'
+            ? 'زنانه'
+            : category === 'men'
+            ? 'مردانه'
+            : category,
+      },
+    ],
+    productInfos: [
+      {
+        id: id * 10,
+        size: 'L',
+        sizeKind: 'ALPHA',
+        images: ['/images/sample.jpg'],
+        colors: [{ id: 1, name: 'مشکی', hexCode: '#000000' }],
+      },
+    ],
+    sellerProducts: [
+      {
+        id: id * 100,
+        productInfoId: id * 10,
+        price: 100,
+        discount: 0,
+        stockQuantity: 5,
+        seller: { id: 1, shippingFee: 0 },
+      },
+    ],
+  } as unknown as KickzoneGraphqlTypes.Product);
+
+const mockHomePageData: HomePageData = {
+  rate: { rate: 270000 },
+  categories: [
+    { id: 1, slug: 'women', name: 'زنانه' },
+    { id: 2, slug: 'men', name: 'مردانه' },
+    { id: 3, slug: 'hoodies', name: 'هودی' },
+    { id: 4, slug: 'pants', name: 'شلوار' },
+  ],
+  all: {
+    totalCount: 20,
+    edges: [
+      {
+        node: createMockProduct(
+          26,
+          'DX2324-531',
+          'Nike Sportswear Tech Fleece Women Hoodie',
+          'women'
+        ),
+      },
+      {
+        node: createMockProduct(
+          91,
+          'FV7247-010',
+          'Jordan Flight Heritage Men Sweatshirt',
+          'men'
+        ),
+      },
+      {
+        node: createMockProduct(
+          77,
+          'HV0959-020',
+          'Nike Solo Swoosh Men Pants',
+          'men'
+        ),
+      },
+      {
+        node: createMockProduct(
+          92,
+          'FZ1919-366',
+          'Jordan Stadium 90 Jacket',
+          'men'
+        ),
+      },
+      {
+        node: createMockProduct(
+          50,
+          'DX0397-277',
+          'Nike Sportswear Phoenix Fleece',
+          'women'
+        ),
+      },
+      {
+        node: createMockProduct(
+          51,
+          'IF2934-010',
+          'Adidas Adicolor Classics Pants',
+          'men'
+        ),
+      },
+      {
+        node: createMockProduct(
+          52,
+          'DM3330-646',
+          'Nike Club Fleece Hoodie',
+          'hoodies'
+        ),
+      },
+      {
+        node: createMockProduct(
+          53,
+          'FD7212-340',
+          'Nike Tech Woven Pants',
+          'pants'
+        ),
+      },
+      {
+        node: createMockProduct(
+          60,
+          'FB8008-063',
+          'Nike Tech Fleece Bomber Jacket',
+          'men'
+        ),
+      },
+      {
+        node: createMockProduct(61, 'BV0507-100', 'Nike Air Max T-Shirt', 'men'),
+      },
+      {
+        node: createMockProduct(
+          70,
+          'DQ7544-662',
+          'Jordan Flight Heritage Hoodie',
+          'men'
+        ),
+      },
+      {
+        node: createMockProduct(71, 'CJ0921-011', 'Jordan Jumpman Pants', 'men'),
+      },
+      {
+        node: createMockProduct(72, 'DA9854-091', 'Jordan Flight Fleece', 'men'),
+      },
+      {
+        node: createMockProduct(
+          81,
+          'FL0147',
+          'Adidas Originals Sweater',
+          'women'
+        ),
+      },
+      {
+        node: createMockProduct(
+          101,
+          'DD5094-133',
+          'Nike Air Zoom Pegasus',
+          'women'
+        ),
+      },
+      {
+        node: createMockProduct(
+          102,
+          'DC5276-596',
+          'Nike Dri-FIT Run Division',
+          'women'
+        ),
+      },
+      {
+        node: createMockProduct(
+          103,
+          'CZ8528-397',
+          'Jordan Essentials Statement',
+          'men'
+        ),
+      },
+    ],
+  },
+};
+
+describe('CustomersHomeScreen - Campaign v4', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockUseProductsQuery.mockReturnValue({
+      products: [],
+      loading: false,
+      loadMore: vi.fn(),
+      hasNextPage: false,
+    });
+
+    Object.defineProperty(window, 'matchMedia', {
+      writable: true,
+      value: vi.fn().mockImplementation((query: string) => {
+        const listeners = new Set<(e: MediaQueryListEvent) => void>();
+        return {
+          matches: false,
+          media: query,
+          onchange: null,
+          addListener: (cb: (e: MediaQueryListEvent) => void) =>
+            listeners.add(cb),
+          removeListener: (cb: (e: MediaQueryListEvent) => void) =>
+            listeners.delete(cb),
+          addEventListener: (
+            _type: string,
+            cb: (e: MediaQueryListEvent) => void
+          ) => listeners.add(cb),
+          removeEventListener: (
+            _type: string,
+            cb: (e: MediaQueryListEvent) => void
+          ) => listeners.delete(cb),
+          dispatchEvent: vi.fn(),
+        };
+      }),
+    });
+  });
+
+  it('shows Lottie loading animation and hides hero and other sections when site is not loaded', () => {
+    const { unmount } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <CustomersHome mockLoading={true} />
+      </MemoryRouter>
+    );
+
+    // Beautiful loading screen must be present
+    expect(screen.getByTestId('home-loading-screen')).toBeInTheDocument();
+    expect(screen.getByTestId('lottie-loading')).toBeInTheDocument();
+    expect(screen.getByText('در حال آماده‌سازی کلکسیون...')).toBeInTheDocument();
+
+    // Body scroll must be locked
+    expect(document.body.style.overflow).toBe('hidden');
+
+    // Hero section and page content MUST NOT be rendered
+    expect(screen.queryByText('Rise Above')).not.toBeInTheDocument();
+    expect(screen.queryByText('دسته‌بندی‌ها')).not.toBeInTheDocument();
+    expect(screen.queryByText('انتخاب‌های SAINTBALA')).not.toBeInTheDocument();
+
+    // Cleanup restores body overflow
+    unmount();
+    expect(document.body.style.overflow).toBe('');
+  });
+
+  it('renders all primary sections of the Campaign v4 design when loaded', () => {
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <CustomersHome initialData={mockHomePageData} />
+      </MemoryRouter>
+    );
+
+    expect(screen.queryByTestId('home-loading-screen')).not.toBeInTheDocument();
+    expect(screen.getByText('Rise Above')).toBeInTheDocument();
+    expect(screen.getByText('۱۰۰٪ اورجینال')).toBeInTheDocument();
+    expect(screen.queryByText('ضمانت تعویض ۷ روزه')).not.toBeInTheDocument();
+    expect(
+      screen.getAllByText('پرداخت آنلاین با زرین‌پال').length
+    ).toBeGreaterThanOrEqual(1);
+
+    expect(screen.getByText('دسته‌بندی‌ها')).toBeInTheDocument();
+    expect(screen.queryByText('جردن قرمز')).not.toBeInTheDocument();
+    expect(screen.getByText('انتخاب‌های SAINTBALA')).toBeInTheDocument();
+    expect(screen.getByText('پرداخت امن')).toBeInTheDocument();
+  });
+
+  it('strictly contains no forbidden claims or terms', () => {
+    const { container } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <CustomersHome initialData={mockHomePageData} />
+      </MemoryRouter>
+    );
+
+    const forbiddenWords = [
+      'ارسال رایگان',
+      'تحویل',
+      'پرفروش',
+      'تخفیف',
+      'کفش',
+      'ست‌ها',
+      'ضمانت تعویض ۷ روزه',
+      'سه نام، یک قول',
+    ];
+    const pageText = container.textContent || '';
+
+    forbiddenWords.forEach((word) => {
+      expect(pageText).not.toContain(word);
+    });
+  });
+
+  it('filters new arrivals when tabs are clicked', async () => {
+    const pageData = selectHomePageData(mockHomePageData);
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <NewArrivalsSection
+          products={pageData.newArrivals}
+          exchangeRate={pageData.exchangeRate}
+        />
+      </MemoryRouter>
+    );
+
+    const allTab = screen.getByRole('tab', { name: 'همه' });
+    const womenTab = screen.getByRole('tab', { name: 'زنانه' });
+    const menTab = screen.getByRole('tab', { name: 'مردانه' });
+
+    expect(allTab).toHaveAttribute('aria-selected', 'true');
+
+    fireEvent.click(womenTab);
+    expect(womenTab).toHaveAttribute('aria-selected', 'true');
+    expect(allTab).toHaveAttribute('aria-selected', 'false');
+
+    fireEvent.click(menTab);
+    expect(menTab).toHaveAttribute('aria-selected', 'true');
+  });
+
+  it('passes category filter to the products query on /shop', () => {
+    render(
+      <MemoryRouter initialEntries={['/shop?category=women']}>
+        <CustomersShopScreen />
+      </MemoryRouter>
+    );
+
+    expect(mockUseProductsQuery).toHaveBeenCalledWith(
+      expect.objectContaining({
+        category: 'women',
+        onlyInStock: true,
+        onlyWithSellers: true,
+        sort: 'ID_DESC',
+      })
+    );
+    expect(screen.getByRole('heading', { name: /محصولات زنانه/ })).toBeInTheDocument();
+    expect(screen.queryByText('فروشگاه SAINTBALA')).not.toBeInTheDocument();
+  });
+
+  it('renders PicksRailSection with shared glass cards and verifies RTL scroll behavior', () => {
+    const pageData = selectHomePageData(mockHomePageData);
+    const mockOnAddItem = vi.fn();
+
+    const { container } = render(
+      <MemoryRouter initialEntries={['/']}>
+        <PicksRailSection
+          products={pageData.picks}
+          exchangeRate={pageData.exchangeRate}
+          onAddItem={mockOnAddItem}
+        />
+      </MemoryRouter>
+    );
+
+    // Verify shared glass cards are used
+    const glassCards = container.querySelectorAll('.lg-card');
+    expect(glassCards.length).toBeGreaterThan(0);
+
+    // Verify scroll buttons
+    const prevBtn = screen.getByRole('button', { name: 'قبلی' });
+    const nextBtn = screen.getByRole('button', { name: 'بعدی' });
+    expect(prevBtn).toBeInTheDocument();
+    expect(nextBtn).toBeInTheDocument();
+
+    // Mock scrollBy on the rail container
+    const railRegion = screen.getByTestId('picks-rail');
+    const scrollBySpy = vi.fn();
+    railRegion.scrollBy = scrollBySpy;
+    Object.defineProperty(railRegion, 'clientWidth', { value: 1000, configurable: true });
+
+    // In RTL: prev should scroll positive (towards start/right), next should scroll negative (towards subsequent/left)
+    fireEvent.click(prevBtn);
+    expect(scrollBySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        left: 750,
+        behavior: 'smooth',
+      })
+    );
+
+    fireEvent.click(nextBtn);
+    expect(scrollBySpy).toHaveBeenCalledWith(
+      expect.objectContaining({
+        left: -750,
+        behavior: 'smooth',
+      })
+    );
+  });
+
+  it('calls addItem with discounted unitPrice and hexCode color from PicksRailSection', () => {
+    // Create a simple product with known price, discount, and color for testing
+    const testProduct: KickzoneGraphqlTypes.Product = {
+      id: 999,
+      name: 'Test Product',
+      sku: 'TEST-001',
+      categories: [{ id: 1, slug: 'test', name: 'Test' }],
+      productInfos: [
+        {
+          id: 9990,
+          productId: 999,
+          sku: 'TEST-001',
+          size: 'L',
+          colors: [{ id: 1, name: 'Black', hexCode: '#121212' }],
+          images: ['/test.jpg'],
+        },
+      ],
+      sellerProducts: [
+        {
+          id: 99900,
+          productInfoId: 9990,
+          sellerId: 1,
+          price: 100,
+          discount: 20, // 20% discount -> 80
+          stockQuantity: 5,
+          seller: { id: 1, shippingFee: 0 },
+        },
+      ],
+    } as unknown as KickzoneGraphqlTypes.Product;
+
+    const mockOnAddItem = vi.fn();
+
+    render(
+      <MemoryRouter initialEntries={['/']}>
+        <PicksRailSection
+          products={[testProduct]}
+          exchangeRate={270000}
+          onAddItem={mockOnAddItem}
+        />
+      </MemoryRouter>
+    );
+
+    // Find the add to cart button - it's a full button (not IconButton) with specific text
+    const addButtons = screen.getAllByRole('button');
+    const addToCartButton = addButtons.find(
+      (btn) =>
+        btn.textContent?.includes('افزودن به سبد خرید') ||
+        btn.textContent?.includes('Add to Cart') ||
+        btn.getAttribute('aria-label')?.includes('افزودن به سبد')
+    );
+    expect(addToCartButton).toBeDefined();
+
+    if (addToCartButton) {
+      fireEvent.click(addToCartButton);
+    }
+
+    // Verify onAddItem was called with product and size (PicksRailSection callback signature)
+    expect(mockOnAddItem).toHaveBeenCalledTimes(1);
+    expect(mockOnAddItem).toHaveBeenCalledWith(testProduct, 'L');
+  });
+});
+</file>
+
+<file path="libs/client/customers/screens/home/src/lib/CustomersHomeScreen.tsx">
+import React, { useMemo, useCallback } from 'react';
+import { useQuery } from '@apollo/client/react';
+import Box from '@mui/material/Box';
+import { CustomersLayout } from '@kickzone-workspace/customers-layout';
+import { useCustomersCartService, getDiscountedUnitPrice } from '@kickzone-workspace/customers-cart-hook';
+import { KickzoneGraphqlTypes } from '@kickzone-workspace/codegen';
+import {
+  useI18nContext,
+  usePageTitle,
+  useSeoMeta,
+  buildHomeJsonLd,
+  useJsonLd,
+} from '@kickzone-workspace/shared-i18n';
+
+import {
+  HOME_PAGE_QUERY,
+  HomePageData,
+  selectHomePageData,
+} from './home-selectors';
+import { useScrollProgress } from './useScrollProgress';
+
+import { HeroSection } from './components/HeroSection';
+import { CategoryBentoSection } from './components/CategoryBentoSection';
+import { PicksRailSection } from './components/PicksRailSection';
+import { TrustStripSection } from './components/TrustStripSection';
+import { HomeLoadingScreen } from './components/HomeLoadingScreen';
+
+export interface CustomersHomeProps {
+  initialData?: HomePageData;
+  mockLoading?: boolean;
+}
+
+export function CustomersHome({
+  initialData,
+  mockLoading,
+}: CustomersHomeProps) {
+  const { LL } = useI18nContext();
+  usePageTitle(() => LL.navigation.home());
+  useSeoMeta({
+    canonicalPath: '/',
+    description: LL.home.hero.subtitle(),
+    ogType: 'website',
+  });
+  const homeJsonLd = useMemo(() => buildHomeJsonLd(), []);
+  useJsonLd('home-schema', homeJsonLd);
+  useScrollProgress();
+
+  const { data: apolloData, loading: apolloLoading } = useQuery<HomePageData>(
+    HOME_PAGE_QUERY,
+    {
+      fetchPolicy: 'cache-first',
+      skip: Boolean(initialData),
+    }
+  );
+
+  const data = initialData || apolloData;
+  const loading = mockLoading ?? (apolloLoading && !data);
+
+  const { addItem } = useCustomersCartService();
+
+  const handleAddToCart = useCallback(
+    (product: KickzoneGraphqlTypes.Product, preferredSize?: string) => {
+      const sp =
+        product.sellerProducts?.find((s) => (s.stockQuantity || 0) > 0) ||
+        product.sellerProducts?.[0];
+      if (!sp) return;
+
+      const pInfo =
+        product.productInfos?.find((pi) =>
+          preferredSize ? pi.size === preferredSize : true
+        ) || product.productInfos?.[0];
+
+      const size = pInfo?.size || preferredSize || null;
+      const color = pInfo?.colors?.[0]?.hexCode || pInfo?.colors?.[0]?.name || null;
+      const image = pInfo?.images?.[0] || null;
+
+      addItem({
+        productId: String(product.id),
+        productName: product.name,
+        productImage: image,
+        quantity: 1,
+        unitPrice: getDiscountedUnitPrice(sp.price, sp.discount),
+        color,
+        size,
+        sellerId: String(sp.seller?.id || 1),
+        sellerName: '',
+        sellerShippingFee: sp.seller?.shippingFee || 0,
+        sellerShippingPaymentMode:
+          (sp.seller as { shippingPaymentMode?: 'PAY_ON_DELIVERY' | 'PAY_ONLINE' })?.shippingPaymentMode ||
+          'PAY_ON_DELIVERY',
+        productInfoId: pInfo ? String(pInfo.id) : '',
+        sellerProductId: String(sp.id),
+        availableStock: sp.stockQuantity || 1,
+      });
+    },
+    [addItem]
+  );
+
+  const pageData = useMemo(() => selectHomePageData(data), [data]);
+
+  return (
+    <>
+      {loading && <HomeLoadingScreen />}
+      <CustomersLayout disablePadding={true}>
+        <Box
+          component="main"
+          id="main"
+          sx={{
+            bgcolor: 'var(--page)',
+            color: 'var(--ink)',
+            minHeight: '100vh',
+            width: '100%',
+            overflowX: 'clip',
+            position: 'relative',
+            fontFamily: 'var(--font-sans)',
+          }}
+        >
+          {!loading && (
+            <>
+              <HeroSection
+                rightProduct={pageData.hero.right}
+                centerProduct={pageData.hero.center}
+                leftProduct={pageData.hero.left}
+              />
+
+              <CategoryBentoSection
+                bento={pageData.bento}
+                categories={pageData.categories}
+              />
+
+              <PicksRailSection
+                products={pageData.picks}
+                exchangeRate={pageData.exchangeRate}
+                onAddItem={handleAddToCart}
+              />
+
+              <TrustStripSection />
+            </>
+          )}
+        </Box>
+      </CustomersLayout>
+    </>
+  );
+}
+
+export default CustomersHome;
+</file>
+
+</files>

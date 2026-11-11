@@ -1,0 +1,2514 @@
+      orderService.setPaymentIntent.mockResolvedValue(undefined as never);
+      orderService.confirmOrderPayment.mockResolvedValue(undefined as never);
+      orderService.cancelPendingOrder.mockResolvedValue(undefined as never);
+    });
+
+    describe('requestZarinPalPayment - Multi-Seller Batch', () => {
+      it('should request payment once for batch total and bind authority to all orders', async () => {
+        const order1 = createMockOrder({ id: 'order-1', total: 40, orderNumber: 'ORD-001' });
+        const order2 = createMockOrder({ id: 'order-2', total: 60, orderNumber: 'ORD-002' });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        paymentService.requestPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
+          errors: [],
+        } as never);
+
+        const input = {
+          amount: 6000000, // (40 + 60) * 60000 = 6,000,000
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        const result = await resolver.requestZarinPalPayment(input);
+
+        expect(paymentService.requestPayment).toHaveBeenCalledTimes(1);
+        expect(paymentService.requestPayment).toHaveBeenCalledWith(
+          expect.objectContaining({ amount: 6000000 })
+        );
+
+        // setPaymentIntent should be called for BOTH orders with the shared authority
+        expect(orderService.setPaymentIntent).toHaveBeenCalledTimes(2);
+        expect(orderService.setPaymentIntent).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderId: 'order-1',
+            authority,
+            amount: 6000000,
+          })
+        );
+        expect(orderService.setPaymentIntent).toHaveBeenCalledWith(
+          expect.objectContaining({
+            orderId: 'order-2',
+            authority,
+            amount: 6000000,
+          })
+        );
+
+        expect(result.authority).toBe(authority);
+        expect(result.code).toBe(100);
+      });
+
+      it('should reject when orders belong to different customers (cross-customer spoofing)', async () => {
+        const order1 = createMockOrder({ id: 'order-1', customerId: 'cust-A', customerEmail: 'a@test.com' });
+        const order2 = createMockOrder({ id: 'order-2', customerId: 'cust-B', customerEmail: 'b@test.com' });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        const input = {
+          amount: 6000000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'All orders in a batch must belong to the same customer'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+        expect(orderService.setPaymentIntent).not.toHaveBeenCalled();
+      });
+
+      it('should reject when any order is not PENDING', async () => {
+        const order1 = createMockOrder({ id: 'order-1', status: OrderStatus.PENDING });
+        const order2 = createMockOrder({ id: 'order-2', status: OrderStatus.CONFIRMED });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        const input = {
+          amount: 6000000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order(s) order-2 are not in PENDING status and cannot be paid'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+      });
+
+      it('should reject javascript: or malformed callback_url', async () => {
+        const order1 = createMockOrder({ id: 'order-1', total: 40 });
+        const order2 = createMockOrder({ id: 'order-2', total: 60 });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        // Test javascript: protocol
+        const inputJs = {
+          amount: 6000000,
+          callback_url: 'javascript:alert(1)',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(inputJs)).rejects.toThrow(
+          'Invalid callback_url protocol'
+        );
+
+        // Test malformed URL
+        const inputMalformed = {
+          amount: 6000000,
+          callback_url: 'not-a-url',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(inputMalformed)).rejects.toThrow(
+          'Invalid callback_url'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+      });
+
+      it('should reject when guest orders in batch have different GuestToken tags', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          total: 40,
+          customerEmail: '',
+          notes: '[GuestToken: token-A]',
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          total: 60,
+          customerEmail: '',
+          notes: '[GuestToken: token-B]',
+        });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+
+        const input = {
+          amount: 6000000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-2'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'All orders in a batch must share the same guest checkout token'
+        );
+
+        expect(paymentService.requestPayment).not.toHaveBeenCalled();
+        expect(orderService.setPaymentIntent).not.toHaveBeenCalled();
+      });
+
+      it('should reject when any order does not exist', async () => {
+        const order1 = createMockOrder({ id: 'order-1' });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(null as never);
+
+        const input = {
+          amount: 6000000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          orderIds: ['order-1', 'order-nonexistent'],
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'Order(s) not found: order-nonexistent'
+        );
+      });
+
+      it('should work with single orderId (backward compatibility)', async () => {
+        const order1 = createMockOrder({ id: 'order-1', total: 100 });
+
+        orderService.findOne.mockResolvedValue(order1 as never);
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 55000 } as never);
+        paymentService.requestPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
+          errors: [],
+        } as never);
+
+        const input = {
+          amount: 5500000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.requestZarinPalPayment(input);
+
+        expect(orderService.findOne).toHaveBeenCalledTimes(1);
+        expect(orderService.setPaymentIntent).toHaveBeenCalledTimes(1);
+        expect(result.authority).toBe(authority);
+      });
+
+      it('should deduplicate orderIds and order_id', async () => {
+        const order1 = createMockOrder({ id: 'order-1', total: 50 });
+        const order2 = createMockOrder({ id: 'order-2', total: 50 });
+
+        orderService.findOne
+          .mockResolvedValueOnce(order1 as never)
+          .mockResolvedValueOnce(order2 as never);
+
+        currencyService.getCurrentExchangeRate.mockResolvedValue({ rate: 60000 } as never);
+        paymentService.requestPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', authority, fee_type: 'Merchant', fee: 0 },
+          errors: [],
+        } as never);
+
+        const input = {
+          amount: 6000000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+          order_id: 'order-1',
+          orderIds: ['order-1', 'order-2', 'order-1'], // duplicates
+        } as never;
+
+        await resolver.requestZarinPalPayment(input);
+
+        // Should only call findOne twice (deduplicated)
+        expect(orderService.findOne).toHaveBeenCalledTimes(2);
+        expect(orderService.setPaymentIntent).toHaveBeenCalledTimes(2);
+      });
+
+      it('should reject when no orderIds provided', async () => {
+        const input = {
+          amount: 100000,
+          callback_url: 'https://example.com/callback',
+          description: 'Test',
+          currency: 'IRT',
+        } as never;
+
+        await expect(resolver.requestZarinPalPayment(input)).rejects.toThrow(
+          'At least one orderId is required'
+        );
+      });
+    });
+
+    describe('verifyZarinPalPayment - Multi-Seller Batch', () => {
+      it('should reject when any order for the authority is already CANCELLED', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          status: OrderStatus.CANCELLED,
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          status: OrderStatus.PENDING,
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-2',
+        } as never;
+
+        await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+          'Cannot verify payment for cancelled or refunded order(s): order-1'
+        );
+
+        expect(paymentService.verifyPayment).not.toHaveBeenCalled();
+        expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+      });
+
+      it('should reject when any order for the authority is already REFUNDED', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          status: OrderStatus.REFUNDED,
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          status: OrderStatus.PENDING,
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-2',
+        } as never;
+
+        await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+          'Cannot verify payment for cancelled or refunded order(s): order-1'
+        );
+
+        expect(paymentService.verifyPayment).not.toHaveBeenCalled();
+        expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+      });
+
+      it('should serialize concurrent verifyZarinPalPayment calls for the same authority and call confirmOrderPayment only once', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+          status: OrderStatus.PENDING,
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-002',
+          status: OrderStatus.PENDING,
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', ref_id: refId },
+          errors: [],
+        } as never);
+
+        orderService.confirmOrderPayment.mockResolvedValue(undefined as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        // Fire two concurrent verify calls with the same authority
+        const [result1, result2] = await Promise.all([
+          resolver.verifyZarinPalPayment(input),
+          resolver.verifyZarinPalPayment(input),
+        ]);
+
+        // Both should return the same successful result
+        expect(result1.success).toBe(true);
+        expect(result2.success).toBe(true);
+        expect(result1.ref_id).toBe(refId);
+        expect(result2.ref_id).toBe(refId);
+
+        // verifyPayment should only be called ONCE (the second call awaits the first)
+        expect(paymentService.verifyPayment).toHaveBeenCalledTimes(1);
+
+        // confirmOrderPayment should be called for each order exactly once (total 2)
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(2);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-2');
+      });
+
+      it('should confirm ALL sibling orders when payment succeeds', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-002',
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', ref_id: refId },
+          errors: [],
+        } as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(2);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-2');
+
+        // Verify response includes all order IDs
+        expect(result.orderIds).toEqual(['order-1', 'order-2']);
+        expect(result.orderId).toBe('order-1');
+        expect(result.orderNumber).toBe('ORD-001, ORD-002');
+        expect(result.ref_id).toBe(refId);
+        expect(result.success).toBe(true);
+      });
+
+      it('should return success: false with refId when gateway returns 100 but confirmOrderPayment throws (insufficient stock)', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', ref_id: refId },
+          errors: [],
+        } as never);
+
+        const stockError = new BadRequestException('Insufficient stock');
+        orderService.confirmOrderPayment.mockRejectedValue(stockError);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(1);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
+
+        // CRITICAL: Must return success: false when confirmOrderPayment throws
+        expect(result.success).toBe(false);
+        expect(result.code).toBe(100);
+        expect(result.ref_id).toBe(refId);
+        expect(result.orderId).toBe('order-1');
+        expect(result.orderNumber).toBe('ORD-001');
+        expect(result.message).toContain('Insufficient stock');
+        expect(result.message).toContain(String(refId));
+      });
+
+      it('should return success: true idempotently when gateway returns 101 and all orders are already CONFIRMED with stock reserved', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          status: OrderStatus.CONFIRMED,
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          status: OrderStatus.CONFIRMED,
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-002',
+        });
+        // Simulate stockReserved flag being true (or not false)
+        (order1 as unknown as Record<string, unknown>)['stockReserved'] = true;
+        (order2 as unknown as Record<string, unknown>)['stockReserved'] = true;
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 101, message: 'Already verified', ref_id: refId },
+          errors: [],
+        } as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        // Should NOT call confirmOrderPayment for already-confirmed orders with stock reserved
+        expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+
+        expect(result.success).toBe(true);
+        expect(result.code).toBe(101);
+        expect(result.ref_id).toBe(refId);
+        expect(result.orderIds).toEqual(['order-1', 'order-2']);
+      });
+it('does NOT treat CONFIRMED orders with stockReserved=undefined as idempotently reserved (matches entity default false)', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          status: OrderStatus.CONFIRMED,
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+        (order1 as unknown as Record<string, unknown>)['stockReserved'] = undefined;
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 101, message: 'Already verified', ref_id: refId },
+          errors: [],
+        } as never);
+        const result = await resolver.verifyZarinPalPayment({ amount: 6000000, authority, order_id: 'order-1' } as never);
+        // Already-CONFIRMED orders are never re-confirmed; result is still a gateway success
+        expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+        expect(result.success).toBe(true);
+        expect(result.code).toBe(101);
+      });
+
+      it('should retry confirmOrderPayment when gateway returns 101 but order is still PENDING (previous attempt failed)', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          status: OrderStatus.PENDING, // Still PENDING because previous confirmOrderPayment failed
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 101, message: 'Already verified', ref_id: refId },
+          errors: [],
+        } as never);
+
+        // First call succeeds (simulating retry success)
+        orderService.confirmOrderPayment.mockResolvedValue(undefined as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(1);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
+
+        expect(result.success).toBe(true);
+        expect(result.code).toBe(101);
+        expect(result.ref_id).toBe(refId);
+      });
+
+      it('should return success: false when gateway returns 101, order is PENDING, and confirmOrderPayment still throws', async () => {
+        const order1 = createMockOrder({
+          id: 'order-1',
+          status: OrderStatus.PENDING,
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 101, message: 'Already verified', ref_id: refId },
+          errors: [],
+        } as never);
+
+        const stockError = new BadRequestException('Insufficient stock on retry');
+        orderService.confirmOrderPayment.mockRejectedValue(stockError);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(1);
+
+        // Should return success: false with refId
+        expect(result.success).toBe(false);
+        expect(result.code).toBe(101);
+        expect(result.ref_id).toBe(refId);
+        expect(result.message).toContain('Insufficient stock on retry');
+        expect(result.message).toContain(String(refId));
+      });
+
+      it('should confirm orders in deterministic order (id ASC)', async () => {
+        const order1 = createMockOrder({ id: 'order-b', paymentAuthority: authority, paymentAmount: 3000000 });
+        const order2 = createMockOrder({ id: 'order-a', paymentAuthority: authority, paymentAmount: 3000000 });
+
+        // Return in non-sorted order to test sorting
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', ref_id: refId },
+          errors: [],
+        } as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-b',
+        } as never;
+
+        await resolver.verifyZarinPalPayment(input);
+
+        // Should confirm in ASC order: order-a, then order-b
+        const confirmCalls = orderService.confirmOrderPayment.mock.calls;
+        expect(confirmCalls[0][0]).toBe('order-a');
+        expect(confirmCalls[1][0]).toBe('order-b');
+      });
+
+      it('should cancel ALL sibling orders when payment fails (non-100/101)', async () => {
+        const order1 = createMockOrder({ id: 'order-1', paymentAuthority: authority, paymentAmount: 6000000 });
+        const order2 = createMockOrder({ id: 'order-2', paymentAuthority: authority, paymentAmount: 6000000 });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: -51, message: 'Payment failed' },
+          errors: [],
+        } as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledTimes(2);
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-2');
+
+        expect(result.code).toBe(-51);
+      });
+
+      it('should only confirm PENDING orders, skip already confirmed ones', async () => {
+        const order1 = createMockOrder({ id: 'order-1', status: OrderStatus.PENDING, paymentAuthority: authority, paymentAmount: 6000000 });
+        const order2 = createMockOrder({ id: 'order-2', status: OrderStatus.CONFIRMED, paymentAuthority: authority, paymentAmount: 6000000 });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', ref_id: refId },
+          errors: [],
+        } as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        await resolver.verifyZarinPalPayment(input);
+
+        // Should only confirm order-1 (PENDING), not order-2 (CONFIRMED)
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(1);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
+      });
+
+      it('should rollback earlier confirmed orders when a later order fails in multi-order batch', async () => {
+        // order-1 succeeds, order-2 fails with insufficient stock
+        const order1 = createMockOrder({
+          id: 'order-1',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-001',
+        });
+        const order2 = createMockOrder({
+          id: 'order-2',
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-002',
+        });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+        paymentService.verifyPayment.mockResolvedValue({
+          data: { code: 100, message: 'Success', ref_id: refId },
+          errors: [],
+        } as never);
+
+        // First call (order-1) succeeds, second call (order-2) throws
+        orderService.confirmOrderPayment
+          .mockResolvedValueOnce(undefined as never)
+          .mockRejectedValueOnce(new BadRequestException('Insufficient stock for order-2'));
+
+        // Add updateOrderStatus mock for rollback verification
+        orderService.updateOrderStatus = jest.fn().mockResolvedValue(undefined as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        const result = await resolver.verifyZarinPalPayment(input);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledTimes(2);
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-1');
+        expect(orderService.confirmOrderPayment).toHaveBeenCalledWith('order-2');
+
+        // CRITICAL: Must return success: false with refId
+        expect(result.success).toBe(false);
+        expect(result.code).toBe(100);
+        expect(result.ref_id).toBe(refId);
+        expect(result.message).toContain('Insufficient stock for order-2');
+        expect(result.message).toContain(String(refId));
+
+        // Verify rollback was called for order-1
+        expect(orderService.updateOrderStatus).toHaveBeenCalledTimes(1);
+        expect(orderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+      });
+
+      it('should reject when no orders found for authority', async () => {
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
+
+        const input = {
+          amount: 6000000,
+          authority: 'NONEXISTENT',
+          order_id: 'order-1',
+        } as never;
+
+        await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+          'No orders found for this payment authority'
+        );
+      });
+
+      it('should reject when authority does not match order', async () => {
+        const order1 = createMockOrder({ id: 'order-1', paymentAuthority: 'DIFFERENT_AUTHORITY' });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1] as never);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+          'Payment authority does not match the order payment intent'
+        );
+      });
+
+      it('should throw when findOrdersByPaymentAuthority returns empty array', async () => {
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([]);
+
+        const input = {
+          amount: 6000000,
+          authority,
+          order_id: 'order-1',
+        } as never;
+
+        await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+          'No orders found for this payment authority'
+        );
+      });
+
+      describe('Pre-verify Stock Check - Fail Closed Before Gateway', () => {
+        const createMockOrderWithItems = (overrides: Partial<{
+          id: string;
+          status: OrderStatus;
+          paymentAuthority: string | null;
+          paymentAmount: number | null;
+          paymentCurrency: string | null;
+          orderNumber: string;
+          items: Array<{
+            quantity: number;
+            sellerProduct: { id: string; stockQuantity: number };
+          }>;
+        }> = {}) => ({
+          id: 'order-123',
+          status: OrderStatus.PENDING,
+          paymentAuthority: authority,
+          paymentAmount: 6000000,
+          paymentCurrency: 'IRT',
+          orderNumber: 'ORD-123',
+          items: [],
+          ...overrides,
+        });
+
+        it('should return success:false with ref_id when pre-verify stock check fails across batch (order-2 insufficient stock), confirmOrderPayment called 0 times', async () => {
+          // order-1 has sufficient stock (sp-1 qty 1, stock 5)
+          // order-2 has insufficient stock (sp-2 qty 3, stock 1)
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            items: [
+              { quantity: 1, sellerProduct: { id: 'sp-1', stockQuantity: 5 } },
+            ],
+          });
+          const order2 = createMockOrderWithItems({
+            id: 'order-2',
+            orderNumber: 'ORD-002',
+            items: [
+              { quantity: 3, sellerProduct: { id: 'sp-2', stockQuantity: 1 } },
+            ],
+          });
+
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Success', ref_id: 111222 },
+            errors: [],
+          } as never);
+
+          const input = {
+            amount: 6000000,
+            authority,
+            order_id: 'order-1',
+          } as never;
+
+          await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+            'Insufficient stock for product sp-2: required 3, available 1'
+          );
+          expect(paymentService.verifyPayment).not.toHaveBeenCalled();
+          expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+        });
+
+        it('should return success:false with ref_id when aggregated stock check fails (two orders share same sellerProductId, combined qty > stock)', async () => {
+          // order-1 requests qty 2 of sp-1 (stock 3)
+          // order-2 requests qty 2 of sp-1 (stock 3) -> combined 4 > 3
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            items: [
+              { quantity: 2, sellerProduct: { id: 'sp-1', stockQuantity: 3 } },
+            ],
+          });
+          const order2 = createMockOrderWithItems({
+            id: 'order-2',
+            orderNumber: 'ORD-002',
+            items: [
+              { quantity: 2, sellerProduct: { id: 'sp-1', stockQuantity: 3 } },
+            ],
+          });
+
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Success', ref_id: 222333 },
+            errors: [],
+          } as never);
+
+          const input = {
+            amount: 6000000,
+            authority,
+            order_id: 'order-1',
+          } as never;
+
+          await expect(resolver.verifyZarinPalPayment(input)).rejects.toThrow(
+            'Insufficient stock for product sp-1: required 4, available 3'
+          );
+          expect(paymentService.verifyPayment).not.toHaveBeenCalled();
+          expect(orderService.confirmOrderPayment).not.toHaveBeenCalled();
+        });
+
+        it('should rollback confirmed siblings when later order fails confirmOrderPayment (3-order batch, id ASC sort)', async () => {
+          // Input orders: order-3, order-1, order-2 (unsorted)
+          // After sort: order-1, order-2, order-3
+          // order-1 confirms, order-2 confirms, order-3 throws
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            paymentAmount: 150000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-x', stockQuantity: 10 } }],
+          });
+          const order2 = createMockOrderWithItems({
+            id: 'order-2',
+            orderNumber: 'ORD-002',
+            paymentAmount: 150000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-x', stockQuantity: 10 } }],
+          });
+          const order3 = createMockOrderWithItems({
+            id: 'order-3',
+            orderNumber: 'ORD-003',
+            paymentAmount: 150000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-3', stockQuantity: 10 } }],
+          });
+
+          // Return in unsorted order to test id ASC sorting
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order3, order1, order2] as never);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Verified', ref_id: 777888 },
+            errors: [],
+          } as never);
+
+          // order-1 succeeds, order-2 succeeds, order-3 throws
+          orderService.confirmOrderPayment
+            .mockResolvedValueOnce(undefined as never) // order-1
+            .mockResolvedValueOnce(undefined as never) // order-2
+            .mockRejectedValueOnce(new BadRequestException('Insufficient stock for product sp-3 during lock'));
+
+          // Mock updateOrderStatus for rollback verification
+          orderService.updateOrderStatus = jest.fn().mockResolvedValue(undefined as never);
+
+          const input = {
+            amount: 150000,
+            authority,
+            order_id: 'order-1',
+          } as never;
+
+          const result = await resolver.verifyZarinPalPayment(input);
+
+          // Confirm calls should be in id ASC order: order-1, order-2, order-3
+          expect(orderService.confirmOrderPayment).toHaveBeenNthCalledWith(1, 'order-1');
+          expect(orderService.confirmOrderPayment).toHaveBeenNthCalledWith(2, 'order-2');
+          expect(orderService.confirmOrderPayment).toHaveBeenNthCalledWith(3, 'order-3');
+
+          // Rollback should be called for BOTH order-1 and order-2
+          expect(orderService.updateOrderStatus).toHaveBeenCalledTimes(2);
+          expect(orderService.updateOrderStatus).toHaveBeenNthCalledWith(1, 'order-1', OrderStatus.CANCELLED);
+          expect(orderService.updateOrderStatus).toHaveBeenNthCalledWith(2, 'order-2', OrderStatus.CANCELLED);
+
+          // Must return success: false with ref_id
+          expect(result.success).toBe(false);
+          expect(result.code).toBe(100);
+          expect(result.ref_id).toBe(777888);
+          expect(result.message).toContain('777888');
+        });
+
+        it('should survive rollback failure (updateOrderStatus rejects) and still return success:false with ref_id', async () => {
+          const order1 = createMockOrderWithItems({
+            id: 'order-1',
+            orderNumber: 'ORD-001',
+            paymentAmount: 100000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-1', stockQuantity: 10 } }],
+          });
+          const order2 = createMockOrderWithItems({
+            id: 'order-2',
+            orderNumber: 'ORD-002',
+            paymentAmount: 100000,
+            items: [{ quantity: 1, sellerProduct: { id: 'sp-2', stockQuantity: 10 } }],
+          });
+
+          orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2] as never);
+
+          paymentService.verifyPayment.mockResolvedValue({
+            data: { code: 100, message: 'Verified', ref_id: 444555 },
+            errors: [],
+          } as never);
+
+          // order-1 confirms, order-2 throws
+          orderService.confirmOrderPayment
+            .mockResolvedValueOnce(undefined as never) // order-1
+            .mockRejectedValueOnce(new Error('Confirmation DB failure'));
+
+          // updateOrderStatus for rollback ALSO rejects (DB connection lost)
+          orderService.updateOrderStatus = jest.fn().mockRejectedValue(new Error('Rollback DB connection lost'));
+
+          const input = {
+            amount: 100000,
+            authority,
+            order_id: 'order-1',
+          } as never;
+
+          const result = await resolver.verifyZarinPalPayment(input);
+
+          // Should NOT throw unhandled error
+          // Should have attempted rollback for order-1
+          expect(orderService.updateOrderStatus).toHaveBeenCalledWith('order-1', OrderStatus.CANCELLED);
+
+          // Must return success: false with ref_id and original error message
+          expect(result.success).toBe(false);
+          expect(result.code).toBe(100);
+          expect(result.ref_id).toBe(444555);
+          expect(result.message).toContain('Confirmation DB failure');
+        });
+      });
+    });
+
+    describe('cancelPendingZarinPalOrder - Multi-Seller Batch', () => {
+      it('should cancel all PENDING sibling orders sharing the same authority', async () => {
+        const order1 = createMockOrder({ id: 'order-1', paymentAuthority: authority });
+        const order2 = createMockOrder({ id: 'order-2', paymentAuthority: authority });
+        const order3 = createMockOrder({ id: 'order-3', status: OrderStatus.CANCELLED, paymentAuthority: authority });
+
+        orderService.findOrdersByPaymentAuthority.mockResolvedValue([order1, order2, order3] as never);
+        orderService.cancelPendingOrder
+          .mockResolvedValueOnce(createMockOrder({ id: 'order-1', status: OrderStatus.CANCELLED }) as never)
+          .mockResolvedValueOnce(createMockOrder({ id: 'order-2', status: OrderStatus.CANCELLED }) as never);
+
+        const result = await resolver.cancelPendingZarinPalOrder(undefined, authority);
+
+        expect(orderService.findOrdersByPaymentAuthority).toHaveBeenCalledWith(authority);
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledTimes(2);
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-1');
+        expect(orderService.cancelPendingOrder).toHaveBeenCalledWith('order-2');
+        // Should NOT cancel order-3 (already CANCELLED)
+        expect(orderService.cancelPendingOrder).not.toHaveBeenCalledWith('order-3');
+        expect(result).toBe(true);
+      });
+    });
+  });
+});
+
+describe('PaymentResolver - Batch Shipping Recomputation & Amount Guard', () => {
+  function setupResolver() {
+    const ordersDb: Record<string, Partial<Order>> = {
+      'ord-cod': {
+        id: 'ord-cod',
+        orderNumber: 'ORD-1',
+        customerEmail: 'buyer@example.com',
+        status: OrderStatus.PENDING,
+        sellerId: 1,
+        subtotal: 100,
+        shippingCost: 15, // stale/poisoned value before recalculation
+        total: 115,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY,
+      },
+      'ord-online': {
+        id: 'ord-online',
+        orderNumber: 'ORD-2',
+        customerEmail: 'buyer@example.com',
+        status: OrderStatus.PENDING,
+        sellerId: 2,
+        subtotal: 50,
+        shippingCost: 0, // client tried to send 0
+        total: 50,
+        shippingMethod: 'express', // 45% of $10 = $4.50
+        shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+      },
+    };
+
+    const paymentService = {
+      requestPayment: jest.fn(async () => ({
+        data: {
+          code: 100,
+          message: 'Success',
+          authority: 'A00000000000000000000000000000000000',
+        },
+        errors: [],
+      })),
+    };
+
+    const orderService = {
+      findOne: jest.fn(async (id: string) => ordersDb[id] ?? null),
+      recalculateBatchOrdersShipping: jest.fn(async (orders: Partial<Order>[]) => {
+        for (const o of orders) {
+          if (o.id === 'ord-cod') {
+            o.shippingCost = 0;
+            o.total = 100;
+          } else if (o.id === 'ord-online') {
+            o.shippingCost = 4.5;
+            o.total = 54.5;
+          }
+        }
+        return orders as Order[];
+      }),
+      setPaymentIntent: jest.fn(async () => ({})),
+    };
+
+    const currencyService = {
+      getCurrentExchangeRate: jest.fn(async () => ({ rate: 60000 })),
+    };
+
+    const resolver = new PaymentResolver(
+      paymentService as unknown as PaymentService,
+      orderService as unknown as OrderService,
+      currencyService as unknown as CurrencyService,
+    );
+
+    return { resolver, paymentService, orderService };
+  }
+
+  it('recomputes batch totals (COD = 0, Online Express = 4.50) and requests exact server Toman amount', async () => {
+    const { resolver, paymentService, orderService } = setupResolver();
+
+    // Server total = $100 (COD) + $54.50 (Online) = $154.50 * 60,000 = 9,270,000 Tomans
+    const expectedTomans = Math.round(154.5 * 60000);
+
+    const res = await resolver.requestZarinPalPayment({
+      amount: expectedTomans,
+      callback_url: 'https://saintbala.com/payment-callback',
+      description: 'Batch Order Payment',
+      currency: 'IRT',
+      orderIds: ['ord-cod', 'ord-online'],
+    });
+
+    expect(orderService.recalculateBatchOrdersShipping).toHaveBeenCalledTimes(1);
+    expect(paymentService.requestPayment).toHaveBeenCalledWith(
+      expect.objectContaining({
+        amount: 9270000,
+      }),
+    );
+    expect(res.authority).toBeDefined();
+  });
+
+  it('rejects payment request when client amount omits PAY_ONLINE shipping cost', async () => {
+    const { resolver } = setupResolver();
+
+    // Client tries to pay only item subtotals ($150 * 60,000 = 9,000,000) without the $4.50 online shipping
+    const tamperedClientAmount = Math.round(150 * 60000);
+
+    await expect(
+      resolver.requestZarinPalPayment({
+        amount: tamperedClientAmount,
+        callback_url: 'https://saintbala.com/payment-callback',
+        description: 'Tampered Payment',
+        currency: 'IRT',
+        orderIds: ['ord-cod', 'ord-online'],
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+});
+
+===== FILE: libs/server/services/src/lib/order.service.spec.ts =====
+import { Test, TestingModule } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { Repository, EntityManager, DataSource, FindOneOptions, FindOptionsWhere } from 'typeorm';
+import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { OrderService } from './order.service';
+import {
+  Order,
+  OrderItem,
+  OrderStatus,
+  SellerProduct,
+  SellerInfo,
+  ShippingPaymentMode,
+  ShippingStrategy,
+  PlatformSettings,
+} from '@kickzone-workspace/entities';
+import { CreateOrderInput, UpdateOrderInput } from '@kickzone-workspace/inputs';
+import {
+  ShippingCalculationService,
+  applyShippingMethodMultiplier,
+} from './shipping-calculation.service';
+
+describe('OrderService', () => {
+  let service: OrderService;
+  let orderRepository: jest.Mocked<Repository<Order>>;
+  let orderItemRepository: jest.Mocked<Repository<OrderItem>>;
+  let sellerProductRepository: jest.Mocked<Repository<SellerProduct>>;
+  let sellerInfoRepository: jest.Mocked<Repository<SellerInfo>>;
+  let dataSource: { transaction: jest.Mock };
+  let mockTransactionManager: {
+    getRepository: jest.Mock;
+    findOne: jest.Mock;
+    save: jest.Mock;
+    remove: jest.Mock;
+  };
+
+  const mockOrderRepository = {
+    create: jest.fn(),
+    save: jest.fn(),
+    findOne: jest.fn(),
+    remove: jest.fn(),
+    createQueryBuilder: jest.fn(),
+    count: jest.fn(),
+    find: jest.fn(),
+  };
+
+  const mockOrderItemRepository = {
+    save: jest.fn(),
+    delete: jest.fn(),
+  };
+
+  const mockSellerProductRepository = {
+    findOne: jest.fn(),
+    findBy: jest.fn(),
+    save: jest.fn(),
+  };
+
+  const mockSellerInfoRepository = {
+    findOne: jest.fn(),
+  };
+
+  const mockQueryBuilder = {
+    leftJoinAndSelect: jest.fn().mockReturnThis(),
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    orderBy: jest.fn().mockReturnThis(),
+    addOrderBy: jest.fn().mockReturnThis(),
+    take: jest.fn().mockReturnThis(),
+    getMany: jest.fn(),
+    getCount: jest.fn(),
+  };
+
+  beforeEach(async () => {
+    mockTransactionManager = {
+      getRepository: jest.fn(),
+      findOne: jest.fn(),
+      save: jest.fn(),
+      remove: jest.fn(),
+    };
+
+    dataSource = {
+      transaction: jest.fn((fn) => fn(mockTransactionManager)),
+    };
+
+    mockTransactionManager.getRepository.mockImplementation((entity: unknown) => {
+      if (entity === Order) return orderRepository;
+      if (entity === SellerProduct) return sellerProductRepository;
+      return mockOrderRepository;
+    });
+
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        OrderService,
+        {
+          provide: getRepositoryToken(Order),
+          useValue: mockOrderRepository,
+        },
+        {
+          provide: getRepositoryToken(OrderItem),
+          useValue: mockOrderItemRepository,
+        },
+        {
+          provide: getRepositoryToken(SellerProduct),
+          useValue: mockSellerProductRepository,
+        },
+        {
+          provide: getRepositoryToken(SellerInfo),
+          useValue: mockSellerInfoRepository,
+        },
+        {
+          provide: DataSource,
+          useValue: dataSource,
+        },
+      ],
+    }).compile();
+
+    service = module.get<OrderService>(OrderService);
+    orderRepository = module.get(getRepositoryToken(Order));
+    orderItemRepository = module.get(getRepositoryToken(OrderItem));
+    sellerProductRepository = module.get(getRepositoryToken(SellerProduct));
+    sellerInfoRepository = module.get(getRepositoryToken(SellerInfo));
+
+    orderRepository.createQueryBuilder = jest
+      .fn()
+      .mockReturnValue(mockQueryBuilder);
+
+    jest.clearAllMocks();
+  });
+
+  afterEach(() => {
+    jest.clearAllMocks();
+  });
+
+  describe('createOrder', () => {
+    const createOrderInput: CreateOrderInput = {
+      customerEmail: 'customer@example.com',
+      customerPhone: '1234567890',
+      customerName: 'John Doe',
+      shippingAddress: '123 Main St',
+      city: 'New York',
+      state: 'NY',
+      zipCode: '10001',
+      country: 'USA',
+      sellerId: 1,
+      items: [
+        {
+          productId: 'product-1',
+          sellerProductId: 'seller-product-1',
+          productName: 'Test Product',
+          quantity: 2,
+          unitPrice: 50,
+          totalPrice: 100,
+        },
+      ],
+      shippingCost: 10,
+    };
+
+    const mockSeller: SellerInfo = {
+      id: 1,
+      storeName: 'Test Store',
+      phone: '9876543210',
+      address: 'Seller Address',
+      shippingFee: 15,
+    } as SellerInfo;
+
+    const mockSellerProduct: SellerProduct = {
+      id: 'seller-product-1',
+      price: 50,
+      discount: 0,
+      productInfoId: 1,
+      stockQuantity: 100,
+      seller: { id: 1 } as unknown as SellerProduct['seller'],
+    } as SellerProduct;
+
+    const mockSavedOrder = {
+      id: 'order-1',
+      orderNumber: 'ORD-123',
+      trackingNumber: 'KZ-20240101-ABC123',
+      customerEmail: createOrderInput.customerEmail,
+      customerPhone: createOrderInput.customerPhone,
+      customerName: createOrderInput.customerName,
+      shippingAddress: createOrderInput.shippingAddress,
+      city: createOrderInput.city,
+      state: createOrderInput.state,
+      zipCode: createOrderInput.zipCode,
+      country: createOrderInput.country,
+      sellerId: createOrderInput.sellerId,
+      status: OrderStatus.PENDING,
+      stockReserved: false,
+      subtotal: 100,
+      shippingCost: 10,
+      total: 110,
+      sellerStoreName: mockSeller.storeName,
+      sellerPhone: mockSeller.phone,
+      sellerAddress: mockSeller.address,
+      items: undefined,
+      seller: mockSeller,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as unknown as Order;
+
+    const mockOrderItem: OrderItem = {
+      id: 'item-1',
+      orderId: 'order-1',
+      productId: 'product-1',
+      sellerProductId: 'seller-product-1',
+      productName: 'Test Product',
+      quantity: 2,
+      unitPrice: 50,
+      totalPrice: 100,
+      originalPrice: 50,
+      discountPercentage: 0,
+      productInfoId: 1,
+    } as OrderItem;
+
+    it('should create an order successfully with stockReserved = false', async () => {
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+      orderRepository.save.mockResolvedValue({ ...orderWithoutItems } as unknown as typeof orderWithoutItems);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
+
+      const result = await service.createOrder(createOrderInput);
+
+      expect(orderRepository.create).toHaveBeenCalledWith(
+        expect.not.objectContaining({ items: expect.any(Array) }),
+      );
+      expect(sellerInfoRepository.findOne).toHaveBeenCalledWith({
+        where: { id: createOrderInput.sellerId },
+      });
+      expect(orderRepository.save).toHaveBeenCalledWith(
+        expect.objectContaining({ items: undefined }),
+      );
+      expect(orderItemRepository.save).toHaveBeenCalledTimes(1);
+      expect(result).toBeDefined();
+      expect(result.orderNumber).toBeDefined();
+      expect(result.trackingNumber).toBeDefined();
+      expect(result.status).toBe(OrderStatus.PENDING);
+      expect(result.stockReserved).toBe(false);
+      expect(result.items).toHaveLength(1);
+    });
+
+    it('should throw NotFoundException if seller does not exist', async () => {
+      orderRepository.create.mockReturnValue(mockSavedOrder);
+      sellerInfoRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(
+        NotFoundException,
+      );
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(
+        `Seller with ID ${createOrderInput.sellerId} not found`,
+      );
+    });
+
+    it('should calculate subtotal and total correctly', async () => {
+      const inputWithTwoItems = {
+        ...createOrderInput,
+        items: [
+          { ...createOrderInput.items[0], sellerProductId: 'seller-product-1', totalPrice: 100 },
+          { ...createOrderInput.items[0], productId: 'product-2', sellerProductId: 'seller-product-2', totalPrice: 50 },
+        ],
+        shippingMethod: 'vip',
+      };
+      // Catalog prices: product-1 = 50, product-2 = 25 (different from client prices)
+      const sellerProduct1 = { ...mockSellerProduct, id: 'seller-product-1', price: 50, discount: 0, seller: { id: 1 } as unknown as SellerProduct['seller'] } as SellerProduct;
+      const sellerProduct2 = { ...mockSellerProduct, id: 'seller-product-2', price: 25, discount: 0, seller: { id: 1 } as unknown as SellerProduct['seller'] } as SellerProduct;
+      const mockOrderItem1 = { ...mockOrderItem, totalPrice: 100, id: 'item-1', unitPrice: 50 } as OrderItem;
+      const mockOrderItem2 = { ...mockOrderItem, productId: 'product-2', totalPrice: 50, id: 'item-2', unitPrice: 25 } as OrderItem;
+      const onlineSeller = { ...mockSeller, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE, shippingFee: 10 };
+      const orderWithoutItems = {
+        ...mockSavedOrder,
+        items: undefined,
+        subtotal: 150, // 50*2 + 25*2 = 100 + 50 = 150
+        total: 160, // 150 + 10 (vip = full fee)
+        shippingCost: 10,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+      } as never;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(sellerProduct1)
+        .mockResolvedValueOnce(sellerProduct2);
+      orderRepository.save.mockResolvedValue(orderWithoutItems);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem1, mockOrderItem2] as never);
+
+      const result = await service.createOrder(inputWithTwoItems);
+
+      expect(result.subtotal).toBe(150);
+      expect(result.total).toBe(160);
+      expect(result.items).toHaveLength(2);
+    });
+
+    it('should compute server shipping cost for PAY_ONLINE seller ignoring client shippingCost', async () => {
+      const inputWithShipping = {
+        ...createOrderInput,
+        shippingCost: 20, // This should be ignored
+        shippingMethod: 'vip',
+      };
+      const onlineSeller = { ...mockSeller, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE, shippingFee: 10 };
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...orderWithoutItems,
+        shippingCost: 10, // Server computed: vip = 100% of 10
+        total: 110,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+      });
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
+
+      const result = await service.createOrder(inputWithShipping);
+
+      expect(result.shippingCost).toBe(10); // Server computed, not client's 20
+      expect(result.total).toBe(110);
+    });
+
+    it('should compute zero shipping for PAY_ON_DELIVERY seller regardless of shippingFee', async () => {
+      const inputWithoutShipping = {
+        ...createOrderInput,
+        shippingCost: undefined,
+        shippingMethod: 'vip',
+      };
+      const codSeller = { ...mockSeller, shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY, shippingFee: 15 };
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(codSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...orderWithoutItems,
+        shippingCost: 0,
+        total: 100,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY,
+      });
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
+
+      const result = await service.createOrder(inputWithoutShipping);
+
+      expect(result.shippingCost).toBe(0);
+      expect(result.total).toBe(100);
+    });
+
+    it('should preserve seller snapshot information', async () => {
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+      orderRepository.save.mockResolvedValue(orderWithoutItems);
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
+
+      const result = await service.createOrder(createOrderInput);
+
+      expect(result.sellerStoreName).toBe(mockSeller.storeName);
+      expect(result.sellerPhone).toBe(mockSeller.phone);
+      expect(result.sellerAddress).toBe(mockSeller.address);
+    });
+
+    it('should NOT decrease stock when creating order', async () => {
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+      orderRepository.save.mockResolvedValue(orderWithoutItems);
+      orderItemRepository.save.mockResolvedValue([] as never);
+
+      await service.createOrder(createOrderInput);
+
+      expect(sellerProductRepository.save).not.toHaveBeenCalled();
+      expect(mockSellerProduct.stockQuantity).toBe(100);
+    });
+
+    it('should preserve product pricing snapshot in order items', async () => {
+      const sellerProductWithDiscount = {
+        ...mockSellerProduct,
+        price: 60,
+        discount: 10,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
+      } as SellerProduct;
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(
+        sellerProductWithDiscount,
+      );
+      orderRepository.save.mockResolvedValue(orderWithoutItems);
+      orderItemRepository.save.mockImplementation(((items: unknown[]) =>
+        Promise.resolve(items)) as never);
+
+      await service.createOrder(createOrderInput);
+
+      expect(orderItemRepository.save).toHaveBeenCalledTimes(1);
+      const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
+      expect(Array.isArray(savedItems)).toBe(true);
+      expect(savedItems.length).toBe(1);
+      expect(savedItems[0]).toHaveProperty('originalPrice', 60);
+      expect(savedItems[0]).toHaveProperty('discountPercentage', 10);
+      expect(savedItems[0]).toHaveProperty('orderId', mockSavedOrder.id);
+    });
+
+    it('should insert each order item only once (no cascade + manual save duplication)', async () => {
+      const inputWithTwoItems: CreateOrderInput = {
+        ...createOrderInput,
+        items: [
+          {
+            productId: 'product-1',
+            sellerProductId: 'seller-product-1',
+            productName: 'Test Product 1',
+            quantity: 1,
+            unitPrice: 50,
+            totalPrice: 50,
+          },
+          {
+            productId: 'product-2',
+            sellerProductId: 'seller-product-2',
+            productName: 'Test Product 2',
+            quantity: 2,
+            unitPrice: 30,
+            totalPrice: 60,
+          },
+        ],
+      };
+
+      const sellerProduct2 = { ...mockSellerProduct, id: 'seller-product-2', seller: { id: 1 } as unknown as SellerProduct['seller'] } as SellerProduct;
+
+      const orderWithoutItems = {
+        ...mockSavedOrder,
+        items: undefined,
+        subtotal: 110,
+        total: 120,
+      } as unknown as Order;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne
+        .mockResolvedValueOnce(mockSellerProduct)
+        .mockResolvedValueOnce(sellerProduct2);
+      orderRepository.save.mockResolvedValue({ ...orderWithoutItems } as unknown as typeof orderWithoutItems);
+      orderItemRepository.save.mockImplementation(((items: object[]) =>
+        Promise.resolve(items.map((i: object, idx: number) => ({ ...i, id: `item-${idx + 1}` })))) as never);
+
+      const result = await service.createOrder(inputWithTwoItems);
+
+      const savedOrderArg = orderRepository.save.mock.calls[0][0] as Order;
+      expect(savedOrderArg.items).toBeUndefined();
+
+      expect(orderItemRepository.save).toHaveBeenCalledTimes(1);
+
+      expect(result.items).toHaveLength(2);
+      expect(result.items[0].quantity).toBe(1);
+      expect(result.items[1].quantity).toBe(2);
+    });
+
+    it('should override client prices with catalog prices (price tampering protection)', async () => {
+      // Client sends unitPrice: 10, totalPrice: 20 but catalog price is 50
+      const inputWithTamperedPrices = {
+        ...createOrderInput,
+        items: [
+          {
+            ...createOrderInput.items[0],
+            unitPrice: 10,
+            totalPrice: 20,
+          },
+        ],
+      };
+      const sellerProductWithHigherPrice = {
+        ...mockSellerProduct,
+        price: 50,
+        discount: 0,
+      } as SellerProduct;
+
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductWithHigherPrice);
+      orderRepository.save.mockResolvedValue({
+        ...orderWithoutItems,
+        subtotal: 100, // 50 * 2 = 100 (catalog price)
+        total: 110,
+      });
+      orderItemRepository.save.mockImplementation(((items: unknown[]) =>
+        Promise.resolve(items)) as never);
+
+      const result = await service.createOrder(inputWithTamperedPrices);
+
+      expect(result.subtotal).toBe(100); // Catalog price, not client's 20
+      expect(result.total).toBe(110);
+      const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
+      expect(savedItems[0].unitPrice).toBe(50); // Catalog unit price
+      expect(savedItems[0].totalPrice).toBe(100); // Catalog total price
+    });
+
+    it('should apply discount when computing catalog price', async () => {
+      const sellerProductWithDiscount = {
+        ...mockSellerProduct,
+        price: 100,
+        discount: 20, // 20% off
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
+      } as SellerProduct;
+
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductWithDiscount);
+      orderRepository.save.mockResolvedValue({
+        ...orderWithoutItems,
+        subtotal: 160, // 80 * 2 = 160 (after 20% discount)
+        total: 170,
+      });
+      orderItemRepository.save.mockImplementation(((items: unknown[]) =>
+        Promise.resolve(items)) as never);
+
+      const result = await service.createOrder(createOrderInput);
+
+      expect(result.subtotal).toBe(160);
+      expect(result.total).toBe(170);
+      const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
+      expect(savedItems[0].unitPrice).toBe(80); // 100 * 0.8 = 80
+      expect(savedItems[0].totalPrice).toBe(160); // 80 * 2 = 160
+      expect(savedItems[0].originalPrice).toBe(100);
+      expect(savedItems[0].discountPercentage).toBe(20);
+    });
+
+    it('should reject cross-seller ownership (product belongs to different seller)', async () => {
+      const sellerProductWrongSeller = {
+        ...mockSellerProduct,
+        seller: { id: 999 } as unknown as SellerProduct['seller'], // Different seller
+      } as SellerProduct;
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductWrongSeller);
+
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(
+        /does not belong to seller 1/,
+      );
+    });
+
+    it('should reject zero quantity', async () => {
+      const inputZeroQty = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], quantity: 0 }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+
+      await expect(service.createOrder(inputZeroQty)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputZeroQty)).rejects.toThrow(
+        /Quantity must be a positive integer/,
+      );
+    });
+
+    it('should reject negative quantity', async () => {
+      const inputNegativeQty = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], quantity: -1 }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+
+      await expect(service.createOrder(inputNegativeQty)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputNegativeQty)).rejects.toThrow(
+        /Quantity must be a positive integer/,
+      );
+    });
+
+    it('should reject non-integer quantity', async () => {
+      const inputFloatQty = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], quantity: 2.5 }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+
+      await expect(service.createOrder(inputFloatQty)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputFloatQty)).rejects.toThrow(
+        /Quantity must be a positive integer/,
+      );
+    });
+
+    it('should ignore client shippingCost (negative value is ignored, server computes based on seller mode)', async () => {
+      const inputNegativeShipping = {
+        ...createOrderInput,
+        shippingCost: -5,
+        shippingMethod: 'vip',
+      };
+      const onlineSeller = { ...mockSeller, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE, shippingFee: 10 };
+      const orderWithoutItems = { ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder;
+      orderRepository.create.mockReturnValue(orderWithoutItems);
+      sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
+      sellerProductRepository.findOne.mockResolvedValue(mockSellerProduct);
+      orderRepository.save.mockResolvedValue({
+        ...orderWithoutItems,
+        shippingCost: 10,
+        total: 110,
+        shippingMethod: 'vip',
+        shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE,
+      });
+      orderItemRepository.save.mockResolvedValue([mockOrderItem] as never);
+
+      const result = await service.createOrder(inputNegativeShipping);
+
+      // Client shippingCost (-5) is ignored; server computes 10 for PAY_ONLINE + vip
+      expect(result.shippingCost).toBe(10);
+      expect(result.total).toBe(110);
+    });
+
+    it('should reject insufficient stock at create', async () => {
+      const sellerProductLowStock = {
+        ...mockSellerProduct,
+        stockQuantity: 1, // Only 1 in stock
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
+      } as SellerProduct;
+
+      const inputExceedsStock = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], quantity: 5 }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductLowStock);
+
+      await expect(service.createOrder(inputExceedsStock)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputExceedsStock)).rejects.toThrow(
+        /Insufficient stock for product seller-product-1. Available: 1, Requested: 5/,
+      );
+    });
+
+    it('should reject missing sellerProductId', async () => {
+      const inputMissingSellerProductId = {
+        ...createOrderInput,
+        items: [{ ...createOrderInput.items[0], sellerProductId: undefined }],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+
+      await expect(service.createOrder(inputMissingSellerProductId)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputMissingSellerProductId)).rejects.toThrow(
+        /sellerProductId is required/,
+      );
+    });
+
+    it('should reject non-existent sellerProduct', async () => {
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      sellerProductRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(NotFoundException);
+      await expect(service.createOrder(createOrderInput)).rejects.toThrow(
+        /SellerProduct with ID seller-product-1 not found/,
+      );
+    });
+
+    it('should reject empty items array', async () => {
+      const inputEmptyItems = {
+        ...createOrderInput,
+        items: [],
+      };
+
+      await expect(service.createOrder(inputEmptyItems)).rejects.toThrow(BadRequestException);
+      await expect(service.createOrder(inputEmptyItems)).rejects.toThrow(
+        'Order must contain at least one item',
+      );
+    });
+
+    it('should reject when aggregated quantity across items exceeds stock', async () => {
+      // Two line items for the same sellerProductId, each quantity <= stock individually,
+      // but combined quantity > stock
+      const sellerProductLimitedStock = {
+        ...mockSellerProduct,
+        stockQuantity: 3, // Only 3 in stock
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
+      } as SellerProduct;
+
+      const inputTwoItemsSameProduct = {
+        ...createOrderInput,
+        items: [
+          {
+            ...createOrderInput.items[0],
+            quantity: 2,
+            sellerProductId: 'seller-product-1',
+          },
+          {
+            ...createOrderInput.items[0],
+            productId: 'product-1-variant',
+            sellerProductId: 'seller-product-1', // Same sellerProductId
+            quantity: 2, // Combined = 4 > 3
+          },
+        ],
+      };
+
+      orderRepository.create.mockReturnValue({ ...mockSavedOrder, items: undefined } as unknown as typeof mockSavedOrder);
+      sellerInfoRepository.findOne.mockResolvedValue(mockSeller);
+      // findOne will be called twice per service call (once per item in Promise.all),
+      // and the test calls the service twice (two expect statements), so 4 total calls
+      sellerProductRepository.findOne.mockResolvedValue(sellerProductLimitedStock);
+
+      await expect(service.createOrder(inputTwoItemsSameProduct)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.createOrder(inputTwoItemsSameProduct)).rejects.toThrow(
+        /Insufficient stock for product seller-product-1. Available: 3, Requested: 4/,
+      );
+    });
+
+    // Heavy 6: Locked Tests 1-9
+    describe('Heavy 6: createOrder catalog pricing, aggregated stock, and input validation', () => {
+      const heavy6Seller: SellerInfo = {
+        id: 1,
+        storeName: 'Heavy 6 Store',
+        phone: '1112223333',
+        address: 'Heavy 6 Address',
+        shippingFee: 15,
+      } as SellerInfo;
+
+      const baseItem = {
+        productId: 'prod-1',
+        sellerProductId: 'sp-1',
+        productName: 'Heavy 6 Product',
+        productImage: 'img.jpg',
+        color: 'Red',
+        size: '42',
+        unitPrice: 100,
+        totalPrice: 100,
+      };
+
+      const makeSellerProduct = (overrides: Partial<SellerProduct> = {}): SellerProduct => ({
+        id: 'sp-1',
+        price: 100,
+        discount: 0,
+        stockQuantity: 5,
+        seller: { id: 1 } as unknown as SellerProduct['seller'],
+        productInfoId: 1,
+        product: undefined as never,
+        productInfo: undefined as never,
+        costPrice: undefined as never,
+        ...overrides,
+      } as SellerProduct);
+
+      const baseInput = (overrides: Partial<CreateOrderInput> = {}): CreateOrderInput => ({
+        customerEmail: 'c@e.com',
+        customerPhone: '123',
+        customerName: 'Customer',
+        shippingAddress: 'Addr',
+        city: 'City',
+        state: 'ST',
+        zipCode: '12345',
+        country: 'US',
+        sellerId: 1,
+        items: [],
+        ...overrides,
+      });
+
+      const setupSuccessMocks = (sellerProduct: SellerProduct, savedOrderOverrides: Partial<Order> = {}) => {
+        const orderWithoutItems = {
+          id: 'order-1',
+          orderNumber: 'ORD-123',
+          trackingNumber: 'KZ-123',
+          customerEmail: 'c@e.com',
+          customerPhone: '123',
+          customerName: 'Customer',
+          shippingAddress: 'Addr',
+          city: 'City',
+          state: 'ST',
+          zipCode: '12345',
+          country: 'US',
+          sellerId: 1,
+          status: OrderStatus.PENDING,
+          stockReserved: false,
+          subtotal: 0,
+          shippingCost: 0,
+          total: 0,
+          sellerStoreName: heavy6Seller.storeName,
+          sellerPhone: heavy6Seller.phone,
+          sellerAddress: heavy6Seller.address,
+          items: undefined,
+          seller: heavy6Seller,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ...savedOrderOverrides,
+        } as never;
+        orderRepository.create.mockReturnValue(orderWithoutItems);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+        orderRepository.save.mockResolvedValue(orderWithoutItems);
+        orderItemRepository.save.mockImplementation(((items: unknown) => Promise.resolve(Array.isArray(items) ? items.map((i: object, idx: number) => ({ ...i, id: `item-${idx + 1}` })) : items)) as never);
+      };
+
+      // Locked Test 1: items: [], null, undefined each reject with 'Order must contain at least one item'
+      it('Locked Test 1: rejects empty items array, null, and undefined', async () => {
+        const emptyInput = baseInput({ items: [] });
+        await expect(service.createOrder(emptyInput)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(emptyInput)).rejects.toThrow('Order must contain at least one item');
+
+        const nullInput = baseInput({ items: null as never });
+        await expect(service.createOrder(nullInput)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(nullInput)).rejects.toThrow('Order must contain at least one item');
+
+        const undefinedInput = baseInput({ items: undefined as never });
+        await expect(service.createOrder(undefinedInput)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(undefinedInput)).rejects.toThrow('Order must contain at least one item');
+      });
+
+      // Locked Test 2: 3 items on 'sp-1' (stock 5) qty 2,2,2 -> rejects 'Insufficient stock for product sp-1. Available: 5, Requested: 6'
+      it('Locked Test 2: aggregated quantity across 3 items exceeds stock', async () => {
+        const sellerProduct = makeSellerProduct({ stockQuantity: 5 });
+        const input = baseInput({
+          items: [
+            { ...baseItem, quantity: 2, size: '42' },
+            { ...baseItem, quantity: 2, size: '43' },
+            { ...baseItem, quantity: 2, size: '44' },
+          ],
+        });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+
+        await expect(service.createOrder(input)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(input)).rejects.toThrow('Insufficient stock for product sp-1. Available: 5, Requested: 6');
+        expect(orderRepository.save).not.toHaveBeenCalled();
+        expect(orderItemRepository.save).not.toHaveBeenCalled();
+      });
+
+      // Locked Test 3: 2 items on 'sp-1' (stock 5) qty 2 (size 42) and 3 (size 43) -> resolves; order.save subtotal 500; orderItem.save 2 items unitPrice 100/totalPrice 200 and 100/300
+      it('Locked Test 3: two items same sellerProductId different sizes within stock resolves with correct pricing', async () => {
+        const sellerProduct = makeSellerProduct({ stockQuantity: 5, price: 100, discount: 0 });
+        const input = baseInput({
+          items: [
+            { ...baseItem, quantity: 2, size: '42' },
+            { ...baseItem, quantity: 3, size: '43' },
+          ],
+        });
+        setupSuccessMocks(sellerProduct, { subtotal: 500, shippingCost: 15, total: 515 });
+
+        const result = await service.createOrder(input);
+
+        expect(orderRepository.save).toHaveBeenCalledWith(expect.objectContaining({ subtotal: 500 }));
+        const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
+        expect(savedItems).toHaveLength(2);
+        expect(savedItems[0]).toEqual(expect.objectContaining({ unitPrice: 100, totalPrice: 200 }));
+        expect(savedItems[1]).toEqual(expect.objectContaining({ unitPrice: 100, totalPrice: 300 }));
+        expect(result.subtotal).toBe(500);
+      });
+
+      // Locked Test 4: sp-1 (stock 5) qty 1 and 1; sp-2 (stock 3) qty 2 and 2 -> rejects 'Insufficient stock for product sp-2. Available: 3, Requested: 4'
+      it('Locked Test 4: aggregated quantity across multiple sellerProductIds exceeds stock on sp-2', async () => {
+        const sellerProduct1 = makeSellerProduct({ id: 'sp-1', stockQuantity: 5 });
+        const sellerProduct2 = makeSellerProduct({ id: 'sp-2', stockQuantity: 3 });
+        const input = baseInput({
+          items: [
+            { ...baseItem, sellerProductId: 'sp-1', quantity: 1 },
+            { ...baseItem, sellerProductId: 'sp-1', quantity: 1 },
+            { ...baseItem, sellerProductId: 'sp-2', quantity: 2 },
+            { ...baseItem, sellerProductId: 'sp-2', quantity: 2 },
+          ],
+        });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockImplementation(({ where }: FindOneOptions<SellerProduct>) => {
+          const id = (where as FindOptionsWhere<SellerProduct> | undefined)?.id;
+          if (id === 'sp-1') return Promise.resolve(sellerProduct1);
+          if (id === 'sp-2') return Promise.resolve(sellerProduct2);
+          return Promise.resolve(null);
+        });
+
+        await expect(service.createOrder(input)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(input)).rejects.toThrow('Insufficient stock for product sp-2. Available: 3, Requested: 4');
+        expect(orderRepository.save).not.toHaveBeenCalled();
+      });
+
+      // Locked Test 5: quantity 0, -3, 1.5, NaN each reject /Quantity must be a positive integer for product/; sellerProductId '' rejects /sellerProductId is required for product/
+      it('Locked Test 5: invalid quantities and missing sellerProductId reject with correct messages', async () => {
+        const sellerProduct = makeSellerProduct();
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+
+        const invalidQuantities = [0, -3, 1.5, NaN];
+        for (const qty of invalidQuantities) {
+          const input = baseInput({ items: [{ ...baseItem, quantity: qty }] });
+          await expect(service.createOrder(input)).rejects.toThrow(BadRequestException);
+          await expect(service.createOrder(input)).rejects.toThrow(/Quantity must be a positive integer for product/);
+        }
+
+        const missingSellerProductIdInput = baseInput({ items: [{ ...baseItem, sellerProductId: '', quantity: 1 }] });
+        await expect(service.createOrder(missingSellerProductIdInput)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(missingSellerProductIdInput)).rejects.toThrow(/sellerProductId is required for product/);
+      });
+
+      // Locked Test 6: sellerId 1 with seller.id '1' as any succeeds; seller.id '99' as any rejects 'Product sp-1 does not belong to seller 1'
+      it('Locked Test 6: seller ownership check - string "1" succeeds, string "99" rejects', async () => {
+        const sellerProductSeller1 = makeSellerProduct({ seller: { id: '1' } as unknown as SellerProduct['seller'] });
+        const input = baseInput({ items: [{ ...baseItem, quantity: 1 }] });
+        setupSuccessMocks(sellerProductSeller1);
+
+        await expect(service.createOrder(input)).resolves.toBeDefined();
+
+        const sellerProductSeller99 = makeSellerProduct({ seller: { id: '99' } as unknown as SellerProduct['seller'] });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6Seller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProductSeller99);
+
+        await expect(service.createOrder(input)).rejects.toThrow(BadRequestException);
+        await expect(service.createOrder(input)).rejects.toThrow('Product sp-1 does not belong to seller 1');
+      });
+
+      // Locked Test 7: tampered client fields (unitPrice 0.01, totalPrice 0.01, subtotal 0.01, total 0.01 as any), qty 2, price 200, discount 25, stock 10, seller.shippingFee 10, shippingCost undefined -> order.save objectContaining({ subtotal: 300, shippingCost: 10, total: 310 }); orderItem.save [objectContaining({ unitPrice: 150, totalPrice: 300, originalPrice: 200, discountPercentage: 25 })]
+      it('Locked Test 7: tampered client prices are ignored; catalog pricing and shippingFee fallback used', async () => {
+        const sellerProduct = makeSellerProduct({ price: 200, discount: 25, stockQuantity: 10 });
+        const heavy6SellerWithFee = { ...heavy6Seller, shippingFee: 10, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE };
+        const input = baseInput({
+          shippingCost: undefined,
+          shippingMethod: 'vip',
+          items: [{
+            ...baseItem,
+            quantity: 2,
+            unitPrice: 0.01,
+            totalPrice: 0.01,
+          }],
+        });
+        setupSuccessMocks(sellerProduct, { subtotal: 300, shippingCost: 10, total: 310, shippingMethod: 'vip', shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE });
+        sellerInfoRepository.findOne.mockResolvedValue(heavy6SellerWithFee);
+
+        const result = await service.createOrder(input);
+
+        expect(orderRepository.save).toHaveBeenCalledWith(expect.objectContaining({ subtotal: 300, shippingCost: 10, total: 310 }));
+        const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
+        expect(savedItems[0]).toEqual(expect.objectContaining({
+          unitPrice: 150, // 200 * (1 - 25/100) = 150
+          totalPrice: 300, // 150 * 2
+          originalPrice: 200,
+          discountPercentage: 25,
+        }));
+        expect(result.subtotal).toBe(300);
+        expect(result.shippingCost).toBe(10);
+        expect(result.total).toBe(310);
+      });
+
+      // Locked Test 8: price 99.99, discount 15, stock 10, qty 3, shippingCost 0 -> orderItem.save [objectContaining({ unitPrice: 84.99, totalPrice: 254.97 })]; order.save objectContaining({ subtotal: 254.97, shippingCost: 0, total: 254.97 })
+      it('Locked Test 8: precision pricing with discount and zero shippingCost', async () => {
+        const sellerProduct = makeSellerProduct({ price: 99.99, discount: 15, stockQuantity: 10 });
+        const codSeller = { ...heavy6Seller, shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY };
+        const input = baseInput({
+          shippingCost: 0,
+          shippingMethod: 'vip',
+          items: [{ ...baseItem, quantity: 3 }],
+        });
+        setupSuccessMocks(sellerProduct, { subtotal: 254.97, shippingCost: 0, total: 254.97, shippingMethod: 'vip', shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY });
+
+        const result = await service.createOrder(input);
+
+        const savedItems = orderItemRepository.save.mock.calls[0][0] as OrderItem[];
+        expect(savedItems[0]).toEqual(expect.objectContaining({
+          unitPrice: 84.99, // 99.99 * 0.85 = 84.9915 -> 84.99
+          totalPrice: 254.97, // 84.99 * 3 = 254.97
+        }));
+        expect(orderRepository.save).toHaveBeenCalledWith(expect.objectContaining({ subtotal: 254.97, shippingCost: 0, total: 254.97 }));
+        expect(result.subtotal).toBe(254.97);
+        expect(result.shippingCost).toBe(0);
+        expect(result.total).toBe(254.97);
+      });
+
+      // Locked Test 9: seller.shippingFee 15, item subtotal 100: client shippingCost is ignored; server computes based on seller shippingPaymentMode
+      it('Locked Test 9: client shippingCost ignored; server computes based on seller shippingPaymentMode', async () => {
+        const sellerProduct = makeSellerProduct({ price: 100, discount: 0, stockQuantity: 10 });
+
+        // (a) PAY_ON_DELIVERY seller: any client shippingCost -> shippingCost = 0
+        const codSeller = { ...heavy6Seller, shippingFee: 15, shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY };
+        const inputZero = baseInput({ shippingCost: 0, shippingMethod: 'vip', items: [{ ...baseItem, quantity: 1 }] });
+        setupSuccessMocks(sellerProduct, { subtotal: 100, shippingCost: 0, total: 100, shippingMethod: 'vip', shippingPaymentMode: ShippingPaymentMode.PAY_ON_DELIVERY });
+        sellerInfoRepository.findOne.mockResolvedValue(codSeller);
+        let result = await service.createOrder(inputZero);
+        expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 0, total: 100 }));
+
+        // (b) PAY_ONLINE seller with vip: client shippingCost null -> server computes full fee (15)
+        const onlineSeller = { ...heavy6Seller, shippingFee: 15, shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE };
+        const inputNull = baseInput({ shippingCost: null as never, shippingMethod: 'vip', items: [{ ...baseItem, quantity: 1 }] });
+        setupSuccessMocks(sellerProduct, { subtotal: 100, shippingCost: 15, total: 115, shippingMethod: 'vip', shippingPaymentMode: ShippingPaymentMode.PAY_ONLINE });
+        sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
+        result = await service.createOrder(inputNull);
+        expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 15, total: 115 }));
+
+        // (c) PAY_ONLINE seller: client shippingCost NaN -> ignored, server computes
+        const inputNaN = baseInput({ shippingCost: NaN, shippingMethod: 'vip', items: [{ ...baseItem, quantity: 1 }] });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
+        sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+        result = await service.createOrder(inputNaN);
+        expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 15, total: 115 }));
+
+        // (d) PAY_ONLINE seller: client shippingCost -5 -> ignored, server computes
+        const inputNegative = baseInput({ shippingCost: -5, shippingMethod: 'vip', items: [{ ...baseItem, quantity: 1 }] });
+        orderRepository.create.mockReturnValue({ id: 'o', items: undefined } as never);
+        sellerInfoRepository.findOne.mockResolvedValue(onlineSeller);
+        sellerProductRepository.findOne.mockResolvedValue(sellerProduct);
+        result = await service.createOrder(inputNegative);
+        expect(result).toEqual(expect.objectContaining({ subtotal: 100, shippingCost: 15, total: 115 }));
+      });
+    });
+  });
+
+  describe('findOne', () => {
+    const orderId = 'order-1';
+    const mockOrder: Order = {
+      id: orderId,
+      orderNumber: 'ORD-123',
+      status: OrderStatus.PENDING,
+      stockReserved: false,
+      items: [],
+      seller: {} as SellerInfo,
+      customerEmail: 'test@example.com',
+      customerPhone: '1234567890',
+      customerName: 'Test User',
+      shippingAddress: '123 Test St',
+      city: 'Test City',
+      state: 'Test State',
+      zipCode: '12345',
+      country: 'Test Country',
+      sellerId: 1,
+      subtotal: 0,
+      shippingCost: 0,
+      total: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Order;
+
+    it('should return an order by id', async () => {
+      orderRepository.findOne.mockResolvedValue(mockOrder);
+
+      const result = await service.findOne(orderId);
+
+      expect(orderRepository.findOne).toHaveBeenCalledWith({
+        where: { id: orderId },
+        relations: ['items', 'seller'],
+      });
+      expect(result).toEqual(mockOrder);
+    });
+
+    it('should throw NotFoundException if order does not exist', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      await expect(service.findOne(orderId)).rejects.toThrow(NotFoundException);
+      await expect(service.findOne(orderId)).rejects.toThrow(
+        `Order with ID ${orderId} not found`,
+      );
+    });
+  });
+
+  describe('findAll', () => {
+    const mockOrders: Order[] = [
+      {
+        id: 'order-1',
+        orderNumber: 'ORD-1',
+        createdAt: new Date('2024-01-01'),
+      } as Order,
+      {
+        id: 'order-2',
+        orderNumber: 'ORD-2',
+        createdAt: new Date('2024-01-02'),
+      } as Order,
+    ];
+
+    beforeEach(() => {
+      mockQueryBuilder.getMany.mockResolvedValue(mockOrders);
+      mockQueryBuilder.getCount.mockResolvedValue(2);
+    });
+
+    it('should return paginated orders', async () => {
+      const result = await service.findAll(10);
+
+      expect(mockQueryBuilder.leftJoinAndSelect).toHaveBeenCalled();
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'order.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.take).toHaveBeenCalledWith(11);
+      expect(result.edges).toHaveLength(2);
+      expect(result.totalCount).toBe(2);
+    });
+
+    it('should filter by sellerId', async () => {
+      await service.findAll(10, undefined, '1');
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.sellerId = :sellerId',
+        { sellerId: 1 },
+      );
+    });
+
+    it('should throw BadRequestException for invalid sellerId', async () => {
+      await expect(service.findAll(10, undefined, 'invalid')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.findAll(10, undefined, 'invalid')).rejects.toThrow(
+        'Invalid sellerId',
+      );
+    });
+
+    it('should filter by status', async () => {
+      await service.findAll(10, undefined, undefined, OrderStatus.PENDING);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.status = :status',
+        { status: OrderStatus.PENDING },
+      );
+    });
+
+    it('should handle pagination cursor', async () => {
+      const cursor = Buffer.from(new Date().toISOString()).toString('base64');
+      await service.findAll(10, cursor);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalled();
+    });
+
+    it('should indicate hasNextPage when more items exist', async () => {
+      const manyOrders = Array.from({ length: 11 }, (_, i) => ({
+        id: `order-${i}`,
+        createdAt: new Date(),
+      })) as Order[];
+      mockQueryBuilder.getMany.mockResolvedValue(manyOrders);
+
+      const result = await service.findAll(10);
+
+      expect(result.pageInfo.hasNextPage).toBe(true);
+    });
+
+    it('should apply id DESC tie-breaker ordering for deterministic pagination', async () => {
+      await service.findAll(10);
+
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'order.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith(
+        'order.id',
+        'DESC',
+      );
+    });
+
+    it('should filter by both sellerId and status', async () => {
+      await service.findAll(10, undefined, '1', OrderStatus.DELIVERED);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.sellerId = :sellerId',
+        { sellerId: 1 },
+      );
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.status = :status',
+        { status: OrderStatus.DELIVERED },
+      );
+    });
+
+    it('should throw BadRequestException for invalid cursor', async () => {
+      const invalidCursor = 'not-valid-base64-date';
+      await expect(service.findAll(10, invalidCursor)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.findAll(10, invalidCursor)).rejects.toThrow(
+        'Invalid cursor',
+      );
+    });
+
+    it('should throw BadRequestException for empty string cursor', async () => {
+      await expect(service.findAll(10, '')).rejects.toThrow(BadRequestException);
+      await expect(service.findAll(10, '')).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for whitespace-only cursor', async () => {
+      await expect(service.findAll(10, '   ')).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.findAll(10, '   ')).rejects.toThrow('Invalid cursor');
+    });
+
+    it('should throw BadRequestException for base64-encoded non-date string', async () => {
+      const nonDateCursor = Buffer.from('not-a-date').toString('base64');
+      await expect(service.findAll(10, nonDateCursor)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.findAll(10, nonDateCursor)).rejects.toThrow(
+        'Invalid cursor',
+      );
+    });
+
+    it('should handle valid cursor and set hasPreviousPage to true', async () => {
+      const validDate = new Date('2026-01-15T10:00:00.000Z');
+      const validCursor = Buffer.from(validDate.toISOString()).toString('base64');
+      await service.findAll(10, validCursor);
+
+      expect(mockQueryBuilder.andWhere).toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        { cursor: validDate },
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is undefined', async () => {
+      const result = await service.findAll(10, undefined);
+
+      expect(result.pageInfo.hasPreviousPage).toBe(false);
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        expect.any(Object),
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is null', async () => {
+      const result = await service.findAll(10, null as never);
+
+      expect(result.pageInfo.hasPreviousPage).toBe(false);
+      expect(mockQueryBuilder.andWhere).not.toHaveBeenCalledWith(
+        'order.createdAt < :cursor',
+        expect.any(Object),
+      );
+    });
+
+    it('should return hasPreviousPage: false when after is empty string', async () => {
+      await expect(service.findAll(10, '')).rejects.toThrow(BadRequestException);
+    });
+
+    it('should apply orderBy createdAt DESC and addOrderBy id DESC', async () => {
+      await service.findAll(10);
+
+      expect(mockQueryBuilder.orderBy).toHaveBeenCalledWith(
+        'order.createdAt',
+        'DESC',
+      );
+      expect(mockQueryBuilder.addOrderBy).toHaveBeenCalledWith('order.id', 'DESC');
+    });
+  });
+
+  describe('updateOrder', () => {
+    const orderId = 'order-1';
+    const existingOrder: Order = {
+      id: orderId,
+      orderNumber: 'ORD-123',
+      subtotal: 100,
+      shippingCost: 10,
+      total: 110,
+      stockReserved: false,
+      items: [],
+      status: OrderStatus.PENDING,
+      seller: {} as SellerInfo,
+      customerEmail: 'test@example.com',
+      customerPhone: '1234567890',
+      customerName: 'Test User',
+      shippingAddress: '123 Test St',
+      city: 'Test City',
+      state: 'Test State',
+      zipCode: '12345',
+      country: 'Test Country',
+      sellerId: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    } as Order;
+
+    const updateInput: UpdateOrderInput = {
+      customerName: 'Updated Name',
+    };
+
+    it('should update order successfully', async () => {
+      orderRepository.findOne.mockResolvedValue(existingOrder);
+      orderRepository.save.mockResolvedValue({
+        ...existingOrder,
+        ...updateInput,
+      } as Order);
+
+      const result = await service.updateOrder(orderId, updateInput);
+
+      expect(orderRepository.findOne).toHaveBeenCalledWith({
+        where: { id: orderId },
+        relations: ['items', 'seller'],
+      });
+      expect(result).toEqual({ ...existingOrder, ...updateInput });
+    });
+
+    it('should throw BadRequestException when items are provided', async () => {
+      const updateInputWithItems: UpdateOrderInput = {
+        items: [
+          {
+            productId: 'product-1',
+            productName: 'Product 1',
+            quantity: 3,
+            unitPrice: 50,
+            totalPrice: 150,
+          },
+        ],
+      };
+
+      orderRepository.findOne.mockResolvedValue(existingOrder);
+
+      await expect(service.updateOrder(orderId, updateInputWithItems)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInputWithItems)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException when subtotal is provided', async () => {
+      const updateInputWithSubtotal = { ...updateInput, subtotal: 200 as unknown };
+
+      orderRepository.findOne.mockResolvedValue(existingOrder);
+
+      await expect(service.updateOrder(orderId, updateInputWithSubtotal)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInputWithSubtotal)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+    });
+
+    it('should throw BadRequestException when total is provided', async () => {
+      const updateInputWithTotal = { ...updateInput, total: 200 as unknown };
+
+      orderRepository.findOne.mockResolvedValue(existingOrder);
+
+      await expect(service.updateOrder(orderId, updateInputWithTotal)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInputWithTotal)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+    });
+
+    it('should throw BadRequestException when shippingCost is provided', async () => {
+      const updateInputWithShippingCost = { ...updateInput, shippingCost: 20 as unknown };
+
+      orderRepository.findOne.mockResolvedValue(existingOrder);
+
+      await expect(service.updateOrder(orderId, updateInputWithShippingCost)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInputWithShippingCost)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+    });
+
+    it('should throw BadRequestException when order status is not PENDING', async () => {
+      const confirmedOrder = { ...existingOrder, status: OrderStatus.CONFIRMED };
+
+      orderRepository.findOne.mockResolvedValue(confirmedOrder);
+
+      await expect(service.updateOrder(orderId, updateInput)).rejects.toThrow(
+        BadRequestException,
+      );
+      await expect(service.updateOrder(orderId, updateInput)).rejects.toThrow(
+        'Order items and financial totals cannot be rewritten after order creation',
+      );
+      expect(orderRepository.save).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('updateOrderStatus', () => {
+    const orderId = 'order-1';
+    const mockOrderItems: OrderItem[] = [
+      {
+        id: 'item-1',
+        productId: 'product-1',
