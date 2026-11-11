@@ -1,33 +1,72 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Suspense, lazy } from 'react';
 import {
   CustomersHome,
   CustomersShopScreen,
 } from '@kickzone-workspace/customers-home-screen';
 import { CustomerProductDetails } from '@kickzone-workspace/customer-product-details';
-import { CustomersLogin } from '@kickzone-workspace/customers-login-screen';
-import { CustomersUnauthorizedScreen } from '@kickzone-workspace/customers-unauthorized-screen';
-import { CustomerShoppingCart } from '@kickzone-workspace/customer-shopping-cart';
-import { CustomerSignup } from '@kickzone-workspace/customer-signup';
-import { CustomerForgotPassword } from '@kickzone-workspace/customer-forgot-password';
-import { CustomerResetPassword } from '@kickzone-workspace/customer-reset-password';
-import { CustomerOrders } from '@kickzone-workspace/customer-orders';
-import { CustomerProfile } from '@kickzone-workspace/customer-profile';
-import { CustomerOrderConfirmation } from '@kickzone-workspace/customer-order-confirmation';
-import { CustomerPaymentCallback } from '@kickzone-workspace/customer-payment';
-import { LanguageComponents } from '@kickzone-workspace/language-components';
 import { CustomersLayout } from '@kickzone-workspace/customers-layout';
 import { CUSTOMER_ROUTES } from '@kickzone-workspace/customers-routes';
-import { CustomerFavorites } from '@kickzone-workspace/customer-favorites';
-import { CustomerGuideAuthenticity } from '@kickzone-workspace/customer-guide-authenticity';
-import { CustomerGuidePayment } from '@kickzone-workspace/customer-guide-payment';
-import { CustomerContact } from '@kickzone-workspace/customer-contact';
-import { CustomerShippingReturns } from '@kickzone-workspace/customer-shipping-returns';
-import { CustomerPrivacyPolicy } from '@kickzone-workspace/customer-privacy-policy';
-import { CustomerNotFound } from '@kickzone-workspace/customer-not-found';
 import { ErrorBoundary } from '@kickzone-workspace/error-boundary';
 import { ScrollToTop } from './ScrollToTop';
 import { ProductLegacyRedirect } from './ProductLegacyRedirect';
 import { RobotsMetaManager } from './RobotsMetaManager';
+
+// Lazy-loaded secondary screens
+const CustomersLogin = lazy(() =>
+  import('@kickzone-workspace/customers-login-screen').then((m) => ({ default: m.CustomersLogin }))
+);
+const CustomersUnauthorizedScreen = lazy(() =>
+  import('@kickzone-workspace/customers-unauthorized-screen').then((m) => ({ default: m.CustomersUnauthorizedScreen }))
+);
+const CustomerShoppingCart = lazy(() =>
+  import('@kickzone-workspace/customer-shopping-cart').then((m) => ({ default: m.CustomerShoppingCart }))
+);
+const CustomerSignup = lazy(() =>
+  import('@kickzone-workspace/customer-signup').then((m) => ({ default: m.CustomerSignup }))
+);
+const CustomerForgotPassword = lazy(() =>
+  import('@kickzone-workspace/customer-forgot-password').then((m) => ({ default: m.CustomerForgotPassword }))
+);
+const CustomerResetPassword = lazy(() =>
+  import('@kickzone-workspace/customer-reset-password').then((m) => ({ default: m.CustomerResetPassword }))
+);
+const CustomerOrders = lazy(() =>
+  import('@kickzone-workspace/customer-orders').then((m) => ({ default: m.CustomerOrders }))
+);
+const CustomerProfile = lazy(() =>
+  import('@kickzone-workspace/customer-profile').then((m) => ({ default: m.CustomerProfile }))
+);
+const CustomerOrderConfirmation = lazy(() =>
+  import('@kickzone-workspace/customer-order-confirmation').then((m) => ({ default: m.CustomerOrderConfirmation }))
+);
+const CustomerPaymentCallback = lazy(() =>
+  import('@kickzone-workspace/customer-payment').then((m) => ({ default: m.CustomerPaymentCallback }))
+);
+const LanguageComponents = lazy(() =>
+  import('@kickzone-workspace/language-components').then((m) => ({ default: m.LanguageComponents }))
+);
+const CustomerFavorites = lazy(() =>
+  import('@kickzone-workspace/customer-favorites').then((m) => ({ default: m.CustomerFavorites }))
+);
+const CustomerGuideAuthenticity = lazy(() =>
+  import('@kickzone-workspace/customer-guide-authenticity').then((m) => ({ default: m.CustomerGuideAuthenticity }))
+);
+const CustomerGuidePayment = lazy(() =>
+  import('@kickzone-workspace/customer-guide-payment').then((m) => ({ default: m.CustomerGuidePayment }))
+);
+const CustomerContact = lazy(() =>
+  import('@kickzone-workspace/customer-contact').then((m) => ({ default: m.CustomerContact }))
+);
+const CustomerShippingReturns = lazy(() =>
+  import('@kickzone-workspace/customer-shipping-returns').then((m) => ({ default: m.CustomerShippingReturns }))
+);
+const CustomerPrivacyPolicy = lazy(() =>
+  import('@kickzone-workspace/customer-privacy-policy').then((m) => ({ default: m.CustomerPrivacyPolicy }))
+);
+const CustomerNotFound = lazy(() =>
+  import('@kickzone-workspace/customer-not-found').then((m) => ({ default: m.CustomerNotFound }))
+);
 
 export function CustomersRouter() {
   return (
@@ -36,7 +75,8 @@ export function CustomersRouter() {
         <ScrollToTop />
         {/* Route-aware robots meta manager - must be inside BrowserRouter for useLocation */}
         <RobotsMetaManager />
-        <Routes>
+        <Suspense fallback={null}>
+          <Routes>
           <Route path={CUSTOMER_ROUTES.HOME} element={<CustomersHome />} />
           <Route
             path={CUSTOMER_ROUTES.PRODUCTS}
@@ -109,6 +149,7 @@ export function CustomersRouter() {
           {/* Wildcard 404 Route */}
           <Route path="*" element={<CustomerNotFound />} />
         </Routes>
+        </Suspense>
       </BrowserRouter>
     </ErrorBoundary>
   );

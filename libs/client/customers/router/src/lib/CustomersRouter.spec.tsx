@@ -179,57 +179,53 @@ describe('CustomersRouter Integration', () => {
     expect(screen.getByTestId('mock-home-screen')).toBeInTheDocument();
   });
 
-  it('routes to /favorites without crashing', () => {
+  it('routes to /favorites without crashing', async () => {
     window.history.pushState({}, 'Favorites', '/favorites');
     render(<CustomersRouter />);
 
-    expect(screen.getByTestId('mock-customer-favorites')).toBeInTheDocument();
+    await screen.findByTestId('mock-customer-favorites');
   });
 
-  it('routes to /guide/authenticity without crashing', () => {
+  it('routes to /guide/authenticity without crashing', async () => {
     window.history.pushState({}, 'Authenticity Guide', '/guide/authenticity');
     render(<CustomersRouter />);
 
-    expect(screen.getByTestId('mock-guide-authenticity')).toBeInTheDocument();
+    await screen.findByTestId('mock-guide-authenticity');
   });
 
-  it('routes to /guide/payment without crashing', () => {
+  it('routes to /guide/payment without crashing', async () => {
     window.history.pushState({}, 'Payment Guide', '/guide/payment');
     render(<CustomersRouter />);
 
-    expect(screen.getByTestId('mock-guide-payment')).toBeInTheDocument();
+    await screen.findByTestId('mock-guide-payment');
   });
 
-  it('routes to /contact without crashing', () => {
+  it('routes to /contact without crashing', async () => {
     window.history.pushState({}, 'Contact Concierge', '/contact');
     render(<CustomersRouter />);
 
-    expect(screen.getByTestId('mock-customer-contact')).toBeInTheDocument();
+    await screen.findByTestId('mock-customer-contact');
   });
 
-  it('routes to /shipping-returns without crashing', () => {
+  it('routes to /shipping-returns without crashing', async () => {
     window.history.pushState({}, 'Shipping & Returns', '/shipping-returns');
     render(<CustomersRouter />);
 
-    expect(
-      screen.getByTestId('mock-customer-shipping-returns')
-    ).toBeInTheDocument();
+    await screen.findByTestId('mock-customer-shipping-returns');
   });
 
-  it('routes to /privacy-policy without crashing', () => {
+  it('routes to /privacy-policy without crashing', async () => {
     window.history.pushState({}, 'Privacy Policy', '/privacy-policy');
     render(<CustomersRouter />);
 
-    expect(
-      screen.getByTestId('mock-customer-privacy-policy')
-    ).toBeInTheDocument();
+    await screen.findByTestId('mock-customer-privacy-policy');
   });
 
-  it('routes unknown URLs to the wildcard CustomerNotFound 404 screen', () => {
+  it('routes unknown URLs to the wildcard CustomerNotFound 404 screen', async () => {
     window.history.pushState({}, 'Unknown', '/any/completely/unknown/page-404');
     render(<CustomersRouter />);
 
-    expect(screen.getByTestId('mock-customer-not-found')).toBeInTheDocument();
+    await screen.findByTestId('mock-customer-not-found');
   });
 });
 

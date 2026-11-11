@@ -19413,61 +19413,6 @@
         },
         {
           "source": "customers-router",
-          "target": "customers-login-screen",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "customers-unauthorized-screen",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "customer-shopping-cart",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "customer-signup",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "customer-forgot-password",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "customer-reset-password",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "customer-orders",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "customer-profile",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "customer-order-confirmation",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "customer-payment",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "language-components",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
           "target": "customers-layout",
           "type": "static"
         },
@@ -19478,43 +19423,98 @@
         },
         {
           "source": "customers-router",
-          "target": "customer-favorites",
+          "target": "error-boundary",
           "type": "static"
+        },
+        {
+          "source": "customers-router",
+          "target": "customers-login-screen",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customers-unauthorized-screen",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customer-shopping-cart",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customer-signup",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customer-forgot-password",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customer-reset-password",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customer-orders",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customer-profile",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customer-order-confirmation",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customer-payment",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "language-components",
+          "type": "dynamic"
+        },
+        {
+          "source": "customers-router",
+          "target": "customer-favorites",
+          "type": "dynamic"
         },
         {
           "source": "customers-router",
           "target": "customer-guide-authenticity",
-          "type": "static"
+          "type": "dynamic"
         },
         {
           "source": "customers-router",
           "target": "customer-guide-payment",
-          "type": "static"
+          "type": "dynamic"
         },
         {
           "source": "customers-router",
           "target": "customer-contact",
-          "type": "static"
+          "type": "dynamic"
         },
         {
           "source": "customers-router",
           "target": "customer-shipping-returns",
-          "type": "static"
+          "type": "dynamic"
         },
         {
           "source": "customers-router",
           "target": "customer-privacy-policy",
-          "type": "static"
+          "type": "dynamic"
         },
         {
           "source": "customers-router",
           "target": "customer-not-found",
-          "type": "static"
-        },
-        {
-          "source": "customers-router",
-          "target": "error-boundary",
-          "type": "static"
+          "type": "dynamic"
         }
       ],
       "customers-routes": [],
