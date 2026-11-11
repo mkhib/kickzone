@@ -1,0 +1,16 @@
+User-agent: *
+Allow: /
+Disallow: /cart
+Disallow: /login
+Disallow: /signup
+Disallow: /forgot-password
+Disallow: /reset-password/
+Disallow: /orders
+Disallow: /profile
+Disallow: /favorites
+Disallow: /order-confirmation
+Disallow: /payment-callback
+Disallow: /unauthorized
+Disallow: /language-settings
+
+Sitemap: https://saintbala.com/sitemap.xml
